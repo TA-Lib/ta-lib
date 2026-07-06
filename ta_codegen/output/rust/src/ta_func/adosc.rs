@@ -133,9 +133,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -312,12 +311,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::adosc`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::adosc`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::adosc`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::adosc`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::adosc`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::adosc`].
     #[inline]
     pub fn adosc_unguarded(
         &self,
@@ -348,7 +347,6 @@ impl Core {
         let mut fastk: f64 = 0.0_f64;
         let mut one_minus_fastk: f64 = 0.0_f64;
         let mut ad: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -377,23 +375,23 @@ impl Core {
         one_minus_fastk = 1.0 - fastk;
         slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
         one_minus_slowk = 1.0 - slowk;
-        high = *inHigh.as_ptr().add(today);
-        low = *inLow.as_ptr().add(today);
+        high = inHigh[today];
+        low = inLow[today];
         tmp = high - low;
-        close = *inClose.as_ptr().add(today);
+        close = inClose[today];
         if tmp > 0.0 {
-            ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(today) as f64);
+            ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
         }
         today += 1;
         fastEMA = ad;
         slowEMA = ad;
         while today < startIdx {
-            high = *inHigh.as_ptr().add(today);
-            low = *inLow.as_ptr().add(today);
+            high = inHigh[today];
+            low = inLow[today];
             tmp = high - low;
-            close = *inClose.as_ptr().add(today);
+            close = inClose[today];
             if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(today) as f64);
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
             fastEMA = fastk * ad + one_minus_fastk * fastEMA;
@@ -401,22 +399,21 @@ impl Core {
         }
         outIdx = 0;
         while today <= endIdx {
-            high = *inHigh.as_ptr().add(today);
-            low = *inLow.as_ptr().add(today);
+            high = inHigh[today];
+            low = inLow[today];
             tmp = high - low;
-            close = *inClose.as_ptr().add(today);
+            close = inClose[today];
             if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(today) as f64);
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
             fastEMA = fastk * ad + one_minus_fastk * fastEMA;
             slowEMA = slowk * ad + one_minus_slowk * slowEMA;
-            *outReal.as_mut_ptr().add(outIdx) = fastEMA - slowEMA;
+            outReal[outIdx] = fastEMA - slowEMA;
             outIdx += 1;
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -99,9 +99,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -161,12 +160,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::avgprice`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::avgprice`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::avgprice`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::avgprice`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::avgprice`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::avgprice`].
     #[inline]
     pub fn avgprice_unguarded(
         &self,
@@ -182,7 +181,6 @@ impl Core {
     ) -> RetCode {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -192,14 +190,13 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            *outReal.as_mut_ptr().add(outIdx) = (((*inHigh.as_ptr().add(i) + *inLow.as_ptr().add(i) + *inClose.as_ptr().add(i) + *inOpen.as_ptr().add(i)) / 4_f64) as f64);
+            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64) as f64);
             outIdx += 1;
         }
         i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -120,9 +120,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -291,12 +290,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::midprice`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::midprice`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::midprice`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::midprice`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::midprice`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::midprice`].
     #[inline]
     pub fn midprice_unguarded(
         &self,
@@ -320,7 +319,6 @@ impl Core {
         let mut highestIdx: i32 = 0_i32;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         let _assertLb = self.midprice_lookback(optInTimePeriod);
@@ -340,21 +338,21 @@ impl Core {
         trailingIdx = startIdx - nbInitialElementNeeded;
         if optInTimePeriod <= 20 {
             while today <= endIdx {
-                lowest = *inLow.as_ptr().add(trailingIdx);
-                highest = *inHigh.as_ptr().add(trailingIdx);
+                lowest = inLow[trailingIdx];
+                highest = inHigh[trailingIdx];
                 trailingIdx += 1;
                 for i in (trailingIdx as usize)..(today as usize) + 1 {
-                    tmpLow = *inLow.as_ptr().add(i);
+                    tmpLow = inLow[i];
                     if tmpLow < lowest {
                         lowest = tmpLow;
                     }
-                    tmpHigh = *inHigh.as_ptr().add(i);
+                    tmpHigh = inHigh[i];
                     if tmpHigh > highest {
                         highest = tmpHigh;
                     }
                 }
                 i = (today as usize) + 1;
-                *outReal.as_mut_ptr().add(outIdx) = (highest + lowest) / 2.0;
+                outReal[outIdx] = (highest + lowest) / 2.0;
                 outIdx += 1;
                 today += 1;
             }
@@ -364,14 +362,14 @@ impl Core {
             lowestIdx = 0 - 1;
             lowest = 0.0;
             while today <= endIdx {
-                tmpHigh = *inHigh.as_ptr().add(today);
-                tmpLow = *inLow.as_ptr().add(today);
+                tmpHigh = inHigh[today];
+                tmpLow = inLow[today];
                 if highestIdx < (trailingIdx) as i32 {
                     highestIdx = (trailingIdx) as i32;
-                    highest = *inHigh.as_ptr().add((highestIdx) as usize);
+                    highest = inHigh[(highestIdx) as usize];
                     i = (highestIdx) as usize;
                     while { i += 1; i } <= today {
-                        tmpHigh = *inHigh.as_ptr().add(i);
+                        tmpHigh = inHigh[i];
                         if tmpHigh > highest {
                             highestIdx = (i) as i32;
                             highest = tmpHigh;
@@ -383,10 +381,10 @@ impl Core {
                 }
                 if lowestIdx < (trailingIdx) as i32 {
                     lowestIdx = (trailingIdx) as i32;
-                    lowest = *inLow.as_ptr().add((lowestIdx) as usize);
+                    lowest = inLow[(lowestIdx) as usize];
                     i = (lowestIdx) as usize;
                     while { i += 1; i } <= today {
-                        tmpLow = *inLow.as_ptr().add(i);
+                        tmpLow = inLow[i];
                         if tmpLow < lowest {
                             lowestIdx = (i) as i32;
                             lowest = tmpLow;
@@ -396,7 +394,7 @@ impl Core {
                     lowestIdx = (today) as i32;
                     lowest = tmpLow;
                 }
-                *outReal.as_mut_ptr().add(outIdx) = (highest + lowest) / 2.0;
+                outReal[outIdx] = (highest + lowest) / 2.0;
                 outIdx += 1;
                 trailingIdx += 1;
                 today += 1;
@@ -405,7 +403,6 @@ impl Core {
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

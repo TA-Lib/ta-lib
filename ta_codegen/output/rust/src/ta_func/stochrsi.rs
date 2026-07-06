@@ -146,9 +146,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -277,12 +276,12 @@ impl Core {
         }
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::stochrsi`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::stochrsi`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::stochrsi`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::stochrsi`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::stochrsi`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::stochrsi`].
     #[inline]
     pub fn stochrsi_unguarded(
         &self,
@@ -306,7 +305,6 @@ impl Core {
         let mut outBegIdx1: usize = 0_usize;
         let mut outBegIdx2: usize = 0_usize;
         let mut outNbElement1: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -340,7 +338,6 @@ impl Core {
             return retCode;
         }
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -123,9 +123,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -431,12 +430,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::trima`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::trima`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::trima`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::trima`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::trima`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::trima`].
     #[inline]
     pub fn trima_unguarded(
         &self,
@@ -459,7 +458,6 @@ impl Core {
         let mut middleIdx: usize = 0_usize;
         let mut factor: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.trima_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -486,7 +484,7 @@ impl Core {
             // for( i = middleIdx; i >= trailingIdx; i -= 1 )
             i = middleIdx;
             loop {
-                tempReal = *inReal.as_ptr().add(i);
+                tempReal = inReal[i];
                 numeratorSub += tempReal;
                 numerator += numeratorSub;
                 if i == trailingIdx { break; }
@@ -495,28 +493,28 @@ impl Core {
             numeratorAdd = 0.0;
             middleIdx += 1;
             for i in (middleIdx as usize)..(todayIdx as usize) + 1 {
-                tempReal = *inReal.as_ptr().add(i);
+                tempReal = inReal[i];
                 numeratorAdd += tempReal;
                 numerator += numeratorAdd;
             }
             i = (todayIdx as usize) + 1;
             outIdx = 0;
-            tempReal = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
-            *outReal.as_mut_ptr().add(outIdx) = numerator * factor;
+            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            outReal[outIdx] = numerator * factor;
             outIdx += 1;
             todayIdx += 1;
             while todayIdx <= endIdx {
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = *inReal.as_ptr().add({ let _v = middleIdx; middleIdx += 1; _v });
+                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
                 numeratorSub += tempReal;
                 numerator += numeratorAdd;
                 numeratorAdd -= tempReal;
-                tempReal = *inReal.as_ptr().add({ let _v = todayIdx; todayIdx += 1; _v });
+                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
                 numeratorAdd += tempReal;
                 numerator += tempReal;
-                tempReal = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
-                *outReal.as_mut_ptr().add(outIdx) = numerator * factor;
+                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+                outReal[outIdx] = numerator * factor;
                 outIdx += 1;
             }
         } else {
@@ -531,7 +529,7 @@ impl Core {
             // for( i = middleIdx; i >= trailingIdx; i -= 1 )
             i = middleIdx;
             loop {
-                tempReal = *inReal.as_ptr().add(i);
+                tempReal = inReal[i];
                 numeratorSub += tempReal;
                 numerator += numeratorSub;
                 if i == trailingIdx { break; }
@@ -540,35 +538,34 @@ impl Core {
             numeratorAdd = 0.0;
             middleIdx += 1;
             for i in (middleIdx as usize)..(todayIdx as usize) + 1 {
-                tempReal = *inReal.as_ptr().add(i);
+                tempReal = inReal[i];
                 numeratorAdd += tempReal;
                 numerator += numeratorAdd;
             }
             i = (todayIdx as usize) + 1;
             outIdx = 0;
-            tempReal = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
-            *outReal.as_mut_ptr().add(outIdx) = numerator * factor;
+            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            outReal[outIdx] = numerator * factor;
             outIdx += 1;
             todayIdx += 1;
             while todayIdx <= endIdx {
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = *inReal.as_ptr().add({ let _v = middleIdx; middleIdx += 1; _v });
+                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
                 numeratorSub += tempReal;
                 numeratorAdd -= tempReal;
                 numerator += numeratorAdd;
-                tempReal = *inReal.as_ptr().add({ let _v = todayIdx; todayIdx += 1; _v });
+                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
                 numeratorAdd += tempReal;
                 numerator += tempReal;
-                tempReal = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
-                *outReal.as_mut_ptr().add(outIdx) = numerator * factor;
+                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+                outReal[outIdx] = numerator * factor;
                 outIdx += 1;
             }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

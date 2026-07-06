@@ -123,9 +123,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -322,12 +321,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::atr`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::atr`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::atr`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::atr`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::atr`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::atr`].
     #[inline]
     pub fn atr_unguarded(
         &self,
@@ -354,7 +353,6 @@ impl Core {
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -377,9 +375,9 @@ impl Core {
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempLT = *inLow.as_ptr().add(today);
-            tempHT = *inHigh.as_ptr().add(today);
-            tempCY = *inClose.as_ptr().add(today - 1);
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
             greatest = tempHT - tempLT;
             val2 = (tempCY - tempHT).abs();
             if val2 > greatest {
@@ -395,9 +393,9 @@ impl Core {
         prevATR = periodTotal / ((optInTimePeriod) as f64);
         i = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
         while i != 0 {
-            tempLT = *inLow.as_ptr().add(today);
-            tempHT = *inHigh.as_ptr().add(today);
-            tempCY = *inClose.as_ptr().add(today - 1);
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
             greatest = tempHT - tempLT;
             val2 = (tempCY - tempHT).abs();
             if val2 > greatest {
@@ -414,12 +412,12 @@ impl Core {
             i -= 1;
         }
         outIdx = 1;
-        *outReal.as_mut_ptr().add(0) = prevATR;
+        outReal[0] = prevATR;
         nbATR = endIdx - startIdx + 1;
         while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
-            tempLT = *inLow.as_ptr().add(today);
-            tempHT = *inHigh.as_ptr().add(today);
-            tempCY = *inClose.as_ptr().add(today - 1);
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
             greatest = tempHT - tempLT;
             val2 = (tempCY - tempHT).abs();
             if val2 > greatest {
@@ -432,14 +430,13 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            *outReal.as_mut_ptr().add(outIdx) = prevATR;
+            outReal[outIdx] = prevATR;
             outIdx += 1;
             today += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

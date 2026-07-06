@@ -98,9 +98,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -165,12 +164,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::obv`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::obv`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::obv`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::obv`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::obv`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::obv`].
     #[inline]
     pub fn obv_unguarded(
         &self,
@@ -187,23 +186,22 @@ impl Core {
         let mut prevReal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevOBV: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         assert!(endIdx < inVolume.len());
         let _assertLb = self.obv_lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        prevOBV = *inVolume.as_ptr().add(startIdx);
-        prevReal = *inReal.as_ptr().add(startIdx);
+        prevOBV = inVolume[startIdx];
+        prevReal = inReal[startIdx];
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempReal = *inReal.as_ptr().add(i);
+            tempReal = inReal[i];
             if tempReal > prevReal {
-                prevOBV += *inVolume.as_ptr().add(i);
+                prevOBV += inVolume[i];
             } else if tempReal < prevReal {
-                prevOBV -= *inVolume.as_ptr().add(i);
+                prevOBV -= inVolume[i];
             }
-            *outReal.as_mut_ptr().add(outIdx) = prevOBV;
+            outReal[outIdx] = prevOBV;
             outIdx += 1;
             prevReal = tempReal;
         }
@@ -211,7 +209,6 @@ impl Core {
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

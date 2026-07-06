@@ -118,9 +118,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -213,12 +212,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::sma`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::sma`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::sma`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::sma`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::sma`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::sma`].
     #[inline]
     pub fn sma_unguarded(
         &self,
@@ -236,7 +235,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.sma_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -255,24 +253,23 @@ impl Core {
         i = trailingIdx;
         if optInTimePeriod > 1 {
             while i < startIdx {
-                periodTotal += *inReal.as_ptr().add(i) as f64;
+                periodTotal += inReal[i] as f64;
                 i = i + 1;
             }
         }
         outIdx = 0;
         while i <= endIdx {
-            periodTotal += *inReal.as_ptr().add(i) as f64;
+            periodTotal += inReal[i] as f64;
             i = i + 1;
             tempReal = periodTotal;
-            periodTotal -= *inReal.as_ptr().add(trailingIdx) as f64;
+            periodTotal -= inReal[trailingIdx] as f64;
             trailingIdx = trailingIdx + 1;
-            *outReal.as_mut_ptr().add(outIdx) = tempReal / (optInTimePeriod as f64);
+            outReal[outIdx] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

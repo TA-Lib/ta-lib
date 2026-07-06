@@ -120,9 +120,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -287,12 +286,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::dema`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::dema`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::dema`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::dema`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::dema`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::dema`].
     #[inline]
     pub fn dema_unguarded(
         &self,
@@ -313,7 +312,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut lookbackEMA: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.dema_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -334,44 +332,43 @@ impl Core {
             i = (optInTimePeriod) as usize;
             tempReal = 0.0;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
             }
             prevEMA1 = tempReal / ((optInTimePeriod) as f64);
             while today <= startIdx - lookbackEMA {
-                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
             }
             tempReal = 0.0;
             tempReal += prevEMA1;
             i = (optInTimePeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
                 tempReal += prevEMA1;
             }
             prevEMA2 = tempReal / ((optInTimePeriod) as f64);
         } else {
-            prevEMA1 = *inReal.as_ptr().add(0);
+            prevEMA1 = inReal[0];
             today = 1;
             while today <= startIdx - lookbackEMA {
-                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
             }
             prevEMA2 = prevEMA1;
         }
         while today <= startIdx {
-            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
             prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
         }
-        *outReal.as_mut_ptr().add(0) = 2.0 * prevEMA1 - prevEMA2;
+        outReal[0] = 2.0 * prevEMA1 - prevEMA2;
         outIdx = 1;
         while today <= endIdx {
-            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
             prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
-            *outReal.as_mut_ptr().add(outIdx) = 2.0 * prevEMA1 - prevEMA2;
+            outReal[outIdx] = 2.0 * prevEMA1 - prevEMA2;
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

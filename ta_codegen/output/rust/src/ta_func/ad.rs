@@ -100,9 +100,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -194,12 +193,12 @@ impl Core {
         }
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::ad`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::ad`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::ad`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::ad`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::ad`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::ad`].
     #[inline]
     pub fn ad_unguarded(
         &self,
@@ -221,7 +220,6 @@ impl Core {
         let mut close: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut ad: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -236,20 +234,19 @@ impl Core {
         outIdx = 0;
         ad = 0.0;
         while nbBar != 0 {
-            high = *inHigh.as_ptr().add(currentBar);
-            low = *inLow.as_ptr().add(currentBar);
+            high = inHigh[currentBar];
+            low = inLow[currentBar];
             tmp = high - low;
-            close = *inClose.as_ptr().add(currentBar);
+            close = inClose[currentBar];
             if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(currentBar) as f64);
+                ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
             }
-            *outReal.as_mut_ptr().add(outIdx) = ad;
+            outReal[outIdx] = ad;
             outIdx += 1;
             currentBar += 1;
             nbBar -= 1;
         }
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

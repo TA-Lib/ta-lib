@@ -156,9 +156,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -388,12 +387,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::macd`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::macd`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::macd`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::macd`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::macd`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::macd`].
     #[inline]
     pub fn macd_unguarded(
         &self,
@@ -423,7 +422,6 @@ impl Core {
         let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -464,18 +462,18 @@ impl Core {
             tempReal = 0.0;
             i = (optInSlowPeriod - optInFastPeriod) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
             }
             prevFast = 0.0;
             i = (optInFastPeriod) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevFast += *inReal.as_ptr().add(today);
-                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                prevFast += inReal[today];
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
             }
             prevSlow = tempReal / ((optInSlowPeriod) as f64);
             prevFast = prevFast / ((optInFastPeriod) as f64);
             while today <= startIdx - lookbackSignal {
-                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
                 prevFast = (tempReal - prevFast) * fastK + prevFast;
                 prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             }
@@ -484,7 +482,7 @@ impl Core {
             prevSignal += macdValue;
             i = (optInSignalPeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
                 prevFast = (tempReal - prevFast) * fastK + prevFast;
                 prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
                 macdValue = prevFast - prevSlow;
@@ -492,11 +490,11 @@ impl Core {
             }
             prevSignal = prevSignal / ((optInSignalPeriod) as f64);
         } else {
-            prevFast = *inReal.as_ptr().add(0);
-            prevSlow = *inReal.as_ptr().add(0);
+            prevFast = inReal[0];
+            prevSlow = inReal[0];
             today = 1;
             while today <= startIdx - lookbackSignal {
-                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
                 prevFast = (tempReal - prevFast) * fastK + prevFast;
                 prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             }
@@ -504,31 +502,30 @@ impl Core {
             prevSignal = macdValue;
         }
         while today <= startIdx {
-            tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             macdValue = prevFast - prevSlow;
             prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
         }
-        *outMACD.as_mut_ptr().add(0) = macdValue;
-        *outMACDSignal.as_mut_ptr().add(0) = prevSignal;
-        *outMACDHist.as_mut_ptr().add(0) = macdValue - prevSignal;
+        outMACD[0] = macdValue;
+        outMACDSignal[0] = prevSignal;
+        outMACDHist[0] = macdValue - prevSignal;
         outIdx = 1;
         while today <= endIdx {
-            tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             macdValue = prevFast - prevSlow;
             prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
-            *outMACD.as_mut_ptr().add(outIdx) = macdValue;
-            *outMACDSignal.as_mut_ptr().add(outIdx) = prevSignal;
-            *outMACDHist.as_mut_ptr().add(outIdx) = macdValue - prevSignal;
+            outMACD[outIdx] = macdValue;
+            outMACDSignal[outIdx] = prevSignal;
+            outMACDHist[outIdx] = macdValue - prevSignal;
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

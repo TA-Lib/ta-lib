@@ -106,9 +106,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -219,12 +218,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::linearreg`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::linearreg`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::linearreg`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::linearreg`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::linearreg`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::linearreg`].
     #[inline]
     pub fn linearreg_unguarded(
         &self,
@@ -248,7 +247,6 @@ impl Core {
         let mut b: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut tempValue1: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.linearreg_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -273,20 +271,19 @@ impl Core {
             // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
             i = (optInTimePeriod) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-                tempValue1 = *inReal.as_ptr().add(today - i);
+                tempValue1 = inReal[today - i];
                 SumY += tempValue1;
                 SumXY += (i as f64) * tempValue1;
             }
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            *outReal.as_mut_ptr().add(outIdx) = b + m * ((optInTimePeriod - 1) as f64);
+            outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);
             outIdx += 1;
             today += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

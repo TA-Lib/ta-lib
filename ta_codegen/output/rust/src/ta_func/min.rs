@@ -112,9 +112,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -219,12 +218,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::min`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::min`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::min`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::min`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::min`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::min`].
     #[inline]
     pub fn min_unguarded(
         &self,
@@ -244,7 +243,6 @@ impl Core {
         let mut lowestIdx: i32 = 0_i32;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.min_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -264,13 +262,13 @@ impl Core {
         lowestIdx = 0 - 1;
         lowest = 0.0;
         while today <= endIdx {
-            tmp = *inReal.as_ptr().add(today);
+            tmp = inReal[today];
             if lowestIdx < (trailingIdx) as i32 {
                 lowestIdx = (trailingIdx) as i32;
-                lowest = *inReal.as_ptr().add((lowestIdx) as usize);
+                lowest = inReal[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
                 while { i += 1; i } <= today {
-                    tmp = *inReal.as_ptr().add(i);
+                    tmp = inReal[i];
                     if tmp < lowest {
                         lowestIdx = (i) as i32;
                         lowest = tmp;
@@ -280,7 +278,7 @@ impl Core {
                 lowestIdx = (today) as i32;
                 lowest = tmp;
             }
-            *outReal.as_mut_ptr().add(outIdx) = lowest;
+            outReal[outIdx] = lowest;
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
@@ -288,7 +286,6 @@ impl Core {
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

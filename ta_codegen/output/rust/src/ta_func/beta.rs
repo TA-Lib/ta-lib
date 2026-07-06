@@ -115,9 +115,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -314,12 +313,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::beta`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::beta`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::beta`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::beta`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::beta`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::beta`].
     #[inline]
     pub fn beta_unguarded(
         &self,
@@ -348,7 +347,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut nbInitialElementNeeded: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal0.len());
         assert!(endIdx < inReal1.len());
         let _assertLb = self.beta_lookback(optInTimePeriod);
@@ -373,20 +371,20 @@ impl Core {
             return RetCode::Success;
         }
         trailingIdx = startIdx - nbInitialElementNeeded;
-        trailing_last_price_x = *inReal0.as_ptr().add(trailingIdx);
+        trailing_last_price_x = inReal0[trailingIdx];
         last_price_x = trailing_last_price_x;
-        trailing_last_price_y = *inReal1.as_ptr().add(trailingIdx);
+        trailing_last_price_y = inReal1[trailingIdx];
         last_price_y = trailing_last_price_y;
         i = { trailingIdx += 1; trailingIdx };
         while i < startIdx {
-            tmp_real = *inReal0.as_ptr().add(i);
+            tmp_real = inReal0[i];
             if !((last_price_x).abs() < 1e-14) {
                 x = (tmp_real - last_price_x) / last_price_x;
             } else {
                 x = 0.0;
             }
             last_price_x = tmp_real;
-            tmp_real = *inReal1.as_ptr().add({ let _v = i; i += 1; _v });
+            tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if !((last_price_y).abs() < 1e-14) {
                 y = (tmp_real - last_price_y) / last_price_y;
             } else {
@@ -401,14 +399,14 @@ impl Core {
         outIdx = 0;
         n = optInTimePeriod as f64;
         loop {
-            tmp_real = *inReal0.as_ptr().add(i);
+            tmp_real = inReal0[i];
             if !((last_price_x).abs() < 1e-14) {
                 x = (tmp_real - last_price_x) / last_price_x;
             } else {
                 x = 0.0;
             }
             last_price_x = tmp_real;
-            tmp_real = *inReal1.as_ptr().add({ let _v = i; i += 1; _v });
+            tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if !((last_price_y).abs() < 1e-14) {
                 y = (tmp_real - last_price_y) / last_price_y;
             } else {
@@ -419,14 +417,14 @@ impl Core {
             S_xy += x * y;
             S_x += x;
             S_y += y;
-            tmp_real = *inReal0.as_ptr().add(trailingIdx);
+            tmp_real = inReal0[trailingIdx];
             if !((trailing_last_price_x).abs() < 1e-14) {
                 x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
             } else {
                 x = 0.0;
             }
             trailing_last_price_x = tmp_real;
-            tmp_real = *inReal1.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
+            tmp_real = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if !((trailing_last_price_y).abs() < 1e-14) {
                 y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
             } else {
@@ -435,10 +433,10 @@ impl Core {
             trailing_last_price_y = tmp_real;
             tmp_real = n * S_xx - S_x * S_x;
             if !((tmp_real).abs() < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = (n * S_xy - S_x * S_y) / tmp_real;
+                outReal[outIdx] = (n * S_xy - S_x * S_y) / tmp_real;
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
             S_xx -= x * x;
@@ -450,7 +448,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

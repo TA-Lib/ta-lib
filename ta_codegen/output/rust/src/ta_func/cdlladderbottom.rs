@@ -104,9 +104,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -276,12 +275,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cdlladderbottom`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cdlladderbottom`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cdlladderbottom`]; an out-of-range parameter,
-    /// an input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::cdlladderbottom`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cdlladderbottom`]; an out-of-range parameter, an input slice not
+    /// covering `startIdx..=endIdx`, or an undersized output slice panics (never undefined
+    /// behavior). Prefer [`Core::cdlladderbottom`].
     #[inline]
     pub fn cdlladderbottom_unguarded(
         &self,
@@ -306,7 +305,6 @@ impl Core {
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -330,13 +328,13 @@ impl Core {
             let mut _candlerange_0: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_0 = (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_0 = (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 1 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1);
+                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1];
                 }
                 2 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1) - (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 _ => {
                     _candlerange_0 = 0.0;
@@ -348,23 +346,23 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if ((if *inClose.as_ptr().add(i - 4) >= *inOpen.as_ptr().add(i - 4) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i - 3) >= *inOpen.as_ptr().add(i - 3) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && *inOpen.as_ptr().add(i - 4) > *inOpen.as_ptr().add(i - 3) && *inOpen.as_ptr().add(i - 3) > *inOpen.as_ptr().add(i - 2) && *inClose.as_ptr().add(i - 4) > *inClose.as_ptr().add(i - 3) && *inClose.as_ptr().add(i - 3) > *inClose.as_ptr().add(i - 2) && ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (*inHigh.as_ptr().add(i - 1) - (if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { *inClose.as_ptr().add(i - 1) } else { *inOpen.as_ptr().add(i - 1) })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs(), 1 => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)), _ => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)) - ((*inClose.as_ptr().add(i - 1)) - (*inOpen.as_ptr().add(i - 1))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) == 1 && *inOpen.as_ptr().add(i) > *inOpen.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) > *inHigh.as_ptr().add(i - 1) {
-                *outInteger.as_mut_ptr().add(outIdx) = 100;
+            if ((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen[i - 4] > inOpen[i - 3] && inOpen[i - 3] > inOpen[i - 2] && inClose[i - 4] > inClose[i - 3] && inClose[i - 3] > inClose[i - 2] && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] > inOpen[i - 1] && inClose[i] > inHigh[i - 1] {
+                outInteger[outIdx] = 100;
                 outIdx += 1;
             } else {
-                *outInteger.as_mut_ptr().add(outIdx) = 0;
+                outInteger[outIdx] = 0;
                 outIdx += 1;
             }
             let mut _candlerange_1: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_1 = (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 1 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1);
+                    _candlerange_1 = inHigh[i - 1] - inLow[i - 1];
                 }
                 2 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1) - (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_1 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 _ => {
                     _candlerange_1 = 0.0;
@@ -373,13 +371,13 @@ impl Core {
             let mut _candlerange_2: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_2 = (*inClose.as_ptr().add(ShadowVeryShortTrailingIdx - 1) - *inOpen.as_ptr().add(ShadowVeryShortTrailingIdx - 1)).abs();
+                    _candlerange_2 = (inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1]).abs();
                 }
                 1 => {
-                    _candlerange_2 = *inHigh.as_ptr().add(ShadowVeryShortTrailingIdx - 1) - *inLow.as_ptr().add(ShadowVeryShortTrailingIdx - 1);
+                    _candlerange_2 = inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1];
                 }
                 2 => {
-                    _candlerange_2 = *inHigh.as_ptr().add(ShadowVeryShortTrailingIdx - 1) - *inLow.as_ptr().add(ShadowVeryShortTrailingIdx - 1) - (*inClose.as_ptr().add(ShadowVeryShortTrailingIdx - 1) - *inOpen.as_ptr().add(ShadowVeryShortTrailingIdx - 1)).abs();
+                    _candlerange_2 = inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1] - (inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1]).abs();
                 }
                 _ => {
                     _candlerange_2 = 0.0;
@@ -393,7 +391,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -122,9 +122,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -270,12 +269,12 @@ impl Core {
         // Free the circular buffer if it was dynamically allocated.
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cci`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cci`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cci`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::cci`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cci`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::cci`].
     #[inline]
     pub fn cci_unguarded(
         &self,
@@ -300,7 +299,6 @@ impl Core {
         let mut circBuffer: Vec<f64> = Vec::new();
         let mut circBuffer_Idx: usize = 0;
         let mut maxIdx_circBuffer: usize = 29;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -323,7 +321,7 @@ impl Core {
         i = startIdx - lookbackTotal;
         if optInTimePeriod > 1 {
             while i < startIdx {
-                *circBuffer.as_mut_ptr().add(circBuffer_Idx) = (*inHigh.as_ptr().add(i) + *inLow.as_ptr().add(i) + *inClose.as_ptr().add(i)) / 3_f64;
+                circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
                 i += 1;
                 circBuffer_Idx += 1;
                 if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
@@ -331,13 +329,13 @@ impl Core {
         }
         outIdx = 0;
         loop {
-            lastValue = (*inHigh.as_ptr().add(i) + *inLow.as_ptr().add(i) + *inClose.as_ptr().add(i)) / 3_f64;
-            *circBuffer.as_mut_ptr().add(circBuffer_Idx) = lastValue;
+            lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
+            circBuffer[circBuffer_Idx] = lastValue;
             theAverage = 0.0;
             // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
             j = 0;
             while j < (optInTimePeriod) as usize {
-                theAverage += *circBuffer.as_ptr().add(j);
+                theAverage += circBuffer[j];
                 j += 1;
             }
             theAverage /= ((optInTimePeriod) as f64);
@@ -345,15 +343,15 @@ impl Core {
             // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
             j = 0;
             while j < (optInTimePeriod) as usize {
-                tempReal2 += (*circBuffer.as_ptr().add(j) - theAverage).abs();
+                tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
             tempReal = lastValue - theAverage;
             if tempReal != 0.0 && tempReal2 != 0.0 {
-                *outReal.as_mut_ptr().add(outIdx) = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
+                outReal[outIdx] = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
             circBuffer_Idx += 1;
@@ -364,7 +362,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -119,9 +119,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -265,12 +264,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::correl`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::correl`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::correl`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::correl`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::correl`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::correl`].
     #[inline]
     pub fn correl_unguarded(
         &self,
@@ -297,7 +296,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal0.len());
         assert!(endIdx < inReal1.len());
         let _assertLb = self.correl_lookback(optInTimePeriod);
@@ -320,22 +318,22 @@ impl Core {
         sumX = sumY;
         sumXY = sumX;
         for today in (trailingIdx as usize)..(startIdx as usize) + 1 {
-            x = *inReal0.as_ptr().add(today);
+            x = inReal0[today];
             sumX += x;
             sumX2 += x * x;
-            y = *inReal1.as_ptr().add(today);
+            y = inReal1[today];
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
         }
         today = (startIdx as usize) + 1;
-        trailingX = *inReal0.as_ptr().add(trailingIdx);
-        trailingY = *inReal1.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
+        trailingX = inReal0[trailingIdx];
+        trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
         tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
         if !((tempReal) < 1e-14) {
-            *outReal.as_mut_ptr().add(0) = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+            outReal[0] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
         } else {
-            *outReal.as_mut_ptr().add(0) = 0.0;
+            outReal[0] = 0.0;
         }
         outIdx = 1;
         while today <= endIdx {
@@ -344,27 +342,26 @@ impl Core {
             sumXY -= trailingX * trailingY;
             sumY -= trailingY;
             sumY2 -= trailingY * trailingY;
-            x = *inReal0.as_ptr().add(today);
+            x = inReal0[today];
             sumX += x;
             sumX2 += x * x;
-            y = *inReal1.as_ptr().add({ let _v = today; today += 1; _v });
+            y = inReal1[{ let _v = today; today += 1; _v }];
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            trailingX = *inReal0.as_ptr().add(trailingIdx);
-            trailingY = *inReal1.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
+            trailingX = inReal0[trailingIdx];
+            trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
             if !((tempReal) < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+                outReal[outIdx] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -119,9 +119,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -251,12 +250,12 @@ impl Core {
         (*outNBElement) = outputSize;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::accbands`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::accbands`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::accbands`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::accbands`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::accbands`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::accbands`].
     #[inline]
     pub fn accbands_unguarded(
         &self,
@@ -283,7 +282,6 @@ impl Core {
         let mut bufferSize: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -309,14 +307,14 @@ impl Core {
         j = 0;
         i = startIdx - lookbackTotal;
         while i <= endIdx {
-            tempReal = *inHigh.as_ptr().add(i) + *inLow.as_ptr().add(i);
+            tempReal = inHigh[i] + inLow[i];
             if !((tempReal).abs() < 1e-14) {
-                tempReal = 4_f64 * (*inHigh.as_ptr().add(i) - *inLow.as_ptr().add(i)) / tempReal;
-                *tempBuffer1.as_mut_ptr().add(j) = *inHigh.as_ptr().add(i) * (1_f64 + tempReal);
-                *tempBuffer2.as_mut_ptr().add(j) = *inLow.as_ptr().add(i) * (1_f64 - tempReal);
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                tempBuffer1[j] = inHigh[i] * (1_f64 + tempReal);
+                tempBuffer2[j] = inLow[i] * (1_f64 - tempReal);
             } else {
-                *tempBuffer1.as_mut_ptr().add(j) = *inHigh.as_ptr().add(i);
-                *tempBuffer2.as_mut_ptr().add(j) = *inLow.as_ptr().add(i);
+                tempBuffer1[j] = inHigh[i];
+                tempBuffer2[j] = inLow[i];
             }
             i += 1;
             j += 1;
@@ -342,7 +340,6 @@ impl Core {
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -125,9 +125,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -231,12 +230,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::adxr`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::adxr`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::adxr`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::adxr`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::adxr`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::adxr`].
     #[inline]
     pub fn adxr_unguarded(
         &self,
@@ -257,7 +256,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -283,13 +281,12 @@ impl Core {
         outIdx = 0;
         nbElement = endIdx - startIdx + 2;
         while { nbElement = nbElement.wrapping_sub(1); nbElement } != 0 {
-            *outReal.as_mut_ptr().add(outIdx) = ((((*adx.as_ptr().add({ let _v = i; i += 1; _v }) + *adx.as_ptr().add({ let _v = j; j += 1; _v })) / 2.0)) as f64);
+            outReal[outIdx] = ((((adx[{ let _v = i; i += 1; _v }] + adx[{ let _v = j; j += 1; _v }]) / 2.0)) as f64);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

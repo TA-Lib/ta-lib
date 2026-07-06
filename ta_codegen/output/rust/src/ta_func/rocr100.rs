@@ -114,9 +114,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -226,12 +225,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::rocr100`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::rocr100`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::rocr100`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::rocr100`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::rocr100`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::rocr100`].
     #[inline]
     pub fn rocr100_unguarded(
         &self,
@@ -247,7 +246,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.rocr100_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -264,12 +262,12 @@ impl Core {
         inIdx = startIdx;
         trailingIdx = startIdx - (optInTimePeriod) as usize;
         while inIdx <= endIdx {
-            tempReal = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
+            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {
-                *outReal.as_mut_ptr().add(outIdx) = ((*inReal.as_ptr().add(inIdx) / tempReal * 100.0) as f64);
+                outReal[outIdx] = ((inReal[inIdx] / tempReal * 100.0) as f64);
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
             inIdx += 1;
@@ -277,7 +275,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

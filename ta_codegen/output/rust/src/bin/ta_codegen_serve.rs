@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 #![allow(non_snake_case, unused_variables, clippy::all)]
 
 use serde_json::{self, Value};

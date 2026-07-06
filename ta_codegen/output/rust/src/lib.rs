@@ -44,12 +44,15 @@
 //! ([`Core::set_unstable_period`]), Metastock compatibility
 //! ([`Core::set_compatibility`]), and candlestick thresholds.
 //!
-//! Every indicator also has an `*_unguarded` variant that skips validation and
-//! bounds checks for internal cross-indicator calls — prefer the checked methods.
+//! Every indicator also has an `*_unguarded` variant that skips parameter
+//! validation for internal cross-indicator calls — prefer the checked methods.
+//! The crate is `#![forbid(unsafe_code)]`: misuse of an `*_unguarded` variant
+//! panics, it never triggers undefined behavior.
 //!
 //! The full function reference, grouped by category, is at
 //! [ta-lib.org/functions](https://ta-lib.org/functions/).
 
+#![forbid(unsafe_code)]
 #![allow(non_snake_case, unused_variables, unused_assignments, unused_mut, unused_parens, arithmetic_overflow)]
 pub mod ta_func;
 pub mod abstract_api;

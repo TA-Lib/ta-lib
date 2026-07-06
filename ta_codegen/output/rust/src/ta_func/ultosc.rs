@@ -141,9 +141,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -450,12 +449,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::ultosc`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::ultosc`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::ultosc`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::ultosc`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::ultosc`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::ultosc`].
     #[inline]
     pub fn ultosc_unguarded(
         &self,
@@ -498,7 +497,6 @@ impl Core {
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -507,12 +505,12 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        *periods.as_mut_ptr().add(0) = optInTimePeriod1;
-        *periods.as_mut_ptr().add(1) = optInTimePeriod2;
-        *periods.as_mut_ptr().add(2) = optInTimePeriod3;
-        *usedFlag.as_mut_ptr().add(0) = 0;
-        *usedFlag.as_mut_ptr().add(1) = 0;
-        *usedFlag.as_mut_ptr().add(2) = 0;
+        periods[0] = optInTimePeriod1;
+        periods[1] = optInTimePeriod2;
+        periods[2] = optInTimePeriod3;
+        usedFlag[0] = 0;
+        usedFlag[1] = 0;
+        usedFlag[2] = 0;
         // for( i = 0; i < 3; i += 1 )
         i = 0;
         while i < 3 {
@@ -521,19 +519,19 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if *usedFlag.as_ptr().add(j) == 0 && (*periods.as_ptr().add(j)) as usize > longestPeriod {
-                    longestPeriod = (*periods.as_ptr().add(j)) as usize;
+                if usedFlag[j] == 0 && (periods[j]) as usize > longestPeriod {
+                    longestPeriod = (periods[j]) as usize;
                     longestIndex = j;
                 }
                 j += 1;
             }
-            *usedFlag.as_mut_ptr().add(longestIndex) = 1;
-            *sortedPeriods.as_mut_ptr().add(i) = (longestPeriod) as i32;
+            usedFlag[longestIndex] = 1;
+            sortedPeriods[i] = (longestPeriod) as i32;
             i += 1;
         }
-        optInTimePeriod1 = *sortedPeriods.as_ptr().add(2);
-        optInTimePeriod2 = *sortedPeriods.as_ptr().add(1);
-        optInTimePeriod3 = *sortedPeriods.as_ptr().add(0);
+        optInTimePeriod1 = sortedPeriods[2];
+        optInTimePeriod2 = sortedPeriods[1];
+        optInTimePeriod3 = sortedPeriods[0];
         lookbackTotal = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -546,11 +544,11 @@ impl Core {
         // for( i = startIdx - (optInTimePeriod1) as usize + 1; i < startIdx; i += 1 )
         i = startIdx - (optInTimePeriod1) as usize + 1;
         while i < startIdx {
-            tempLT = *inLow.as_ptr().add(i);
-            tempHT = *inHigh.as_ptr().add(i);
-            tempCY = *inClose.as_ptr().add(i - 1);
+            tempLT = inLow[i];
+            tempHT = inHigh[i];
+            tempCY = inClose[i - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(i) - trueLow;
+            closeMinusTrueLow = inClose[i] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -569,11 +567,11 @@ impl Core {
         // for( i = startIdx - (optInTimePeriod2) as usize + 1; i < startIdx; i += 1 )
         i = startIdx - (optInTimePeriod2) as usize + 1;
         while i < startIdx {
-            tempLT = *inLow.as_ptr().add(i);
-            tempHT = *inHigh.as_ptr().add(i);
-            tempCY = *inClose.as_ptr().add(i - 1);
+            tempLT = inLow[i];
+            tempHT = inHigh[i];
+            tempCY = inClose[i - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(i) - trueLow;
+            closeMinusTrueLow = inClose[i] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -592,11 +590,11 @@ impl Core {
         // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
         i = startIdx - (optInTimePeriod3) as usize + 1;
         while i < startIdx {
-            tempLT = *inLow.as_ptr().add(i);
-            tempHT = *inHigh.as_ptr().add(i);
-            tempCY = *inClose.as_ptr().add(i - 1);
+            tempLT = inLow[i];
+            tempHT = inHigh[i];
+            tempCY = inClose[i - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(i) - trueLow;
+            closeMinusTrueLow = inClose[i] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -616,11 +614,11 @@ impl Core {
         trailingIdx2 = today - (optInTimePeriod2) as usize + 1;
         trailingIdx3 = today - (optInTimePeriod3) as usize + 1;
         while today <= endIdx {
-            tempLT = *inLow.as_ptr().add(today);
-            tempHT = *inHigh.as_ptr().add(today);
-            tempCY = *inClose.as_ptr().add(today - 1);
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(today) - trueLow;
+            closeMinusTrueLow = inClose[today] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -646,11 +644,11 @@ impl Core {
             if !((b3Total).abs() < 1e-14) {
                 output += a3Total / b3Total;
             }
-            tempLT = *inLow.as_ptr().add(trailingIdx1);
-            tempHT = *inHigh.as_ptr().add(trailingIdx1);
-            tempCY = *inClose.as_ptr().add(trailingIdx1 - 1);
+            tempLT = inLow[trailingIdx1];
+            tempHT = inHigh[trailingIdx1];
+            tempCY = inClose[trailingIdx1 - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(trailingIdx1) - trueLow;
+            closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -662,11 +660,11 @@ impl Core {
             }
             a1Total -= closeMinusTrueLow;
             b1Total -= trueRange;
-            tempLT = *inLow.as_ptr().add(trailingIdx2);
-            tempHT = *inHigh.as_ptr().add(trailingIdx2);
-            tempCY = *inClose.as_ptr().add(trailingIdx2 - 1);
+            tempLT = inLow[trailingIdx2];
+            tempHT = inHigh[trailingIdx2];
+            tempCY = inClose[trailingIdx2 - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(trailingIdx2) - trueLow;
+            closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -678,11 +676,11 @@ impl Core {
             }
             a2Total -= closeMinusTrueLow;
             b2Total -= trueRange;
-            tempLT = *inLow.as_ptr().add(trailingIdx3);
-            tempHT = *inHigh.as_ptr().add(trailingIdx3);
-            tempCY = *inClose.as_ptr().add(trailingIdx3 - 1);
+            tempLT = inLow[trailingIdx3];
+            tempHT = inHigh[trailingIdx3];
+            tempCY = inClose[trailingIdx3 - 1];
             trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = *inClose.as_ptr().add(trailingIdx3) - trueLow;
+            closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             if tempDouble > trueRange {
@@ -694,7 +692,7 @@ impl Core {
             }
             a3Total -= closeMinusTrueLow;
             b3Total -= trueRange;
-            *outReal.as_mut_ptr().add(outIdx) = 100.0 * (output / 7.0);
+            outReal[outIdx] = 100.0 * (output / 7.0);
             outIdx += 1;
             today += 1;
             trailingIdx1 += 1;
@@ -704,7 +702,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

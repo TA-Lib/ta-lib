@@ -102,9 +102,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -294,12 +293,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cdlpiercing`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cdlpiercing`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cdlpiercing`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::cdlpiercing`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cdlpiercing`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::cdlpiercing`].
     #[inline]
     pub fn cdlpiercing_unguarded(
         &self,
@@ -325,7 +324,6 @@ impl Core {
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -342,53 +340,53 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        *BodyLongPeriodTotal.as_mut_ptr().add(1) = 0.0;
-        *BodyLongPeriodTotal.as_mut_ptr().add(0) = 0.0;
+        BodyLongPeriodTotal[1] = 0.0;
+        BodyLongPeriodTotal[0] = 0.0;
         BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
         i = BodyLongTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
             match BodyLong_rangeType {
                 0 => {
-                    _candlerange_0 = (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_0 = (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 1 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1);
+                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1];
                 }
                 2 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1) - (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 _ => {
                     _candlerange_0 = 0.0;
                 }
             }
-            *BodyLongPeriodTotal.as_mut_ptr().add(1) = *BodyLongPeriodTotal.as_ptr().add(1) + _candlerange_0;
+            BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + _candlerange_0;
             let mut _candlerange_1: f64;
             match BodyLong_rangeType {
                 0 => {
-                    _candlerange_1 = (*inClose.as_ptr().add(i) - *inOpen.as_ptr().add(i)).abs();
+                    _candlerange_1 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i) - *inLow.as_ptr().add(i);
+                    _candlerange_1 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i) - *inLow.as_ptr().add(i) - (*inClose.as_ptr().add(i) - *inOpen.as_ptr().add(i)).abs();
+                    _candlerange_1 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
                 }
                 _ => {
                     _candlerange_1 = 0.0;
                 }
             }
-            *BodyLongPeriodTotal.as_mut_ptr().add(0) = *BodyLongPeriodTotal.as_ptr().add(0) + _candlerange_1;
+            BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + _candlerange_1;
             i += 1;
         }
         i = startIdx;
         outIdx = 0;
         loop {
-            if ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (*BodyLongPeriodTotal.as_ptr().add(1)) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs(), 1 => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)), _ => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)) - ((*inClose.as_ptr().add(i - 1)) - (*inOpen.as_ptr().add(i - 1))).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) == 1 && (*inClose.as_ptr().add(i) - *inOpen.as_ptr().add(i)).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (*BodyLongPeriodTotal.as_ptr().add(0)) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (*inClose.as_ptr().add(i) - *inOpen.as_ptr().add(i)).abs(), 1 => (*inHigh.as_ptr().add(i)) - (*inLow.as_ptr().add(i)), _ => (*inHigh.as_ptr().add(i)) - (*inLow.as_ptr().add(i)) - ((*inClose.as_ptr().add(i)) - (*inOpen.as_ptr().add(i))).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && *inOpen.as_ptr().add(i) < *inLow.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) < *inOpen.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) > *inClose.as_ptr().add(i - 1) + (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs() * 0.5 {
-                *outInteger.as_mut_ptr().add(outIdx) = 100;
+            if ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal[1]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && (inClose[i] - inOpen[i]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i] < inLow[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > inClose[i - 1] + (inClose[i - 1] - inOpen[i - 1]).abs() * 0.5 {
+                outInteger[outIdx] = 100;
                 outIdx += 1;
             } else {
-                *outInteger.as_mut_ptr().add(outIdx) = 0;
+                outInteger[outIdx] = 0;
                 outIdx += 1;
             }
             // for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
@@ -397,13 +395,13 @@ impl Core {
                 let mut _candlerange_2: f64;
                 match BodyLong_rangeType {
                     0 => {
-                        _candlerange_2 = (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_2 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_2 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx);
+                        _candlerange_2 = inHigh[i - totIdx] - inLow[i - totIdx];
                     }
                     2 => {
-                        _candlerange_2 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx) - (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_2 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_2 = 0.0;
@@ -412,19 +410,19 @@ impl Core {
                 let mut _candlerange_3: f64;
                 match BodyLong_rangeType {
                     0 => {
-                        _candlerange_3 = (*inClose.as_ptr().add(BodyLongTrailingIdx - totIdx) - *inOpen.as_ptr().add(BodyLongTrailingIdx - totIdx)).abs();
+                        _candlerange_3 = (inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(BodyLongTrailingIdx - totIdx) - *inLow.as_ptr().add(BodyLongTrailingIdx - totIdx);
+                        _candlerange_3 = inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx];
                     }
                     2 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(BodyLongTrailingIdx - totIdx) - *inLow.as_ptr().add(BodyLongTrailingIdx - totIdx) - (*inClose.as_ptr().add(BodyLongTrailingIdx - totIdx) - *inOpen.as_ptr().add(BodyLongTrailingIdx - totIdx)).abs();
+                        _candlerange_3 = inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx] - (inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_3 = 0.0;
                     }
                 }
-                *BodyLongPeriodTotal.as_mut_ptr().add(totIdx) = *BodyLongPeriodTotal.as_ptr().add(totIdx) + (_candlerange_2 - _candlerange_3);
+                BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (_candlerange_2 - _candlerange_3);
                 if totIdx == 0 { break; }
                 totIdx -= 1;
             }
@@ -435,7 +433,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

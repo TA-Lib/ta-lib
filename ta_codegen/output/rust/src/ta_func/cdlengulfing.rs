@@ -101,9 +101,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -207,12 +206,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cdlengulfing`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cdlengulfing`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cdlengulfing`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::cdlengulfing`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cdlengulfing`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::cdlengulfing`].
     #[inline]
     pub fn cdlengulfing_unguarded(
         &self,
@@ -229,7 +228,6 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -249,16 +247,16 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if (if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) == 1 && ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (*inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i - 1) && *inOpen.as_ptr().add(i) < *inClose.as_ptr().add(i - 1) || *inClose.as_ptr().add(i) > *inOpen.as_ptr().add(i - 1) && *inOpen.as_ptr().add(i) <= *inClose.as_ptr().add(i - 1)) || ((if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 }) == 1 && (*inOpen.as_ptr().add(i) >= *inClose.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) < *inOpen.as_ptr().add(i - 1) || *inOpen.as_ptr().add(i) > *inClose.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) <= *inOpen.as_ptr().add(i - 1)) {
-                if *inOpen.as_ptr().add(i) != *inClose.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) != *inOpen.as_ptr().add(i - 1) {
-                    *outInteger.as_mut_ptr().add(outIdx) = ((if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) * 100) as i32;
+            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) {
+                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
                     outIdx += 1;
                 } else {
-                    *outInteger.as_mut_ptr().add(outIdx) = ((if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) * 80) as i32;
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
                     outIdx += 1;
                 }
             } else {
-                *outInteger.as_mut_ptr().add(outIdx) = 0;
+                outInteger[outIdx] = 0;
                 outIdx += 1;
             }
             i += 1;
@@ -267,7 +265,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

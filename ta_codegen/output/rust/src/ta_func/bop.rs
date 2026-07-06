@@ -97,9 +97,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -162,12 +161,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::bop`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::bop`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::bop`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::bop`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::bop`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::bop`].
     #[inline]
     pub fn bop_unguarded(
         &self,
@@ -184,7 +183,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -194,12 +192,12 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempReal = *inHigh.as_ptr().add(i) - *inLow.as_ptr().add(i);
+            tempReal = inHigh[i] - inLow[i];
             if (tempReal) < 1e-14 {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = (((*inClose.as_ptr().add(i) - *inOpen.as_ptr().add(i)) / tempReal) as f64);
+                outReal[outIdx] = (((inClose[i] - inOpen[i]) / tempReal) as f64);
                 outIdx += 1;
             }
         }
@@ -207,7 +205,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

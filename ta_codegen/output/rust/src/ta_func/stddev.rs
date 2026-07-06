@@ -121,9 +121,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -212,12 +211,12 @@ impl Core {
         }
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::stddev`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::stddev`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::stddev`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::stddev`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::stddev`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::stddev`].
     #[inline]
     pub fn stddev_unguarded(
         &self,
@@ -233,7 +232,6 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -246,11 +244,11 @@ impl Core {
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = *outReal.as_ptr().add(i);
+                tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
-                    *outReal.as_mut_ptr().add(i) = (tempReal).sqrt() * optInNbDev;
+                    outReal[i] = (tempReal).sqrt() * optInNbDev;
                 } else {
-                    *outReal.as_mut_ptr().add(i) = 0.0 as f64;
+                    outReal[i] = 0.0 as f64;
                 }
                 i += 1;
             }
@@ -258,17 +256,16 @@ impl Core {
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = *outReal.as_ptr().add(i);
+                tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
-                    *outReal.as_mut_ptr().add(i) = (tempReal).sqrt();
+                    outReal[i] = (tempReal).sqrt();
                 } else {
-                    *outReal.as_mut_ptr().add(i) = 0.0 as f64;
+                    outReal[i] = 0.0 as f64;
                 }
                 i += 1;
             }
         }
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

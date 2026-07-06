@@ -106,9 +106,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -300,12 +299,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cdl3linestrike`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cdl3linestrike`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cdl3linestrike`]; an out-of-range parameter,
-    /// an input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::cdl3linestrike`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cdl3linestrike`]; an out-of-range parameter, an input slice not
+    /// covering `startIdx..=endIdx`, or an undersized output slice panics (never undefined
+    /// behavior). Prefer [`Core::cdl3linestrike`].
     #[inline]
     pub fn cdl3linestrike_unguarded(
         &self,
@@ -331,7 +330,6 @@ impl Core {
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -348,53 +346,53 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        *NearPeriodTotal.as_mut_ptr().add(3) = 0.0;
-        *NearPeriodTotal.as_mut_ptr().add(2) = 0.0;
+        NearPeriodTotal[3] = 0.0;
+        NearPeriodTotal[2] = 0.0;
         NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
         i = NearTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
             match Near_rangeType {
                 0 => {
-                    _candlerange_0 = (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs();
+                    _candlerange_0 = (inClose[i - 3] - inOpen[i - 3]).abs();
                 }
                 1 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 3) - *inLow.as_ptr().add(i - 3);
+                    _candlerange_0 = inHigh[i - 3] - inLow[i - 3];
                 }
                 2 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 3) - *inLow.as_ptr().add(i - 3) - (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs();
+                    _candlerange_0 = inHigh[i - 3] - inLow[i - 3] - (inClose[i - 3] - inOpen[i - 3]).abs();
                 }
                 _ => {
                     _candlerange_0 = 0.0;
                 }
             }
-            *NearPeriodTotal.as_mut_ptr().add(3) = *NearPeriodTotal.as_ptr().add(3) + _candlerange_0;
+            NearPeriodTotal[3] = NearPeriodTotal[3] + _candlerange_0;
             let mut _candlerange_1: f64;
             match Near_rangeType {
                 0 => {
-                    _candlerange_1 = (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs();
+                    _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
                 }
                 1 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 2) - *inLow.as_ptr().add(i - 2);
+                    _candlerange_1 = inHigh[i - 2] - inLow[i - 2];
                 }
                 2 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 2) - *inLow.as_ptr().add(i - 2) - (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs();
+                    _candlerange_1 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
                 }
                 _ => {
                     _candlerange_1 = 0.0;
                 }
             }
-            *NearPeriodTotal.as_mut_ptr().add(2) = *NearPeriodTotal.as_ptr().add(2) + _candlerange_1;
+            NearPeriodTotal[2] = NearPeriodTotal[2] + _candlerange_1;
             i += 1;
         }
         i = startIdx;
         outIdx = 0;
         loop {
-            if (if *inClose.as_ptr().add(i - 3) >= *inOpen.as_ptr().add(i - 3) { 1 } else { 0 - 1 }) == (if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { 1 } else { 0 - 1 }) && (if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { 1 } else { 0 - 1 }) == (if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 }) && (if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 }) == 0 - (if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 }) && *inOpen.as_ptr().add(i - 2) >= (*inOpen.as_ptr().add(i - 3)).min(*inClose.as_ptr().add(i - 3)) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (*NearPeriodTotal.as_ptr().add(3)) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs(), 1 => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)), _ => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)) - ((*inClose.as_ptr().add(i - 3)) - (*inOpen.as_ptr().add(i - 3))).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && *inOpen.as_ptr().add(i - 2) <= (*inOpen.as_ptr().add(i - 3)).max(*inClose.as_ptr().add(i - 3)) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (*NearPeriodTotal.as_ptr().add(3)) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs(), 1 => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)), _ => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)) - ((*inClose.as_ptr().add(i - 3)) - (*inOpen.as_ptr().add(i - 3))).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && *inOpen.as_ptr().add(i - 1) >= (*inOpen.as_ptr().add(i - 2)).min(*inClose.as_ptr().add(i - 2)) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (*NearPeriodTotal.as_ptr().add(2)) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs(), 1 => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)), _ => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)) - ((*inClose.as_ptr().add(i - 2)) - (*inOpen.as_ptr().add(i - 2))).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && *inOpen.as_ptr().add(i - 1) <= (*inOpen.as_ptr().add(i - 2)).max(*inClose.as_ptr().add(i - 2)) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (*NearPeriodTotal.as_ptr().add(2)) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs(), 1 => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)), _ => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)) - ((*inClose.as_ptr().add(i - 2)) - (*inOpen.as_ptr().add(i - 2))).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 }) == 1 && *inClose.as_ptr().add(i - 1) > *inClose.as_ptr().add(i - 2) && *inClose.as_ptr().add(i - 2) > *inClose.as_ptr().add(i - 3) && *inOpen.as_ptr().add(i) > *inClose.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) < *inOpen.as_ptr().add(i - 3) || ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && *inClose.as_ptr().add(i - 1) < *inClose.as_ptr().add(i - 2) && *inClose.as_ptr().add(i - 2) < *inClose.as_ptr().add(i - 3) && *inOpen.as_ptr().add(i) < *inClose.as_ptr().add(i - 1) && *inClose.as_ptr().add(i) > *inOpen.as_ptr().add(i - 3)) {
-                *outInteger.as_mut_ptr().add(outIdx) = ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 }) * 100) as i32;
+            if (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) && (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && inOpen[i - 2] >= (inOpen[i - 3]).min(inClose[i - 3]) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i - 2] <= (inOpen[i - 3]).max(inClose[i - 3]) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i - 1] >= (inOpen[i - 2]).min(inClose[i - 2]) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i - 1] <= (inOpen[i - 2]).max(inClose[i - 2]) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) {
+                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
                 outIdx += 1;
             } else {
-                *outInteger.as_mut_ptr().add(outIdx) = 0;
+                outInteger[outIdx] = 0;
                 outIdx += 1;
             }
             // for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
@@ -403,13 +401,13 @@ impl Core {
                 let mut _candlerange_2: f64;
                 match Near_rangeType {
                     0 => {
-                        _candlerange_2 = (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_2 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_2 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx);
+                        _candlerange_2 = inHigh[i - totIdx] - inLow[i - totIdx];
                     }
                     2 => {
-                        _candlerange_2 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx) - (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_2 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_2 = 0.0;
@@ -418,19 +416,19 @@ impl Core {
                 let mut _candlerange_3: f64;
                 match Near_rangeType {
                     0 => {
-                        _candlerange_3 = (*inClose.as_ptr().add(NearTrailingIdx - totIdx) - *inOpen.as_ptr().add(NearTrailingIdx - totIdx)).abs();
+                        _candlerange_3 = (inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(NearTrailingIdx - totIdx) - *inLow.as_ptr().add(NearTrailingIdx - totIdx);
+                        _candlerange_3 = inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx];
                     }
                     2 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(NearTrailingIdx - totIdx) - *inLow.as_ptr().add(NearTrailingIdx - totIdx) - (*inClose.as_ptr().add(NearTrailingIdx - totIdx) - *inOpen.as_ptr().add(NearTrailingIdx - totIdx)).abs();
+                        _candlerange_3 = inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx] - (inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_3 = 0.0;
                     }
                 }
-                *NearPeriodTotal.as_mut_ptr().add(totIdx) = *NearPeriodTotal.as_ptr().add(totIdx) + (_candlerange_2 - _candlerange_3);
+                NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (_candlerange_2 - _candlerange_3);
                 if totIdx == 2 { break; }
                 totIdx -= 1;
             }
@@ -441,7 +439,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

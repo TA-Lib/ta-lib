@@ -140,9 +140,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -386,12 +385,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::stochf`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::stochf`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::stochf`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::stochf`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::stochf`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::stochf`].
     #[inline]
     pub fn stochf_unguarded(
         &self,
@@ -424,7 +423,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut bufferIsAllocated: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -461,13 +459,13 @@ impl Core {
             tempBuffer = vec![0.0_f64; ((endIdx - today + 1) * 1) as usize];
         }
         while today <= endIdx {
-            tmp = *inLow.as_ptr().add(today);
+            tmp = inLow[today];
             if lowestIdx < (trailingIdx) as i32 {
                 lowestIdx = (trailingIdx) as i32;
-                lowest = *inLow.as_ptr().add((lowestIdx) as usize);
+                lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
                 while { i += 1; i } <= today {
-                    tmp = *inLow.as_ptr().add(i);
+                    tmp = inLow[i];
                     if tmp < lowest {
                         lowestIdx = (i) as i32;
                         lowest = tmp;
@@ -479,13 +477,13 @@ impl Core {
                 lowest = tmp;
                 diff = (highest - lowest) / 100.0;
             }
-            tmp = *inHigh.as_ptr().add(today);
+            tmp = inHigh[today];
             if highestIdx < (trailingIdx) as i32 {
                 highestIdx = (trailingIdx) as i32;
-                highest = *inHigh.as_ptr().add((highestIdx) as usize);
+                highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
                 while { i += 1; i } <= today {
-                    tmp = *inHigh.as_ptr().add(i);
+                    tmp = inHigh[i];
                     if tmp > highest {
                         highestIdx = (i) as i32;
                         highest = tmp;
@@ -498,10 +496,10 @@ impl Core {
                 diff = (highest - lowest) / 100.0;
             }
             if diff != 0.0 {
-                *tempBuffer.as_mut_ptr().add(outIdx) = (*inClose.as_ptr().add(today) - lowest) / diff;
+                tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
                 outIdx += 1;
             } else {
-                *tempBuffer.as_mut_ptr().add(outIdx) = 0.0;
+                tempBuffer[outIdx] = 0.0;
                 outIdx += 1;
             }
             trailingIdx += 1;
@@ -530,7 +528,6 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

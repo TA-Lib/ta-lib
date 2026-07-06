@@ -92,9 +92,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -145,12 +144,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::floor`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::floor`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::floor`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::floor`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::floor`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::floor`].
     #[inline]
     pub fn floor_unguarded(
         &self,
@@ -163,7 +162,6 @@ impl Core {
     ) -> RetCode {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.floor_lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -172,14 +170,13 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            *outReal.as_mut_ptr().add(outIdx) = (((*inReal.as_ptr().add(i)).floor()) as f64);
+            outReal[outIdx] = (((inReal[i]).floor()) as f64);
             i += 1;
             outIdx += 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

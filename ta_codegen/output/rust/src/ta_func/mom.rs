@@ -112,9 +112,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -217,12 +216,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::mom`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::mom`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::mom`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::mom`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::mom`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::mom`].
     #[inline]
     pub fn mom_unguarded(
         &self,
@@ -237,7 +236,6 @@ impl Core {
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.mom_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -254,13 +252,12 @@ impl Core {
         inIdx = startIdx;
         trailingIdx = startIdx - (optInTimePeriod) as usize;
         while inIdx <= endIdx {
-            *outReal.as_mut_ptr().add(outIdx) = ((*inReal.as_ptr().add({ let _v = inIdx; inIdx += 1; _v }) - *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v })) as f64);
+            outReal[outIdx] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }]) as f64);
             outIdx += 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

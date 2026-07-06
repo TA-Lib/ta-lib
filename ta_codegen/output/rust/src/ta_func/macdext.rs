@@ -161,9 +161,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -346,12 +345,12 @@ impl Core {
         (*outNBElement) = outNbElement2;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::macdext`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::macdext`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::macdext`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::macdext`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::macdext`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::macdext`].
     #[inline]
     pub fn macdext_unguarded(
         &self,
@@ -383,7 +382,6 @@ impl Core {
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempMAType: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -440,7 +438,7 @@ impl Core {
         // for( i = 0; i < outNbElement1; i += 1 )
         i = 0;
         while i < outNbElement1 {
-            *fastMABuffer.as_mut_ptr().add(i) = *fastMABuffer.as_ptr().add(i) - *slowMABuffer.as_ptr().add(i);
+            fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
             i += 1;
         }
         {
@@ -458,13 +456,12 @@ impl Core {
         // for( i = 0; i < outNbElement2; i += 1 )
         i = 0;
         while i < outNbElement2 {
-            *outMACDHist.as_mut_ptr().add(i) = ((*outMACD.as_ptr().add(i) - *outMACDSignal.as_ptr().add(i)) as f64);
+            outMACDHist[i] = ((outMACD[i] - outMACDSignal[i]) as f64);
             i += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outNbElement2;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

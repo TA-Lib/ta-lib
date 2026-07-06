@@ -131,9 +131,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -494,12 +493,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::minus_di`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::minus_di`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::minus_di`]; an out-of-range parameter, an
-    /// input slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or
-    /// cause undefined behavior. Prefer [`Core::minus_di`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::minus_di`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::minus_di`].
     #[inline]
     pub fn minus_di_unguarded(
         &self,
@@ -526,7 +525,6 @@ impl Core {
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -550,15 +548,15 @@ impl Core {
         if optInTimePeriod <= 1 {
             (*outBegIdx) = startIdx;
             today = startIdx - 1;
-            prevHigh = *inHigh.as_ptr().add(today);
-            prevLow = *inLow.as_ptr().add(today);
-            prevClose = *inClose.as_ptr().add(today);
+            prevHigh = inHigh[today];
+            prevLow = inLow[today];
+            prevClose = inClose[today];
             while today < endIdx {
                 today += 1;
-                tempReal = *inHigh.as_ptr().add(today);
+                tempReal = inHigh[today];
                 diffP = tempReal - prevHigh;
                 prevHigh = tempReal;
-                tempReal = *inLow.as_ptr().add(today);
+                tempReal = inLow[today];
                 diffM = prevLow - tempReal;
                 prevLow = tempReal;
                 if diffM > 0_f64 && diffP < diffM {
@@ -575,17 +573,17 @@ impl Core {
                     _true_range_0 = range_0;
                     tempReal = _true_range_0;
                     if (tempReal).abs() < 1e-14 {
-                        *outReal.as_mut_ptr().add(outIdx) = 0.0 as f64;
+                        outReal[outIdx] = 0.0 as f64;
                         outIdx += 1;
                     } else {
-                        *outReal.as_mut_ptr().add(outIdx) = diffM / tempReal;
+                        outReal[outIdx] = diffM / tempReal;
                         outIdx += 1;
                     }
                 } else {
-                    *outReal.as_mut_ptr().add(outIdx) = 0.0 as f64;
+                    outReal[outIdx] = 0.0 as f64;
                     outIdx += 1;
                 }
-                prevClose = *inClose.as_ptr().add(today);
+                prevClose = inClose[today];
             }
             (*outNBElement) = outIdx;
             return RetCode::Success;
@@ -595,16 +593,16 @@ impl Core {
         prevMinusDM = 0.0;
         prevTR = 0.0;
         today = startIdx - lookbackTotal;
-        prevHigh = *inHigh.as_ptr().add(today);
-        prevLow = *inLow.as_ptr().add(today);
-        prevClose = *inClose.as_ptr().add(today);
+        prevHigh = inHigh[today];
+        prevLow = inLow[today];
+        prevClose = inClose[today];
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             today += 1;
-            tempReal = *inHigh.as_ptr().add(today);
+            tempReal = inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = *inLow.as_ptr().add(today);
+            tempReal = inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if diffM > 0_f64 && diffP < diffM {
@@ -623,15 +621,15 @@ impl Core {
             _true_range_1 = range_1;
             tempReal = _true_range_1;
             prevTR += tempReal;
-            prevClose = *inClose.as_ptr().add(today);
+            prevClose = inClose[today];
         }
         i = (self.unstable_period[FuncUnstId::MinusDI as usize] + 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             today += 1;
-            tempReal = *inHigh.as_ptr().add(today);
+            tempReal = inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = *inLow.as_ptr().add(today);
+            tempReal = inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if diffM > 0_f64 && diffP < diffM {
@@ -652,20 +650,20 @@ impl Core {
             _true_range_2 = range_2;
             tempReal = _true_range_2;
             prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
-            prevClose = *inClose.as_ptr().add(today);
+            prevClose = inClose[today];
         }
         if !((prevTR).abs() < 1e-14) {
-            *outReal.as_mut_ptr().add(0) = (100.0 * (prevMinusDM / prevTR));
+            outReal[0] = (100.0 * (prevMinusDM / prevTR));
         } else {
-            *outReal.as_mut_ptr().add(0) = 0.0;
+            outReal[0] = 0.0;
         }
         outIdx = 1;
         while today < endIdx {
             today += 1;
-            tempReal = *inHigh.as_ptr().add(today);
+            tempReal = inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = *inLow.as_ptr().add(today);
+            tempReal = inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if diffM > 0_f64 && diffP < diffM {
@@ -686,18 +684,17 @@ impl Core {
             _true_range_3 = range_3;
             tempReal = _true_range_3;
             prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
-            prevClose = *inClose.as_ptr().add(today);
+            prevClose = inClose[today];
             if !((prevTR).abs() < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = (100.0 * (prevMinusDM / prevTR));
+                outReal[outIdx] = (100.0 * (prevMinusDM / prevTR));
                 outIdx += 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

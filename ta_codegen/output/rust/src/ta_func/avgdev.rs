@@ -110,9 +110,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -200,12 +199,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::avgdev`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::avgdev`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::avgdev`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::avgdev`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::avgdev`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::avgdev`].
     #[inline]
     pub fn avgdev_unguarded(
         &self,
@@ -220,7 +219,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookback: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.avgdev_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -245,23 +243,22 @@ impl Core {
             // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
             i = 0;
             while i < (optInTimePeriod) as usize {
-                todaySum += *inReal.as_ptr().add(today - i);
+                todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
             // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
             i = 0;
             while i < (optInTimePeriod) as usize {
-                todayDev += (*inReal.as_ptr().add(today - i) - todaySum / ((optInTimePeriod) as f64)).abs();
+                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }
-            *outReal.as_mut_ptr().add(outIdx) = todayDev / ((optInTimePeriod) as f64);
+            outReal[outIdx] = todayDev / ((optInTimePeriod) as f64);
             outIdx += 1;
             today += 1;
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

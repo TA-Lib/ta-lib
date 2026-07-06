@@ -102,9 +102,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -317,12 +316,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::cdlconcealbabyswall`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::cdlconcealbabyswall`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::cdlconcealbabyswall`]; an out-of-range
-    /// parameter, an input slice not covering `startIdx..=endIdx`, or an undersized output slice
-    /// may panic or cause undefined behavior. Prefer [`Core::cdlconcealbabyswall`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::cdlconcealbabyswall`]; an out-of-range parameter, an input slice not
+    /// covering `startIdx..=endIdx`, or an undersized output slice panics (never undefined
+    /// behavior). Prefer [`Core::cdlconcealbabyswall`].
     #[inline]
     pub fn cdlconcealbabyswall_unguarded(
         &self,
@@ -348,7 +347,6 @@ impl Core {
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        unsafe {
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -365,70 +363,70 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        *ShadowVeryShortPeriodTotal.as_mut_ptr().add(3) = 0.0;
-        *ShadowVeryShortPeriodTotal.as_mut_ptr().add(2) = 0.0;
-        *ShadowVeryShortPeriodTotal.as_mut_ptr().add(1) = 0.0;
+        ShadowVeryShortPeriodTotal[3] = 0.0;
+        ShadowVeryShortPeriodTotal[2] = 0.0;
+        ShadowVeryShortPeriodTotal[1] = 0.0;
         ShadowVeryShortTrailingIdx = startIdx - (ShadowVeryShort_avgPeriod) as usize;
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_0 = (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs();
+                    _candlerange_0 = (inClose[i - 3] - inOpen[i - 3]).abs();
                 }
                 1 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 3) - *inLow.as_ptr().add(i - 3);
+                    _candlerange_0 = inHigh[i - 3] - inLow[i - 3];
                 }
                 2 => {
-                    _candlerange_0 = *inHigh.as_ptr().add(i - 3) - *inLow.as_ptr().add(i - 3) - (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs();
+                    _candlerange_0 = inHigh[i - 3] - inLow[i - 3] - (inClose[i - 3] - inOpen[i - 3]).abs();
                 }
                 _ => {
                     _candlerange_0 = 0.0;
                 }
             }
-            *ShadowVeryShortPeriodTotal.as_mut_ptr().add(3) = *ShadowVeryShortPeriodTotal.as_ptr().add(3) + _candlerange_0;
+            ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + _candlerange_0;
             let mut _candlerange_1: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_1 = (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs();
+                    _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
                 }
                 1 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 2) - *inLow.as_ptr().add(i - 2);
+                    _candlerange_1 = inHigh[i - 2] - inLow[i - 2];
                 }
                 2 => {
-                    _candlerange_1 = *inHigh.as_ptr().add(i - 2) - *inLow.as_ptr().add(i - 2) - (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs();
+                    _candlerange_1 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
                 }
                 _ => {
                     _candlerange_1 = 0.0;
                 }
             }
-            *ShadowVeryShortPeriodTotal.as_mut_ptr().add(2) = *ShadowVeryShortPeriodTotal.as_ptr().add(2) + _candlerange_1;
+            ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + _candlerange_1;
             let mut _candlerange_2: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_2 = (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 1 => {
-                    _candlerange_2 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1);
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
                 }
                 2 => {
-                    _candlerange_2 = *inHigh.as_ptr().add(i - 1) - *inLow.as_ptr().add(i - 1) - (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs();
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
                 }
                 _ => {
                     _candlerange_2 = 0.0;
                 }
             }
-            *ShadowVeryShortPeriodTotal.as_mut_ptr().add(1) = *ShadowVeryShortPeriodTotal.as_ptr().add(1) + _candlerange_2;
+            ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + _candlerange_2;
             i += 1;
         }
         i = startIdx;
         outIdx = 0;
         loop {
-            if ((if *inClose.as_ptr().add(i - 3) >= *inOpen.as_ptr().add(i - 3) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i) >= *inOpen.as_ptr().add(i) { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if *inClose.as_ptr().add(i - 3) >= *inOpen.as_ptr().add(i - 3) { *inOpen.as_ptr().add(i - 3) } else { *inClose.as_ptr().add(i - 3) }) - *inLow.as_ptr().add(i - 3)) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (*ShadowVeryShortPeriodTotal.as_ptr().add(3)) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs(), 1 => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)), _ => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)) - ((*inClose.as_ptr().add(i - 3)) - (*inOpen.as_ptr().add(i - 3))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (*inHigh.as_ptr().add(i - 3) - (if *inClose.as_ptr().add(i - 3) >= *inOpen.as_ptr().add(i - 3) { *inClose.as_ptr().add(i - 3) } else { *inOpen.as_ptr().add(i - 3) })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (*ShadowVeryShortPeriodTotal.as_ptr().add(3)) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 3) - *inOpen.as_ptr().add(i - 3)).abs(), 1 => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)), _ => (*inHigh.as_ptr().add(i - 3)) - (*inLow.as_ptr().add(i - 3)) - ((*inClose.as_ptr().add(i - 3)) - (*inOpen.as_ptr().add(i - 3))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { *inOpen.as_ptr().add(i - 2) } else { *inClose.as_ptr().add(i - 2) }) - *inLow.as_ptr().add(i - 2)) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (*ShadowVeryShortPeriodTotal.as_ptr().add(2)) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs(), 1 => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)), _ => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)) - ((*inClose.as_ptr().add(i - 2)) - (*inOpen.as_ptr().add(i - 2))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (*inHigh.as_ptr().add(i - 2) - (if *inClose.as_ptr().add(i - 2) >= *inOpen.as_ptr().add(i - 2) { *inClose.as_ptr().add(i - 2) } else { *inOpen.as_ptr().add(i - 2) })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (*ShadowVeryShortPeriodTotal.as_ptr().add(2)) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 2) - *inOpen.as_ptr().add(i - 2)).abs(), 1 => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)), _ => (*inHigh.as_ptr().add(i - 2)) - (*inLow.as_ptr().add(i - 2)) - ((*inClose.as_ptr().add(i - 2)) - (*inOpen.as_ptr().add(i - 2))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if (*inOpen.as_ptr().add(i - 1)).max(*inClose.as_ptr().add(i - 1)) < (*inOpen.as_ptr().add(i - 2)).min(*inClose.as_ptr().add(i - 2)) { 1 } else { 0 }) != 0) && (*inHigh.as_ptr().add(i - 1) - (if *inClose.as_ptr().add(i - 1) >= *inOpen.as_ptr().add(i - 1) { *inClose.as_ptr().add(i - 1) } else { *inOpen.as_ptr().add(i - 1) })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (*ShadowVeryShortPeriodTotal.as_ptr().add(1)) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (*inClose.as_ptr().add(i - 1) - *inOpen.as_ptr().add(i - 1)).abs(), 1 => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)), _ => (*inHigh.as_ptr().add(i - 1)) - (*inLow.as_ptr().add(i - 1)) - ((*inClose.as_ptr().add(i - 1)) - (*inOpen.as_ptr().add(i - 1))).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && *inHigh.as_ptr().add(i - 1) > *inClose.as_ptr().add(i - 2) && *inHigh.as_ptr().add(i) > *inHigh.as_ptr().add(i - 1) && *inLow.as_ptr().add(i) < *inLow.as_ptr().add(i - 1) {
-                *outInteger.as_mut_ptr().add(outIdx) = 100;
+            if ((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if inClose[i - 3] >= inOpen[i - 3] { inOpen[i - 3] } else { inClose[i - 3] }) - inLow[i - 3]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[3]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (inHigh[i - 3] - (if inClose[i - 3] >= inOpen[i - 3] { inClose[i - 3] } else { inOpen[i - 3] })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[3]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i - 2] >= inOpen[i - 2] { inOpen[i - 2] } else { inClose[i - 2] }) - inLow[i - 2]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (inHigh[i - 2] - (if inClose[i - 2] >= inOpen[i - 2] { inClose[i - 2] } else { inOpen[i - 2] })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[1]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && inHigh[i - 1] > inClose[i - 2] && inHigh[i] > inHigh[i - 1] && inLow[i] < inLow[i - 1] {
+                outInteger[outIdx] = 100;
                 outIdx += 1;
             } else {
-                *outInteger.as_mut_ptr().add(outIdx) = 0;
+                outInteger[outIdx] = 0;
                 outIdx += 1;
             }
             // for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
@@ -437,13 +435,13 @@ impl Core {
                 let mut _candlerange_3: f64;
                 match ShadowVeryShort_rangeType {
                     0 => {
-                        _candlerange_3 = (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_3 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx);
+                        _candlerange_3 = inHigh[i - totIdx] - inLow[i - totIdx];
                     }
                     2 => {
-                        _candlerange_3 = *inHigh.as_ptr().add(i - totIdx) - *inLow.as_ptr().add(i - totIdx) - (*inClose.as_ptr().add(i - totIdx) - *inOpen.as_ptr().add(i - totIdx)).abs();
+                        _candlerange_3 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_3 = 0.0;
@@ -452,19 +450,19 @@ impl Core {
                 let mut _candlerange_4: f64;
                 match ShadowVeryShort_rangeType {
                     0 => {
-                        _candlerange_4 = (*inClose.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx) - *inOpen.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx)).abs();
+                        _candlerange_4 = (inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx]).abs();
                     }
                     1 => {
-                        _candlerange_4 = *inHigh.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx) - *inLow.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx);
+                        _candlerange_4 = inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx];
                     }
                     2 => {
-                        _candlerange_4 = *inHigh.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx) - *inLow.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx) - (*inClose.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx) - *inOpen.as_ptr().add(ShadowVeryShortTrailingIdx - totIdx)).abs();
+                        _candlerange_4 = inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx] - (inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx]).abs();
                     }
                     _ => {
                         _candlerange_4 = 0.0;
                     }
                 }
-                *ShadowVeryShortPeriodTotal.as_mut_ptr().add(totIdx) = *ShadowVeryShortPeriodTotal.as_ptr().add(totIdx) + (_candlerange_3 - _candlerange_4);
+                ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (_candlerange_3 - _candlerange_4);
                 if totIdx == 1 { break; }
                 totIdx -= 1;
             }
@@ -475,7 +473,6 @@ impl Core {
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

@@ -126,9 +126,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -183,12 +182,12 @@ impl Core {
         // 0 indicate fix 12 == 0.15  for optInFastPeriod
         // 0 indicate fix 26 == 0.075 for optInSlowPeriod
     }
-    /// Unchecked variant of [`Core::macdfix`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::macdfix`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::macdfix`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::macdfix`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::macdfix`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::macdfix`].
     #[inline]
     pub fn macdfix_unguarded(
         &self,
@@ -202,7 +201,6 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.macdfix_lookback(optInSignalPeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -210,7 +208,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
         return self.macd_unguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-        } // unsafe
     }
 }
 /***************/

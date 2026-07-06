@@ -1833,6 +1833,7 @@ pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
     let mut s = String::new();
 
     // File-level attributes
+    s.push_str("#![forbid(unsafe_code)]\n");
     s.push_str("#![allow(non_snake_case, unused_variables, clippy::all)]\n\n");
 
     // Imports

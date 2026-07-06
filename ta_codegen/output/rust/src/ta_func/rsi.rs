@@ -123,9 +123,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -373,12 +372,12 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::rsi`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::rsi`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::rsi`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::rsi`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::rsi`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::rsi`].
     #[inline]
     pub fn rsi_unguarded(
         &self,
@@ -401,7 +400,6 @@ impl Core {
         let mut savePrevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.rsi_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -429,7 +427,7 @@ impl Core {
             return RetCode::Success;
         }
         today = startIdx - lookbackTotal;
-        prevValue = *inReal.as_ptr().add(today) as f64;
+        prevValue = inReal[today] as f64;
         unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
         if unstablePeriod == 0 && self.compatibility == Compatibility::Metastock {
             savePrevValue = prevValue;
@@ -438,7 +436,7 @@ impl Core {
             // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
             i = (optInTimePeriod) as usize;
             while i > 0 {
-                tempValue1 = *inReal.as_ptr().add(today) as f64;
+                tempValue1 = inReal[today] as f64;
                 today = today + 1;
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
@@ -453,10 +451,10 @@ impl Core {
             tempValue2 = prevGain / (optInTimePeriod as f64);
             tempValue1 = tempValue2 + tempValue1;
             if !((tempValue1).abs() < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = 100.0 * (tempValue2 / tempValue1);
+                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
                 outIdx = outIdx + 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx = outIdx + 1;
             }
             if today > endIdx {
@@ -473,7 +471,7 @@ impl Core {
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
         while i > 0 {
-            tempValue1 = *inReal.as_ptr().add(today) as f64;
+            tempValue1 = inReal[today] as f64;
             today = today + 1;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
@@ -489,15 +487,15 @@ impl Core {
         if today > startIdx {
             tempValue1 = prevGain + prevLoss;
             if !((tempValue1).abs() < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = 100.0 * (prevGain / tempValue1);
+                outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx = outIdx + 1;
             }
         } else {
             while today < startIdx {
-                tempValue1 = *inReal.as_ptr().add(today) as f64;
+                tempValue1 = inReal[today] as f64;
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
                 prevLoss *= (optInTimePeriod - 1) as f64;
@@ -513,7 +511,7 @@ impl Core {
             }
         }
         while today <= endIdx {
-            tempValue1 = *inReal.as_ptr().add(today) as f64;
+            tempValue1 = inReal[today] as f64;
             today = today + 1;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
@@ -528,17 +526,16 @@ impl Core {
             prevGain /= optInTimePeriod as f64;
             tempValue1 = prevGain + prevLoss;
             if !((tempValue1).abs() < 1e-14) {
-                *outReal.as_mut_ptr().add(outIdx) = 100.0 * (prevGain / tempValue1);
+                outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {
-                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outReal[outIdx] = 0.0;
                 outIdx = outIdx + 1;
             }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

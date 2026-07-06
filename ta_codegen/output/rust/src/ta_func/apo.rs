@@ -126,9 +126,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -223,12 +222,12 @@ impl Core {
         }
         return retCode;
     }
-    /// Unchecked variant of [`Core::apo`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::apo`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::apo`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::apo`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::apo`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::apo`].
     #[inline]
     pub fn apo_unguarded(
         &self,
@@ -251,7 +250,6 @@ impl Core {
         let mut outNbElement2: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -271,7 +269,7 @@ impl Core {
                 i = 0;
                 j = tempInteger;
                 while i < outNbElement1 {
-                    *outReal.as_mut_ptr().add(i) = ((*tempBuffer.as_ptr().add(j) - *outReal.as_ptr().add(i)) as f64);
+                    outReal[i] = ((tempBuffer[j] - outReal[i]) as f64);
                     i += 1;
                     j += 1;
                 }
@@ -280,7 +278,6 @@ impl Core {
             }
         }
         return retCode;
-        } // unsafe
     }
 }
 /***************/

@@ -93,9 +93,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -153,12 +152,12 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::mult`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::mult`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::mult`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::mult`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::mult`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::mult`].
     #[inline]
     pub fn mult_unguarded(
         &self,
@@ -172,7 +171,6 @@ impl Core {
     ) -> RetCode {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal0.len());
         assert!(endIdx < inReal1.len());
         let _assertLb = self.mult_lookback();
@@ -181,14 +179,13 @@ impl Core {
         outIdx = 0;
         i = startIdx;
         while i <= endIdx {
-            *outReal.as_mut_ptr().add(outIdx) = (*inReal0.as_ptr().add(i) * *inReal1.as_ptr().add(i)) as f64;
+            outReal[outIdx] = (inReal0[i] * inReal1[i]) as f64;
             outIdx += 1;
             i += 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/

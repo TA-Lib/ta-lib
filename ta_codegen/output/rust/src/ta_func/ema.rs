@@ -122,9 +122,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -194,7 +193,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.ema_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -250,33 +248,32 @@ impl Core {
             i = (optInTimePeriod) as usize;
             tempReal = 0.0;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
             }
             prevMA = tempReal / ((optInTimePeriod) as f64);
         } else {
-            prevMA = *inReal.as_ptr().add(0);
+            prevMA = inReal[0];
             today = 1;
         }
         while today <= startIdx {
-            prevMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevMA) * ((optInK_1) as f64) + prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
         }
-        *outReal.as_mut_ptr().add(0) = prevMA;
+        outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevMA) * ((optInK_1) as f64) + prevMA;
-            *outReal.as_mut_ptr().add(outIdx) = prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            outReal[outIdx] = prevMA;
             outIdx += 1;
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-        } // unsafe
     }
-    /// Unchecked variant of [`Core::ema`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::ema`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::ema`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::ema`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::ema`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::ema`].
     #[inline]
     pub fn ema_unguarded(
         &self,
@@ -289,14 +286,12 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         let mut optInK_1: f64 = 0.0_f64;
-        unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.ema_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
         return self.ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
-        } // unsafe
     }
 }
 /***************/

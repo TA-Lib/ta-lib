@@ -128,9 +128,8 @@ impl Core {
     /// # Panics
     ///
     /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range: undersized slices panic or, for functions that forward to unchecked
-    /// internals, cause undefined behavior. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
     ///
     /// # Examples
     ///
@@ -283,12 +282,12 @@ impl Core {
         (*outNBElement) = outputSize;
         return RetCode::Success;
     }
-    /// Unchecked variant of [`Core::mavp`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::mavp`], used for internal cross-indicator calls.
     ///
-    /// Skips parameter validation and uses unchecked indexing internally. Every argument must
-    /// satisfy the constraints documented on [`Core::mavp`]; an out-of-range parameter, an input
-    /// slice not covering `startIdx..=endIdx`, or an undersized output slice may panic or cause
-    /// undefined behavior. Prefer [`Core::mavp`].
+    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
+    /// documented on [`Core::mavp`]; an out-of-range parameter, an input slice not covering
+    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
+    /// [`Core::mavp`].
     #[inline]
     pub fn mavp_unguarded(
         &self,
@@ -314,7 +313,6 @@ impl Core {
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
-        unsafe {
         assert!(endIdx < inReal.len());
         assert!(endIdx < inPeriods.len());
         let _assertLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -345,19 +343,19 @@ impl Core {
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
-            tempInt = (*inPeriods.as_ptr().add(startIdx + i) as usize) as usize;
+            tempInt = (inPeriods[startIdx + i] as usize) as usize;
             if tempInt < (optInMinPeriod) as usize {
                 tempInt = (optInMinPeriod) as usize;
             } else if tempInt > (optInMaxPeriod) as usize {
                 tempInt = (optInMaxPeriod) as usize;
             }
-            *localPeriodArray.as_mut_ptr().add(i) = (tempInt) as i32;
+            localPeriodArray[i] = (tempInt) as i32;
             i += 1;
         }
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
-            curPeriod = (*localPeriodArray.as_ptr().add(i)) as usize;
+            curPeriod = (localPeriodArray[i]) as usize;
             if curPeriod != 0 {
                 retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                 if retCode != RetCode::Success {
@@ -365,13 +363,13 @@ impl Core {
                     (*outNBElement) = 0;
                     return retCode;
                 }
-                *outReal.as_mut_ptr().add(i) = ((*localOutputArray.as_ptr().add(i)) as f64);
+                outReal[i] = ((localOutputArray[i]) as f64);
                 // for( j = i + 1; j < outputSize; j += 1 )
                 j = i + 1;
                 while j < outputSize {
-                    if (*localPeriodArray.as_ptr().add(j)) as usize == curPeriod {
-                        *localPeriodArray.as_mut_ptr().add(j) = 0;
-                        *outReal.as_mut_ptr().add(j) = ((*localOutputArray.as_ptr().add(j)) as f64);
+                    if (localPeriodArray[j]) as usize == curPeriod {
+                        localPeriodArray[j] = 0;
+                        outReal[j] = ((localOutputArray[j]) as f64);
                     }
                     j += 1;
                 }
@@ -381,7 +379,6 @@ impl Core {
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
         return RetCode::Success;
-        } // unsafe
     }
 }
 /***************/
