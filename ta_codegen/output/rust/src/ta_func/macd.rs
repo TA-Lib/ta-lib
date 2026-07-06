@@ -45,14 +45,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JPP      JP Pienaar (j.pienaar@mci.co.za)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  080403 JPP  Fix #767653 for logic when swapping periods.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  080403 JPP    Fix #767653 for logic when swapping periods.
+ *  070526 MF,CC  Speed optimization: compute the two price EMA, the
+ *                signal line and the histogram in a single lockstep
+ *                pass (bit-exact, no temporary buffers).
  */
 
 // Import types from parent module
@@ -221,44 +225,20 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut slowEMABuffer: Vec<f64> = Vec::new();
-        let mut fastEMABuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempInteger: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
-        let mut outBegIdx2: usize = 0_usize;
-        let mut outNbElement2: usize = 0_usize;
+        let mut prevFast: f64 = 0.0_f64;
+        let mut prevSlow: f64 = 0.0_f64;
+        let mut prevSignal: f64 = 0.0_f64;
+        let mut macdValue: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         let mut slowK: f64 = 0.0_f64;
         let mut fastK: f64 = 0.0_f64;
         let mut signalK: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
-        let mut useFixedK: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        // !!! A lot of speed optimization could be done
-        // !!! with this function.
-        // !!!
-        // !!! A better approach would be to use ema
-        // !!! just to get the seeding values for the
-        // !!! fast and slow EMA. Then process the difference
-        // !!! in an allocated buffer until enough data is
-        // !!! available for the first signal value.
-        // !!! From that point all the processing can
-        // !!! be done in a tight loop.
-        // !!!
-        // !!! That approach will have the following
-        // !!! advantage:
-        // !!!   1) One mem allocation needed instead of two.
-        // !!!   2) The mem allocation size will be only the
-        // !!!      signal lookback period instead of the
-        // !!!      whole range of data.
-        // !!!   3) Processing will be done in a tight loop.
-        // !!!      allowing to avoid a lot of memory store-load
-        // !!!      operation.
-        // !!!   4) The memcpy at the end will be eliminated!
-        // !!!
-        // !!! If only I had time....
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
@@ -269,20 +249,17 @@ impl Core {
         }
         // Catch special case for fix 26/12 MACD.
         // Use hardcoded k values matching the original algorithm.
-        useFixedK = 0;
         if optInSlowPeriod == 0 {
-            optInSlowPeriod = 26;
             // Fix 26
+            optInSlowPeriod = 26;
             slowK = 0.075;
-            useFixedK = 1;
         } else {
             slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
         }
         if optInFastPeriod == 0 {
-            optInFastPeriod = 12;
             // Fix 12
+            optInFastPeriod = 12;
             fastK = 0.15;
-            useFixedK = 1;
         } else {
             fastK = 2.0 / ((optInFastPeriod + 1) as f64);
         }
@@ -301,77 +278,114 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        // Allocate intermediate buffer for fast/slow EMA.
-        tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-        fastEMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        slowEMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        // Calculate the slow EMA.
+        // Everything is computed in a single lockstep pass: each bar
+        // advances the fast and slow EMA (two independent recursions),
+        // their difference is the MACD line, and each MACD-line value
+        // is immediately fed into the signal EMA. No temporary buffers.
         //
-        // Move back the startIdx to get enough data
-        // for the signal period. That way, once the
-        // signal calculation is done, all the output
-        // will start at the requested 'startIdx'.
-        tempInteger = startIdx - lookbackSignal;
-        // Use ema_private when hardcoded k is needed (MACDFIX path).
-        // Use ema() for the normal path — codegen handles double/float routing.
-        if useFixedK != 0 {
-            retCode = self.ema_private(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, &mut outBegIdx1, &mut outNbElement1, &mut slowEMABuffer[..]);
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - Default compatibility: each EMA is seeded with the sum of
+        //    its first 'period' inputs, accumulated from 0.0 in input
+        //    order, divided by the period. The fast and slow seed
+        //    windows end on the same bar. The signal EMA is seeded the
+        //    same way from the first 'signal period' MACD-line values.
+        //  - Metastock compatibility: the fast and slow EMA are seeded
+        //    from inReal[0], the signal EMA from the first MACD-line
+        //    value.
+        // Output alignment is identical for all compatibility modes;
+        // only the seed values differ.
+        //
+        // In-place (an output == inReal) is supported: outputs at
+        // [outIdx] are written only after inReal[startIdx+outIdx] was
+        // read.
+        if self.compatibility == Compatibility::Default {
+            // Seed each price EMA with a simple average of its first
+            // 'period' price bars. The fast window is the tail of the
+            // slow window: consume the leading slow-only bars first,
+            // then accumulate both over the shared bars.
+            today = startIdx - lookbackTotal;
+            tempReal = 0.0;
+            i = (optInSlowPeriod - optInFastPeriod) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevFast = 0.0;
+            i = (optInFastPeriod) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevFast += inReal[today];
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevSlow = tempReal / ((optInSlowPeriod) as f64);
+            prevFast = prevFast / ((optInFastPeriod) as f64);
+            // Advance both EMA through their unstable period, up to the
+            // first MACD-line bar.
+            while today <= startIdx - lookbackSignal {
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            }
+            macdValue = prevFast - prevSlow;
+            // Seed the signal EMA with a simple average of the first
+            // 'signal period' MACD-line values, accumulated as they are
+            // produced.
+            prevSignal = 0.0;
+            prevSignal += macdValue;
+            i = (optInSignalPeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                macdValue = prevFast - prevSlow;
+                prevSignal += macdValue;
+            }
+            prevSignal = prevSignal / ((optInSignalPeriod) as f64);
         } else {
-            retCode = self.ema_unguarded(tempInteger, endIdx, inReal, optInSlowPeriod, &mut outBegIdx1, &mut outNbElement1, &mut slowEMABuffer[..]);
+            // Metastock/Tradestation: seed the fast and slow EMA with
+            // inReal[0], advance them in lockstep up to the first
+            // MACD-line bar, then seed the signal EMA with the first
+            // MACD-line value.
+            prevFast = inReal[0];
+            prevSlow = inReal[0];
+            today = 1;
+            while today <= startIdx - lookbackSignal {
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            }
+            macdValue = prevFast - prevSlow;
+            prevSignal = macdValue;
         }
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
+        // Advance everything in lockstep through the unstable period
+        // of the signal EMA, up to the first output bar.
+        while today <= startIdx {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
         }
-        // Calculate the fast EMA.
-        if useFixedK != 0 {
-            retCode = self.ema_private(tempInteger, endIdx, inReal, optInFastPeriod, fastK, &mut outBegIdx2, &mut outNbElement2, &mut fastEMABuffer[..]);
-        } else {
-            retCode = self.ema_unguarded(tempInteger, endIdx, inReal, optInFastPeriod, &mut outBegIdx2, &mut outNbElement2, &mut fastEMABuffer[..]);
-        }
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // Parano tests. Will be removed eventually.
-        if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::BadParam;
-        }
-        // Calculate (fast EMA) - (slow EMA).
-        // for( i = 0; i < outNbElement1; i += 1 )
-        i = 0;
-        while i < outNbElement1 {
-            fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
-            i += 1;
-        }
-        // Copy the result into the output for the caller.
-        {
-            let _n = ((endIdx - startIdx + 1) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackSignal) as usize;
-            outMACD[_di.._di + _n].copy_from_slice(&fastEMABuffer[_si.._si + _n]);
-        };
-        // Calculate the signal/trigger line (on double buffer, use ema_private).
-        retCode = self.ema_private(0, outNbElement1 - 1, &fastEMABuffer, optInSignalPeriod, signalK, &mut outBegIdx2, &mut outNbElement2, outMACDSignal);
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // Calculate the histogram.
-        // for( i = 0; i < outNbElement2; i += 1 )
-        i = 0;
-        while i < outNbElement2 {
-            outMACDHist[i] = ((outMACD[i] - outMACDSignal[i]) as f64);
-            i += 1;
+        // Stable zone: keep advancing in lockstep and write the three
+        // outputs.
+        outMACD[0] = macdValue;
+        outMACDSignal[0] = prevSignal;
+        outMACDHist[0] = macdValue - prevSignal;
+        outIdx = 1;
+        while today <= endIdx {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            outMACD[outIdx] = macdValue;
+            outMACDSignal[outIdx] = prevSignal;
+            outMACDHist[outIdx] = macdValue - prevSignal;
+            outIdx += 1;
         }
         // All done! Indicate the output limits and return success.
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outNbElement2;
+        (*outNBElement) = outIdx;
         return RetCode::Success;
     }
     /// Unchecked variant of [`Core::macd`], used for internal cross-indicator calls.
@@ -395,21 +409,20 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        let mut slowEMABuffer: Vec<f64> = Vec::new();
-        let mut fastEMABuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempInteger: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
-        let mut outBegIdx2: usize = 0_usize;
-        let mut outNbElement2: usize = 0_usize;
+        let mut prevFast: f64 = 0.0_f64;
+        let mut prevSlow: f64 = 0.0_f64;
+        let mut prevSignal: f64 = 0.0_f64;
+        let mut macdValue: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         let mut slowK: f64 = 0.0_f64;
         let mut fastK: f64 = 0.0_f64;
         let mut signalK: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
-        let mut useFixedK: usize = 0_usize;
-        let mut i: usize = 0_usize;
         unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -422,18 +435,15 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
         }
-        useFixedK = 0;
         if optInSlowPeriod == 0 {
             optInSlowPeriod = 26;
             slowK = 0.075;
-            useFixedK = 1;
         } else {
             slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
         }
         if optInFastPeriod == 0 {
             optInFastPeriod = 12;
             fastK = 0.15;
-            useFixedK = 1;
         } else {
             fastK = 2.0 / ((optInFastPeriod + 1) as f64);
         }
@@ -449,61 +459,74 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-        fastEMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        slowEMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        tempInteger = startIdx - lookbackSignal;
-        if useFixedK != 0 {
-            retCode = self.ema_private(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, &mut outBegIdx1, &mut outNbElement1, &mut slowEMABuffer[..]);
+        if self.compatibility == Compatibility::Default {
+            today = startIdx - lookbackTotal;
+            tempReal = 0.0;
+            i = (optInSlowPeriod - optInFastPeriod) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            }
+            prevFast = 0.0;
+            i = (optInFastPeriod) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevFast += *inReal.as_ptr().add(today);
+                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            }
+            prevSlow = tempReal / ((optInSlowPeriod) as f64);
+            prevFast = prevFast / ((optInFastPeriod) as f64);
+            while today <= startIdx - lookbackSignal {
+                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            }
+            macdValue = prevFast - prevSlow;
+            prevSignal = 0.0;
+            prevSignal += macdValue;
+            i = (optInSignalPeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                macdValue = prevFast - prevSlow;
+                prevSignal += macdValue;
+            }
+            prevSignal = prevSignal / ((optInSignalPeriod) as f64);
         } else {
-            retCode = self.ema_unguarded(tempInteger, endIdx, inReal, optInSlowPeriod, &mut outBegIdx1, &mut outNbElement1, &mut slowEMABuffer[..]);
+            prevFast = *inReal.as_ptr().add(0);
+            prevSlow = *inReal.as_ptr().add(0);
+            today = 1;
+            while today <= startIdx - lookbackSignal {
+                tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+                prevFast = (tempReal - prevFast) * fastK + prevFast;
+                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            }
+            macdValue = prevFast - prevSlow;
+            prevSignal = macdValue;
         }
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
+        while today <= startIdx {
+            tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
         }
-        if useFixedK != 0 {
-            retCode = self.ema_private(tempInteger, endIdx, inReal, optInFastPeriod, fastK, &mut outBegIdx2, &mut outNbElement2, &mut fastEMABuffer[..]);
-        } else {
-            retCode = self.ema_unguarded(tempInteger, endIdx, inReal, optInFastPeriod, &mut outBegIdx2, &mut outNbElement2, &mut fastEMABuffer[..]);
-        }
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::BadParam;
-        }
-        // for( i = 0; i < outNbElement1; i += 1 )
-        i = 0;
-        while i < outNbElement1 {
-            *fastEMABuffer.as_mut_ptr().add(i) = *fastEMABuffer.as_ptr().add(i) - *slowEMABuffer.as_ptr().add(i);
-            i += 1;
-        }
-        {
-            let _n = ((endIdx - startIdx + 1) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackSignal) as usize;
-            outMACD[_di.._di + _n].copy_from_slice(&fastEMABuffer[_si.._si + _n]);
-        };
-        retCode = self.ema_private(0, outNbElement1 - 1, &fastEMABuffer, optInSignalPeriod, signalK, &mut outBegIdx2, &mut outNbElement2, outMACDSignal);
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // for( i = 0; i < outNbElement2; i += 1 )
-        i = 0;
-        while i < outNbElement2 {
-            *outMACDHist.as_mut_ptr().add(i) = ((*outMACD.as_ptr().add(i) - *outMACDSignal.as_ptr().add(i)) as f64);
-            i += 1;
+        *outMACD.as_mut_ptr().add(0) = macdValue;
+        *outMACDSignal.as_mut_ptr().add(0) = prevSignal;
+        *outMACDHist.as_mut_ptr().add(0) = macdValue - prevSignal;
+        outIdx = 1;
+        while today <= endIdx {
+            tempReal = *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            *outMACD.as_mut_ptr().add(outIdx) = macdValue;
+            *outMACDSignal.as_mut_ptr().add(outIdx) = prevSignal;
+            *outMACDHist.as_mut_ptr().add(outIdx) = macdValue - prevSignal;
+            outIdx += 1;
         }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outNbElement2;
+        (*outNBElement) = outIdx;
         return RetCode::Success;
         } // unsafe
     }

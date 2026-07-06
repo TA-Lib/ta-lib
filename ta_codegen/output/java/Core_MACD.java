@@ -4,14 +4,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JPP      JP Pienaar (j.pienaar@mci.co.za)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  080403 JPP  Fix #767653 for logic when swapping periods.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  080403 JPP    Fix #767653 for logic when swapping periods.
+ *  070526 MF,CC  Speed optimization: compute the two price EMA, the
+ *                signal line and the histogram in a single lockstep
+ *                pass (bit-exact, no temporary buffers).
  */
 
    public int macdLookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -61,21 +65,20 @@
                         double outMACDSignal[],
                         double outMACDHist[] )
    {
-      double[] slowEMABuffer;
-      double[] fastEMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
-      int useFixedK = 0;
-      int i = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -97,30 +100,6 @@
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      /* !!! A lot of speed optimization could be done
-       * !!! with this function.
-       * !!!
-       * !!! A better approach would be to use ema
-       * !!! just to get the seeding values for the
-       * !!! fast and slow EMA. Then process the difference
-       * !!! in an allocated buffer until enough data is
-       * !!! available for the first signal value.
-       * !!! From that point all the processing can
-       * !!! be done in a tight loop.
-       * !!!
-       * !!! That approach will have the following
-       * !!! advantage:
-       * !!!   1) One mem allocation needed instead of two.
-       * !!!   2) The mem allocation size will be only the
-       * !!!      signal lookback period instead of the
-       * !!!      whole range of data.
-       * !!!   3) Processing will be done in a tight loop.
-       * !!!      allowing to avoid a lot of memory store-load
-       * !!!      operation.
-       * !!!   4) The memcpy at the end will be eliminated!
-       * !!!
-       * !!! If only I had time....
-       */
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -133,20 +112,17 @@
       /* Catch special case for fix 26/12 MACD.
        * Use hardcoded k values matching the original algorithm.
        */
-      useFixedK = 0;
       if( optInSlowPeriod == 0 ) {
-         optInSlowPeriod = 26;
          /* Fix 26 */
+         optInSlowPeriod = 26;
          slowK = 0.075;
-         useFixedK = 1;
       } else {
          slowK = 2.0 / (double)(optInSlowPeriod + 1);
       }
       if( optInFastPeriod == 0 ) {
-         optInFastPeriod = 12;
          /* Fix 12 */
+         optInFastPeriod = 12;
          fastK = 0.15;
-         useFixedK = 1;
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
@@ -166,68 +142,121 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      /* Allocate intermediate buffer for fast/slow EMA. */
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastEMABuffer = new double[(int)(tempInteger * 1)];
-      slowEMABuffer = new double[(int)(tempInteger * 1)];
-      /* Calculate the slow EMA.
+      /* Everything is computed in a single lockstep pass: each bar
+       * advances the fast and slow EMA (two independent recursions),
+       * their difference is the MACD line, and each MACD-line value
+       * is immediately fed into the signal EMA. No temporary buffers.
        *
-       * Move back the startIdx to get enough data
-       * for the signal period. That way, once the
-       * signal calculation is done, all the output
-       * will start at the requested 'startIdx'.
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum of
+       *    its first 'period' inputs, accumulated from 0.0 in input
+       *    order, divided by the period. The fast and slow seed
+       *    windows end on the same bar. The signal EMA is seeded the
+       *    same way from the first 'signal period' MACD-line values.
+       *  - Metastock compatibility: the fast and slow EMA are seeded
+       *    from inReal[0], the signal EMA from the first MACD-line
+       *    value.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (an output == inReal) is supported: outputs at
+       * [outIdx] are written only after inReal[startIdx+outIdx] was
+       * read.
        */
-      tempInteger = startIdx - lookbackSignal;
-      /* Use ema_private when hardcoded k is needed (MACDFIX path).
-       * Use ema() for the normal path — codegen handles double/float routing.
+      if( this.compatibility == Compatibility.Default ) {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars. The fast window is the tail of the
+          * slow window: consume the leading slow-only bars first,
+          * then accumulate both over the shared bars.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
+      } else {
+         /* Metastock/Tradestation: seed the fast and slow EMA with
+          * inReal[0], advance them in lockstep up to the first
+          * MACD-line bar, then seed the signal EMA with the first
+          * MACD-line value.
+          */
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      }
+      /* Advance everything in lockstep through the unstable period
+       * of the signal EMA, up to the first output bar.
        */
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, outBegIdx1, outNbElement1, slowEMABuffer);
-      } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, outBegIdx1, outNbElement1, slowEMABuffer);
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
       }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Calculate the fast EMA. */
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInFastPeriod, fastK, outBegIdx2, outNbElement2, fastEMABuffer);
-      } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, outBegIdx2, outNbElement2, fastEMABuffer);
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Parano tests. Will be removed eventually. */
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      /* Calculate (fast EMA) - (slow EMA). */
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
-      }
-      /* Copy the result into the output for the caller. */
-      System.arraycopy(fastEMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      /* Calculate the signal/trigger line (on double buffer, use ema_private). */
-      retCode = emaPrivate(0, outNbElement1.value - 1, fastEMABuffer, optInSignalPeriod, signalK, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Calculate the histogram. */
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      /* Stable zone: keep advancing in lockstep and write the three
+       * outputs.
+       */
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
       }
       /* All done! Indicate the output limits and return success. */
       outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
+      outNBElement.value = outIdx;
       return RetCode.Success ;
    }
    public RetCode macdUnguarded( int startIdx,
@@ -242,38 +271,34 @@
                                  double outMACDSignal[],
                                  double outMACDHist[] )
    {
-      double[] slowEMABuffer;
-      double[] fastEMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
-      int useFixedK = 0;
-      int i = 0;
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      useFixedK = 0;
       if( optInSlowPeriod == 0 ) {
          optInSlowPeriod = 26;
          slowK = 0.075;
-         useFixedK = 1;
       } else {
          slowK = 2.0 / (double)(optInSlowPeriod + 1);
       }
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
          fastK = 0.15;
-         useFixedK = 1;
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
@@ -289,50 +314,74 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastEMABuffer = new double[(int)(tempInteger * 1)];
-      slowEMABuffer = new double[(int)(tempInteger * 1)];
-      tempInteger = startIdx - lookbackSignal;
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, outBegIdx1, outNbElement1, slowEMABuffer);
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, outBegIdx1, outNbElement1, slowEMABuffer);
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
       }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
       }
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInFastPeriod, fastK, outBegIdx2, outNbElement2, fastEMABuffer);
-      } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, outBegIdx2, outNbElement2, fastEMABuffer);
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
-      }
-      System.arraycopy(fastEMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = emaPrivate(0, outNbElement1.value - 1, fastEMABuffer, optInSignalPeriod, signalK, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
       }
       outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
+      outNBElement.value = outIdx;
       return RetCode.Success ;
    }
    public RetCode macd( int startIdx,
@@ -347,21 +396,20 @@
                         double outMACDSignal[],
                         double outMACDHist[] )
    {
-      double[] slowEMABuffer;
-      double[] fastEMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
-      int useFixedK = 0;
-      int i = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -388,18 +436,15 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      useFixedK = 0;
       if( optInSlowPeriod == 0 ) {
          optInSlowPeriod = 26;
          slowK = 0.075;
-         useFixedK = 1;
       } else {
          slowK = 2.0 / (double)(optInSlowPeriod + 1);
       }
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
          fastK = 0.15;
-         useFixedK = 1;
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
@@ -415,50 +460,74 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastEMABuffer = new double[(int)(tempInteger * 1)];
-      slowEMABuffer = new double[(int)(tempInteger * 1)];
-      tempInteger = startIdx - lookbackSignal;
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, outBegIdx1, outNbElement1, slowEMABuffer);
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, outBegIdx1, outNbElement1, slowEMABuffer);
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
       }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
       }
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInFastPeriod, fastK, outBegIdx2, outNbElement2, fastEMABuffer);
-      } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, outBegIdx2, outNbElement2, fastEMABuffer);
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
-      }
-      System.arraycopy(fastEMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = emaPrivate(0, outNbElement1.value - 1, fastEMABuffer, optInSignalPeriod, signalK, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
       }
       outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
+      outNBElement.value = outIdx;
       return RetCode.Success ;
    }
    public RetCode macdUnguarded( int startIdx,
@@ -473,38 +542,34 @@
                                  double outMACDSignal[],
                                  double outMACDHist[] )
    {
-      double[] slowEMABuffer;
-      double[] fastEMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
-      int useFixedK = 0;
-      int i = 0;
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      useFixedK = 0;
       if( optInSlowPeriod == 0 ) {
          optInSlowPeriod = 26;
          slowK = 0.075;
-         useFixedK = 1;
       } else {
          slowK = 2.0 / (double)(optInSlowPeriod + 1);
       }
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
          fastK = 0.15;
-         useFixedK = 1;
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
@@ -520,49 +585,73 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastEMABuffer = new double[(int)(tempInteger * 1)];
-      slowEMABuffer = new double[(int)(tempInteger * 1)];
-      tempInteger = startIdx - lookbackSignal;
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInSlowPeriod, slowK, outBegIdx1, outNbElement1, slowEMABuffer);
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, outBegIdx1, outNbElement1, slowEMABuffer);
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
       }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
       }
-      if( (useFixedK) != 0 ) {
-         retCode = emaPrivate(tempInteger, endIdx, inReal, optInFastPeriod, fastK, outBegIdx2, outNbElement2, fastEMABuffer);
-      } else {
-         retCode = emaUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, outBegIdx2, outNbElement2, fastEMABuffer);
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
-      }
-      System.arraycopy(fastEMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = emaPrivate(0, outNbElement1.value - 1, fastEMABuffer, optInSignalPeriod, signalK, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
       }
       outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
+      outNBElement.value = outIdx;
       return RetCode.Success ;
    }
