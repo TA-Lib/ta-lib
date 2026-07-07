@@ -9,18 +9,20 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.7.2] Not Released Yet
 ### Added
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
-- (#78) CMake can now opt out of building the static or the shared library (both are built by default). Thanks @BwL1289 !
-- (#75) Author and originating-publication references added to the DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX documentation. Thanks @nehemiah888 !
+- (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
+- (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
 
 ### Changed
-- Algo Optimisation: DEMA, TEMA and TRIX are 3x to 7x faster.
-- Algo Optimisation: MACD and MACDFIX are ~8x faster, and MACDEXT as well when all three MA types are EMA.
-- Algo Optimisation: ATR and NATR compute the True Range inline (single pass, no temporary buffer), ~10-15% faster.
+- Algo Optimisations:
+  - 3x to 7x faster: DEMA, TEMA and TRIX
+  - ~8x faster: MACD and MACDFIX
+  - ~8x faster: MACDEXT when all three MA types are EMA.
+  - ~10% faster: ATR and NATR
 
 ### Fixed
 - (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !
-- (#64) Website function list mixing up CDL3LINESTRIKE with CDL3OUTSIDE's description. Thanks @mw66 !
-- (#7) CCI returned a spurious value (~66.67) instead of 0.0 when all prices over the period were identical; the near-zero guard now uses an epsilon tolerance (TA_IS_ZERO) rather than an exact `!= 0.0` comparison. Thanks @trufanov-nok for identifying and resolving this!
+- (#64) Website docs mixing up CDL3LINESTRIKE with CDL3OUTSIDE's description. Thanks @mw66 !
+- (#7) CCI returned a spurious value when all prices over the period were identical; Thanks @trufanov-nok for identifying and resolving this!
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !
 - (#98) TRIX and NATR returned wrong values when startIdx > lookback, and a non-zero unstable period changed IMI's summation window.
 - (#99) BBANDS with `TA_MAType_MAMA` and a period >= 34 returned a misaligned middle band.
