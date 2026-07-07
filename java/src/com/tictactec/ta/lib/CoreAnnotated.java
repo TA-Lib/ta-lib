@@ -5157,7 +5157,7 @@ public int imiLookback(
 @FuncInfo(
         name  = "IMI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 0,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6374,7 +6374,7 @@ public int mfiLookback(
 @FuncInfo(
         name  = "MFI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 0,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

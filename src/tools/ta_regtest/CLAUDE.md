@@ -135,8 +135,18 @@ Integer outputs use exact match comparison (or tolerance via `TA_DO_NOT_COMPARE`
 
 ### Unstable Period Functions
 
-24 functions have unstable periods that affect output. Must send `unstablePeriod` param to servers:
-ADX, ADXR, ATR, CMO, DX, EMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, IMI, KAMA, MAMA, MFI, MINUS_DI, MINUS_DM, NATR, PLUS_DI, PLUS_DM, RSI, STOCHRSI, T3
+22 functions have a genuine unstable period that affects output (recursive /
+converging — Wilder smoothing, EMA/adaptive-EMA, Hilbert IIR). Must send
+`unstablePeriod` param to servers:
+ADX, ADXR, ATR, CMO, DX, EMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, KAMA, MAMA, MINUS_DI, MINUS_DM, NATR, PLUS_DI, PLUS_DM, RSI, STOCHRSI, T3
+
+The `TA_FuncUnstId` enum still has 24 entries: **IMI** and **MFI** keep their
+`TA_FUNC_UNST_*` id (removing it would renumber the enum → ABI break) but are
+*not* unstable — both are finite sliding-window indicators (IMI recomputes its
+window fresh each bar → bit-exact; MFI carries a running accumulator → ~1e-13
+drift only). They no longer carry the `unstable_period` abstract flag and are
+excluded from `UNSTABLE_MAP` so their range sweeps use the tight
+`TA_FUNC_UNST_NONE` tolerance rather than the loose convergence envelope.
 
 ## Buffer Sizes
 
@@ -200,10 +210,12 @@ Scope rules (deliberate):
 - **#98 exceptions:** TRIX/NATR `startIdx > lookback` cases are skipped
   (mislabeled / wrong-close output through 0.6.4, fixed in 0.7.2), plus NATR
   cases with a zero close in the output range (old code clobbered
-  `outReal[0]`). The ref differential sweep skips IMI's unstable-period
-  variant (its unstable no longer grows the window). Comparing these against
-  frozen oracles would diff the bug fixes themselves. The fixed
-  behavior is validated instead by the (now value-comparing) range tests.
+  `outReal[0]`). Comparing these against frozen oracles would diff the bug
+  fixes themselves. The fixed behavior is validated instead by the (now
+  value-comparing) range tests. (IMI and MFI no longer need an unstable-period
+  carve-out here: both are reclassified as stable finite-window indicators —
+  no `TA_FUNC_FLG_UNST_PER`, lookback ignores the unstable period — so the ref
+  sweep never runs a u&gt;0 variant for them.)
   Reported in the summary as a `skipped:` line; everything else remains
   waiver-free at period ≥ 2.
 - The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one

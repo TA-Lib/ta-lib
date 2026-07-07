@@ -92,10 +92,10 @@ fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {
         9 => Some(FuncUnstId::HtSine),
         10 => Some(FuncUnstId::HtTrendline),
         11 => Some(FuncUnstId::HtTrendMode),
-        12 => Some(FuncUnstId::Imi),
+        12 => Some(FuncUnstId::Unused12),
         13 => Some(FuncUnstId::Kama),
         14 => Some(FuncUnstId::Mama),
-        15 => Some(FuncUnstId::Mfi),
+        15 => Some(FuncUnstId::Unused15),
         16 => Some(FuncUnstId::MinusDI),
         17 => Some(FuncUnstId::MinusDM),
         18 => Some(FuncUnstId::Natr),
@@ -5864,9 +5864,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inClose = &_json_inClose;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[12] = period as i32;
-            }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
@@ -6707,9 +6704,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inVolume = &_json_inVolume;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[15] = period as i32;
-            }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;

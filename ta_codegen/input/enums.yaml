@@ -38,10 +38,10 @@ FuncUnstId:
   - { c_name: TA_FUNC_UNST_HT_SINE,      pascal_name: HtSine,      value: 9 }
   - { c_name: TA_FUNC_UNST_HT_TRENDLINE, pascal_name: HtTrendline, value: 10 }
   - { c_name: TA_FUNC_UNST_HT_TRENDMODE, pascal_name: HtTrendMode, value: 11 }
-  - { c_name: TA_FUNC_UNST_IMI,          pascal_name: Imi,         value: 12 }
+  - { c_name: TA_FUNC_UNST_UNUSED_12,    pascal_name: Unused12,    value: 12 }  # reserved: was IMI, reclassified stable (#14); kept for ABI, reusable
   - { c_name: TA_FUNC_UNST_KAMA,         pascal_name: Kama,        value: 13 }
   - { c_name: TA_FUNC_UNST_MAMA,         pascal_name: Mama,        value: 14 }
-  - { c_name: TA_FUNC_UNST_MFI,          pascal_name: Mfi,         value: 15 }
+  - { c_name: TA_FUNC_UNST_UNUSED_15,    pascal_name: Unused15,    value: 15 }  # reserved: was MFI, reclassified stable (#4); kept for ABI, reusable
   - { c_name: TA_FUNC_UNST_MINUS_DI,     pascal_name: MinusDI,     value: 16 }
   - { c_name: TA_FUNC_UNST_MINUS_DM,     pascal_name: MinusDM,     value: 17 }
   - { c_name: TA_FUNC_UNST_NATR,         pascal_name: Natr,        value: 18 }

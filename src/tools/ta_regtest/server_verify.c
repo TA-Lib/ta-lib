@@ -42,10 +42,12 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"HT_SINE",      TA_FUNC_UNST_HT_SINE},
     {"HT_TRENDLINE", TA_FUNC_UNST_HT_TRENDLINE},
     {"HT_TRENDMODE", TA_FUNC_UNST_HT_TRENDMODE},
-    {"IMI",          TA_FUNC_UNST_IMI},
+    /* IMI and MFI are intentionally omitted: both are finite sliding-window
+     * indicators reclassified as stable (no TA_FUNC_FLG_UNST_PER), and their
+     * lookback no longer consults the unstable period. Keep in sync with the
+     * UNSTABLE_MAP in test_codegen.c. */
     {"KAMA",         TA_FUNC_UNST_KAMA},
     {"MAMA",         TA_FUNC_UNST_MAMA},
-    {"MFI",          TA_FUNC_UNST_MFI},
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
     {"MINUS_DM",     TA_FUNC_UNST_MINUS_DM},
     {"NATR",         TA_FUNC_UNST_NATR},

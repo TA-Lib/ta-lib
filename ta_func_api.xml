@@ -3904,9 +3904,6 @@
 		<CamelCaseName>Imi</CamelCaseName>
 		<ShortDescription>Intraday Momentum Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
-		<Flags>
-			<Flag>Unstable Period</Flag>
-		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Open</Type>
@@ -4722,9 +4719,6 @@
 		<CamelCaseName>Mfi</CamelCaseName>
 		<ShortDescription>Money Flow Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
-		<Flags>
-			<Flag>Unstable Period</Flag>
-		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>

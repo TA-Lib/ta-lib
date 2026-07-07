@@ -38399,6 +38399,9 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  WZ       wony (github @wony-zheng)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -38407,6 +38410,8 @@ public class Core {
  *  181012 AB    Initial Version
  *  070526 MF,CC  Fix #98: the unstable period grew the summation window
  *                to period+u bars; window is now always 'period'.
+ *  070726 WZ,CC  (#14) IMI has no unstable period; drop the unstable-period
+ *                term from the lookback so TA_SetUnstablePeriod is a no-op.
  */
 
    public int imiLookback( int optInTimePeriod )
@@ -38416,7 +38421,7 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.Imi.ordinal()] - 1 ;
+      return optInTimePeriod - 1 ;
 
    }
    public RetCode imi( int startIdx,
@@ -44484,6 +44489,8 @@ public class Core {
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       BobTrader (TADoc.org forum user).
+ *  MW       github @mw66
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -44494,6 +44501,9 @@ public class Core {
  *  062704 MF    Prevent divide by zero.
  *  121705 MF    Java port related changes.
  *  060907 MF,BT Fix #1727704. MFI logic bug when no price movement
+ *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
+ *               term (and the now-dead unstable-skip loop) so
+ *               TA_SetUnstablePeriod is a no-op for it.
  */
 
    public int mfiLookback( int optInTimePeriod )
@@ -44503,7 +44513,7 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.Mfi.ordinal()] ;
+      return optInTimePeriod ;
 
    }
    public RetCode mfi( int startIdx,
@@ -44550,7 +44560,7 @@ public class Core {
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Mfi.ordinal()];
+      lookbackTotal = optInTimePeriod;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -44593,43 +44603,16 @@ public class Core {
        *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
        * The second equation is used here for speed optimization.
        */
-      if( today > startIdx ) {
-         tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-         }
-      } else {
-         /* Skip the unstable period. Do the processing
-          * but do not write it in the output.
-          */
-         while( today < startIdx ) {
-            posSumMF -= mflow_positive[mflow_Idx];
-            negSumMF -= mflow_negative[mflow_Idx];
-            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            tempValue1 *= inVolume[today++];
-            if( tempValue2 < 0 ) {
-               mflow_negative[mflow_Idx] = tempValue1;
-               negSumMF += tempValue1;
-               mflow_positive[mflow_Idx] = 0.0;
-            } else if( tempValue2 > 0 ) {
-               mflow_positive[mflow_Idx] = tempValue1;
-               posSumMF += tempValue1;
-               mflow_negative[mflow_Idx] = 0.0;
-            } else {
-               mflow_positive[mflow_Idx] = 0.0;
-               mflow_negative[mflow_Idx] = 0.0;
-            }
-            mflow_Idx++;
-            if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-         }
-      }
-      /* Unstable period skipped... now continue
-       * processing if needed.
+      /* The first full window is complete: emit its output for startIdx here,
+       * then slide the window over the remaining bars below.
        */
+      tempValue1 = posSumMF + negSumMF;
+      if( tempValue1 < 1.0 ) {
+         outReal[outIdx++] = 0.0;
+      } else {
+         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
+      }
+      /* Now continue processing the remaining bars. */
       while( today <= endIdx ) {
          posSumMF -= mflow_positive[mflow_Idx];
          negSumMF -= mflow_negative[mflow_Idx];
@@ -44693,7 +44676,7 @@ public class Core {
       mflow_Idx = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Mfi.ordinal()];
+      lookbackTotal = optInTimePeriod;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -44726,36 +44709,11 @@ public class Core {
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
       }
-      if( today > startIdx ) {
-         tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-         }
+      tempValue1 = posSumMF + negSumMF;
+      if( tempValue1 < 1.0 ) {
+         outReal[outIdx++] = 0.0;
       } else {
-         while( today < startIdx ) {
-            posSumMF -= mflow_positive[mflow_Idx];
-            negSumMF -= mflow_negative[mflow_Idx];
-            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            tempValue1 *= inVolume[today++];
-            if( tempValue2 < 0 ) {
-               mflow_negative[mflow_Idx] = tempValue1;
-               negSumMF += tempValue1;
-               mflow_positive[mflow_Idx] = 0.0;
-            } else if( tempValue2 > 0 ) {
-               mflow_positive[mflow_Idx] = tempValue1;
-               posSumMF += tempValue1;
-               mflow_negative[mflow_Idx] = 0.0;
-            } else {
-               mflow_positive[mflow_Idx] = 0.0;
-               mflow_negative[mflow_Idx] = 0.0;
-            }
-            mflow_Idx++;
-            if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-         }
+         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
       }
       while( today <= endIdx ) {
          posSumMF -= mflow_positive[mflow_Idx];
@@ -44831,7 +44789,7 @@ public class Core {
       mflow_Idx = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Mfi.ordinal()];
+      lookbackTotal = optInTimePeriod;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -44864,36 +44822,11 @@ public class Core {
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
       }
-      if( today > startIdx ) {
-         tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-         }
+      tempValue1 = posSumMF + negSumMF;
+      if( tempValue1 < 1.0 ) {
+         outReal[outIdx++] = 0.0;
       } else {
-         while( today < startIdx ) {
-            posSumMF -= mflow_positive[mflow_Idx];
-            negSumMF -= mflow_negative[mflow_Idx];
-            tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            tempValue1 *= (double)inVolume[today++];
-            if( tempValue2 < 0 ) {
-               mflow_negative[mflow_Idx] = tempValue1;
-               negSumMF += tempValue1;
-               mflow_positive[mflow_Idx] = 0.0;
-            } else if( tempValue2 > 0 ) {
-               mflow_positive[mflow_Idx] = tempValue1;
-               posSumMF += tempValue1;
-               mflow_negative[mflow_Idx] = 0.0;
-            } else {
-               mflow_positive[mflow_Idx] = 0.0;
-               mflow_negative[mflow_Idx] = 0.0;
-            }
-            mflow_Idx++;
-            if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-         }
+         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
       }
       while( today <= endIdx ) {
          posSumMF -= mflow_positive[mflow_Idx];
@@ -44958,7 +44891,7 @@ public class Core {
       mflow_Idx = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Mfi.ordinal()];
+      lookbackTotal = optInTimePeriod;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -44991,36 +44924,11 @@ public class Core {
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
       }
-      if( today > startIdx ) {
-         tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-         }
+      tempValue1 = posSumMF + negSumMF;
+      if( tempValue1 < 1.0 ) {
+         outReal[outIdx++] = 0.0;
       } else {
-         while( today < startIdx ) {
-            posSumMF -= mflow_positive[mflow_Idx];
-            negSumMF -= mflow_negative[mflow_Idx];
-            tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            tempValue1 *= (double)inVolume[today++];
-            if( tempValue2 < 0 ) {
-               mflow_negative[mflow_Idx] = tempValue1;
-               negSumMF += tempValue1;
-               mflow_positive[mflow_Idx] = 0.0;
-            } else if( tempValue2 > 0 ) {
-               mflow_positive[mflow_Idx] = tempValue1;
-               posSumMF += tempValue1;
-               mflow_negative[mflow_Idx] = 0.0;
-            } else {
-               mflow_positive[mflow_Idx] = 0.0;
-               mflow_negative[mflow_Idx] = 0.0;
-            }
-            mflow_Idx++;
-            if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-         }
+         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
       }
       while( today <= endIdx ) {
          posSumMF -= mflow_positive[mflow_Idx];

@@ -6799,8 +6799,6 @@ public class TaCodegenServe {
                     inClose = GetDoubleArray(p, "inClose");
                 }
                 int optInTimePeriod = p.TryGetProperty("optInTimePeriod", out var _optInTimePeriodVal) ? _optInTimePeriodVal.GetInt32() : 14;
-                int unstablePeriod = p.TryGetProperty("unstablePeriod", out var _upVal) ? _upVal.GetInt32() : 0;
-                TA_SetUnstablePeriod(12, unstablePeriod);
                 double[] outArr0 = new double[n];
                 int rc = 0;
                 int outBegIdx = 0, outNBElement = 0;
@@ -7386,8 +7384,6 @@ public class TaCodegenServe {
                     inVolume = GetDoubleArray(p, "inVolume");
                 }
                 int optInTimePeriod = p.TryGetProperty("optInTimePeriod", out var _optInTimePeriodVal) ? _optInTimePeriodVal.GetInt32() : 14;
-                int unstablePeriod = p.TryGetProperty("unstablePeriod", out var _upVal) ? _upVal.GetInt32() : 0;
-                TA_SetUnstablePeriod(15, unstablePeriod);
                 double[] outArr0 = new double[n];
                 int rc = 0;
                 int outBegIdx = 0, outNBElement = 0;

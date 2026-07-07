@@ -39,10 +39,12 @@ pub enum FuncUnstId {
     HtSine,
     HtTrendline,
     HtTrendMode,
-    Imi,
+    /// Reserved: was IMI, reclassified stable (#14); kept for ABI, reusable.
+    Unused12,
     Kama,
     Mama,
-    Mfi,
+    /// Reserved: was MFI, reclassified stable (#4); kept for ABI, reusable.
+    Unused15,
     MinusDI,
     MinusDM,
     Natr,

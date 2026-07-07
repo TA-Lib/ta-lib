@@ -142,10 +142,8 @@ fn func_unst_id(name: &str) -> Option<i32> {
         "HT_SINE" => Some(9),    // TA_FUNC_UNST_HT_SINE
         "HT_TRENDLINE" => Some(10), // TA_FUNC_UNST_HT_TRENDLINE
         "HT_TRENDMODE" => Some(11), // TA_FUNC_UNST_HT_TRENDMODE
-        "IMI" => Some(12),       // TA_FUNC_UNST_IMI
         "KAMA" => Some(13),      // TA_FUNC_UNST_KAMA
         "MAMA" => Some(14),      // TA_FUNC_UNST_MAMA
-        "MFI" => Some(15),       // TA_FUNC_UNST_MFI
         "MINUS_DI" => Some(16),  // TA_FUNC_UNST_MINUS_DI
         "MINUS_DM" => Some(17),  // TA_FUNC_UNST_MINUS_DM
         "NATR" => Some(18),      // TA_FUNC_UNST_NATR
@@ -1059,7 +1057,7 @@ pub fn generate_java_server(funcs: &[FuncDef]) -> String {
     s.push_str("enum FuncUnstId {\n");
     s.push_str("    Adx, Adxr, Atr, Cmo, Dx, Ema,\n");
     s.push_str("    HtDcPeriod, HtDcPhase, HtPhasor, HtSine, HtTrendline, HtTrendMode,\n");
-    s.push_str("    Imi, Kama, Mama, Mfi, MinusDI, MinusDM,\n");
+    s.push_str("    Unused12, Kama, Mama, Unused15, MinusDI, MinusDM,\n");
     s.push_str("    Natr, PlusDI, PlusDM, Rsi, StochRsi, T3, None;\n");
     s.push_str("}\n\n");
 
@@ -1936,10 +1934,10 @@ pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
     s.push_str("        9 => Some(FuncUnstId::HtSine),\n");
     s.push_str("        10 => Some(FuncUnstId::HtTrendline),\n");
     s.push_str("        11 => Some(FuncUnstId::HtTrendMode),\n");
-    s.push_str("        12 => Some(FuncUnstId::Imi),\n");
+    s.push_str("        12 => Some(FuncUnstId::Unused12),\n");
     s.push_str("        13 => Some(FuncUnstId::Kama),\n");
     s.push_str("        14 => Some(FuncUnstId::Mama),\n");
-    s.push_str("        15 => Some(FuncUnstId::Mfi),\n");
+    s.push_str("        15 => Some(FuncUnstId::Unused15),\n");
     s.push_str("        16 => Some(FuncUnstId::MinusDI),\n");
     s.push_str("        17 => Some(FuncUnstId::MinusDM),\n");
     s.push_str("        18 => Some(FuncUnstId::Natr),\n");

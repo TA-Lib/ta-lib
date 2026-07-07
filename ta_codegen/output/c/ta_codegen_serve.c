@@ -7246,7 +7246,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             json_find_double_array(json, "inClose", g_inBuf1, MAX_ARRAY_SIZE);
         }
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        TA_SetUnstablePeriod(12, json_find_int(json, "unstablePeriod"));
         int outBegIdx = 0, outNBElement = 0;
         int bench_iters = json_find_int(json, "iters");
         if( bench_iters < 1 ) bench_iters = 1;
@@ -8360,7 +8359,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             json_find_double_array(json, "inVolume", g_inBuf3, MAX_ARRAY_SIZE);
         }
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        TA_SetUnstablePeriod(15, json_find_int(json, "unstablePeriod"));
         int outBegIdx = 0, outNBElement = 0;
         int bench_iters = json_find_int(json, "iters");
         if( bench_iters < 1 ) bench_iters = 1;

@@ -203,8 +203,10 @@ static int json_is_error(const char *json)
 
 /* ---- Unstable period lookup ---- */
 
-/* Map function name to TA_FuncUnstId. Only the 24 functions with
- * TA_FUNC_FLG_UNST_PER have entries here.
+/* Map function name to TA_FuncUnstId for range-sweep tolerance selection.
+ * Entries are the 22 functions that carry TA_FUNC_FLG_UNST_PER, plus the 6
+ * EMA-derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX) that converge
+ * like EMA. IMI and MFI are deliberately excluded (finite-window, stable).
  */
 typedef struct {
     const char   *name;
@@ -224,10 +226,15 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"HT_SINE",      TA_FUNC_UNST_HT_SINE},
     {"HT_TRENDLINE", TA_FUNC_UNST_HT_TRENDLINE},
     {"HT_TRENDMODE", TA_FUNC_UNST_HT_TRENDMODE},
-    {"IMI",          TA_FUNC_UNST_IMI},
+    /* IMI and MFI are NOT listed here on purpose. Both are finite
+     * sliding-window indicators, not recursive/converging ones, so their
+     * range sweep must use the tight TA_FUNC_UNST_NONE tolerance (IMI is
+     * bit-exact; MFI drifts only ~1e-13 via its running accumulator), not
+     * the loose convergence envelope this map selects. Their TA_FUNC_UNST_*
+     * enum entries are retained for ABI but no longer advertise instability.
+     */
     {"KAMA",         TA_FUNC_UNST_KAMA},
     {"MAMA",         TA_FUNC_UNST_MAMA},
-    {"MFI",          TA_FUNC_UNST_MFI},
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
     {"MINUS_DM",     TA_FUNC_UNST_MINUS_DM},
     {"NATR",         TA_FUNC_UNST_NATR},
@@ -1716,11 +1723,15 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         sweep_set_compat(params.cp,    0, params.responseBuf);
     }
 
-    /* Unstable-period pass at defaults (sent per-call to both servers). */
+    /* Unstable-period pass at defaults (sent per-call to both servers).
+     * Only genuinely recursive functions still carry TA_FUNC_FLG_UNST_PER and
+     * a mapped unstId, so IMI and MFI (finite-window, reclassified stable) are
+     * naturally excluded here. That also retires the former explicit IMI
+     * carve-out: IMI's u>0 output diverges from the frozen ref due to fix #98,
+     * but with no unstable flag this variant no longer runs for it at all. */
     if( params.codegenError == TA_TEST_PASS &&
         (funcInfo->flags & TA_FUNC_FLG_UNST_PER) &&
-        params.unstId != TA_FUNC_UNST_NONE &&
-        strcmp(funcInfo->name, "IMI") != 0 )   /* #98: IMI unstable semantics fixed vs frozen ref */
+        params.unstId != TA_FUNC_UNST_NONE )
     {
         TA_SetUnstablePeriod(params.unstId, 3);
         variants += sweep_run_variant(&params);
