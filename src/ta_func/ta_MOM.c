@@ -229,7 +229,7 @@ TA_RetCode TA_S_MOM( int    startIdx,
    trailingIdx = startIdx - optInTimePeriod;
    while( inIdx <= endIdx )
    {
-      outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+      outReal[outIdx++] = (double)inReal[inIdx++] - (double)inReal[trailingIdx++];
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -263,7 +263,7 @@ TA_RetCode TA_S_MOM_Unguarded( int    startIdx,
    trailingIdx = startIdx - optInTimePeriod;
    while( inIdx <= endIdx )
    {
-      outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+      outReal[outIdx++] = (double)inReal[inIdx++] - (double)inReal[trailingIdx++];
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

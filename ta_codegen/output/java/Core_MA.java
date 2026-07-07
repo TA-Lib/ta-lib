@@ -226,7 +226,7 @@
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = inReal[todayIdx];
+            outReal[outIdx] = (double)inReal[todayIdx];
          }
          outBegIdx.value = startIdx;
          return RetCode.Success ;
@@ -285,7 +285,7 @@
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = inReal[todayIdx];
+            outReal[outIdx] = (double)inReal[todayIdx];
          }
          outBegIdx.value = startIdx;
          return RetCode.Success ;

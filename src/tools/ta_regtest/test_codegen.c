@@ -95,7 +95,7 @@ static int              g_numTimingResults = 0;
 /* ---- Minimal JSON helpers (no library dependency) ---- */
 
 static int json_write_double_array(char *buf, int buf_size,
-                                   const TA_Real *data, int count)
+                                   const TA_Real *data, int count, int widen)
 {
     int pos = 0;
     buf[pos++] = '[';
@@ -103,7 +103,11 @@ static int json_write_double_array(char *buf, int buf_size,
     {
         if( i > 0 )
             pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
+        if( widen )
+            /* Round to float then back to double; %.17g round-trips exactly. */
+            pos += snprintf(buf + pos, buf_size - pos, "%.17g", (double)(float)data[i]);
+        else
+            pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
     }
     buf[pos++] = ']';
     buf[pos] = '\0';
@@ -316,6 +320,13 @@ typedef struct {
      * reordering; 0 means the default scale of 1). */
     int    useFloat;
     double epsilonScale;
+    /* Float leg: when set, build_json_request rounds every input value to float
+     * and back to double (serialized with %.17g, exact) so the double-variant
+     * baseline and the use_float single-precision leg operate on identical
+     * float-derived inputs. Lets the float leg assert TA_S_<F> == TA_<F> on
+     * widened inputs bit-for-bit (the single-precision variants now compute in
+     * double, PR #33). */
+    int    widenFloatInputs;
     int    sweepFloatLeg;   /* run the float leg per sweep variant (C only) */
 
     /* Timing */
@@ -433,37 +444,37 @@ static int build_json_request(CodegenRangeTestParam *p,
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inOpen\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->open, p->nbBars);
+                           p->history->open, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_HIGH )
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inHigh\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->high, p->nbBars);
+                           p->history->high, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_LOW )
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inLow\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->low, p->nbBars);
+                           p->history->low, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_CLOSE )
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inClose\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->close, p->nbBars);
+                           p->history->close, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_VOLUME )
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inVolume\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->volume, p->nbBars);
+                           p->history->volume, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_OPENINTEREST )
             {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inOpenInterest\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->openInterest, p->nbBars);
+                           p->history->openInterest, p->nbBars, p->widenFloatInputs);
             }
             break;
         }
@@ -474,7 +485,7 @@ static int build_json_request(CodegenRangeTestParam *p,
                 /* Single real input: "inReal" */
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inReal\":");
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           p->history->close, p->nbBars);
+                           p->history->close, p->nbBars, p->widenFloatInputs);
             }
             else
             {
@@ -491,7 +502,7 @@ static int build_json_request(CodegenRangeTestParam *p,
 
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inReal%d\":", realInputCount);
                 pos += json_write_double_array(buf + pos, bufSize - pos,
-                           data, p->nbBars);
+                           data, p->nbBars, p->widenFloatInputs);
             }
             realInputCount++;
             break;
@@ -1470,14 +1481,30 @@ static void run_float_leg(CodegenRangeTestParam *p)
 {
     if( p->codegenError != TA_TEST_PASS )
         return;
-    p->useFloat = 1;
-    p->epsilonScale = 100.0;
+
+    /* TA_S_<F>(float) is now bit-identical to TA_<F>((double)float) (the
+     * single-precision variants widen every float input read, PR #33). Verify
+     * that invariant bit-for-bit: the baseline is the double variant on
+     * float-widened inputs; the use_float leg is the single-precision variant on
+     * the same inputs. Both hit the C server with %.17g-exact widened inputs
+     * (the use_float leg rounds back to float, idempotent). Replaces the old
+     * comparison against the frozen single-precision reference, which computed
+     * in float. */
+    p->widenFloatInputs = 1;
+    p->epsilonScale = 0.0;
+
+    /* Baseline: double variant on the float-widened inputs. */
+    p->useFloat = 0;
     build_json_request(p, 0, p->nbBars - 1);
-    if( codegen_pipe_call(p->refCp, p->requestBuf, p->responseBuf,
+    if( codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
                           JSON_BUF_SIZE) == TA_TEST_PASS
         && !json_is_error(p->responseBuf) )
     {
         parse_ref_baseline(p);
+
+        /* Single-precision variant on the same inputs — must match bit-for-bit. */
+        p->useFloat = 1;
+        build_json_request(p, 0, p->nbBars - 1);
         if( codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
                               JSON_BUF_SIZE) != TA_TEST_PASS )
             p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
@@ -1485,9 +1512,11 @@ static void run_float_leg(CodegenRangeTestParam *p)
             for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
                 compare_codegen_output_generic(p, o);
         if( p->codegenError != TA_TEST_PASS )
-            printf("  (mismatch above is from the FLOAT (TA_S_) leg)\n");
+            printf("  (mismatch above is the FLOAT (TA_S_) leg: TA_S_ vs TA_ on widened inputs)\n");
     }
+
     p->useFloat = 0;
+    p->widenFloatInputs = 0;
     p->epsilonScale = 0.0;
 }
 

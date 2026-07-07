@@ -203,13 +203,13 @@
       lowestIdx = 0 - 1;
       lowest = 0.0;
       while( today <= endIdx ) {
-         tmp = inReal[today];
+         tmp = (double)inReal[today];
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
+            lowest = (double)inReal[lowestIdx];
             i = lowestIdx;
             while( ++i <= today ) {
-               tmp = inReal[i];
+               tmp = (double)inReal[i];
                if( tmp < lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
@@ -258,13 +258,13 @@
       lowestIdx = 0 - 1;
       lowest = 0.0;
       while( today <= endIdx ) {
-         tmp = inReal[today];
+         tmp = (double)inReal[today];
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
+            lowest = (double)inReal[lowestIdx];
             i = lowestIdx;
             while( ++i <= today ) {
-               tmp = inReal[i];
+               tmp = (double)inReal[i];
                if( tmp < lowest ) {
                   lowestIdx = i;
                   lowest = tmp;

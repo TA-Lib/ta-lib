@@ -464,14 +464,14 @@ TA_RetCode TA_S_BETA( int    startIdx,
       return TA_SUCCESS;
    }
    trailingIdx = startIdx - nbInitialElementNeeded;
-   trailing_last_price_x = inReal0[trailingIdx];
+   trailing_last_price_x = (double)inReal0[trailingIdx];
    last_price_x = trailing_last_price_x;
-   trailing_last_price_y = inReal1[trailingIdx];
+   trailing_last_price_y = (double)inReal1[trailingIdx];
    last_price_y = trailing_last_price_y;
    i = ++trailingIdx;
    while( i < startIdx )
    {
-      tmp_real = inReal0[i];
+      tmp_real = (double)inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
       {
          x = (tmp_real - last_price_x) / last_price_x;
@@ -480,7 +480,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          x = 0.0;
       }
       last_price_x = tmp_real;
-      tmp_real = inReal1[i++];
+      tmp_real = (double)inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
       {
          y = (tmp_real - last_price_y) / last_price_y;
@@ -498,7 +498,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
    n = (double)optInTimePeriod;
    do
    {
-      tmp_real = inReal0[i];
+      tmp_real = (double)inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
       {
          x = (tmp_real - last_price_x) / last_price_x;
@@ -507,7 +507,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          x = 0.0;
       }
       last_price_x = tmp_real;
-      tmp_real = inReal1[i++];
+      tmp_real = (double)inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
       {
          y = (tmp_real - last_price_y) / last_price_y;
@@ -520,7 +520,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       S_xy += x * y;
       S_x += x;
       S_y += y;
-      tmp_real = inReal0[trailingIdx];
+      tmp_real = (double)inReal0[trailingIdx];
       if( !TA_IS_ZERO(trailing_last_price_x) )
       {
          x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
@@ -529,7 +529,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          x = 0.0;
       }
       trailing_last_price_x = tmp_real;
-      tmp_real = inReal1[trailingIdx++];
+      tmp_real = (double)inReal1[trailingIdx++];
       if( !TA_IS_ZERO(trailing_last_price_y) )
       {
          y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
@@ -604,14 +604,14 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    trailingIdx = startIdx - nbInitialElementNeeded;
-   trailing_last_price_x = inReal0[trailingIdx];
+   trailing_last_price_x = (double)inReal0[trailingIdx];
    last_price_x = trailing_last_price_x;
-   trailing_last_price_y = inReal1[trailingIdx];
+   trailing_last_price_y = (double)inReal1[trailingIdx];
    last_price_y = trailing_last_price_y;
    i = ++trailingIdx;
    while( i < startIdx )
    {
-      tmp_real = inReal0[i];
+      tmp_real = (double)inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
       {
          x = (tmp_real - last_price_x) / last_price_x;
@@ -620,7 +620,7 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
          x = 0.0;
       }
       last_price_x = tmp_real;
-      tmp_real = inReal1[i++];
+      tmp_real = (double)inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
       {
          y = (tmp_real - last_price_y) / last_price_y;
@@ -638,7 +638,7 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
    n = (double)optInTimePeriod;
    do
    {
-      tmp_real = inReal0[i];
+      tmp_real = (double)inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
       {
          x = (tmp_real - last_price_x) / last_price_x;
@@ -647,7 +647,7 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
          x = 0.0;
       }
       last_price_x = tmp_real;
-      tmp_real = inReal1[i++];
+      tmp_real = (double)inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
       {
          y = (tmp_real - last_price_y) / last_price_y;
@@ -660,7 +660,7 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
       S_xy += x * y;
       S_x += x;
       S_y += y;
-      tmp_real = inReal0[trailingIdx];
+      tmp_real = (double)inReal0[trailingIdx];
       if( !TA_IS_ZERO(trailing_last_price_x) )
       {
          x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
@@ -669,7 +669,7 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
          x = 0.0;
       }
       trailing_last_price_x = tmp_real;
-      tmp_real = inReal1[trailingIdx++];
+      tmp_real = (double)inReal1[trailingIdx++];
       if( !TA_IS_ZERO(trailing_last_price_y) )
       {
          y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;

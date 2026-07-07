@@ -199,10 +199,10 @@
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
             patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
             patternIdx = 0;
          }
          i += 1;
@@ -210,11 +210,11 @@
       i = startIdx;
       outIdx = 0;
       do {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
             patternIdx = i;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             patternIdx = 0;
          } else {
@@ -254,10 +254,10 @@
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
             patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
             patternIdx = 0;
          }
          i += 1;
@@ -265,11 +265,11 @@
       i = startIdx;
       outIdx = 0;
       do {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
             patternIdx = i;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             patternIdx = 0;
          } else {

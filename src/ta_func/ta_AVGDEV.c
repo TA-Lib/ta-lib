@@ -226,12 +226,12 @@ TA_RetCode TA_S_AVGDEV( int    startIdx,
       todaySum = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todaySum += inReal[today - i];
+         todaySum += (double)inReal[today - i];
       }
       todayDev = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+         todayDev += fabs((double)inReal[today - i] - todaySum / optInTimePeriod);
       }
       outReal[outIdx] = todayDev / optInTimePeriod;
       outIdx += 1;
@@ -275,12 +275,12 @@ TA_RetCode TA_S_AVGDEV_Unguarded( int    startIdx,
       todaySum = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todaySum += inReal[today - i];
+         todaySum += (double)inReal[today - i];
       }
       todayDev = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+         todayDev += fabs((double)inReal[today - i] - todaySum / optInTimePeriod);
       }
       outReal[outIdx] = todayDev / optInTimePeriod;
       outIdx += 1;

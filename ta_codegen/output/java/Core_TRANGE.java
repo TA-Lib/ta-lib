@@ -171,9 +171,9 @@
       outIdx = 0;
       today = startIdx;
       while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -218,9 +218,9 @@
       outIdx = 0;
       today = startIdx;
       while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {

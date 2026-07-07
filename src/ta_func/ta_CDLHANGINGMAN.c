@@ -418,7 +418,7 @@ TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && fmin(inClose[i],inOpen[i]) >= inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && fmin((double)inClose[i],(double)inOpen[i]) >= (double)inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -521,7 +521,7 @@ TA_RetCode TA_S_CDLHANGINGMAN_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && fmin(inClose[i],inOpen[i]) >= inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && fmin((double)inClose[i],(double)inOpen[i]) >= (double)inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 

@@ -317,9 +317,9 @@ TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -389,9 +389,9 @@ TA_RetCode TA_S_CDLLONGLINE_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;

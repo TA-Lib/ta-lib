@@ -618,25 +618,25 @@ TA_RetCode TA_S_SAR( int    startIdx,
    *outBegIdx= startIdx;
    outIdx = 0;
    todayIdx = startIdx;
-   newHigh = inHigh[todayIdx - 1];
-   newLow = inLow[todayIdx - 1];
+   newHigh = (double)inHigh[todayIdx - 1];
+   newLow = (double)inLow[todayIdx - 1];
    if( isLong == 1 )
    {
-      ep = inHigh[todayIdx];
+      ep = (double)inHigh[todayIdx];
       sar = newLow;
    } else 
    {
-      ep = inLow[todayIdx];
+      ep = (double)inLow[todayIdx];
       sar = newHigh;
    }
-   newLow = inLow[todayIdx];
-   newHigh = inHigh[todayIdx];
+   newLow = (double)inLow[todayIdx];
+   newHigh = (double)inHigh[todayIdx];
    while( todayIdx <= endIdx )
    {
       prevLow = newLow;
       prevHigh = newHigh;
-      newLow = inLow[todayIdx];
-      newHigh = inHigh[todayIdx];
+      newLow = (double)inLow[todayIdx];
+      newHigh = (double)inHigh[todayIdx];
       todayIdx += 1;
       if( isLong == 1 )
       {
@@ -794,25 +794,25 @@ TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
    *outBegIdx= startIdx;
    outIdx = 0;
    todayIdx = startIdx;
-   newHigh = inHigh[todayIdx - 1];
-   newLow = inLow[todayIdx - 1];
+   newHigh = (double)inHigh[todayIdx - 1];
+   newLow = (double)inLow[todayIdx - 1];
    if( isLong == 1 )
    {
-      ep = inHigh[todayIdx];
+      ep = (double)inHigh[todayIdx];
       sar = newLow;
    } else 
    {
-      ep = inLow[todayIdx];
+      ep = (double)inLow[todayIdx];
       sar = newHigh;
    }
-   newLow = inLow[todayIdx];
-   newHigh = inHigh[todayIdx];
+   newLow = (double)inLow[todayIdx];
+   newHigh = (double)inHigh[todayIdx];
    while( todayIdx <= endIdx )
    {
       prevLow = newLow;
       prevHigh = newHigh;
-      newLow = inLow[todayIdx];
-      newHigh = inHigh[todayIdx];
+      newLow = (double)inLow[todayIdx];
+      newHigh = (double)inHigh[todayIdx];
       todayIdx += 1;
       if( isLong == 1 )
       {

@@ -24,7 +24,7 @@ TA_RetCode mult(int startIdx, int endIdx, const double inReal0[], const double i
    outIdx = 0;
    i = startIdx;
    while( i <= endIdx ) {
-      outReal[outIdx] = (double)(inReal0[i]*inReal1[i]);
+      outReal[outIdx] = inReal0[i]*inReal1[i];
       outIdx += 1;
       i += 1;
    }

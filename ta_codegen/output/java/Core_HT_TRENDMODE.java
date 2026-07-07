@@ -1021,23 +1021,23 @@
       outBegIdx.value = startIdx;
       trailingWMAIdx = startIdx - lookbackTotal;
       today = trailingWMAIdx;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub = tempReal;
       periodWMASum = tempReal;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub += tempReal;
       periodWMASum += tempReal * 2.0;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub += tempReal;
       periodWMASum += tempReal * 3.0;
       trailingWMAValue = 0.0;
       i = 34;
       do {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          periodWMASub += tempReal;
          periodWMASub -= trailingWMAValue;
          periodWMASum += tempReal * 4.0;
-         trailingWMAValue = inReal[trailingWMAIdx++];
+         trailingWMAValue = (double)inReal[trailingWMAIdx++];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
       } while( --i != 0 );
@@ -1103,11 +1103,11 @@
       DCPhase = 0.0;
       while( today <= endIdx ) {
          adjustedPrevPeriod = 0.075 * period + 0.54;
-         todayValue = inReal[today];
+         todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = inReal[trailingWMAIdx++];
+         trailingWMAValue = (double)inReal[trailingWMAIdx++];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          smoothPrice[smoothPrice_Idx] = smoothedValue;
@@ -1264,7 +1264,7 @@
          idx = today;
          tempReal = 0.0;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+            tempReal += (double)inReal[idx--];
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -1416,23 +1416,23 @@
       outBegIdx.value = startIdx;
       trailingWMAIdx = startIdx - lookbackTotal;
       today = trailingWMAIdx;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub = tempReal;
       periodWMASum = tempReal;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub += tempReal;
       periodWMASum += tempReal * 2.0;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       periodWMASub += tempReal;
       periodWMASum += tempReal * 3.0;
       trailingWMAValue = 0.0;
       i = 34;
       do {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          periodWMASub += tempReal;
          periodWMASub -= trailingWMAValue;
          periodWMASum += tempReal * 4.0;
-         trailingWMAValue = inReal[trailingWMAIdx++];
+         trailingWMAValue = (double)inReal[trailingWMAIdx++];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
       } while( --i != 0 );
@@ -1498,11 +1498,11 @@
       DCPhase = 0.0;
       while( today <= endIdx ) {
          adjustedPrevPeriod = 0.075 * period + 0.54;
-         todayValue = inReal[today];
+         todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = inReal[trailingWMAIdx++];
+         trailingWMAValue = (double)inReal[trailingWMAIdx++];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          smoothPrice[smoothPrice_Idx] = smoothedValue;
@@ -1659,7 +1659,7 @@
          idx = today;
          tempReal = 0.0;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+            tempReal += (double)inReal[idx--];
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;

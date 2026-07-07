@@ -591,15 +591,15 @@
       if( optInTimePeriod <= 1 ) {
          outBegIdx.value = startIdx;
          today = startIdx - 1;
-         prevHigh = inHigh[today];
-         prevLow = inLow[today];
-         prevClose = inClose[today];
+         prevHigh = (double)inHigh[today];
+         prevLow = (double)inLow[today];
+         prevClose = (double)inClose[today];
          while( today < endIdx ) {
             today += 1;
-            tempReal = inHigh[today];
+            tempReal = (double)inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = inLow[today];
+            tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
@@ -623,7 +623,7 @@
             } else {
                outReal[outIdx++] = (double)0.0;
             }
-            prevClose = inClose[today];
+            prevClose = (double)inClose[today];
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
@@ -633,16 +633,16 @@
       prevMinusDM = 0.0;
       prevTR = 0.0;
       today = startIdx - lookbackTotal;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
-      prevClose = inClose[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
+      prevClose = (double)inClose[today];
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -661,15 +661,15 @@
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR += tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
       }
       i = this.unstablePeriod[FuncUnstId.MinusDI.ordinal()] + 1;
       while( i-- != 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -690,7 +690,7 @@
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
       }
       if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
          outReal[0] = (100.0 * (prevMinusDM / prevTR));
@@ -700,10 +700,10 @@
       outIdx = 1;
       while( today < endIdx ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -724,7 +724,7 @@
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
          if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
             outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
          } else {
@@ -774,15 +774,15 @@
       if( optInTimePeriod <= 1 ) {
          outBegIdx.value = startIdx;
          today = startIdx - 1;
-         prevHigh = inHigh[today];
-         prevLow = inLow[today];
-         prevClose = inClose[today];
+         prevHigh = (double)inHigh[today];
+         prevLow = (double)inLow[today];
+         prevClose = (double)inClose[today];
          while( today < endIdx ) {
             today += 1;
-            tempReal = inHigh[today];
+            tempReal = (double)inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = inLow[today];
+            tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
@@ -806,7 +806,7 @@
             } else {
                outReal[outIdx++] = (double)0.0;
             }
-            prevClose = inClose[today];
+            prevClose = (double)inClose[today];
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
@@ -816,16 +816,16 @@
       prevMinusDM = 0.0;
       prevTR = 0.0;
       today = startIdx - lookbackTotal;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
-      prevClose = inClose[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
+      prevClose = (double)inClose[today];
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -844,15 +844,15 @@
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR += tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
       }
       i = this.unstablePeriod[FuncUnstId.MinusDI.ordinal()] + 1;
       while( i-- != 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -873,7 +873,7 @@
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
       }
       if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
          outReal[0] = (100.0 * (prevMinusDM / prevTR));
@@ -883,10 +883,10 @@
       outIdx = 1;
       while( today < endIdx ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -907,7 +907,7 @@
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-         prevClose = inClose[today];
+         prevClose = (double)inClose[today];
          if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
             outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
          } else {

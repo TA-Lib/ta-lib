@@ -331,10 +331,10 @@
       one_minus_fastk = 1.0 - fastk;
       slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
       one_minus_slowk = 1.0 - slowk;
-      high = inHigh[today];
-      low = inLow[today];
+      high = (double)inHigh[today];
+      low = (double)inLow[today];
       tmp = high - low;
-      close = inClose[today];
+      close = (double)inClose[today];
       if( tmp > 0.0 ) {
          ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
       }
@@ -342,10 +342,10 @@
       fastEMA = ad;
       slowEMA = ad;
       while( today < startIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
+         high = (double)inHigh[today];
+         low = (double)inLow[today];
          tmp = high - low;
-         close = inClose[today];
+         close = (double)inClose[today];
          if( tmp > 0.0 ) {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
@@ -355,10 +355,10 @@
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
+         high = (double)inHigh[today];
+         low = (double)inLow[today];
          tmp = high - low;
-         close = inClose[today];
+         close = (double)inClose[today];
          if( tmp > 0.0 ) {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
@@ -418,10 +418,10 @@
       one_minus_fastk = 1.0 - fastk;
       slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
       one_minus_slowk = 1.0 - slowk;
-      high = inHigh[today];
-      low = inLow[today];
+      high = (double)inHigh[today];
+      low = (double)inLow[today];
       tmp = high - low;
-      close = inClose[today];
+      close = (double)inClose[today];
       if( tmp > 0.0 ) {
          ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
       }
@@ -429,10 +429,10 @@
       fastEMA = ad;
       slowEMA = ad;
       while( today < startIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
+         high = (double)inHigh[today];
+         low = (double)inLow[today];
          tmp = high - low;
-         close = inClose[today];
+         close = (double)inClose[today];
          if( tmp > 0.0 ) {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
@@ -442,10 +442,10 @@
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
+         high = (double)inHigh[today];
+         low = (double)inLow[today];
          tmp = high - low;
-         close = inClose[today];
+         close = (double)inClose[today];
          if( tmp > 0.0 ) {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }

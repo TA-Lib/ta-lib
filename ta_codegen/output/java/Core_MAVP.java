@@ -301,7 +301,7 @@
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
       for( i = 0; i < outputSize; i += 1 ) {
-         tempInt = (int)inPeriods[startIdx + i];
+         tempInt = (int)(double)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
             tempInt = optInMinPeriod;
          } else if( tempInt > optInMaxPeriod ) {
@@ -381,7 +381,7 @@
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
       for( i = 0; i < outputSize; i += 1 ) {
-         tempInt = (int)inPeriods[startIdx + i];
+         tempInt = (int)(double)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
             tempInt = optInMinPeriod;
          } else if( tempInt > optInMaxPeriod ) {

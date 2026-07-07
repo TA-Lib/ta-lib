@@ -130,7 +130,7 @@ TA_RetCode TA_S_SINH( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = sinh(inReal[i]);
+      outReal[outIdx] = sinh((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_SINH_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = sinh(inReal[i]);
+      outReal[outIdx] = sinh((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

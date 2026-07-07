@@ -1335,7 +1335,20 @@ impl ExprEmitter for CExpr<'_> {
     }
 
     fn array_access(&self, name: &str, idx: &Expr) -> String {
-        format!("{}[{}]", name, self.walk(idx))
+        let access = format!("{}[{}]", name, self.walk(idx));
+        // Single-precision (TA_S_) variants take `const float` inputs but compute
+        // and store in `double`. Widen each float input element as it is read so
+        // the arithmetic runs in double: otherwise two float inputs combined
+        // directly (e.g. TA_S_MULT's inReal0[i]*inReal1[i], or the price-average
+        // sums in TA_S_MEDPRICE/TYPPRICE) round — and can overflow to inf — in
+        // float before the result is widened. Reported as PR #33 (@iglesias).
+        // The cast is emitted only for float inputs in the single-precision
+        // variant; the double variant is byte-for-byte unchanged.
+        if self.ctx.single_precision && is_input_param_name(name) {
+            format!("(double){access}")
+        } else {
+            access
+        }
     }
 
     fn binop(&self, left: &Expr, op: &BinOp, right: &Expr) -> String {
@@ -1379,6 +1392,16 @@ impl ExprEmitter for CExpr<'_> {
 
     fn cast(&self, var_type: &VarType, inner: &Expr) -> String {
         let c_type = c_type_name(var_type);
+        // In single-precision variants `array_access` already widens a float input
+        // element read to double. Drop a redundant source-level `(double)` around
+        // such a read so we emit `(double)inX[i]`, not `(double)(double)inX[i]`.
+        if self.ctx.single_precision && matches!(var_type, VarType::Real) {
+            if let Expr::ArrayAccess(name, _) = inner {
+                if is_input_param_name(name) {
+                    return self.walk(inner);
+                }
+            }
+        }
         // A cast binds as a prefix-unary operator; only wrap a looser-binding
         // operand (a binary op or ternary).
         let s = self.walk(inner);
@@ -1404,6 +1427,12 @@ impl ExprEmitter for CExpr<'_> {
     }
 
     fn address_of(&self, inner: &Expr) -> String {
+        // `&arr[i]` needs an lvalue. In single-precision variants `array_access`
+        // would widen an input read to `(double)inX[i]` (an rvalue), so taking its
+        // address is ill-formed — emit the raw element access here instead.
+        if let Expr::ArrayAccess(name, idx) = inner {
+            return format!("&{}[{}]", name, self.walk(idx));
+        }
         format!("&{}", self.walk(inner))
     }
 

@@ -683,17 +683,17 @@ TA_RetCode TA_S_DX( int    startIdx,
    prevPlusDM = 0.0;
    prevTR = 0.0;
    today = startIdx - lookbackTotal;
-   prevHigh = inHigh[today];
-   prevLow = inLow[today];
-   prevClose = inClose[today];
+   prevHigh = (double)inHigh[today];
+   prevLow = (double)inLow[today];
+   prevClose = (double)inClose[today];
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffM > 0 && diffP < diffM )
@@ -718,16 +718,16 @@ TA_RetCode TA_S_DX( int    startIdx,
       _true_range_0 = range_0;
       tempReal = _true_range_0;
       prevTR += tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
    }
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_DX,Dx) + 1;
    while( i-- != 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM / optInTimePeriod;
@@ -754,7 +754,7 @@ TA_RetCode TA_S_DX( int    startIdx,
       _true_range_1 = range_1;
       tempReal = _true_range_1;
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
    }
    if( !TA_IS_ZERO(prevTR) )
    {
@@ -776,10 +776,10 @@ TA_RetCode TA_S_DX( int    startIdx,
    while( today < endIdx )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM / optInTimePeriod;
@@ -806,7 +806,7 @@ TA_RetCode TA_S_DX( int    startIdx,
       _true_range_2 = range_2;
       tempReal = _true_range_2;
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
       if( !TA_IS_ZERO(prevTR) )
       {
          minusDI = (100.0 * (prevMinusDM / prevTR));
@@ -880,17 +880,17 @@ TA_RetCode TA_S_DX_Unguarded( int    startIdx,
    prevPlusDM = 0.0;
    prevTR = 0.0;
    today = startIdx - lookbackTotal;
-   prevHigh = inHigh[today];
-   prevLow = inLow[today];
-   prevClose = inClose[today];
+   prevHigh = (double)inHigh[today];
+   prevLow = (double)inLow[today];
+   prevClose = (double)inClose[today];
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffM > 0 && diffP < diffM )
@@ -915,16 +915,16 @@ TA_RetCode TA_S_DX_Unguarded( int    startIdx,
       _true_range_0 = range_0;
       tempReal = _true_range_0;
       prevTR += tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
    }
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_DX,Dx) + 1;
    while( i-- != 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM / optInTimePeriod;
@@ -951,7 +951,7 @@ TA_RetCode TA_S_DX_Unguarded( int    startIdx,
       _true_range_1 = range_1;
       tempReal = _true_range_1;
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
    }
    if( !TA_IS_ZERO(prevTR) )
    {
@@ -973,10 +973,10 @@ TA_RetCode TA_S_DX_Unguarded( int    startIdx,
    while( today < endIdx )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM / optInTimePeriod;
@@ -1003,7 +1003,7 @@ TA_RetCode TA_S_DX_Unguarded( int    startIdx,
       _true_range_2 = range_2;
       tempReal = _true_range_2;
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
-      prevClose = inClose[today];
+      prevClose = (double)inClose[today];
       if( !TA_IS_ZERO(prevTR) )
       {
          minusDI = (100.0 * (prevMinusDM / prevTR));

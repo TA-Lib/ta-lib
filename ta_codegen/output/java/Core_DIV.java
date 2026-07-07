@@ -73,7 +73,7 @@
          return RetCode.OutOfRangeEndIndex ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = inReal0[i] / inReal1[i];
+         outReal[outIdx] = (double)inReal0[i] / (double)inReal1[i];
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -90,7 +90,7 @@
       int outIdx = 0;
       int i = 0;
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = inReal0[i] / inReal1[i];
+         outReal[outIdx] = (double)inReal0[i] / (double)inReal1[i];
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;

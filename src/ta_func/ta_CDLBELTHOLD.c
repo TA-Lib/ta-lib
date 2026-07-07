@@ -318,9 +318,9 @@ TA_RetCode TA_S_CDLBELTHOLD( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -390,9 +390,9 @@ TA_RetCode TA_S_CDLBELTHOLD_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;

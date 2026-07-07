@@ -382,7 +382,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
    {
       while( i < startIdx )
       {
-         circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+         circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
          i += 1;
          circBuffer_Idx++;
          if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
@@ -391,7 +391,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
    outIdx = 0;
    do
    {
-      lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+      lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
       circBuffer[circBuffer_Idx] = lastValue;
       theAverage = 0;
       for( j = 0; j < optInTimePeriod; j += 1 )
@@ -476,7 +476,7 @@ TA_RetCode TA_S_CCI_Unguarded( int    startIdx,
    {
       while( i < startIdx )
       {
-         circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+         circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
          i += 1;
          circBuffer_Idx++;
          if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
@@ -485,7 +485,7 @@ TA_RetCode TA_S_CCI_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+      lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
       circBuffer[circBuffer_Idx] = lastValue;
       theAverage = 0;
       for( j = 0; j < optInTimePeriod; j += 1 )

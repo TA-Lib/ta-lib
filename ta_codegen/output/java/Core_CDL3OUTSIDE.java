@@ -149,8 +149,8 @@
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] < (double)inClose[i - 2] && (double)inClose[i] > (double)inClose[i - 1] || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (double)inOpen[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 1] < (double)inOpen[i - 2] && (double)inClose[i] < (double)inClose[i - 1] ) {
+            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
@@ -185,8 +185,8 @@
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] < (double)inClose[i - 2] && (double)inClose[i] > (double)inClose[i - 1] || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (double)inOpen[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 1] < (double)inOpen[i - 2] && (double)inClose[i] < (double)inClose[i - 1] ) {
+            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }

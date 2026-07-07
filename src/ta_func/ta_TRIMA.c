@@ -540,7 +540,7 @@ TA_RetCode TA_S_TRIMA( int    startIdx,
       numeratorSub = 0.0;
       for( i = middleIdx; i >= trailingIdx; i -= 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorSub += tempReal;
          numerator += numeratorSub;
       }
@@ -548,26 +548,26 @@ TA_RetCode TA_S_TRIMA( int    startIdx,
       middleIdx += 1;
       for( i = middleIdx; i <= todayIdx; i += 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorAdd += tempReal;
          numerator += numeratorAdd;
       }
       outIdx = 0;
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx += 1;
       while( todayIdx <= endIdx )
       {
          numerator -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal = inReal[middleIdx++];
+         tempReal = (double)inReal[middleIdx++];
          numeratorSub += tempReal;
          numerator += numeratorAdd;
          numeratorAdd -= tempReal;
-         tempReal = inReal[todayIdx++];
+         tempReal = (double)inReal[todayIdx++];
          numeratorAdd += tempReal;
          numerator += tempReal;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
    } else 
@@ -582,7 +582,7 @@ TA_RetCode TA_S_TRIMA( int    startIdx,
       numeratorSub = 0.0;
       for( i = middleIdx; i >= trailingIdx; i -= 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorSub += tempReal;
          numerator += numeratorSub;
       }
@@ -590,26 +590,26 @@ TA_RetCode TA_S_TRIMA( int    startIdx,
       middleIdx += 1;
       for( i = middleIdx; i <= todayIdx; i += 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorAdd += tempReal;
          numerator += numeratorAdd;
       }
       outIdx = 0;
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx += 1;
       while( todayIdx <= endIdx )
       {
          numerator -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal = inReal[middleIdx++];
+         tempReal = (double)inReal[middleIdx++];
          numeratorSub += tempReal;
          numeratorAdd -= tempReal;
          numerator += numeratorAdd;
-         tempReal = inReal[todayIdx++];
+         tempReal = (double)inReal[todayIdx++];
          numeratorAdd += tempReal;
          numerator += tempReal;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
    }
@@ -662,7 +662,7 @@ TA_RetCode TA_S_TRIMA_Unguarded( int    startIdx,
       numeratorSub = 0.0;
       for( i = middleIdx; i >= trailingIdx; i -= 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorSub += tempReal;
          numerator += numeratorSub;
       }
@@ -670,26 +670,26 @@ TA_RetCode TA_S_TRIMA_Unguarded( int    startIdx,
       middleIdx += 1;
       for( i = middleIdx; i <= todayIdx; i += 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorAdd += tempReal;
          numerator += numeratorAdd;
       }
       outIdx = 0;
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx += 1;
       while( todayIdx <= endIdx )
       {
          numerator -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal = inReal[middleIdx++];
+         tempReal = (double)inReal[middleIdx++];
          numeratorSub += tempReal;
          numerator += numeratorAdd;
          numeratorAdd -= tempReal;
-         tempReal = inReal[todayIdx++];
+         tempReal = (double)inReal[todayIdx++];
          numeratorAdd += tempReal;
          numerator += tempReal;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
    } else 
@@ -704,7 +704,7 @@ TA_RetCode TA_S_TRIMA_Unguarded( int    startIdx,
       numeratorSub = 0.0;
       for( i = middleIdx; i >= trailingIdx; i -= 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorSub += tempReal;
          numerator += numeratorSub;
       }
@@ -712,26 +712,26 @@ TA_RetCode TA_S_TRIMA_Unguarded( int    startIdx,
       middleIdx += 1;
       for( i = middleIdx; i <= todayIdx; i += 1 )
       {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          numeratorAdd += tempReal;
          numerator += numeratorAdd;
       }
       outIdx = 0;
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx += 1;
       while( todayIdx <= endIdx )
       {
          numerator -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal = inReal[middleIdx++];
+         tempReal = (double)inReal[middleIdx++];
          numeratorSub += tempReal;
          numeratorAdd -= tempReal;
          numerator += numeratorAdd;
-         tempReal = inReal[todayIdx++];
+         tempReal = (double)inReal[todayIdx++];
          numeratorAdd += tempReal;
          numerator += tempReal;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
    }

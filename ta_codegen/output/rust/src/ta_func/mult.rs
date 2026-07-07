@@ -144,7 +144,7 @@ impl Core {
         outIdx = 0;
         i = startIdx;
         while i <= endIdx {
-            outReal[outIdx] = (inReal0[i] * inReal1[i]) as f64;
+            outReal[outIdx] = ((inReal0[i] * inReal1[i]) as f64);
             outIdx += 1;
             i += 1;
         }
@@ -179,7 +179,7 @@ impl Core {
         outIdx = 0;
         i = startIdx;
         while i <= endIdx {
-            outReal[outIdx] = (inReal0[i] * inReal1[i]) as f64;
+            outReal[outIdx] = ((inReal0[i] * inReal1[i]) as f64);
             outIdx += 1;
             i += 1;
         }

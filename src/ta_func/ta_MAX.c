@@ -274,15 +274,15 @@ TA_RetCode TA_S_MAX( int    startIdx,
    highest = 0.0;
    while( today <= endIdx )
    {
-      tmp = inReal[today];
+      tmp = (double)inReal[today];
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
+         highest = (double)inReal[highestIdx];
          i = highestIdx;
          while( ++i <= today )
          {
-            tmp = inReal[i];
+            tmp = (double)inReal[i];
             if( tmp > highest )
             {
                highestIdx = i;
@@ -338,15 +338,15 @@ TA_RetCode TA_S_MAX_Unguarded( int    startIdx,
    highest = 0.0;
    while( today <= endIdx )
    {
-      tmp = inReal[today];
+      tmp = (double)inReal[today];
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
+         highest = (double)inReal[highestIdx];
          i = highestIdx;
          while( ++i <= today )
          {
-            tmp = inReal[i];
+            tmp = (double)inReal[i];
             if( tmp > highest )
             {
                highestIdx = i;

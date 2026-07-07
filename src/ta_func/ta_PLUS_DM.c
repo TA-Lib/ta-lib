@@ -493,15 +493,15 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    {
       *outBegIdx= startIdx;
       today = startIdx - 1;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
       while( today < endIdx )
       {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffP > 0 && diffP > diffM )
@@ -518,16 +518,16 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    *outBegIdx= startIdx;
    prevPlusDM = 0.0;
    today = startIdx - lookbackTotal;
-   prevHigh = inHigh[today];
-   prevLow = inLow[today];
+   prevHigh = (double)inHigh[today];
+   prevLow = (double)inLow[today];
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
@@ -539,10 +539,10 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    while( i-- != 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
@@ -558,10 +558,10 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    while( today < endIdx )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
@@ -619,15 +619,15 @@ TA_RetCode TA_S_PLUS_DM_Unguarded( int    startIdx,
    {
       *outBegIdx= startIdx;
       today = startIdx - 1;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
       while( today < endIdx )
       {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffP > 0 && diffP > diffM )
@@ -644,16 +644,16 @@ TA_RetCode TA_S_PLUS_DM_Unguarded( int    startIdx,
    *outBegIdx= startIdx;
    prevPlusDM = 0.0;
    today = startIdx - lookbackTotal;
-   prevHigh = inHigh[today];
-   prevLow = inLow[today];
+   prevHigh = (double)inHigh[today];
+   prevLow = (double)inLow[today];
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
@@ -665,10 +665,10 @@ TA_RetCode TA_S_PLUS_DM_Unguarded( int    startIdx,
    while( i-- != 0 )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
@@ -684,10 +684,10 @@ TA_RetCode TA_S_PLUS_DM_Unguarded( int    startIdx,
    while( today < endIdx )
    {
       today += 1;
-      tempReal = inHigh[today];
+      tempReal = (double)inHigh[today];
       diffP = tempReal - prevHigh;
       prevHigh = tempReal;
-      tempReal = inLow[today];
+      tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )

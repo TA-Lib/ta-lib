@@ -238,15 +238,15 @@ TA_RetCode TA_S_SUM( int    startIdx,
    {
       while( i < startIdx )
       {
-         periodTotal += inReal[i++];
+         periodTotal += (double)inReal[i++];
       }
    }
    outIdx = 0;
    do
    {
-      periodTotal += inReal[i++];
+      periodTotal += (double)inReal[i++];
       tempReal = periodTotal;
-      periodTotal -= inReal[trailingIdx++];
+      periodTotal -= (double)inReal[trailingIdx++];
       outReal[outIdx++] = tempReal;
    } while( i <= endIdx );
    *outNBElement= outIdx;
@@ -287,15 +287,15 @@ TA_RetCode TA_S_SUM_Unguarded( int    startIdx,
    {
       while( i < startIdx )
       {
-         periodTotal += inReal[i++];
+         periodTotal += (double)inReal[i++];
       }
    }
    outIdx = 0;
    do
    {
-      periodTotal += inReal[i++];
+      periodTotal += (double)inReal[i++];
       tempReal = periodTotal;
-      periodTotal -= inReal[trailingIdx++];
+      periodTotal -= (double)inReal[trailingIdx++];
       outReal[outIdx++] = tempReal;
    } while( i <= endIdx );
    *outNBElement= outIdx;

@@ -405,7 +405,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    localPeriodArray = malloc(outputSize * sizeof(int));
    for( i = 0; i < outputSize; i += 1 )
    {
-      tempInt = (int)inPeriods[startIdx + i];
+      tempInt = (int)(double)inPeriods[startIdx + i];
       if( tempInt < optInMinPeriod )
       {
          tempInt = optInMinPeriod;
@@ -505,7 +505,7 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    localPeriodArray = malloc(outputSize * sizeof(int));
    for( i = 0; i < outputSize; i += 1 )
    {
-      tempInt = (int)inPeriods[startIdx + i];
+      tempInt = (int)(double)inPeriods[startIdx + i];
       if( tempInt < optInMinPeriod )
       {
          tempInt = optInMinPeriod;

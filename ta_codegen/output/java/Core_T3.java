@@ -388,7 +388,7 @@
          outIdx = 0;
          today = startIdx;
          while( today <= endIdx ) {
-            outReal[outIdx++] = inReal[today++];
+            outReal[outIdx++] = (double)inReal[today++];
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
@@ -397,27 +397,27 @@
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);
       one_minus_k = 1.0 - k;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          tempReal += e3;
@@ -425,7 +425,7 @@
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -434,7 +434,7 @@
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -443,7 +443,7 @@
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -458,7 +458,7 @@
       outIdx = 0;
       outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -509,7 +509,7 @@
          outIdx = 0;
          today = startIdx;
          while( today <= endIdx ) {
-            outReal[outIdx++] = inReal[today++];
+            outReal[outIdx++] = (double)inReal[today++];
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
@@ -518,27 +518,27 @@
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);
       one_minus_k = 1.0 - k;
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          tempReal += e3;
@@ -546,7 +546,7 @@
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -555,7 +555,7 @@
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -564,7 +564,7 @@
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;
@@ -579,7 +579,7 @@
       outIdx = 0;
       outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = k * (double)inReal[today++] + one_minus_k * e1;
          e2 = k * e1 + one_minus_k * e2;
          e3 = k * e2 + one_minus_k * e3;
          e4 = k * e3 + one_minus_k * e4;

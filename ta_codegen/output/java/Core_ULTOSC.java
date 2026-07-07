@@ -618,11 +618,11 @@
       a1Total = 0;
       b1Total = 0;
       for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -638,11 +638,11 @@
       a2Total = 0;
       b2Total = 0;
       for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -658,11 +658,11 @@
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -681,11 +681,11 @@
       trailingIdx2 = today - optInTimePeriod2 + 1;
       trailingIdx3 = today - optInTimePeriod3 + 1;
       while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[today] - trueLow;
+         closeMinusTrueLow = (double)inClose[today] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -711,11 +711,11 @@
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
+         tempLT = (double)inLow[trailingIdx1];
+         tempHT = (double)inHigh[trailingIdx1];
+         tempCY = (double)inClose[trailingIdx1 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -727,11 +727,11 @@
          }
          a1Total -= closeMinusTrueLow;
          b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
+         tempLT = (double)inLow[trailingIdx2];
+         tempHT = (double)inHigh[trailingIdx2];
+         tempCY = (double)inClose[trailingIdx2 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -743,11 +743,11 @@
          }
          a2Total -= closeMinusTrueLow;
          b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
+         tempLT = (double)inLow[trailingIdx3];
+         tempHT = (double)inHigh[trailingIdx3];
+         tempCY = (double)inClose[trailingIdx3 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -842,11 +842,11 @@
       a1Total = 0;
       b1Total = 0;
       for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -862,11 +862,11 @@
       a2Total = 0;
       b2Total = 0;
       for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -882,11 +882,11 @@
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
+         closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -905,11 +905,11 @@
       trailingIdx2 = today - optInTimePeriod2 + 1;
       trailingIdx3 = today - optInTimePeriod3 + 1;
       while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[today] - trueLow;
+         closeMinusTrueLow = (double)inClose[today] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -935,11 +935,11 @@
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
+         tempLT = (double)inLow[trailingIdx1];
+         tempHT = (double)inHigh[trailingIdx1];
+         tempCY = (double)inClose[trailingIdx1 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -951,11 +951,11 @@
          }
          a1Total -= closeMinusTrueLow;
          b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
+         tempLT = (double)inLow[trailingIdx2];
+         tempHT = (double)inHigh[trailingIdx2];
+         tempCY = (double)inClose[trailingIdx2 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {
@@ -967,11 +967,11 @@
          }
          a2Total -= closeMinusTrueLow;
          b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
+         tempLT = (double)inLow[trailingIdx3];
+         tempHT = (double)inHigh[trailingIdx3];
+         tempCY = (double)inClose[trailingIdx3 - 1];
          trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
+         closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.abs(tempCY - tempHT);
          if( tempDouble > trueRange ) {

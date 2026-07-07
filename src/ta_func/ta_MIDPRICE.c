@@ -409,17 +409,17 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
    {
       while( today <= endIdx )
       {
-         lowest = inLow[trailingIdx];
-         highest = inHigh[trailingIdx];
+         lowest = (double)inLow[trailingIdx];
+         highest = (double)inHigh[trailingIdx];
          trailingIdx += 1;
          for( i = trailingIdx; i <= today; i += 1 )
          {
-            tmpLow = inLow[i];
+            tmpLow = (double)inLow[i];
             if( tmpLow < lowest )
             {
                lowest = tmpLow;
             }
-            tmpHigh = inHigh[i];
+            tmpHigh = (double)inHigh[i];
             if( tmpHigh > highest )
             {
                highest = tmpHigh;
@@ -436,16 +436,16 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
       lowest = 0.0;
       while( today <= endIdx )
       {
-         tmpHigh = inHigh[today];
-         tmpLow = inLow[today];
+         tmpHigh = (double)inHigh[today];
+         tmpLow = (double)inLow[today];
          if( highestIdx < trailingIdx )
          {
             highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
+            highest = (double)inHigh[highestIdx];
             i = highestIdx;
             while( ++i <= today )
             {
-               tmpHigh = inHigh[i];
+               tmpHigh = (double)inHigh[i];
                if( tmpHigh > highest )
                {
                   highestIdx = i;
@@ -460,11 +460,11 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
          if( lowestIdx < trailingIdx )
          {
             lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
+            lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
             while( ++i <= today )
             {
-               tmpLow = inLow[i];
+               tmpLow = (double)inLow[i];
                if( tmpLow < lowest )
                {
                   lowestIdx = i;
@@ -525,17 +525,17 @@ TA_RetCode TA_S_MIDPRICE_Unguarded( int    startIdx,
    {
       while( today <= endIdx )
       {
-         lowest = inLow[trailingIdx];
-         highest = inHigh[trailingIdx];
+         lowest = (double)inLow[trailingIdx];
+         highest = (double)inHigh[trailingIdx];
          trailingIdx += 1;
          for( i = trailingIdx; i <= today; i += 1 )
          {
-            tmpLow = inLow[i];
+            tmpLow = (double)inLow[i];
             if( tmpLow < lowest )
             {
                lowest = tmpLow;
             }
-            tmpHigh = inHigh[i];
+            tmpHigh = (double)inHigh[i];
             if( tmpHigh > highest )
             {
                highest = tmpHigh;
@@ -552,16 +552,16 @@ TA_RetCode TA_S_MIDPRICE_Unguarded( int    startIdx,
       lowest = 0.0;
       while( today <= endIdx )
       {
-         tmpHigh = inHigh[today];
-         tmpLow = inLow[today];
+         tmpHigh = (double)inHigh[today];
+         tmpLow = (double)inLow[today];
          if( highestIdx < trailingIdx )
          {
             highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
+            highest = (double)inHigh[highestIdx];
             i = highestIdx;
             while( ++i <= today )
             {
-               tmpHigh = inHigh[i];
+               tmpHigh = (double)inHigh[i];
                if( tmpHigh > highest )
                {
                   highestIdx = i;
@@ -576,11 +576,11 @@ TA_RetCode TA_S_MIDPRICE_Unguarded( int    startIdx,
          if( lowestIdx < trailingIdx )
          {
             lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
+            lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
             while( ++i <= today )
             {
-               tmpLow = inLow[i];
+               tmpLow = (double)inLow[i];
                if( tmpLow < lowest )
                {
                   lowestIdx = i;

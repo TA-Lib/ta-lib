@@ -563,20 +563,20 @@ TA_RetCode TA_S_MACD( int    startIdx,
       i = optInSlowPeriod - optInFastPeriod;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevFast = 0.0;
       i = optInFastPeriod;
       while( i-- > 0 )
       {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
+         prevFast += (double)inReal[today];
+         tempReal += (double)inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
       prevFast = prevFast / optInFastPeriod;
       while( today <= startIdx - lookbackSignal )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       }
@@ -586,7 +586,7 @@ TA_RetCode TA_S_MACD( int    startIdx,
       i = optInSignalPeriod - 1;
       while( i-- > 0 )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;
@@ -595,12 +595,12 @@ TA_RetCode TA_S_MACD( int    startIdx,
       prevSignal = prevSignal / optInSignalPeriod;
    } else 
    {
-      prevFast = inReal[0];
-      prevSlow = inReal[0];
+      prevFast = (double)inReal[0];
+      prevSlow = (double)inReal[0];
       today = 1;
       while( today <= startIdx - lookbackSignal )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       }
@@ -609,7 +609,7 @@ TA_RetCode TA_S_MACD( int    startIdx,
    }
    while( today <= startIdx )
    {
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       prevFast = (tempReal - prevFast) * fastK + prevFast;
       prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       macdValue = prevFast - prevSlow;
@@ -621,7 +621,7 @@ TA_RetCode TA_S_MACD( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       prevFast = (tempReal - prevFast) * fastK + prevFast;
       prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       macdValue = prevFast - prevSlow;
@@ -706,20 +706,20 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       i = optInSlowPeriod - optInFastPeriod;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevFast = 0.0;
       i = optInFastPeriod;
       while( i-- > 0 )
       {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
+         prevFast += (double)inReal[today];
+         tempReal += (double)inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
       prevFast = prevFast / optInFastPeriod;
       while( today <= startIdx - lookbackSignal )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       }
@@ -729,7 +729,7 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       i = optInSignalPeriod - 1;
       while( i-- > 0 )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;
@@ -738,12 +738,12 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       prevSignal = prevSignal / optInSignalPeriod;
    } else 
    {
-      prevFast = inReal[0];
-      prevSlow = inReal[0];
+      prevFast = (double)inReal[0];
+      prevSlow = (double)inReal[0];
       today = 1;
       while( today <= startIdx - lookbackSignal )
       {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       }
@@ -752,7 +752,7 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
    }
    while( today <= startIdx )
    {
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       prevFast = (tempReal - prevFast) * fastK + prevFast;
       prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       macdValue = prevFast - prevSlow;
@@ -764,7 +764,7 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      tempReal = inReal[today++];
+      tempReal = (double)inReal[today++];
       prevFast = (tempReal - prevFast) * fastK + prevFast;
       prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
       macdValue = prevFast - prevSlow;

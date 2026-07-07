@@ -458,7 +458,7 @@ TA_RetCode TA_S_TEMA( int    startIdx,
       outIdx = 0;
       while( startIdx <= endIdx )
       {
-         outReal[outIdx++] = inReal[startIdx++];
+         outReal[outIdx++] = (double)inReal[startIdx++];
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
@@ -471,35 +471,35 @@ TA_RetCode TA_S_TEMA( int    startIdx,
       tempReal = 0.0;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA * 2 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
    } else 
    {
-      prevEMA1 = inReal[0];
+      prevEMA1 = (double)inReal[0];
       today = 1;
       while( today <= startIdx - lookbackEMA * 2 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       }
       prevEMA2 = prevEMA1;
    }
    while( today <= startIdx - lookbackEMA )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
    }
    if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
@@ -509,7 +509,7 @@ TA_RetCode TA_S_TEMA( int    startIdx,
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
          prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
          tempReal += prevEMA2;
       }
@@ -520,7 +520,7 @@ TA_RetCode TA_S_TEMA( int    startIdx,
    }
    while( today <= startIdx )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
       prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
    }
@@ -528,7 +528,7 @@ TA_RetCode TA_S_TEMA( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
       prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
       outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
@@ -575,7 +575,7 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
       outIdx = 0;
       while( startIdx <= endIdx )
       {
-         outReal[outIdx++] = inReal[startIdx++];
+         outReal[outIdx++] = (double)inReal[startIdx++];
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
@@ -588,35 +588,35 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
       tempReal = 0.0;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA * 2 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
    } else 
    {
-      prevEMA1 = inReal[0];
+      prevEMA1 = (double)inReal[0];
       today = 1;
       while( today <= startIdx - lookbackEMA * 2 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       }
       prevEMA2 = prevEMA1;
    }
    while( today <= startIdx - lookbackEMA )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
    }
    if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
@@ -626,7 +626,7 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
          prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
          tempReal += prevEMA2;
       }
@@ -637,7 +637,7 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
    }
    while( today <= startIdx )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
       prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
    }
@@ -645,7 +645,7 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
       prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
       prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
       outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);

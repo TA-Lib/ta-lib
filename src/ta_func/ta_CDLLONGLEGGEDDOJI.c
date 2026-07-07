@@ -318,7 +318,7 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -390,7 +390,7 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
       {
          outInteger[outIdx++] = 100;
       } else 

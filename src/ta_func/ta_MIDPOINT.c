@@ -342,16 +342,16 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmpHigh = inReal[today];
+      tmpHigh = (double)inReal[today];
       tmpLow = tmpHigh;
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
+         highest = (double)inReal[highestIdx];
          i = highestIdx;
          while( ++i <= today )
          {
-            tmpHigh = inReal[i];
+            tmpHigh = (double)inReal[i];
             if( tmpHigh > highest )
             {
                highestIdx = i;
@@ -366,11 +366,11 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
       if( lowestIdx < trailingIdx )
       {
          lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
+         lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
          while( ++i <= today )
          {
-            tmpLow = inReal[i];
+            tmpLow = (double)inReal[i];
             if( tmpLow < lowest )
             {
                lowestIdx = i;
@@ -431,16 +431,16 @@ TA_RetCode TA_S_MIDPOINT_Unguarded( int    startIdx,
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmpHigh = inReal[today];
+      tmpHigh = (double)inReal[today];
       tmpLow = tmpHigh;
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
+         highest = (double)inReal[highestIdx];
          i = highestIdx;
          while( ++i <= today )
          {
-            tmpHigh = inReal[i];
+            tmpHigh = (double)inReal[i];
             if( tmpHigh > highest )
             {
                highestIdx = i;
@@ -455,11 +455,11 @@ TA_RetCode TA_S_MIDPOINT_Unguarded( int    startIdx,
       if( lowestIdx < trailingIdx )
       {
          lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
+         lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
          while( ++i <= today )
          {
-            tmpLow = inReal[i];
+            tmpLow = (double)inReal[i];
             if( tmpLow < lowest )
             {
                lowestIdx = i;

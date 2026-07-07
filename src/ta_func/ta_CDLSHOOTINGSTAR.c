@@ -370,7 +370,7 @@ TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((fmin(inOpen[i],inClose[i]) > fmax(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+      if( ((fmin((double)inOpen[i],(double)inClose[i]) > fmax((double)inOpen[i - 1],(double)inClose[i - 1])) ? 1 : 0) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -457,7 +457,7 @@ TA_RetCode TA_S_CDLSHOOTINGSTAR_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((fmin(inOpen[i],inClose[i]) > fmax(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+      if( ((fmin((double)inOpen[i],(double)inClose[i]) > fmax((double)inOpen[i - 1],(double)inClose[i - 1])) ? 1 : 0) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 

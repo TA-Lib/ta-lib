@@ -249,9 +249,9 @@ TA_RetCode TA_S_TRANGE( int    startIdx,
    today = startIdx;
    while( today <= endIdx )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -303,9 +303,9 @@ TA_RetCode TA_S_TRANGE_Unguarded( int    startIdx,
    today = startIdx;
    while( today <= endIdx )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )

@@ -131,7 +131,7 @@ TA_RetCode TA_S_ATAN( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = atan(inReal[i]);
+      outReal[outIdx] = atan((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -150,7 +150,7 @@ TA_RetCode TA_S_ATAN_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = atan(inReal[i]);
+      outReal[outIdx] = atan((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

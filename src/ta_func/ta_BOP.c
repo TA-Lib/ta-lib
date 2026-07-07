@@ -173,13 +173,13 @@ TA_RetCode TA_S_BOP( int    startIdx,
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      tempReal = inHigh[i] - inLow[i];
+      tempReal = (double)inHigh[i] - (double)inLow[i];
       if( TA_IS_ZERO_OR_NEG(tempReal) )
       {
          outReal[outIdx++] = 0.0;
       } else 
       {
-         outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
+         outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
       }
    }
    *outNBElement= outIdx;
@@ -204,13 +204,13 @@ TA_RetCode TA_S_BOP_Unguarded( int    startIdx,
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      tempReal = inHigh[i] - inLow[i];
+      tempReal = (double)inHigh[i] - (double)inLow[i];
       if( TA_IS_ZERO_OR_NEG(tempReal) )
       {
          outReal[outIdx++] = 0.0;
       } else 
       {
-         outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
+         outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
       }
    }
    *outNBElement= outIdx;

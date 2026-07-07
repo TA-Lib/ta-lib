@@ -84,7 +84,7 @@
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -103,7 +103,7 @@
       int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;

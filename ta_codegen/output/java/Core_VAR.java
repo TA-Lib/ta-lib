@@ -223,7 +223,7 @@
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            tempReal = inReal[i++];
+            tempReal = (double)inReal[i++];
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
@@ -231,13 +231,13 @@
       }
       outIdx = 0;
       do {
-         tempReal = inReal[i++];
+         tempReal = (double)inReal[i++];
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
          meanValue1 = periodTotal1 / optInTimePeriod;
          meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
@@ -280,7 +280,7 @@
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            tempReal = inReal[i++];
+            tempReal = (double)inReal[i++];
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
@@ -288,13 +288,13 @@
       }
       outIdx = 0;
       do {
-         tempReal = inReal[i++];
+         tempReal = (double)inReal[i++];
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
          meanValue1 = periodTotal1 / optInTimePeriod;
          meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+         tempReal = (double)inReal[trailingIdx++];
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;

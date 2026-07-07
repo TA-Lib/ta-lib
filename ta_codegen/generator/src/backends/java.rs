@@ -1513,7 +1513,18 @@ impl ExprEmitter for JavaExpr<'_> {
     }
 
     fn array_access(&self, name: &str, idx: &Expr) -> String {
-        format!("{}[{}]", name, self.walk(idx))
+        let access = format!("{}[{}]", name, self.walk(idx));
+        // Single-precision variants take float[] inputs but compute and store in
+        // double. Java evaluates float*float in float, so combining two float
+        // inputs directly (e.g. the mult float[] overload's inReal0[i]*inReal1[i])
+        // rounds — and can overflow to Infinity — before the widening to double.
+        // Widen each float input element as it is read. Reported as PR #33
+        // (@iglesias). Double-input overloads are unchanged.
+        if self.ctx.single_precision && self.ctx.float_input_params.contains(name) {
+            format!("(double){access}")
+        } else {
+            access
+        }
     }
 
     fn binop(&self, left: &Expr, op: &BinOp, right: &Expr) -> String {
@@ -1561,6 +1572,16 @@ impl ExprEmitter for JavaExpr<'_> {
     }
 
     fn cast(&self, var_type: &VarType, inner: &Expr) -> String {
+        // In single-precision variants `array_access` already widens a float input
+        // element read to double. Drop a redundant source-level `(double)` around
+        // such a read so we emit `(double)inX[i]`, not `(double)(double)inX[i]`.
+        if self.ctx.single_precision && matches!(var_type, VarType::Real) {
+            if let Expr::ArrayAccess(name, _) = inner {
+                if self.ctx.float_input_params.contains(name) {
+                    return self.walk(inner);
+                }
+            }
+        }
         let java_type = match var_type {
             VarType::Real => "double",
             VarType::Integer | VarType::Index => "int",

@@ -395,14 +395,14 @@
       if( optInTimePeriod <= 1 ) {
          outBegIdx.value = startIdx;
          today = startIdx - 1;
-         prevHigh = inHigh[today];
-         prevLow = inLow[today];
+         prevHigh = (double)inHigh[today];
+         prevLow = (double)inLow[today];
          while( today < endIdx ) {
             today += 1;
-            tempReal = inHigh[today];
+            tempReal = (double)inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = inLow[today];
+            tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
@@ -417,15 +417,15 @@
       outBegIdx.value = startIdx;
       prevMinusDM = 0.0;
       today = startIdx - lookbackTotal;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -435,10 +435,10 @@
       i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
       while( i-- != 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -451,10 +451,10 @@
       outIdx = 1;
       while( today < endIdx ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -503,14 +503,14 @@
       if( optInTimePeriod <= 1 ) {
          outBegIdx.value = startIdx;
          today = startIdx - 1;
-         prevHigh = inHigh[today];
-         prevLow = inLow[today];
+         prevHigh = (double)inHigh[today];
+         prevLow = (double)inLow[today];
          while( today < endIdx ) {
             today += 1;
-            tempReal = inHigh[today];
+            tempReal = (double)inHigh[today];
             diffP = tempReal - prevHigh;
             prevHigh = tempReal;
-            tempReal = inLow[today];
+            tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
@@ -525,15 +525,15 @@
       outBegIdx.value = startIdx;
       prevMinusDM = 0.0;
       today = startIdx - lookbackTotal;
-      prevHigh = inHigh[today];
-      prevLow = inLow[today];
+      prevHigh = (double)inHigh[today];
+      prevLow = (double)inLow[today];
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -543,10 +543,10 @@
       i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
       while( i-- != 0 ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
@@ -559,10 +559,10 @@
       outIdx = 1;
       while( today < endIdx ) {
          today += 1;
-         tempReal = inHigh[today];
+         tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
          prevHigh = tempReal;
-         tempReal = inLow[today];
+         tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {

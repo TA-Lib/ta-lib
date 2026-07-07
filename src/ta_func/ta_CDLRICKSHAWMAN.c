@@ -368,7 +368,7 @@ TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (fmin(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && fmax(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (fmin((double)inOpen[i],(double)inClose[i]) <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && fmax((double)inOpen[i],(double)inClose[i]) >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -455,7 +455,7 @@ TA_RetCode TA_S_CDLRICKSHAWMAN_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (fmin(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && fmax(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && (fmin((double)inOpen[i],(double)inClose[i]) <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && fmax((double)inOpen[i],(double)inClose[i]) >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
       {
          outInteger[outIdx++] = 100;
       } else 

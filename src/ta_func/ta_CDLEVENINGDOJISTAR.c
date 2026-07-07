@@ -393,7 +393,7 @@ TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((fmin(inOpen[i - 1],inClose[i - 1]) > fmax(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((fmin((double)inOpen[i - 1],(double)inClose[i - 1]) > fmax((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] < (double)inClose[i - 2] - fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -482,7 +482,7 @@ TA_RetCode TA_S_CDLEVENINGDOJISTAR_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((fmin(inOpen[i - 1],inClose[i - 1]) > fmax(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((fmin((double)inOpen[i - 1],(double)inClose[i - 1]) > fmax((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] < (double)inClose[i - 2] - fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 

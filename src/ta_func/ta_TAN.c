@@ -130,7 +130,7 @@ TA_RetCode TA_S_TAN( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = tan(inReal[i]);
+      outReal[outIdx] = tan((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_TAN_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = tan(inReal[i]);
+      outReal[outIdx] = tan((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

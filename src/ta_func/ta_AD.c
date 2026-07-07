@@ -222,10 +222,10 @@ TA_RetCode TA_S_AD( int    startIdx,
    ad = 0.0;
    while( nbBar != 0 )
    {
-      high = inHigh[currentBar];
-      low = inLow[currentBar];
+      high = (double)inHigh[currentBar];
+      low = (double)inLow[currentBar];
       tmp = high - low;
-      close = inClose[currentBar];
+      close = (double)inClose[currentBar];
       if( tmp > 0.0 )
       {
          ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
@@ -264,10 +264,10 @@ TA_RetCode TA_S_AD_Unguarded( int    startIdx,
    ad = 0.0;
    while( nbBar != 0 )
    {
-      high = inHigh[currentBar];
-      low = inLow[currentBar];
+      high = (double)inHigh[currentBar];
+      low = (double)inLow[currentBar];
       tmp = high - low;
-      close = inClose[currentBar];
+      close = (double)inClose[currentBar];
       if( tmp > 0.0 )
       {
          ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];

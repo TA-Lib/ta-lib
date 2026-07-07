@@ -259,18 +259,18 @@
       inIdx = trailingIdx;
       i = 1;
       while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = (double)inReal[inIdx++];
          periodSub += tempReal;
          periodSum += tempReal * i;
          i += 1;
       }
       trailingValue = 0.0;
       while( inIdx <= endIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = (double)inReal[inIdx++];
          periodSub += tempReal;
          periodSub -= trailingValue;
          periodSum += tempReal * optInTimePeriod;
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = (double)inReal[trailingIdx++];
          outReal[outIdx++] = periodSum / divider;
          periodSum -= periodSub;
       }
@@ -319,18 +319,18 @@
       inIdx = trailingIdx;
       i = 1;
       while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = (double)inReal[inIdx++];
          periodSub += tempReal;
          periodSum += tempReal * i;
          i += 1;
       }
       trailingValue = 0.0;
       while( inIdx <= endIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = (double)inReal[inIdx++];
          periodSub += tempReal;
          periodSub -= trailingValue;
          periodSum += tempReal * optInTimePeriod;
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = (double)inReal[trailingIdx++];
          outReal[outIdx++] = periodSum / divider;
          periodSum -= periodSub;
       }

@@ -106,15 +106,15 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      prevOBV = inVolume[startIdx];
-      prevReal = inReal[startIdx];
+      prevOBV = (double)inVolume[startIdx];
+      prevReal = (double)inReal[startIdx];
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
+            prevOBV += (double)inVolume[i];
          } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
+            prevOBV -= (double)inVolume[i];
          }
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;
@@ -136,15 +136,15 @@
       double prevReal = 0;
       double tempReal = 0;
       double prevOBV = 0;
-      prevOBV = inVolume[startIdx];
-      prevReal = inReal[startIdx];
+      prevOBV = (double)inVolume[startIdx];
+      prevReal = (double)inReal[startIdx];
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inReal[i];
+         tempReal = (double)inReal[i];
          if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
+            prevOBV += (double)inVolume[i];
          } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
+            prevOBV -= (double)inVolume[i];
          }
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;

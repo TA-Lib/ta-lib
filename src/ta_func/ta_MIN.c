@@ -274,15 +274,15 @@ TA_RetCode TA_S_MIN( int    startIdx,
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmp = inReal[today];
+      tmp = (double)inReal[today];
       if( lowestIdx < trailingIdx )
       {
          lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
+         lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
          while( ++i <= today )
          {
-            tmp = inReal[i];
+            tmp = (double)inReal[i];
             if( tmp < lowest )
             {
                lowestIdx = i;
@@ -338,15 +338,15 @@ TA_RetCode TA_S_MIN_Unguarded( int    startIdx,
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmp = inReal[today];
+      tmp = (double)inReal[today];
       if( lowestIdx < trailingIdx )
       {
          lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
+         lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
          while( ++i <= today )
          {
-            tmp = inReal[i];
+            tmp = (double)inReal[i];
             if( tmp < lowest )
             {
                lowestIdx = i;

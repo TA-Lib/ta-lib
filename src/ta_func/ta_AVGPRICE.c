@@ -159,7 +159,7 @@ TA_RetCode TA_S_AVGPRICE( int    startIdx,
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4;
+      outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] + (double)inOpen[i]) / 4;
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -182,7 +182,7 @@ TA_RetCode TA_S_AVGPRICE_Unguarded( int    startIdx,
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4;
+      outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] + (double)inOpen[i]) / 4;
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

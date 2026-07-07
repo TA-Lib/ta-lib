@@ -70,7 +70,7 @@
          return RetCode.OutOfRangeEndIndex ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.sin(inReal[i]);
+         outReal[outIdx] = Math.sin((double)inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -86,7 +86,7 @@
       int outIdx = 0;
       int i = 0;
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.sin(inReal[i]);
+         outReal[outIdx] = Math.sin((double)inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;

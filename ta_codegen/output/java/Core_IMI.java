@@ -157,8 +157,8 @@
          double downsum = 0.0;
          int i;
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-            double close = inClose[i];
-            double open = inOpen[i];
+            double close = (double)inClose[i];
+            double open = (double)inOpen[i];
             if( close > open ) {
                upsum += close - open;
             } else {
@@ -199,8 +199,8 @@
          double downsum = 0.0;
          int i;
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-            double close = inClose[i];
-            double open = inOpen[i];
+            double close = (double)inClose[i];
+            double open = (double)inOpen[i];
             if( close > open ) {
                upsum += close - open;
             } else {

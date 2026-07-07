@@ -170,14 +170,14 @@
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            periodTotal += inReal[i++];
+            periodTotal += (double)inReal[i++];
          }
       }
       outIdx = 0;
       do {
-         periodTotal += inReal[i++];
+         periodTotal += (double)inReal[i++];
          tempReal = periodTotal;
-         periodTotal -= inReal[trailingIdx++];
+         periodTotal -= (double)inReal[trailingIdx++];
          outReal[outIdx++] = tempReal;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
@@ -212,14 +212,14 @@
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            periodTotal += inReal[i++];
+            periodTotal += (double)inReal[i++];
          }
       }
       outIdx = 0;
       do {
-         periodTotal += inReal[i++];
+         periodTotal += (double)inReal[i++];
          tempReal = periodTotal;
-         periodTotal -= inReal[trailingIdx++];
+         periodTotal -= (double)inReal[trailingIdx++];
          outReal[outIdx++] = tempReal;
       } while( i <= endIdx );
       outNBElement.value = outIdx;

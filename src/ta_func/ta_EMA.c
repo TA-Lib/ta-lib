@@ -199,23 +199,23 @@ TA_RetCode TA_S_EMA_Private( int    startIdx,
       tempReal = 0.0;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevMA = tempReal / optInTimePeriod;
    } else 
    {
-      prevMA = inReal[0];
+      prevMA = (double)inReal[0];
       today = 1;
    }
    while( today <= startIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
@@ -300,23 +300,23 @@ TA_RetCode TA_S_EMA_Unguarded( int    startIdx,
       tempReal = 0.0;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevMA = tempReal / optInTimePeriod;
    } else 
    {
-      prevMA = inReal[0];
+      prevMA = (double)inReal[0];
       today = 1;
    }
    while( today <= startIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
@@ -372,23 +372,23 @@ TA_RetCode TA_S_EMA( int    startIdx,
       tempReal = 0.0;
       while( i-- > 0 )
       {
-         tempReal += inReal[today++];
+         tempReal += (double)inReal[today++];
       }
       prevMA = tempReal / optInTimePeriod;
    } else 
    {
-      prevMA = inReal[0];
+      prevMA = (double)inReal[0];
       today = 1;
    }
    while( today <= startIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;

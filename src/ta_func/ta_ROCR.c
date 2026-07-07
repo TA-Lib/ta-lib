@@ -245,10 +245,10 @@ TA_RetCode TA_S_ROCR( int    startIdx,
    trailingIdx = startIdx - optInTimePeriod;
    while( inIdx <= endIdx )
    {
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       if( tempReal != 0.0 )
       {
-         outReal[outIdx++] = inReal[inIdx] / tempReal;
+         outReal[outIdx++] = (double)inReal[inIdx] / tempReal;
       } else 
       {
          outReal[outIdx++] = 0.0;
@@ -288,10 +288,10 @@ TA_RetCode TA_S_ROCR_Unguarded( int    startIdx,
    trailingIdx = startIdx - optInTimePeriod;
    while( inIdx <= endIdx )
    {
-      tempReal = inReal[trailingIdx++];
+      tempReal = (double)inReal[trailingIdx++];
       if( tempReal != 0.0 )
       {
-         outReal[outIdx++] = inReal[inIdx] / tempReal;
+         outReal[outIdx++] = (double)inReal[inIdx] / tempReal;
       } else 
       {
          outReal[outIdx++] = 0.0;

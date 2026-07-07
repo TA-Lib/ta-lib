@@ -260,7 +260,7 @@
       i = startIdx - lookbackTotal;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+            circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
             i += 1;
             circBuffer_Idx++;
             if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
@@ -268,7 +268,7 @@
       }
       outIdx = 0;
       do {
-         lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+         lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
          circBuffer[circBuffer_Idx] = lastValue;
          theAverage = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {
@@ -330,7 +330,7 @@
       i = startIdx - lookbackTotal;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+            circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
             i += 1;
             circBuffer_Idx++;
             if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
@@ -338,7 +338,7 @@
       }
       outIdx = 0;
       do {
-         lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+         lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
          circBuffer[circBuffer_Idx] = lastValue;
          theAverage = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {

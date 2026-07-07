@@ -199,13 +199,13 @@
       highestIdx = 0 - 1;
       highest = 0.0;
       while( today <= endIdx ) {
-         tmp = inReal[today];
+         tmp = (double)inReal[today];
          if( highestIdx < trailingIdx ) {
             highestIdx = trailingIdx;
-            highest = inReal[highestIdx];
+            highest = (double)inReal[highestIdx];
             i = highestIdx;
             while( ++i <= today ) {
-               tmp = inReal[i];
+               tmp = (double)inReal[i];
                if( tmp > highest ) {
                   highestIdx = i;
                   highest = tmp;
@@ -254,13 +254,13 @@
       highestIdx = 0 - 1;
       highest = 0.0;
       while( today <= endIdx ) {
-         tmp = inReal[today];
+         tmp = (double)inReal[today];
          if( highestIdx < trailingIdx ) {
             highestIdx = trailingIdx;
-            highest = inReal[highestIdx];
+            highest = (double)inReal[highestIdx];
             i = highestIdx;
             while( ++i <= today ) {
-               tmp = inReal[i];
+               tmp = (double)inReal[i];
                if( tmp > highest ) {
                   highestIdx = i;
                   highest = tmp;

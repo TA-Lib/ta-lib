@@ -579,6 +579,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
+   DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
 
    return TA_TEST_PASS; /* All tests succeeded. */

@@ -465,18 +465,18 @@
          tempReal = 0.0;
          i = optInSlowPeriod - optInFastPeriod;
          while( i-- > 0 ) {
-            tempReal += inReal[today++];
+            tempReal += (double)inReal[today++];
          }
          prevFast = 0.0;
          i = optInFastPeriod;
          while( i-- > 0 ) {
-            prevFast += inReal[today];
-            tempReal += inReal[today++];
+            prevFast += (double)inReal[today];
+            tempReal += (double)inReal[today++];
          }
          prevSlow = tempReal / optInSlowPeriod;
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          }
@@ -485,7 +485,7 @@
          prevSignal += macdValue;
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             macdValue = prevFast - prevSlow;
@@ -493,11 +493,11 @@
          }
          prevSignal = prevSignal / optInSignalPeriod;
       } else {
-         prevFast = inReal[0];
-         prevSlow = inReal[0];
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          }
@@ -505,7 +505,7 @@
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;
@@ -516,7 +516,7 @@
       outMACDHist[0] = macdValue - prevSignal;
       outIdx = 1;
       while( today <= endIdx ) {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;
@@ -590,18 +590,18 @@
          tempReal = 0.0;
          i = optInSlowPeriod - optInFastPeriod;
          while( i-- > 0 ) {
-            tempReal += inReal[today++];
+            tempReal += (double)inReal[today++];
          }
          prevFast = 0.0;
          i = optInFastPeriod;
          while( i-- > 0 ) {
-            prevFast += inReal[today];
-            tempReal += inReal[today++];
+            prevFast += (double)inReal[today];
+            tempReal += (double)inReal[today++];
          }
          prevSlow = tempReal / optInSlowPeriod;
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          }
@@ -610,7 +610,7 @@
          prevSignal += macdValue;
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
             macdValue = prevFast - prevSlow;
@@ -618,11 +618,11 @@
          }
          prevSignal = prevSignal / optInSignalPeriod;
       } else {
-         prevFast = inReal[0];
-         prevSlow = inReal[0];
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
-            tempReal = inReal[today++];
+            tempReal = (double)inReal[today++];
             prevFast = (tempReal - prevFast) * fastK + prevFast;
             prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          }
@@ -630,7 +630,7 @@
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;
@@ -641,7 +641,7 @@
       outMACDHist[0] = macdValue - prevSignal;
       outIdx = 1;
       while( today <= endIdx ) {
-         tempReal = inReal[today++];
+         tempReal = (double)inReal[today++];
          prevFast = (tempReal - prevFast) * fastK + prevFast;
          prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
          macdValue = prevFast - prevSlow;

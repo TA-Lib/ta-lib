@@ -272,9 +272,9 @@ TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) )
+      if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > fabs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > fabs((double)inClose[i] - (double)inOpen[i]) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -329,9 +329,9 @@ TA_RetCode TA_S_CDLSPINNINGTOP_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) )
+      if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > fabs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > fabs((double)inClose[i] - (double)inOpen[i]) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;

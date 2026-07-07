@@ -237,14 +237,14 @@
       tempBuffer1 = new double[(int)(bufferSize * 1)];
       tempBuffer2 = new double[(int)(bufferSize * 1)];
       for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
-         tempReal = inHigh[i] + inLow[i];
+         tempReal = (double)inHigh[i] + (double)inLow[i];
          if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-            tempBuffer2[j] = inLow[i] * (1 - tempReal);
+            tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+            tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
+            tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
          } else {
-            tempBuffer1[j] = inHigh[i];
-            tempBuffer2[j] = inLow[i];
+            tempBuffer1[j] = (double)inHigh[i];
+            tempBuffer2[j] = (double)inLow[i];
          }
       }
       retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);
@@ -306,14 +306,14 @@
       tempBuffer1 = new double[(int)(bufferSize * 1)];
       tempBuffer2 = new double[(int)(bufferSize * 1)];
       for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
-         tempReal = inHigh[i] + inLow[i];
+         tempReal = (double)inHigh[i] + (double)inLow[i];
          if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-            tempBuffer2[j] = inLow[i] * (1 - tempReal);
+            tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+            tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
+            tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
          } else {
-            tempBuffer1[j] = inHigh[i];
-            tempBuffer2[j] = inLow[i];
+            tempBuffer1[j] = (double)inHigh[i];
+            tempBuffer2[j] = (double)inLow[i];
          }
       }
       retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);

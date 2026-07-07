@@ -368,20 +368,20 @@
          return RetCode.Success ;
       }
       trailingIdx = startIdx - nbInitialElementNeeded;
-      trailing_last_price_x = inReal0[trailingIdx];
+      trailing_last_price_x = (double)inReal0[trailingIdx];
       last_price_x = trailing_last_price_x;
-      trailing_last_price_y = inReal1[trailingIdx];
+      trailing_last_price_y = (double)inReal1[trailingIdx];
       last_price_y = trailing_last_price_y;
       i = ++trailingIdx;
       while( i < startIdx ) {
-         tmp_real = inReal0[i];
+         tmp_real = (double)inReal0[i];
          if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - last_price_x) / last_price_x;
          } else {
             x = 0.0;
          }
          last_price_x = tmp_real;
-         tmp_real = inReal1[i++];
+         tmp_real = (double)inReal1[i++];
          if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - last_price_y) / last_price_y;
          } else {
@@ -396,14 +396,14 @@
       outIdx = 0;
       n = (double)optInTimePeriod;
       do {
-         tmp_real = inReal0[i];
+         tmp_real = (double)inReal0[i];
          if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - last_price_x) / last_price_x;
          } else {
             x = 0.0;
          }
          last_price_x = tmp_real;
-         tmp_real = inReal1[i++];
+         tmp_real = (double)inReal1[i++];
          if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - last_price_y) / last_price_y;
          } else {
@@ -414,14 +414,14 @@
          S_xy += x * y;
          S_x += x;
          S_y += y;
-         tmp_real = inReal0[trailingIdx];
+         tmp_real = (double)inReal0[trailingIdx];
          if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
          } else {
             x = 0.0;
          }
          trailing_last_price_x = tmp_real;
-         tmp_real = inReal1[trailingIdx++];
+         tmp_real = (double)inReal1[trailingIdx++];
          if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
          } else {
@@ -488,20 +488,20 @@
          return RetCode.Success ;
       }
       trailingIdx = startIdx - nbInitialElementNeeded;
-      trailing_last_price_x = inReal0[trailingIdx];
+      trailing_last_price_x = (double)inReal0[trailingIdx];
       last_price_x = trailing_last_price_x;
-      trailing_last_price_y = inReal1[trailingIdx];
+      trailing_last_price_y = (double)inReal1[trailingIdx];
       last_price_y = trailing_last_price_y;
       i = ++trailingIdx;
       while( i < startIdx ) {
-         tmp_real = inReal0[i];
+         tmp_real = (double)inReal0[i];
          if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - last_price_x) / last_price_x;
          } else {
             x = 0.0;
          }
          last_price_x = tmp_real;
-         tmp_real = inReal1[i++];
+         tmp_real = (double)inReal1[i++];
          if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - last_price_y) / last_price_y;
          } else {
@@ -516,14 +516,14 @@
       outIdx = 0;
       n = (double)optInTimePeriod;
       do {
-         tmp_real = inReal0[i];
+         tmp_real = (double)inReal0[i];
          if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - last_price_x) / last_price_x;
          } else {
             x = 0.0;
          }
          last_price_x = tmp_real;
-         tmp_real = inReal1[i++];
+         tmp_real = (double)inReal1[i++];
          if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - last_price_y) / last_price_y;
          } else {
@@ -534,14 +534,14 @@
          S_xy += x * y;
          S_x += x;
          S_y += y;
-         tmp_real = inReal0[trailingIdx];
+         tmp_real = (double)inReal0[trailingIdx];
          if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
          } else {
             x = 0.0;
          }
          trailing_last_price_x = tmp_real;
-         tmp_real = inReal1[trailingIdx++];
+         tmp_real = (double)inReal1[trailingIdx++];
          if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
          } else {

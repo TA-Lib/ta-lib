@@ -303,7 +303,7 @@ TA_RetCode TA_S_MA( int    startIdx,
       *outNBElement= nbElement;
       for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
       {
-         outReal[outIdx] = inReal[todayIdx];
+         outReal[outIdx] = (double)inReal[todayIdx];
       }
       *outBegIdx= startIdx;
       return TA_SUCCESS;
@@ -371,7 +371,7 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
       *outNBElement= nbElement;
       for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
       {
-         outReal[outIdx] = inReal[todayIdx];
+         outReal[outIdx] = (double)inReal[todayIdx];
       }
       *outBegIdx= startIdx;
       return TA_SUCCESS;

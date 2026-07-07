@@ -359,16 +359,16 @@ TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+      if( fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
       {
-         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+         if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
          {
-            if( fmax(inClose[i],inOpen[i]) < fmax(inClose[i - 1],inOpen[i - 1]) && fmin(inClose[i],inOpen[i]) > fmin(inClose[i - 1],inOpen[i - 1]) )
+            if( fmax((double)inClose[i],(double)inOpen[i]) < fmax((double)inClose[i - 1],(double)inOpen[i - 1]) && fmin((double)inClose[i],(double)inOpen[i]) > fmin((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
-            } else if( fmax(inClose[i],inOpen[i]) <= fmax(inClose[i - 1],inOpen[i - 1]) && fmin(inClose[i],inOpen[i]) >= fmin(inClose[i - 1],inOpen[i - 1]) )
+               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+            } else if( fmax((double)inClose[i],(double)inOpen[i]) <= fmax((double)inClose[i - 1],(double)inOpen[i - 1]) && fmin((double)inClose[i],(double)inOpen[i]) >= fmin((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
             } else 
             {
                outInteger[outIdx++] = 0;
@@ -447,16 +447,16 @@ TA_RetCode TA_S_CDLHARAMICROSS_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+      if( fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
       {
-         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+         if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
          {
-            if( fmax(inClose[i],inOpen[i]) < fmax(inClose[i - 1],inOpen[i - 1]) && fmin(inClose[i],inOpen[i]) > fmin(inClose[i - 1],inOpen[i - 1]) )
+            if( fmax((double)inClose[i],(double)inOpen[i]) < fmax((double)inClose[i - 1],(double)inOpen[i - 1]) && fmin((double)inClose[i],(double)inOpen[i]) > fmin((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
-            } else if( fmax(inClose[i],inOpen[i]) <= fmax(inClose[i - 1],inOpen[i - 1]) && fmin(inClose[i],inOpen[i]) >= fmin(inClose[i - 1],inOpen[i - 1]) )
+               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+            } else if( fmax((double)inClose[i],(double)inOpen[i]) <= fmax((double)inClose[i - 1],(double)inOpen[i - 1]) && fmin((double)inClose[i],(double)inOpen[i]) >= fmin((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
             } else 
             {
                outInteger[outIdx++] = 0;

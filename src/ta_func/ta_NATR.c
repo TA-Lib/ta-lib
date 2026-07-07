@@ -492,9 +492,9 @@ TA_RetCode TA_S_NATR( int    startIdx,
    i = optInTimePeriod;
    while( i-- > 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -513,9 +513,9 @@ TA_RetCode TA_S_NATR( int    startIdx,
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
    while( i != 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -534,7 +534,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       i -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[startIdx];
+   tempValue = (double)inClose[startIdx];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -545,9 +545,9 @@ TA_RetCode TA_S_NATR( int    startIdx,
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -562,7 +562,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = (double)inClose[today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;
@@ -623,9 +623,9 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
    i = optInTimePeriod;
    while( i-- > 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -644,9 +644,9 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
    while( i != 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -665,7 +665,7 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       i -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[startIdx];
+   tempValue = (double)inClose[startIdx];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -676,9 +676,9 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
       greatest = tempHT - tempLT;
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
@@ -693,7 +693,7 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = (double)inClose[today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;

@@ -97,11 +97,11 @@
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inHigh[i] - inLow[i];
+         tempReal = (double)inHigh[i] - (double)inLow[i];
          if( (tempReal < 0.00000000000001) ) {
             outReal[outIdx++] = 0.0;
          } else {
-            outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
+            outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
          }
       }
       outNBElement.value = outIdx;
@@ -123,11 +123,11 @@
       double tempReal = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inHigh[i] - inLow[i];
+         tempReal = (double)inHigh[i] - (double)inLow[i];
          if( (tempReal < 0.00000000000001) ) {
             outReal[outIdx++] = 0.0;
          } else {
-            outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
+            outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
          }
       }
       outNBElement.value = outIdx;

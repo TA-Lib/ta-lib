@@ -158,11 +158,11 @@
          int i;
          todaySum = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todaySum += inReal[today - i];
+            todaySum += (double)inReal[today - i];
          }
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.abs(inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += Math.abs((double)inReal[today - i] - todaySum / optInTimePeriod);
          }
          outReal[outIdx] = todayDev / optInTimePeriod;
          outIdx += 1;
@@ -200,11 +200,11 @@
          int i;
          todaySum = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todaySum += inReal[today - i];
+            todaySum += (double)inReal[today - i];
          }
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.abs(inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += Math.abs((double)inReal[today - i] - todaySum / optInTimePeriod);
          }
          outReal[outIdx] = todayDev / optInTimePeriod;
          outIdx += 1;

@@ -18,6 +18,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - Algo Optimisation: ATR and NATR compute the True Range inline (single pass, no temporary buffer), ~10-15% faster.
 
 ### Fixed
+- (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !
 - (#64) Website function list mixing up CDL3LINESTRIKE with CDL3OUTSIDE's description. Thanks @mw66 !
 - (#7) CCI returned a spurious value (~66.67) instead of 0.0 when all prices over the period were identical; the near-zero guard now uses an epsilon tolerance (TA_IS_ZERO) rather than an exact `!= 0.0` comparison. Thanks @trufanov-nok for identifying and resolving this!
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !

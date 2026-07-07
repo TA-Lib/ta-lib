@@ -130,7 +130,7 @@ TA_RetCode TA_S_CEIL( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = ceil(inReal[i]);
+      outReal[outIdx] = ceil((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_CEIL_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = ceil(inReal[i]);
+      outReal[outIdx] = ceil((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

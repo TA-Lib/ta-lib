@@ -272,7 +272,7 @@ TA_RetCode TA_S_CDLDOJI( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -329,7 +329,7 @@ TA_RetCode TA_S_CDLDOJI_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
       {
          outInteger[outIdx++] = 100;
       } else 

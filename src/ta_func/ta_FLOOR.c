@@ -130,7 +130,7 @@ TA_RetCode TA_S_FLOOR( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = floor(inReal[i]);
+      outReal[outIdx] = floor((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_FLOOR_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = floor(inReal[i]);
+      outReal[outIdx] = floor((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

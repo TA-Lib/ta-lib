@@ -467,7 +467,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       today = startIdx;
       while( today <= endIdx )
       {
-         outReal[outIdx++] = inReal[today++];
+         outReal[outIdx++] = (double)inReal[today++];
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
@@ -489,13 +489,13 @@ TA_RetCode TA_S_KAMA( int    startIdx,
    i = optInTimePeriod;
    while( i-- > 0 )
    {
-      tempReal = inReal[today++];
-      tempReal -= inReal[today];
+      tempReal = (double)inReal[today++];
+      tempReal -= (double)inReal[today];
       sumROC1 += fabs(tempReal);
    }
-   prevKAMA = inReal[today - 1];
-   tempReal = inReal[today];
-   tempReal2 = inReal[trailingIdx++];
+   prevKAMA = (double)inReal[today - 1];
+   tempReal = (double)inReal[today];
+   tempReal2 = (double)inReal[trailingIdx++];
    periodROC = tempReal - tempReal2;
    trailingValue = tempReal2;
    if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
@@ -507,14 +507,14 @@ TA_RetCode TA_S_KAMA( int    startIdx,
    }
    tempReal = tempReal * constDiff + constMax;
    tempReal *= tempReal;
-   prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+   prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
    while( today <= startIdx )
    {
-      tempReal = inReal[today];
-      tempReal2 = inReal[trailingIdx++];
+      tempReal = (double)inReal[today];
+      tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
-      sumROC1 += fabs(tempReal - inReal[today - 1]);
+      sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
       trailingValue = tempReal2;
       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
       {
@@ -525,18 +525,18 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       }
       tempReal = tempReal * constDiff + constMax;
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
    }
    outReal[0] = prevKAMA;
    outIdx = 1;
    *outBegIdx= today - 1;
    while( today <= endIdx )
    {
-      tempReal = inReal[today];
-      tempReal2 = inReal[trailingIdx++];
+      tempReal = (double)inReal[today];
+      tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
-      sumROC1 += fabs(tempReal - inReal[today - 1]);
+      sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
       trailingValue = tempReal2;
       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
       {
@@ -547,7 +547,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       }
       tempReal = tempReal * constDiff + constMax;
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
       outReal[outIdx++] = prevKAMA;
    }
    *outNBElement= outIdx;
@@ -596,7 +596,7 @@ TA_RetCode TA_S_KAMA_Unguarded( int    startIdx,
       today = startIdx;
       while( today <= endIdx )
       {
-         outReal[outIdx++] = inReal[today++];
+         outReal[outIdx++] = (double)inReal[today++];
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
@@ -618,13 +618,13 @@ TA_RetCode TA_S_KAMA_Unguarded( int    startIdx,
    i = optInTimePeriod;
    while( i-- > 0 )
    {
-      tempReal = inReal[today++];
-      tempReal -= inReal[today];
+      tempReal = (double)inReal[today++];
+      tempReal -= (double)inReal[today];
       sumROC1 += fabs(tempReal);
    }
-   prevKAMA = inReal[today - 1];
-   tempReal = inReal[today];
-   tempReal2 = inReal[trailingIdx++];
+   prevKAMA = (double)inReal[today - 1];
+   tempReal = (double)inReal[today];
+   tempReal2 = (double)inReal[trailingIdx++];
    periodROC = tempReal - tempReal2;
    trailingValue = tempReal2;
    if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
@@ -636,14 +636,14 @@ TA_RetCode TA_S_KAMA_Unguarded( int    startIdx,
    }
    tempReal = tempReal * constDiff + constMax;
    tempReal *= tempReal;
-   prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+   prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
    while( today <= startIdx )
    {
-      tempReal = inReal[today];
-      tempReal2 = inReal[trailingIdx++];
+      tempReal = (double)inReal[today];
+      tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
-      sumROC1 += fabs(tempReal - inReal[today - 1]);
+      sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
       trailingValue = tempReal2;
       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
       {
@@ -654,18 +654,18 @@ TA_RetCode TA_S_KAMA_Unguarded( int    startIdx,
       }
       tempReal = tempReal * constDiff + constMax;
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
    }
    outReal[0] = prevKAMA;
    outIdx = 1;
    *outBegIdx= today - 1;
    while( today <= endIdx )
    {
-      tempReal = inReal[today];
-      tempReal2 = inReal[trailingIdx++];
+      tempReal = (double)inReal[today];
+      tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
-      sumROC1 += fabs(tempReal - inReal[today - 1]);
+      sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
       trailingValue = tempReal2;
       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
       {
@@ -676,7 +676,7 @@ TA_RetCode TA_S_KAMA_Unguarded( int    startIdx,
       }
       tempReal = tempReal * constDiff + constMax;
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
       outReal[outIdx++] = prevKAMA;
    }
    *outNBElement= outIdx;

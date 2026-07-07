@@ -317,6 +317,11 @@ typedef enum
   TA_SV_NBELEMENT_MISMATCH           = 1302,
   TA_SV_OUTPUT_MISMATCH              = 1303,
 
+  /* Single-precision (TA_S_) vector-arithmetic overflow guard (PR #33) */
+  TA_S_OVERFLOW_BAD_RETCODE          = 1400,
+  TA_S_OVERFLOW_NOT_FINITE           = 1401,
+  TA_S_OVERFLOW_WRONG_VALUE          = 1402,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif

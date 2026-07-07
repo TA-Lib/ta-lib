@@ -394,9 +394,9 @@
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -412,9 +412,9 @@
       prevATR = periodTotal / optInTimePeriod;
       i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
       while( i != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -431,7 +431,7 @@
          i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx];
+      tempValue = (double)inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR / tempValue * 100.0;
       } else {
@@ -439,9 +439,9 @@
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -454,7 +454,7 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = (double)inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {
@@ -507,9 +507,9 @@
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -525,9 +525,9 @@
       prevATR = periodTotal / optInTimePeriod;
       i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
       while( i != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -544,7 +544,7 @@
          i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx];
+      tempValue = (double)inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR / tempValue * 100.0;
       } else {
@@ -552,9 +552,9 @@
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -567,7 +567,7 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = (double)inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {

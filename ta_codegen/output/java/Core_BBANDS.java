@@ -432,16 +432,16 @@
          _endSum = (int)outBegIdx.value;
          _periodTotal2 = 0;
          for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = inReal[_outIdx];
+            _tempReal = (double)inReal[_outIdx];
             _tempReal *= _tempReal;
             _periodTotal2 += _tempReal;
          }
          for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = inReal[_endSum];
+            _tempReal = (double)inReal[_endSum];
             _tempReal *= _tempReal;
             _periodTotal2 += _tempReal;
             _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_startSum];
+            _tempReal = (double)inReal[_startSum];
             _tempReal *= _tempReal;
             _periodTotal2 -= _tempReal;
             _tempReal = tempBuffer1[_outIdx];
@@ -561,16 +561,16 @@
          _endSum = (int)outBegIdx.value;
          _periodTotal2 = 0;
          for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = inReal[_outIdx];
+            _tempReal = (double)inReal[_outIdx];
             _tempReal *= _tempReal;
             _periodTotal2 += _tempReal;
          }
          for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = inReal[_endSum];
+            _tempReal = (double)inReal[_endSum];
             _tempReal *= _tempReal;
             _periodTotal2 += _tempReal;
             _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_startSum];
+            _tempReal = (double)inReal[_startSum];
             _tempReal *= _tempReal;
             _periodTotal2 -= _tempReal;
             _tempReal = tempBuffer1[_outIdx];

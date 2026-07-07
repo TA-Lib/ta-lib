@@ -269,7 +269,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
       SumY = 0;
       for( i = optInTimePeriod; i-- != 0;  )
       {
-         tempValue1 = inReal[today - i];
+         tempValue1 = (double)inReal[today - i];
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
       }
@@ -326,7 +326,7 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
       SumY = 0;
       for( i = optInTimePeriod; i-- != 0;  )
       {
-         tempValue1 = inReal[today - i];
+         tempValue1 = (double)inReal[today - i];
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
       }

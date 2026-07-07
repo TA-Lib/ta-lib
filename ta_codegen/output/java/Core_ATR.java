@@ -350,9 +350,9 @@
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -368,9 +368,9 @@
       prevATR = periodTotal / optInTimePeriod;
       i = this.unstablePeriod[FuncUnstId.Atr.ordinal()];
       while( i != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -390,9 +390,9 @@
       outReal[0] = prevATR;
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -451,9 +451,9 @@
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -469,9 +469,9 @@
       prevATR = periodTotal / optInTimePeriod;
       i = this.unstablePeriod[FuncUnstId.Atr.ordinal()];
       while( i != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {
@@ -491,9 +491,9 @@
       outReal[0] = prevATR;
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.abs(tempCY - tempHT);
          if( val2 > greatest ) {

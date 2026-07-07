@@ -35,7 +35,7 @@
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
-         outReal[outIdx] = (double)(inReal0[i] * inReal1[i]);
+         outReal[outIdx] = inReal0[i] * inReal1[i];
          outIdx += 1;
          i += 1;
       }
@@ -56,7 +56,7 @@
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
-         outReal[outIdx] = (double)(inReal0[i] * inReal1[i]);
+         outReal[outIdx] = inReal0[i] * inReal1[i];
          outIdx += 1;
          i += 1;
       }
@@ -83,7 +83,7 @@
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
-         outReal[outIdx] = (double)(inReal0[i] * inReal1[i]);
+         outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
          outIdx += 1;
          i += 1;
       }
@@ -104,7 +104,7 @@
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
-         outReal[outIdx] = (double)(inReal0[i] * inReal1[i]);
+         outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
          outIdx += 1;
          i += 1;
       }

@@ -377,16 +377,16 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
    }
    for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 )
    {
-      tempReal = inHigh[i] + inLow[i];
+      tempReal = (double)inHigh[i] + (double)inLow[i];
       if( !TA_IS_ZERO(tempReal) )
       {
-         tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-         tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-         tempBuffer2[j] = inLow[i] * (1 - tempReal);
+         tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+         tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
+         tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
       } else 
       {
-         tempBuffer1[j] = inHigh[i];
-         tempBuffer2[j] = inLow[i];
+         tempBuffer1[j] = (double)inHigh[i];
+         tempBuffer2[j] = (double)inLow[i];
       }
    }
    retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inClose,optInTimePeriod,&outBegIdxDummy,&outNbElementDummy,outRealMiddleBand);
@@ -475,16 +475,16 @@ TA_RetCode TA_S_ACCBANDS_Unguarded( int    startIdx,
    }
    for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 )
    {
-      tempReal = inHigh[i] + inLow[i];
+      tempReal = (double)inHigh[i] + (double)inLow[i];
       if( !TA_IS_ZERO(tempReal) )
       {
-         tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-         tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-         tempBuffer2[j] = inLow[i] * (1 - tempReal);
+         tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+         tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
+         tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
       } else 
       {
-         tempBuffer1[j] = inHigh[i];
-         tempBuffer2[j] = inLow[i];
+         tempBuffer1[j] = (double)inHigh[i];
+         tempBuffer2[j] = (double)inLow[i];
       }
    }
    retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inClose,optInTimePeriod,&outBegIdxDummy,&outNbElementDummy,outRealMiddleBand);

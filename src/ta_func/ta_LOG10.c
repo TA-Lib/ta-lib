@@ -130,7 +130,7 @@ TA_RetCode TA_S_LOG10( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = log10(inReal[i]);
+      outReal[outIdx] = log10((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_LOG10_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = log10(inReal[i]);
+      outReal[outIdx] = log10((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

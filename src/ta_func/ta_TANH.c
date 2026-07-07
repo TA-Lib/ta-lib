@@ -130,7 +130,7 @@ TA_RetCode TA_S_TANH( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = tanh(inReal[i]);
+      outReal[outIdx] = tanh((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -149,7 +149,7 @@ TA_RetCode TA_S_TANH_Unguarded( int    startIdx,
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
-      outReal[outIdx] = tanh(inReal[i]);
+      outReal[outIdx] = tanh((double)inReal[i]);
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

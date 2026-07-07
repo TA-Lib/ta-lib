@@ -277,7 +277,7 @@ TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -335,7 +335,7 @@ TA_RetCode TA_S_CDLMATCHINGLOW_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
       {
          outInteger[outIdx++] = 100;
       } else 

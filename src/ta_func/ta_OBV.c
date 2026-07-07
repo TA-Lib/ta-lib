@@ -173,18 +173,18 @@ TA_RetCode TA_S_OBV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   prevOBV = inVolume[startIdx];
-   prevReal = inReal[startIdx];
+   prevOBV = (double)inVolume[startIdx];
+   prevReal = (double)inReal[startIdx];
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      tempReal = inReal[i];
+      tempReal = (double)inReal[i];
       if( tempReal > prevReal )
       {
-         prevOBV += inVolume[i];
+         prevOBV += (double)inVolume[i];
       } else if( tempReal < prevReal )
       {
-         prevOBV -= inVolume[i];
+         prevOBV -= (double)inVolume[i];
       }
       outReal[outIdx++] = prevOBV;
       prevReal = tempReal;
@@ -208,18 +208,18 @@ TA_RetCode TA_S_OBV_Unguarded( int    startIdx,
    double tempReal;
    double prevOBV;
 
-   prevOBV = inVolume[startIdx];
-   prevReal = inReal[startIdx];
+   prevOBV = (double)inVolume[startIdx];
+   prevReal = (double)inReal[startIdx];
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      tempReal = inReal[i];
+      tempReal = (double)inReal[i];
       if( tempReal > prevReal )
       {
-         prevOBV += inVolume[i];
+         prevOBV += (double)inVolume[i];
       } else if( tempReal < prevReal )
       {
-         prevOBV -= inVolume[i];
+         prevOBV -= (double)inVolume[i];
       }
       outReal[outIdx++] = prevOBV;
       prevReal = tempReal;

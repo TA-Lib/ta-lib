@@ -446,13 +446,13 @@
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
       }
       while( today <= endIdx ) {
-         tmp = inLow[today];
+         tmp = (double)inLow[today];
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
+            lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
             while( ++i <= today ) {
-               tmp = inLow[i];
+               tmp = (double)inLow[i];
                if( tmp < lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
@@ -464,13 +464,13 @@
             lowest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         tmp = inHigh[today];
+         tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
             highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
+            highest = (double)inHigh[highestIdx];
             i = highestIdx;
             while( ++i <= today ) {
-               tmp = inHigh[i];
+               tmp = (double)inHigh[i];
                if( tmp > highest ) {
                   highestIdx = i;
                   highest = tmp;
@@ -483,7 +483,7 @@
             diff = (highest - lowest) / 100.0;
          }
          if( diff != 0.0 ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
          }
@@ -567,13 +567,13 @@
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
       }
       while( today <= endIdx ) {
-         tmp = inLow[today];
+         tmp = (double)inLow[today];
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
+            lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
             while( ++i <= today ) {
-               tmp = inLow[i];
+               tmp = (double)inLow[i];
                if( tmp < lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
@@ -585,13 +585,13 @@
             lowest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         tmp = inHigh[today];
+         tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
             highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
+            highest = (double)inHigh[highestIdx];
             i = highestIdx;
             while( ++i <= today ) {
-               tmp = inHigh[i];
+               tmp = (double)inHigh[i];
                if( tmp > highest ) {
                   highestIdx = i;
                   highest = tmp;
@@ -604,7 +604,7 @@
             diff = (highest - lowest) / 100.0;
          }
          if( diff != 0.0 ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
          }

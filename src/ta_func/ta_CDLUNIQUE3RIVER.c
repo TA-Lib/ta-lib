@@ -331,7 +331,7 @@ TA_RetCode TA_S_CDLUNIQUE3RIVER( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inOpen[i - 1] <= inOpen[i - 2] && inLow[i - 1] < inLow[i - 2] && inOpen[i] > inLow[i - 1] && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inOpen[i - 1] <= (double)inOpen[i - 2] && (double)inLow[i - 1] < (double)inLow[i - 2] && (double)inOpen[i] > (double)inLow[i - 1] && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -404,7 +404,7 @@ TA_RetCode TA_S_CDLUNIQUE3RIVER_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inOpen[i - 1] <= inOpen[i - 2] && inLow[i - 1] < inLow[i - 2] && inOpen[i] > inLow[i - 1] && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inOpen[i - 1] <= (double)inOpen[i - 2] && (double)inLow[i - 1] < (double)inLow[i - 2] && (double)inOpen[i] > (double)inLow[i - 1] && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
       {
          outInteger[outIdx++] = 100;
       } else 

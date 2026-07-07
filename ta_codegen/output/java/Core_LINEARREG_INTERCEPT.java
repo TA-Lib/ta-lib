@@ -198,7 +198,7 @@
          SumXY = 0;
          SumY = 0;
          for( i = optInTimePeriod; i-- != 0;  ) {
-            tempValue1 = inReal[today - i];
+            tempValue1 = (double)inReal[today - i];
             SumY += tempValue1;
             SumXY += (double)i * tempValue1;
          }
@@ -247,7 +247,7 @@
          SumXY = 0;
          SumY = 0;
          for( i = optInTimePeriod; i-- != 0;  ) {
-            tempValue1 = inReal[today - i];
+            tempValue1 = (double)inReal[today - i];
             SumY += tempValue1;
             SumXY += (double)i * tempValue1;
          }

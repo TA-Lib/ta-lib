@@ -231,8 +231,8 @@ TA_RetCode TA_S_IMI( int    startIdx,
       int i;
       for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
-         double close = inClose[i];
-         double open = inOpen[i];
+         double close = (double)inClose[i];
+         double open = (double)inOpen[i];
          if( close > open )
          {
             upsum += close - open;
@@ -281,8 +281,8 @@ TA_RetCode TA_S_IMI_Unguarded( int    startIdx,
       int i;
       for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
-         double close = inClose[i];
-         double open = inOpen[i];
+         double close = (double)inClose[i];
+         double open = (double)inOpen[i];
          if( close > open )
          {
             upsum += close - open;

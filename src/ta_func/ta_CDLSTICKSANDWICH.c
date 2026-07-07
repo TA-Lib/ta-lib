@@ -282,7 +282,7 @@ TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inLow[i - 1] > inClose[i - 2] && inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && (double)inClose[i] >= (double)inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -340,7 +340,7 @@ TA_RetCode TA_S_CDLSTICKSANDWICH_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inLow[i - 1] > inClose[i - 2] && inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && (double)inClose[i] >= (double)inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
       {
          outInteger[outIdx++] = 100;
       } else 

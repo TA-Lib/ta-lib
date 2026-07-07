@@ -289,7 +289,7 @@ TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inOpen[i - 4] > inOpen[i - 3] && inOpen[i - 3] > inOpen[i - 2] && inClose[i - 4] > inClose[i - 3] && inClose[i - 3] > inClose[i - 2] && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] > inOpen[i - 1] && inClose[i] > inHigh[i - 1] )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -347,7 +347,7 @@ TA_RetCode TA_S_CDLLADDERBOTTOM_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inOpen[i - 4] > inOpen[i - 3] && inOpen[i - 3] > inOpen[i - 2] && inClose[i - 4] > inClose[i - 3] && inClose[i - 3] > inClose[i - 2] && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] > inOpen[i - 1] && inClose[i] > inHigh[i - 1] )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] )
       {
          outInteger[outIdx++] = 100;
       } else 
