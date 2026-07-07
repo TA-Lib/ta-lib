@@ -17,7 +17,7 @@ void server_verify_shutdown(void);
 /* Returns 1 if server verification is active (at least one pipe). */
 int server_verify_active(void);
 
-/* Verify a C-ref function call against all active servers.
+/* Verify a C function call against all active servers.
  *
  * Uses ta_abstract metadata to build JSON-RPC requests internally.
  * Test authors only need to pass the same data they already have.
@@ -35,8 +35,8 @@ int server_verify_active(void);
  *                   Integer params are truncated internally based on ta_abstract type info.
  *                   NULL if no optional params.
  * nbOptParams:      Number of elements in optParams (0 if none).
- * outReal:          NULL-terminated array of C-ref real output buffers, or NULL if none.
- * outInteger:       NULL-terminated array of C-ref integer output buffers, or NULL if none.
+ * outReal:          NULL-terminated array of C real output buffers, or NULL if none.
+ * outInteger:       NULL-terminated array of C integer output buffers, or NULL if none.
  *
  * Returns TA_TEST_PASS on success (or if no servers are active).
  */

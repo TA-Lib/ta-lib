@@ -246,14 +246,14 @@ The hardcoded `test_*.c` expected values remain the generator-independent **abso
   pre-cutover). The protocol is byte-for-byte the existing server protocol (probed: emits
   `retCode/outBegIdx/outNBElement/timing_ns/outReal[N]`; `list_functions` = 161).
 - **Checkpoint:** ✅ `ta_regtest --codegen` = **161/0 for C, Rust, Java, .NET** with
-  `ta_ref_serve` (worktree-built) as the oracle. In-process C-ref absolute tests still pass;
+  `ta_ref_serve` (worktree-built) as the oracle. In-process C absolute tests still pass;
   `ta_codegen/output` untouched (regen oracle clean); both CMake **and** autotools compile
   `test_codegen.c`. Confirmed the nightly/dist CI (`scripts/test-dist.py`) does **not** run
   `--codegen`, so requiring `ta_ref_serve` does not affect CI.
 - **Rollback:** `git checkout -- src/tools/ta_regtest/test_codegen.c scripts/regtest.py`;
   `git worktree remove ../ta-lib-ref` (+ `git tag -d reference-pre-cutover` to undo Stage 0).
 - **Deferred (not needed for non-circularity):** `server_verify.c` (the hand-written tests'
-  server bridge) still compares against the in-process C-ref. Post-cutover that becomes
+  server bridge) still compares against the in-process C. Post-cutover that becomes
   redundant (its absolute hardcoded values remain the real oracle), not circular — optional
   cleanup later. **CI/tag portability:** the tag is local; CI that runs `--codegen` would need
   the tag pushed (or `regtest.py`'s fallback) — revisit when/if CI gains a codegen step.

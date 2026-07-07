@@ -1,4 +1,4 @@
-/* server_verify.c — Verify hand-written C-ref test results against JSON-RPC servers.
+/* server_verify.c — Verify hand-written C test results against JSON-RPC servers.
  *
  * Uses ta_abstract metadata to build JSON requests internally, so test files
  * only pass inputs/params/outputs in signature order without any JSON knowledge.
@@ -434,7 +434,7 @@ static int build_request(const char *funcName,
     return pos;
 }
 
-/* ---- Compare server response with C-ref output ---- */
+/* ---- Compare server response with C output ---- */
 
 static ErrorNumber compare_output(const char *funcName,
                                   const char *resp,
@@ -447,7 +447,7 @@ static ErrorNumber compare_output(const char *funcName,
     int srvRetCode = sv_json_get_int(resp, "retCode");
     if( srvRetCode != (int)crefRetCode )
     {
-        printf("  SV FAIL [%s] (pipe %d): retCode c-ref=%d server=%d\n",
+        printf("  SV FAIL [%s] (pipe %d): retCode C=%d server=%d\n",
                funcName, g_curPipe, (int)crefRetCode, srvRetCode);
         return TA_SV_RETCODE_MISMATCH;
     }
@@ -461,14 +461,14 @@ static ErrorNumber compare_output(const char *funcName,
 
     if( srvBegIdx != (int)crefOutBegIdx )
     {
-        printf("  SV FAIL [%s] (pipe %d): outBegIdx c-ref=%d server=%d\n",
+        printf("  SV FAIL [%s] (pipe %d): outBegIdx C=%d server=%d\n",
                funcName, g_curPipe, (int)crefOutBegIdx, srvBegIdx);
         return TA_SV_BEGIDX_MISMATCH;
     }
 
     if( srvNbElement != (int)crefOutNbElement )
     {
-        printf("  SV FAIL [%s] (pipe %d): outNbElement c-ref=%d server=%d\n",
+        printf("  SV FAIL [%s] (pipe %d): outNbElement C=%d server=%d\n",
                funcName, g_curPipe, (int)crefOutNbElement, srvNbElement);
         return TA_SV_NBELEMENT_MISMATCH;
     }
@@ -495,7 +495,7 @@ static ErrorNumber compare_output(const char *funcName,
             int srvCount = sv_json_get_double_array(resp, key, srvBuf, SV_MAX_OUTPUT);
             if( srvCount != (int)crefOutNbElement )
             {
-                printf("  SV FAIL [%s]: output %d count c-ref=%d server=%d\n",
+                printf("  SV FAIL [%s]: output %d count C=%d server=%d\n",
                        funcName, outIdx, (int)crefOutNbElement, srvCount);
                 return TA_SV_OUTPUT_MISMATCH;
             }
@@ -507,7 +507,7 @@ static ErrorNumber compare_output(const char *funcName,
                 double tol = (absVal > 1.0) ? SV_EPSILON * absVal : SV_EPSILON;
                 if( diff > tol )
                 {
-                    printf("  SV FAIL [%s]: output %d [%d] c-ref=%.15g server=%.15g (diff=%.15g)\n",
+                    printf("  SV FAIL [%s]: output %d [%d] C=%.15g server=%.15g (diff=%.15g)\n",
                            funcName, outIdx, j, outReal[outIdx][j], srvBuf[j], diff);
                     return TA_SV_OUTPUT_MISMATCH;
                 }
@@ -534,7 +534,7 @@ static ErrorNumber compare_output(const char *funcName,
             int srvCount = sv_json_get_int_array(resp, key, srvIntBuf, SV_MAX_OUTPUT);
             if( srvCount != (int)crefOutNbElement )
             {
-                printf("  SV FAIL [%s]: int output %d count c-ref=%d server=%d\n",
+                printf("  SV FAIL [%s]: int output %d count C=%d server=%d\n",
                        funcName, outIdx, (int)crefOutNbElement, srvCount);
                 return TA_SV_OUTPUT_MISMATCH;
             }
@@ -543,7 +543,7 @@ static ErrorNumber compare_output(const char *funcName,
             {
                 if( outInteger[outIdx][j] != srvIntBuf[j] )
                 {
-                    printf("  SV FAIL [%s]: int output %d [%d] c-ref=%d server=%d\n",
+                    printf("  SV FAIL [%s]: int output %d [%d] C=%d server=%d\n",
                            funcName, outIdx, j, outInteger[outIdx][j], srvIntBuf[j]);
                     return TA_SV_OUTPUT_MISMATCH;
                 }
@@ -574,7 +574,7 @@ ErrorNumber server_verify(
         return TA_TEST_PASS;
 
     /* Skip server verification for error cases (parameter validation
-     * is implementation-specific and may differ between c-ref and server). */
+     * is implementation-specific and may differ between C and server). */
     if( crefRetCode != TA_SUCCESS )
         return TA_TEST_PASS;
 

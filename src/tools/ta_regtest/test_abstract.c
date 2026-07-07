@@ -77,7 +77,7 @@
 /**** External variables declarations. ****/
 extern int doExtensiveProfiling;
 
-/* Optional codegen server pipe — when set, each c-ref TA_CallFunc is
+/* Optional codegen server pipe — when set, each C TA_CallFunc is
  * replicated via the server's abstract_call endpoint and compared. */
 #include "codegen_pipe.h"
 #include "ta_abstract.h"
@@ -274,7 +274,7 @@ static int abstract_json_get_string(const char *json, const char *field,
 
 /* Verify all ta_abstract metadata for a function against the server.
  * Calls TA_GetFuncInfo, TA_GetInputParameterInfo, TA_GetOptInputParameterInfo,
- * TA_GetOutputParameterInfo on both c-ref and server, compares results.
+ * TA_GetOutputParameterInfo on both C and server, compares results.
  */
 static ErrorNumber abstract_verify_func_metadata(
     const char *funcName,
@@ -308,42 +308,42 @@ static ErrorNumber abstract_verify_func_metadata(
     abstract_json_get_string(g_abstractRespBuf, "camelCaseName", srvCamelCase, sizeof(srvCamelCase));
 
     if( fi->name && strcmp(srvName, fi->name) != 0 ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo name c-ref=%s server=%s\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo name C=%s server=%s\n",
                funcName, fi->name, srvName);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( fi->group && strcmp(srvGroup, fi->group) != 0 ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo group c-ref=%s server=%s\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo group C=%s server=%s\n",
                funcName, fi->group, srvGroup);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( fi->hint && strcmp(srvHint, fi->hint) != 0 ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo hint c-ref=%s server=%s\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo hint C=%s server=%s\n",
                funcName, fi->hint, srvHint);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( fi->camelCaseName && strcmp(srvCamelCase, fi->camelCaseName) != 0 ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo camelCaseName c-ref=%s server=%s\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo camelCaseName C=%s server=%s\n",
                funcName, fi->camelCaseName, srvCamelCase);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( srvNbInput != (int)fi->nbInput ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbInput c-ref=%u server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbInput C=%u server=%d\n",
                funcName, fi->nbInput, srvNbInput);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( srvNbOptInput != (int)fi->nbOptInput ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbOptInput c-ref=%u server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbOptInput C=%u server=%d\n",
                funcName, fi->nbOptInput, srvNbOptInput);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( srvNbOutput != (int)fi->nbOutput ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbOutput c-ref=%u server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo nbOutput C=%u server=%d\n",
                funcName, fi->nbOutput, srvNbOutput);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( srvFlags != (int)fi->flags ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo flags c-ref=%d server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo flags C=%d server=%d\n",
                funcName, (int)fi->flags, srvFlags);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
@@ -371,17 +371,17 @@ static ErrorNumber abstract_verify_func_metadata(
         abstract_json_get_string(g_abstractRespBuf, "paramName", srvParamName, sizeof(srvParamName));
 
         if( srvType != (int)crefInfo->type ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] type c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] type C=%d server=%d\n",
                    funcName, i, (int)crefInfo->type, srvType);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( srvFlags2 != (int)crefInfo->flags ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] flags c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] flags C=%d server=%d\n",
                    funcName, i, (int)crefInfo->flags, srvFlags2);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( crefInfo->paramName && strcmp(srvParamName, crefInfo->paramName) != 0 ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] paramName c-ref=%s server=%s\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetInputParameterInfo[%u] paramName C=%s server=%s\n",
                    funcName, i, crefInfo->paramName, srvParamName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
@@ -412,17 +412,17 @@ static ErrorNumber abstract_verify_func_metadata(
         double srvDefault = abstract_json_get_double(g_abstractRespBuf, "defaultValue");
 
         if( srvType != (int)crefOpt->type ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] type c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] type C=%d server=%d\n",
                    funcName, i, (int)crefOpt->type, srvType);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( crefOpt->paramName && strcmp(srvParamName, crefOpt->paramName) != 0 ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] paramName c-ref=%s server=%s\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] paramName C=%s server=%s\n",
                    funcName, i, crefOpt->paramName, srvParamName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( crefOpt->displayName && strcmp(srvDisplayName, crefOpt->displayName) != 0 ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] displayName c-ref=%s server=%s\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] displayName C=%s server=%s\n",
                    funcName, i, crefOpt->displayName, srvDisplayName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
@@ -432,7 +432,7 @@ static ErrorNumber abstract_verify_func_metadata(
             if( diff < 0 ) diff = -diff;
             double tol = CODEGEN_EPSILON;
             if( diff > tol ) {
-                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] defaultValue c-ref=%.15g server=%.15g\n",
+                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] defaultValue C=%.15g server=%.15g\n",
                        funcName, i, crefOpt->defaultValue, srvDefault);
                 return TA_ABSTRACT_CALL_MISMATCH;
             }
@@ -441,7 +441,7 @@ static ErrorNumber abstract_verify_func_metadata(
         {
             int srvOptFlags = abstract_json_get_int(g_abstractRespBuf, "flags");
             if( srvOptFlags != (int)crefOpt->flags ) {
-                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] flags c-ref=%d server=%d\n",
+                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] flags C=%d server=%d\n",
                        funcName, i, (int)crefOpt->flags, srvOptFlags);
                 return TA_ABSTRACT_CALL_MISMATCH;
             }
@@ -457,12 +457,12 @@ static ErrorNumber abstract_verify_func_metadata(
                 int srvSugEn = abstract_json_get_int(g_abstractRespBuf, "suggestedEnd");
                 int srvSugIn = abstract_json_get_int(g_abstractRespBuf, "suggestedIncrement");
                 if( srvMin != (int)r->min || srvMax != (int)r->max ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] range c-ref=[%d,%d] server=[%d,%d]\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] range C=[%d,%d] server=[%d,%d]\n",
                            funcName, i, (int)r->min, (int)r->max, srvMin, srvMax);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
                 if( srvSugSt != (int)r->suggested_start || srvSugEn != (int)r->suggested_end || srvSugIn != (int)r->suggested_increment ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] suggested c-ref=[%d,%d,%d] server=[%d,%d,%d]\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] suggested C=[%d,%d,%d] server=[%d,%d,%d]\n",
                            funcName, i, (int)r->suggested_start, (int)r->suggested_end, (int)r->suggested_increment, srvSugSt, srvSugEn, srvSugIn);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
@@ -480,17 +480,17 @@ static ErrorNumber abstract_verify_func_metadata(
                 double dEn = srvSugEn - r->suggested_end; if(dEn<0) dEn=-dEn;
                 double dIn = srvSugIn - r->suggested_increment; if(dIn<0) dIn=-dIn;
                 if( diffMin > CODEGEN_EPSILON || diffMax > CODEGEN_EPSILON ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] range c-ref=[%.6g,%.6g] server=[%.6g,%.6g]\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] range C=[%.6g,%.6g] server=[%.6g,%.6g]\n",
                            funcName, i, r->min, r->max, srvMin, srvMax);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
                 if( srvPrec != (int)r->precision ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] precision c-ref=%d server=%d\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] precision C=%d server=%d\n",
                            funcName, i, (int)r->precision, srvPrec);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
                 if( dSt > CODEGEN_EPSILON || dEn > CODEGEN_EPSILON || dIn > CODEGEN_EPSILON ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] suggested c-ref=[%.6g,%.6g,%.6g] server=[%.6g,%.6g,%.6g]\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] suggested C=[%.6g,%.6g,%.6g] server=[%.6g,%.6g,%.6g]\n",
                            funcName, i, r->suggested_start, r->suggested_end, r->suggested_increment, srvSugSt, srvSugEn, srvSugIn);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
@@ -505,7 +505,7 @@ static ErrorNumber abstract_verify_func_metadata(
                 }
                 abstract_json_get_string(g_abstractRespBuf, "valueList", srvList, sizeof(srvList));
                 if( strcmp(srvList, crefList) != 0 ) {
-                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] valueList c-ref=[%s] server=[%s]\n",
+                    printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] valueList C=[%s] server=[%s]\n",
                            funcName, i, crefList, srvList);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
@@ -536,17 +536,17 @@ static ErrorNumber abstract_verify_func_metadata(
         abstract_json_get_string(g_abstractRespBuf, "paramName", srvParamName, sizeof(srvParamName));
 
         if( srvType != (int)crefOut->type ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] type c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] type C=%d server=%d\n",
                    funcName, i, (int)crefOut->type, srvType);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( srvFlags3 != (int)crefOut->flags ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] flags c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] flags C=%d server=%d\n",
                    funcName, i, (int)crefOut->flags, srvFlags3);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
         if( crefOut->paramName && strcmp(srvParamName, crefOut->paramName) != 0 ) {
-            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] paramName c-ref=%s server=%s\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetOutputParameterInfo[%u] paramName C=%s server=%s\n",
                    funcName, i, crefOut->paramName, srvParamName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
@@ -628,7 +628,7 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
 }
 
 /* Build and send an abstract_call request to the server, mirroring the
- * c-ref TA_CallFunc that was just made with the given paramHolder.
+ * C TA_CallFunc that was just made with the given paramHolder.
  * Compares retCode, outBegIdx, outNBElement, lookback.
  */
 static ErrorNumber abstract_verify_server_call(
@@ -712,8 +712,8 @@ static ErrorNumber abstract_verify_server_call(
         }
     }
 
-    /* Send optional params using c-ref's defaults (from metadata).
-     * This ensures the server uses the same values as c-ref's
+    /* Send optional params using C's defaults (from metadata).
+     * This ensures the server uses the same values as C's
      * TA_ParamHolderAlloc, which initializes from defaultValue. */
     for( unsigned int i = 0; i < funcInfo->nbOptInput; i++ )
     {
@@ -754,7 +754,7 @@ static ErrorNumber abstract_verify_server_call(
     int srvRetCode = abstract_json_get_int(g_abstractRespBuf, "retCode");
     if( srvRetCode != (int)crefRetCode )
     {
-        printf("  ABSTRACT ERROR [%s]: retCode c-ref=%d server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: retCode C=%d server=%d\n",
                funcName, (int)crefRetCode, srvRetCode);
 
         return TA_ABSTRACT_CALL_MISMATCH;
@@ -766,7 +766,7 @@ static ErrorNumber abstract_verify_server_call(
     int srvBegIdx = abstract_json_get_int(g_abstractRespBuf, "outBegIdx");
     if( srvBegIdx != crefBegIdx )
     {
-        printf("  ABSTRACT ERROR [%s]: outBegIdx c-ref=%d server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: outBegIdx C=%d server=%d\n",
                funcName, crefBegIdx, srvBegIdx);
 
         return TA_ABSTRACT_CALL_MISMATCH;
@@ -775,7 +775,7 @@ static ErrorNumber abstract_verify_server_call(
     int srvNbElement = abstract_json_get_int(g_abstractRespBuf, "outNBElement");
     if( srvNbElement != crefNbElement )
     {
-        printf("  ABSTRACT ERROR [%s]: outNBElement c-ref=%d server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: outNBElement C=%d server=%d\n",
                funcName, crefNbElement, srvNbElement);
 
         return TA_ABSTRACT_CALL_MISMATCH;
@@ -784,7 +784,7 @@ static ErrorNumber abstract_verify_server_call(
     int srvLookback = abstract_json_get_int(g_abstractRespBuf, "lookback");
     if( srvLookback != crefLookback )
     {
-        printf("  ABSTRACT ERROR [%s]: lookback c-ref=%d server=%d\n",
+        printf("  ABSTRACT ERROR [%s]: lookback C=%d server=%d\n",
                funcName, crefLookback, srvLookback);
 
         return TA_ABSTRACT_LOOKBACK_MISMATCH;
@@ -819,7 +819,7 @@ static ErrorNumber abstract_verify_server_call(
                 int n = abstract_json_get_int_array(g_abstractRespBuf, key, srvOut, 2000);
                 if( n != crefNbElement )
                 {
-                    printf("  ABSTRACT ERROR [%s]: int output[%u] count c-ref=%d server=%d\n",
+                    printf("  ABSTRACT ERROR [%s]: int output[%u] count C=%d server=%d\n",
                            funcName, oi, crefNbElement, n);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
@@ -827,7 +827,7 @@ static ErrorNumber abstract_verify_server_call(
                 {
                     if( crefOutInt[oi][j] != srvOut[j] )
                     {
-                        printf("  ABSTRACT ERROR [%s]: int output[%u][%d] c-ref=%d server=%d\n",
+                        printf("  ABSTRACT ERROR [%s]: int output[%u][%d] C=%d server=%d\n",
                                funcName, oi, j, crefOutInt[oi][j], srvOut[j]);
                         return TA_ABSTRACT_CALL_MISMATCH;
                     }
@@ -842,7 +842,7 @@ static ErrorNumber abstract_verify_server_call(
                 int n = abstract_json_get_double_array(g_abstractRespBuf, key, srvOut, 2000);
                 if( n != crefNbElement )
                 {
-                    printf("  ABSTRACT ERROR [%s]: real output[%u] count c-ref=%d server=%d\n",
+                    printf("  ABSTRACT ERROR [%s]: real output[%u] count C=%d server=%d\n",
                            funcName, oi, crefNbElement, n);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
@@ -862,7 +862,7 @@ static ErrorNumber abstract_verify_server_call(
                     }
                     if( diff > tol )
                     {
-                        printf("  ABSTRACT ERROR [%s]: real output[%u][%d] c-ref=%.15g server=%.15g diff=%.15g\n",
+                        printf("  ABSTRACT ERROR [%s]: real output[%u][%d] C=%.15g server=%.15g diff=%.15g\n",
                                funcName, oi, j, crefOutReal[oi][j], srvOut[j], diff);
                         return TA_ABSTRACT_CALL_MISMATCH;
                     }
@@ -985,13 +985,13 @@ ErrorNumber test_abstract( void )
             unsigned long long srvChecksum = abstract_json_get_ull(g_abstractRespBuf, "checksum");
             if( srvLen != i )
             {
-               printf("  ABSTRACT ERROR: TA_FunctionDescriptionXML length c-ref=%d server=%d\n",
+               printf("  ABSTRACT ERROR: TA_FunctionDescriptionXML length C=%d server=%d\n",
                       i, srvLen);
                return TA_ABSTRACT_CALL_MISMATCH;
             }
             if( srvChecksum != crefChecksum )
             {
-               printf("  ABSTRACT ERROR: TA_FunctionDescriptionXML checksum c-ref=%llu server=%llu\n",
+               printf("  ABSTRACT ERROR: TA_FunctionDescriptionXML checksum C=%llu server=%llu\n",
                       crefChecksum, srvChecksum);
                return TA_ABSTRACT_CALL_MISMATCH;
             }
@@ -1001,7 +1001,7 @@ ErrorNumber test_abstract( void )
 
    if( g_abstractPipe )
    {
-      printf( "  Abstract server verification: all calls match c-ref\n" );
+      printf( "  Abstract server verification: all calls match C\n" );
    }
 
    return TA_TEST_PASS; /* Succcess. */
@@ -1062,7 +1062,7 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
      return TA_ABS_TST_FAIL_GETLOOKBACK_1;
   }
 
-  /* Verify server agrees with c-ref lookback (params: 3,4,SMA,4,SMA). */
+  /* Verify server agrees with C lookback (params: 3,4,SMA,4,SMA). */
   if( g_abstractPipe )
   {
      snprintf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE,
@@ -1081,7 +1081,7 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
      int srvLookback = abstract_json_get_int(g_abstractRespBuf, "lookback");
      if( srvLookback != lookback )
      {
-        printf("ABSTRACT ERROR: STOCH lookback c-ref=%d server=%d\n",
+        printf("ABSTRACT ERROR: STOCH lookback C=%d server=%d\n",
                lookback, srvLookback);
         return TA_ABSTRACT_LOOKBACK_MISMATCH;
      }
@@ -1127,7 +1127,7 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
      int srvLookback = abstract_json_get_int(g_abstractRespBuf, "lookback");
      if( srvLookback != lookback )
      {
-        printf("ABSTRACT ERROR: STOCH lookback c-ref=%d server=%d\n",
+        printf("ABSTRACT ERROR: STOCH lookback C=%d server=%d\n",
                lookback, srvLookback);
         return TA_ABSTRACT_LOOKBACK_MISMATCH;
      }
@@ -1353,7 +1353,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
           "{\"method\":\"abstract_get_lookback\",\"params\":{\"funcName\":\"%s\"",
           funcName);
 
-      /* Send same default params as c-ref uses */
+      /* Send same default params as C uses */
       for( unsigned int k = 0; k < funcInfo->nbOptInput; k++ )
       {
          const TA_OptInputParameterInfo *oi;
@@ -1381,7 +1381,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
          int srvLookback = abstract_json_get_int(g_abstractRespBuf, "lookback");
          if( srvLookback != lookback )
          {
-            printf("  ABSTRACT ERROR [%s]: TA_GetLookback c-ref=%d server=%d\n",
+            printf("  ABSTRACT ERROR [%s]: TA_GetLookback C=%d server=%d\n",
                    funcName, lookback, srvLookback);
             TA_ParamHolderFree( paramHolder );
             return TA_ABSTRACT_LOOKBACK_MISMATCH;
