@@ -804,12 +804,6 @@ static ErrorNumber abstract_verify_server_call(
      * can absorb. On noise input — not a price series — exact value parity is not
      * meaningful; value parity on REAL price data is covered by test_codegen, so here
      * we keep only their structural parity strict. */
-    if( crefNbElement > 0 && relaxValues )
-    {
-        printf("  NOTE [%s]: random-noise output-value parity skipped "
-               "(FP-order amplification; value parity covered by test_codegen)\n",
-               funcName);
-    }
     if( crefNbElement > 0 && !relaxValues )
     {
         int realKeyIdx = 0, intKeyIdx = 0;
