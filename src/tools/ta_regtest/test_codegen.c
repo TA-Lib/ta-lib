@@ -1342,7 +1342,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( s_avg_ns > 0 && c_avg_ns > 0 )
     {
         double ratio = c_avg_ns / s_avg_ns;
-        printf("PASS   (C: %.0fns, %s: %.0fns, %.2fx %s)\n",
+        printf("PASS   (c-ref: %.0fns, %s: %.0fns, %.2fx %s)\n",
                c_avg_ns, ctx->lang->display, s_avg_ns,
                (ratio >= 1.0) ? ratio : 1.0 / ratio,
                (ratio >= 1.0) ? "faster" : "slower");
