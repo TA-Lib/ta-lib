@@ -45,6 +45,9 @@
  *  070226 MF,CC  First version. Period=1 / minimum-period boundary
  *                cases for GitHub issues #48 and #59 (SourceForge
  *                bug 84).
+ *  070726 MF,CC  Widen the abstract sweep to the full parameter grid
+ *                (all parameter types, min..max+1) with a coherence /
+ *                clean-BAD_PARAM / finite-output contract (#94).
  */
 
 /* Description:
@@ -66,11 +69,18 @@
  *    historical scaling quirks (NATR(1)==TRANGE without
  *    normalization; DI(1)==DM/TR without the x100 of DI(n>=2)) so
  *    any future semantic change is a deliberate test edit.
- *  - An abstract-driven sweep: every integer-range optional param of
- *    every function is exercised at its minimum (must succeed with
- *    outBegIdx==TA_GetLookback and full coverage) and at min-1
- *    (must return TA_BAD_PARAM). Reads the metadata, so it adapts
- *    automatically when a minimum changes.
+ *  - An abstract-driven parameter-boundary sweep (#94): every optional
+ *    parameter of every function is exercised across its whole range —
+ *    integer ranges at min / min+1 / default+-1 / a large "past the
+ *    data" period plus the out-of-range min-1 and max+1; integer/real
+ *    lists at every enumerated value; real ranges at min / default /
+ *    max. Each in-range value must be coherent (outBegIdx >= lookback,
+ *    coverage to the last bar, or an empty result) or a clean
+ *    TA_BAD_PARAM; the default must always compute; out-of-range
+ *    integers must be rejected; and every output is scanned for
+ *    NaN/Inf/subnormal garbage. Reads the metadata, so it adapts
+ *    automatically. Set PB_SWEEP_LIST_ALL=1 to enumerate every failing
+ *    case in one run instead of aborting on the first.
  *
  * When --codegen is active every successful hand-written call is
  * also verified against the language servers (C, Rust, Java, .NET)
@@ -1176,8 +1186,12 @@ static ErrorNumber testPeriodOnePins( const TA_History *history )
 /**********************************************/
 
 /* Scan every real output element in [0,nb) for NaN/Inf/subnormal garbage —
- * the "no denormal-garbage values" contract from issue #94. Integer outputs
- * are not scanned (any bit pattern is a legal candlestick/index code).
+ * the "no denormal-garbage values" contract from issue #94. A subnormal is a
+ * valid finite double in the abstract, but no TA indicator produces one on the
+ * reference data; treating it as a failure is a deliberate uninitialized-memory
+ * heuristic — it is how the MAVP inverted-window garbage (6.5e-310) was caught,
+ * and ASan/UBSan do not flag uninitialized reads. Integer outputs are not
+ * scanned (any bit pattern is a legal candlestick/index code).
  */
 static ErrorNumber pbScanOutputsFinite( const char *label,
                                         const TA_FuncHandle *handle,
@@ -1351,8 +1365,10 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
 
    if( lookback <= endIdx )
    {
-      /* Enough data: coherent output must span lookback..last bar. */
-      if( outBegIdx != lookback || outNbElement <= 0 ||
+      /* Enough data: output must start at or after the lookback (a later start
+       * is valid — e.g. the #99 BBANDS/MAMA middle-band realign) and reach the
+       * last bar with a positive count. */
+      if( outBegIdx < lookback || outNbElement <= 0 ||
           outBegIdx + outNbElement - 1 != endIdx )
       {
          printf( "\nFail: %s: incoherent begIdx %d nb %d lookback %d (last bar %d)\n",
@@ -1401,6 +1417,13 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    const TA_OptInputParameterInfo *optInfo;
    unsigned int paramNb;
    int endIdx = (int)ctx->history->nbBars - 1;
+   /* MAVP is the only indicator with an integer inter-parameter ordering
+    * constraint (minPeriod <= maxPeriod): sweeping one period past the other's
+    * default legitimately returns TA_BAD_PARAM, so its non-default in-range
+    * values are lenient. Every OTHER function must compute at every realistic
+    * value (min / min+1 / default+-1) — so a regression that wrongly rejects a
+    * documented minimum period is caught, not silently accepted. */
+   int crossConstrained = ( strcmp( funcInfo->name, "MAVP" ) == 0 );
 
    if( ctx->errNb != TA_TEST_PASS )
       return;   /* Already failed: skip the rest quietly. */
@@ -1434,14 +1457,14 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
             for( k = 0; k < nCand; k++ ) if( cand[k] == v ) { dup = 1; break; }
             if( !dup ) cand[nCand++] = v;
          }
-         /* The default must compute coherently. Every other in-range value
-          * must be coherent OR a clean rejection: a single-parameter boundary
-          * can violate a cross-parameter constraint against another default
-          * (e.g. MAVP maxPeriod=1 with the default minPeriod=2). */
+         /* Realistic values must compute coherently. Only a cross-constrained
+          * function (MAVP) is allowed to reject a non-default boundary; the
+          * default itself must always succeed, for every function. */
          for( k = 0; k < nCand; k++ )
          {
-            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, cand[k], 0.0,
-                            cand[k] == def ? PB_EXPECT_STRICT : PB_EXPECT_LENIENT );
+            int expect = ( !crossConstrained || cand[k] == def )
+                             ? PB_EXPECT_STRICT : PB_EXPECT_LENIENT;
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, cand[k], 0.0, expect );
             if( ctx->errNb != TA_TEST_PASS ) return;
          }
          /* A large "past the data" period: coherent (empty) OR a clean
@@ -1530,6 +1553,16 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
 static ErrorNumber testMinBoundarySweep( const TA_History *history )
 {
    PBSweepCtx ctx;
+
+   /* The per-output scratch buffers are sized to PB_DATA_SIZE; a lookback-0
+    * function writes up to nbBars elements. Guard the coupling explicitly so a
+    * larger reference dataset fails loudly here instead of corrupting memory. */
+   if( (int)history->nbBars > PB_DATA_SIZE )
+   {
+      printf( "\nFail: boundary sweep buffers (%d) smaller than data (%d bars)\n",
+              PB_DATA_SIZE, (int)history->nbBars );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
 
    ctx.history = history;
    ctx.errNb = TA_TEST_PASS;

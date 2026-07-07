@@ -369,7 +369,13 @@ def main():
     if args.target == 'all':
         cmake_build(build_dir, jobs=args.jobs)
     elif args.target in SIMPLE_TARGETS:
-        cmake_build(build_dir, target=SIMPLE_TARGETS[args.target], jobs=args.jobs)
+        cmake_target = SIMPLE_TARGETS[args.target]
+        # Under --sanitize the binary lives only in cmake-build-asan/bin/. Build
+        # the raw target rather than ensure_ta_regtest_in_bin, whose ALL-target
+        # copy would overwrite the Release bin/ta_regtest with the ASan build.
+        if args.sanitize and cmake_target == 'ensure_ta_regtest_in_bin':
+            cmake_target = 'ta_regtest'
+        cmake_build(build_dir, target=cmake_target, jobs=args.jobs)
     else:
         print(f"Error: Unknown target '{args.target}'. Run with 'help' to see available targets.")
         sys.exit(1)
