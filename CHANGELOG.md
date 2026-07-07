@@ -10,6 +10,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Added
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both are built by default). Thanks @BwL1289 !
+- (#75) Author and originating-publication references added to the DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX documentation. Thanks @nehemiah888 !
 
 ### Changed
 - Algo Optimisation: DEMA, TEMA and TRIX are 3x to 7x faster.
