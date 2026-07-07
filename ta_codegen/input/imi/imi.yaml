@@ -2,7 +2,7 @@ name: IMI
 camel_case: Imi
 group: Momentum Indicators
 hint: Intraday Momentum Index
-flags: [unstable_period]
+flags: []
 inputs:
   - name: inPriceOC
     type: price

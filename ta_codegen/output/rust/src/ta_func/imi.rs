@@ -44,6 +44,9 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  WZ       wony (github @wony-zheng)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -52,6 +55,8 @@
  *  181012 AB    Initial Version
  *  070526 MF,CC  Fix #98: the unstable period grew the summation window
  *                to period+u bars; window is now always 'period'.
+ *  070726 WZ,CC  (#14) IMI has no unstable period; drop the unstable-period
+ *                term from the lookback so TA_SetUnstablePeriod is a no-op.
  */
 
 // Import types from parent module
@@ -81,7 +86,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        return (optInTimePeriod + self.unstable_period[FuncUnstId::Imi as usize] - 1) as usize;
+        return (optInTimePeriod - 1) as usize;
     }
     /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of
     /// each bar. Over a rolling window it ratios cumulative up-body moves against total up+down

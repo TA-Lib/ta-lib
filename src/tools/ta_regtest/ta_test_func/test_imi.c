@@ -47,7 +47,7 @@
  */
 
 /* Description:
- *     Test AVGDEV function.
+ *     Test IMI function.
  */
 
 /**** Headers ****/
@@ -105,7 +105,7 @@ static ErrorNumber do_test( const TA_History *history,
 static TA_Test tableTest[] =
 {
    /*************************/
-   /*      AVGDEV TEST      */
+   /*        IMI TEST       */
    /*************************/
    { 1, 0, 0, 251, 5, TA_SUCCESS,     0, 55.9194,   4,  252-4 }, /* First Value */
    { 0, 0, 0, 251, 5, TA_SUCCESS,     1, 64.6143,   4,  252-4 },
@@ -203,12 +203,6 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->close, history->nbBars );
    setInputBuffer( 2, history->open, history->nbBars );
 
-    retCode = TA_SetUnstablePeriod(
-                                    TA_FUNC_UNST_IMI,
-                                    test->unstablePeriod );
-    if( retCode != TA_SUCCESS )
-        return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
-
    /* Make a simple first call. */
    retCode = TA_IMI(
                         test->startIdx,
@@ -275,30 +269,30 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-
-
-   // TODO: Review remaining code, unexpectable fails, the test might be wrong!?
-   return TA_TEST_PASS;
-
-#if 0
    /* Do a systematic test of most of the
     * possible startIdx/endIdx range.
+    *
+    * IMI recomputes upsum/downsum fresh over its finite window every output
+    * bar (no running accumulator, no recursion), so its output is bit-exact
+    * across any startIdx/endIdx. This sweep was previously disabled with a
+    * "the test might be wrong!?" note, but the test was right: it was catching
+    * fix #98 (the unstable period used to grow the summation window). With
+    * that fixed, compare as TA_FUNC_UNST_NONE to enforce the exactness.
     */
    testParam.test  = test;
    testParam.close = history->close;
    testParam.open = history->open;
-// XXX FAIL HERE
+
    if( test->doRangeTestFlag )
    {
       errNb = doRangeTest(
                            rangeTestFunction,
-                           TA_FUNC_UNST_IMI,
+                           TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
 
    return TA_TEST_PASS;
-#endif
 }
 

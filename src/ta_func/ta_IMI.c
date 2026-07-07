@@ -47,6 +47,9 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  WZ       wony (github @wony-zheng)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -55,6 +58,8 @@
  *  181012 AB    Initial Version
  *  070526 MF,CC  Fix #98: the unstable period grew the summation window
  *                to period+u bars; window is now always 'period'.
+ *  070726 WZ,CC  (#14) IMI has no unstable period; drop the unstable-period
+ *                term from the lookback so TA_SetUnstablePeriod is a no-op.
  */
 
 TA_LIB_API int TA_IMI_Lookback( int optInTimePeriod )
@@ -63,7 +68,7 @@ TA_LIB_API int TA_IMI_Lookback( int optInTimePeriod )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_IMI,Imi) - 1;
+   return optInTimePeriod - 1;
 }
 
 TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
