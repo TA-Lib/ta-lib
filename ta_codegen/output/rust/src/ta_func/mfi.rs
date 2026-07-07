@@ -45,6 +45,8 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       BobTrader (TADoc.org forum user).
+ *  MW       github @mw66
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -55,6 +57,9 @@
  *  062704 MF    Prevent divide by zero.
  *  121705 MF    Java port related changes.
  *  060907 MF,BT Fix #1727704. MFI logic bug when no price movement
+ *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
+ *               term (and the now-dead unstable-skip loop) so
+ *               TA_SetUnstablePeriod is a no-op for it.
  */
 
 // Import types from parent module
@@ -84,7 +89,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        return (optInTimePeriod + self.unstable_period[FuncUnstId::Mfi as usize]) as usize;
+        return (optInTimePeriod) as usize;
     }
     /// Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs
     /// negative money flow over a period. A volume-based analog of RSI. >80 overbought, \<20
@@ -206,7 +211,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Mfi as usize]) as usize;
+        lookbackTotal = (optInTimePeriod) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -250,43 +255,17 @@ impl Core {
         //    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
         //    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
         // The second equation is used here for speed optimization.
-        if today > startIdx {
-            tempValue1 = posSumMF + negSumMF;
-            if tempValue1 < 1.0 {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
-                outIdx += 1;
-            }
+        // The first full window is complete: emit its output for startIdx here,
+        // then slide the window over the remaining bars below.
+        tempValue1 = posSumMF + negSumMF;
+        if tempValue1 < 1.0 {
+            outReal[outIdx] = 0.0;
+            outIdx += 1;
         } else {
-            // Skip the unstable period. Do the processing
-            // but do not write it in the output.
-            while today < startIdx {
-                posSumMF -= mflow_positive[mflow_Idx];
-                negSumMF -= mflow_negative[mflow_Idx];
-                tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-                if tempValue2 < 0_f64 {
-                    mflow_negative[mflow_Idx] = tempValue1;
-                    negSumMF += tempValue1;
-                    mflow_positive[mflow_Idx] = 0.0;
-                } else if tempValue2 > 0_f64 {
-                    mflow_positive[mflow_Idx] = tempValue1;
-                    posSumMF += tempValue1;
-                    mflow_negative[mflow_Idx] = 0.0;
-                } else {
-                    mflow_positive[mflow_Idx] = 0.0;
-                    mflow_negative[mflow_Idx] = 0.0;
-                }
-                mflow_Idx += 1;
-                if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
-            }
+            outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+            outIdx += 1;
         }
-        // Unstable period skipped... now continue
-        // processing if needed.
+        // Now continue processing the remaining bars.
         while today <= endIdx {
             posSumMF -= mflow_positive[mflow_Idx];
             negSumMF -= mflow_negative[mflow_Idx];
@@ -368,7 +347,7 @@ impl Core {
         mflow_Idx = 0;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Mfi as usize]) as usize;
+        lookbackTotal = (optInTimePeriod) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -404,38 +383,13 @@ impl Core {
             if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
             i -= 1;
         }
-        if today > startIdx {
-            tempValue1 = posSumMF + negSumMF;
-            if tempValue1 < 1.0 {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
-                outIdx += 1;
-            }
+        tempValue1 = posSumMF + negSumMF;
+        if tempValue1 < 1.0 {
+            outReal[outIdx] = 0.0;
+            outIdx += 1;
         } else {
-            while today < startIdx {
-                posSumMF -= mflow_positive[mflow_Idx];
-                negSumMF -= mflow_negative[mflow_Idx];
-                tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-                if tempValue2 < 0_f64 {
-                    mflow_negative[mflow_Idx] = tempValue1;
-                    negSumMF += tempValue1;
-                    mflow_positive[mflow_Idx] = 0.0;
-                } else if tempValue2 > 0_f64 {
-                    mflow_positive[mflow_Idx] = tempValue1;
-                    posSumMF += tempValue1;
-                    mflow_negative[mflow_Idx] = 0.0;
-                } else {
-                    mflow_positive[mflow_Idx] = 0.0;
-                    mflow_negative[mflow_Idx] = 0.0;
-                }
-                mflow_Idx += 1;
-                if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
-            }
+            outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+            outIdx += 1;
         }
         while today <= endIdx {
             posSumMF -= mflow_positive[mflow_Idx];

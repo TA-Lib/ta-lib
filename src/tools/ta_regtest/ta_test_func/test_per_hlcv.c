@@ -306,11 +306,6 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->low,   history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
 
-   /* Clear the unstable periods from previous tests. */
-   retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_MFI, 0 );
-   if( retCode != TA_SUCCESS )
-      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
-
    /* Make a simple first call. */
    switch( test->theFunction )
    {
@@ -673,8 +668,13 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_MFI_TEST:
+         /* MFI is a finite sliding-window sum (SMA-like), not an unstable/
+          * recursive function: its running add/subtract accumulator drifts
+          * by only ~1e-14, far inside the 1e-9 stable-comparison band. Test
+          * it as TA_FUNC_UNST_NONE to enforce that stability across ranges.
+          */
          errNb = doRangeTest( rangeTestFunction,
-                              TA_FUNC_UNST_MFI,
+                              TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;

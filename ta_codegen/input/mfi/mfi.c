@@ -4,6 +4,8 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       BobTrader (TADoc.org forum user).
+ *  MW       github @mw66
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -14,11 +16,14 @@
  *  062704 MF    Prevent divide by zero.
  *  121705 MF    Java port related changes.
  *  060907 MF,BT Fix #1727704. MFI logic bug when no price movement
+ *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
+ *               term (and the now-dead unstable-skip loop) so
+ *               TA_SetUnstablePeriod is a no-op for it.
  */
 
 int mfi_lookback(int           optInTimePeriod)
 {
-   return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_MFI);
+   return optInTimePeriod;
 }
 
 TA_RetCode mfi(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
@@ -36,7 +41,7 @@ TA_RetCode mfi(int startIdx, int endIdx, const double inHigh[], const double inL
    *outNBElement = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_MFI);
+   lookbackTotal = optInTimePeriod;
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -91,53 +96,16 @@ TA_RetCode mfi(int startIdx, int endIdx, const double inHigh[], const double inL
     *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
     * The second equation is used here for speed optimization.
     */
-   if( today > startIdx )
-   {
-      tempValue1 = posSumMF+negSumMF;
-      if( tempValue1 < 1.0 )
-         outReal[outIdx++] = 0.0;
-      else
-         outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
-   }
-   else
-   {
-      /* Skip the unstable period. Do the processing
-       * but do not write it in the output.
-       */
-      while( today < startIdx )
-      {
-         posSumMF -= mflow_positive[mflow_Idx];
-         negSumMF -= mflow_negative[mflow_Idx];
-
-         tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue  = tempValue1;
-         tempValue1 *= inVolume[today++];
-         if( tempValue2 < 0 )
-         {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         }
-         else if( tempValue2 > 0 )
-         {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         }
-         else
-         {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         }
-
-         CIRCBUF_NEXT(mflow);
-      }
-   }
-
-   /* Unstable period skipped... now continue
-    * processing if needed.
+   /* The first full window is complete: emit its output for startIdx here,
+    * then slide the window over the remaining bars below.
     */
+   tempValue1 = posSumMF+negSumMF;
+   if( tempValue1 < 1.0 )
+      outReal[outIdx++] = 0.0;
+   else
+      outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
+
+   /* Now continue processing the remaining bars. */
    while( today <= endIdx )
    {
       posSumMF -= mflow_positive[mflow_Idx];

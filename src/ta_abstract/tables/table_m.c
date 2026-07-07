@@ -504,7 +504,7 @@ DEF_FUNCTION( MFI,
               TA_GroupId_MomentumIndicators,
               "Money Flow Index",
               "Mfi",
-              TA_FUNC_FLG_UNST_PER
+              0
              );
 /* MFI END */
 
