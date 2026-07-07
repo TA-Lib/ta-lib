@@ -2728,6 +2728,8 @@ fn gen_ta_func_api_c(repo_root: &Path) -> String {
             let _ = write!(o, ",0x{b:02X}");
         }
     }
+    // NUL-terminate so TA_FunctionDescriptionXML() returns a valid C string.
+    let _ = write!(o, ",0x00");
     o.push_str("};\n\n");
 
     o.push_str(
