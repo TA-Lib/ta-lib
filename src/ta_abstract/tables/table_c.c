@@ -154,7 +154,7 @@ static const TA_OptInputParameterInfo *TA_CDL3LINESTRIKE_OptInputs[] =
 
 DEF_FUNCTION( CDL3LINESTRIKE,
               TA_GroupId_PatternRecognition,
-              "Three-Line Strike ",
+              "Three-Line Strike",
               "Cdl3LineStrike",
               TA_FUNC_FLG_CANDLESTICK
              );

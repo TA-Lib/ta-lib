@@ -107,7 +107,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CDL2CROWS](cdl2crows.md) — Two Crows
 - [CDL3BLACKCROWS](cdl3blackcrows.md) — Three Black Crows
 - [CDL3INSIDE](cdl3inside.md) — Three Inside Up/Down
-- [CDL3LINESTRIKE](cdl3linestrike.md) — Three-Line Strike 
+- [CDL3LINESTRIKE](cdl3linestrike.md) — Three-Line Strike
 - [CDL3OUTSIDE](cdl3outside.md) — Three Outside Up/Down
 - [CDL3STARSINSOUTH](cdl3starsinsouth.md) — Three Stars In The South
 - [CDL3WHITESOLDIERS](cdl3whitesoldiers.md) — Three Advancing White Soldiers

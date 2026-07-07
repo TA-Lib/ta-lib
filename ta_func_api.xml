@@ -983,7 +983,7 @@
 	<FinancialFunction>
 		<Abbreviation>CDL3LINESTRIKE</Abbreviation>
 		<CamelCaseName>Cdl3LineStrike</CamelCaseName>
-		<ShortDescription>Three-Line Strike </ShortDescription>
+		<ShortDescription>Three-Line Strike</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>

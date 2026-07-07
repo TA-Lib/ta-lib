@@ -640,7 +640,7 @@ pub static FUNCS: [FuncInfo; 161] = [
         name: "CDL3LINESTRIKE",
         camel_case_name: "Cdl3LineStrike",
         group: Group::PatternRecognition,
-        hint: "Three-Line Strike ",
+        hint: "Three-Line Strike",
         flags: FuncFlags(0x10000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],

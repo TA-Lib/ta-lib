@@ -1,7 +1,7 @@
 name: CDL3LINESTRIKE
 camel_case: Cdl3LineStrike
 group: Pattern Recognition
-hint: "Three-Line Strike "
+hint: "Three-Line Strike"
 flags: [candlestick]
 inputs:
   - name: inPriceOHLC

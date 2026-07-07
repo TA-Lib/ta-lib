@@ -792,7 +792,7 @@ TA_LIB_API int TA_CDL3INSIDE_Lookback( void );
 
 
 /*
- * TA_CDL3LINESTRIKE - Three-Line Strike 
+ * TA_CDL3LINESTRIKE - Three-Line Strike
  * 
  * Input  = Open, High, Low, Close
  * Output = int
