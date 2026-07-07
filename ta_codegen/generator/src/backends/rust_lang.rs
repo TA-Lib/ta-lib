@@ -3615,19 +3615,15 @@ fn render_func_call(
         // 1-arg: ABS/fabs → .ta_abs() (generic) or .abs() (concrete)
         // 1-arg: all others → .ta_{fname}() (generic) or .{fname}() (concrete)
         match mf {
-            MathFn::Max => {
-                if args.len() >= 2 {
-                    let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
-                    let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
-                    return format!("({a}).max({b})");
-                }
+            MathFn::Max if args.len() >= 2 => {
+                let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
+                let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
+                return format!("({a}).max({b})");
             }
-            MathFn::Min => {
-                if args.len() >= 2 {
-                    let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
-                    let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
-                    return format!("({a}).min({b})");
-                }
+            MathFn::Min if args.len() >= 2 => {
+                let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
+                let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
+                return format!("({a}).min({b})");
             }
             _ => {}
         }
