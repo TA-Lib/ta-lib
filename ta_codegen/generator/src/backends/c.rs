@@ -188,6 +188,9 @@ fn gen_header() -> String {
 /// out-of-range values. One source of truth for both function variants:
 /// guarded functions fail with `TA_BAD_PARAM`, lookback functions fail with
 /// `-1` (the classic lookback bad-param contract that wrappers rely on).
+// Integer optional-param defaults and ranges are stored as `f64` in the IR; casting
+// the integer-valued ones to `i32` for literal emission is exact, not truncating.
+#[allow(clippy::cast_possible_truncation)]
 fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {

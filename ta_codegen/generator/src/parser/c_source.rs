@@ -137,7 +137,7 @@ fn tokenize(input: &str) -> Vec<Token> {
 /// the index of the token it immediately precedes (`tokens.len()` at capture
 /// time), plus its cleaned content lines. The parser re-associates these to
 /// statements positionally without ever seeing a comment token.
-#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines, clippy::type_complexity)]
 fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, bool)>) {
     let input = strip_local_macros(input);
     let mut tokens = Vec::new();

@@ -54,6 +54,13 @@
 
 #![forbid(unsafe_code)]
 #![allow(non_snake_case, unused_variables, unused_assignments, unused_mut, unused_parens, arithmetic_overflow)]
+// Generated code: Clippy's style/complexity lints are noise on machine output, and
+// several "fixes" would change numeric behavior — e.g. `neg_cmp_op_on_partial_ord`
+// on C's `!(a < b)` NaN idiom, or De Morgan rewrites under `nonminimal_bool`. The
+// crate is verified bit-exact against the C reference, so these are suppressed rather
+// than applied. `too_many_arguments` is inherent to the C API arity.
+#![allow(clippy::all, clippy::pedantic)]
+#![allow(clippy::approx_constant)] // PI (180/3.141592653589793) is copied verbatim from the C source.
 pub mod ta_func;
 pub mod abstract_api;
 pub use ta_func::*;

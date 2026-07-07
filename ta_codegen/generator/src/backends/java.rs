@@ -377,6 +377,9 @@ fn java_type_str(var_type: &VarType) -> &'static str {
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
 /// (the classic lookback bad-param contract). Enum params (e.g. MAType) need
 /// no validation in Java — the type system already constrains them.
+// Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
+// casts to `i32` for literal emission are exact, not truncating.
+#[allow(clippy::cast_possible_truncation)]
 fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
@@ -418,8 +421,7 @@ fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
                     out.push('\n');
                 }
             }
-            ParamType::Enum(_) => {}
-            ParamType::Price(_) => {}
+            ParamType::Enum(_) | ParamType::Price(_) => {}
         }
     }
     out

@@ -266,6 +266,40 @@ jobs:
           # edge-range sweep traps arithmetic overflow instead of wrapping it away.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=rust --rust-debug
 
+  # Clippy lint gate for the Rust code: the generator tool and the generated crate.
+  # The tool enforces #![deny(clippy::pedantic)] on itself, but nothing in CI ever
+  # ran clippy, so that gate silently drifted (pedantic errors landed on dev
+  # unnoticed). This makes clippy a hard gate. `-D warnings` promotes the remaining
+  # warn-level lints (and rustc warnings) to errors too; the generated crate stays
+  # green because its scaffolding emits a crate-level #![allow(clippy::all,
+  # clippy::pedantic)] — its machine output is verified bit-exact against the C
+  # reference, not linted (rewriting emitted comparisons would change NaN semantics).
+  # Rust-only and self-contained: no C build, no JDK/.NET, and intentionally NOT
+  # gated on the C hero 'test' job, so an unrelated dist failure can't skip it.
+  clippy:
+    name: Rust clippy (generator + generated crate)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      # Rust is preinstalled on ubuntu-latest; add the component defensively
+      # (idempotent — a no-op when clippy is already present).
+      - name: Ensure clippy component
+        shell: bash
+        run: rustup component add clippy
+
+      - name: Clippy the generator tool
+        shell: bash
+        run: cargo clippy --all-targets --manifest-path ta_codegen/generator/Cargo.toml -- -D warnings
+
+      - name: Clippy the generated crate
+        shell: bash
+        run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
+
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.

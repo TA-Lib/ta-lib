@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![allow(non_snake_case, unused_variables, clippy::all)]
+#![allow(non_snake_case, unused_variables, dead_code, clippy::all)]
 
 use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};

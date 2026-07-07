@@ -834,7 +834,7 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
                 "            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf{j}[_fi] = (float)g_inBuf{j}[_fi];\n"
             ));
         }
-        let mut emit_s_call = |s: &mut String, suffix: &str| {
+        let emit_s_call = |s: &mut String, suffix: &str| {
             s.push_str(&format!("            rc = TA_S_{}{}(\n", func.name, suffix));
             s.push_str("                startIdx, endIdx,\n");
             for (j, _name) in input_names.iter().enumerate() {
@@ -1834,7 +1834,7 @@ pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
 
     // File-level attributes
     s.push_str("#![forbid(unsafe_code)]\n");
-    s.push_str("#![allow(non_snake_case, unused_variables, clippy::all)]\n\n");
+    s.push_str("#![allow(non_snake_case, unused_variables, dead_code, clippy::all)]\n\n");
 
     // Imports
     s.push_str("use serde_json::{self, Value};\n");

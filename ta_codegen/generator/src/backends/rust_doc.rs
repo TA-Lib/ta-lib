@@ -24,7 +24,7 @@ const WRAP: usize = 92;
 // ---------------------------------------------------------------------------
 
 /// Full rustdoc block (+ `#[doc(alias)]` attributes) for the guarded public function.
-#[allow(clippy::implicit_hasher)]
+#[allow(clippy::implicit_hasher, clippy::too_many_lines)]
 pub fn guarded_docs(
     func: &FuncDef,
     snake: &str,
