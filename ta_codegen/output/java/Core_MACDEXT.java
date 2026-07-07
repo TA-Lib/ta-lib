@@ -171,6 +171,9 @@
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       /* Copy the result into the output for the caller. */
+      /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
       retCode = movingAverageUnguarded(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);

@@ -91,6 +91,9 @@
          outBegIdx.value = startIdx;
          i = endIdx - startIdx + 1;
          outNBElement.value = i;
+         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
+          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+          */
          System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
          return RetCode.Success ;
       }

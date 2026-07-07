@@ -142,7 +142,10 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
       *outBegIdx= startIdx;
       i = endIdx - startIdx + 1;
       *outNBElement= i;
-      memcpy(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      /* memmove, not memcpy: an in-place caller (outReal == inReal) with
+       * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+       */
+      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
       return TA_SUCCESS;
    }
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -351,7 +354,7 @@ TA_LIB_API TA_RetCode TA_CMO_Unguarded( int    startIdx,
       *outBegIdx= startIdx;
       i = endIdx - startIdx + 1;
       *outNBElement= i;
-      memcpy(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;
@@ -527,7 +530,7 @@ TA_RetCode TA_S_CMO( int    startIdx,
       *outBegIdx= startIdx;
       i = endIdx - startIdx + 1;
       *outNBElement= i;
-      memcpy(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;
@@ -689,7 +692,7 @@ TA_RetCode TA_S_CMO_Unguarded( int    startIdx,
       *outBegIdx= startIdx;
       i = endIdx - startIdx + 1;
       *outNBElement= i;
-      memcpy(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;

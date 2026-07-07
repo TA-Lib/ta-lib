@@ -306,7 +306,10 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memcpy(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+    * reused as scratch, so source and destination overlap (issue #94).
+    */
+   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
    {
@@ -456,7 +459,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_Unguarded( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   memcpy(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -627,7 +630,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   memcpy(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -772,7 +775,7 @@ TA_RetCode TA_S_STOCHF_Unguarded( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   memcpy(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);

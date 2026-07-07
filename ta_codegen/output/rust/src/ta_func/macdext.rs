@@ -320,6 +320,8 @@ impl Core {
             i += 1;
         }
         // Copy the result into the output for the caller.
+        // memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+        // reused as scratch, so source and destination overlap (issue #94).
         {
             let _n = ((endIdx - startIdx + 1) * 1) as usize;
             let _di = (0) as usize;

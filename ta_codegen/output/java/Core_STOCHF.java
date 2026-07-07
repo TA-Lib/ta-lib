@@ -232,6 +232,9 @@
        *  caller buffer because more input data then the
        *  requested range was needed for doing %D).
        */
+      /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
       System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {

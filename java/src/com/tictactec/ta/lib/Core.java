@@ -27020,6 +27020,9 @@ public class Core {
          outBegIdx.value = startIdx;
          i = endIdx - startIdx + 1;
          outNBElement.value = i;
+         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
+          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+          */
          System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
          return RetCode.Success ;
       }
@@ -41566,6 +41569,9 @@ public class Core {
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       /* Copy the result into the output for the caller. */
+      /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
       retCode = movingAverageUnguarded(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
@@ -43449,6 +43455,16 @@ public class Core {
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      /* An inverted period window (min above max) is an invalid parameter
+       * combination: the per-bar clamp below would push a period above
+       * optInMaxPeriod, exceeding the lookback and reading uninitialized
+       * results. Reject it cleanly instead of returning garbage.
+       */
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -43552,6 +43568,11 @@ public class Core {
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -43643,6 +43664,11 @@ public class Core {
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -43718,6 +43744,11 @@ public class Core {
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -52513,6 +52544,9 @@ public class Core {
          outBegIdx.value = startIdx;
          i = (int)(endIdx - startIdx + 1);
          outNBElement.value = (int)i;
+         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
+          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+          */
          System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
          return RetCode.Success ;
       }
@@ -55836,6 +55870,9 @@ public class Core {
        *  caller buffer because more input data then the
        *  requested range was needed for doing %D).
        */
+      /* memmove, not memcpy: tempBuffer aliases outSlowK when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
@@ -56484,6 +56521,9 @@ public class Core {
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
        *  requested range was needed for doing %D).
+       */
+      /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
        */
       System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
       /* Don't need K anymore, free it if it was allocated here. */

@@ -176,7 +176,9 @@ TA_RetCode macdext(int startIdx, int endIdx, const double inReal[], int optInFas
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
 
    /* Copy the result into the output for the caller. */
-   memcpy(outMACD, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1) * sizeof(double));
+   /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+    * reused as scratch, so source and destination overlap (issue #94). */
+   memmove(outMACD, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1) * sizeof(double));
 
    /* Calculate the signal/trigger line. */
    retCode = ma( 0, outNbElement1-1,

@@ -17,6 +17,24 @@ set(CMAKE_C_STANDARD 11)
 option(BUILD_DEV_TOOLS "Build development tools (ta_regtest, ta_bench)" ON)
 message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
 
+# Optional AddressSanitizer + UndefinedBehaviorSanitizer instrumentation (issue
+# #94). Builds the library and the C tools so that out-of-bounds / uninitialized
+# reads in indicator code (the MACD/TRIX/MAVP boundary class) fail loudly instead
+# of returning plausible garbage. Dev/CI only (one nightly job), never a release
+# build. GCC/Clang only. Enable with -DENABLE_SANITIZERS=ON.
+option(ENABLE_SANITIZERS "Instrument the C build with AddressSanitizer + UBSan (dev/CI only)" OFF)
+if(ENABLE_SANITIZERS)
+    if(MSVC)
+        message(FATAL_ERROR "ENABLE_SANITIZERS is only supported with GCC/Clang, not MSVC.")
+    endif()
+    # Must be set before any target is defined so the flags apply to the
+    # library and the tools alike (compile AND link).
+    set(TA_SANITIZER_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    add_compile_options(${TA_SANITIZER_FLAGS})
+    add_link_options(${TA_SANITIZER_FLAGS})
+    message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined -fno-sanitize-recover=all)")
+endif()
+
 # Default to Release config
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)

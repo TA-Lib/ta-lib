@@ -365,6 +365,8 @@ impl Core {
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
         //  requested range was needed for doing %D).
+        // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+        // reused as scratch, so source and destination overlap (issue #94).
         {
             let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
             let _di = (0) as usize;

@@ -327,6 +327,41 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
+  # Memory-safety gate (#94): build the library + ta_regtest with
+  # AddressSanitizer + UBSan and run the full C reference suite, including the
+  # parameter-boundary sweep (every optional parameter at min/min+1/default+-1/
+  # large across every function). Turns an out-of-bounds / uninitialized read in
+  # indicator code (the MACD/TRIX/MAVP/STOCH boundary class) into a hard failure
+  # instead of plausible garbage. C-only, GCC, gated on 'test'.
+  sanitizers:
+    name: ASan/UBSan (C reference suite + boundary sweep)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build ta_regtest with ASan+UBSan
+        shell: bash
+        run: python3 scripts/build.py ta_regtest --sanitize
+
+      - name: Run C reference suite + boundary sweep under sanitizers
+        shell: bash
+        working-directory: cmake-build-asan/bin
+        env:
+          ASAN_OPTIONS: halt_on_error=1:abort_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ./ta_regtest
+
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
   # recipe). Gated on the C hero job like the other non-hero jobs.

@@ -226,7 +226,9 @@ TA_RetCode stochf(int startIdx, int endIdx, const double inHigh[], const double 
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memcpy(outFastK, &tempBuffer[lookbackFastD], ((int)*outNBElement) * sizeof(double));
+   /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+    * reused as scratch, so source and destination overlap (issue #94). */
+   memmove(outFastK, &tempBuffer[lookbackFastD], ((int)*outNBElement) * sizeof(double));
 
    /* Don't need K anymore, free it if it was allocated here. */
    if (bufferIsAllocated) { free(tempBuffer); }

@@ -25,6 +25,18 @@ TA_RetCode mavp(int startIdx, int endIdx, const double inReal[], const double in
    int localNbElement;
    TA_RetCode retCode;
 
+   /* An inverted period window (min above max) is an invalid parameter
+    * combination: the per-bar clamp below would push a period above
+    * optInMaxPeriod, exceeding the lookback and reading uninitialized
+    * results. Reject it cleanly instead of returning garbage.
+    */
+   if( optInMinPeriod > optInMaxPeriod )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_BAD_PARAM;
+   }
+
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */

@@ -329,7 +329,10 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memcpy(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
+   /* memmove, not memcpy: tempBuffer aliases outSlowK when the caller buffer is
+    * reused as scratch, so source and destination overlap (issue #94).
+    */
+   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
    {
@@ -484,7 +487,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
       return retCode;
    }
    retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   memcpy(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
+   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -666,7 +669,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       return retCode;
    }
    retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   memcpy(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
+   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -816,7 +819,7 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
       return retCode;
    }
    retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   memcpy(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
+   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);

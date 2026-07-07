@@ -217,6 +217,8 @@ impl Core {
             (*outBegIdx) = startIdx;
             i = endIdx - startIdx + 1;
             (*outNBElement) = i;
+            // memmove, not memcpy: an in-place caller (outReal == inReal) with
+            // startIdx > 0 overlaps source and destination (issue #94; matches WMA).
             {
             let _n = (i * 1) as usize;
             let _di = (0) as usize;

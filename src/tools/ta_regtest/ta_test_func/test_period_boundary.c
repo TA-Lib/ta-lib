@@ -79,8 +79,10 @@
 
 /**** Headers ****/
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -101,6 +103,20 @@
 
 /* Buffers for the abstract-driven sweep (max 3 outputs per function). */
 #define PB_MAX_OUTPUT 3
+
+/* An integer max above this is treated as effectively unbounded: we do not
+ * probe max+1 (it would overflow a value no caller ever passes) and leave the
+ * true-max / integer-overflow surface to the ASan/UBSan nightly job. */
+#define PB_SWEEP_MAX_BOUNDED 1000000
+
+/* Per-case expectation for the sweep. #94's memory-safety contract is
+ * "succeed-coherent OR clean TA_BAD_PARAM — never a crash/garbage". */
+#define PB_EXPECT_REJECT  0   /* out of range: must return TA_BAD_PARAM       */
+#define PB_EXPECT_STRICT  1   /* realistic value: must succeed, coherent      */
+#define PB_EXPECT_LENIENT 2   /* extreme value: coherent OR clean TA_BAD_PARAM
+                               * (an in-range value can still be rejected when
+                               *  it violates a cross-parameter constraint,
+                               *  e.g. MAVP minPeriod > maxPeriod).            */
 static TA_Real    pbSweepOutReal[PB_MAX_OUTPUT][PB_DATA_SIZE];
 static TA_Integer pbSweepOutInt[PB_MAX_OUTPUT][PB_DATA_SIZE];
 
@@ -109,7 +125,22 @@ typedef struct
    const TA_History *history;
    ErrorNumber errNb;
    int nbParamTested;
+   int nbFail;
 } PBSweepCtx;
+
+/* Diagnostic: when the environment variable PB_SWEEP_LIST_ALL is set, the
+ * sweep reports every failing case (and keeps going) instead of aborting on
+ * the first one. Leaves the pass/fail verdict unchanged for CI. */
+static int g_pbListAll = 0;
+
+/* Record a sweep failure. In normal mode this aborts the sweep (sets errNb);
+ * in list-all mode it only counts, so a single run enumerates every case. */
+static void pbFail( PBSweepCtx *ctx )
+{
+   ctx->nbFail++;
+   if( !g_pbListAll )
+      ctx->errNb = (ErrorNumber)( TA_REGTEST_OPTIMIZATION_REF_ERROR );
+}
 
 typedef struct
 {
@@ -1144,142 +1175,354 @@ static ErrorNumber testPeriodOnePins( const TA_History *history )
 /* Sub-test: abstract-driven min-param sweep  */
 /**********************************************/
 
-static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
+/* Scan every real output element in [0,nb) for NaN/Inf/subnormal garbage —
+ * the "no denormal-garbage values" contract from issue #94. Integer outputs
+ * are not scanned (any bit pattern is a legal candlestick/index code).
+ */
+static ErrorNumber pbScanOutputsFinite( const char *label,
+                                        const TA_FuncHandle *handle,
+                                        const TA_FuncInfo *funcInfo,
+                                        int nb )
 {
-   PBSweepCtx *ctx = (PBSweepCtx *)opaque;
+   const TA_OutputParameterInfo *outputInfo;
+   unsigned int o;
+   int j;
+
+   for( o = 0; o < funcInfo->nbOutput && o < PB_MAX_OUTPUT; o++ )
+   {
+      TA_GetOutputParameterInfo( handle, o, &outputInfo );
+      if( outputInfo->type != TA_Output_Real )
+         continue;
+      for( j = 0; j < nb; j++ )
+      {
+         TA_Real v = pbSweepOutReal[o][j];
+         if( !isfinite( v ) || fpclassify( v ) == FP_SUBNORMAL )
+         {
+            printf( "\nFail: %s: out[%u][%d] = %.17g is not finite/normal\n",
+                    label, o, j, v );
+            return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* Run one sweep case: optional parameter `paramNb` set to `ivalue` (integer
+ * params) or `dvalue` (when isReal), every other parameter left at its
+ * default. `expect` is PB_EXPECT_STRICT (must succeed, coherent+finite),
+ * PB_EXPECT_LENIENT (coherent OR a clean TA_BAD_PARAM), or PB_EXPECT_REJECT
+ * (must return TA_BAD_PARAM). A successful call is coherent when the output
+ * either fully spans lookback..last-bar (lookback <= endIdx) or is empty (the
+ * period consumes the whole range); a crash, an out-of-bounds access, a
+ * garbage/non-finite value, or any other retCode is always a failure.
+ * On the first failure sets ctx->errNb and returns.
+ */
+static void pbSweepRunCase( PBSweepCtx *ctx,
+                            const TA_FuncInfo *funcInfo,
+                            unsigned int paramNb,
+                            const TA_OptInputParameterInfo *optInfo,
+                            int isReal, int ivalue, TA_Real dvalue,
+                            int expect )
+{
    const TA_History *history = ctx->history;
    const TA_FuncHandle *handle = funcInfo->handle;
    const TA_InputParameterInfo *inputInfo;
    const TA_OutputParameterInfo *outputInfo;
-   const TA_OptInputParameterInfo *optInfo;
    TA_ParamHolder *paramHolder;
    TA_RetCode retCode;
-   unsigned int i, paramNb;
-   int pass;
+   unsigned int i;
+   int endIdx = (int)history->nbBars - 1;
+   int outBegIdx = -1, outNbElement = -1, lookback = -1;
+   char label[160];
+
+   {
+      const char *tag = ( expect == PB_EXPECT_REJECT )  ? " (expect BAD_PARAM)" :
+                        ( expect == PB_EXPECT_LENIENT ) ? " (lenient)" : "";
+      if( isReal )
+         snprintf( label, sizeof(label), "sweep %s.%s=%.9g%s",
+                   funcInfo->name, optInfo->paramName, dvalue, tag );
+      else
+         snprintf( label, sizeof(label), "sweep %s.%s=%d%s",
+                   funcInfo->name, optInfo->paramName, ivalue, tag );
+   }
+
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: TA_ParamHolderAlloc [%d]\n", label, retCode );
+      pbFail( ctx );
+      return;
+   }
+   ctx->nbParamTested++;
+
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      switch( inputInfo->type )
+      {
+      case TA_Input_Price:
+         TA_SetInputParamPricePtr( paramHolder, i,
+            inputInfo->flags & TA_IN_PRICE_OPEN   ? history->open   : NULL,
+            inputInfo->flags & TA_IN_PRICE_HIGH   ? history->high   : NULL,
+            inputInfo->flags & TA_IN_PRICE_LOW    ? history->low    : NULL,
+            inputInfo->flags & TA_IN_PRICE_CLOSE  ? history->close  : NULL,
+            inputInfo->flags & TA_IN_PRICE_VOLUME ? history->volume : NULL,
+            NULL );
+         break;
+      case TA_Input_Real:
+         /* Second real input of MAVP is the periods array: close prices are
+          * clamped into [minPeriod,maxPeriod], exactly the boundary behavior
+          * we want exercised. */
+         TA_SetInputParamRealPtr( paramHolder, i, history->close );
+         break;
+      case TA_Input_Integer:
+         /* No function currently uses an integer input array. */
+         break;
+      }
+   }
+
+   for( i = 0; i < funcInfo->nbOutput && i < PB_MAX_OUTPUT; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outputInfo );
+      if( outputInfo->type == TA_Output_Real )
+         TA_SetOutputParamRealPtr( paramHolder, i, &pbSweepOutReal[i][0] );
+      else
+         TA_SetOutputParamIntegerPtr( paramHolder, i, &pbSweepOutInt[i][0] );
+   }
+
+   if( isReal )
+      retCode = TA_SetOptInputParamReal( paramHolder, paramNb, dvalue );
+   else
+      retCode = TA_SetOptInputParamInteger( paramHolder, paramNb, ivalue );
+   if( retCode != TA_SUCCESS )
+   {
+      /* A set-time rejection is a clean rejection: fine for an out-of-range
+       * (or cross-constrained) value, a failure only for a strictly-valid one. */
+      if( expect == PB_EXPECT_STRICT )
+      {
+         printf( "\nFail: %s: set-param rejected a valid value [%d]\n", label, retCode );
+         pbFail( ctx );
+      }
+      else if( retCode != TA_BAD_PARAM )
+      {
+         printf( "\nFail: %s: set-param retCode %d, expected TA_BAD_PARAM\n", label, retCode );
+         pbFail( ctx );
+      }
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+
+   retCode = TA_CallFunc( paramHolder, 0, endIdx, &outBegIdx, &outNbElement );
+
+   if( expect == PB_EXPECT_REJECT )
+   {
+      if( retCode != TA_BAD_PARAM )
+      {
+         printf( "\nFail: %s: retCode %d, expected TA_BAD_PARAM\n", label, retCode );
+         pbFail( ctx );
+      }
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+
+   /* A lenient (extreme) value may be cleanly rejected by a cross-parameter
+    * constraint — that is an acceptable outcome, just not a coherent result. */
+   if( expect == PB_EXPECT_LENIENT && retCode == TA_BAD_PARAM )
+   {
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+
+   /* Otherwise the call must succeed with a coherent, finite result. */
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: retCode %d, expected TA_SUCCESS\n", label, retCode );
+      pbFail( ctx );
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+   if( TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: TA_GetLookback failed\n", label );
+      pbFail( ctx );
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+
+   if( lookback <= endIdx )
+   {
+      /* Enough data: coherent output must span lookback..last bar. */
+      if( outBegIdx != lookback || outNbElement <= 0 ||
+          outBegIdx + outNbElement - 1 != endIdx )
+      {
+         printf( "\nFail: %s: incoherent begIdx %d nb %d lookback %d (last bar %d)\n",
+                 label, outBegIdx, outNbElement, lookback, endIdx );
+         pbFail( ctx );
+         TA_ParamHolderFree( paramHolder );
+         return;
+      }
+      if( pbScanOutputsFinite( label, handle, funcInfo, outNbElement ) != TA_TEST_PASS )
+      {
+         pbFail( ctx );
+         TA_ParamHolderFree( paramHolder );
+         return;
+      }
+   }
+   else
+   {
+      /* The period consumes the whole range: the coherent result is empty. */
+      if( outNbElement != 0 )
+      {
+         printf( "\nFail: %s: lookback %d > last bar %d but nb %d != 0\n",
+                 label, lookback, endIdx, outNbElement );
+         pbFail( ctx );
+         TA_ParamHolderFree( paramHolder );
+         return;
+      }
+   }
+
+   TA_ParamHolderFree( paramHolder );
+}
+
+/* Boundary grid for one function: every optional parameter is swept across
+ * min / min+1 / default-1 / default / default+1 / a large "past the data"
+ * period (integer ranges), across every enumerated value (integer/real
+ * lists), and across min / default / max (real ranges — the library does not
+ * range-check reals, so those exercise the finite scan, not BAD_PARAM). The
+ * out-of-range integers min-1 and (bounded) max+1 must be cleanly rejected.
+ * Every other parameter is held at its default. #94's true-max / integer-
+ * overflow surface is deliberately delegated to the ASan/UBSan nightly job
+ * (a value no caller passes, and unsafe to force here in a plain build).
+ */
+static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
+{
+   PBSweepCtx *ctx = (PBSweepCtx *)opaque;
+   const TA_FuncHandle *handle = funcInfo->handle;
+   const TA_OptInputParameterInfo *optInfo;
+   unsigned int paramNb;
+   int endIdx = (int)ctx->history->nbBars - 1;
 
    if( ctx->errNb != TA_TEST_PASS )
       return;   /* Already failed: skip the rest quietly. */
 
    for( paramNb = 0; paramNb < funcInfo->nbOptInput; paramNb++ )
    {
-      const TA_IntegerRange *range;
-
       TA_GetOptInputParameterInfo( handle, paramNb, &optInfo );
-      if( optInfo->type != TA_OptInput_IntegerRange )
-         continue;
-      range = (const TA_IntegerRange *)optInfo->dataSet;
 
-      /* Two passes: param at min (must succeed, coherent output),
-       * param at min-1 (must be rejected with TA_BAD_PARAM).
-       */
-      for( pass = 0; pass < 2; pass++ )
+      switch( optInfo->type )
       {
-         int value = (pass == 0) ? range->min : range->min - 1;
-         int outBegIdx = -1, outNbElement = -1, lookback = -1;
+      case TA_OptInput_IntegerRange:
+      {
+         const TA_IntegerRange *r = (const TA_IntegerRange *)optInfo->dataSet;
+         int lo = r->min, hi = r->max, def = (int)optInfo->defaultValue;
+         /* A large period near/past the data boundary — overflow-safe. */
+         int big = (hi < endIdx + 2) ? hi : endIdx + 2;
+         int wanted[5];
+         int cand[5];
+         int nWanted = 0, nCand = 0, k, m, dup;
 
-         retCode = TA_ParamHolderAlloc( handle, &paramHolder );
-         if( retCode != TA_SUCCESS )
+         wanted[nWanted++] = lo;
+         wanted[nWanted++] = lo + 1;
+         wanted[nWanted++] = def - 1;
+         wanted[nWanted++] = def;
+         wanted[nWanted++] = def + 1;
+         for( m = 0; m < nWanted; m++ )
          {
-            printf( "\nFail: sweep %s: TA_ParamHolderAlloc [%d]\n", funcInfo->name, retCode );
-            ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-            return;
+            int v = wanted[m];
+            if( v < lo || v > hi ) continue;
+            dup = 0;
+            for( k = 0; k < nCand; k++ ) if( cand[k] == v ) { dup = 1; break; }
+            if( !dup ) cand[nCand++] = v;
          }
-
-         for( i = 0; i < funcInfo->nbInput; i++ )
+         /* The default must compute coherently. Every other in-range value
+          * must be coherent OR a clean rejection: a single-parameter boundary
+          * can violate a cross-parameter constraint against another default
+          * (e.g. MAVP maxPeriod=1 with the default minPeriod=2). */
+         for( k = 0; k < nCand; k++ )
          {
-            TA_GetInputParameterInfo( handle, i, &inputInfo );
-            switch( inputInfo->type )
-            {
-            case TA_Input_Price:
-               TA_SetInputParamPricePtr( paramHolder, i,
-                  inputInfo->flags & TA_IN_PRICE_OPEN   ? history->open   : NULL,
-                  inputInfo->flags & TA_IN_PRICE_HIGH   ? history->high   : NULL,
-                  inputInfo->flags & TA_IN_PRICE_LOW    ? history->low    : NULL,
-                  inputInfo->flags & TA_IN_PRICE_CLOSE  ? history->close  : NULL,
-                  inputInfo->flags & TA_IN_PRICE_VOLUME ? history->volume : NULL,
-                  NULL );
-               break;
-            case TA_Input_Real:
-               /* Second real input of MAVP is the periods array: close
-                * prices are clamped into [minPeriod,maxPeriod], which
-                * is exactly the boundary behavior we want exercised.
-                */
-               TA_SetInputParamRealPtr( paramHolder, i, history->close );
-               break;
-            case TA_Input_Integer:
-               /* No function currently uses an integer input array. */
-               break;
-            }
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, cand[k], 0.0,
+                            cand[k] == def ? PB_EXPECT_STRICT : PB_EXPECT_LENIENT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
          }
-
-         for( i = 0; i < funcInfo->nbOutput && i < PB_MAX_OUTPUT; i++ )
+         /* A large "past the data" period: coherent (empty) OR a clean
+          * cross-parameter rejection (e.g. minPeriod pushed above maxPeriod). */
+         dup = 0;
+         for( k = 0; k < nCand; k++ ) if( cand[k] == big ) { dup = 1; break; }
+         if( !dup && big >= lo && big <= hi )
          {
-            TA_GetOutputParameterInfo( handle, i, &outputInfo );
-            if( outputInfo->type == TA_Output_Real )
-               TA_SetOutputParamRealPtr( paramHolder, i, &pbSweepOutReal[i][0] );
-            else
-               TA_SetOutputParamIntegerPtr( paramHolder, i, &pbSweepOutInt[i][0] );
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, big, 0.0,
+                            PB_EXPECT_LENIENT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
          }
-
-         retCode = TA_SetOptInputParamInteger( paramHolder, paramNb, value );
-         if( retCode != TA_SUCCESS )
+         /* min-1 is always below the floor: a clean rejection. */
+         if( lo > INT_MIN )
          {
-            printf( "\nFail: sweep %s.%s=%d: TA_SetOptInputParamInteger [%d]\n",
-                    funcInfo->name, optInfo->paramName, value, retCode );
-            TA_ParamHolderFree( paramHolder );
-            ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-            return;
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, lo - 1, 0.0,
+                            PB_EXPECT_REJECT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
          }
-
-         retCode = TA_CallFunc( paramHolder, 0, history->nbBars - 1,
-                                &outBegIdx, &outNbElement );
-
-         if( pass == 0 )
+         /* max+1 above a *bounded* ceiling: a clean rejection. */
+         if( hi > 0 && hi <= PB_SWEEP_MAX_BOUNDED )
          {
-            /* Minimum value: must succeed with coherent output. */
-            if( retCode != TA_SUCCESS )
-            {
-               printf( "\nFail: sweep %s.%s=min(%d): retCode %d\n",
-                       funcInfo->name, optInfo->paramName, value, retCode );
-               TA_ParamHolderFree( paramHolder );
-               ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-               return;
-            }
-            if( TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS ||
-                outBegIdx != lookback )
-            {
-               printf( "\nFail: sweep %s.%s=min(%d): outBegIdx %d != lookback %d\n",
-                       funcInfo->name, optInfo->paramName, value, outBegIdx, lookback );
-               TA_ParamHolderFree( paramHolder );
-               ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-               return;
-            }
-            if( outNbElement <= 0 ||
-                outBegIdx + outNbElement - 1 != (int)history->nbBars - 1 )
-            {
-               printf( "\nFail: sweep %s.%s=min(%d): begIdx %d nb %d does not reach last bar %d\n",
-                       funcInfo->name, optInfo->paramName, value,
-                       outBegIdx, outNbElement, (int)history->nbBars - 1 );
-               TA_ParamHolderFree( paramHolder );
-               ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-               return;
-            }
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, hi + 1, 0.0,
+                            PB_EXPECT_REJECT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
          }
-         else
+         break;
+      }
+      case TA_OptInput_IntegerList:
+      {
+         const TA_IntegerList *list = (const TA_IntegerList *)optInfo->dataSet;
+         unsigned int e;
+         for( e = 0; e < list->nbElement; e++ )
          {
-            /* Below the minimum: must be cleanly rejected. */
-            if( retCode != TA_BAD_PARAM )
-            {
-               printf( "\nFail: sweep %s.%s=min-1(%d): retCode %d, expected TA_BAD_PARAM\n",
-                       funcInfo->name, optInfo->paramName, value, retCode );
-               TA_ParamHolderFree( paramHolder );
-               ctx->errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
-               return;
-            }
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0,
+                            list->data[e].value, 0.0, PB_EXPECT_STRICT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
          }
+         break;
+      }
+      case TA_OptInput_RealRange:
+      {
+         const TA_RealRange *r = (const TA_RealRange *)optInfo->dataSet;
+         TA_Real wanted[3];
+         TA_Real cand[3];
+         int nWanted = 0, nCand = 0, k, m, dup;
 
-         TA_ParamHolderFree( paramHolder );
-         ctx->nbParamTested++;
+         wanted[nWanted++] = r->min;
+         wanted[nWanted++] = optInfo->defaultValue;
+         wanted[nWanted++] = r->max;
+         for( m = 0; m < nWanted; m++ )
+         {
+            TA_Real v = wanted[m];
+            /* Only realistic magnitudes: the abstract ranges are often
+             * effectively unbounded (~+/-3e37), and forcing those risks a
+             * legitimate Inf that is not a memory-safety signal. */
+            if( !isfinite( v ) || fabs( v ) > 1e6 ) continue;
+            dup = 0;
+            for( k = 0; k < nCand; k++ ) if( cand[k] == v ) { dup = 1; break; }
+            if( !dup ) cand[nCand++] = v;
+         }
+         for( k = 0; k < nCand; k++ )
+         {
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 1, 0, cand[k],
+                            PB_EXPECT_STRICT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
+         }
+         break;
+      }
+      case TA_OptInput_RealList:
+      {
+         const TA_RealList *list = (const TA_RealList *)optInfo->dataSet;
+         unsigned int e;
+         for( e = 0; e < list->nbElement; e++ )
+         {
+            pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 1, 0,
+                            list->data[e].value, PB_EXPECT_STRICT );
+            if( ctx->errNb != TA_TEST_PASS ) return;
+         }
+         break;
+      }
       }
    }
 }
@@ -1291,8 +1534,14 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    ctx.history = history;
    ctx.errNb = TA_TEST_PASS;
    ctx.nbParamTested = 0;
+   ctx.nbFail = 0;
+   g_pbListAll = ( getenv( "PB_SWEEP_LIST_ALL" ) != NULL );
 
    TA_ForEachFunc( pbSweepOneFunction, &ctx );
+
+   if( g_pbListAll )
+      printf( "\n  boundary sweep: %d cases, %d failure(s)\n",
+              ctx.nbParamTested, ctx.nbFail );
 
    if( ctx.errNb != TA_TEST_PASS )
       return ctx.errNb;

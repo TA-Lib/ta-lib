@@ -67,7 +67,9 @@ TA_RetCode cmo(int startIdx, int endIdx, const double inReal[], int optInTimePer
       *outBegIdx = startIdx;
       i = (endIdx-startIdx)+1;
       *outNBElement = i;
-      memcpy(&outReal[0], &inReal[startIdx], (i) * sizeof(double));
+      /* memmove, not memcpy: an in-place caller (outReal == inReal) with
+       * startIdx > 0 overlaps source and destination (issue #94; matches WMA). */
+      memmove(&outReal[0], &inReal[startIdx], (i) * sizeof(double));
       return TA_SUCCESS;
    }
 

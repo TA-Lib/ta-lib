@@ -115,6 +115,17 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   /* An inverted period window (min above max) is an invalid parameter
+    * combination: the per-bar clamp below would push a period above
+    * optInMaxPeriod, exceeding the lookback and reading uninitialized
+    * results. Reject it cleanly instead of returning garbage.
+    */
+   if( optInMinPeriod > optInMaxPeriod )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_BAD_PARAM;
+   }
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -237,6 +248,12 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    int localNbElement;
    TA_RetCode retCode;
 
+   if( optInMinPeriod > optInMaxPeriod )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
    if( startIdx < lookbackTotal )
    {
@@ -353,6 +370,12 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   if( optInMinPeriod > optInMaxPeriod )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
    if( startIdx < lookbackTotal )
    {
@@ -447,6 +470,12 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    int localNbElement;
    TA_RetCode retCode;
 
+   if( optInMinPeriod > optInMaxPeriod )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
    if( startIdx < lookbackTotal )
    {

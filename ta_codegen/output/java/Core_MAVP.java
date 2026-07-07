@@ -64,6 +64,16 @@
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      /* An inverted period window (min above max) is an invalid parameter
+       * combination: the per-bar clamp below would push a period above
+       * optInMaxPeriod, exceeding the lookback and reading uninitialized
+       * results. Reject it cleanly instead of returning garbage.
+       */
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -167,6 +177,11 @@
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -258,6 +273,11 @@
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -333,6 +353,11 @@
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
+      if( optInMinPeriod > optInMaxPeriod ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.BadParam ;
+      }
       lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

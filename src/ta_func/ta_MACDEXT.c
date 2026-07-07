@@ -259,7 +259,10 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
    }
    /* Copy the result into the output for the caller. */
-   memcpy(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+   /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+    * reused as scratch, so source and destination overlap (issue #94).
+    */
+   memmove(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
    /* Calculate the signal/trigger line. */
    retCode = TA_MA_Unguarded(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
    free(fastMABuffer);
@@ -388,7 +391,7 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Unguarded( int    startIdx,
    {
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
    }
-   memcpy(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+   memmove(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
    retCode = TA_MA_Unguarded(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
    free(fastMABuffer);
    free(slowMABuffer);
@@ -546,7 +549,7 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
    {
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
    }
-   memcpy(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+   memmove(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
    retCode = TA_MA_Unguarded(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
    free(fastMABuffer);
    free(slowMABuffer);
@@ -672,7 +675,7 @@ TA_RetCode TA_S_MACDEXT_Unguarded( int    startIdx,
    {
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
    }
-   memcpy(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+   memmove(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
    retCode = TA_MA_Unguarded(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
    free(fastMABuffer);
    free(slowMABuffer);

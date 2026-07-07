@@ -34,6 +34,7 @@ from utilities.common import (
 )
 
 BUILD_DIR_NAME = "cmake-build"
+SANITIZE_DIR_NAME = "cmake-build-asan"
 DEFAULT_BUILD_TYPE = "Release"
 DEFAULT_JOBS = os.cpu_count() or 4
 
@@ -112,13 +113,15 @@ def show_help():
                         then: ta_bench --language=cref,c,talib_rs --function=...)
 
   Other:
-    clean               Remove cmake-build/
+    clean               Remove cmake-build/ and cmake-build-asan/
     help                Show this message
 
   Options:
     --build-type=Debug  Set cmake build type (default: Release)
     --jobs=8            Parallel jobs (default: number of CPUs)
     --cmake-args="..."  Extra arguments passed to cmake configure
+    --sanitize          Build with AddressSanitizer + UBSan into cmake-build-asan
+                        (Debug, static-only; e.g. build.py ta_regtest --sanitize)
 """)
 
 def run_codegen(root_dir: str, *cargo_args: str):
@@ -292,6 +295,8 @@ def main():
     parser.add_argument('--build-type', default=DEFAULT_BUILD_TYPE)
     parser.add_argument('--jobs', '-j', type=int, default=DEFAULT_JOBS)
     parser.add_argument('--cmake-args', default='')
+    parser.add_argument('--sanitize', action='store_true',
+                        help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
     parser.add_argument('--help', '-h', action='store_true')
     args = parser.parse_args()
 
@@ -302,11 +307,27 @@ def main():
     root_dir = find_repo_root()
     build_dir = os.path.join(root_dir, BUILD_DIR_NAME)
 
+    # ASan/UBSan builds go to a separate directory (Debug, static-only) so they
+    # never share object files or the CMake cache with the Release tree.
+    if args.sanitize:
+        build_dir = os.path.join(root_dir, SANITIZE_DIR_NAME)
+        if args.build_type == DEFAULT_BUILD_TYPE:
+            args.build_type = 'Debug'
+        args.cmake_args = (
+            args.cmake_args + ' -DENABLE_SANITIZERS=ON -DBUILD_SHARED_LIBS=OFF'
+        ).strip()
+
     if args.target == 'clean':
-        try:
-            shutil.rmtree(build_dir)
-            print(f"Removed {build_dir}")
-        except FileNotFoundError:
+        removed = False
+        for d in (os.path.join(root_dir, BUILD_DIR_NAME),
+                  os.path.join(root_dir, SANITIZE_DIR_NAME)):
+            try:
+                shutil.rmtree(d)
+                print(f"Removed {d}")
+                removed = True
+            except FileNotFoundError:
+                pass
+        if not removed:
             print("Nothing to clean.")
         return
 

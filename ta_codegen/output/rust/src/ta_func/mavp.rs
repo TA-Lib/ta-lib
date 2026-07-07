@@ -197,6 +197,15 @@ impl Core {
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
+        // An inverted period window (min above max) is an invalid parameter
+        // combination: the per-bar clamp below would push a period above
+        // optInMaxPeriod, exceeding the lookback and reading uninitialized
+        // results. Reject it cleanly instead of returning garbage.
+        if optInMinPeriod > optInMaxPeriod {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::BadParam;
+        }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.ma_lookback(optInMaxPeriod, optInMAType);
@@ -318,6 +327,11 @@ impl Core {
         let _assertLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
+        if optInMinPeriod > optInMaxPeriod {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::BadParam;
+        }
         lookbackTotal = self.ma_lookback(optInMaxPeriod, optInMAType);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
