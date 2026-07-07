@@ -9,7 +9,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.7.2] Not Released Yet
 ### Added
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
-- (#78) CMake can now build only the shared or only the static library. Thanks @BwL1289 !
+- (#78) CMake can now opt out of building the static or the shared library (both are built by default). Thanks @BwL1289 !
 
 ### Changed
 - Algo Optimisation: DEMA, TEMA and TRIX are 3x to 7x faster.
@@ -21,7 +21,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !
 - (#98) TRIX and NATR returned wrong values when startIdx > lookback, and a non-zero unstable period changed IMI's summation window.
 - (#99) BBANDS with `TA_MAType_MAMA` and a period >= 34 returned a misaligned middle band.
-- (#77) The CMake shared library was not linked against libm, leaving math symbols unresolved for consumers. Thanks @BwL1289 !
+- (#77) The CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 
 ## [0.7.1] 2026-07-03
 ### Added
