@@ -382,22 +382,58 @@ set(LIB_SOURCES
 list(APPEND LIB_SOURCES ${COMMON_SOURCES})
 list(APPEND LIB_SOURCES ${IDL_SOURCES})
 
-add_library(ta-lib SHARED ${LIB_SOURCES})
-set_target_properties(ta-lib PROPERTIES
-	SOVERSION ${PROJECT_VERSION}
-	DEFINE_SYMBOL TA_LIB_SHARED
-	OUTPUT_NAME "ta-lib"
-)
-add_library(ta-lib-static STATIC ${LIB_SOURCES})
+# --- Library artifact selection (issue #78) ---
+# Both default ON, so a plain build produces the shared + static libraries just
+# as before. Opt out with -DBUILD_SHARED_LIBS=OFF (static only) or
+# -DBUILD_STATIC_LIBS=OFF (shared only). BUILD_SHARED_LIBS is the standard CMake
+# variable that vcpkg/Conan already drive, so honoring it also lets those builds
+# request a single linkage instead of always building both.
+option(BUILD_SHARED_LIBS "Build the ta-lib shared library" ON)
+option(BUILD_STATIC_LIBS "Build the ta-lib static library" ON)
+if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
+	message(FATAL_ERROR
+		"BUILD_SHARED_LIBS and BUILD_STATIC_LIBS are both OFF: nothing to build. "
+		"Enable at least one.")
+endif()
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}  BUILD_STATIC_LIBS: ${BUILD_STATIC_LIBS}")
 
-if(UNIX)
-	set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib)
-endif(UNIX)
+# libm note (applies to both targets): on Linux/glibc and the BSDs the math
+# functions (sin, cos, sqrt, atan, ...) live in a separate libm, so the shared
+# library needs its own DT_NEEDED libm and the static archive must propagate the
+# dependency to consumers. Windows math is in the CRT, macOS in libSystem, so 'm'
+# is linked only on non-Windows. PRIVATE: libm is an implementation detail.
+if(BUILD_SHARED_LIBS)
+	add_library(ta-lib SHARED ${LIB_SOURCES})
+	set_target_properties(ta-lib PROPERTIES
+		SOVERSION ${PROJECT_VERSION}
+		DEFINE_SYMBOL TA_LIB_SHARED
+		OUTPUT_NAME "ta-lib"
+	)
+	target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+	if(NOT WIN32)
+		target_link_libraries(ta-lib PRIVATE m)
+	endif()
+endif()
+if(BUILD_STATIC_LIBS)
+	add_library(ta-lib-static STATIC ${LIB_SOURCES})
 
-if(WIN32)
-	# Note: WIN32 is defined regardless of 32 or 64 bits host.
-	set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib-static)
-endif(WIN32)
+	if(UNIX)
+		set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib)
+	endif(UNIX)
+
+	if(WIN32)
+		# Note: WIN32 is defined regardless of 32 or 64 bits host.
+		# Keep the -static suffix so it does not collide with the shared import
+		# library ta-lib.lib; the vcpkg port renames it to ta-lib.lib for the
+		# static triplet.
+		set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib-static)
+	endif(WIN32)
+
+	target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+	if(NOT WIN32)
+		target_link_libraries(ta-lib-static PRIVATE m)
+	endif()
+endif()
 
 if(MSVC)
 	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:/deterministic>)
@@ -406,25 +442,17 @@ if(MSVC)
     add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,STATIC_LIBRARY>:/Brepro>)
 endif(MSVC)
 
-target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-# Link the C math library (libm). On Linux/glibc and the BSDs the math
-# functions (sin, cos, sqrt, atan, ...) live in a separate libm, so the shared
-# library needs its own DT_NEEDED entry for it (otherwise libta-lib.so ships
-# with undefined math symbols) and the static archive must propagate the
-# dependency to its consumers. On Windows the math functions are in the CRT and
-# on macOS in libSystem, so no separate 'm' is needed there -- same WIN32 guard
-# the C tools already use below. PRIVATE: libm is an implementation detail and
-# is not part of ta-lib's public header API.
-if(NOT WIN32)
-	target_link_libraries(ta-lib PRIVATE m)
-	target_link_libraries(ta-lib-static PRIVATE m)
+# Install the libraries and headers (only the targets that were built).
+set(TA_LIB_INSTALL_TARGETS "")
+if(BUILD_SHARED_LIBS)
+    list(APPEND TA_LIB_INSTALL_TARGETS ta-lib)
+endif()
+if(BUILD_STATIC_LIBS)
+    list(APPEND TA_LIB_INSTALL_TARGETS ta-lib-static)
 endif()
 
-# Install the libraries and headers.
 if(WIN32)
-    install(TARGETS ta-lib ta-lib-static
+    install(TARGETS ${TA_LIB_INSTALL_TARGETS}
 	    RUNTIME DESTINATION bin  # For shared libraries (DLLs on Windows)
         LIBRARY DESTINATION lib  # For import library
         ARCHIVE DESTINATION lib  # For static libraries
@@ -434,7 +462,7 @@ if(WIN32)
         DESTINATION include/ta-lib
     )
 else()
-    install(TARGETS ta-lib ta-lib-static
+    install(TARGETS ${TA_LIB_INSTALL_TARGETS}
         LIBRARY DESTINATION lib  # For shared libraries (.so on Linux)
         ARCHIVE DESTINATION lib  # For static libraries
     )
@@ -478,7 +506,20 @@ if(UNIX)
 	install(SCRIPT ${CMAKE_BINARY_DIR}/cleanup_glob.cmake )
 endif()
 
-if(BUILD_DEV_TOOLS)
+# The dev tools use internal, non-exported library symbols, so they need the
+# STATIC library. On Linux/macOS the shared library also exports every symbol, so
+# the tools can fall back to it there; on Windows the DLL exports only the public
+# TA_LIB_API surface, so a shared-only build cannot link the tools -- skip them
+# (a shared-only build is a packaging request; the dev tools are not needed).
+set(_TA_BUILD_TOOLS ${BUILD_DEV_TOOLS})
+if(BUILD_DEV_TOOLS AND WIN32 AND NOT BUILD_STATIC_LIBS)
+	message(WARNING "BUILD_DEV_TOOLS is ON but the dev tools require the static library "
+		"on Windows (BUILD_STATIC_LIBS=OFF); skipping ta_regtest/ta_bench. "
+		"Set BUILD_STATIC_LIBS=ON to build them.")
+	set(_TA_BUILD_TOOLS OFF)
+endif()
+
+if(_TA_BUILD_TOOLS)
 	##############
 	# ta_regtest #
 	##############
@@ -517,6 +558,15 @@ if(BUILD_DEV_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/server_verify.c"
 	)
 
+	# Link the static lib (built alongside by default); on a non-Windows
+	# shared-only build fall back to the shared lib, which exports all symbols.
+	# (The Windows shared-only case never reaches here -- see _TA_BUILD_TOOLS.)
+	if(BUILD_STATIC_LIBS)
+		set(TA_LIB_TOOL_TARGET ta-lib-static)
+	else()
+		set(TA_LIB_TOOL_TARGET ta-lib)
+	endif()
+
 	add_executable(ta_regtest ${TA_REGTEST_SOURCES})
 
 	# Set the include directories for ta_regtest
@@ -530,9 +580,9 @@ if(BUILD_DEV_TOOLS)
 	# Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
 	# On windows, no need for a math library. It is already included in the standard library.
 	if(WIN32)
-		target_link_libraries(ta_regtest PRIVATE ta-lib-static)
+		target_link_libraries(ta_regtest PRIVATE ${TA_LIB_TOOL_TARGET})
 	else()
-		target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
+		target_link_libraries(ta_regtest PRIVATE ${TA_LIB_TOOL_TARGET} m)
 	endif()
 
 	# Set the output directory for the ta_regtest executable during the build process
@@ -558,9 +608,9 @@ if(BUILD_DEV_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest"
 	)
 	if(WIN32)
-		target_link_libraries(ta_bench PRIVATE ta-lib-static)
+		target_link_libraries(ta_bench PRIVATE ${TA_LIB_TOOL_TARGET})
 	else()
-		target_link_libraries(ta_bench PRIVATE ta-lib-static m)
+		target_link_libraries(ta_bench PRIVATE ${TA_LIB_TOOL_TARGET} m)
 	endif()
 	set_target_properties(ta_bench PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
@@ -582,9 +632,9 @@ if(BUILD_DEV_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
 	)
 	if(WIN32)
-		target_link_libraries(ta_bench_direct PRIVATE ta-lib-static)
+		target_link_libraries(ta_bench_direct PRIVATE ${TA_LIB_TOOL_TARGET})
 	else()
-		target_link_libraries(ta_bench_direct PRIVATE ta-lib-static m)
+		target_link_libraries(ta_bench_direct PRIVATE ${TA_LIB_TOOL_TARGET} m)
 	endif()
 	set_target_properties(ta_bench_direct PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
@@ -614,7 +664,7 @@ endif()
 #
 # Pass extra args: cmake --build . --target regtest -- REGTEST_ARGS="--function=SMA"
 
-if(BUILD_DEV_TOOLS)
+if(_TA_BUILD_TOOLS)
 	# C reference tests only
 	add_custom_target(test
 		COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/bin"
