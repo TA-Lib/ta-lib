@@ -150,6 +150,10 @@ impl Core {
     ///
     /// [`Core::ema`] · [`Core::roc`] · [`Core::rocr`] · [`Core::tema`]
     ///
+    /// # References
+    ///
+    /// * Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
+    ///
     /// Further reading: [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix/)
     #[doc(alias = "TripleExponentialAverage")]
     pub fn trix(

@@ -45,3 +45,7 @@ Kaufman Adaptive Moving Average, Kaufman's Adaptive Moving Average
 ## See Also
 
 MAMA · EMA · MA
+
+## References
+
+- Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*, McGraw-Hill (1995)

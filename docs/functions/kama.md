@@ -50,3 +50,7 @@ Kaufman Adaptive Moving Average, Kaufman's Adaptive Moving Average
 ## See Also
 
 [MAMA](mama.md) · [EMA](ema.md) · [MA](ma.md)
+
+## References
+
+- Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*, McGraw-Hill (1995)

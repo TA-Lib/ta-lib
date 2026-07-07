@@ -48,3 +48,7 @@ Money Flow Index
 ## See Also
 
 [RSI](rsi.md) · [AD](ad.md) · [ADOSC](adosc.md)
+
+## References
+
+- Gene Quong & Avrum Soudack, *Volume-Weighted RSI: Money Flow*, Technical Analysis of Stocks & Commodities, V.7:3 (March 1989)

@@ -48,3 +48,7 @@ Double Exponential Moving Average
 ## See Also
 
 [EMA](ema.md) · [TEMA](tema.md) · [MA](ma.md)
+
+## References
+
+- Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of Stocks & Commodities, V.12:1 (January 1994)

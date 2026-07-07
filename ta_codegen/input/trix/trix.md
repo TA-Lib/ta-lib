@@ -43,3 +43,7 @@ Triple Exponential Average
 ## See Also
 
 EMA · ROC · ROCR · TEMA
+
+## References
+
+- Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)

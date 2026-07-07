@@ -155,6 +155,11 @@ impl Core {
     ///
     /// [`Core::rsi`] · [`Core::ad`] · [`Core::adosc`]
     ///
+    /// # References
+    ///
+    /// * Gene Quong & Avrum Soudack, *Volume-Weighted RSI: Money Flow*, Technical Analysis of
+    ///   Stocks & Commodities, V.7:3 (March 1989)
+    ///
     /// Further reading: [ta-lib.org/functions/mfi](https://ta-lib.org/functions/mfi/)
     #[doc(alias = "MoneyFlowIndex")]
     pub fn mfi(

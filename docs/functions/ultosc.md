@@ -53,3 +53,7 @@ Ultimate Oscillator, UO
 ## See Also
 
 [ATR](atr.md) · [TRANGE](trange.md) · [RSI](rsi.md)
+
+## References
+
+- Larry Williams, *The Ultimate Oscillator*, Technical Analysis of Stocks & Commodities, V.3:4 (1985)

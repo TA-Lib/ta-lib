@@ -151,6 +151,11 @@ impl Core {
     ///
     /// [`Core::ema`] · [`Core::dema`] · [`Core::t3`]
     ///
+    /// # References
+    ///
+    /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
+    ///   Stocks & Commodities, V.12:1 (January 1994)
+    ///
     /// Further reading: [ta-lib.org/functions/tema](https://ta-lib.org/functions/tema/)
     #[doc(alias = "TripleExponentialMovingAverage")]
     pub fn tema(

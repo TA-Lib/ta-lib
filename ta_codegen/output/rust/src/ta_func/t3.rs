@@ -157,6 +157,11 @@ impl Core {
     ///
     /// [`Core::ema`] · [`Core::dema`] · [`Core::tema`] · [`Core::ma`]
     ///
+    /// # References
+    ///
+    /// * Tim Tillson, *Smoothing Techniques for More Accurate Signals*, Technical Analysis of
+    ///   Stocks & Commodities, V.16:1 (January 1998)
+    ///
     /// Further reading: [ta-lib.org/functions/t3](https://ta-lib.org/functions/t3/)
     #[doc(alias = "TillsonT3")]
     #[doc(alias = "TripleExponentialMovingAverage")]

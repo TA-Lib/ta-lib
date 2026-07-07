@@ -159,6 +159,11 @@ impl Core {
     ///
     /// [`Core::mama`] · [`Core::ema`] · [`Core::ma`]
     ///
+    /// # References
+    ///
+    /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
+    ///   McGraw-Hill (1995)
+    ///
     /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama/)
     #[doc(alias = "KaufmanAdaptiveMovingAverage")]
     #[doc(alias = "KaufmansAdaptiveMovingAverage")]

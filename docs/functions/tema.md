@@ -48,3 +48,7 @@ Triple Exponential Moving Average
 ## See Also
 
 [EMA](ema.md) · [DEMA](dema.md) · [T3](t3.md)
+
+## References
+
+- Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of Stocks & Commodities, V.12:1 (January 1994)

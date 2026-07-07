@@ -48,3 +48,7 @@ Triple Exponential Average
 ## See Also
 
 [EMA](ema.md) · [ROC](roc.md) · [ROCR](rocr.md) · [TEMA](tema.md)
+
+## References
+
+- Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
