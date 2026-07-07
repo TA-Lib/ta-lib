@@ -5297,10 +5297,10 @@ TA_LIB_API int TA_WMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
  * See ta_defs.h for the enumeration TA_FuncUnstId
  */
 
-TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
+TA_LIB_API TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod );
 
-unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
+TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
 
 /* You can change slightly the behavior of the TA functions
  * by requesting compatibiliy with some existing software.
@@ -5310,8 +5310,8 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
  *
  * See ta_defs.h for the enumeration TA_Compatibility.
  */
-TA_RetCode TA_SetCompatibility( TA_Compatibility value );
-TA_Compatibility TA_GetCompatibility( void );
+TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );
+TA_LIB_API TA_Compatibility TA_GetCompatibility( void );
 
 /* Candlesticks struct and functions
  * Because candlestick patterns are subjective, it is necessary 
@@ -5324,7 +5324,7 @@ TA_Compatibility TA_GetCompatibility( void );
  * of the last avgPeriod candles' rangeType multiplied by factor.
  * This setting is valid until TA_RestoreCandleDefaultSettings is called
  */
-TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
+TA_LIB_API TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
                                  TA_RangeType rangeType, 
                                  int avgPeriod, 
                                  double factor );
@@ -5332,7 +5332,7 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
 /* Call TA_RestoreCandleDefaultSettings after using custom settings 
  * to restore the default settings for the specified settingType
  */
-TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );
+TA_LIB_API TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );
 
 #ifdef __cplusplus
 }

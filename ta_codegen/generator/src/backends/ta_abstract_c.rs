@@ -2806,10 +2806,10 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* See ta_defs.h for the enumeration TA_FuncUnstId\n\
          \x20*/\n\
          \n\
-         TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,\n\
+         TA_LIB_API TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,\n\
          \x20                                unsigned int  unstablePeriod );\n\
          \n\
-         unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
+         TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
          \n\
          /* You can change slightly the behavior of the TA functions\n\
          \x20* by requesting compatibiliy with some existing software.\n\
@@ -2819,8 +2819,8 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20*\n\
          \x20* See ta_defs.h for the enumeration TA_Compatibility.\n\
          \x20*/\n\
-         TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
-         TA_Compatibility TA_GetCompatibility( void );\n\
+         TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
+         TA_LIB_API TA_Compatibility TA_GetCompatibility( void );\n\
          \n\
          /* Candlesticks struct and functions\n\
          \x20* Because candlestick patterns are subjective, it is necessary \n\
@@ -2833,7 +2833,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* of the last avgPeriod candles' rangeType multiplied by factor.\n\
          \x20* This setting is valid until TA_RestoreCandleDefaultSettings is called\n\
          \x20*/\n\
-         TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, \n\
+         TA_LIB_API TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,\n\
          \x20                                TA_RangeType rangeType, \n\
          \x20                                int avgPeriod, \n\
          \x20                                double factor );\n\
@@ -2841,7 +2841,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          /* Call TA_RestoreCandleDefaultSettings after using custom settings \n\
          \x20* to restore the default settings for the specified settingType\n\
          \x20*/\n\
-         TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );\n\
+         TA_LIB_API TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );\n\
          \n\
          #ifdef __cplusplus\n\
          }\n\
