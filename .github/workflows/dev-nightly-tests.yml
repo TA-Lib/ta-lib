@@ -276,8 +276,14 @@ jobs:
   # reference, not linted (rewriting emitted comparisons would change NaN semantics).
   # Rust-only and self-contained: no C build, no JDK/.NET, and intentionally NOT
   # gated on the C hero 'test' job, so an unrelated dist failure can't skip it.
+  #
+  # This job also RUNS the generator's own unit tests (`cargo test`). Clippy with
+  # --all-targets only *compiles* the test target; it never executes it, so
+  # runtime assertions in tests/backend_suite.rs (e.g. the STOCH temp-buffer copy
+  # shape) went unchecked and a stale one drifted onto dev unnoticed. Running them
+  # here closes that gap at nightly cadence (not per-commit).
   clippy:
-    name: Rust clippy (generator + generated crate)
+    name: Rust clippy + generator tests
     runs-on: ubuntu-latest
 
     steps:
@@ -299,6 +305,10 @@ jobs:
       - name: Clippy the generated crate
         shell: bash
         run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
+
+      - name: Test the generator tool
+        shell: bash
+        run: cargo test --manifest-path ta_codegen/generator/Cargo.toml
 
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
