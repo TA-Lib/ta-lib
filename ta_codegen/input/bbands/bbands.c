@@ -21,7 +21,7 @@
  *
  */
 
-int bbands_lookback(int           optInTimePeriod,                                               double        optInNbDevUp,                                               double        optInNbDevDn,                                               TA_MAType     optInMAType)
+int bbands_lookback(int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType)
 {
    (void)optInNbDevUp;
    (void)optInNbDevDn;

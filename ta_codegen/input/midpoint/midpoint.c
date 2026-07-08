@@ -17,7 +17,7 @@
  *
  */
 
-int midpoint_lookback(int           optInTimePeriod)
+int midpoint_lookback(int optInTimePeriod)
 {
    return (optInTimePeriod-1);
 }

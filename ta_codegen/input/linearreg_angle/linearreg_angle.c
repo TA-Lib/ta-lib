@@ -14,7 +14,7 @@
  *  072106 MF,AM   Fix #1526632. Add missing atan().
  */
 
-int linearreg_angle_lookback(int           optInTimePeriod)
+int linearreg_angle_lookback(int optInTimePeriod)
 {
    return optInTimePeriod-1;
 }

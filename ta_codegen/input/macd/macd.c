@@ -19,7 +19,7 @@
  *
  */
 
-int macd_lookback(int           optInFastPeriod,                                             int           optInSlowPeriod,                                             int           optInSignalPeriod)
+int macd_lookback(int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod)
 {
    int tempInteger;
 
@@ -40,7 +40,7 @@ int macd_lookback(int           optInFastPeriod,                                
       optInFastPeriod = tempInteger;
    }
 
-   return   ema_lookback( optInSlowPeriod   )
+   return ema_lookback( optInSlowPeriod )
    + ema_lookback( optInSignalPeriod );
 }
 

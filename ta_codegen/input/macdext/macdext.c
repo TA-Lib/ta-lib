@@ -16,14 +16,14 @@
  *
  */
 
-int macdext_lookback(int           optInFastPeriod,                                                TA_MAType     optInFastMAType,                                               int           optInSlowPeriod,                                                TA_MAType     optInSlowMAType,                                               int           optInSignalPeriod,                                                TA_MAType     optInSignalMAType)
+int macdext_lookback(int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType)
 {
    int tempInteger;
    int lookbackLargest;
 
    /* Find the MA with the largest lookback */
    lookbackLargest = ma_lookback( optInFastPeriod, optInFastMAType );
-   tempInteger     = ma_lookback( optInSlowPeriod, optInSlowMAType );
+   tempInteger = ma_lookback( optInSlowPeriod, optInSlowMAType );
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 
@@ -80,7 +80,7 @@ TA_RetCode macdext(int startIdx, int endIdx, const double inReal[], int optInFas
 
    /* Find the MA with the largest lookback */
    lookbackLargest = ma_lookback( optInFastPeriod, optInFastMAType );
-   tempInteger     = ma_lookback( optInSlowPeriod, optInSlowMAType );
+   tempInteger = ma_lookback( optInSlowPeriod, optInSlowMAType );
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 

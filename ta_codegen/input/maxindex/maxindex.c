@@ -12,7 +12,7 @@
  *
  */
 
-int maxindex_lookback(int           optInTimePeriod)
+int maxindex_lookback(int optInTimePeriod)
 {
    return (optInTimePeriod-1);
 }

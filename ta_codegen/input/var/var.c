@@ -14,7 +14,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-int var_lookback(int           optInTimePeriod,                                            double        optInNbDev)
+int var_lookback(int optInTimePeriod, double optInNbDev)
 {
    (void)optInNbDev;
 

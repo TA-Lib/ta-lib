@@ -13,7 +13,7 @@
  *  010606 MF   Abstract local arrays. Detect divide by zero.
  */
 
-int ultosc_lookback(int           optInTimePeriod1,                                               int           optInTimePeriod2,                                               int           optInTimePeriod3)
+int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
 {
    int maxPeriod;
 

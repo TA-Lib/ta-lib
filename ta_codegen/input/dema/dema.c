@@ -16,7 +16,7 @@
  *
  */
 
-int dema_lookback(int           optInTimePeriod)
+int dema_lookback(int optInTimePeriod)
 {
    /* Get lookback for one EMA.
     * Multiply by two (because double smoothing).

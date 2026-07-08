@@ -14,14 +14,14 @@
  *
  */
 
-int macdfix_lookback(int           optInSignalPeriod)
+int macdfix_lookback(int optInSignalPeriod)
 {
    /* The lookback is driven by the signal line output.
     *
     * (must also account for the initial data consume
     *  by the fix 26 period EMA).
     */
-   return   ema_lookback( 26 )
+   return ema_lookback( 26 )
    + ema_lookback( optInSignalPeriod );
 }
 

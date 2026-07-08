@@ -16,7 +16,7 @@
  *  020605 AA   Fix #1117656. NULL pointer assignement.
  */
 
-int stochrsi_lookback(int           optInTimePeriod,                                                 int           optInFastK_Period,                                                 int           optInFastD_Period,                                                 TA_MAType     optInFastD_MAType)
+int stochrsi_lookback(int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType)
 {
    int retValue;
 
@@ -64,8 +64,8 @@ TA_RetCode stochrsi(int startIdx, int endIdx, const double inReal[], int optInTi
    *outNBElement = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackSTOCHF  = stochf_lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-   lookbackTotal   = rsi_lookback( optInTimePeriod ) + lookbackSTOCHF;
+   lookbackSTOCHF = stochf_lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   lookbackTotal = rsi_lookback( optInTimePeriod ) + lookbackSTOCHF;
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;

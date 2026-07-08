@@ -20,7 +20,7 @@
  *                lockstep pass (bit-exact, no temporary buffers).
  */
 
-int tema_lookback(int           optInTimePeriod)
+int tema_lookback(int optInTimePeriod)
 {
    int retValue;
 

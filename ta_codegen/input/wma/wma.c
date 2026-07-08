@@ -14,7 +14,7 @@
  *
  */
 
-int wma_lookback(int           optInTimePeriod)
+int wma_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1;
 }

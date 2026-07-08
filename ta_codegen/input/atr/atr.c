@@ -16,7 +16,7 @@
  *
  */
 
-int atr_lookback(int           optInTimePeriod)
+int atr_lookback(int optInTimePeriod)
 {
    /* The ATR lookback is the sum of:
     *    1 + (optInTimePeriod - 1)

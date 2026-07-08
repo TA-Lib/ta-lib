@@ -21,7 +21,7 @@
  *                with TA_MA's period-1 copy, so identity is explicit.
  */
 
-int kama_lookback(int           optInTimePeriod)
+int kama_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod == 1 )
       return TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);

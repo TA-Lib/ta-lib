@@ -16,7 +16,7 @@
  *                single pass (bit-exact, no temporary buffer).
  */
 
-int natr_lookback(int           optInTimePeriod)
+int natr_lookback(int optInTimePeriod)
 {
    /* The ATR lookback is the sum of:
     *    1 + (optInTimePeriod - 1)

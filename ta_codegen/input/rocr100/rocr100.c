@@ -14,7 +14,7 @@
  *
  */
 
-int rocr100_lookback(int           optInTimePeriod)
+int rocr100_lookback(int optInTimePeriod)
 {
    return optInTimePeriod;
 }

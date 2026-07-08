@@ -14,7 +14,7 @@
  *  062804 MF   Resolve div by zero bug on limit case.
  */
 
-int rsi_lookback(int           optInTimePeriod)
+int rsi_lookback(int optInTimePeriod)
 {
    int retValue;
 

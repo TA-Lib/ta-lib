@@ -16,7 +16,7 @@
  *
  */
 
-int min_lookback(int           optInTimePeriod)
+int min_lookback(int optInTimePeriod)
 {
    return (optInTimePeriod-1);
 }

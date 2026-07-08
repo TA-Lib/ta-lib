@@ -17,7 +17,7 @@
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  */
 
-int ma_lookback(int           optInTimePeriod,                                           TA_MAType     optInMAType)
+int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
 {
    int retValue;
 

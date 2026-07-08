@@ -11,7 +11,7 @@
  *  021807 MF     Initial Version
  */
 
-int mavp_lookback(int           optInMinPeriod,                                             int           optInMaxPeriod,                                             TA_MAType     optInMAType)
+int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
 {
    return ma_lookback(optInMaxPeriod, optInMAType);
 }

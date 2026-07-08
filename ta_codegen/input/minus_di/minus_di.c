@@ -18,7 +18,7 @@
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
  */
 
-int minus_di_lookback(int           optInTimePeriod)
+int minus_di_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
       return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_MINUS_DI);

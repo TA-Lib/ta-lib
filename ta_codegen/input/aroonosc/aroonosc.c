@@ -15,7 +15,7 @@
  *  050703 MF   Fix algorithm base on Adrian Michel bug report #748163
  */
 
-int aroonosc_lookback(int           optInTimePeriod)
+int aroonosc_lookback(int optInTimePeriod)
 {
    return optInTimePeriod;
 }

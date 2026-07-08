@@ -13,7 +13,7 @@
  *
  */
 
-int sum_lookback(int           optInTimePeriod)
+int sum_lookback(int optInTimePeriod)
 {
    return optInTimePeriod-1;
 }

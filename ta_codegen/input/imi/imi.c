@@ -18,7 +18,7 @@
  *                term from the lookback so TA_SetUnstablePeriod is a no-op.
  */
 
-int imi_lookback(int           optInTimePeriod)
+int imi_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1;
 }

@@ -15,7 +15,7 @@
  *  020605 AA   Fix #1117666 Lookback & out-of-bound bug.
  */
 
-int apo_lookback(int           optInFastPeriod,                                            int           optInSlowPeriod,                                            TA_MAType     optInMAType)
+int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
 {
    /* The slow MA is the key factor determining the lookback period. */
    return ma_lookback( max(optInSlowPeriod,optInFastPeriod), optInMAType );

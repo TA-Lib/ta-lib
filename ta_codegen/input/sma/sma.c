@@ -14,7 +14,7 @@
  *
  */
 
-int sma_lookback(int           optInTimePeriod)
+int sma_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1;
 }

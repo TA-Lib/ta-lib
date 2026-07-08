@@ -14,7 +14,7 @@
  *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
  */
 
-int adxr_lookback(int           optInTimePeriod)
+int adxr_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
       return optInTimePeriod + adx_lookback( optInTimePeriod) - 1;

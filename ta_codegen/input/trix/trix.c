@@ -18,7 +18,7 @@
  *                output was mislabeled by up to one EMA lookback.
  */
 
-int trix_lookback(int           optInTimePeriod)
+int trix_lookback(int optInTimePeriod)
 {
    int emaLookback;
 
@@ -38,7 +38,7 @@ TA_RetCode trix(int startIdx, int endIdx, const double inReal[], int optInTimePe
    *outBegIdx = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackEMA   = ema_lookback( optInTimePeriod );
+   lookbackEMA = ema_lookback( optInTimePeriod );
    lookbackTotal = (lookbackEMA*3) + rocr_lookback( 1 );
 
    if( startIdx < lookbackTotal )

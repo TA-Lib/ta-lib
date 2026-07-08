@@ -18,7 +18,7 @@
  *  082206 MF   Fix #1544555. Div by zero bug reported by GC.
  */
 
-int adx_lookback(int           optInTimePeriod)
+int adx_lookback(int optInTimePeriod)
 {
    return (2 * optInTimePeriod) + TA_GetUnstablePeriod(TA_FUNC_UNST_ADX) - 1;
 }

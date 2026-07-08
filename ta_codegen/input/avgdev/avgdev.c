@@ -11,7 +11,7 @@
  *  090812 AB     Initial Version
  */
 
-int avgdev_lookback(int           optInTimePeriod)
+int avgdev_lookback(int optInTimePeriod)
 {
    return optInTimePeriod-1;
 }

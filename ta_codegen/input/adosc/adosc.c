@@ -14,7 +14,7 @@
  *
  */
 
-int adosc_lookback(int           optInFastPeriod,                                              int           optInSlowPeriod)
+int adosc_lookback(int optInFastPeriod, int optInSlowPeriod)
 {
    int slowestPeriod;
 

@@ -15,7 +15,7 @@
  *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
  *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
  */
-int dx_lookback(int           optInTimePeriod)
+int dx_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
       return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_DX);

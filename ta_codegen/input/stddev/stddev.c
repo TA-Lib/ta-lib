@@ -15,7 +15,7 @@
  *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
  */
 
-int stddev_lookback(int           optInTimePeriod,                                               double        optInNbDev)
+int stddev_lookback(int optInTimePeriod, double optInNbDev)
 {
    /* Lookback is driven by the variance. */
    return var_lookback( optInTimePeriod, optInNbDev );

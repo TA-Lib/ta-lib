@@ -13,7 +13,7 @@
  *  021806 MF,BT   Fix #1434450 reported by BT.
  */
 
-int cmo_lookback(int           optInTimePeriod)
+int cmo_lookback(int optInTimePeriod)
 {
    int retValue;
 

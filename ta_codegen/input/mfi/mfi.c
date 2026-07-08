@@ -21,7 +21,7 @@
  *               TA_SetUnstablePeriod is a no-op for it.
  */
 
-int mfi_lookback(int           optInTimePeriod)
+int mfi_lookback(int optInTimePeriod)
 {
    return optInTimePeriod;
 }

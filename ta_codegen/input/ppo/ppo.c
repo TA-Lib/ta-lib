@@ -15,7 +15,7 @@
  *
  */
 
-int ppo_lookback(int           optInFastPeriod,                                            int           optInSlowPeriod,                                            TA_MAType     optInMAType)
+int ppo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
 {
    /* Lookback is driven by the slowest MA. */
    return ma_lookback( max(optInSlowPeriod,optInFastPeriod), optInMAType );

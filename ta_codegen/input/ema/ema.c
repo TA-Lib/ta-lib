@@ -14,7 +14,7 @@
  *
  */
 
-int ema_lookback(int           optInTimePeriod)
+int ema_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1 + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA);
 }

@@ -12,7 +12,7 @@
  *  122006 MW   Initial Version
  */
 
-int beta_lookback(int           optInTimePeriod)
+int beta_lookback(int optInTimePeriod)
 {
    return optInTimePeriod;
 }

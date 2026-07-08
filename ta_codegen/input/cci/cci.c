@@ -22,7 +22,7 @@
  *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
  */
 
-int cci_lookback(int           optInTimePeriod)
+int cci_lookback(int optInTimePeriod)
 {
    return (optInTimePeriod-1);
 }

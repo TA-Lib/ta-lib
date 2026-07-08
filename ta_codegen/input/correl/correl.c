@@ -15,7 +15,7 @@
  *
  */
 
-int correl_lookback(int           optInTimePeriod)
+int correl_lookback(int optInTimePeriod)
 {
    return optInTimePeriod-1;
 }

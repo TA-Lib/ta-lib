@@ -14,7 +14,7 @@
  *
  */
 
-int willr_lookback(int           optInTimePeriod)
+int willr_lookback(int optInTimePeriod)
 {
    return (optInTimePeriod-1);
 }

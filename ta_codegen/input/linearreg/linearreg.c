@@ -13,7 +13,7 @@
  *
  */
 
-int linearreg_lookback(int           optInTimePeriod)
+int linearreg_lookback(int optInTimePeriod)
 {
    return optInTimePeriod-1;
 }

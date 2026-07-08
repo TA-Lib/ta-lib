@@ -13,7 +13,7 @@
  *  120907 MF     Handling of a few limit cases
  */
 
-int accbands_lookback(int           optInTimePeriod)
+int accbands_lookback(int optInTimePeriod)
 {
    return sma_lookback( optInTimePeriod );
 }

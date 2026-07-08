@@ -15,7 +15,7 @@
  *
  */
 
-int plus_dm_lookback(int           optInTimePeriod)
+int plus_dm_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
       return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_PLUS_DM) - 1;

@@ -14,7 +14,7 @@
  *
  */
 
-int mom_lookback(int           optInTimePeriod)
+int mom_lookback(int optInTimePeriod)
 {
    return optInTimePeriod;
 }

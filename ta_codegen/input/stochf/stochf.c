@@ -15,7 +15,7 @@
  *
  */
 
-int stochf_lookback(int           optInFastK_Period,                                               int           optInFastD_Period,                                               TA_MAType     optInFastD_MAType)
+int stochf_lookback(int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType)
 {
    int retValue;
 
@@ -72,7 +72,7 @@ TA_RetCode stochf(int startIdx, int endIdx, const double inHigh[], const double 
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period-1;
-   lookbackFastD  = ma_lookback( optInFastD_Period, optInFastD_MAType );
+   lookbackFastD = ma_lookback( optInFastD_Period, optInFastD_MAType );
    lookbackTotal  = lookbackK + lookbackFastD;
 
    /* Move up the start index if there is not
