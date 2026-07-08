@@ -18,7 +18,13 @@ int cdl3linestrike_lookback(void)
    return Near_avgPeriod + 3;
 }
 
-TA_RetCode cdl3linestrike(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdl3linestrike(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double NearPeriodTotal[4];
    int i, outIdx, totIdx, NearTrailingIdx, lookbackTotal;

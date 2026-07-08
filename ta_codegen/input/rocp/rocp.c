@@ -19,7 +19,11 @@ int rocp_lookback(int optInTimePeriod)
    return optInTimePeriod;
 }
 
-TA_RetCode rocp(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode rocp(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int inIdx, outIdx, trailingIdx;
    double tempReal;

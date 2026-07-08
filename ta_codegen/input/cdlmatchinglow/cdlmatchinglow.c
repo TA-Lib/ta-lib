@@ -18,7 +18,13 @@ int cdlmatchinglow_lookback(void)
    return Equal_avgPeriod + 1;
 }
 
-TA_RetCode cdlmatchinglow(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlmatchinglow(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double EqualPeriodTotal;
    int i, outIdx, EqualTrailingIdx, lookbackTotal;

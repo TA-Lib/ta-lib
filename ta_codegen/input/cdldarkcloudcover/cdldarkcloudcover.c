@@ -20,7 +20,14 @@ int cdldarkcloudcover_lookback(double        optInPenetration)
    return BodyLong_avgPeriod + 1;
 }
 
-TA_RetCode cdldarkcloudcover(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdldarkcloudcover(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   double optInPenetration,
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyLongPeriodTotal;
    int i, outIdx, BodyLongTrailingIdx, lookbackTotal;

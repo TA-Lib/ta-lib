@@ -18,7 +18,13 @@ int cdlpiercing_lookback(void)
    return BodyLong_avgPeriod + 1;
 }
 
-TA_RetCode cdlpiercing(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlpiercing(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyLongPeriodTotal[2];
    int i, outIdx, totIdx, BodyLongTrailingIdx, lookbackTotal;

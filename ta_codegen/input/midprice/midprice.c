@@ -25,7 +25,12 @@ int midprice_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode midprice(int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode midprice(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double lowest, highest, tmpLow, tmpHigh;
    int outIdx, nbInitialElementNeeded;

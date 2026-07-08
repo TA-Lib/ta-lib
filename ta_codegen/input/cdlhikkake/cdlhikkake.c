@@ -18,7 +18,13 @@ int cdlhikkake_lookback(void)
    return 5;
 }
 
-TA_RetCode cdlhikkake(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlhikkake(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    int i, outIdx, lookbackTotal, patternIdx, patternResult;
 

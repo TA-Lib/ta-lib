@@ -21,7 +21,12 @@ int stddev_lookback(int optInTimePeriod, double optInNbDev)
    return var_lookback( optInTimePeriod, optInNbDev );
 }
 
-TA_RetCode stddev(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode stddev(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   double optInNbDev,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int i;
    TA_RetCode retCode;

@@ -18,7 +18,13 @@ int cdl3inside_lookback(void)
    return max( BodyShort_avgPeriod, BodyLong_avgPeriod ) + 2;
 }
 
-TA_RetCode cdl3inside(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdl3inside(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyShortPeriodTotal, BodyLongPeriodTotal;
    int i, outIdx, BodyShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;

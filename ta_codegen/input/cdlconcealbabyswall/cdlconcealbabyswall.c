@@ -18,7 +18,13 @@ int cdlconcealbabyswall_lookback(void)
    return ShadowVeryShort_avgPeriod + 3;
 }
 
-TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double ShadowVeryShortPeriodTotal[4];
    int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;

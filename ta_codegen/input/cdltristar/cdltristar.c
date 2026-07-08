@@ -18,7 +18,13 @@ int cdltristar_lookback(void)
    return BodyDoji_avgPeriod + 2;
 }
 
-TA_RetCode cdltristar(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdltristar(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyPeriodTotal;
    int i, outIdx, BodyTrailingIdx, lookbackTotal;

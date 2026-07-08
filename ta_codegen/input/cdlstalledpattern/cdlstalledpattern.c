@@ -20,7 +20,13 @@ int cdlstalledpattern_lookback(void)
    ) + 2;
 }
 
-TA_RetCode cdlstalledpattern(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlstalledpattern(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyLongPeriodTotal[3];
    double NearPeriodTotal[3];

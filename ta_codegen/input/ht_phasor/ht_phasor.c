@@ -20,7 +20,11 @@ int ht_phasor_lookback(void)
    return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_PHASOR);
 }
 
-TA_RetCode ht_phasor(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[])
+TA_RetCode ht_phasor(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outInPhase[],
+   double outQuadrature[])
 {
    int outIdx, i;
    int lookbackTotal, today;

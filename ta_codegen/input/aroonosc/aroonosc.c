@@ -20,7 +20,12 @@ int aroonosc_lookback(int optInTimePeriod)
    return optInTimePeriod;
 }
 
-TA_RetCode aroonosc(int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode aroonosc(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double lowest, highest, tmp, factor, aroon;
    int outIdx;

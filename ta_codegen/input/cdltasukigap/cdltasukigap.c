@@ -18,7 +18,13 @@ int cdltasukigap_lookback(void)
    return Near_avgPeriod + 2;
 }
 
-TA_RetCode cdltasukigap(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdltasukigap(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double NearPeriodTotal;
    int i, outIdx, NearTrailingIdx, lookbackTotal;

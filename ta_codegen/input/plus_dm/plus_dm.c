@@ -23,7 +23,12 @@ int plus_dm_lookback(int optInTimePeriod)
       return 1;
 }
 
-TA_RetCode plus_dm(int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode plus_dm(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, tempReal;

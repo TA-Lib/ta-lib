@@ -16,7 +16,14 @@ int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
    return ma_lookback(optInMaxPeriod, optInMAType);
 }
 
-TA_RetCode mavp(int startIdx, int endIdx, const double inReal[], const double inPeriods[], int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode mavp(int startIdx, int endIdx,
+   const double inReal[],
+   const double inPeriods[],
+   int optInMinPeriod,
+   int optInMaxPeriod,
+   TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int i, j, lookbackTotal, outputSize, tempInt, curPeriod;
    int *localPeriodArray;

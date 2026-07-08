@@ -21,7 +21,13 @@ int cdladvanceblock_lookback(void)
    ) + 2;
 }
 
-TA_RetCode cdladvanceblock(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdladvanceblock(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double ShadowShortPeriodTotal[3];
    double ShadowLongPeriodTotal[2];

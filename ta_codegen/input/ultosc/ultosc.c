@@ -24,7 +24,15 @@ int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePer
    return sma_lookback( maxPeriod ) + 1;
 }
 
-TA_RetCode ultosc(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ultosc(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInTimePeriod1,
+   int optInTimePeriod2,
+   int optInTimePeriod3,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;

@@ -36,7 +36,19 @@ int sarext_lookback(double        optInStartValue,                              
    return 1;
 }
 
-TA_RetCode sarext(int startIdx, int endIdx, const double inHigh[], const double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode sarext(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   double optInStartValue,
+   double optInOffsetOnReverse,
+   double optInAccelerationInitLong,
+   double optInAccelerationLong,
+   double optInAccelerationMaxLong,
+   double optInAccelerationInitShort,
+   double optInAccelerationShort,
+   double optInAccelerationMaxShort,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    TA_RetCode retCode;
 

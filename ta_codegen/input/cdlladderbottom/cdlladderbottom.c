@@ -18,7 +18,13 @@ int cdlladderbottom_lookback(void)
    return ShadowVeryShort_avgPeriod + 4;
 }
 
-TA_RetCode cdlladderbottom(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlladderbottom(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double ShadowVeryShortPeriodTotal;
    int i, outIdx, ShadowVeryShortTrailingIdx, lookbackTotal;

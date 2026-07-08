@@ -21,7 +21,14 @@ int cdlmorningdojistar_lookback(double        optInPenetration)
    ) + 2;
 }
 
-TA_RetCode cdlmorningdojistar(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlmorningdojistar(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   double optInPenetration,
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyDojiPeriodTotal, BodyLongPeriodTotal, BodyShortPeriodTotal;
    int i, outIdx, BodyDojiTrailingIdx, BodyLongTrailingIdx, BodyShortTrailingIdx, lookbackTotal;

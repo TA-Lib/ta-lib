@@ -18,7 +18,13 @@ int cdlshortline_lookback(void)
    return max( BodyShort_avgPeriod, ShadowShort_avgPeriod );
 }
 
-TA_RetCode cdlshortline(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlshortline(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyPeriodTotal, ShadowPeriodTotal;
    int i, outIdx, BodyTrailingIdx, ShadowTrailingIdx, lookbackTotal;

@@ -19,7 +19,13 @@ int cdlcounterattack_lookback(void)
    ) + 1;
 }
 
-TA_RetCode cdlcounterattack(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlcounterattack(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double EqualPeriodTotal;
    double BodyLongPeriodTotal[2];

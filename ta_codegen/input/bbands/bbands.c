@@ -36,7 +36,16 @@ int bbands_lookback(int optInTimePeriod, double optInNbDevUp, double optInNbDevD
    return ma_lookback( optInTimePeriod, optInMAType );
 }
 
-TA_RetCode bbands(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[])
+TA_RetCode bbands(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   double optInNbDevUp,
+   double optInNbDevDn,
+   TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outRealUpperBand[],
+   double outRealMiddleBand[],
+   double outRealLowerBand[])
 {
    TA_RetCode retCode;
    int i;

@@ -21,7 +21,11 @@ int medprice_lookback(void)
    return 0;
 }
 
-TA_RetCode medprice(int startIdx, int endIdx, const double inHigh[], const double inLow[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode medprice(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx, i;
 

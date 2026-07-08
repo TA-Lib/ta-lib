@@ -27,7 +27,11 @@ int ht_sine_lookback(void)
    return 63 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_SINE);
 }
 
-TA_RetCode ht_sine(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[])
+TA_RetCode ht_sine(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outSine[],
+   double outLeadSine[])
 {
    int outIdx, i;
    int lookbackTotal, today;

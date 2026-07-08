@@ -22,7 +22,11 @@ int midpoint_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode midpoint(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode midpoint(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double lowest, highest, tmpLow, tmpHigh;
    int outIdx, nbInitialElementNeeded;

@@ -21,7 +21,12 @@ int wclprice_lookback(void)
    return 0;
 }
 
-TA_RetCode wclprice(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode wclprice(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx, i;
 

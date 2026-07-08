@@ -18,7 +18,13 @@ int cdlrisefall3methods_lookback(void)
    return max( BodyShort_avgPeriod, BodyLong_avgPeriod ) + 4;
 }
 
-TA_RetCode cdlrisefall3methods(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlrisefall3methods(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyPeriodTotal[5];
    int i, outIdx, totIdx, BodyShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;

@@ -31,7 +31,10 @@ int ht_trendline_lookback(void)
    return 63 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_TRENDLINE);
 }
 
-TA_RetCode ht_trendline(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ht_trendline(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx, i;
    int lookbackTotal, today;

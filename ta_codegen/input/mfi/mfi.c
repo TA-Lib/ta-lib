@@ -26,7 +26,14 @@ int mfi_lookback(int optInTimePeriod)
    return optInTimePeriod;
 }
 
-TA_RetCode mfi(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode mfi(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   const double inVolume[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double posSumMF, negSumMF, prevValue;
    double tempValue1, tempValue2;

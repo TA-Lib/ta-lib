@@ -18,7 +18,13 @@ int cdldoji_lookback(void)
    return BodyDoji_avgPeriod;
 }
 
-TA_RetCode cdldoji(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdldoji(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyDojiPeriodTotal;
    int i, outIdx, BodyDojiTrailingIdx, lookbackTotal;

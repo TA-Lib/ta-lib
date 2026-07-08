@@ -21,7 +21,13 @@ int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType
    return ma_lookback( max(optInSlowPeriod,optInFastPeriod), optInMAType );
 }
 
-TA_RetCode apo(int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode apo(int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod,
+   int optInSlowPeriod,
+   TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double *tempBuffer;
    TA_RetCode retCode;

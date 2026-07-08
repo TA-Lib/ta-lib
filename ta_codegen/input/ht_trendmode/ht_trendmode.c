@@ -27,7 +27,10 @@ int ht_trendmode_lookback(void)
    return 63 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_TRENDMODE);
 }
 
-TA_RetCode ht_trendmode(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode ht_trendmode(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    int outIdx, i;
    int lookbackTotal, today;

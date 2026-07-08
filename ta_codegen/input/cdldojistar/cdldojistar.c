@@ -18,7 +18,13 @@ int cdldojistar_lookback(void)
    return max( BodyDoji_avgPeriod, BodyLong_avgPeriod ) + 1;
 }
 
-TA_RetCode cdldojistar(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdldojistar(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyDojiPeriodTotal, BodyLongPeriodTotal;
    int i, outIdx, BodyDojiTrailingIdx, BodyLongTrailingIdx, lookbackTotal;

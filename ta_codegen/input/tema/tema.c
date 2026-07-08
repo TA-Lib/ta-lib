@@ -30,7 +30,11 @@ int tema_lookback(int optInTimePeriod)
    return retValue * 3;
 }
 
-TA_RetCode tema(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode tema(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double prevEMA1, prevEMA2, prevEMA3, tempReal, optInK_1;
    int i, today, outIdx, lookbackEMA, lookbackTotal;

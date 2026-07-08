@@ -19,7 +19,11 @@ int wma_lookback(int optInTimePeriod)
    return optInTimePeriod - 1;
 }
 
-TA_RetCode wma(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode wma(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int inIdx, outIdx, i, trailingIdx, divider;
    double periodSum, periodSub, tempReal, trailingValue;

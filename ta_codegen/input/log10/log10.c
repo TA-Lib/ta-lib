@@ -16,7 +16,10 @@ int log10_lookback(void)
    return 0;
 }
 
-TA_RetCode log10(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode log10(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx;
    int i;

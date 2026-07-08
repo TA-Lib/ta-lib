@@ -22,7 +22,13 @@ int adxr_lookback(int optInTimePeriod)
       return 3;
 }
 
-TA_RetCode adxr(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode adxr(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double *adx;
    int adxrLookback, i, j, outIdx, nbElement;

@@ -18,7 +18,13 @@ int cdlhikkakemod_lookback(void)
    return max( 1, Near_avgPeriod ) + 5;
 }
 
-TA_RetCode cdlhikkakemod(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlhikkakemod(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double NearPeriodTotal;
    int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, patternResult;

@@ -23,7 +23,12 @@ int imi_lookback(int optInTimePeriod)
    return optInTimePeriod - 1;
 }
 
-TA_RetCode imi(int startIdx, int endIdx, const double inOpen[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode imi(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int lookback, outIdx = 0;
 

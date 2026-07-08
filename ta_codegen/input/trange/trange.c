@@ -19,7 +19,12 @@ int trange_lookback(void)
    return 1;
 }
 
-TA_RetCode trange(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode trange(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int today, outIdx;
    double val2, val3, greatest;

@@ -27,7 +27,13 @@ int cci_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode cci(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode cci(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double tempReal, tempReal2, theAverage, lastValue;
    int i, j, outIdx, lookbackTotal;

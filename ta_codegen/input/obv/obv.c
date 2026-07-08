@@ -22,7 +22,11 @@ int obv_lookback(void)
    return 0;
 }
 
-TA_RetCode obv(int startIdx, int endIdx, const double inReal[], const double inVolume[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode obv(int startIdx, int endIdx,
+   const double inReal[],
+   const double inVolume[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int i;
    int outIdx;

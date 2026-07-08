@@ -44,7 +44,13 @@ int mama_lookback(double        optInFastLimit,                                 
    return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_MAMA);
 }
 
-TA_RetCode mama(int startIdx, int endIdx, const double inReal[], double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[])
+TA_RetCode mama(int startIdx, int endIdx,
+   const double inReal[],
+   double optInFastLimit,
+   double optInSlowLimit,
+   int *outBegIdx, int *outNBElement,
+   double outMAMA[],
+   double outFAMA[])
 {
    int outIdx, i;
    int lookbackTotal, today;

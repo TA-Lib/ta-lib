@@ -25,7 +25,13 @@ int macdfix_lookback(int optInSignalPeriod)
    + ema_lookback( optInSignalPeriod );
 }
 
-TA_RetCode macdfix(int startIdx, int endIdx, const double inReal[], int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[])
+TA_RetCode macdfix(int startIdx, int endIdx,
+   const double inReal[],
+   int optInSignalPeriod,
+   int *outBegIdx, int *outNBElement,
+   double outMACD[],
+   double outMACDSignal[],
+   double outMACDHist[])
 {
    return macd( startIdx, endIdx, inReal,
       0, /* 0 indicate fix 12 == 0.15  for optInFastPeriod */

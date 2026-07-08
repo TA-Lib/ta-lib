@@ -18,7 +18,13 @@ int cdllongleggeddoji_lookback(void)
    return max( BodyDoji_avgPeriod, ShadowLong_avgPeriod );
 }
 
-TA_RetCode cdllongleggeddoji(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdllongleggeddoji(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyDojiPeriodTotal, ShadowLongPeriodTotal;
    int i, outIdx, BodyDojiTrailingIdx, ShadowLongTrailingIdx, lookbackTotal;

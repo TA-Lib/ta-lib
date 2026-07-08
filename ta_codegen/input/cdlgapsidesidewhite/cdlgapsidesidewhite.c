@@ -18,7 +18,13 @@ int cdlgapsidesidewhite_lookback(void)
    return max( Near_avgPeriod, Equal_avgPeriod ) + 2;
 }
 
-TA_RetCode cdlgapsidesidewhite(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlgapsidesidewhite(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double NearPeriodTotal, EqualPeriodTotal;
    int i, outIdx, NearTrailingIdx, EqualTrailingIdx, lookbackTotal;

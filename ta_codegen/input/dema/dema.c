@@ -24,7 +24,11 @@ int dema_lookback(int optInTimePeriod)
    return ema_lookback( optInTimePeriod ) * 2;
 }
 
-TA_RetCode dema(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode dema(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double prevEMA1, prevEMA2, tempReal, optInK_1;
    int i, today, outIdx, lookbackEMA, lookbackTotal;

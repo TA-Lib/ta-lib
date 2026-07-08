@@ -28,7 +28,15 @@ int adosc_lookback(int optInFastPeriod, int optInSlowPeriod)
    return ema_lookback( slowestPeriod );
 }
 
-TA_RetCode adosc(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode adosc(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   const double inVolume[],
+   int optInFastPeriod,
+   int optInSlowPeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int today, outIdx, lookbackTotal;
    int slowestPeriod;

@@ -24,7 +24,13 @@ int sar_lookback(double        optInAcceleration,                               
    return 1;
 }
 
-TA_RetCode sar(int startIdx, int endIdx, const double inHigh[], const double inLow[], double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode sar(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   double optInAcceleration,
+   double optInMaximum,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    TA_RetCode retCode;
 

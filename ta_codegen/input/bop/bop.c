@@ -18,7 +18,13 @@ int bop_lookback(void)
    return 0;
 }
 
-TA_RetCode bop(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode bop(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx, i;
    double tempReal;

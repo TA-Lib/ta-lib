@@ -25,7 +25,15 @@ int stochrsi_lookback(int optInTimePeriod, int optInFastK_Period, int optInFastD
    return retValue;
 }
 
-TA_RetCode stochrsi(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[])
+TA_RetCode stochrsi(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int optInFastK_Period,
+   int optInFastD_Period,
+   TA_MAType optInFastD_MAType,
+   int *outBegIdx, int *outNBElement,
+   double outFastK[],
+   double outFastD[])
 {
    double *tempRSIBuffer;
 

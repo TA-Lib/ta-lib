@@ -16,7 +16,10 @@ int sqrt_lookback(void)
    return 0;
 }
 
-TA_RetCode sqrt(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode sqrt(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx;
    int i;

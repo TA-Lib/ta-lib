@@ -20,7 +20,12 @@ int correl_lookback(int optInTimePeriod)
    return optInTimePeriod-1;
 }
 
-TA_RetCode correl(int startIdx, int endIdx, const double inReal0[], const double inReal1[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode correl(int startIdx, int endIdx,
+   const double inReal0[],
+   const double inReal1[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double sumXY, sumX, sumY, sumX2, sumY2, x, y, trailingX, trailingY;
    double tempReal;

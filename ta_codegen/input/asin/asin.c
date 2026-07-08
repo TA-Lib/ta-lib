@@ -16,7 +16,10 @@ int asin_lookback(void)
    return 0;
 }
 
-TA_RetCode asin(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode asin(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx;
    int i;

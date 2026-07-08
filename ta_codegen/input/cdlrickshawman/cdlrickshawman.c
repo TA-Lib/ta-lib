@@ -20,7 +20,13 @@ int cdlrickshawman_lookback(void)
    );
 }
 
-TA_RetCode cdlrickshawman(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlrickshawman(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyDojiPeriodTotal, ShadowLongPeriodTotal, NearPeriodTotal;
    int i, outIdx, BodyDojiTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx, lookbackTotal;

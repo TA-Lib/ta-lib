@@ -31,7 +31,18 @@ int macdext_lookback(int optInFastPeriod, TA_MAType optInFastMAType, int optInSl
    return lookbackLargest + ma_lookback( optInSignalPeriod, optInSignalMAType );
 }
 
-TA_RetCode macdext(int startIdx, int endIdx, const double inReal[], int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[])
+TA_RetCode macdext(int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod,
+   TA_MAType optInFastMAType,
+   int optInSlowPeriod,
+   TA_MAType optInSlowMAType,
+   int optInSignalPeriod,
+   TA_MAType optInSignalMAType,
+   int *outBegIdx, int *outNBElement,
+   double outMACD[],
+   double outMACDSignal[],
+   double outMACDHist[])
 {
    double *slowMABuffer;
    double *fastMABuffer;

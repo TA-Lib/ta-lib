@@ -29,7 +29,11 @@ int kama_lookback(int optInTimePeriod)
    return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);
 }
 
-TA_RetCode kama(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode kama(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    const double constMax = 2.0/(30.0+1.0);
    const double constDiff = 2.0/(2.0+1.0) - constMax;

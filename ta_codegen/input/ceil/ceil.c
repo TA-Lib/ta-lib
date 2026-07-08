@@ -16,7 +16,10 @@ int ceil_lookback(void)
    return 0;
 }
 
-TA_RetCode ceil(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ceil(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx;
    int i;

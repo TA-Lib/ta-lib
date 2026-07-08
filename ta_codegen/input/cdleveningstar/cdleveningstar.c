@@ -20,7 +20,14 @@ int cdleveningstar_lookback(double        optInPenetration)
    return max( BodyShort_avgPeriod, BodyLong_avgPeriod ) + 2;
 }
 
-TA_RetCode cdleveningstar(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdleveningstar(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   double optInPenetration,
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyShortPeriodTotal, BodyLongPeriodTotal, BodyShortPeriodTotal2;
    int i, outIdx, BodyShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;

@@ -20,7 +20,13 @@ int cdlseparatinglines_lookback(void)
    ) + 1;
 }
 
-TA_RetCode cdlseparatinglines(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlseparatinglines(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double ShadowVeryShortPeriodTotal, BodyLongPeriodTotal, EqualPeriodTotal;
    int i, outIdx, ShadowVeryShortTrailingIdx, BodyLongTrailingIdx, EqualTrailingIdx, lookbackTotal;

@@ -26,7 +26,11 @@ int trix_lookback(int optInTimePeriod)
    return (emaLookback*3) + rocr_lookback( 1 );
 }
 
-TA_RetCode trix(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode trix(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double prevEMA1, prevEMA2, prevEMA3, tempReal, optInK_1;
    int i, today, outIdx, lookbackEMA, lookbackTotal;

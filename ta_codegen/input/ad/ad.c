@@ -20,7 +20,13 @@ int ad_lookback(void)
    return 0;
 }
 
-TA_RetCode ad(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ad(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   const double inVolume[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int nbBar, currentBar, outIdx;
 

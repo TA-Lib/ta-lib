@@ -17,7 +17,12 @@ int minmax_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode minmax(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[])
+TA_RetCode minmax(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outMin[],
+   double outMax[])
 {
    double highest, lowest, tmpHigh, tmpLow;
    int outIdx, nbInitialElementNeeded;

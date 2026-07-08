@@ -19,7 +19,13 @@ int willr_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode willr(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode willr(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double lowest, highest, tmp, diff;
    int outIdx, nbInitialElementNeeded;

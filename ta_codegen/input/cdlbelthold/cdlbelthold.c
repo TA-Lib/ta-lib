@@ -18,7 +18,13 @@ int cdlbelthold_lookback(void)
    return max( BodyLong_avgPeriod, ShadowVeryShort_avgPeriod );
 }
 
-TA_RetCode cdlbelthold(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlbelthold(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyLongPeriodTotal, ShadowVeryShortPeriodTotal;
    int i, outIdx, BodyLongTrailingIdx, ShadowVeryShortTrailingIdx, lookbackTotal;

@@ -28,7 +28,16 @@ int stochf_lookback(int optInFastK_Period, int optInFastD_Period, TA_MAType optI
    return retValue;
 }
 
-TA_RetCode stochf(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[])
+TA_RetCode stochf(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInFastK_Period,
+   int optInFastD_Period,
+   TA_MAType optInFastD_MAType,
+   int *outBegIdx, int *outNBElement,
+   double outFastK[],
+   double outFastD[])
 {
    TA_RetCode retCode;
    double lowest, highest, tmp, diff;

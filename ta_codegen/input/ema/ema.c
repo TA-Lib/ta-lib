@@ -19,9 +19,11 @@ int ema_lookback(int optInTimePeriod)
    return optInTimePeriod - 1 + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA);
 }
 
-TA_RetCode ema(int startIdx, int endIdx, const double *inReal,
+TA_RetCode ema(int startIdx, int endIdx,
+   const double *inReal,
    int optInTimePeriod,
-   int *outBegIdx, int *outNBElement, double *outReal)
+   int *outBegIdx, int *outNBElement,
+   double *outReal)
 {
    double optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
 
@@ -30,9 +32,12 @@ TA_RetCode ema(int startIdx, int endIdx, const double *inReal,
       outBegIdx, outNBElement, outReal);
 }
 
-TA_RetCode ema_private(int startIdx, int endIdx, const double *inReal,
-   int optInTimePeriod, double optInK_1,
-   int *outBegIdx, int *outNBElement, double *outReal)
+TA_RetCode ema_private(int startIdx, int endIdx,
+   const double *inReal,
+   int optInTimePeriod,
+   double optInK_1,
+   int *outBegIdx, int *outNBElement,
+   double *outReal)
 {
    double tempReal, prevMA;
    int i, today, outIdx, lookbackTotal;

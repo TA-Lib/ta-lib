@@ -18,7 +18,11 @@ int sum_lookback(int optInTimePeriod)
    return optInTimePeriod-1;
 }
 
-TA_RetCode sum(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode sum(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double periodTotal, tempReal;
    int i, outIdx, trailingIdx, lookbackTotal;

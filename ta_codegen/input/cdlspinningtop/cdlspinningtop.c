@@ -18,7 +18,13 @@ int cdlspinningtop_lookback(void)
    return BodyShort_avgPeriod;
 }
 
-TA_RetCode cdlspinningtop(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdlspinningtop(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyPeriodTotal;
    int i, outIdx, BodyTrailingIdx, lookbackTotal;

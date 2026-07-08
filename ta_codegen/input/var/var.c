@@ -21,7 +21,11 @@ int var_lookback(int optInTimePeriod, double optInNbDev)
    return optInTimePeriod-1;
 }
 
-TA_RetCode var(int startIdx, int endIdx, const double *inReal, int optInTimePeriod, int *outBegIdx, int *outNBElement, double *outReal)
+TA_RetCode var(int startIdx, int endIdx,
+   const double *inReal,
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double *outReal)
 {
    double tempReal, periodTotal1, periodTotal2, meanValue1, meanValue2;
    int i, outIdx, trailingIdx, nbInitialElementNeeded;

@@ -69,7 +69,12 @@ int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
    return retValue;
 }
 
-TA_RetCode ma(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ma(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double *dummyBuffer;
    TA_RetCode retCode;

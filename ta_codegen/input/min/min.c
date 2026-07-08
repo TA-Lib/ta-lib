@@ -21,7 +21,11 @@ int min_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode min(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode min(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    double lowest, tmp;
    int outIdx, nbInitialElementNeeded;

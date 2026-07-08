@@ -28,7 +28,13 @@ int atr_lookback(int optInTimePeriod)
    return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_ATR);
 }
 
-TA_RetCode atr(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode atr(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int i, outIdx, today, lookbackTotal;
    int nbATR;

@@ -18,7 +18,13 @@ int cdl3outside_lookback(void)
    return 3;
 }
 
-TA_RetCode cdl3outside(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdl3outside(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    int i, outIdx, lookbackTotal;
 

@@ -20,7 +20,10 @@ int ht_dcperiod_lookback(void)
    return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_DCPERIOD);
 }
 
-TA_RetCode ht_dcperiod(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode ht_dcperiod(int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx, i;
    int lookbackTotal, today;

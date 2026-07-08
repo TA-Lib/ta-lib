@@ -44,7 +44,15 @@ int macd_lookback(int optInFastPeriod, int optInSlowPeriod, int optInSignalPerio
    + ema_lookback( optInSignalPeriod );
 }
 
-TA_RetCode macd(int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[])
+TA_RetCode macd(int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod,
+   int optInSlowPeriod,
+   int optInSignalPeriod,
+   int *outBegIdx, int *outNBElement,
+   double outMACD[],
+   double outMACDSignal[],
+   double outMACDHist[])
 {
    double prevFast, prevSlow, prevSignal, macdValue, tempReal;
    double slowK, fastK, signalK;

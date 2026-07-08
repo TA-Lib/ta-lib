@@ -16,7 +16,11 @@ int div_lookback(void)
    return 0;
 }
 
-TA_RetCode div(int startIdx, int endIdx, const double inReal0[], const double inReal1[], int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode div(int startIdx, int endIdx,
+   const double inReal0[],
+   const double inReal1[],
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int outIdx;
    int i;

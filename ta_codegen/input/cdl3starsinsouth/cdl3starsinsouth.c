@@ -20,7 +20,13 @@ int cdl3starsinsouth_lookback(void)
    ) + 2;
 }
 
-TA_RetCode cdl3starsinsouth(int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inHigh[],
+   const double inLow[],
+   const double inClose[],
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double BodyLongPeriodTotal, BodyShortPeriodTotal, ShadowLongPeriodTotal;
    double ShadowVeryShortPeriodTotal[2];

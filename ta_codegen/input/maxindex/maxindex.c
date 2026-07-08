@@ -17,7 +17,11 @@ int maxindex_lookback(int optInTimePeriod)
    return (optInTimePeriod-1);
 }
 
-TA_RetCode maxindex(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, int outInteger[])
+TA_RetCode maxindex(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   int outInteger[])
 {
    double highest, tmp;
    int outIdx, nbInitialElementNeeded;

@@ -16,7 +16,11 @@ int avgdev_lookback(int optInTimePeriod)
    return optInTimePeriod-1;
 }
 
-TA_RetCode avgdev(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
+TA_RetCode avgdev(int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
 {
    int today, outIdx, lookback;
 
