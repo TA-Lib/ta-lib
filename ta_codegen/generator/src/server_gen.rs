@@ -5,8 +5,18 @@
 //! All servers speak the same protocol as the existing Rust server in server.rs.
 
 use crate::backends::java::to_java_method_name;
-use crate::ir::{FuncDef, Input, OptInput, Output, ParamType};
+use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
+use std::collections::HashMap;
 use std::path::Path;
+
+/// The comma-separated `FuncUnstId` variant names from enums.yaml (the source of
+/// truth), in ordinal order. Empty if the enum is somehow missing.
+fn func_unst_pascal_names(enums: &HashMap<String, EnumDef>) -> Vec<String> {
+    enums
+        .get("FuncUnstId")
+        .map(|fu| fu.variants.iter().map(|v| v.pascal_name.clone()).collect())
+        .unwrap_or_default()
+}
 
 /// Generate the JSON response key for an output at position `idx` among all outputs.
 ///
@@ -1026,7 +1036,8 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
 /// Generates a single TaCodegenServe.java with all necessary classes inline
 /// (`RetCode` enum, `MInteger`, Core class with methods, main server loop).
 #[allow(clippy::too_many_lines)]
-pub fn generate_java_server(funcs: &[FuncDef]) -> String {
+#[allow(clippy::implicit_hasher)]
+pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
     s.push_str("/* Auto-generated JSON-RPC server for ta_codegen Java output.\n");
@@ -1053,12 +1064,22 @@ pub fn generate_java_server(funcs: &[FuncDef]) -> String {
     // MInteger helper
     s.push_str("class MInteger { public int value; }\n\n");
 
-    // FuncUnstId and Compatibility enums (referenced by generated Core methods)
+    // FuncUnstId and Compatibility enums (referenced by generated Core methods).
+    // FuncUnstId is emitted from enums.yaml (source of truth), 6 names per line,
+    // plus the server-side `None` sentinel (distinct from the shipped enum's `All`).
     s.push_str("enum FuncUnstId {\n");
-    s.push_str("    Adx, Adxr, Atr, Cmo, Dx, Ema,\n");
-    s.push_str("    HtDcPeriod, HtDcPhase, HtPhasor, HtSine, HtTrendline, HtTrendMode,\n");
-    s.push_str("    Unused12, Kama, Mama, Unused15, MinusDI, MinusDM,\n");
-    s.push_str("    Natr, PlusDI, PlusDM, Rsi, StochRsi, T3, None;\n");
+    {
+        let names = func_unst_pascal_names(enums);
+        let nchunks = names.chunks(6).count().max(1);
+        for (idx, chunk) in names.chunks(6).enumerate() {
+            if idx + 1 == nchunks {
+                // Last line carries the server-side `None` sentinel and the `;`.
+                s.push_str(&format!("    {}, None;\n", chunk.join(", ")));
+            } else {
+                s.push_str(&format!("    {},\n", chunk.join(", ")));
+            }
+        }
+    }
     s.push_str("}\n\n");
 
     s.push_str("enum Compatibility {\n");
@@ -1827,7 +1848,8 @@ fn format_default_f64(v: f64) -> String {
 /// It reads JSON-RPC requests from stdin, dispatches to the generated TA function
 /// implementations, and writes JSON responses to stdout.
 #[allow(clippy::too_many_lines)]
-pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
+#[allow(clippy::implicit_hasher)]
+pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
     // File-level attributes
@@ -1922,30 +1944,10 @@ pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
     // Helper: FuncUnstId from integer
     s.push_str("fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {\n");
     s.push_str("    match id {\n");
-    s.push_str("        0 => Some(FuncUnstId::Adx),\n");
-    s.push_str("        1 => Some(FuncUnstId::Adxr),\n");
-    s.push_str("        2 => Some(FuncUnstId::Atr),\n");
-    s.push_str("        3 => Some(FuncUnstId::Cmo),\n");
-    s.push_str("        4 => Some(FuncUnstId::Dx),\n");
-    s.push_str("        5 => Some(FuncUnstId::Ema),\n");
-    s.push_str("        6 => Some(FuncUnstId::HtDcPeriod),\n");
-    s.push_str("        7 => Some(FuncUnstId::HtDcPhase),\n");
-    s.push_str("        8 => Some(FuncUnstId::HtPhasor),\n");
-    s.push_str("        9 => Some(FuncUnstId::HtSine),\n");
-    s.push_str("        10 => Some(FuncUnstId::HtTrendline),\n");
-    s.push_str("        11 => Some(FuncUnstId::HtTrendMode),\n");
-    s.push_str("        12 => Some(FuncUnstId::Unused12),\n");
-    s.push_str("        13 => Some(FuncUnstId::Kama),\n");
-    s.push_str("        14 => Some(FuncUnstId::Mama),\n");
-    s.push_str("        15 => Some(FuncUnstId::Unused15),\n");
-    s.push_str("        16 => Some(FuncUnstId::MinusDI),\n");
-    s.push_str("        17 => Some(FuncUnstId::MinusDM),\n");
-    s.push_str("        18 => Some(FuncUnstId::Natr),\n");
-    s.push_str("        19 => Some(FuncUnstId::PlusDI),\n");
-    s.push_str("        20 => Some(FuncUnstId::PlusDM),\n");
-    s.push_str("        21 => Some(FuncUnstId::Rsi),\n");
-    s.push_str("        22 => Some(FuncUnstId::StochRsi),\n");
-    s.push_str("        23 => Some(FuncUnstId::T3),\n");
+    // Generated from enums.yaml (source of truth), in ordinal order.
+    for (i, name) in func_unst_pascal_names(enums).iter().enumerate() {
+        s.push_str(&format!("        {i} => Some(FuncUnstId::{name}),\n"));
+    }
     s.push_str("        _ => None,\n");
     s.push_str("    }\n");
     s.push_str("}\n\n");

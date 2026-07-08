@@ -331,6 +331,13 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         HashMap::new()
     };
 
+    // enums.yaml is the source of truth for FuncUnstId, but a couple of copies
+    // are hand-maintained (not regenerated from it) and can silently drift —
+    // notably the Rust crate enum template. Fail loudly here rather than let a
+    // rename half-propagate (e.g. the MFI/IMI -> UNUSED reclassification, which
+    // otherwise broke the Rust server build against a stale variant name).
+    verify_hand_maintained_funcunstid(&enums, &base);
+
     // Discover all function definition directories
     let mut func_dirs: Vec<_> = std::fs::read_dir(&base)
         .expect("Cannot read ta_codegen/input directory")
@@ -627,9 +634,26 @@ fn generate_servers(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
     let out_base = root.join("ta_codegen/output");
 
+    // enums.yaml is the source of truth for FuncUnstId; pass it so the Java and
+    // Rust servers emit their FuncUnstId enum / id map from it instead of a
+    // hand-maintained copy that can silently drift.
+    let enums = {
+        let enums_path = root.join("ta_codegen/input/enums.yaml");
+        if enums_path.exists() {
+            parser::enums::load_enums(&enums_path)
+        } else {
+            HashMap::new()
+        }
+    };
+
+    // The server FuncUnstId enums are emitted from enums.yaml below; the Rust
+    // crate enum is a hand-maintained copy, so guard it here too (this command
+    // can run without `generate`, e.g. `build.py servers`).
+    verify_hand_maintained_funcunstid(&enums, &root.join("ta_codegen/input"));
+
     for backend in &backends_to_run {
         match backends::get(backend) {
-            Some(b) => b.generate_server(&funcs, &out_base),
+            Some(b) => b.generate_server(&funcs, &enums, &out_base),
             None => eprintln!("Unknown backend: {}", backend),
         }
     }
@@ -667,6 +691,81 @@ fn generate_bench(backend_filter: Option<&str>) {
 /// Centralized so the C server, C bench, and shared-library builds cannot drift.
 const COMMON_GCC_FLAGS: &[&str] = &["-lm", "-O3", "-flto", "-DNDEBUG", "-Wno-parentheses-equality"];
 
+/// Verify the hand-maintained Rust `FuncUnstId` enum matches enums.yaml.
+///
+/// enums.yaml is the source of truth for `FuncUnstId`; the C enum (`ta_defs.h`)
+/// and the shipped Java enum are regenerated from it, but the Rust crate enum
+/// lives in the hand-written template `input/lib/rust/types.rs` and is copied
+/// verbatim. If it drifts, the Rust server references a variant that no longer
+/// exists (build failure) and the shipped Rust crate's enum diverges from the C
+/// header. Fail loudly at generate time rather than let a rename half-propagate.
+fn verify_hand_maintained_funcunstid(
+    enums: &HashMap<String, ir::EnumDef>,
+    base: &std::path::Path,
+) {
+    let Some(fu) = enums.get("FuncUnstId") else {
+        return;
+    };
+    // The crate enum is the enums.yaml variants followed by the `FuncUnstAll`
+    // wildcard sentinel; keep it in the expected list so a misplaced/duplicated
+    // sentinel (which would mis-size `[i32; FuncUnstAll as usize]`) is caught.
+    let mut expected: Vec<&str> = fu.variants.iter().map(|v| v.pascal_name.as_str()).collect();
+    expected.push("FuncUnstAll");
+
+    let path = base.join("lib/rust/types.rs");
+    let src = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(_) => return, // template absent in this checkout -- nothing to verify
+    };
+
+    let marker = "pub enum FuncUnstId {";
+    let Some(start) = src.find(marker) else {
+        eprintln!("Error: `{marker}` not found in {}", path.display());
+        std::process::exit(1);
+    };
+    // Strip line/doc comments (`//`, `///`) BEFORE locating the closing brace, so
+    // a `}` or stray token inside a comment cannot truncate the body or leak a
+    // bogus variant.
+    let stripped: String = src[start + marker.len()..]
+        .lines()
+        .map(|l| l.split("//").next().unwrap_or(l))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let Some(end) = stripped.find('}') else {
+        eprintln!("Error: unterminated FuncUnstId enum in {}", path.display());
+        std::process::exit(1);
+    };
+
+    // Variants are comma-separated; take each entry's leading identifier so an
+    // explicit `= discriminant` or several variants on one line are handled, and
+    // keep `FuncUnstAll` in place (compared positionally against `expected`).
+    let found: Vec<&str> = stripped[..end]
+        .split(',')
+        .map(str::trim)
+        .filter(|e| !e.is_empty())
+        .map(|e| {
+            e.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+                .next()
+                .unwrap_or(e)
+        })
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    if found != expected {
+        eprintln!(
+            "Error: the hand-maintained Rust FuncUnstId enum has drifted from \
+             enums.yaml (the source of truth).\n  file:     {}\n  expected: {:?}\n  \
+             found:    {:?}\nUpdate that template's `pub enum FuncUnstId` to match \
+             enums.yaml -- the C and shipped-Java enums regenerate automatically, but \
+             this Rust one does not.",
+            path.display(),
+            expected,
+            found
+        );
+        std::process::exit(1);
+    }
+}
+
 fn build_servers(backend_filter: Option<&str>) {
     let root = repo_root();
     let backends_to_build: Vec<&str> = match backend_filter {
@@ -679,6 +778,11 @@ fn build_servers(backend_filter: Option<&str>) {
 
     // Remove stale shared-lib marker so it rebuilds fresh each invocation.
     let _ = std::fs::remove_file(bin_dir.join(".shared_lib_built"));
+
+    // Track server-build failures so we can exit non-zero. Without this a
+    // failed compile would still exit 0, and ta_regtest would silently reuse
+    // the previously-built (stale) server binary — a real break reads as green.
+    let mut failures: u32 = 0;
 
     for backend in &backends_to_build {
         match *backend {
@@ -715,8 +819,14 @@ fn build_servers(backend_filter: Option<&str>) {
                     .status()
                 {
                     Ok(s) if s.success() => println!("OK"),
-                    Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-                    Err(e) => println!("FAILED (gcc not found: {})", e),
+                    Ok(s) => {
+                        failures += 1;
+                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                    }
+                    Err(e) => {
+                        failures += 1;
+                        println!("FAILED (gcc not found: {})", e);
+                    }
                 }
                 // Also build direct-call benchmark binary if source exists
                 let bench_src = out_base.join("c/ta_bench_cg.c");
@@ -739,8 +849,14 @@ fn build_servers(backend_filter: Option<&str>) {
                         .status()
                     {
                         Ok(s) if s.success() => println!("OK"),
-                        Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-                        Err(e) => println!("FAILED (gcc not found: {})", e),
+                        Ok(s) => {
+                            failures += 1;
+                            println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                        }
+                        Err(e) => {
+                            failures += 1;
+                            println!("FAILED (gcc not found: {})", e);
+                        }
                     }
                 }
             }
@@ -758,13 +874,21 @@ fn build_servers(backend_filter: Option<&str>) {
                     .status()
                 {
                     Ok(s) if s.success() => println!("OK"),
-                    Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-                    Err(e) => println!("FAILED (javac not found: {})", e),
+                    Ok(s) => {
+                        failures += 1;
+                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                    }
+                    Err(e) => {
+                        failures += 1;
+                        println!("FAILED (javac not found: {})", e);
+                    }
                 }
             }
             "dotnet" => {
                 // Build shared library from generated C files (needed by .NET P/Invoke)
-                build_shared_lib(&out_base, &bin_dir);
+                if !build_shared_lib(&out_base, &bin_dir) {
+                    failures += 1;
+                }
 
                 print!("  Building .NET server... ");
                 let dotnet_dir = out_base.join("dotnet");
@@ -809,8 +933,14 @@ fn build_servers(backend_filter: Option<&str>) {
                         }
                         println!("OK");
                     }
-                    Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-                    Err(e) => println!("FAILED (dotnet not found: {})", e),
+                    Ok(s) => {
+                        failures += 1;
+                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                    }
+                    Err(e) => {
+                        failures += 1;
+                        println!("FAILED (dotnet not found: {})", e);
+                    }
                 }
             }
             "rust" => {
@@ -825,13 +955,20 @@ fn build_servers(backend_filter: Option<&str>) {
                         let src = rust_dir.join("target/release/ta_codegen_serve");
                         let dst = bin_dir.join("ta_codegen_serve_rust");
                         if let Err(e) = std::fs::copy(&src, &dst) {
+                            failures += 1;
                             println!("OK (build), FAILED (copy: {})", e);
                         } else {
                             println!("OK");
                         }
                     }
-                    Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-                    Err(e) => println!("FAILED (cargo not found: {})", e),
+                    Ok(s) => {
+                        failures += 1;
+                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                    }
+                    Err(e) => {
+                        failures += 1;
+                        println!("FAILED (cargo not found: {})", e);
+                    }
                 }
             }
             _ => {
@@ -839,15 +976,26 @@ fn build_servers(backend_filter: Option<&str>) {
             }
         }
     }
+
+    if failures > 0 {
+        eprintln!(
+            "\nError: {failures} server build step(s) FAILED (see above). Refusing to \
+             exit 0 -- otherwise ta_regtest silently reuses stale server binaries and a \
+             real break reads as green."
+        );
+        std::process::exit(1);
+    }
 }
 
 /// Build a shared library from the generated C files.
 /// This is used by both the Python (ctypes) and .NET (P/Invoke) servers.
 /// The shared lib exports all TA_* functions and is placed in bin/.
-fn build_shared_lib(out_base: &Path, bin_dir: &Path) {
+/// Returns `true` on success so the caller can count a failure (the .NET server
+/// needs this native lib; a silent failure here used to still exit 0).
+fn build_shared_lib(out_base: &Path, bin_dir: &Path) -> bool {
     let marker = bin_dir.join(".shared_lib_built");
     if marker.exists() {
-        return; // Already built this run
+        return true; // Already built this run
     }
 
     print!("  Building shared library... ");
@@ -899,7 +1047,7 @@ fn build_shared_lib(out_base: &Path, bin_dir: &Path) {
 
     if c_names.is_empty() {
         println!("FAILED (no C source files found)");
-        return;
+        return false;
     }
 
     // Sort alphabetically, but move MA to end (it calls SMA/EMA/WMA)
@@ -939,9 +1087,16 @@ fn build_shared_lib(out_base: &Path, bin_dir: &Path) {
         Ok(s) if s.success() => {
             println!("OK");
             std::fs::write(&marker, "").ok();
+            true
         }
-        Ok(s) => println!("FAILED (exit {})", s.code().unwrap_or(-1)),
-        Err(e) => println!("FAILED (gcc not found: {})", e),
+        Ok(s) => {
+            println!("FAILED (exit {})", s.code().unwrap_or(-1));
+            false
+        }
+        Err(e) => {
+            println!("FAILED (gcc not found: {})", e);
+            false
+        }
     }
 }
 
