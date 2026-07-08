@@ -972,6 +972,86 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
     return 0;
 }
 
+/* ---- Determine range-stability class for doRangeTestEx ---- */
+
+/* Explicit per-function range-test tolerance class (see TA_RangeStability).
+ * This REPLACES the old implicit "unstId == NONE ? tight : loose" inference:
+ * the tolerance now follows each function's numerical nature, not merely whether
+ * it carries an unstable-period id.
+ *
+ *   SKIP       - accumulation seeded at startIdx / path-dependent state machine
+ *                (derived from get_integer_tolerance()==DO_NOT_COMPARE, the same
+ *                single source the integer-output skip uses -- never a 2nd list).
+ *   EXACT      - fresh-recomputed finite window; bit-exact across ranges.
+ *   EPSILON    - finite window with running-accumulator / reorder FP drift, and
+ *                the default for anything without an unstable period.
+ *   CONVERGING - carries an unstable-period id (recursive / IIR).
+ *
+ * SKIP, then the explicit EXACT/EPSILON entries, are checked BEFORE the
+ * unstId-derived CONVERGING, so a vestigial unstable-period id (the IMI/MFI trap)
+ * trips the guard in doRangeTestEx instead of silently drawing the loose
+ * tolerance. */
+static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
+{
+    /* SKIP is NOT maintained as a second list here: it is exactly the set that
+     * get_integer_tolerance() marks TA_DO_NOT_COMPARE (accumulations seeded at
+     * startIdx and path-dependent state machines -- AD, ADOSC, OBV, SAR, SAREXT).
+     * Deriving it from that single source guarantees the real-output skip (this
+     * class, via dataWithinReasonableRange) and the integer-output skip
+     * (doRangeTestFixSize, keyed on the same DO_NOT_COMPARE) can never drift
+     * apart. Checked first: a skipped function is skipped whatever else it is. */
+    if( get_integer_tolerance(funcInfo) == TA_DO_NOT_COMPARE )
+        return TA_STABLE_SKIP;
+
+    /* Fresh-recomputed finite window -> bit-exact across ranges: every output bar
+     * rebuilds its result from the raw input window (or one input element) with
+     * NO floating-point total carried across bars, so the value is independent of
+     * startIdx. Audited function-by-function from the input .c sources and then
+     * confirmed by this range gate running at the strict TA_STABLE_EXACT (==)
+     * tolerance. (IMI is the archetype, issue #14.) */
+    static const char *exact[] = {
+        /* per-element vector math / unary transforms */
+        "ACOS", "ASIN", "ATAN", "CEIL", "COS", "COSH", "EXP", "FLOOR", "LN",
+        "LOG10", "SIN", "SINH", "SQRT", "TAN", "TANH", "ADD", "SUB", "MULT", "DIV",
+        /* per-bar price transforms */
+        "AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE", "BOP", "TRANGE",
+        /* per-bar momentum (difference / ratio of two bars) */
+        "MOM", "ROC", "ROCP", "ROCR", "ROCR100",
+        /* comparison-selected window extrema (cached min/max, no FP accumulation) */
+        "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
+        /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
+        "AVGDEV", "LINEARREG", "LINEARREG_ANGLE", "LINEARREG_INTERCEPT",
+        "LINEARREG_SLOPE", "TSF",
+        /* fresh sliding window, no accumulator */
+        "IMI",
+    };
+
+    /* Finite window carried in a RUNNING ACCUMULATOR (running sum/total updated
+     * add-head/subtract-trailing, or MA-based at the default SMA type) -> differs
+     * only by ~1e-9 FP rounding across ranges. This is also the default for any
+     * function not listed above, so the array need only carry MFI (issue #4) as a
+     * documented archetype. Audited running-accumulator functions that rely on
+     * that default: ACCBANDS, APO, BBANDS, BETA, CCI, CORREL, MA, MAVP, PPO, SMA,
+     * STDDEV, STOCH, STOCHF, SUM, TRIMA, ULTOSC, VAR, WMA. MACDEXT stays
+     * CONVERGING (it is EPSILON only at the default SMA type, but carries the EMA
+     * unstable-period id for its EMA-type parameterisations). */
+    static const char *epsilon[] = { "MFI" };
+
+    for( unsigned int i = 0; i < sizeof(exact)/sizeof(exact[0]); i++ )
+        if( strcmp(funcInfo->name, exact[i]) == 0 )
+            return TA_STABLE_EXACT;
+    for( unsigned int i = 0; i < sizeof(epsilon)/sizeof(epsilon[0]); i++ )
+        if( strcmp(funcInfo->name, epsilon[i]) == 0 )
+            return TA_STABLE_EPSILON;
+
+    if( get_range_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE )
+        return TA_STABLE_CONVERGING;
+
+    /* Default: a finite-window function without an unstable period compares at
+     * the tight epsilon tolerance (identical to the pre-explicit behaviour). */
+    return TA_STABLE_EPSILON;
+}
+
 
 /* ---- Filter helper ---- */
 
@@ -1285,8 +1365,9 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ErrorNumber errNb = TA_TEST_PASS;
     if( nbElem > 0 && params.codegenError == TA_TEST_PASS )
     {
-        errNb = doRangeTest(
+        errNb = doRangeTestEx(
             codegen_range_generic,
+            stability_class(funcInfo),
             get_range_unst_id(funcInfo->name),
             (void *)&params,
             funcInfo->nbOutput,

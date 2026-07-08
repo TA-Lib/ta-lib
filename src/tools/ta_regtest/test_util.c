@@ -114,6 +114,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        TA_Integer refLookback,
                                        const TA_Real    *refBuffer,
                                        const TA_Integer *refBufferInt,
+                                       TA_RangeStability stability,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
                                        unsigned int outputNb,
@@ -121,14 +122,19 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
 
 static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
+                                      TA_RangeStability stability,
                                       TA_FuncUnstId unstId,
                                       unsigned int integerTolerance );
 
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
+                                            TA_RangeStability stability,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
                                             unsigned int outputNb,
                                             unsigned int integerTolerance );
+
+static TA_RangeStability classify_range_stability( TA_FuncUnstId unstId,
+                                                   unsigned int integerTolerance );
 
 static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
                                     TA_Integer    startIdx,
@@ -503,19 +509,82 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 }
 
 
+/* Derive the range-stability class the legacy way, from (unstId,
+ * integerTolerance). This reproduces the historical tolerance tiers exactly for
+ * the hand-written call sites, which express intent through the unstId they pass:
+ *   - integerTolerance == TA_DO_NOT_COMPARE -> TA_STABLE_SKIP
+ *   - unstId != TA_FUNC_UNST_NONE           -> TA_STABLE_CONVERGING
+ *   - otherwise                             -> TA_STABLE_EPSILON
+ * It never yields TA_STABLE_EXACT: a legacy site asking for the tight (~1e-9)
+ * comparison is a safe superset of bit-exact, so nothing regresses. Sites that
+ * want strict bit-exactness call doRangeTestEx(TA_STABLE_EXACT, ...) directly
+ * (e.g. test_imi.c), and the generic codegen gate classifies each function
+ * explicitly (see stability_class() in test_codegen.c). */
+static TA_RangeStability classify_range_stability( TA_FuncUnstId unstId,
+                                                   unsigned int integerTolerance )
+{
+   if( integerTolerance == TA_DO_NOT_COMPARE )
+      return TA_STABLE_SKIP;
+   if( unstId != TA_FUNC_UNST_NONE )
+      return TA_STABLE_CONVERGING;
+   return TA_STABLE_EPSILON;
+}
+
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
                          unsigned int nbOutput,
                          unsigned int integerTolerance )
 {
+   return doRangeTestEx( testFunction,
+                         classify_range_stability( unstId, integerTolerance ),
+                         unstId,
+                         opaqueData,
+                         nbOutput,
+                         integerTolerance );
+}
+
+ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
+                           TA_RangeStability stability,
+                           TA_FuncUnstId unstId,
+                           void *opaqueData,
+                           unsigned int nbOutput,
+                           unsigned int integerTolerance )
+{
    unsigned int outputNb;
    ErrorNumber errNb;
+
+   /* Guard: keep the stability class and the unstable-period id consistent.
+    *  - CONVERGING needs an unstable period to warm up the recursion (so the
+    *    loose tolerance's residual is bounded).
+    *  - EXACT / EPSILON are finite-window: carrying an unstable-period id there
+    *    is the vestigial-flag trap that let a bug hide behind the loose
+    *    convergence tolerance (IMI #14, MFI #4). Fail loudly instead.
+    *  - SKIP is exempt: an accumulation seeded at startIdx may still legitimately
+    *    sweep an internal EMA's unstable period while its values are left
+    *    uncompared (e.g. ADOSC passes unstId=EMA with TA_DO_NOT_COMPARE). */
+   if( stability == TA_STABLE_CONVERGING && unstId == TA_FUNC_UNST_NONE )
+   {
+      printf( "Fail: doRangeTest CONVERGING class has no unstable-period id\n" );
+      return TA_TESTUTIL_DRT_STABILITY_MISMATCH;
+   }
+   if( (stability == TA_STABLE_EXACT || stability == TA_STABLE_EPSILON)
+       && unstId != TA_FUNC_UNST_NONE )
+   {
+      printf( "Fail: doRangeTest %s class carries a non-NONE unstable-period id "
+              "(unstId=%d). The function is classified finite-window but also maps "
+              "to an unstable period: if it is recursive, classify it CONVERGING "
+              "(leave it only in UNSTABLE_MAP); if the id is vestigial, remove it "
+              "from UNSTABLE_MAP. It must not appear in both.\n",
+              stability == TA_STABLE_EXACT ? "EXACT" : "EPSILON", (int)unstId );
+      return TA_TESTUTIL_DRT_STABILITY_MISMATCH;
+   }
 
    /* Test all the outputs individually. */
    for( outputNb=0; outputNb < nbOutput; outputNb++ )
    {
       errNb = doRangeTestForOneOutput( testFunction,
+                                       stability,
                                        unstId,
                                        opaqueData,
                                        outputNb,
@@ -544,6 +613,7 @@ void printRetCode( TA_RetCode retCode )
 
 /**** Local functions definitions.     ****/
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
+                                            TA_RangeStability stability,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
                                             unsigned int outputNb,
@@ -634,7 +704,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
          errNb = doRangeTestFixSize( testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,
                                      refBuffer, refBufferInt,
-                                     unstId, fixSize, outputNb, integerTolerance );
+                                     stability, unstId, fixSize, outputNb, integerTolerance );
          if( errNb != TA_TEST_PASS)
          {
             TA_Free( refBuffer );
@@ -651,7 +721,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
             errNb = doRangeTestFixSize( testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,
                                         refBuffer, refBufferInt,
-                                        unstId, fixSize, outputNb, integerTolerance );
+                                        stability, unstId, fixSize, outputNb, integerTolerance );
             if( errNb != TA_TEST_PASS)
             {
                printf( "Fail: Using unstable period %d\n", unstablePeriod );
@@ -704,6 +774,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        TA_Integer refLookback,
                                        const TA_Real *refBuffer,
                                        const TA_Integer *refBufferInt,
+                                       TA_RangeStability stability,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
                                        unsigned int outputNb,
@@ -838,7 +909,12 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             {
                if( outputIsInteger )
                {
+                  /* TA_STABLE_SKIP skips integer outputs as well as real ones, so
+                   * "skip" is uniform across output types and cannot desync from
+                   * the real path in dataWithinReasonableRange() (the legacy
+                   * integerTolerance == TA_DO_NOT_COMPARE gate is kept too). */
                   if( outputBufferInt[1+i] != refBufferInt[relativeIdx+i]
+                      && stability != TA_STABLE_SKIP
                       && integerTolerance != TA_DO_NOT_COMPARE )
                   {
                      printf( "Fail: doRangeTestFixSize diff data for idx=%d (%d,%d)\n", i,
@@ -854,7 +930,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                {
                   val1 = outputBuffer[1+i];
                   val2 = refBuffer[relativeIdx+i];
-                  if( !dataWithinReasonableRange( val1, val2, i, unstId, integerTolerance ) )
+                  if( !dataWithinReasonableRange( val1, val2, i, stability, unstId, integerTolerance ) )
                   {
                      printf( "Fail: doRangeTestFixSize diff data for idx=%d (%e,%e)\n", i, val1, val2 );
                      printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -991,29 +1067,43 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
  */
 static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
+                                      TA_RangeStability stability,
                                       TA_FuncUnstId unstId,
                                       unsigned int integerTolerance )
 {
    TA_Real difference, tolerance, temp;
    unsigned int val1_int, val2_int, tempInt, periodToIgnore;
 
-   if( integerTolerance == TA_DO_NOT_COMPARE )
-      return 1; /* Don't compare, says that everything is fine */
+   /* TA_STABLE_SKIP: the function is a non-converging accumulation seeded at
+    * startIdx or a path-dependent state machine, so recomputing a bar from a
+    * different startIdx legitimately yields a different value -- nothing to
+    * compare (formerly signalled by integerTolerance == TA_DO_NOT_COMPARE). */
+   if( stability == TA_STABLE_SKIP )
+      return 1;
 
    /* Bitwise-identical is always coherent, incl. NaN==NaN (ACOS/ASIN
     * on out-of-domain price data). */
    if( memcmp( &val1, &val2, sizeof(TA_Real) ) == 0 )
       return 1;
 
-   /* If the function does not have an unstable period,
-    * the compared value shall be identical.
-    *
-    * Because the algo may vary slightly allow for
-    * a small epsilon error because of the nature
-    * of floating point operations.
-    */
-   if( unstId == TA_FUNC_UNST_NONE )
+   /* TA_STABLE_EXACT: a fresh-recomputed finite window (e.g. IMI) must be
+    * bit-exact regardless of startIdx. Compare with '==' rather than memcmp so
+    * +0.0 and -0.0 count as equal (NaN is already handled above); any surviving
+    * difference is a real bug, not floating-point noise. */
+   if( stability == TA_STABLE_EXACT )
+      return (val1 == val2);
+
+   /* TA_STABLE_EPSILON: a finite window carried in a running accumulator or
+    * evaluated in a different order across ranges (e.g. MFI, running-sum MAs)
+    * differs only by floating-point rounding -- a tight fixed epsilon. This is
+    * the tier every function without an unstable period used to get. */
+   if( stability == TA_STABLE_EPSILON )
       return TA_REAL_EQ( val1, val2, 0.000000001 );
+
+   /* TA_STABLE_CONVERGING (everything below): recursive / IIR output whose value
+    * depends on how far back the recursion started. The unstable period bounds
+    * the residual, so the tolerance starts loose and tightens as outputPosition
+    * and the unstable period grow (detailed below). */
 
    /* In the context of the TA functions, all value
     * below 0.00001 are considered equal to zero and

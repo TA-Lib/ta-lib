@@ -43,7 +43,10 @@ Examples:
 `doRangeTest()` is what makes ta_regtest thorough. It calls a `RangeTestFunction` callback hundreds of times with every possible `startIdx`/`endIdx` combination, verifying:
 - Output coherency across different ranges (same data regardless of range selection)
 - Lookback function consistency
-- Unstable period handling (via tolerance: `TA_DO_NOT_COMPARE` to skip)
+- Value comparison across ranges at a tolerance set by the function's
+  `TA_RangeStability` class — exact / epsilon / converging / skip (see
+  "Range-test tolerance is an explicit stability class" below). `doRangeTestEx`
+  takes the class explicitly; the legacy `doRangeTest` derives it.
 
 ### RangeTestFunction Callback Interface
 
@@ -89,6 +92,31 @@ mechanism absorbs their legitimate trajectory dependence. Documented
 exceptions that keep `TA_DO_NOT_COMPARE` (legitimate, non-converging range
 dependence): running accumulations seeded at `startIdx` (AD, OBV, ADOSC) and
 path-dependent state machines (SAR, SAREXT) — see `get_integer_tolerance()`.
+
+#### Range-test tolerance is an explicit stability class, not `unstId == NONE`
+
+The cross-range value comparison (`dataWithinReasonableRange`) picks its tolerance
+from an explicit `TA_RangeStability` class (`ta_test_priv.h`), **decoupled** from
+whether a function carries an unstable-period id. This exists because the old
+"`unstId == NONE ? tight : loose`" inference let a *vestigial* unstable-period flag
+hand a finite-window function the loose convergence tolerance and hide a real bug
+(IMI #14, MFI #4). The four classes:
+
+| Class | Tolerance | Who |
+|-------|-----------|-----|
+| `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, LINEARREG/TSF/AVGDEV, vector math) |
+| `TA_STABLE_EPSILON` | `1e-9` relative | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
+| `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N) | recursive/IIR — anything in `UNSTABLE_MAP` |
+| `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` (AD, ADOSC, OBV, SAR, SAREXT) |
+
+`stability_class()` (`test_codegen.c`) assigns the generic-gate class per function
+(explicit `exact[]` list from a source audit, `SKIP` **derived** from
+`get_integer_tolerance` so it never desyncs from the integer-output skip,
+`CONVERGING` from `UNSTABLE_MAP`, else `EPSILON`). `doRangeTestEx` **guards** the
+invariant: `CONVERGING` must carry an unstId; `EXACT`/`EPSILON` must not (that's the
+vestigial-flag trap); `SKIP` is exempt (ADOSC legitimately sweeps an internal EMA).
+The legacy `doRangeTest(unstId, integerTolerance)` is a wrapper that derives the
+class (never `EXACT`, a safe superset) for the hand-written per-function tests.
 
 After all functions run, ta_regtest prints:
 - A **cross-language timing comparison table** (wall-clock ns per call, speedup vs C)

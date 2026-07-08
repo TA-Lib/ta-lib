@@ -205,11 +205,55 @@ typedef TA_RetCode (*RangeTestFunction)( TA_Integer    startIdx,
  * test_util.c for more info).
  */
 #define TA_DO_NOT_COMPARE 0xFFFFFFFF
+
+/* Explicit classification of how a function's output behaves when the SAME bar
+ * is recomputed from a different startIdx (the range-test / self-coherency
+ * property).
+ *
+ * This is DECOUPLED from TA_FuncUnstId on purpose. Whether a function carries an
+ * unstable-period id (the sweep mechanism) is a separate concern from the
+ * tolerance its numerical nature warrants. The tolerance tier used to be
+ * *inferred* as "unstId == NONE ? tight : loose", which let a vestigial
+ * unstable-period flag hand a finite-window function the loose convergence
+ * tolerance and hide a real bug (IMI, issue #14; MFI, issue #4). The class is
+ * now stated explicitly and cross-checked against the unstable-period id (see
+ * the guard in doRangeTestEx).
+ */
+typedef enum
+{
+   TA_STABLE_EXACT,      /* Fresh-recomputed finite window -> bit-exact across
+                          * ranges; any difference is a bug (e.g. IMI). */
+   TA_STABLE_EPSILON,    /* Finite window via a running accumulator / algebraic
+                          * re-order -> ~1e-9 FP drift only (e.g. MFI, running-
+                          * sum MAs). */
+   TA_STABLE_CONVERGING, /* Recursive / IIR -> the value depends on how far back
+                          * the recursion started; the unstable period bounds the
+                          * residual, so the tolerance is loose early and tightens
+                          * (e.g. EMA, RSI, ADX, ATR, T3, HT_*). */
+   TA_STABLE_SKIP        /* Non-converging accumulation seeded at startIdx or a
+                          * path-dependent state machine -> cross-range
+                          * comparison is meaningless (AD, ADOSC, OBV, SAR,
+                          * SAREXT). */
+} TA_RangeStability;
+
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
                          unsigned int nbOutput,
                          unsigned int integerTolerance );
+
+/* Same as doRangeTest, but the value-comparison tolerance is driven by an
+ * explicit range-stability class instead of being inferred from unstId.
+ * doRangeTest is a thin wrapper that derives the class from
+ * (unstId, integerTolerance) for the legacy call sites. unstId is still
+ * required here: it selects which unstable period to sweep and feeds the
+ * convergence math for TA_STABLE_CONVERGING. */
+ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
+                           TA_RangeStability stability,
+                           TA_FuncUnstId unstId,
+                           void *opaqueData,
+                           unsigned int nbOutput,
+                           unsigned int integerTolerance );
 
 /* Print out info about a retCode */
 void printRetCode( TA_RetCode retCode );

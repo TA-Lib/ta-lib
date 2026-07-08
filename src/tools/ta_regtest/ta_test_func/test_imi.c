@@ -285,8 +285,13 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
+      /* IMI recomputes its up/down window fresh every bar (no accumulator, no
+       * recursion), so it is bit-exact across ranges. Assert that explicitly
+       * with TA_STABLE_EXACT rather than settling for the tight-but-fuzzy
+       * epsilon tolerance; this is the range test that caught issue #14. */
+      errNb = doRangeTestEx(
                            rangeTestFunction,
+                           TA_STABLE_EXACT,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
