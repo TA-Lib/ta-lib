@@ -33,7 +33,7 @@ TA-Lib Definition: [`cdlinneck.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 |--------|------|
 | C | [`ta_CDLINNECK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLINNECK.c) |
 | Rust | [`cdlinneck.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlinneck.rs) |
-| Java | [`Core.java`](https://github.com/TA-Lib/ta-lib/blob/main/java/src/com/tictactec/ta/lib/Core.java) |
+| Java | [`Core_CDLINNECK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLINNECK.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

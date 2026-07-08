@@ -33,7 +33,7 @@ TA-Lib Definition: [`cmo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 |--------|------|
 | C | [`ta_CMO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMO.c) |
 | Rust | [`cmo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cmo.rs) |
-| Java | [`Core.java`](https://github.com/TA-Lib/ta-lib/blob/main/java/src/com/tictactec/ta/lib/Core.java) |
+| Java | [`Core_CMO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CMO.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 
