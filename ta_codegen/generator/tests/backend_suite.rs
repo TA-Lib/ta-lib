@@ -5285,9 +5285,10 @@ fn c_t3_for_countdown_loops() {
 
 #[test]
 fn c_stoch_has_malloc_and_free() {
-    // STOCH mallocs a temp %K buffer, memcpy's it into the caller buffer, and
-    // frees it. (MACD was the original vehicle, but its lockstep fusion removed
-    // the temp buffers.)
+    // STOCH mallocs a temp %K buffer, memmove's it into the caller buffer, and
+    // frees it. (memmove, not memcpy: the temp aliases outSlowK when the caller
+    // reuses the buffer — see #94. MACD was the original vehicle, but its
+    // lockstep fusion removed the temp buffers.)
     let (func, enums) = load_indicator("stoch");
     let out = generate_all(&func, &enums);
     let c = &out.c;
@@ -5301,8 +5302,8 @@ fn c_stoch_has_malloc_and_free() {
         "C STOCH should contain free calls"
     );
     assert!(
-        c.contains("memcpy("),
-        "C STOCH should contain memcpy calls"
+        c.contains("memmove("),
+        "C STOCH should contain memmove calls"
     );
 }
 
