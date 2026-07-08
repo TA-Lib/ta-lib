@@ -7,6 +7,8 @@ import sys
 import os
 
 import sync
+from utilities.common import verify_git_repo
+from utilities.versions import check_sources_digest
 
 def run_command(command):
     """Run a shell command and return the output."""
@@ -33,6 +35,29 @@ def main():
         if run_command(['git', 'rev-parse', 'dev']) != run_command(['git', 'rev-parse', 'origin/dev']):
             print("dev branch not up-to-date with remote. Do 'git pull'.")
             sys.exit(1)
+
+        # Gate: dev must be self-consistent before it is propagated to main.
+        #
+        # The committed TA_LIB_SOURCES_DIGEST must already match what dev's
+        # sources compute. If it does not, the dev-nightly job has not yet
+        # regenerated and committed the digest -- and, in the same pass, the
+        # dist assets -- for the current sources. Merging that state into main
+        # makes main-nightly's "Verify dist assets are up-to-date" gate fail,
+        # exactly how PR #33's source change broke main after it landed there
+        # without its dist regeneration. Refuse rather than propagate the
+        # inconsistency (this also pre-empts sync.main() below silently
+        # rewriting a stale digest into a dirty ta_common.h).
+        root_dir = verify_git_repo()
+        print("Verifying dev sources digest is consistent...")
+        if check_sources_digest(root_dir) is None:
+            print("Error: dev is NOT consistent -- its committed "
+                  "TA_LIB_SOURCES_DIGEST does not match its sources (mismatch "
+                  "printed above).")
+            print("Wait for the dev-nightly job to regenerate and commit the "
+                  "digest + dist assets, or run 'scripts/package.py' on dev and "
+                  "commit the result, then re-run this merge.")
+            sys.exit(1)
+        print("dev sources digest is consistent.")
 
         # Call sync to verify that dev is up-to-date with main.
         # This is to avoid conflicts when merging dev into main.
