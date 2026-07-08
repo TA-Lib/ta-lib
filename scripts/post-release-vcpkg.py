@@ -8,6 +8,9 @@ What this script does
 2) Computes the SHA512 of the tarball (required by vcpkg).
 3) Prints the update plan.
 4) With confirmation, updates a local microsoft/vcpkg checkout and opens a PR.
+5) Opens a '[monitor] VCPkg release <version>' tracking issue in the TA-Lib repo
+   (linking the vcpkg PR) so a maintainer can watch it through to merge — vcpkg
+   reviews often take several days.
 
 Usage
 -----
@@ -29,9 +32,13 @@ Safety guards (applied before performing any write operations)
 Idempotency
 -----------
 Safe to run multiple times for the same release:
-- If an open PR already exists for this version, the script exits cleanly.
+- If an open PR already exists for this version, the script reconciles the
+  monitor issue (opening it only if missing) and exits cleanly.
 - Updating the vcpkg port files is idempotent (re-sets the same version/SHA512).
 - git checkout -B + "no changes to commit" guard prevents duplicate commits.
+- The monitor issue is opened only if none already exists (open or closed) for
+  this version, matched by exact title against the immediately-consistent issue
+  list (not the eventually-consistent search index).
 
 Version source
 --------------
@@ -60,6 +67,15 @@ from utilities.files import path_join
 API_RELEASE_LATEST = "https://api.github.com/repos/TA-Lib/ta-lib/releases/latest"
 ASSET_PATTERN = re.compile(r"ta-lib-(\d+\.\d+\.\d+)-github-tag-archive\.tar\.gz$")
 VCPKG_PORT_NAME = "talib"
+
+# After the microsoft/vcpkg PR is opened, a tracking ("[monitor]") issue is opened in
+# the TA-Lib repo so a maintainer can watch the vcpkg PR through to merge — vcpkg
+# reviews often take several days. The maintainer closes the issue once the port is live.
+MONITOR_REPO = "TA-Lib/ta-lib"
+# "me" (per the maintainer's request) is mario4tier; greenTableWork is the second
+# tracker. Both must have TA-Lib/ta-lib access for assignment to succeed — a failure
+# to assign is a non-fatal warning (the issue is still opened).
+MONITOR_ASSIGNEES = ["mario4tier", "greenTableWork"]
 
 
 def sha512_file(path: Path) -> str:
@@ -188,13 +204,19 @@ def _current_branch() -> str:
     return result.stdout.strip()
 
 
-def _check_no_existing_vcpkg_pr(version: str) -> None:
+def _find_existing_vcpkg_pr(version: str) -> str | None:
     """
-    Raise RuntimeError if an open PR for this version already exists in
-    microsoft/vcpkg.  Uses the public GitHub search API (no auth required).
-    Raises RuntimeError if the API call fails — caller should retry later.
+    Return the html_url of an OPEN microsoft/vcpkg PR for this version, or None if
+    there is none.  Uses the public GitHub search API (no auth required).
+
+    Raises RuntimeError if the API call itself fails — the caller cannot safely
+    proceed (it might open a duplicate PR), so it should retry later.
     """
-    query = "repo:microsoft/vcpkg is:pr is:open [ta-lib] in:title"
+    # Search for the port token "[talib]" — the PR title is "[talib] update to <ver>"
+    # (vcpkg's [portname] convention; the port is VCPKG_PORT_NAME). NOT "[ta-lib]":
+    # GitHub tokenizes "ta-lib" -> {ta, lib}, which never matches the single token
+    # "talib", so an "[ta-lib]" query would silently miss the script's own PRs.
+    query = f"repo:microsoft/vcpkg is:pr is:open [{VCPKG_PORT_NAME}] in:title"
     url = "https://api.github.com/search/issues?" + urlencode({"q": query, "per_page": "10"})
     # Match the version as a whole token (word boundaries) to avoid false positives
     # such as 0.6.1 matching 0.6.10 or 10.6.1.
@@ -209,12 +231,106 @@ def _check_no_existing_vcpkg_pr(version: str) -> None:
     for item in data.get("items", []):
         title = item.get("title", "")
         if version_re.search(title):
-            pr_url = item.get("html_url", "")
-            raise RuntimeError(
-                f"An open PR for ta-lib {version} already exists in microsoft/vcpkg:\n"
-                f"  {pr_url}\n"
-                "No new PR is needed. Run with --plan to review the current state."
-            )
+            return item.get("html_url", "")
+    return None
+
+
+def _gh_capture(args: list[str], cwd: str | None = None) -> tuple[int, str, str]:
+    """
+    Run a `gh` command capturing output; return (returncode, stdout, stderr).
+
+    Unlike run_command(), this NEVER exits or raises. The monitor issue is a
+    best-effort convenience opened AFTER the vcpkg PR already exists, so its gh
+    calls must degrade to warnings rather than aborting the release run — even if
+    gh vanishes from PATH or exec fails between shutil.which() and here.
+    """
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, cwd=cwd)
+    except Exception as e:
+        return 1, "", str(e)
+    return result.returncode, result.stdout.strip(), result.stderr.strip()
+
+
+def create_monitor_issue(version: str, pr_url: str) -> None:
+    """
+    Open (idempotently) a '[monitor] VCPkg release <version>' tracking issue in the
+    TA-Lib repo, linking the microsoft/vcpkg PR and assigning the maintainers so it
+    can be watched through to merge and closed once the port is live.
+
+    Best-effort: the vcpkg PR is already open by the time this runs, so every failure
+    here prints a warning with manual-fallback instructions and returns — never fatal.
+    """
+    title = f"[monitor] VCPkg release {version}"
+    gh_path = shutil.which("gh")
+    if gh_path is None:
+        print("[warn] GitHub CLI not found; skipping the vcpkg monitor issue.")
+        print(f"       Open '{title}' manually in {MONITOR_REPO},")
+        print(f"       link {pr_url or 'the microsoft/vcpkg PR'}, assign {', '.join(MONITOR_ASSIGNEES)}.")
+        return
+
+    # Idempotency: don't open a second monitor issue for the same version. Use the
+    # plain issue-list (REST) endpoint with an exact title match — NOT `--search`,
+    # whose index is eventually consistent (a prompt re-run could miss a seconds-old
+    # issue -> duplicate) and tokenized (bracket/dot fuzziness). `--state all` also
+    # suppresses re-creation once the maintainer has closed it.
+    rc, out, _ = _gh_capture([gh_path, "issue", "list", "--repo", MONITOR_REPO,
+                              "--state", "all", "--limit", "200",
+                              "--json", "title,state,url"])
+    if rc == 0 and out:
+        try:
+            for issue in json.loads(out):
+                if issue.get("title", "") == title:
+                    state = (issue.get("state") or "").lower()
+                    print(f"[ok] vcpkg monitor issue already exists ({state}): {issue.get('url', '')}")
+                    return
+        except (json.JSONDecodeError, TypeError):
+            pass  # Unparseable list -> fall through and create; a duplicate is harmless.
+
+    pr_line = pr_url if pr_url else "see the open PRs at https://github.com/microsoft/vcpkg/pulls"
+    body = (
+        f"Tracking the microsoft/vcpkg port update for TA-Lib **{version}**.\n\n"
+        f"- vcpkg PR: {pr_line}\n\n"
+        "vcpkg PRs are reviewed and merged by the vcpkg maintainers, which usually "
+        "takes a few days. This issue is a reminder to watch that PR through to merge.\n\n"
+        f"**Close this issue** once the vcpkg PR is merged and `vcpkg install {VCPKG_PORT_NAME}` "
+        f"installs {version}.\n\n"
+        "_Opened automatically by `scripts/post-release-vcpkg.py`._"
+    )
+    rc, out, err = _gh_capture([gh_path, "issue", "create", "--repo", MONITOR_REPO,
+                                "--title", title, "--body", body])
+    if rc != 0:
+        print(f"[warn] Could not open the vcpkg monitor issue: {err or 'unknown error'}")
+        print(f"       Open '{title}' manually in {MONITOR_REPO} linking {pr_line}.")
+        return
+    issue_url = out.splitlines()[-1].strip() if out else ""
+    print(f"[ok] Opened vcpkg monitor issue: {issue_url or '(created)'}")
+
+    if not issue_url:
+        print(f"[warn] Could not determine the monitor issue URL; assign "
+              f"{', '.join(MONITOR_ASSIGNEES)} manually.")
+        return
+
+    # Assign the maintainers. Assignment requires TA-Lib/ta-lib access; gh applies
+    # --add-assignee atomically (one non-assignable login drops them ALL), so if the
+    # combined call fails, retry each login on its own — that way "me" still gets
+    # assigned even if greenTableWork is not yet a collaborator. Never fatal.
+    def _assign(logins: list[str]) -> bool:
+        edit_args: list[str] = []
+        for lg in logins:
+            edit_args += ["--add-assignee", lg]
+        rc_a, _, _ = _gh_capture([gh_path, "issue", "edit", issue_url] + edit_args)
+        return rc_a == 0
+
+    if _assign(MONITOR_ASSIGNEES):
+        print(f"[ok] Assigned {', '.join(MONITOR_ASSIGNEES)} to the monitor issue.")
+    else:
+        assigned = [lg for lg in MONITOR_ASSIGNEES if _assign([lg])]
+        failed = [lg for lg in MONITOR_ASSIGNEES if lg not in assigned]
+        if assigned:
+            print(f"[ok] Assigned {', '.join(assigned)} to the monitor issue.")
+        if failed:
+            print(f"[warn] Could not assign {', '.join(failed)} (needs {MONITOR_REPO} access).")
+            print(f"       Assign manually if needed: {issue_url}")
 
 
 def update_vcpkg_files(vcpkg_root: Path, version: str, sha512: str) -> None:
@@ -361,11 +477,20 @@ def commit_and_open_pr(vcpkg_root: Path, version: str) -> None:
         run_command(["git", "remote", "add", "fork", fork_url], cwd=str(vcpkg_root))
     run_command(["git", "push", "-u", "fork", f"ta-lib-{version}"], cwd=str(vcpkg_root))
 
-    run_command([gh_path, "pr", "create", "--repo", "microsoft/vcpkg",
+    pr_output = run_command([gh_path, "pr", "create", "--repo", "microsoft/vcpkg",
                  "--head", f"{login}:ta-lib-{version}",
                  "--title", f"[talib] update to {version}", "--fill-first"],
                 cwd=str(vcpkg_root))
     print("[ok] Opened PR in microsoft/vcpkg")
+
+    # gh prints the new PR URL on stdout; grab it to link from the monitor issue.
+    pr_url = ""
+    for line in reversed(pr_output.splitlines()):
+        line = line.strip()
+        if line.startswith("http"):
+            pr_url = line
+            break
+    create_monitor_issue(version, pr_url)
 
 
 def main() -> int:
@@ -431,7 +556,17 @@ def main() -> int:
             "release has been published from main."
         )
 
-    _check_no_existing_vcpkg_pr(version)
+    existing_pr = _find_existing_vcpkg_pr(version)
+    if existing_pr:
+        print(
+            f"[info] An open PR for ta-lib {version} already exists in microsoft/vcpkg:\n"
+            f"       {existing_pr}\n"
+            "[info] No new vcpkg PR is needed; ensuring the monitor issue exists."
+        )
+        # Reconcile: open the monitor issue if it is missing (idempotent), so the
+        # already-open vcpkg PR can still be tracked and closed out.
+        create_monitor_issue(version, existing_pr)
+        return 0
 
     # --- Step 5: confirmation prompt ---
     print(
@@ -440,6 +575,8 @@ def main() -> int:
         f"  2) Update ports/{VCPKG_PORT_NAME}/{{portfile.cmake,vcpkg.json}} to {version}\n"
         f"  3) Run ./vcpkg x-add-version {VCPKG_PORT_NAME}\n"
         f"  4) Commit, push branch ta-lib-{version}, and open a PR to microsoft/vcpkg\n"
+        f"  5) Open a '[monitor] VCPkg release {version}' issue in {MONITOR_REPO}\n"
+        f"     (assigned to {', '.join(MONITOR_ASSIGNEES)}) to track that PR\n"
     )
     confirm = input("Proceed? (yes/NO): ")
     if confirm.strip().lower() != "yes":
