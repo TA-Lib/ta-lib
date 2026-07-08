@@ -72,7 +72,7 @@ TA_LIB_API int TA_APO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAT
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
    /* The slow MA is the key factor determining the lookback period. */
-   return TA_MA_Lookback(fmax(optInSlowPeriod,optInFastPeriod),optInMAType);
+   return TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType);
 }
 
 TA_LIB_API TA_RetCode TA_APO( int    startIdx,

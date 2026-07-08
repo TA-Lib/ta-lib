@@ -71,7 +71,7 @@ TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double optInPenetration )
       optInPenetration = 0.3;
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return -1;
-   return fmax(fmax(BodyDoji_avgPeriod,BodyLong_avgPeriod),BodyShort_avgPeriod) + 2;
+   return max(max(BodyDoji_avgPeriod,BodyLong_avgPeriod),BodyShort_avgPeriod) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,

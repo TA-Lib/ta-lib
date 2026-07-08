@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void )
    int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
    double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
-   return fmax(BodyShort_avgPeriod,ShadowVeryLong_avgPeriod);
+   return max(BodyShort_avgPeriod,ShadowVeryLong_avgPeriod);
 }
 
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE( int    startIdx,

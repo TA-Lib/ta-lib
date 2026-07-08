@@ -68,7 +68,7 @@ TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double optInPenetration )
       optInPenetration = 0.3;
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return -1;
-   return fmax(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
+   return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
@@ -174,7 +174,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
    {
       if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* black */
           ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* white real body */
-          ((fmax(inOpen[i - 1],inClose[i - 1]) < fmin(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* gapping down */
+          ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* gapping down */
           inClose[i] > inClose[i - 2] + fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* closing well within 1st rb */
           fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long */
           fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && /* 2nd: short */
@@ -260,7 +260,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmax(inOpen[i - 1],inClose[i - 1]) < fmin(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && inClose[i] > inClose[i - 2] + fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
+      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && inClose[i] > inClose[i - 2] + fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -358,7 +358,7 @@ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmax((double)inOpen[i - 1],(double)inClose[i - 1]) < fmin((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] > (double)inClose[i - 2] + fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] > (double)inClose[i - 2] + fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -436,7 +436,7 @@ TA_RetCode TA_S_CDLMORNINGSTAR_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmax((double)inOpen[i - 1],(double)inClose[i - 1]) < fmin((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] > (double)inClose[i - 2] + fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && (double)inClose[i] > (double)inClose[i - 2] + fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,i) )
       {
          outInteger[outIdx++] = 100;
       } else 

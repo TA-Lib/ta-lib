@@ -68,7 +68,7 @@ TA_LIB_API int TA_CDLMATHOLD_Lookback( double optInPenetration )
       optInPenetration = 0.5;
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return -1;
-   return fmax(BodyShort_avgPeriod,BodyLong_avgPeriod) + 4;
+   return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 4;
 }
 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
@@ -176,18 +176,18 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&               /* white, black, 2 black or white, white */
+      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&                  /* white, black, 2 black or white, white */
           ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 &&
           ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
-          ((fmin(inOpen[i - 3],inClose[i - 3]) > fmax(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* upside gap 1st to 2nd */
-          fmin(inOpen[i - 2],inClose[i - 2]) < inClose[i - 4] &&                /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
-          fmin(inOpen[i - 1],inClose[i - 1]) < inClose[i - 4] &&
-          fmin(inOpen[i - 2],inClose[i - 2]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
-          fmin(inOpen[i - 1],inClose[i - 1]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration &&
-          fmax(inClose[i - 2],inOpen[i - 2]) < inOpen[i - 3] &&                 /* 2nd to 4th are falling */
-          fmax(inClose[i - 1],inOpen[i - 1]) < fmax(inClose[i - 2],inOpen[i - 2]) &&
-          inOpen[i] > inClose[i - 1] &&                                         /* 5th opens above the prior close */
-          inClose[i] > fmax(fmax(inHigh[i - 3],inHigh[i - 2]),inHigh[i - 1]) && /* 5th closes above the highest high of the reaction days */
+          ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* upside gap 1st to 2nd */
+          min(inOpen[i - 2],inClose[i - 2]) < inClose[i - 4] &&                    /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+          min(inOpen[i - 1],inClose[i - 1]) < inClose[i - 4] &&
+          min(inOpen[i - 2],inClose[i - 2]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
+          min(inOpen[i - 1],inClose[i - 1]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration &&
+          max(inClose[i - 2],inOpen[i - 2]) < inOpen[i - 3] &&                     /* 2nd to 4th are falling */
+          max(inClose[i - 1],inOpen[i - 1]) < max(inClose[i - 2],inOpen[i - 2]) &&
+          inOpen[i] > inClose[i - 1] &&                                            /* 5th opens above the prior close */
+          inClose[i] > max(max(inHigh[i - 3],inHigh[i - 2]),inHigh[i - 1]) &&      /* 5th closes above the highest high of the reaction days */
           fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && /* 1st long, then 3 small */
           fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) &&
           fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) &&
@@ -277,7 +277,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 && ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmin(inOpen[i - 3],inClose[i - 3]) > fmax(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && fmin(inOpen[i - 2],inClose[i - 2]) < inClose[i - 4] && fmin(inOpen[i - 1],inClose[i - 1]) < inClose[i - 4] && fmin(inOpen[i - 2],inClose[i - 2]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && fmin(inOpen[i - 1],inClose[i - 1]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && fmax(inClose[i - 2],inOpen[i - 2]) < inOpen[i - 3] && fmax(inClose[i - 1],inOpen[i - 1]) < fmax(inClose[i - 2],inOpen[i - 2]) && inOpen[i] > inClose[i - 1] && inClose[i] > fmax(fmax(inHigh[i - 3],inHigh[i - 2]),inHigh[i - 1]) && fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
+      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 && ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && min(inOpen[i - 2],inClose[i - 2]) < inClose[i - 4] && min(inOpen[i - 1],inClose[i - 1]) < inClose[i - 4] && min(inOpen[i - 2],inClose[i - 2]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && min(inOpen[i - 1],inClose[i - 1]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && max(inClose[i - 2],inOpen[i - 2]) < inOpen[i - 3] && max(inClose[i - 1],inOpen[i - 1]) < max(inClose[i - 2],inOpen[i - 2]) && inOpen[i] > inClose[i - 1] && inClose[i] > max(max(inHigh[i - 3],inHigh[i - 2]),inHigh[i - 1]) && fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -379,7 +379,7 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmin((double)inOpen[i - 3],(double)inClose[i - 3]) > fmax((double)inOpen[i - 4],(double)inClose[i - 4])) ? 1 : 0) && fmin((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inClose[i - 4] && fmin((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inClose[i - 4] && fmin((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && fmin((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && fmax((double)inClose[i - 2],(double)inOpen[i - 2]) < (double)inOpen[i - 3] && fmax((double)inClose[i - 1],(double)inOpen[i - 1]) < fmax((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > fmax(fmax((double)inHigh[i - 3],(double)inHigh[i - 2]),(double)inHigh[i - 1]) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((min((double)inOpen[i - 3],(double)inClose[i - 3]) > max((double)inOpen[i - 4],(double)inClose[i - 4])) ? 1 : 0) && min((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inClose[i - 4] && min((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inClose[i - 4] && min((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && min((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && max((double)inClose[i - 2],(double)inOpen[i - 2]) < (double)inOpen[i - 3] && max((double)inClose[i - 1],(double)inOpen[i - 1]) < max((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > max(max((double)inHigh[i - 3],(double)inHigh[i - 2]),(double)inHigh[i - 1]) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -461,7 +461,7 @@ TA_RetCode TA_S_CDLMATHOLD_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((fmin((double)inOpen[i - 3],(double)inClose[i - 3]) > fmax((double)inOpen[i - 4],(double)inClose[i - 4])) ? 1 : 0) && fmin((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inClose[i - 4] && fmin((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inClose[i - 4] && fmin((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && fmin((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && fmax((double)inClose[i - 2],(double)inOpen[i - 2]) < (double)inOpen[i - 3] && fmax((double)inClose[i - 1],(double)inOpen[i - 1]) < fmax((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > fmax(fmax((double)inHigh[i - 3],(double)inHigh[i - 2]),(double)inHigh[i - 1]) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((min((double)inOpen[i - 3],(double)inClose[i - 3]) > max((double)inOpen[i - 4],(double)inClose[i - 4])) ? 1 : 0) && min((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inClose[i - 4] && min((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inClose[i - 4] && min((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && min((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && max((double)inClose[i - 2],(double)inOpen[i - 2]) < (double)inOpen[i - 3] && max((double)inClose[i - 1],(double)inOpen[i - 1]) < max((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > max(max((double)inHigh[i - 3],(double)inHigh[i - 2]),(double)inHigh[i - 1]) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) )
       {
          outInteger[outIdx++] = 100;
       } else 

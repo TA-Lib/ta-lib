@@ -70,7 +70,7 @@ TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void )
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
    double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
-   return fmax(fmax(ShadowVeryShort_avgPeriod,ShadowLong_avgPeriod),fmax(BodyLong_avgPeriod,BodyShort_avgPeriod)) + 2;
+   return max(max(ShadowVeryShort_avgPeriod,ShadowLong_avgPeriod),max(BodyLong_avgPeriod,BodyShort_avgPeriod)) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,

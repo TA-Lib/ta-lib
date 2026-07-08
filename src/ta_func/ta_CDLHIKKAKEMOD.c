@@ -61,7 +61,7 @@ TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void )
    int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
    double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
-   return fmax(1,Near_avgPeriod) + 5;
+   return max(1,Near_avgPeriod) + 5;
 }
 
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,

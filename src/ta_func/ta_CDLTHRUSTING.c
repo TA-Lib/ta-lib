@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLTHRUSTING_Lookback( void )
    int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
    double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
-   return fmax(Equal_avgPeriod,BodyLong_avgPeriod) + 1;
+   return max(Equal_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,

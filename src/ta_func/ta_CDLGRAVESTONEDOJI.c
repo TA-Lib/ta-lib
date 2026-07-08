@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void )
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
    double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
-   return fmax(BodyDoji_avgPeriod,ShadowVeryShort_avgPeriod);
+   return max(BodyDoji_avgPeriod,ShadowVeryShort_avgPeriod);
 }
 
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,

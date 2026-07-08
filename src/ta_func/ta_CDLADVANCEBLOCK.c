@@ -73,7 +73,7 @@ TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void )
    int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
    int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
    double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
-   return fmax(fmax(fmax(ShadowLong_avgPeriod,ShadowShort_avgPeriod),fmax(Far_avgPeriod,Near_avgPeriod)),BodyLong_avgPeriod) + 2;
+   return max(max(max(ShadowLong_avgPeriod,ShadowShort_avgPeriod),max(Far_avgPeriod,Near_avgPeriod)),BodyLong_avgPeriod) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,

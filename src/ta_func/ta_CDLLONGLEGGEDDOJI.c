@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void )
    int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
    double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
-   return fmax(BodyDoji_avgPeriod,ShadowLong_avgPeriod);
+   return max(BodyDoji_avgPeriod,ShadowLong_avgPeriod);
 }
 
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,

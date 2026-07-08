@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void )
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
    double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
-   return fmax(ShadowVeryShort_avgPeriod,Equal_avgPeriod) + 2;
+   return max(ShadowVeryShort_avgPeriod,Equal_avgPeriod) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,

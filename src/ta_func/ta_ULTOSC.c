@@ -75,7 +75,7 @@ TA_LIB_API int TA_ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, i
    /* Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
     * time period, plus 1 for the True Range.
     */
-   maxPeriod = fmax(fmax(optInTimePeriod1,optInTimePeriod2),optInTimePeriod3);
+   maxPeriod = max(max(optInTimePeriod1,optInTimePeriod2),optInTimePeriod3);
    return TA_SMA_Lookback(maxPeriod) + 1;
 }
 
@@ -193,7 +193,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -216,7 +216,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -239,7 +239,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -267,7 +267,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[today] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -304,7 +304,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[trailingIdx1];
       tempHT = inHigh[trailingIdx1];
       tempCY = inClose[trailingIdx1 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -322,7 +322,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[trailingIdx2];
       tempHT = inHigh[trailingIdx2];
       tempCY = inClose[trailingIdx2 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -340,7 +340,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       tempLT = inLow[trailingIdx3];
       tempHT = inHigh[trailingIdx3];
       tempCY = inClose[trailingIdx3 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -457,7 +457,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -480,7 +480,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -503,7 +503,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[i];
       tempHT = inHigh[i];
       tempCY = inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -529,7 +529,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[today] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -564,7 +564,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[trailingIdx1];
       tempHT = inHigh[trailingIdx1];
       tempCY = inClose[trailingIdx1 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -582,7 +582,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[trailingIdx2];
       tempHT = inHigh[trailingIdx2];
       tempCY = inClose[trailingIdx2 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -600,7 +600,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       tempLT = inLow[trailingIdx3];
       tempHT = inHigh[trailingIdx3];
       tempCY = inClose[trailingIdx3 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -735,7 +735,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -758,7 +758,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -781,7 +781,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -807,7 +807,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[today];
       tempHT = (double)inHigh[today];
       tempCY = (double)inClose[today - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[today] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -842,7 +842,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[trailingIdx1];
       tempHT = (double)inHigh[trailingIdx1];
       tempCY = (double)inClose[trailingIdx1 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -860,7 +860,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[trailingIdx2];
       tempHT = (double)inHigh[trailingIdx2];
       tempCY = (double)inClose[trailingIdx2 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -878,7 +878,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       tempLT = (double)inLow[trailingIdx3];
       tempHT = (double)inHigh[trailingIdx3];
       tempCY = (double)inClose[trailingIdx3 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -987,7 +987,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1010,7 +1010,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1033,7 +1033,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[i];
       tempHT = (double)inHigh[i];
       tempCY = (double)inClose[i - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[i] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1059,7 +1059,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[today];
       tempHT = (double)inHigh[today];
       tempCY = (double)inClose[today - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[today] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1094,7 +1094,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[trailingIdx1];
       tempHT = (double)inHigh[trailingIdx1];
       tempCY = (double)inClose[trailingIdx1 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1112,7 +1112,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[trailingIdx2];
       tempHT = (double)inHigh[trailingIdx2];
       tempCY = (double)inClose[trailingIdx2 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);
@@ -1130,7 +1130,7 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       tempLT = (double)inLow[trailingIdx3];
       tempHT = (double)inHigh[trailingIdx3];
       tempCY = (double)inClose[trailingIdx3 - 1];
-      trueLow = fmin(tempLT,tempCY);
+      trueLow = min(tempLT,tempCY);
       closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = fabs(tempCY - tempHT);

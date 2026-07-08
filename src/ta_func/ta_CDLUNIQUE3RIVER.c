@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLUNIQUE3RIVER_Lookback( void )
    int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
    double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-   return fmax(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
+   return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
 }
 
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER( int    startIdx,

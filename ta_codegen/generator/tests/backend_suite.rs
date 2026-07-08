@@ -1808,23 +1808,22 @@ fn backends_render_max_min_fmax_fmin_abs() {
     let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // C: max(a,b) → fmax(a,b), min(a,b) → fmin(a,b), ABS(x) → fabs(x)
+    // C: max/min → the ta_utility.h branch macros max()/min() (NOT C99 fmin/fmax);
+    // ABS(x) → fabs(x). See #102: fmin/fmax carry IEEE-754 NaN/signed-zero semantics
+    // that block a branchless (vectorizable) lowering and force int→double
+    // round-trips; the branch macros match the pre-cutover reference bit-for-bit.
     assert!(
-        c_out.contains("fmax("),
-        "C: max/fmax should render as fmax(): {c_out}"
-    );
-    assert!(
-        c_out.contains("fmin("),
-        "C: min/fmin should render as fmin(): {c_out}"
+        c_out.contains("= max(") && c_out.contains("= min("),
+        "C: max/min should render as the ta_utility.h branch macros max()/min() (#102): {c_out}"
     );
     assert!(
         c_out.contains("fabs("),
         "C: ABS should render as fabs(): {c_out}"
     );
-    // C must NOT emit bare max() or min() (which are not in C99 <math.h>)
+    // C must NOT emit the C99 fmax()/fmin() library calls (the #102 regression)
     assert!(
-        !c_out.contains("= max(") && !c_out.contains("= min("),
-        "C: must not emit bare max()/min() calls"
+        !c_out.contains("fmax(") && !c_out.contains("fmin("),
+        "C: must not emit the C99 fmax()/fmin() library calls (#102): {c_out}"
     );
     // C must NOT emit ABS() calls
     assert!(

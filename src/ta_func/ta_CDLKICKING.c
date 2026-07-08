@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLKICKING_Lookback( void )
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
    double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
-   return fmax(ShadowVeryShort_avgPeriod,BodyLong_avgPeriod) + 1;
+   return max(ShadowVeryShort_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
 TA_LIB_API TA_RetCode TA_CDLKICKING( int    startIdx,

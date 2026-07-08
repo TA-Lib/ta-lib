@@ -1679,10 +1679,15 @@ fn render_func_call(
         }
     } else if let Some(mf) = MathFn::from_name(fname) {
         // Plain C math functions — remap names where needed, then emit as C function calls.
-        // max → fmax, min → fmin, fabs/ABS → fabs (all from <math.h>)
+        // fabs/ABS → fabs (from <math.h>). max/min emit the branch macros from
+        // ta_utility.h (`#define min(a,b) (((a)<(b))?(a):(b))`), NOT the C99
+        // fmin/fmax: the macros match the pre-cutover reference bit-for-bit, lower
+        // to a branchless min/max the compiler can vectorize, and keep integer args
+        // in integer arithmetic. fmin/fmax carry IEEE-754 NaN/signed-zero semantics
+        // that block that lowering (and forced int→double round-trips). See #102.
         let c_name = match mf {
-            MathFn::Max => "fmax",
-            MathFn::Min => "fmin",
+            MathFn::Max => "max",
+            MathFn::Min => "min",
             MathFn::Abs => "fabs",
             other => other.canonical(),
         };

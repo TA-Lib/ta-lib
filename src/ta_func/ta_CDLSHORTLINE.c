@@ -64,7 +64,7 @@ TA_LIB_API int TA_CDLSHORTLINE_Lookback( void )
    int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
    int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
    double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
-   return fmax(BodyShort_avgPeriod,ShadowShort_avgPeriod);
+   return max(BodyShort_avgPeriod,ShadowShort_avgPeriod);
 }
 
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE( int    startIdx,
