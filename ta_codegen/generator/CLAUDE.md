@@ -30,6 +30,17 @@ ta_codegen/output/       (other backends + C aggregation TUs)
 include/ta_func.h        (generated public header)
 ```
 
+**Hand-written library templates** (not indicator algorithms, not generated) live under
+`ta_codegen/generator/templates/` — the generator's own assets, kept out of `input/`
+(which holds only the 161 indicator definitions) and out of `output/` (100% generated):
+- `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
+  scaffolding, copied verbatim into the Rust crate (`output/rust/src/ta_func/types.rs`).
+- `templates/c/ta_retcode.c.template` — spliced with `src/ta_common/ta_retcode.csv`
+  (`backends/retcode.rs`) → `src/ta_common/ta_retcode.c`.
+- `templates/c/ta_abstract_serve.c` — hand-written abstract-serve handlers `#include`d
+  into the C JSON-RPC server (added to the server compile's `-I` path).
+- `templates/c/ta_abstract_dump.c` — standalone dev tool dumping the ta_abstract API as JSON.
+
 ### Key Modules
 
 | Module | Purpose |

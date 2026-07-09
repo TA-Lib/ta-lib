@@ -381,7 +381,7 @@ committed gen_code output (the cleanest possible oracle: regenerate → `git dif
 - **`src/ta_common/ta_retcode.c` — the `TA_SetRetCodeInfo` table.** New `backends/retcode.rs` builds
   `retCodeInfoTable[]` from the shipped source `src/ta_common/ta_retcode.csv` (the csv is INPUT, not
   generated — only gen_code ever read it) + a static-scaffolding template
-  `ta_codegen/input/lib/c/ta_retcode.c.template`; the `0xFFFF`/`TA_UNKNOWN_ERR` sentinel is appended
+  `ta_codegen/generator/templates/c/ta_retcode.c.template`; the `0xFFFF`/`TA_UNKNOWN_ERR` sentinel is appended
   as the final comma-less entry. **Corrects an earlier runbook claim:** `ta_common` was NOT "all
   hand-written" — `ta_retcode.c` was gen_code-generated (only `ta_retcode.csv` is the hand-source).
 - Both wired into `main.rs`'s `if backends_to_run.contains(&"c")` block.

@@ -108,6 +108,18 @@ fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {
     }
 }
 
+fn apply_unstable_period(core: &mut Core, id: usize, period: i32) -> bool {
+    if id == FuncUnstId::FuncUnstAll as usize {
+        *core = core.to_builder().unstable_period(FuncUnstId::FuncUnstAll, period).build();
+        true
+    } else if let Some(uid) = func_unst_id_from_int(id) {
+        *core = core.to_builder().unstable_period(uid, period).build();
+        true
+    } else {
+        false
+    }
+}
+
 fn handle_request(core: &mut Core, ref_data: &mut RefData, line: &str) -> String {
     let req: Value = match serde_json::from_str(line) {
         Ok(v) => v,
@@ -451,7 +463,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[0] = period as i32;
+                apply_unstable_period(core, 0, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -513,7 +525,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[1] = period as i32;
+                apply_unstable_period(core, 1, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -816,7 +828,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[2] = period as i32;
+                apply_unstable_period(core, 2, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5114,7 +5126,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[3] = period as i32;
+                apply_unstable_period(core, 3, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5402,7 +5414,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[4] = period as i32;
+                apply_unstable_period(core, 4, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5454,7 +5466,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[5] = period as i32;
+                apply_unstable_period(core, 5, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5585,7 +5597,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[6] = period as i32;
+                apply_unstable_period(core, 6, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5630,7 +5642,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[7] = period as i32;
+                apply_unstable_period(core, 7, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5675,7 +5687,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[8] = period as i32;
+                apply_unstable_period(core, 8, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5722,7 +5734,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[9] = period as i32;
+                apply_unstable_period(core, 9, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5769,7 +5781,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[10] = period as i32;
+                apply_unstable_period(core, 10, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -5814,7 +5826,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[11] = period as i32;
+                apply_unstable_period(core, 11, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5912,7 +5924,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[13] = period as i32;
+                apply_unstable_period(core, 13, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -6441,7 +6453,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInFastLimit = params["optInFastLimit"].as_f64().unwrap_or(0.5) as f64;
             let optInSlowLimit = params["optInSlowLimit"].as_f64().unwrap_or(0.05) as f64;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[14] = period as i32;
+                apply_unstable_period(core, 14, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7047,7 +7059,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[16] = period as i32;
+                apply_unstable_period(core, 16, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7104,7 +7116,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[17] = period as i32;
+                apply_unstable_period(core, 17, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7258,7 +7270,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[18] = period as i32;
+                apply_unstable_period(core, 18, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7369,7 +7381,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[19] = period as i32;
+                apply_unstable_period(core, 19, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7426,7 +7438,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[20] = period as i32;
+                apply_unstable_period(core, 20, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -7707,7 +7719,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[21] = period as i32;
+                apply_unstable_period(core, 21, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -8245,7 +8257,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
             let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[22] = period as i32;
+                apply_unstable_period(core, 22, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -8396,7 +8408,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
             let optInVFactor = params["optInVFactor"].as_f64().unwrap_or(0.7) as f64;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                core.unstable_period[23] = period as i32;
+                apply_unstable_period(core, 23, period as i32);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9249,11 +9261,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
         "set_unstable_period" => {
             let id = params["id"].as_u64().unwrap_or(99) as usize;
             let period = params["period"].as_i64().unwrap_or(0) as i32;
-            if id == FuncUnstId::FuncUnstAll as usize {
-                for i in 0..(FuncUnstId::FuncUnstAll as usize) { core.unstable_period[i] = period; }
-                "{\"status\":\"ok\"}".to_string()
-            } else if id < FuncUnstId::FuncUnstAll as usize {
-                core.unstable_period[id] = period;
+            if apply_unstable_period(core, id, period) {
                 "{\"status\":\"ok\"}".to_string()
             } else {
                 "{\"error\":\"Invalid unstable period id\"}".to_string()
@@ -9261,10 +9269,11 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
         }
         "set_compatibility" => {
             let mode = params["mode"].as_u64().unwrap_or(0);
-            core.compatibility = match mode {
+            let compat = match mode {
                 1 => Compatibility::Metastock,
                 _ => Compatibility::Default,
             };
+            *core = core.to_builder().compatibility(compat).build();
             "{\"status\":\"ok\"}".to_string()
         }
         "TA_GetFuncInfo" => {

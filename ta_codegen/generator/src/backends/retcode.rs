@@ -5,7 +5,7 @@
 //! The dynamic part is the `retCodeInfoTable[]` array, built from the shipped
 //! source `src/ta_common/ta_retcode.csv` (`id,enumStr,infoStr` per line). The
 //! static scaffolding (license, struct, `TA_SetRetCodeInfo`) lives in the
-//! template `ta_codegen/input/lib/c/ta_retcode.c.template`, with the table region
+//! template `ta_codegen/generator/templates/c/ta_retcode.c.template`, with the table region
 //! marked by [`MARKER`]. The `0xFFFF` / `TA_UNKNOWN_ERR` sentinel is appended as
 //! the final (comma-less) entry, matching gen_code.
 

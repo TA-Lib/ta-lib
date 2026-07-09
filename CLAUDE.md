@@ -39,7 +39,7 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 - **YAML** = data, config, enums, IDL. Pure definitions with no logic.
   - MAType and FuncUnstId enums (`ta_codegen/input/enums.yaml`)
   - Function metadata (inputs, outputs, optional params, groups) — per-function `<name>/<name>.yaml`
-  - Shared library types — RetCode, CandleSetting defaults, Compatibility — live as templates under `ta_codegen/input/lib/` (e.g. `lib/rust/types.rs`, `lib/c/ta_retcode.c.template`), not YAML
+  - Shared library types — RetCode, CandleSetting defaults, Compatibility — are hand-written templates the generator emits (NOT under `input/`, which is algorithms only, and not YAML); they live with the generator under `ta_codegen/generator/templates/` (e.g. `templates/rust/types.rs`, `templates/c/ta_retcode.c.template`)
 - **C source files** = logic. Anything with computation.
   - Indicator implementations (`ta_codegen/input/<name>/<name>.c`)
   - Helper functions (`ta_codegen/input/helpers/`)

@@ -145,7 +145,7 @@ typed methods directly; anyone needing runtime introspection uses C `ta_abstract
 To make `output/java` a self-contained, buildable, publishable library, `ta_codegen` must generate:
 - **package declarations + an assembled `Core` class** (today the fragments have neither);
 - **the shared types** — `RetCode`, `MAType`, `Compatibility`, `CandleSetting`/`CandleSettingType`,
-  `MInteger`, `RangeType`, `MoneyFlow` — as templates under `ta_codegen/input/lib/java/`, mirroring
+  `MInteger`, `RangeType`, `MoneyFlow` — as templates under `ta_codegen/generator/templates/java/`, mirroring
   how C and Rust shared types already live there;
 - **`FuncUnstId`** (already generated) relocated into the new package;
 - a **`pom.xml`** (Decision C: Maven) with the chosen coordinates and Central-publish metadata
@@ -164,7 +164,7 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
 - **Checkpoint:** docs build clean, links resolve on GitHub. **Rollback:** revert the link change.
 
 ### Phase 1 — Make `output/java` a complete buildable Maven project
-- Add Java shared-type templates under `ta_codegen/input/lib/java/`.
+- Add Java shared-type templates under `ta_codegen/generator/templates/java/`.
 - Teach `ta_codegen` to emit package decls, an assembled `Core`, the shared types, `FuncUnstId`, and
   a Maven `pom.xml`, all under the new package `io.github.talib`. No abstract layer (Decision B1).
 - **Checkpoint (RED until all green):** `mvn -q compile` succeeds; `TaCodegenServe` still builds and

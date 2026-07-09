@@ -120,7 +120,7 @@ Root cause categories:
 Make ONE change. Fix locations in priority order:
 1. `ta_codegen/input/<name>/<name>.c` — indicator source (plain C)
 2. `ta_codegen/generator/src/backends/c.rs` — C backend rendering
-3. `ta_codegen/generator/src/backends/builtins.rs` + `ta_codegen/input/lib/` — shared macros, types, globals
+3. `ta_codegen/generator/src/backends/builtins.rs` + `ta_codegen/generator/templates/` — shared macros, types, globals
 4. `ta_codegen/generator/src/parser/` — parser changes
 
 After fixing, go back to GENERATE and repeat the full loop.
@@ -206,7 +206,7 @@ cc -O3 -DNDEBUG -Wno-everything -I ta_codegen/output/c -o bin/ta_ref_serve /tmp/
 | `ta_codegen/generator/src/server_gen.rs` | Server generation — dispatch, load_data, timing |
 | `ta_codegen/generator/src/main.rs` | Build step, generate-bench command |
 | `ta_codegen/input/<name>/<name>.c` | Indicator source — the logic itself (plain C) |
-| `ta_codegen/generator/src/backends/builtins.rs`, `ta_codegen/input/lib/` | Shared macros, static globals, candle helpers |
+| `ta_codegen/generator/src/backends/builtins.rs`, `ta_codegen/generator/templates/` | Shared macros, static globals, candle helpers |
 | `src/tools/ta_bench/ta_bench_direct.c` | Direct-call benchmark orchestrator (cmake) |
 | `src/tools/ta_bench/ta_bench.c` | Server-based benchmark with thermal canary |
 | `scripts/regtest.py` | Full pipeline: generate + build + test + bench + direct-bench |

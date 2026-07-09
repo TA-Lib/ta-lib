@@ -336,7 +336,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // notably the Rust crate enum template. Fail loudly here rather than let a
     // rename half-propagate (e.g. the MFI/IMI -> UNUSED reclassification, which
     // otherwise broke the Rust server build against a stale variant name).
-    verify_hand_maintained_funcunstid(&enums, &base);
+    verify_hand_maintained_funcunstid(&enums, &root);
 
     // Discover all function definition directories
     let mut func_dirs: Vec<_> = std::fs::read_dir(&base)
@@ -434,7 +434,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // `--func=X` run cannot rewrite mod.rs down to the filtered subset and
     // break the crate.
     if backends_to_run.contains(&"rust") {
-        let types_src = root.join("ta_codegen/input/lib/rust/types.rs");
+        let types_src = root.join("ta_codegen/generator/templates/rust/types.rs");
         generate_rust_crate_scaffolding(&out_base, all_funcs, &types_src);
     }
 
@@ -455,7 +455,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::makefile_am::generate(all_funcs, &root.join("src/ta_func/Makefile.am"), &root);
         backends::cmake_lists::generate(all_funcs, &root.join("CMakeLists.txt"), &root);
 
-        let c_lib_src = root.join("ta_codegen/input/lib/c");
+        let c_lib_src = root.join("ta_codegen/generator/templates/c");
         let c_dir = root.join("ta_codegen/output/c");
         std::fs::create_dir_all(&c_dir).unwrap();
         // Single-entry file list, kept as a loop to match the sibling copy loops below.
@@ -494,7 +494,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         //   - the TA_SetRetCodeInfo table in ta_common/ta_retcode.c (from the csv)
         backends::ta_defs::generate(&enums, &root.join("include/ta_defs.h"));
         backends::retcode::generate(
-            &root.join("ta_codegen/input/lib/c/ta_retcode.c.template"),
+            &root.join("ta_codegen/generator/templates/c/ta_retcode.c.template"),
             &root.join("src/ta_common/ta_retcode.csv"),
             &root.join("src/ta_common/ta_retcode.c"),
         );
@@ -695,13 +695,13 @@ const COMMON_GCC_FLAGS: &[&str] = &["-lm", "-O3", "-flto", "-DNDEBUG", "-Wno-par
 ///
 /// enums.yaml is the source of truth for `FuncUnstId`; the C enum (`ta_defs.h`)
 /// and the shipped Java enum are regenerated from it, but the Rust crate enum
-/// lives in the hand-written template `input/lib/rust/types.rs` and is copied
-/// verbatim. If it drifts, the Rust server references a variant that no longer
-/// exists (build failure) and the shipped Rust crate's enum diverges from the C
+/// lives in the hand-written template `ta_codegen/generator/templates/rust/types.rs`
+/// and is copied verbatim. If it drifts, the Rust server references a variant that no
+/// longer exists (build failure) and the shipped Rust crate's enum diverges from the C
 /// header. Fail loudly at generate time rather than let a rename half-propagate.
 fn verify_hand_maintained_funcunstid(
     enums: &HashMap<String, ir::EnumDef>,
-    base: &std::path::Path,
+    root: &std::path::Path,
 ) {
     let Some(fu) = enums.get("FuncUnstId") else {
         return;
@@ -712,7 +712,7 @@ fn verify_hand_maintained_funcunstid(
     let mut expected: Vec<&str> = fu.variants.iter().map(|v| v.pascal_name.as_str()).collect();
     expected.push("FuncUnstAll");
 
-    let path = base.join("lib/rust/types.rs");
+    let path = root.join("ta_codegen/generator/templates/rust/types.rs");
     let src = match std::fs::read_to_string(&path) {
         Ok(s) => s,
         Err(_) => return, // template absent in this checkout -- nothing to verify
@@ -798,7 +798,7 @@ fn build_servers(backend_filter: Option<&str>) {
                 let ta_common_dir = src_dir.join("ta_common");
                 let ta_abstract_dir = src_dir.join("ta_abstract");
                 let ta_frames_dir = ta_abstract_dir.join("frames");
-                let ta_abstract_serve_dir = root.join("ta_codegen/input/lib/c");
+                let ta_abstract_serve_dir = root.join("ta_codegen/generator/templates/c");
                 let src = c_dir.join("ta_codegen_serve.c");
                 let dst = bin_dir.join("ta_codegen_serve_c");
                 match std::process::Command::new("gcc")
@@ -1423,9 +1423,22 @@ codegen-units = 1
 //! * Every call returns a [`RetCode`]; anything other than [`RetCode::Success`]
 //!   means no output was produced.
 //!
-//! Per-instance settings on [`Core`] control the unstable period
-//! ([`Core::set_unstable_period`]), Metastock compatibility
-//! ([`Core::set_compatibility`]), and candlestick thresholds.
+//! [`Core`] is immutable after construction: its per-instance settings — unstable
+//! period, Metastock [`Compatibility`], and candlestick thresholds — are chosen up
+//! front with [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
+//! can be shared read-only across threads (e.g. via `Arc`) with no locking:
+//!
+//! ```
+//! use ta_lib::{Core, Compatibility, FuncUnstId};
+//!
+//! let core = Core::builder()
+//!     .compatibility(Compatibility::Metastock)
+//!     .unstable_period(FuncUnstId::Ema, 10)
+//!     .build();
+//! ```
+//!
+//! To change a setting, build a new `Core` (cloning is cheap); [`Core::to_builder()`]
+//! seeds a builder from an existing instance.
 //!
 //! Every indicator also has an `*_unguarded` variant that skips parameter
 //! validation for internal cross-indicator calls — prefer the checked methods.
@@ -1493,6 +1506,25 @@ input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 `RetCode` result. `outBegIdx` reports the input index of the first output value;
 `*_lookback` methods return how many leading values an indicator consumes.
 
+## Configuration
+
+`Core` is immutable after construction. The value-affecting settings — unstable
+period, Metastock compatibility, and candlestick thresholds — are chosen up front
+with a builder and then frozen:
+
+```rust
+use ta_lib::{Core, Compatibility, FuncUnstId};
+
+let core = Core::builder()
+    .compatibility(Compatibility::Metastock)
+    .unstable_period(FuncUnstId::Ema, 10)
+    .build();
+```
+
+Because a configured `Core` only ever reads its settings, it is `Send + Sync` and
+can be shared read-only across threads (e.g. an `Arc<Core>` with concurrent
+indicator calls) without locking. To change a setting, build a new `Core`.
+
 ## Documentation
 
 - API reference: <https://docs.rs/ta-lib>
@@ -1507,7 +1539,7 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
     std::fs::write(&readme_path, readme).unwrap();
     println!("  Scaffolding -> {}", readme_path.display());
 
-    // --- Copy hand-written types.rs from ta_codegen/input/lib/rust/ ---
+    // --- Copy hand-written types.rs from ta_codegen/generator/templates/rust/ ---
     if types_src.exists() {
         let types_dest = ta_func_dir.join("types.rs");
         std::fs::copy(types_src, &types_dest).unwrap();

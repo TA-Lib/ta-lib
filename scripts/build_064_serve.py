@@ -83,7 +83,7 @@ def include_dirs(root, bin_dir):
         os.path.join(c_out, "ta_common"),
         os.path.join(c_out, "ta_abstract"),
         os.path.join(c_out, "ta_abstract", "frames"),
-        os.path.join(root, "ta_codegen", "input", "lib", "c"),
+        os.path.join(root, "ta_codegen", "generator", "templates", "c"),
         os.path.join(root, "src", "ta_common"),
         os.path.join(root, "src", "ta_func"),
         os.path.join(root, "src"),
@@ -147,7 +147,7 @@ OUTPUT_HOOK = r'''
 def build(root, bin_dir, lib_a):
     c_out = os.path.join(root, "ta_codegen", "output", "c")
     serve_src = os.path.join(c_out, "ta_codegen_serve.c")
-    abstract_src = os.path.join(root, "ta_codegen", "input", "lib", "c", "ta_abstract_serve.c")
+    abstract_src = os.path.join(root, "ta_codegen", "generator", "templates", "c", "ta_abstract_serve.c")
 
     # 1. Main transport: strip generated .c includes, add ref headers + init,
     #    emit exact hex-float (%a) for the full_output debug arrays.

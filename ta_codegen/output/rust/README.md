@@ -38,6 +38,25 @@ input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 `RetCode` result. `outBegIdx` reports the input index of the first output value;
 `*_lookback` methods return how many leading values an indicator consumes.
 
+## Configuration
+
+`Core` is immutable after construction. The value-affecting settings — unstable
+period, Metastock compatibility, and candlestick thresholds — are chosen up front
+with a builder and then frozen:
+
+```rust
+use ta_lib::{Core, Compatibility, FuncUnstId};
+
+let core = Core::builder()
+    .compatibility(Compatibility::Metastock)
+    .unstable_period(FuncUnstId::Ema, 10)
+    .build();
+```
+
+Because a configured `Core` only ever reads its settings, it is `Send + Sync` and
+can be shared read-only across threads (e.g. an `Arc<Core>` with concurrent
+indicator calls) without locking. To change a setting, build a new `Core`.
+
 ## Documentation
 
 - API reference: <https://docs.rs/ta-lib>

@@ -632,7 +632,7 @@ fn generate_c_global_buffers() -> String {
     s
 }
 
-/// The abstract handler C code lives in ta_codegen/input/lib/c/ta_abstract_serve.c
+/// The abstract handler C code lives in ta_codegen/generator/templates/c/ta_abstract_serve.c
 /// (native C, not generated). The server just #includes it.
 fn generate_c_abstract_handlers() -> String {
     "#include \"ta_abstract_serve.c\"\n\n".to_string()
@@ -1952,6 +1952,23 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
+    // apply_unstable_period — rebuild the immutable `*core` with one function's
+    // unstable period changed, going through the public builder API (`Core` has no
+    // setters). Handles the FuncUnstAll "set all" wildcard (id == FuncUnstAll as
+    // usize); returns false on an out-of-range id. Shared by the `set_unstable_period`
+    // RPC and the inline per-function `unstablePeriod` override.
+    s.push_str("fn apply_unstable_period(core: &mut Core, id: usize, period: i32) -> bool {\n");
+    s.push_str("    if id == FuncUnstId::FuncUnstAll as usize {\n");
+    s.push_str("        *core = core.to_builder().unstable_period(FuncUnstId::FuncUnstAll, period).build();\n");
+    s.push_str("        true\n");
+    s.push_str("    } else if let Some(uid) = func_unst_id_from_int(id) {\n");
+    s.push_str("        *core = core.to_builder().unstable_period(uid, period).build();\n");
+    s.push_str("        true\n");
+    s.push_str("    } else {\n");
+    s.push_str("        false\n");
+    s.push_str("    }\n");
+    s.push_str("}\n\n");
+
     // handle_request function
     s.push_str("fn handle_request(core: &mut Core, ref_data: &mut RefData, line: &str) -> String {\n");
     s.push_str("    let req: Value = match serde_json::from_str(line) {\n");
@@ -2077,7 +2094,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         if let Some(id) = func_unst_id(&func.name) {
             s.push_str("            if let Some(period) = params[\"unstablePeriod\"].as_i64() {\n");
             s.push_str(&format!(
-                "                core.unstable_period[{id}] = period as i32;\n"
+                "                apply_unstable_period(core, {id}, period as i32);\n"
             ));
             s.push_str("            }\n");
         }
@@ -2230,16 +2247,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str(
         "            let period = params[\"period\"].as_i64().unwrap_or(0) as i32;\n",
     );
-    // id == FuncUnstAll is the "set all" sentinel (matches C TA_SetUnstablePeriod).
-    s.push_str(
-        "            if id == FuncUnstId::FuncUnstAll as usize {\n",
-    );
-    s.push_str("                for i in 0..(FuncUnstId::FuncUnstAll as usize) { core.unstable_period[i] = period; }\n");
-    s.push_str(
-        "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
-    );
-    s.push_str("            } else if id < FuncUnstId::FuncUnstAll as usize {\n");
-    s.push_str("                core.unstable_period[id] = period;\n");
+    // apply_unstable_period rebuilds the immutable Core via the builder and handles
+    // the FuncUnstAll "set all" sentinel (matches C TA_SetUnstablePeriod).
+    s.push_str("            if apply_unstable_period(core, id, period) {\n");
     s.push_str(
         "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
     );
@@ -2255,10 +2265,11 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str(
         "            let mode = params[\"mode\"].as_u64().unwrap_or(0);\n",
     );
-    s.push_str("            core.compatibility = match mode {\n");
+    s.push_str("            let compat = match mode {\n");
     s.push_str("                1 => Compatibility::Metastock,\n");
     s.push_str("                _ => Compatibility::Default,\n");
     s.push_str("            };\n");
+    s.push_str("            *core = core.to_builder().compatibility(compat).build();\n");
     s.push_str(
         "            \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
     );

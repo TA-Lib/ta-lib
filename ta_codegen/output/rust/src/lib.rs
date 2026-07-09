@@ -40,9 +40,22 @@
 //! * Every call returns a [`RetCode`]; anything other than [`RetCode::Success`]
 //!   means no output was produced.
 //!
-//! Per-instance settings on [`Core`] control the unstable period
-//! ([`Core::set_unstable_period`]), Metastock compatibility
-//! ([`Core::set_compatibility`]), and candlestick thresholds.
+//! [`Core`] is immutable after construction: its per-instance settings — unstable
+//! period, Metastock [`Compatibility`], and candlestick thresholds — are chosen up
+//! front with [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
+//! can be shared read-only across threads (e.g. via `Arc`) with no locking:
+//!
+//! ```
+//! use ta_lib::{Core, Compatibility, FuncUnstId};
+//!
+//! let core = Core::builder()
+//!     .compatibility(Compatibility::Metastock)
+//!     .unstable_period(FuncUnstId::Ema, 10)
+//!     .build();
+//! ```
+//!
+//! To change a setting, build a new `Core` (cloning is cheap); [`Core::to_builder()`]
+//! seeds a builder from an existing instance.
 //!
 //! Every indicator also has an `*_unguarded` variant that skips parameter
 //! validation for internal cross-indicator calls — prefer the checked methods.

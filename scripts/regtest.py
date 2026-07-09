@@ -84,8 +84,8 @@ def _ta_ref_serve_paths(src_root, build_dir):
             os.path.join(c_out, "ta_abstract"),
             os.path.join(c_out, "ta_abstract", "frames"),
             # ta_def_ui.h does `#include "ta_frame.h"` (frames/) and pulls in
-            # ta_abstract_serve.c, which lives under ta_codegen/input/lib/c.
-            os.path.join(src_root, "ta_codegen", "input", "lib", "c"),
+            # ta_abstract_serve.c, which lives under ta_codegen/generator/templates/c.
+            os.path.join(src_root, "ta_codegen", "generator", "templates", "c"),
             # Current-tree layout: ta_memory.h / ta_utility.h live with the
             # library sources, not under ta_codegen/output/c, and the server
             # includes "ta_func/ta_func_private.h" relative to src/.
