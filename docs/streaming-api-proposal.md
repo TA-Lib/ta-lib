@@ -4,18 +4,33 @@ Status: **proposal only** — no implementation. Written 2026-07-02.
 
 ## Motivation
 
-Live-trading users recompute the full indicator history on every new bar.
-Stream-style APIs available in the ecosystem today (e.g. the Python wrapper's
-`talib.stream` module) do the same thing under the hood: they run the full
-batch computation and return the last element — O(n) work per tick, no
-retained state.
+Live-trading users typically recompute an indicator over its whole history on
+every new bar. The Python wrapper's experimental `talib.stream` was a good first
+step past that — a lighter "just the latest value" call — but it keeps no state
+and diverges from the batch for recursive indicators (see next section).
 
 A true streaming tier — per-indicator state + O(1) amortized
-`update(bar) -> latest value` — eliminates that. A *generated* one (one state
-struct + transition function per indicator, emitted for all four backends from
-the same canonical input) would be a genuine TA-Lib differentiator, and
-ta_codegen's IR makes it feasible without hand-writing 161 stream
-implementations.
+`update(bar) -> latest value`, bit-exact to the full-history batch — closes both
+gaps. A *generated* one (one state struct + transition function per indicator,
+emitted for all four backends from the same canonical input) is a genuine TA-Lib
+differentiator, and ta_codegen's IR makes it feasible without hand-writing 161
+stream implementations.
+
+## Prior art: `talib.stream`
+
+The Python wrapper's streaming module returns the latest value by calling the C
+function at a single index (`startIdx = endIdx = len-1`), reaching back only
+`lookback` bars instead of building the whole array — cheaper than the Function
+API. A good experimental first cut; two limitations this proposal removes:
+
+- **No retained state** — every tick redoes the `lookback` reach-back, so it is
+  O(lookback)/tick, not O(1); nothing is carried between bars.
+- **Diverges from the batch for recursive indicators** — it re-seeds from the
+  trailing window, not full history, so for unstable/recursive functions
+  (RSI, EMA, ADX, …) its output does not match the full-history batch (a
+  correctness gap, not rounding; open upstream: ta-lib-python #600, RSI). This
+  is the sliced-batch case; the contract below anchors our stream to the
+  full-history batch instead.
 
 ## Semantic definition (the contract tests enforce)
 
@@ -26,43 +41,39 @@ stream_F.update(x[t]) == batch_F(startIdx=t, endIdx=t, full history 0..t)
 ```
 
 i.e. streaming output at bar t equals the batch output when the batch is given
-the full history. Two consequences:
+the full history.
 
-- **Unstable-period functions** (EMA, RSI, ADX, …, 24 of them): streaming
-  state carries the effect of *all* history, so the stream equals batch with
-  effectively infinite warm-up. This matches how live users actually consume
-  these indicators. `TA_SetUnstablePeriod` does not apply to the stream tier
-  (documented, not silently ignored: the state-init API takes no unstable
-  period).
+- **Validation range = batch visibility.** Checked over the bars the batch
+  reports (`outBegIdx` for `outNBElement`, batch at `startIdx=0`), and there
+  **bit-identical**.
 - **Warm-up**: `update()` returns "not ready" (C: out-flag / `TA_NEED_MORE_DATA`;
-  Rust: `Option<f64>::None`) for the first `lookback` bars.
+  Rust: `Option<f64>::None`) until the first bar the batch would report.
 
-Bit-exactness vs batch is testable mechanically (see Verification).
+`TA_SetUnstablePeriod` shifts only *which* bars the batch reports (its
+`outBegIdx`), never their values, so the check holds for any setting; the
+state-init API takes no unstable period.
 
 ## Streamability tiers (classification of all 161 functions)
 
 | Tier | Shape | State | Examples (not exhaustive) |
 |------|-------|-------|---------------------------|
 | T1 | pure per-bar map | none | ADD…DIV, all math transforms, price transforms, BOP, TRANGE |
-| T2 | scalar recurrence | O(1) scalars | EMA, RSI, CMO, ADX/ADXR/DI/DM, ATR/NATR, KAMA, SAR/SAREXT, OBV, AD, T3 |
+| T2 | scalar recurrence | O(1) scalars | EMA, DEMA/TEMA/TRIX, RSI, CMO, ADX/ADXR/DI/DM, ATR/NATR, KAMA, SAR/SAREXT, OBV, AD, T3 |
 | T3 | fixed window | ring buffer O(period) | SMA, WMA, SUM, VAR/STDDEV, MOM/ROC*, TRIMA, CCI, MFI, ULTOSC, LINEARREG family, CDL* body averages |
 | T4 | window extrema | monotonic deque O(period) | MIN/MAX/MINMAX(INDEX), MIDPOINT/MIDPRICE, WILLR, AROON*, STOCH/STOCHF |
-| T5 | needs restructuring first | — | DEMA/TEMA/TRIX (currently buffered EMA-of-EMA passes), STOCHRSI, MAMA, HT_* (ring buffers already fixed-size → actually T2/T3 after inspection), MAVP (per-bar period ⇒ no fixed window) |
+| T5 | needs restructuring first | — | STOCHRSI, MAMA, HT_* (ring buffers already fixed-size → actually T2/T3 after inspection), MAVP (per-bar period ⇒ no fixed window) |
 
-Two observations from the recent batch-optimization work tie in directly:
+Two structural notes on the current code:
 
-- The **monotonic deque** was evaluated for the *batch* extrema functions and
-  rejected there (the cached-extremum-index idiom the family already uses is
-  faster on batch data), but it is the *right* structure for T4 streaming:
-  the batch cached-index trick needs arbitrary look-back rescans, which a
-  stream cannot do without keeping the whole window anyway; the deque gives
-  amortized O(1) per tick with exactly the window's contents.
-- The planned **lockstep EMA-cascade rewrites** for DEMA/TEMA/TRIX/MACD
-  (bit-exact batch restructurings that eliminate the intermediate EMA
-  buffers) are exactly what moves those functions from T5 to T2: once the
-  cascade runs in lockstep per-bar instead of buffer-at-a-time, the loop body
-  *is* the stream transition function. Landing those batch rewrites first
-  makes the streaming tier nearly free for that family.
+- **T4 uses a monotonic deque, not the batch's idiom.** The batch extrema
+  functions use a cached-extremum-index that rescans arbitrarily far back when
+  the extremum leaves the window — a stream cannot rescan without retaining the
+  whole window anyway. A monotonic deque gives amortized O(1) per tick with
+  exactly the window's contents, so the stream emitter substitutes it for T4.
+- **The EMA cascades (DEMA/TEMA/TRIX/MACD) run in lockstep per-bar** — scalar
+  `prevEMA1/2/3`, no intermediate buffers — so the steady-state loop body already
+  *is* the stream transition function. The stream tier is nearly free for that
+  family (hence their T2 classification above).
 
 ## API shape per backend
 
@@ -117,10 +128,40 @@ demands; multi-output write through out-params (C) or return small structs
    as the batch call plus nothing; the server feeds the input array one bar
    at a time through the stream state and returns the collected outputs.
 5. **Verification**: ta_regtest gains a codegen pass that calls both
-   `TA_XXX` (batch, startIdx=0) and `stream_call` on the same history and
-   requires **bit-identical** outputs from the first ready bar onward, per
-   language. The frozen reference oracle stays the batch baseline; the stream
-   contract is anchored to batch, so no new reference data is needed.
+   `TA_XXX` (batch, `startIdx=0`) and `stream_call` on the same history and
+   requires **bit-identical** outputs over the range the batch reports
+   (`outBegIdx .. outBegIdx+outNBElement`), per language. Keep the batch at
+   `startIdx=0` — a sliced batch (`startIdx > lookback`) seeds mid-series and
+   would not match the from-index-0 stream. The frozen reference oracle stays
+   the batch baseline; the stream contract is anchored to batch, so no new
+   reference data is needed.
+
+## Reuse model
+
+The stream is **derived from, never fused with, the batch.** Auto-analysis (§2)
+reads the batch and emits a *separate* stream, so contributors keep writing plain
+batch — no stream-specific authoring for the functions analysis can crack (all of
+T1/T2, running-sum T3 like SMA). Keeping batch independent is a *verification*
+choice, not just hygiene: the stream-vs-batch check (§5) only has teeth if the two
+sides don't share code. Each error class then anchors to something that is not a
+copy of itself:
+
+| Implementation | Anchored to | Catches |
+|----------------|-------------|---------|
+| batch | frozen reference oracle | wrong batch math |
+| stream | batch, bit-exact (§5) | wrong *transformation* — ring size, trailing offset, seed partition |
+
+Derivation isn't fully independent (a batch-math bug reaches both), but that class
+is already covered by batch-vs-reference, and the batch never runs the ring/seed
+transform — so stream-vs-batch stays a real differential on the transform itself.
+
+Rejected: a single shared internal (`step()` used by both, or batch =
+`init; loop{update}`). It makes the differential tautological, and for T3/T4 forces
+batch onto ring/deque storage that regresses its tuned array-index loops.
+
+Where analysis can't derive a passing stream (multi-phase seeds like ADX, T4
+extrema templates, T5 restructuring cases), hand-write that one stream — independent by
+construction, so its differential is only stronger — or mark it non-streamable.
 
 ## Staging
 
@@ -132,8 +173,8 @@ demands; multi-output write through out-params (C) or return small structs
    O(period) per tick for these; still fine for live use at real-world
    periods).
 3. T4 deque extrema.
-4. T5 unlocked by the bit-exact batch rewrites (EMA cascades first — they're
-   independently worthwhile as batch speedups).
+4. Remaining T5 (STOCHRSI, MAMA, HT_*, MAVP) — per-function restructuring or a
+   hand-written stream.
 5. Java/.NET emitters once C/Rust stabilize.
 
 ## Non-goals / risks
