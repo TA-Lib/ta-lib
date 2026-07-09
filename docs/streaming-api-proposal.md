@@ -5,16 +5,11 @@ Status: **proposal only** — no implementation. Written 2026-07-02.
 ## Design
 
 ### Motivation
+Live-trading users often want the latest indicator value updated in O(1) per new bar — not a full recompute each tick. This has been requested over the years, and some TA-Lib derivative works have already attempted it (see prior art).
 
-Live-trading users typically recompute an indicator over its whole history on
-every new bar. The Python wrapper's experimental `talib.stream` was a good first
-step past that — a lighter "just the latest value" call — but it keeps no state
-and diverges from the batch for recursive indicators (see next section).
+This proposal is to add an official **streaming API** to TA-Lib for C, Rust and Java (other language may be later).
 
-A true streaming tier — per-indicator state + O(1) amortized
-`update(bar) -> latest value`, bit-exact to the full-history batch — closes both
-gaps. A *generated* one (one state struct + transition function per indicator,
-emitted for all native backends from the same canonical input) is a genuine TA-Lib differentiator, and ta_codegen makes it feasible without hand-writing 161 stream implementations.
+The hard parts are **maintenance** and **validation**, and both are solvable with recent automation added to TA-Lib 0.7.1.
 
 ### Prior art: `talib.stream`
 
@@ -29,26 +24,37 @@ API. A good experimental first cut; two limitations this proposal removes:
   trailing window, not full history, so for unstable/recursive functions
   (RSI, EMA, ADX, …) its output does not match the full-history batch.
 
+### Prior art: ta-lib-rt
+
+[ta-lib-rt](https://github.com/trufanov-nok/ta-lib-rt) is a **fork of the C
+TA-Lib** that adds exactly this kind of incremental API.
+
+So the *concept* — per-indicator state + per-bar update — is not novel; ta-lib-rt got there first.
+
+ta-lib-rt shows it can be done. It is a great reference and inspiration to this proposal.
+
+This proposal adds **maintenance automation** to keep an official streaming API updated lockstep with the official TA-Lib batch API.
+
 ### Public API (stream lifecycle)
 
-Every stream, in every backend, is the same lifecycle:
+Every stream, in every language, is the same lifecycle:
 
 1. **`open(params, history[]) → (handle, value)` — once.** Validates the params
    and consumes the provided history in one pass, returning an opaque, typed
    stream **handle** (allocated by the library) plus the current value (the
-   indicator for the last history bar). It retains no input array afterward —
-   everything needed is kept in the handle. (Needs at least `lookback+1` bars to
-   yield a first output; `xxx_lookback(params)` gives that count.)
+   calculated output for the last history bar). Everything needed is kept in the handle (the initial history can be "freed").
 2. **`update(handle, bar) → value` — once per new bar.** Takes the handle and the
-   new input(s) (OHLCV for multi-input functions), advances the O(1) state, and
-   returns the latest value.
+   new input(s) (OHLCV for multi-input functions), and
+   output the latest value.
 3. **`close(handle)`.** Releases the stream — explicit in C, implicit (automatic)
-   in managed backends.
+   in managed backends (Rust/Java).
 
-Parameters and history are fixed at `open`, so `update` carries no
-configuration; changing a parameter means a new stream. The handle is opaque and
-tied to the library version that created it — don't persist it across versions or
-processes. Per-backend signatures are in the *API shape per backend* section below.
+Parameters and history are fixed at `open`; changing a parameter means a new stream.
+
+The handle is opaque and
+tied to the library version that created it — don't persist it across versions
+
+Per-language signatures are in the *API shape per backend* section below.
 
 Multi-output functions (MACD, BBANDS, STOCH) return a tuple for value.
 
@@ -60,17 +66,12 @@ For every function F and bar stream x[0..t]:
 stream_F.update(x[t]) == batch_F(startIdx=t, endIdx=t, full history 0..t)
 ```
 
-i.e. streaming output at bar t equals the batch output over the same data —
-where "the data" is whatever `open` was given plus every `update` since, seeded
-from its index 0. Priming `open` from bar 0 therefore makes the stream bit-exact
-to the full-history batch.
+i.e. streaming output at bar t equals the batch output over the same data
 
-Validated against the existing batch code for robust bit-identical matching:
-batch is heavily tested against frozen references (e.g. 0.6.4), and stream is
-tested against batch — so stream test coverage is transitively exhaustive.
+ta_regtest automation validates the batch API exhaustively including comparison against frozen references (e.g. 0.6.4). It will be extended to compare the streaming API against batch and transitively be as robust.
 
-`TA_SetUnstablePeriod` shifts only *which* bars the batch reports (its
-`outBegIdx`), never their values, so the check holds for any global unstable setting.
+We purposely avoid code re-use between the generated batch and stream API, reducing risk of introducing common/invisible bugs.
+
 
 ### API shape per backend (signatures)
 
@@ -123,19 +124,13 @@ Stricter than the C tier, where `TA_Globals` is a process-wide mutable and
 concurrent batch is safe only if nothing calls `TA_SetX` meanwhile.
 
 ### Non-goals / risks
-
 - **No behavioral change to the batch tier.** The stream tier is additive.
-- API surface doubles per function — gate emission on the YAML flag so we can
-  ship tiers incrementally.
-- Candle settings: CDL streams snapshot `TA_Globals->candleSettings` at `open`
-  (documented), avoiding mid-stream global mutation hazards.
-- MAVP and functions with per-bar variable periods stay unsupported
-  (documented) rather than pretending.
-- Memory policy in C: `open` allocates the handle, `close` frees it.
+- In first release, MAVP and functions with per-bar variable periods might stay unsupported (documented) rather than pretending.
 - Handle lifetime: the handle is valid only within the exact library version
   that created it — not serializable or persistable across versions or
   processes. Cross-version persistence is out of scope for now; it may be
   revisited once the streaming feature stabilizes.
+- Some annotation might be needed in the generator input to guide the stream emitter.
 
 ## Implementation
 
@@ -188,38 +183,7 @@ Two structural notes on the current code:
 5. **Verification**: ta_regtest gains a codegen pass that calls both
    `TA_XXX` (batch, `startIdx=0`) and `stream_call` on the same history and
    requires **bit-identical** outputs over the range the batch reports
-   (`outBegIdx .. outBegIdx+outNBElement`), per language. Keep the batch at
-   `startIdx=0` — a sliced batch (`startIdx > lookback`) seeds mid-series and
-   would not match the from-index-0 stream. The frozen reference oracle stays
-   the batch baseline; the stream contract is anchored to batch, so no new
-   reference data is needed.
-
-### Reuse model
-
-The stream is **derived from, never fused with, the batch.** Auto-analysis (§2)
-reads the batch and emits a *separate* stream, so contributors keep writing plain
-batch — no stream-specific authoring for the functions analysis can crack (all of
-T1/T2, running-sum T3 like SMA). Keeping batch independent is a *verification*
-choice, not just hygiene: the stream-vs-batch check (§5) only has teeth if the two
-sides don't share code. Each error class then anchors to something that is not a
-copy of itself:
-
-| Implementation | Anchored to | Catches |
-|----------------|-------------|---------|
-| batch | frozen reference oracle | wrong batch math |
-| stream | batch, bit-exact (§5) | wrong *transformation* — ring size, trailing offset, seed partition |
-
-Derivation isn't fully independent (a batch-math bug reaches both), but that class
-is already covered by batch-vs-reference, and the batch never runs the ring/seed
-transform — so stream-vs-batch stays a real differential on the transform itself.
-
-Rejected: a single shared internal (`step()` used by both, or batch =
-`init; loop{update}`). It makes the differential tautological, and for T3/T4 forces
-batch onto ring/deque storage that regresses its tuned array-index loops.
-
-Where analysis can't derive a passing stream (multi-phase seeds like ADX, T4
-extrema templates, T5 restructuring cases), hand-write that one stream — independent by
-construction, so its differential is only stronger — or mark it non-streamable.
+   (`outBegIdx .. outBegIdx+outNBElement`).
 
 ### Staging
 
