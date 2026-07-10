@@ -6338,3 +6338,74 @@ fn java_array_access() {
         "Java ArrayAccess should render as arr[idx]: {rendered}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Streaming dispatch emission (TC composed tier: MA)
+// ---------------------------------------------------------------------------
+
+/// Pin the generated MA dispatch stream section: tagged handle over the
+/// callees' PUBLIC streams, batch-order ENUM_CASE arms, identity fast path,
+/// unsupported arms (TRIMA until its stream lands, MAMA) rejecting at Open.
+#[test]
+fn test_c_ma_dispatch_stream_section() {
+    let (mut func, enums) = load_indicator("ma");
+    func.streaming = true; // the YAML flag flips with this milestone
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+
+    // Handle: params + a single tagged sub pointer, no StreamStep.
+    assert!(c.contains("struct TA_MA_Stream {"), "state struct");
+    assert!(c.contains("void *sub;"), "tagged sub-stream pointer");
+    assert!(!c.contains("TA_MA_StreamStep"), "dispatch has no transition fn");
+
+    // Open: identity path first (mirrors batch order), then the dispatch.
+    assert!(
+        c.contains("if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 )"),
+        "identity min-history check"
+    );
+    for (label, callee) in [
+        ("Sma", "TA_SMA"),
+        ("Ema", "TA_EMA"),
+        ("Wma", "TA_WMA"),
+        ("Dema", "TA_DEMA"),
+        ("Tema", "TA_TEMA"),
+        ("Kama", "TA_KAMA"),
+        ("T3", "TA_T3"),
+    ] {
+        assert!(
+            c.contains(&format!("case ENUM_CASE(MAType, TA_MAType_{}, {label}):", label.to_uppercase())),
+            "supported arm case label for {label}"
+        );
+        assert!(c.contains(&format!("{callee}_Open(")), "sub open for {callee}");
+        assert!(c.contains(&format!("{callee}_Update(")), "sub update for {callee}");
+        assert!(c.contains(&format!("{callee}_Peek(")), "sub peek for {callee}");
+        assert!(c.contains(&format!("{callee}_Close(")), "sub close for {callee}");
+    }
+    // T3's fixed vfactor literal forwards positionally.
+    assert!(
+        c.contains("TA_T3_Open( optInTimePeriod, 0.7, inReal, historyLen"),
+        "T3 arm forwards the 0.7 vfactor literal"
+    );
+    // Unsupported arms reject at Open and never open a sub-stream.
+    assert!(
+        c.contains("case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima): /* no trima stream */"),
+        "TRIMA reject arm"
+    );
+    assert!(
+        c.contains("case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */"),
+        "MAMA reject arm"
+    );
+    assert!(!c.contains("TA_TRIMA_Open"), "no TRIMA sub open");
+    assert!(!c.contains("TA_MAMA_Open"), "no MAMA sub open");
+    // Update/Peek identity short-circuit reads the handle's params.
+    assert!(
+        c.contains("if( stream->optInTimePeriod == 1 )"),
+        "identity short-circuit on the handle"
+    );
+    // Peek keeps the handle logically const (const sub cast, no state copy).
+    assert!(
+        c.contains("(const TA_SMA_Stream *)stream->sub"),
+        "const sub cast in Peek"
+    );
+}

@@ -590,24 +590,57 @@ claim in *Motivation* gets measured, not asserted).
    too-short-history rejection, and assigning a candle-setting local in
    a steady loop is a hard analyzer error. (dual steady loops, memmove
    identity, open-time delegation) — a controlled preview of composition.
-6. **TC composed functions** (needs the earlier tiers' sub-streams;
-   MA-dispatch design spiked first: hand-write a STOCH stream over generated
-   SMA/EMA streams and diff against batch across the MAType×period grid).
-   Design sketch from the C-exhaustion campaign (2026-07-10): composition
-   goes through the PUBLIC stream handles, not cross-TU internals. A
-   composed handle (STOCH) embeds sub-stream handles (`TA_MA_Stream *`,
-   itself a MAType-tagged dispatch over the existing per-MA streams); its
-   Open still transcribes the whole batch body — and since batch already
-   MATERIALIZES the intermediate series (STOCH's tempBuffer) before
-   calling `ma(0, n-1, ...)` over it, Open can open the sub-streams on
-   those very arrays before they are freed. Update then pipelines: raw
-   value → sub-Update(K) → sub-Update(D) → outputs. Bit-exactness
-   composes by induction: each sub-stream is bit-exact against its own
-   batch over the full intermediate series, which is exactly what the
-   composed batch computes. The same mechanism unlocks the delegating
-   param-degenerates (ATR/NATR period 1 = an embedded TRANGE stream;
-   MACDEXT/MACDFIX = MA sub-streams), while DI/DM only need a dual
-   transition selected once at Open by the fixed param.
+6. **TC composed functions** — **MA dispatch + composition spike DONE
+   (2026-07-10)**; the rest of the family is in progress. Composition goes
+   through the PUBLIC stream handles, not cross-TU internals:
+   - **`TA_MA_Stream` (DONE, 132 streamable).** The analyzer recognizes the
+     dispatch body shape (identity path + switch over an enum optional param
+     whose arms delegate the whole range) and the emitter renders a tagged
+     handle over the callees' public streams. The supported-arm set is
+     DERIVED from the callees' YAML stream flags at generation time —
+     TRIMA's arm joins automatically the moment its stream lands; MAMA's
+     arm (discarded-FAMA dummy-buffer shape) stays a documented Open
+     `TA_BAD_PARAM`. A stream-flagged callee arm that loses its strict
+     whole-range delegation shape is a hard generate error, never a silent
+     reject (that would turn a generator regression into a vacuous pass).
+     Verification: the driver now sweeps enum (MAType) params — one vector
+     per non-default value, each with its own K and Metastock legs (the
+     selected arm may be unstable or compatibility-seeded even though the
+     dispatcher is not) — and the server carries a generated expect-reject
+     precheck for unsupported arms (`unsupportedArm`), so the documented
+     rejection is verified loudly. Both a wrong-period arm and a
+     wrongly-succeeding TRIMA arm were sabotage-tested; ASan/UBSan clean
+     over the full 9-MAType × period × K/compat × 7-shape grid.
+   - **STOCH composition spike (DONE, mechanism proven).** A hand-written
+     STOCH stream over public `TA_MA_Stream` handles: Open transcribes the
+     batch body — and since batch already MATERIALIZES the intermediate
+     series (STOCH's tempBuffer) before calling `ma(0, n-1, ...)` over it,
+     Open opens the sub-streams on those very arrays at the exact points
+     batch consumes them (raw %K before the in-place smoothing, smoothed %K
+     after) before they are freed. Update pipelines: transcribed extrema
+     step → raw %K → sub-Update(K) → sub-Update(D) → outputs. Peek uses a
+     `peekMode` flag in the scratch state copy so the ONE step body calls
+     sub-Peek instead of sub-Update (heap sub-handles cannot be cloned by a
+     struct copy). Result: 14,580 cases across the full 9×9 MAType grid ×
+     6 param sets (incl. period-1 identity-MA composition and fastK=1) ×
+     5 data shapes (incl. CONSTANT and TIE_HEAVY) × 3 warm-up prefixes —
+     **1,146,950 update legs bit-identical to `batch(0, n-1)`**, peek ==
+     update on every bar, TRIMA/MAMA arms reject as documented, 0 failures;
+     a deliberate wrong-order sub-open (smoothed instead of raw %K) fails
+     4,394 legs, proving the harness. Bit-exactness composes by induction:
+     each sub-stream is bit-exact against its own batch over the full
+     intermediate series, which is exactly what the composed batch computes.
+   - **Remaining:** generalize the pipeline model in the analyzer/emitter
+     (sub-open anchor `max(0, sArg − callee_lookback)` at each consuming
+     call site; intermediate-series scalars in the transition; combine-loop
+     alignment algebra) and roll STOCH, STOCHF, STDDEV, APO/PPO, STOCHRSI,
+     MACDEXT, ADXR (sub-output ring), BBANDS. Then the delegating
+     param-degenerates (ATR/NATR period 1 = an embedded TRANGE stream;
+     MACDFIX = generation-time inlining of macd's IR with substituted
+     `0,0` args — those select the FIXED k=0.15/0.075 coefficients inside
+     macd's body, so the public `TA_MACD_Open` validation can never accept
+     them), while DI/DM, TRIMA and MIDPRICE need a dual transition selected
+     once at Open by the fixed param.
    **Strategy: exhaust the C emitter tier by tier — every gotcha is
    language-neutral — and only then port the proven model to Rust; the Rust
    emitter is a re-rendering of settled machinery, not a second discovery.**

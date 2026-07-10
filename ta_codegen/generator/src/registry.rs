@@ -24,6 +24,9 @@ pub struct Registry {
     /// irregular/typo names so cross-indicator Java calls resolve to the same
     /// method name the backend emits for the definition.
     java_names: HashMap<String, String>,
+    /// Per-indicator signature facts for the streaming dispatch/composed
+    /// analysis (stream flag + input/opt/output counts), from the YAML.
+    callee_sigs: HashMap<String, crate::streaming::CalleeSig>,
 }
 
 impl Registry {
@@ -31,6 +34,7 @@ impl Registry {
     pub fn from_dir(base_dir: &Path) -> Self {
         let mut indicators = Vec::new();
         let mut java_names = HashMap::new();
+        let mut callee_sigs = HashMap::new();
 
         if let Ok(entries) = std::fs::read_dir(base_dir) {
             for entry in entries.filter_map(std::result::Result::ok) {
@@ -43,10 +47,21 @@ impl Registry {
                 if yaml_path.exists() {
                     // Read the `camel_case` field so Java cross-calls match the
                     // backend's method names (incl. historical irregular spellings).
-                    let java_name = crate::parser::yaml::parse_yaml(&yaml_path)
+                    let fd = crate::parser::yaml::parse_yaml(&yaml_path);
+                    let java_name = fd
                         .camel_case
+                        .clone()
                         .map_or_else(|| to_camel_case(&dir_name), |cc| lower_first(&cc));
                     java_names.insert(dir_name.clone(), java_name);
+                    callee_sigs.insert(
+                        dir_name.clone(),
+                        crate::streaming::CalleeSig {
+                            streaming: fd.streaming,
+                            n_inputs: crate::streaming::input_array_names(&fd).len(),
+                            n_opts: fd.optional_inputs.len(),
+                            n_outputs: fd.outputs.len(),
+                        },
+                    );
                     indicators.push(dir_name);
                 }
             }
@@ -55,7 +70,7 @@ impl Registry {
         // Sort by descending length so longest-match wins (e.g. "stochrsi" before "stoch")
         indicators.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
 
-        Registry { indicators, java_names }
+        Registry { indicators, java_names, callee_sigs }
     }
 
     /// The Java camelCase base method name for an indicator dir-name, falling back
@@ -139,6 +154,12 @@ impl Registry {
         None
     }
 
+}
+
+impl crate::streaming::CalleeLookup for Registry {
+    fn callee(&self, name: &str) -> Option<crate::streaming::CalleeSig> {
+        self.callee_sigs.get(name).cloned()
+    }
 }
 
 /// Convert to C naming: `sma_lookback` -> `TA_SMA_Lookback`

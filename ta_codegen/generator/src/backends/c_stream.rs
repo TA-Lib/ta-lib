@@ -26,11 +26,11 @@ use std::fmt::Write as _;
 use crate::helper_registry::HelperRegistry;
 use crate::ir::{EnumDef, Expr, FuncDef, ParamType, Statement};
 use crate::registry::Registry;
-use crate::streaming::{self, circ_storages, StreamModel};
+use crate::streaming::{self, circ_storages, DispatchPlan, StreamModel, StreamPlan};
 
 use super::c::{
-    c_decl, emit_opt_param_validation, render_expression, render_statement,
-    render_statement_stream,
+    c_decl, emit_opt_param_validation, render_c_switch_label, render_expression,
+    render_statement, render_statement_stream,
 };
 
 /// C name mapping for the transition rewrite: state fields through the
@@ -175,15 +175,68 @@ pub fn close_signature(func: &FuncDef) -> String {
 
 /// Header declarations for one streamable function (opaque handle typedef +
 /// the four lifecycle prototypes). Emitted into include/ta_func.h.
-pub fn header_decls(func: &FuncDef) -> String {
+/// Dispatch functions with unsupported arms (MA while TRIMA/MAMA lack
+/// streams) get a derived capability note: a batch-valid enum value being
+/// stream-rejected is user-visible API behavior and must be documented at
+/// the declaration, not only in the proposal. The note regenerates from the
+/// plan, so it updates itself when a callee gains its stream.
+pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> String {
     let n = uname(func);
+    let mut note = String::new();
+    if let Ok(StreamPlan::Dispatch(dp)) = streaming::validate_streamable(func, lookup) {
+        let unsupported = dp.unsupported_labels();
+        if !unsupported.is_empty() {
+            let consts: Vec<String> = unsupported
+                .iter()
+                .map(|l| {
+                    if l.starts_with("TA_") {
+                        (*l).to_string()
+                    } else {
+                        format!("TA_{l}")
+                    }
+                })
+                .collect();
+            let _ = write!(
+                note,
+                " * Note: {} values whose underlying function has no stream yet\n * ({}) are rejected at Open with TA_BAD_PARAM; they gain\n * streams automatically when the underlying function does.\n",
+                dp.param,
+                consts.join(", ")
+            );
+            if let Some(idp) = &dp.identity {
+                if let Some(g) = identity_guard_text(&idp.condition) {
+                    let _ = writeln!(
+                        note,
+                        " * The {g} identity path streams for every {} value.",
+                        dp.param
+                    );
+                }
+            }
+        }
+    }
     format!(
-        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n * Open consumes the warm-up history; Update commits one closed bar;\n * Peek evaluates a forming bar without committing; Close frees the handle.\n * A handle is single-writer: driving one handle from two threads\n * concurrently — Update or Peek, despite the latter's const — is\n * undefined behavior. Distinct handles are fully independent.\n * See docs/streaming-api-proposal.md.\n */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n",
+        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n * Open consumes the warm-up history; Update commits one closed bar;\n * Peek evaluates a forming bar without committing; Close frees the handle.\n * A handle is single-writer: driving one handle from two threads\n * concurrently — Update or Peek, despite the latter's const — is\n * undefined behavior. Distinct handles are fully independent.\n{note} * See docs/streaming-api-proposal.md.\n */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n",
         open_signature(func),
         update_signature(func),
         peek_signature(func),
         close_signature(func)
     )
+}
+
+/// Text form of a recognized identity guard (`<param> == 1` / `<param> <= 1`
+/// — the closed shape the identity detector accepts).
+fn identity_guard_text(cond: &Expr) -> Option<String> {
+    use crate::ir::BinOp;
+    if let Expr::BinOp(l, op, r) = cond {
+        if let (Expr::Var(v), Expr::IntLiteral(k)) = (l.as_ref(), r.as_ref()) {
+            let op_s = match op {
+                BinOp::Eq => "==",
+                BinOp::LessEq => "<=",
+                _ => return None,
+            };
+            return Some(format!("{v} {op_s} {k}"));
+        }
+    }
+    None
 }
 
 /// Generate the whole stream section for one function's `.c` file.
@@ -201,23 +254,243 @@ pub fn generate(
         func.streaming,
         "c_stream::generate called without a streaming declaration"
     );
-    let model =
-        streaming::validate_streamable(func).unwrap_or_else(|e| panic!("streaming gate: {e}"));
+    let plan = streaming::validate_streamable(func, registry)
+        .unwrap_or_else(|e| panic!("streaming gate: {e}"));
 
     let counter = Cell::new(0usize);
     let mut o = String::new();
 
     let _ = writeln!(o, "/**** Streaming API *****/\n");
 
-    emit_state_struct(&mut o, func, &model);
-    emit_release(&mut o, func, &model);
-    emit_step(&mut o, func, &model, enums, registry, helpers, &counter);
-    emit_open(&mut o, func, &model, enums, registry, helpers, &counter);
-    emit_update(&mut o, func);
-    emit_peek(&mut o, func, &model);
-    emit_close(&mut o, func, &model);
+    match &plan {
+        StreamPlan::Loop(model) => {
+            emit_state_struct(&mut o, func, model);
+            emit_release(&mut o, func, model);
+            emit_step(&mut o, func, model, enums, registry, helpers, &counter);
+            emit_open(&mut o, func, model, enums, registry, helpers, &counter);
+            emit_update(&mut o, func);
+            emit_peek(&mut o, func, model);
+            emit_close(&mut o, func, model);
+        }
+        StreamPlan::Dispatch(dp) => {
+            emit_dispatch(&mut o, func, dp, enums, registry, helpers, &counter);
+        }
+    }
 
     o
+}
+
+// ---------------------------------------------------------------------------
+// Dispatch emission (MA): a tagged handle over the callees' PUBLIC streams.
+// ---------------------------------------------------------------------------
+
+/// `TA_<CALLEE>` for an input-level callee name (`sma` -> `TA_SMA`).
+fn callee_prefix(callee: &str) -> String {
+    format!("TA_{}", callee.to_uppercase())
+}
+
+/// The identity condition with the caller's optional params redirected
+/// through the handle (`optInTimePeriod == 1` -> `stream->optInTimePeriod == 1`).
+fn dispatch_identity_cond_on_handle(
+    func: &FuncDef,
+    dp: &DispatchPlan,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    let idp = dp.identity.as_ref()?;
+    let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let cond = streaming::rewrite_expr(&idp.condition, &|e| match e {
+        Expr::Var(v) if params.contains(&v) => Expr::Var(format!("stream->{v}")),
+        other => other,
+    });
+    Some(render_expression(&cond, registry, helpers, counter))
+}
+
+/// Per-arm dispatch bodies for Update/Peek/Close, plus the shared open
+/// switch. All labels render through the batch's own `ENUM_CASE` mapping so
+/// the arms read exactly like the batch dispatch they mirror.
+#[allow(clippy::too_many_lines)]
+fn emit_dispatch(
+    o: &mut String,
+    func: &FuncDef,
+    dp: &DispatchPlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let inputs = streaming::input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let bar_args: String = inputs.join(", ");
+    let out_args: String = outputs.join(", ");
+    let case_of = |label: &str| render_c_switch_label(label, enums);
+
+    // --- state struct -------------------------------------------------------
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
+    }
+    let _ = writeln!(
+        o,
+        "   /* Sub-stream handle, tagged by {}; NULL on the identity path. */",
+        dp.param
+    );
+    let _ = writeln!(o, "   void *sub;");
+    let _ = writeln!(o, "}};\n");
+
+    // --- Open ----------------------------------------------------------------
+    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
+    let _ = writeln!(o, "   TA_RetCode retCode;");
+    let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   *stream = NULL;");
+    let null_checks: Vec<String> = inputs
+        .iter()
+        .chain(outputs.iter())
+        .map(|x| format!("!{x}"))
+        .collect();
+    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
+    let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    let _ = writeln!(
+        o,
+        "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );"
+    );
+    let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
+    let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   sp->{0} = {0};", p.name);
+    }
+    if let Some(idp) = &dp.identity {
+        // The batch checks the identity path BEFORE the dispatch, for every
+        // arm value — mirror the order (min_history holds: the lookback is 0
+        // on this path for every arm).
+        let cond = render_expression(&idp.condition, registry, helpers, counter);
+        let lookback_args: Vec<String> =
+            func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+        let _ = writeln!(o, "\n   if( {cond} )\n   {{");
+        let _ = writeln!(
+            o,
+            "      if( historyLen < TA_{n}_Lookback( {} ) + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}",
+            lookback_args.join(", ")
+        );
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(o, "      *{out} = {inp}[historyLen - 1];");
+        }
+        let _ = writeln!(o, "      *stream = sp;");
+        let _ = writeln!(o, "      return TA_SUCCESS;");
+        let _ = writeln!(o, "   }}");
+    }
+    let _ = writeln!(o, "\n   retCode = TA_BAD_PARAM;");
+    let _ = writeln!(o, "   switch( {} )", dp.param);
+    let _ = writeln!(o, "   {{");
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let cp = callee_prefix(&arm.callee);
+        let opt_args: Vec<String> = arm
+            .opt_args
+            .iter()
+            .map(|e| render_expression(e, registry, helpers, counter))
+            .collect();
+        let opt_str = opt_args
+            .iter()
+            .fold(String::new(), |mut s, a| {
+                let _ = write!(s, "{a}, ");
+                s
+            });
+        let _ = writeln!(o, "   case {}:", case_of(&arm.label));
+        let _ = writeln!(o, "      {{");
+        let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
+        let _ = writeln!(
+            o,
+            "         retCode = {cp}_Open( {opt_str}{bar_args}, historyLen, &sub, {out_args} );",
+        );
+        let _ = writeln!(o, "         sp->sub = sub;");
+        let _ = writeln!(o, "      }}");
+        let _ = writeln!(o, "      break;");
+    }
+    // Unsupported arms reject at Open — a documented capability limitation
+    // (the callee has no stream yet). They regenerate as supported arms the
+    // moment the callee's YAML gains the stream flag.
+    for arm in dp.arms.iter().filter(|a| !a.supported) {
+        let _ = writeln!(
+            o,
+            "   case {}: /* no {} stream */",
+            case_of(&arm.label),
+            if arm.callee.is_empty() { "delegation" } else { &arm.callee }
+        );
+    }
+    let _ = writeln!(o, "   default:");
+    let _ = writeln!(o, "      retCode = TA_BAD_PARAM;");
+    let _ = writeln!(o, "      break;");
+    let _ = writeln!(o, "   }}");
+    let _ = writeln!(o, "\n   if( retCode != TA_SUCCESS )");
+    let _ = writeln!(o, "   {{");
+    let _ = writeln!(o, "      TA_Free( sp );");
+    let _ = writeln!(o, "      return retCode;");
+    let _ = writeln!(o, "   }}");
+    let _ = writeln!(o, "   *stream = sp;");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+
+    // --- Update / Peek ---------------------------------------------------------
+    let identity_handle_cond =
+        dispatch_identity_cond_on_handle(func, dp, registry, helpers, counter);
+    for verb in ["Update", "Peek"] {
+        let sig = if verb == "Update" {
+            update_signature(func)
+        } else {
+            peek_signature(func)
+        };
+        let const_qual = if verb == "Peek" { "const " } else { "" };
+        let _ = writeln!(o, "{sig}\n{{");
+        let checks: Vec<String> = std::iter::once("!stream".to_string())
+            .chain(outputs.iter().map(|x| format!("!{x}")))
+            .collect();
+        let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
+        if let (Some(cond), Some(idp)) = (&identity_handle_cond, &dp.identity) {
+            let _ = writeln!(o, "   if( {cond} )\n   {{");
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "      *{out} = {inp};");
+            }
+            let _ = writeln!(o, "      return TA_SUCCESS;");
+            let _ = writeln!(o, "   }}");
+        }
+        let _ = writeln!(o, "   switch( stream->{} )", dp.param);
+        let _ = writeln!(o, "   {{");
+        for arm in dp.arms.iter().filter(|a| a.supported) {
+            let cp = callee_prefix(&arm.callee);
+            let _ = writeln!(o, "   case {}:", case_of(&arm.label));
+            let _ = writeln!(
+                o,
+                "      return {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {out_args} );"
+            );
+        }
+        let _ = writeln!(o, "   default:");
+        let _ = writeln!(o, "      /* Unreachable: Open rejects arms without a sub-stream. */");
+        let _ = writeln!(o, "      return TA_INTERNAL_ERROR;");
+        let _ = writeln!(o, "   }}\n}}\n");
+    }
+
+    // --- Close -----------------------------------------------------------------
+    let _ = writeln!(o, "{}\n{{", close_signature(func));
+    let _ = writeln!(o, "   if( !stream ) return TA_SUCCESS;");
+    let _ = writeln!(o, "   switch( stream->{} )", dp.param);
+    let _ = writeln!(o, "   {{");
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let cp = callee_prefix(&arm.callee);
+        let _ = writeln!(o, "   case {}:", case_of(&arm.label));
+        let _ = writeln!(
+            o,
+            "      {cp}_Close( ({cp}_Stream *)stream->sub );"
+        );
+        let _ = writeln!(o, "      break;");
+    }
+    let _ = writeln!(o, "   default:");
+    let _ = writeln!(o, "      break; /* identity-only or rejected arm: no sub-stream */");
+    let _ = writeln!(o, "   }}");
+    let _ = writeln!(o, "   TA_Free( stream );");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {

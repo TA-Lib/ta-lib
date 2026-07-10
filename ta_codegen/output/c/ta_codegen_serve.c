@@ -381,7 +381,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ACOS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ACOS_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ACOS_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -430,7 +430,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AD_Open(sv_h, sv_l, sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AD_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -479,7 +479,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ADD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADD_Open(sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADD_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -532,7 +532,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADOSC_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -585,7 +585,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADX_Close(st); }
             TA_SetUnstablePeriod(0, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -636,7 +636,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AROON_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_AROON_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AROON_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -689,7 +689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AROONOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AROONOSC_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AROONOSC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -738,7 +738,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ASIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ASIN_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ASIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -787,7 +787,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ATAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ATAN_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ATAN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -837,7 +837,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AVGDEV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGDEV_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AVGDEV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -886,7 +886,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AVGPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGPRICE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AVGPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -936,7 +936,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_BETA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BETA_Open(optInTimePeriod, sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BETA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -985,7 +985,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_BOP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BOP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BOP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -1035,7 +1035,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CCI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CCI_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CCI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -1088,7 +1088,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL2CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL2CROWS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1147,7 +1147,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3BLACKCROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3BLACKCROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3BLACKCROWS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1206,7 +1206,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3INSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3INSIDE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3INSIDE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1265,7 +1265,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3LINESTRIKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3LINESTRIKE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3LINESTRIKE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1324,7 +1324,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3OUTSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3OUTSIDE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3OUTSIDE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1383,7 +1383,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3STARSINSOUTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3STARSINSOUTH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3STARSINSOUTH_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1442,7 +1442,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDL3WHITESOLDIERS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3WHITESOLDIERS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3WHITESOLDIERS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1502,7 +1502,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLABANDONEDBABY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLABANDONEDBABY_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLABANDONEDBABY_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1561,7 +1561,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLADVANCEBLOCK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLADVANCEBLOCK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLADVANCEBLOCK_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1620,7 +1620,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLBELTHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBELTHOLD_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLBELTHOLD_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1679,7 +1679,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLBREAKAWAY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBREAKAWAY_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLBREAKAWAY_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1738,7 +1738,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLCLOSINGMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCLOSINGMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCLOSINGMARUBOZU_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1797,7 +1797,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLCONCEALBABYSWALL_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCONCEALBABYSWALL_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCONCEALBABYSWALL_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1856,7 +1856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLCOUNTERATTACK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCOUNTERATTACK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCOUNTERATTACK_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1916,7 +1916,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLDARKCLOUDCOVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDARKCLOUDCOVER_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -1975,7 +1975,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDOJI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2034,7 +2034,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJISTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDOJISTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2093,7 +2093,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLDRAGONFLYDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDRAGONFLYDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDRAGONFLYDOJI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2152,7 +2152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLENGULFING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLENGULFING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLENGULFING_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2212,7 +2212,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLEVENINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLEVENINGDOJISTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2272,7 +2272,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLEVENINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLEVENINGSTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2331,7 +2331,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGAPSIDESIDEWHITE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLGAPSIDESIDEWHITE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2390,7 +2390,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLGRAVESTONEDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGRAVESTONEDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLGRAVESTONEDOJI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2449,7 +2449,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHAMMER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHAMMER_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2508,7 +2508,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHANGINGMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHANGINGMAN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHANGINGMAN_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2567,7 +2567,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHARAMI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHARAMI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2626,7 +2626,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHARAMICROSS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMICROSS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHARAMICROSS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2685,7 +2685,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHIGHWAVE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIGHWAVE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIGHWAVE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2744,7 +2744,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLHOMINGPIGEON_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHOMINGPIGEON_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHOMINGPIGEON_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2803,7 +2803,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLIDENTICAL3CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLIDENTICAL3CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLIDENTICAL3CROWS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2862,7 +2862,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLINNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINNECK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLINNECK_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2921,7 +2921,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLINVERTEDHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINVERTEDHAMMER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLINVERTEDHAMMER_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -2980,7 +2980,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLKICKING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLKICKING_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3039,7 +3039,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLKICKINGBYLENGTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKINGBYLENGTH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLKICKINGBYLENGTH_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3098,7 +3098,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLLADDERBOTTOM_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLADDERBOTTOM_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLADDERBOTTOM_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3157,7 +3157,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLLONGLEGGEDDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLEGGEDDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLONGLEGGEDDOJI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3216,7 +3216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLLONGLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLINE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLONGLINE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3275,7 +3275,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMARUBOZU_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3334,7 +3334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLMATCHINGLOW_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATCHINGLOW_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMATCHINGLOW_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3394,7 +3394,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLMATHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATHOLD_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMATHOLD_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3454,7 +3454,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLMORNINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMORNINGDOJISTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3514,7 +3514,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLMORNINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMORNINGSTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3573,7 +3573,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLONNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLONNECK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLONNECK_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3632,7 +3632,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLPIERCING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLPIERCING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLPIERCING_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3691,7 +3691,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLRICKSHAWMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRICKSHAWMAN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLRICKSHAWMAN_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3750,7 +3750,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLRISEFALL3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRISEFALL3METHODS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLRISEFALL3METHODS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3809,7 +3809,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSEPARATINGLINES_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSEPARATINGLINES_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSEPARATINGLINES_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3868,7 +3868,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSHOOTINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHOOTINGSTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSHOOTINGSTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3927,7 +3927,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSHORTLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHORTLINE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSHORTLINE_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -3986,7 +3986,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSPINNINGTOP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSPINNINGTOP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSPINNINGTOP_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4045,7 +4045,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSTALLEDPATTERN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTALLEDPATTERN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSTALLEDPATTERN_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4104,7 +4104,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLSTICKSANDWICH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTICKSANDWICH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSTICKSANDWICH_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4163,7 +4163,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLTAKURI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTAKURI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTAKURI_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4222,7 +4222,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLTASUKIGAP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTASUKIGAP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTASUKIGAP_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4281,7 +4281,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLTHRUSTING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTHRUSTING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTHRUSTING_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4340,7 +4340,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLTRISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTRISTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTRISTAR_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4399,7 +4399,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLUNIQUE3RIVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUNIQUE3RIVER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLUNIQUE3RIVER_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4458,7 +4458,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUPSIDEGAP2CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLUPSIDEGAP2CROWS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4517,7 +4517,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_CDLXSIDEGAP3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLXSIDEGAP3METHODS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLXSIDEGAP3METHODS_Close(st); }
-            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;
+            if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -4572,7 +4572,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CEIL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CEIL_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CEIL_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4624,7 +4624,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CMO_Close(st); }
             TA_SetUnstablePeriod(3, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4675,7 +4675,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CORREL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CORREL_Open(optInTimePeriod, sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CORREL_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4724,7 +4724,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_COS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COS_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_COS_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4773,7 +4773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_COSH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COSH_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_COSH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4825,7 +4825,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DEMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4875,7 +4875,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_DIV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DIV_Open(sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DIV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4927,7 +4927,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DX_Close(st); }
             TA_SetUnstablePeriod(4, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -4980,7 +4980,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_EMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5030,7 +5030,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_EXP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EXP_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_EXP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5079,7 +5079,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_FLOOR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_FLOOR_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_FLOOR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5129,7 +5129,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_IMI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_IMI_Open(optInTimePeriod, sv_o, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_IMI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5181,7 +5181,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_KAMA_Close(st); }
             TA_SetUnstablePeriod(13, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5232,7 +5232,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5282,7 +5282,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_ANGLE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_ANGLE_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_ANGLE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5332,7 +5332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_INTERCEPT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_INTERCEPT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5382,7 +5382,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_SLOPE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_SLOPE_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_SLOPE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5431,7 +5431,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LN_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5480,7 +5480,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LOG10_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LOG10_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LOG10_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5518,6 +5518,80 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
         return;
     }
+    else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
+        if( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) )
+        {
+            TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
+            int rejected;
+            orc = TA_MA_Open( optInTimePeriod, optInMAType, sv_c, svN, &st, &v0 );
+            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
+            if( st ) TA_MA_Close( st );
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
+            return;
+        }
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
+        TA_SetUnstablePeriod(13, (unsigned int)svK);
+        TA_SetUnstablePeriod(14, (unsigned int)svK);
+        TA_SetUnstablePeriod(23, (unsigned int)svK);
+        rc = TA_MA(0, svN - 1, sv_c, optInTimePeriod, optInMAType, &svBeg, &svNb, sv_b0);
+        lb = TA_MA_Lookback(optInTimePeriod, optInMAType);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(optInTimePeriod, optInMAType, sv_c, svN, &st, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MA_Close(st); }
+            TA_SetUnstablePeriod(5, 0);
+            TA_SetUnstablePeriod(13, 0);
+            TA_SetUnstablePeriod(14, 0);
+            TA_SetUnstablePeriod(23, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_MA_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            rc = TA_MA_Open(optInTimePeriod, optInMAType, sv_c, P, &st, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_MA_Peek(st, sv_c[t], &pk0);
+                TA_MA_Update(st, sv_c[t], &v0);
+                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            }
+            if( st ) TA_MA_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        TA_SetUnstablePeriod(5, 0);
+        TA_SetUnstablePeriod(13, 0);
+        TA_SetUnstablePeriod(14, 0);
+        TA_SetUnstablePeriod(23, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
+        return;
+    }
     else if( fnLen == 7 && strncmp(fn, "TA_MACD", 7) == 0 ) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
@@ -5534,7 +5608,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACD_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5591,7 +5665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MAX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5641,7 +5715,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MAXINDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MAXINDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAXINDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5690,7 +5764,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MEDPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MEDPRICE_Open(sv_h, sv_l, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MEDPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5740,7 +5814,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MFI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MFI_Open(optInTimePeriod, sv_h, sv_l, sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MFI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5790,7 +5864,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MIDPOINT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIDPOINT_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MIDPOINT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5840,7 +5914,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIN_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5890,7 +5964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MININDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MININDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MININDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5940,7 +6014,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MINMAX_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_MINMAX_Open(optInTimePeriod, sv_c, svN, &st, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINMAX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -5993,7 +6067,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MINMAXINDEX_Stream *st = NULL; int v0 = 0; int v1 = 0; TA_RetCode orc = TA_MINMAXINDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINMAXINDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6046,7 +6120,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MOM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MOM_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MOM_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6095,7 +6169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MULT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MULT_Open(sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MULT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6144,7 +6218,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_OBV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_OBV_Open(sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_OBV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6194,7 +6268,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROC_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6244,7 +6318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROCP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCP_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6294,7 +6368,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROCR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6344,7 +6418,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROCR100_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR100_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCR100_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6396,7 +6470,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_RSI_Close(st); }
             TA_SetUnstablePeriod(21, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6448,7 +6522,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAR_Open(optInAcceleration, optInMaximum, sv_h, sv_l, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SAR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6505,7 +6579,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SAREXT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAREXT_Open(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sv_h, sv_l, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SAREXT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6554,7 +6628,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SIN_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6603,7 +6677,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SINH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SINH_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SINH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6653,7 +6727,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SMA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6702,7 +6776,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SQRT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SQRT_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SQRT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6751,7 +6825,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SUB_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUB_Open(sv_c, sv_v, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SUB_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6801,7 +6875,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SUM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUM_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SUM_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6854,7 +6928,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_T3_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6904,7 +6978,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TAN_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TAN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -6953,7 +7027,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TANH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TANH_Open(sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TANH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7005,7 +7079,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TEMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7055,7 +7129,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TRANGE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRANGE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRANGE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7107,7 +7181,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRIX_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7158,7 +7232,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TSF_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TSF_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TSF_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7207,7 +7281,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TYPPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TYPPRICE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TYPPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7259,7 +7333,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ULTOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ULTOSC_Open(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ULTOSC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7310,7 +7384,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_VAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_VAR_Open(optInTimePeriod, optInNbDev, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_VAR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7359,7 +7433,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_WCLPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WCLPRICE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WCLPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7409,7 +7483,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_WILLR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WILLR_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WILLR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;
@@ -7459,7 +7533,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_WMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WMA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
         }
         npref = 0;

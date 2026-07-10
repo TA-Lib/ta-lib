@@ -701,18 +701,118 @@ fn sv_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 /// continue to the next settings round (a failed round must not truncate the
 /// sweep); non-candle functions respond and return as before.
 fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
+    // Reject parity: whenever the batch leg produced nothing — an error
+    // (bad params, e.g. an out-of-list enum hitting a dispatch default arm)
+    // or an empty range — the stream's Open must reject too. Open mirrors
+    // the batch validation and min-history by construction, so a stream
+    // that opens where batch fails is always a contract break; forcing
+    // ok=1 on batch errors (the old behavior) shielded exactly that.
     if candle {
-        s.push_str("            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;\n");
+        s.push_str("            if( !openRejects ) allOk = 0;\n");
         s.push_str("            if( rd + 1 < rounds ) continue;\n");
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
         s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);\n");
     } else {
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
-        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
     }
     s.push_str("            return;\n");
     s.push_str("        }\n");
+}
+
+/// Dispatch functions (MA): enum values whose arm has no sub-stream reject
+/// at Open — a DOCUMENTED capability limitation, verified loudly here
+/// (never a silent vacuous pass). The identity path (period==1) is exempt:
+/// it streams for every arm value, exactly as the batch checks it before
+/// dispatching. The unsupported set is derived from the callees' stream
+/// flags at generation time, so a callee gaining the flag (TRIMA) flips its
+/// legs from expect-reject to verified automatically on the next generate.
+fn emit_sv_dispatch_precheck(
+    s: &mut String,
+    func: &FuncDef,
+    funcs: &[FuncDef],
+    input_arrays: &[&str],
+    n_outs: usize,
+    name: &str,
+) {
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    let Ok(crate::streaming::StreamPlan::Dispatch(dp)) =
+        crate::streaming::validate_streamable(func, &lookup)
+    else {
+        return;
+    };
+    let unsupported = dp.unsupported_labels();
+    if unsupported.is_empty() {
+        return;
+    }
+    // IR case labels are TA-stripped; the C constant is TA_-prefixed.
+    let arm_match = unsupported
+        .iter()
+        .map(|l| {
+            let c_const = if l.starts_with("TA_") {
+                (*l).to_string()
+            } else {
+                format!("TA_{l}")
+            };
+            format!("{} == {c_const}", dp.param)
+        })
+        .collect::<Vec<_>>()
+        .join(" || ");
+    let guard = match dp
+        .identity
+        .as_ref()
+        .and_then(|i| sv_identity_guard(&i.condition))
+    {
+        Some(g) => format!("!({g}) && ( {arm_match} )"),
+        None => format!("( {arm_match} )"),
+    };
+    let mut pre_opt_args = String::new();
+    for o in &func.optional_inputs {
+        let _ = std::fmt::Write::write_fmt(&mut pre_opt_args, format_args!("{}, ", o.name));
+    }
+    let mut pre_in_args = String::new();
+    for a in input_arrays {
+        let _ = std::fmt::Write::write_fmt(&mut pre_in_args, format_args!("{a}, "));
+    }
+    let decls: String = func
+        .outputs
+        .iter()
+        .enumerate()
+        .map(|(i, ou)| {
+            if ou.param_type == ParamType::Integer {
+                format!("int v{i} = 0;")
+            } else {
+                format!("double v{i} = 0.0;")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let addrs = (0..n_outs)
+        .map(|i| format!("&v{i}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    s.push_str(&format!(
+        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( {pre_opt_args}{pre_in_args}svN, &st, {addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
+    ));
+}
+
+/// Render a dispatch identity guard for the verify precheck. The identity
+/// detector only accepts `<param> == 1` / `<param> <= 1`, so the shape is
+/// closed — no general expression renderer needed here.
+fn sv_identity_guard(cond: &crate::ir::Expr) -> Option<String> {
+    use crate::ir::{BinOp, Expr};
+    if let Expr::BinOp(l, op, r) = cond {
+        if let (Expr::Var(v), Expr::IntLiteral(k)) = (l.as_ref(), r.as_ref()) {
+            let op_s = match op {
+                BinOp::Eq => "==",
+                BinOp::LessEq => "<=",
+                _ => return None,
+            };
+            return Some(format!("{v} {op_s} {k}"));
+        }
+    }
+    None
 }
 
 #[allow(clippy::too_many_lines)]
@@ -829,6 +929,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
                 ));
             }
         }
+
+        emit_sv_dispatch_precheck(&mut s, func, funcs, &input_arrays, n_outs, name);
 
         let candle = func.flags.iter().any(|f| f == "candlestick");
         s.push_str("        TA_RetCode rc;\n");

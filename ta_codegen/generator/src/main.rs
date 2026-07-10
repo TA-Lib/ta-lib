@@ -271,10 +271,12 @@ fn format(func_filter: Option<&str>, check_only: bool) -> i32 {
 fn stream_census(seed_yaml: bool) -> i32 {
     let root = repo_root();
     let funcs = load_func_defs(None, &root);
+    let lookup = ta_codegen_lib::streaming::FuncsLookup(&funcs);
     let mut derived_t1 = 0usize;
     let mut derived_t2 = 0usize;
     let mut derived_t3 = 0usize;
     let mut derived_t4 = 0usize;
+    let mut derived_tc = 0usize;
     let mut mismatches = 0usize;
     let mut seeded = 0usize;
 
@@ -282,24 +284,40 @@ fn stream_census(seed_yaml: bool) -> i32 {
         // Full validation (analysis + transition build) — the same gate
         // generate() enforces, so census can never seed a function the
         // emitter cannot actually build.
-        match ta_codegen_lib::streaming::validate_streamable(func) {
-            Ok(m) => {
-                match m.tier {
-                    ir::StreamTier::T1 => derived_t1 += 1,
-                    ir::StreamTier::T2 => derived_t2 += 1,
-                    ir::StreamTier::T3 => derived_t3 += 1,
-                    ir::StreamTier::T4 => derived_t4 += 1,
-                }
+        match ta_codegen_lib::streaming::validate_streamable(func, &lookup) {
+            Ok(plan) => {
                 let status = if func.streaming { "streamed" } else { "candidate" };
-                println!(
-                    "{:<10} {:<14} {} state={} lags={} outs={}",
-                    status,
-                    func.name,
-                    m.tier.as_str(),
-                    m.state.len(),
-                    m.lags.len(),
-                    m.outputs.len()
-                );
+                match &plan {
+                    ta_codegen_lib::streaming::StreamPlan::Loop(m) => {
+                        match m.tier {
+                            ir::StreamTier::T1 => derived_t1 += 1,
+                            ir::StreamTier::T2 => derived_t2 += 1,
+                            ir::StreamTier::T3 => derived_t3 += 1,
+                            ir::StreamTier::T4 => derived_t4 += 1,
+                        }
+                        println!(
+                            "{:<10} {:<14} {} state={} lags={} outs={}",
+                            status,
+                            func.name,
+                            m.tier.as_str(),
+                            m.state.len(),
+                            m.lags.len(),
+                            m.outputs.len()
+                        );
+                    }
+                    ta_codegen_lib::streaming::StreamPlan::Dispatch(dp) => {
+                        derived_tc += 1;
+                        println!(
+                            "{:<10} {:<14} TC dispatch({}) arms={}/{} identity={}",
+                            status,
+                            func.name,
+                            dp.param,
+                            dp.arms.iter().filter(|a| a.supported).count(),
+                            dp.arms.len(),
+                            if dp.identity.is_some() { "yes" } else { "no" }
+                        );
+                    }
+                }
                 if seed_yaml && !func.streaming {
                     let yaml_path = root
                         .join("ta_codegen/input")
@@ -325,7 +343,7 @@ fn stream_census(seed_yaml: bool) -> i32 {
         }
     }
     println!(
-        "\n{} functions: {derived_t1} derive T1, {derived_t2} derive T2, {derived_t3} derive T3, {derived_t4} derive T4, {mismatches} declaration mismatch(es){}",
+        "\n{} functions: {derived_t1} derive T1, {derived_t2} derive T2, {derived_t3} derive T3, {derived_t4} derive T4, {derived_tc} derive TC dispatch, {mismatches} declaration mismatch(es){}",
         funcs.len(),
         if seed_yaml { std::format!(", {seeded} YAML(s) seeded") } else { String::new() }
     );
@@ -469,7 +487,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // a YAML-declared tier must match the IR-derived shape, so a batch
         // rewrite that breaks stream analyzability fails HERE, not at release.
         if func_def.streaming {
-            if let Err(e) = ta_codegen_lib::streaming::validate_streamable(&func_def) {
+            if let Err(e) = ta_codegen_lib::streaming::validate_streamable(&func_def, &registry) {
                 eprintln!("error: {e}");
                 eprintln!("       (run `ta_codegen stream-census` for the full audit)");
                 std::process::exit(1);

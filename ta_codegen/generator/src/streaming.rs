@@ -159,6 +159,112 @@ pub struct IdentityPath {
     pub pairs: Vec<(String, String)>,
 }
 
+/// Signature facts about a potential sub-stream callee, provided by a
+/// [`CalleeLookup`]. Derived from YAML metadata only (no `.c` parsing), so
+/// any layer that can read the input tree can supply it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CalleeSig {
+    /// The callee is YAML `stream`-flagged (its public stream API exists).
+    pub streaming: bool,
+    /// Number of input ARRAYS (price components expanded).
+    pub n_inputs: usize,
+    /// Number of optional parameters.
+    pub n_opts: usize,
+    /// Number of outputs.
+    pub n_outputs: usize,
+}
+
+/// Cross-function lookup for composed/dispatch analysis: maps an input-level
+/// indicator name (`sma`, `ma`, ...) to its [`CalleeSig`]. Implemented by
+/// [`crate::registry::Registry`] (emitters) and [`FuncsLookup`] (census,
+/// server generation, tests).
+pub trait CalleeLookup {
+    fn callee(&self, name: &str) -> Option<CalleeSig>;
+}
+
+/// Signature facts derived from one [`FuncDef`] (shared by every
+/// [`CalleeLookup`] implementation).
+#[must_use]
+pub fn callee_sig_of(f: &FuncDef) -> CalleeSig {
+    CalleeSig {
+        streaming: f.streaming,
+        n_inputs: input_array_names(f).len(),
+        n_opts: f.optional_inputs.len(),
+        n_outputs: f.outputs.len(),
+    }
+}
+
+/// [`CalleeLookup`] over a loaded [`FuncDef`] slice.
+pub struct FuncsLookup<'a>(pub &'a [FuncDef]);
+
+impl CalleeLookup for FuncsLookup<'_> {
+    fn callee(&self, name: &str) -> Option<CalleeSig> {
+        self.0
+            .iter()
+            .find(|f| f.name.eq_ignore_ascii_case(name))
+            .map(callee_sig_of)
+    }
+}
+
+/// One arm of a recognized dispatch body.
+#[derive(Debug, Clone)]
+pub struct DispatchArm {
+    /// Case label verbatim from the IR switch (e.g. `TA_MAType_SMA`).
+    pub label: String,
+    /// Callee indicator (input-level lowercase name, e.g. `sma`). Empty for
+    /// arms containing no indicator call (pure reject arms).
+    pub callee: String,
+    /// The callee's optional-input argument expressions, positionally
+    /// mapped from the batch call. Meaningful only when `supported`.
+    pub opt_args: Vec<Expr>,
+    /// The arm delegates whole-range to a stream-flagged callee: the stream
+    /// opens the callee's public stream. Unsupported arms reject at Open
+    /// with BAD_PARAM (documented capability limitation, e.g. MAType=MAMA).
+    pub supported: bool,
+}
+
+/// A recognized dispatch body (MA): optional identity path + a switch over
+/// an enum optional param whose arms delegate the WHOLE range (`startIdx`,
+/// `endIdx`, all inputs, all outputs forwarded) to other indicator
+/// functions. The stream is a tagged handle over the callees' PUBLIC
+/// streams; the supported-arm set is derived from the callees' YAML stream
+/// flags at generation time, so a callee gaining the flag extends the
+/// dispatch on the next generate.
+#[derive(Debug)]
+pub struct DispatchPlan<'a> {
+    pub func: &'a FuncDef,
+    /// The switch subject: an enum optional param, fixed at open.
+    pub param: String,
+    pub arms: Vec<DispatchArm>,
+    /// Recognized param==1 identity path (checked BEFORE the dispatch,
+    /// mirroring the batch body order — it applies to every arm).
+    pub identity: Option<IdentityPath>,
+}
+
+impl DispatchPlan<'_> {
+    /// Labels of the arms Open rejects (unsupported callees).
+    #[must_use]
+    pub fn unsupported_labels(&self) -> Vec<&str> {
+        self.arms
+            .iter()
+            .filter(|a| !a.supported)
+            .map(|a| a.label.as_str())
+            .collect()
+    }
+}
+
+/// The derived stream implementation plan for one function: a steady-loop
+/// transition model, or a dispatch over other functions' public streams.
+// One short-lived plan exists per generated function; the size skew between
+// the loop model and a dispatch plan is irrelevant, and boxing would only
+// add deref noise at every emitter call site.
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
+pub enum StreamPlan<'a> {
+    Loop(StreamModel<'a>),
+    Dispatch(DispatchPlan<'a>),
+}
+
 /// Syntactic form of the steady-state loop (informational; open() transcribes
 /// the whole body verbatim, only update-body extraction depends on it).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -965,11 +1071,291 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     })
 }
 
+/// Recognize a dispatch body: optional identity path, then a single switch
+/// over an enum optional param whose arms delegate the whole range to other
+/// indicator functions, then `return <retcode-var>`.
+///
+/// Strictness contract: an arm whose callee is stream-flagged MUST match the
+/// strict whole-range delegation shape — a mismatch is a hard error, never a
+/// silent downgrade to a reject arm (that would turn a generator regression
+/// into a vacuous verification pass). Arms with unflagged callees (MAMA,
+/// TRIMA until its stream lands) become reject arms regardless of shape.
+pub fn analyze_dispatch<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<DispatchPlan<'a>, StreamError> {
+    let body: &[Statement] = if func.has_explicit_private {
+        &func.private_body
+    } else {
+        &func.body
+    };
+    let bar_inputs = input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let (identity, identity_idx) = detect_identity_path(body, &bar_inputs, &outputs, &params);
+
+    // A body without a top-level switch is not dispatch-shaped AT ALL:
+    // report NoSteadyLoop so validate_streamable surfaces the loop-tier
+    // error (the actionable one for the 131 loop functions) instead of a
+    // dispatch-shape complaint about their first non-decl statement.
+    if !body
+        .iter()
+        .any(|s| matches!(s, Statement::Switch { .. }))
+    {
+        return Err(StreamError::NoSteadyLoop);
+    }
+
+    // Structural scan of the top level: decls/comments, the identity path,
+    // exactly one switch, and a final `return <var>`.
+    let mut switch_idx: Option<usize> = None;
+    let mut ret_var: Option<&str> = None;
+    for (i, s) in body.iter().enumerate() {
+        if Some(i) == identity_idx {
+            continue;
+        }
+        let is_last = i == body.len() - 1;
+        match s {
+            Statement::VarDecl { .. } | Statement::Comment(_) => {}
+            Statement::Switch { .. } => {
+                if switch_idx.is_some() {
+                    return Err(StreamError::Unsupported(
+                        "dispatch body has more than one switch".into(),
+                    ));
+                }
+                switch_idx = Some(i);
+            }
+            Statement::Return {
+                value: Some(Expr::Var(v)),
+            } if is_last => ret_var = Some(v),
+            other => {
+                return Err(StreamError::Unsupported(format!(
+                    "dispatch body has an unrecognized top-level statement ({})",
+                    stmt_kind(other)
+                )));
+            }
+        }
+    }
+    let Some(Statement::Switch {
+        expr: subject,
+        cases,
+        default,
+    }) = switch_idx.map(|i| &body[i])
+    else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+    let ret_var = ret_var.ok_or_else(|| {
+        StreamError::Unsupported("dispatch body does not end in `return <retcode>`".into())
+    })?;
+
+    // Subject must be an enum optional param.
+    let param = match subject {
+        Expr::Var(v)
+            if func
+                .optional_inputs
+                .iter()
+                .any(|p| p.name == *v && matches!(p.param_type, ParamType::Enum(_))) =>
+        {
+            v.clone()
+        }
+        _ => {
+            return Err(StreamError::Unsupported(
+                "dispatch switch subject is not an enum optional param".into(),
+            ));
+        }
+    };
+
+    // The default arm must not delegate to an indicator (MA's is a plain
+    // `retCode = TA_BAD_PARAM`, which Open mirrors by construction).
+    if !find_indicator_calls(default.as_slice(), lookup).is_empty() {
+        return Err(StreamError::Unsupported(
+            "dispatch default arm calls an indicator".into(),
+        ));
+    }
+
+    let mut arms = Vec::new();
+    for (label, stmts) in cases {
+        arms.push(parse_dispatch_arm(
+            label, stmts, func, lookup, ret_var, &bar_inputs, &outputs,
+        )?);
+    }
+    if !arms.iter().any(|a| a.supported) {
+        return Err(StreamError::Unsupported(
+            "dispatch body has no stream-flagged callee arm".into(),
+        ));
+    }
+    Ok(DispatchPlan {
+        func,
+        param,
+        arms,
+        identity,
+    })
+}
+
+/// Compact statement-kind label for diagnostics (a full IR Debug dump is
+/// unreadable in a gate error).
+fn stmt_kind(s: &Statement) -> &'static str {
+    match s {
+        Statement::VarDecl { .. } => "declaration",
+        Statement::Assign { .. } => "assignment",
+        Statement::If { .. } => "if",
+        Statement::While { .. } => "while loop",
+        Statement::DoWhile { .. } => "do-while loop",
+        Statement::For { .. } | Statement::ForC { .. } => "for loop",
+        Statement::Switch { .. } => "switch",
+        Statement::Return { .. } => "return",
+        Statement::Break => "break",
+        Statement::Continue => "continue",
+        Statement::Block { .. } => "block",
+        Statement::Expr(_) => "expression statement",
+        Statement::CircBuf(_) => "circbuf op",
+        Statement::Comment(_) => "comment",
+    }
+}
+
+/// Every distinct `Expr::FuncCall` name in `stmts` the lookup knows (i.e.
+/// indicator calls, as opposed to malloc/free/math builtins), in first-seen
+/// order. Nested calls count too (walk_stmt_exprs recurses into every
+/// expression).
+fn find_indicator_calls(stmts: &[Statement], lookup: &dyn CalleeLookup) -> Vec<String> {
+    let mut found: Vec<String> = Vec::new();
+    for s in stmts {
+        walk_stmt_exprs(s, &mut |e| {
+            if let Expr::FuncCall(name, _) = e {
+                if lookup.callee(name).is_some() && !found.contains(name) {
+                    found.push(name.clone());
+                }
+            }
+        });
+    }
+    found
+}
+
+/// Classify one case arm. See `analyze_dispatch` for the strictness rules.
+fn parse_dispatch_arm(
+    label: &str,
+    stmts: &[Statement],
+    func: &FuncDef,
+    lookup: &dyn CalleeLookup,
+    ret_var: &str,
+    bar_inputs: &[String],
+    outputs: &[String],
+) -> Result<DispatchArm, StreamError> {
+    let reject = |callee: &str| DispatchArm {
+        label: label.to_string(),
+        callee: callee.to_string(),
+        opt_args: Vec::new(),
+        supported: false,
+    };
+    let callees = find_indicator_calls(stmts, lookup);
+    let Some(callee) = callees.first().cloned() else {
+        return Ok(reject("")); // no indicator call: pure reject arm
+    };
+    let sig = lookup.callee(&callee).expect("looked up above");
+
+    // Strict whole-range delegation shape: exactly one statement,
+    // `<retvar> = callee(startIdx, endIdx, <own inputs>, <pure opt args>,
+    //                    outBegIdx, outNBElement, <own outputs>)`.
+    let meaningful: Vec<&Statement> = stmts
+        .iter()
+        .filter(|s| !matches!(s, Statement::Comment(_)))
+        .collect();
+    let strict: Option<Vec<Expr>> = match meaningful.as_slice() {
+        [Statement::Assign {
+            target: Expr::Var(t),
+            value: Expr::FuncCall(name, args),
+            compound: false,
+        }] if t == ret_var && *name == callee => {
+            delegation_opt_args(args, func, &sig, bar_inputs, outputs)
+        }
+        _ => None,
+    };
+    if let (Some(opt_args), true) = (strict, sig.streaming) {
+        return Ok(DispatchArm {
+            label: label.to_string(),
+            callee,
+            opt_args,
+            supported: true,
+        });
+    }
+    // Not a supported delegation. If ANY indicator called in the arm is
+    // stream-flagged — not just the first one seen — this is a hard gate
+    // error: an arm like `trima(...); dema(...)` must never silently become
+    // a reject arm the verify precheck then blesses (the strictness
+    // contract above).
+    if let Some(flagged) = callees
+        .iter()
+        .find(|c| lookup.callee(c).is_some_and(|s| s.streaming))
+    {
+        return Err(StreamError::Unsupported(format!(
+            "dispatch arm `{label}` calls stream-flagged `{flagged}` but is not a \
+             whole-range delegation"
+        )));
+    }
+    // Only unflagged callees: honest reject arm (MAMA; TRIMA until it streams).
+    Ok(reject(&callee))
+}
+
+/// Validate a whole-range delegation call's argument list and return the
+/// callee's optional-input argument expressions (positional).
+fn delegation_opt_args(
+    args: &[Expr],
+    func: &FuncDef,
+    sig: &CalleeSig,
+    bar_inputs: &[String],
+    outputs: &[String],
+) -> Option<Vec<Expr>> {
+    let n = args.len();
+    if sig.n_inputs != bar_inputs.len()
+        || sig.n_outputs != outputs.len()
+        || n != 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs
+    {
+        return None;
+    }
+    let is_var = |e: &Expr, want: &str| matches!(e, Expr::Var(v) if v == want);
+    if !is_var(&args[0], "startIdx") || !is_var(&args[1], "endIdx") {
+        return None;
+    }
+    for (k, arr) in bar_inputs.iter().enumerate() {
+        if !is_var(&args[2 + k], arr) {
+            return None;
+        }
+    }
+    let opt_base = 2 + sig.n_inputs;
+    let out_meta = opt_base + sig.n_opts;
+    if !is_var(&args[out_meta], "outBegIdx") || !is_var(&args[out_meta + 1], "outNBElement") {
+        return None;
+    }
+    for (k, out) in outputs.iter().enumerate() {
+        if !is_var(&args[out_meta + 2 + k], out) {
+            return None;
+        }
+    }
+    // Opt args must be pure over the caller's own params (or literals): they
+    // are re-evaluated at Open time to open the sub-stream.
+    let params: BTreeSet<String> = func
+        .optional_inputs
+        .iter()
+        .map(|p| p.name.clone())
+        .collect();
+    let opt_args: Vec<Expr> = args[opt_base..out_meta].to_vec();
+    for a in &opt_args {
+        let mut names = BTreeSet::new();
+        expr_var_names(a, &mut names);
+        if !names.iter().all(|nm| params.contains(nm)) {
+            return None;
+        }
+    }
+    Some(opt_args)
+}
+
 /// Validate that a `streaming: true` function is still analyzable. Any
 /// failure is a generation-time error (the maintenance-coupling gate from
 /// the proposal): a batch rewrite that breaks stream analyzability fails
 /// HERE, not at release. The tier is derived, never declared.
-pub fn validate_streamable(func: &FuncDef) -> Result<StreamModel<'_>, String> {
+pub fn validate_streamable<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<StreamPlan<'a>, String> {
     struct GateNames;
     impl NameMap for GateNames {
         fn state(&self, name: &str) -> String {
@@ -1012,21 +1398,40 @@ pub fn validate_streamable(func: &FuncDef) -> Result<StreamModel<'_>, String> {
             "sp->xCap".to_string()
         }
     }
-    let model = analyze(func).map_err(|e| {
-        format!(
-            "{}: YAML declares `streaming: true` but the function is not streamable at stage 1: {e}",
+    // Loop tier first (the established 131), dispatch second: a body with a
+    // steady loop is never a dispatch, so the order only decides which error
+    // is reported when both fail.
+    let loop_err = match analyze(func) {
+        Ok(model) => {
+            // The transition must BUILD, too — analysis success alone would
+            // let a seeded function pass the gate and then panic in the
+            // emitter.
+            build_transition(&model, &GateNames).map_err(|e| {
+                format!(
+                    "{}: streamable by analysis but the transition cannot be built: {e}",
+                    func.name
+                )
+            })?;
+            return Ok(StreamPlan::Loop(model));
+        }
+        Err(e) => e,
+    };
+    match analyze_dispatch(func, lookup) {
+        Ok(plan) => Ok(StreamPlan::Dispatch(plan)),
+        // NoSteadyLoop = "no switch found": the body is not a dispatch, so
+        // the loop error names the real blocker. Any other dispatch error
+        // means the body IS switch-shaped and that error is the actionable
+        // one (e.g. a stream-flagged callee arm losing its delegation shape
+        // must fail loudly, never fall back to the generic loop error).
+        Err(StreamError::NoSteadyLoop) => Err(format!(
+            "{}: YAML declares `streaming: true` but the function is not streamable at stage 1: {loop_err}",
             func.name
-        )
-    })?;
-    // The transition must BUILD, too — analysis success alone would let a
-    // seeded function pass the gate and then panic in the emitter.
-    build_transition(&model, &GateNames).map_err(|e| {
-        format!(
-            "{}: streamable by analysis but the transition cannot be built: {e}",
+        )),
+        Err(dispatch_err) => Err(format!(
+            "{}: YAML declares `streaming: true` but the dispatch body is not streamable: {dispatch_err}",
             func.name
-        )
-    })?;
-    Ok(model)
+        )),
+    }
 }
 
 /// Scan the transition statements for array accesses and stateful calls.
@@ -3511,12 +3916,20 @@ mod tests {
         assert!(matches!(analyze(&f), Err(StreamError::UnsupportedCall(_))));
     }
 
+    /// A lookup that knows no indicators (loop-tier unit tests).
+    struct NoCallees;
+    impl CalleeLookup for NoCallees {
+        fn callee(&self, _name: &str) -> Option<CalleeSig> {
+            None
+        }
+    }
+
     #[test]
     fn unanalyzable_declared_function_is_an_error() {
         let ok = func_with_body(t1_body());
-        assert!(validate_streamable(&ok).is_ok());
+        assert!(validate_streamable(&ok, &NoCallees).is_ok());
         let bad = func_with_body(vec![Statement::Return { value: None }]);
-        let err = validate_streamable(&bad).unwrap_err();
+        let err = validate_streamable(&bad, &NoCallees).unwrap_err();
         assert!(err.contains("not streamable"), "{err}");
     }
 

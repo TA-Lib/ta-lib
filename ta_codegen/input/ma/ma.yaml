@@ -2,7 +2,7 @@ name: MA
 camel_case: MovingAverage
 group: Overlap Studies
 hint: Moving average
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

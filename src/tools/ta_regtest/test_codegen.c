@@ -1135,6 +1135,7 @@ typedef struct {
     int               streamFunctions;
     int               streamLegs;
     int               streamSkipped;
+    int               streamRejectArms;
 } ForEachFuncContext;
 
 static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -1864,6 +1865,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * counted as skips. See docs/streaming-api-proposal.md, Verification. */
 
 #define STREAM_MAX_OPT 8
+#define STREAM_MAX_VEC 64
 #define STREAM_N       240
 
 static int stream_flag(const char *resp, const char *key)
@@ -1902,12 +1904,21 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
 
 /* Param vectors: defaults, integer params at their true minimum (period==1
  * territory, issues #93/#94 — deliberately NOT floored at 2 like the 0.6.4
- * fuzz), and min+1. Real/list params stay at their defaults. */
+ * fuzz), and min+1. Real params stay at their defaults. Then one extra
+ * vector per non-default enum (MAType) list value, everything else at
+ * defaults: dispatch streams (MA) select their sub-stream by these values,
+ * so every arm gets its own bit-exact legs; arms without a sub-stream are
+ * verified as documented Open rejects server-side ("unsupportedArm").
+ * vecIsEnum marks the sweep vectors so the variant loop can add K and
+ * Metastock legs (the selected arm may be unstable — EMA/KAMA/T3 — or
+ * compatibility-seeded — EMA). */
 static int stream_build_vectors(const TA_FuncInfo *fi,
-                                double vec[3][STREAM_MAX_OPT])
+                                double vec[STREAM_MAX_VEC][STREAM_MAX_OPT],
+                                int vecIsEnum[STREAM_MAX_VEC],
+                                int *overflow)
 {
-    unsigned int i;
-    int hasMin = 0, hasMinPlus1 = 0;
+    unsigned int i, e;
+    int hasMin = 0, hasMinPlus1 = 0, nvec, v;
     for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
     {
         const TA_OptInputParameterInfo *oi;
@@ -1932,22 +1943,76 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
             }
         }
     }
-    if( hasMin && hasMinPlus1 ) return 3;
-    if( hasMin ) return 2;
-    if( hasMinPlus1 )
+    if( hasMin && hasMinPlus1 ) nvec = 3;
+    else if( hasMin ) nvec = 2;
+    else if( hasMinPlus1 )
     {
         for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
             vec[1][i] = vec[2][i];
-        return 2;
+        nvec = 2;
     }
-    return 1;
+    else nvec = 1;
+    for( v = 0; v < nvec; v++ ) vecIsEnum[v] = 0;
+
+    /* Enum (MAType) sweep vectors: each non-default list value crossed with
+     * (a) the defaults vector AND (b) the boundary vector when one exists
+     * (period==1 x MAType covers the identity-beats-unsupported-arm ordering
+     * — TA_MA_Open(1, MAMA) must stream — and min-period x arm covers the
+     * selected sub-stream's own boundary seeding). Plus one OUT-OF-LIST
+     * value per enum param: batch rejects it (the dispatch default arm), so
+     * the stream must reject too — reject-parity for the default arm.
+     * *overflow reports values silently dropped by the STREAM_MAX_VEC cap
+     * (the caller fails the run loudly: silent truncation would quietly
+     * stop testing arms). */
+    {
+        int baseVecs = nvec;
+        *overflow = 0;
+        for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+        {
+            const TA_OptInputParameterInfo *oi;
+            TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+            if( oi->type == TA_OptInput_IntegerList )
+            {
+                const TA_IntegerList *l = (const TA_IntegerList *)oi->dataSet;
+                int b, maxList = 0;
+                unsigned int j;
+                if( !l ) continue;
+                for( b = 0; b < baseVecs && b < 2; b++ )
+                {
+                    for( e = 0; e < l->nbElement; e++ )
+                    {
+                        if( l->data[e].value == (int)oi->defaultValue ) continue;
+                        if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; continue; }
+                        for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                            vec[nvec][j] = vec[b][j];
+                        vec[nvec][i] = (double)l->data[e].value;
+                        vecIsEnum[nvec] = 1;
+                        nvec++;
+                    }
+                }
+                for( e = 0; e < l->nbElement; e++ )
+                    if( l->data[e].value > maxList ) maxList = l->data[e].value;
+                if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; }
+                else
+                {
+                    for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                        vec[nvec][j] = vec[0][j];
+                    vec[nvec][i] = (double)(maxList + 91); /* out of list */
+                    vecIsEnum[nvec] = 1;
+                    nvec++;
+                }
+            }
+        }
+    }
+    return nvec;
 }
 
 static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 {
     ForEachFuncContext *ctx = (ForEachFuncContext *)opaqueData;
-    double vec[3][STREAM_MAX_OPT];
-    int nvec, v, variant, legs = 0;
+    double vec[STREAM_MAX_VEC][STREAM_MAX_OPT];
+    int vecIsEnum[STREAM_MAX_VEC];
+    int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
     int isUnstable;
 
     if( ctx->error != TA_TEST_PASS ) return;
@@ -1958,13 +2023,22 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * their stream values depend on EMA's ambient K). */
     isUnstable = (funcInfo->flags & TA_FUNC_FLG_UNST_PER) != 0 ||
                  get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE;
-    nvec = stream_build_vectors(funcInfo, vec);
+    nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, &vecOverflow);
 
     /* Silent truncation would quietly stop testing params beyond the cap. */
     if( funcInfo->nbOptInput > STREAM_MAX_OPT )
     {
         printf("STREAM PARAM OVERFLOW [TA_%s]: %u opt params > STREAM_MAX_OPT\n",
                funcInfo->name, funcInfo->nbOptInput);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+        return;
+    }
+    if( vecOverflow > 0 )
+    {
+        printf("STREAM VECTOR OVERFLOW [TA_%s]: %d enum value(s) dropped by "
+               "STREAM_MAX_VEC — arms would go unverified\n",
+               funcInfo->name, vecOverflow);
         ctx->failed++;
         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
         return;
@@ -1982,12 +2056,18 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             ErrorNumber pipeErr;
             if( variant == 1 )
             {
-                if( v != 0 || !isUnstable ) continue;
+                /* K-leg: defaults vector when the function is unstable, plus
+                 * every enum-sweep vector — the selected sub-stream may be
+                 * unstable (MA dispatching to EMA/KAMA/T3) even when the
+                 * dispatcher itself carries no unstable flag. */
+                if( !( (v == 0 && isUnstable) || vecIsEnum[v] ) ) continue;
                 K = 3;
             }
             else if( variant == 2 )
             {
-                if( v != 0 ) continue;
+                /* Metastock leg: defaults vector + enum-sweep vectors (an
+                 * EMA-family arm seeds differently under Metastock). */
+                if( v != 0 && !vecIsEnum[v] ) continue;
                 compat = 1;
             }
             else if( variant >= 3 )
@@ -2045,11 +2125,27 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 int l = stream_flag(ctx->responseBuf, "\"legs\":");
                 if( l > 0 ) legs += l;
+                if( stream_flag(ctx->responseBuf, "\"unsupportedArm\":") == 1 )
+                    rejArms++;
             }
         }
     }
+    /* Verified-leg floor: every stream-flagged function must contribute at
+     * least one bit-exact leg. Expected-reject arms (unsupportedArm) answer
+     * ok:1/legs:0 by design, so without this floor a plan-derivation
+     * regression that marks every arm unsupported — making Open reject AND
+     * the precheck bless the reject — would pass with zero comparisons. */
+    if( legs <= 0 )
+    {
+        printf("STREAM VACUOUS [TA_%s]: 0 verified legs (%d expected-reject "
+               "arm legs)\n", funcInfo->name, rejArms);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+        return;
+    }
     ctx->streamFunctions++;
     ctx->streamLegs += legs;
+    ctx->streamRejectArms += rejArms;
 }
 
 /* ---- Test orchestration (Task 9) ---- */
@@ -2136,12 +2232,15 @@ static ErrorNumber test_codegen_for_language(
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
         if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
         {
-            ctx.streamFunctions = 0;
-            ctx.streamLegs      = 0;
-            ctx.streamSkipped   = 0;
+            ctx.streamFunctions   = 0;
+            ctx.streamLegs        = 0;
+            ctx.streamSkipped     = 0;
+            ctx.streamRejectArms  = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
-            printf("  Stream verify: %d functions, %d legs bit-exact vs batch, %d without a stream\n",
-                   ctx.streamFunctions, ctx.streamLegs, ctx.streamSkipped);
+            printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
+                   "%d expected-reject arm legs, %d without a stream\n",
+                   ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
+                   ctx.streamSkipped);
         }
         else if( probeErr == TA_TEST_PASS )
         {

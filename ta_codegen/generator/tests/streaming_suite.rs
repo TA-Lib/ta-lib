@@ -22,6 +22,12 @@ fn load(name: &str) -> FuncDef {
     func
 }
 
+/// Cross-function lookup over the real input tree (YAML-only, same data the
+/// emitters read through the Registry).
+fn lookup() -> ta_codegen_lib::registry::Registry {
+    ta_codegen_lib::registry::Registry::from_dir(&input_dir())
+}
+
 #[test]
 fn mult_is_t1() {
     let f = load("mult");
@@ -117,6 +123,7 @@ fn bbands_composed_rejected() {
 #[test]
 fn all_declared_functions_are_streamable() {
     let base = input_dir();
+    let lk = lookup();
     let mut checked = 0;
     for entry in std::fs::read_dir(&base).expect("input dir") {
         let dir = entry.expect("entry").path();
@@ -131,11 +138,11 @@ fn all_declared_functions_are_streamable() {
         }
         let func = load(&name);
         if func.streaming {
-            streaming::validate_streamable(&func).unwrap_or_else(|e| panic!("{e}"));
+            streaming::validate_streamable(&func, &lk).unwrap_or_else(|e| panic!("{e}"));
             checked += 1;
         }
     }
-    assert!(checked >= 131, "expected 131+ declared functions, saw {checked}");
+    assert!(checked >= 132, "expected 132+ declared functions, saw {checked}");
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
@@ -242,9 +249,151 @@ fn cdlhikkake_rejected_at_transition_build() {
     let f = load("cdlhikkake");
     assert!(streaming::analyze(&f).is_ok(), "analysis alone passes");
     assert!(
-        streaming::validate_streamable(&f).is_err(),
+        streaming::validate_streamable(&f, &lookup()).is_err(),
         "transition build must reject the cursor leak"
     );
+}
+
+/* ---- TC composed tier: dispatch plans ---- */
+
+#[test]
+fn ma_derives_dispatch_plan() {
+    // MA is the MAType-tagged dispatch over the per-MA streams. The
+    // supported-arm set is DERIVED from the callees' YAML stream flags:
+    // TRIMA joins automatically when its stream lands; MAMA's arm (dummy
+    // FAMA buffer, discarded output) stays a documented Open reject.
+    let f = load("ma");
+    // The YAML flag itself is load-bearing: losing it would silently drop
+    // TA_MA_Stream from every generated surface while all gates stay green
+    // (backend_suite force-sets the flag for shape pinning; the regtest
+    // set-equality check passes when both sides lose the stream together).
+    assert!(f.streaming, "ma.yaml must carry the stream flag");
+    let lk = lookup();
+    let plan = streaming::validate_streamable(&f, &lk).expect("MA derives a plan");
+    let streaming::StreamPlan::Dispatch(dp) = plan else {
+        panic!("MA must derive a dispatch plan, not a loop model");
+    };
+    assert_eq!(dp.param, "optInMAType");
+    assert!(dp.identity.is_some(), "period==1 identity path");
+    assert_eq!(dp.arms.len(), 9, "all nine batch arms recognized");
+    let supported: Vec<&str> = dp
+        .arms
+        .iter()
+        .filter(|a| a.supported)
+        .map(|a| a.callee.as_str())
+        .collect();
+    assert_eq!(
+        supported,
+        ["sma", "ema", "wma", "dema", "tema", "kama", "t3"],
+        "supported arms follow the callee stream flags, in batch order"
+    );
+    // Labels are TA-stripped in the IR (the C renderer restores the prefix).
+    let rejected: Vec<&str> = dp.unsupported_labels();
+    assert_eq!(rejected, ["MAType_TRIMA", "MAType_MAMA"]);
+    // T3's arm forwards the fixed vfactor literal positionally.
+    let t3 = dp.arms.iter().find(|a| a.callee == "t3").unwrap();
+    assert_eq!(t3.opt_args.len(), 2, "period + literal 0.7 vfactor");
+}
+
+#[test]
+fn dispatch_hard_errors_when_flagged_callee_arm_loses_shape() {
+    // A stream-flagged callee arm that is not a strict whole-range
+    // delegation must be a loud gate error, never a silent reject arm
+    // (that would turn a generator regression into a vacuous pass).
+    struct OneFlagged;
+    impl streaming::CalleeLookup for OneFlagged {
+        fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
+            (name == "sma").then_some(streaming::CalleeSig {
+                streaming: true,
+                n_inputs: 1,
+                n_opts: 1,
+                n_outputs: 1,
+            })
+        }
+    }
+    let mut f = load("ma");
+    // Sabotage: swap the SMA arm's endIdx arg so the shape check fails.
+    sabotage_first_sma_arm(&mut f);
+    let err = streaming::analyze_dispatch(&f, &OneFlagged).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("whole-range")),
+        "expected hard shape error, got: {err}"
+    );
+}
+
+#[test]
+fn dispatch_hard_errors_when_flagged_delegation_hides_behind_unflagged_call() {
+    // The review-confirmed silent-downgrade hole: an arm whose FIRST
+    // indicator call is unflagged (trima) but which then whole-range
+    // delegates to a stream-flagged callee (dema) must be a hard gate
+    // error — never a reject arm the verify precheck would bless.
+    use ta_codegen_lib::ir::{Expr, Statement};
+    let mut f = load("ma");
+    let lk = lookup();
+    fn visit(stmts: &mut [Statement]) {
+        for s in stmts {
+            if let Statement::Switch { cases, .. } = s {
+                for (_, body) in cases.iter_mut() {
+                    let is_dema = body.iter().any(|st| {
+                        matches!(st,
+                            Statement::Assign { value: Expr::FuncCall(n, _), .. } if n == "dema")
+                    });
+                    if is_dema {
+                        let call = Statement::Assign {
+                            target: Expr::Var("retCode".into()),
+                            value: Expr::FuncCall(
+                                "trima".into(),
+                                vec![
+                                    Expr::Var("startIdx".into()),
+                                    Expr::Var("endIdx".into()),
+                                    Expr::Var("inReal".into()),
+                                    Expr::Var("optInTimePeriod".into()),
+                                    Expr::Var("outBegIdx".into()),
+                                    Expr::Var("outNBElement".into()),
+                                    Expr::Var("outReal".into()),
+                                ],
+                            ),
+                            compound: false,
+                        };
+                        body.insert(0, call);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    visit(&mut f.body);
+    let err = streaming::analyze_dispatch(&f, &lk).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m)
+            if m.contains("dema") && m.contains("whole-range")),
+        "expected hard error naming the flagged callee, got: {err}"
+    );
+}
+
+fn sabotage_first_sma_arm(f: &mut FuncDef) {
+    use ta_codegen_lib::ir::{Expr, Statement};
+    fn visit(stmts: &mut [Statement]) {
+        for s in stmts {
+            if let Statement::Switch { cases, .. } = s {
+                for (_, body) in cases.iter_mut() {
+                    for st in body.iter_mut() {
+                        if let Statement::Assign {
+                            value: Expr::FuncCall(name, args),
+                            ..
+                        } = st
+                        {
+                            if name == "sma" {
+                                args[1] = Expr::Var("startIdx".into());
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    visit(&mut f.body);
 }
 
 #[test]

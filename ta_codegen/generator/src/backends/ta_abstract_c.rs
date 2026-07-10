@@ -2784,8 +2784,9 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
     );
 
     // Emit all function prototypes.
+    let ref_lookup = RefFuncsLookup(funcs);
     for func in funcs {
-        emit_func_h_block(&mut o, func);
+        emit_func_h_block(&mut o, func, &ref_lookup);
     }
 
     // Utility function section (unstable period, compatibility, candle settings).
@@ -2861,7 +2862,20 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
 }
 
 /// Emit the comment block + double/single/lookback prototypes for one function.
-fn emit_func_h_block(o: &mut String, func: &FuncDef) {
+/// [`crate::streaming::CalleeLookup`] over the borrowed FuncDef list this
+/// backend already carries (dispatch capability notes in the header).
+struct RefFuncsLookup<'a>(&'a [&'a FuncDef]);
+
+impl crate::streaming::CalleeLookup for RefFuncsLookup<'_> {
+    fn callee(&self, name: &str) -> Option<crate::streaming::CalleeSig> {
+        self.0
+            .iter()
+            .find(|f| f.name.eq_ignore_ascii_case(name))
+            .map(|f| crate::streaming::callee_sig_of(f))
+    }
+}
+
+fn emit_func_h_block(o: &mut String, func: &FuncDef, lookup: &dyn crate::streaming::CalleeLookup) {
     let name = &func.name;
     let hint = func.hint.as_deref().unwrap_or(name);
 
@@ -2948,7 +2962,7 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef) {
 
     // --- Streaming API declarations (only for YAML-declared functions) ---
     if func.streaming {
-        o.push_str(&crate::backends::c_stream::header_decls(func));
+        o.push_str(&crate::backends::c_stream::header_decls(func, lookup));
         o.push('\n');
     }
 }

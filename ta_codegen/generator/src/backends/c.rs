@@ -1275,7 +1275,7 @@ fn try_render_switch_as_ternary(
 /// Render a switch case label for C output.
 /// Looks up the label in the enum registry to generate `ENUM_CASE(Type, C_Name, Pascal)`.
 /// Falls back to the raw label if not an enum variant.
-fn render_c_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
+pub(crate) fn render_c_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
     if let Some((enum_name, variant)) = lookup_variant(label, enums) {
         format!(
             "ENUM_CASE({}, {}, {})",

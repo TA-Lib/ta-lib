@@ -61,7 +61,7 @@ DEF_FUNCTION( MA,
               TA_GroupId_OverlapStudies,
               "Moving average",
               "MovingAverage",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MA END */
 

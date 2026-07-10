@@ -418,3 +418,203 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
    return retCode;
 }
 
+/**** Streaming API *****/
+
+struct TA_MA_Stream {
+   int optInTimePeriod;
+   TA_MAType optInMAType;
+   /* Sub-stream handle, tagged by optInMAType; NULL on the identity path. */
+   void *sub;
+};
+
+TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_MA_Stream **stream, double *outReal )
+{
+   struct TA_MA_Stream *sp;
+   TA_RetCode retCode;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == (int)0x80000000 )
+      optInMAType = 0;
+
+   sp = (struct TA_MA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   memset( sp, 0, sizeof(*sp) );
+   sp->optInTimePeriod = optInTimePeriod;
+   sp->optInMAType = optInMAType;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
+   retCode = TA_BAD_PARAM;
+   switch( optInMAType )
+   {
+   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+      {
+         TA_SMA_Stream *sub = NULL;
+         retCode = TA_SMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+      {
+         TA_EMA_Stream *sub = NULL;
+         retCode = TA_EMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+      {
+         TA_WMA_Stream *sub = NULL;
+         retCode = TA_WMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+      {
+         TA_DEMA_Stream *sub = NULL;
+         retCode = TA_DEMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+      {
+         TA_TEMA_Stream *sub = NULL;
+         retCode = TA_TEMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+      {
+         TA_KAMA_Stream *sub = NULL;
+         retCode = TA_KAMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+      {
+         TA_T3_Stream *sub = NULL;
+         retCode = TA_T3_Open( optInTimePeriod, 0.7, inReal, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima): /* no trima stream */
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */
+   default:
+      retCode = TA_BAD_PARAM;
+      break;
+   }
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( sp );
+      return retCode;
+   }
+   *stream = sp;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( stream->optInTimePeriod == 1 )
+   {
+      *outReal = inReal;
+      return TA_SUCCESS;
+   }
+   switch( stream->optInMAType )
+   {
+   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+      return TA_SMA_Update( (TA_SMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+      return TA_EMA_Update( (TA_EMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+      return TA_WMA_Update( (TA_WMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+      return TA_DEMA_Update( (TA_DEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+      return TA_TEMA_Update( (TA_TEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+      return TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+      return TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
+   default:
+      /* Unreachable: Open rejects arms without a sub-stream. */
+      return TA_INTERNAL_ERROR;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( stream->optInTimePeriod == 1 )
+   {
+      *outReal = inReal;
+      return TA_SUCCESS;
+   }
+   switch( stream->optInMAType )
+   {
+   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+      return TA_SMA_Peek( (const TA_SMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+      return TA_EMA_Peek( (const TA_EMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+      return TA_WMA_Peek( (const TA_WMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+      return TA_DEMA_Peek( (const TA_DEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+      return TA_TEMA_Peek( (const TA_TEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+      return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+      return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
+   default:
+      /* Unreachable: Open rejects arms without a sub-stream. */
+      return TA_INTERNAL_ERROR;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
+{
+   if( !stream ) return TA_SUCCESS;
+   switch( stream->optInMAType )
+   {
+   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+      TA_SMA_Close( (TA_SMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+      TA_EMA_Close( (TA_EMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+      TA_WMA_Close( (TA_WMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+      TA_DEMA_Close( (TA_DEMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+      TA_TEMA_Close( (TA_TEMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+      TA_KAMA_Close( (TA_KAMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+      TA_T3_Close( (TA_T3_Stream *)stream->sub );
+      break;
+   default:
+      break; /* identity-only or rejected arm: no sub-stream */
+   }
+   TA_Free( stream );
+   return TA_SUCCESS;
+}
+
