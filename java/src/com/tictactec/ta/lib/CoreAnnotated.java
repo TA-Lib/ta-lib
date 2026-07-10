@@ -4692,7 +4692,7 @@ public int dxLookback(
 @FuncInfo(
         name  = "DX",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5157,7 +5157,7 @@ public int imiLookback(
 @FuncInfo(
         name  = "IMI",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

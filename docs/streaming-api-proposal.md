@@ -569,7 +569,12 @@ claim in *Motivation* gets measured, not asserted).
    for now (they save bar indices — absolute-index recall beyond the
    extrema automaton).
 5. **Stage-1.5 param-degenerate paths — PARTIALLY DONE** (+RSI, CMO, WMA,
-   AVGDEV = 129 streamable): the period-1 `memmove` form now matches the
+   AVGDEV, then DX and IMI = 131 streamable; DX's zero-denominator
+   `out[idx-1]` repeat carries as `lastOut_*` state refreshed after each
+   update, and IMI's cursor-anchored window
+   `for (i = cursor-(p-1); i <= cursor; i++)` normalizes to a descending
+   offset counter — bars still visit oldest-first, so FP accumulation
+   order is untouched): the period-1 `memmove` form now matches the
    identity fast path, and block-scoped loop locals classify as temps.
    One honest contract nuance came out of RSI/CMO under Metastock: their
    batch emits a seed output and, when continuing, REWINDS and rebuilds
@@ -588,6 +593,21 @@ claim in *Motivation* gets measured, not asserted).
 6. **TC composed functions** (needs the earlier tiers' sub-streams;
    MA-dispatch design spiked first: hand-write a STOCH stream over generated
    SMA/EMA streams and diff against batch across the MAType×period grid).
+   Design sketch from the C-exhaustion campaign (2026-07-10): composition
+   goes through the PUBLIC stream handles, not cross-TU internals. A
+   composed handle (STOCH) embeds sub-stream handles (`TA_MA_Stream *`,
+   itself a MAType-tagged dispatch over the existing per-MA streams); its
+   Open still transcribes the whole batch body — and since batch already
+   MATERIALIZES the intermediate series (STOCH's tempBuffer) before
+   calling `ma(0, n-1, ...)` over it, Open can open the sub-streams on
+   those very arrays before they are freed. Update then pipelines: raw
+   value → sub-Update(K) → sub-Update(D) → outputs. Bit-exactness
+   composes by induction: each sub-stream is bit-exact against its own
+   batch over the full intermediate series, which is exactly what the
+   composed batch computes. The same mechanism unlocks the delegating
+   param-degenerates (ATR/NATR period 1 = an embedded TRANGE stream;
+   MACDEXT/MACDFIX = MA sub-streams), while DI/DM only need a dual
+   transition selected once at Open by the fixed param.
    **Strategy: exhaust the C emitter tier by tier — every gotcha is
    language-neutral — and only then port the proven model to Rust; the Rust
    emitter is a re-rendering of settled machinery, not a second discovery.**

@@ -135,7 +135,7 @@ fn all_declared_functions_are_streamable() {
             checked += 1;
         }
     }
-    assert!(checked >= 125, "expected 125+ declared functions, saw {checked}");
+    assert!(checked >= 131, "expected 131+ declared functions, saw {checked}");
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
@@ -245,4 +245,24 @@ fn cdlhikkake_rejected_at_transition_build() {
         streaming::validate_streamable(&f).is_err(),
         "transition build must reject the cursor leak"
     );
+}
+
+#[test]
+fn dx_output_feedback_carried_as_lastout() {
+    // DX repeats the previous output on a zero denominator: out[idx-1] reads
+    // become lastOut_* state (written after each update).
+    let f = load("dx");
+    let m = streaming::analyze(&f).expect("DX analyzes");
+    assert_eq!(m.out_feedback, ["outReal"]);
+}
+
+#[test]
+fn imi_cursor_anchored_window_reindexed() {
+    // `for (i = cursor-(p-1); i <= cursor; i++)` normalizes to a descending
+    // offset counter — a plain rescan window, bars still oldest-first.
+    let f = load("imi");
+    let m = streaming::analyze(&f).expect("IMI analyzes");
+    assert_eq!(m.tier, StreamTier::T3);
+    assert!(!m.windows.is_empty(), "reindexed rescan window");
+    assert!(m.state.is_empty(), "pure window recompute carries no state");
 }

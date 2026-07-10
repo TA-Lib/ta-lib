@@ -2,7 +2,7 @@ name: DX
 camel_case: Dx
 group: Momentum Indicators
 hint: Directional Movement Index
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inPriceHLC
     type: price

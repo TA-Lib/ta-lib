@@ -194,6 +194,9 @@ pub struct StreamModel<'a> {
     pub counter: Option<String>,
     /// Output-index variables (dropped in the transition).
     pub out_index_vars: BTreeSet<String>,
+    /// Outputs whose PREVIOUS value the steady loop reads (`out[idx-1]`,
+    /// DX's zero-denominator repeat) — carried as `lastOut_<name>` state.
+    pub out_feedback: Vec<String>,
     /// Scalar input parameters of `update`, one per input component, in batch
     /// signature order (e.g. `[inHigh, inLow, inClose]` for TRANGE).
     pub bar_inputs: Vec<String>,
@@ -873,6 +876,11 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     // classification sees plain index forms (CDLKICKINGBYLENGTH). Pure
     // expressions only; semantics and FP behavior are identical.
     let steady_stmts = hoist_ternary_indices(&steady_stmts);
+    // Normalize cursor-anchored ascending windows
+    // `for (i = cursor - E; i <= cursor; i++)` into the descending counter
+    // form `for (w = E; w >= 0; w--)` with `i` := `cursor - w` (IMI) — the
+    // reads become in[cursor - w], the standard rescan-window shape.
+    let steady_stmts = reindex_cursor_windows(&steady_stmts, &cursor);
 
     // --- array accesses ----------------------------------------------------
 
@@ -890,14 +898,8 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     let rings = assemble_rings(trailing.clone(), &ring_back, &ring_fwd, &bar_inputs);
     let windows = assemble_windows(scanned_windows, &bar_inputs);
 
-    // Outputs may only appear as assignment targets (no read-back).
-    for s in &steady_stmts {
-        if let Some(name) = output_read_back(s, &outputs) {
-            return Err(StreamError::UnsupportedAccess(format!(
-                "output `{name}` is read back in the steady loop"
-            )));
-        }
-    }
+    let out_feedback = collect_out_feedback(&steady_stmts, &outputs);
+    check_no_output_read_back(&steady_stmts, &outputs)?;
 
     // --- locals ------------------------------------------------------------
     let (circs, circ_extra) = discover_circs(body, &steady_stmts);
@@ -942,6 +944,7 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     Ok(StreamModel {
         func,
         seed_boundary,
+        out_feedback,
         body,
         tier,
         loop_form,
@@ -1051,6 +1054,10 @@ fn scan_accesses(
                         access_err =
                             record_input_access(name, idx, cursor, &window_bounds, &mut acc);
                     } else if outputs.iter().any(|o| o == name) {
+                        if is_prev_output_read(idx) {
+                            // Previous-output feedback read (lastOut state).
+                            return;
+                        }
                         let idx_var = match idx.as_ref() {
                             Expr::Var(v) => Some(v.clone()),
                             Expr::PostIncrement(b) => match b.as_ref() {
@@ -1993,12 +2000,61 @@ fn countdown_cursor(
 
 /// Does any statement read an output array (outputs are write-only in a
 /// transition)? Returns the offending array name.
+/// Outputs may only appear as assignment targets (no read-back).
+fn check_no_output_read_back(
+    steady_stmts: &[Statement],
+    outputs: &[String],
+) -> Result<(), StreamError> {
+    for s in steady_stmts {
+        if let Some(name) = output_read_back(s, outputs) {
+            return Err(StreamError::UnsupportedAccess(format!(
+                "output `{name}` is read back in the steady loop"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Outputs whose previous value the steady loop reads (`out[idx-1]`).
+fn collect_out_feedback(steady_stmts: &[Statement], outputs: &[String]) -> Vec<String> {
+    let mut out_feedback: Vec<String> = Vec::new();
+    for st in steady_stmts {
+        walk_stmt_exprs(st, &mut |e| {
+            walk_expr(e, &mut |x| {
+                if let Expr::ArrayAccess(n, idx) = x {
+                    if outputs.iter().any(|o| o == n)
+                        && is_prev_output_read(idx)
+                        && !out_feedback.contains(n)
+                    {
+                        out_feedback.push(n.clone());
+                    }
+                }
+            });
+        });
+    }
+    out_feedback
+}
+
+/// `out[idx - 1]`: the previous bar's output (DX repeats it on a zero
+/// denominator). Carried as `lastOut_*` state in the transition.
+pub fn is_prev_output_read(idx: &Expr) -> bool {
+    matches!(
+        idx,
+        Expr::BinOp(l, BinOp::Sub, r)
+            if matches!(l.as_ref(), Expr::Var(_))
+                && matches!(r.as_ref(), Expr::IntLiteral(1))
+    )
+}
+
 fn output_read_back(s: &Statement, outputs: &[String]) -> Option<String> {
     let mut hit: Option<String> = None;
     let mut check_value = |e: &Expr| {
         walk_expr(e, &mut |x| {
-            if let Expr::ArrayAccess(n, _) = x {
-                if outputs.iter().any(|o| o == n) && hit.is_none() {
+            if let Expr::ArrayAccess(n, idx) = x {
+                if outputs.iter().any(|o| o == n)
+                    && hit.is_none()
+                    && !is_prev_output_read(idx)
+                {
                     hit = Some(n.clone());
                 }
             }
@@ -2297,6 +2353,16 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
 
     let mut out = rewritten;
     insert_transition_prologue(&mut out, model, names, identity_branch);
+    // Previous-output feedback: refresh lastOut_* AFTER the body computed
+    // this bar's output (reads of out[idx-1] were rewritten to the state
+    // field, which still held the prior bar's value during the body).
+    for name in &model.out_feedback {
+        out.push(Statement::Assign {
+            target: Expr::Var(names.state(&format!("lastOut_{name}"))),
+            value: names.output(name),
+            compound: false,
+        });
+    }
     // Lag shifts, deepest slot first, then the new bar into lag1.
     for lag in &model.lags {
         for k in (2..=lag.depth).rev() {
@@ -2452,6 +2518,143 @@ fn hoist_ternary_indices(stmts: &[Statement]) -> Vec<Statement> {
     rewrite_stmts(stmts, &fe, &Some)
 }
 
+/// Rewrite `for (i = cursor - E; i <= cursor; i++) BODY` into
+/// `for (i = E; i >= 0; i--) BODY[i := cursor - i]`. Iteration order over
+/// bars is reversed relative to batch, so this applies ONLY when the body
+/// is order-independent for FP purposes — conservatively: never. Instead
+/// the counter keeps ascending bar order by iterating the OFFSET downward:
+/// offset w runs E..0, so `cursor - w` still visits bars oldest-first and
+/// the FP accumulation order is untouched.
+fn reindex_cursor_windows(stmts: &[Statement], cursor: &str) -> Vec<Statement> {
+    stmts
+        .iter()
+        .map(|st| reindex_one(st, cursor))
+        .collect()
+}
+
+/// Match `for (i = cursor - E; i <= cursor; i++)` and return `(i, E)`.
+fn match_cursor_anchored_loop(
+    init: &Statement,
+    condition: &Expr,
+    update: &Statement,
+    cursor: &str,
+) -> Option<(String, Expr)> {
+    match (init, condition) {
+        (
+            Statement::Assign {
+                target: Expr::Var(iv),
+                value: Expr::BinOp(l, BinOp::Sub, e),
+                ..
+            },
+            Expr::BinOp(cl, BinOp::LessEq, cr),
+        ) => {
+            let init_from_cursor = matches!(l.as_ref(), Expr::Var(v) if v == cursor);
+            let cond_i_le_cursor = matches!(cl.as_ref(), Expr::Var(v) if v == iv)
+                && matches!(cr.as_ref(), Expr::Var(v) if v == cursor);
+            let inc = match update {
+                Statement::Expr(Expr::PostIncrement(b) | Expr::PreIncrement(b)) => {
+                    matches!(b.as_ref(), Expr::Var(v) if v == iv)
+                }
+                // `i++` also parses as the compound `i = i + 1`.
+                Statement::Assign {
+                    target: Expr::Var(tv),
+                    value: Expr::BinOp(al, BinOp::Add, ar),
+                    ..
+                } => {
+                    tv == iv
+                        && matches!(al.as_ref(), Expr::Var(v) if v == iv)
+                        && matches!(ar.as_ref(), Expr::IntLiteral(1))
+                }
+                _ => false,
+            };
+            if init_from_cursor && cond_i_le_cursor && inc && expr_is_pure(e) {
+                Some((iv.clone(), (**e).clone()))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn reindex_one(st: &Statement, cursor: &str) -> Statement {
+    if let Statement::ForC {
+        init,
+        condition,
+        update,
+        body,
+    } = st
+    {
+        if let Some((iv, bound)) = match_cursor_anchored_loop(init, condition, update, cursor) {
+            // Substitute i := cursor - i in the body (bars still visit
+            // oldest-first: offset counts E down to 0).
+            let cur = cursor.to_string();
+            let iv2 = iv.clone();
+            let fe = move |e: Expr| -> Expr {
+                match e {
+                    Expr::Var(v) if v == iv2 => Expr::BinOp(
+                        Box::new(Expr::Var(cur.clone())),
+                        BinOp::Sub,
+                        Box::new(Expr::Var(iv2.clone())),
+                    ),
+                    other => other,
+                }
+            };
+            let new_body = rewrite_stmts(body, &fe, &Some);
+            return Statement::ForC {
+                init: Box::new(Statement::Assign {
+                    target: Expr::Var(iv.clone()),
+                    value: bound,
+                    compound: false,
+                }),
+                condition: Expr::BinOp(
+                    Box::new(Expr::Var(iv.clone())),
+                    BinOp::GreaterEq,
+                    Box::new(Expr::IntLiteral(0)),
+                ),
+                // The canonical IR form for `i--` (the parser's own shape;
+                // Statement::Expr(PostDecrement) renders empty in C).
+                update: Box::new(Statement::Assign {
+                    target: Expr::Var(iv.clone()),
+                    value: Expr::BinOp(
+                        Box::new(Expr::Var(iv)),
+                        BinOp::Sub,
+                        Box::new(Expr::IntLiteral(1)),
+                    ),
+                    compound: true,
+                }),
+                body: new_body,
+            };
+        }
+    }
+    // Recurse into compound statements.
+    match st {
+        Statement::While { condition, body } => Statement::While {
+            condition: condition.clone(),
+            body: reindex_cursor_windows(body, cursor),
+        },
+        Statement::DoWhile { condition, body } => Statement::DoWhile {
+            condition: condition.clone(),
+            body: reindex_cursor_windows(body, cursor),
+        },
+        Statement::If {
+            condition,
+            then_body,
+            else_body,
+            cond_comments,
+        } => Statement::If {
+            condition: condition.clone(),
+            then_body: reindex_cursor_windows(then_body, cursor),
+            else_body: reindex_cursor_windows(else_body, cursor),
+            cond_comments: cond_comments.clone(),
+        },
+        Statement::Block { body } => Statement::Block {
+            body: reindex_cursor_windows(body, cursor),
+        },
+        other => other.clone(),
+    }
+}
+
 /// True when evaluating the expression has no side effects.
 fn expr_is_pure(e: &Expr) -> bool {
     match e {
@@ -2596,6 +2799,11 @@ fn rewrite_expr_for_transition(
                 names.extrema_buf(&n),
                 Box::new(Expr::BinOp(idx, BinOp::Mod, Box::new(Expr::Var(names.extrema_cap())))),
             )
+        }
+        Expr::ArrayAccess(n, idx)
+            if model.out_feedback.contains(&n) && is_prev_output_read(&idx) =>
+        {
+            Expr::Var(names.state(&format!("lastOut_{n}")))
         }
         Expr::ArrayAccess(n, idx) if state_names.contains(&n) => {
             Expr::ArrayAccess(names.state(&n), idx)

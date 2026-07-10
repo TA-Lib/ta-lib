@@ -60,7 +60,7 @@ DEF_FUNCTION( IMI,
               TA_GroupId_MomentumIndicators,
               "Intraday Momentum Index",
               "Imi",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* IMI END */
 

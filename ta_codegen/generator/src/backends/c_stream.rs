@@ -232,6 +232,9 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
     for (name, ty) in &model.state {
         let _ = writeln!(o, "   {};", c_decl(ty, name));
     }
+    for name in &model.out_feedback {
+        let _ = writeln!(o, "   {} lastOut_{name};", out_c_type(func, name));
+    }
     for lag in &model.lags {
         for k in 1..=lag.depth {
             let _ = writeln!(o, "   double {};", StreamModel::lag_field(&lag.array, k));
@@ -607,6 +610,9 @@ fn alloc_and_capture(
         let _ = writeln!(s, "{pad}sp->{name} = {name};");
     }
     if with_state {
+        for name in &model.out_feedback {
+            let _ = writeln!(s, "{pad}sp->lastOut_{name} = lastValue_{name};");
+        }
         for (name, ty) in &model.state {
             if matches!(
                 ty,
@@ -916,10 +922,20 @@ fn build_open_body(model: &StreamModel) -> Vec<Statement> {
     // read on that field and the zero is dead state.
     let state_names: std::collections::BTreeMap<String, crate::ir::VarType> =
         model.state.iter().cloned().collect();
+    let fb_outputs = model.out_feedback.clone();
     let fe = move |e: Expr| -> Expr {
         match e {
             Expr::PointerDeref(nm) if nm == "outBegIdx" => Expr::Var("dummyBegIdx".into()),
             Expr::PointerDeref(nm) if nm == "outNBElement" => Expr::Var("dummyNBElement".into()),
+            // Previous-output feedback read: in the transcription the output
+            // array does not exist; lastValue_<out> still holds the previous
+            // bar's value at the point of the read.
+            Expr::ArrayAccess(nm, idx)
+                if fb_outputs.contains(&nm)
+                    && crate::streaming::is_prev_output_read(&idx) =>
+            {
+                Expr::Var(format!("lastValue_{nm}"))
+            }
             other => other,
         }
     };

@@ -4419,6 +4419,26 @@ TA_LIB_API TA_RetCode TA_S_DX( int    startIdx,
 TA_LIB_API int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_DX — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_DX_Stream TA_DX_Stream;
+
+TA_LIB_API TA_RetCode TA_DX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_DX_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DX_Update( TA_DX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DX_Peek( const TA_DX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DX_Close( TA_DX_Stream *stream );
+
 /*
  * TA_EMA - Exponential Moving Average
  * 
@@ -4740,6 +4760,26 @@ TA_LIB_API TA_RetCode TA_S_IMI( int    startIdx,
 
 TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_IMI — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_IMI_Stream TA_IMI_Stream;
+
+TA_LIB_API TA_RetCode TA_IMI_Open( int optInTimePeriod, const double inOpen[], const double inClose[], int historyLen, TA_IMI_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream );
 
 /*
  * TA_KAMA - Kaufman Adaptive Moving Average

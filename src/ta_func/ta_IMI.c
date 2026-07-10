@@ -304,3 +304,172 @@ TA_RetCode TA_S_IMI_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_IMI_Stream {
+   int optInTimePeriod;
+   int winPos_i;
+   int winCap_i;
+   double *win_i_inOpen;
+   double *winMirror_i_inOpen;
+   double *win_i_inClose;
+   double *winMirror_i_inClose;
+};
+
+static void TA_IMI_StreamRelease( struct TA_IMI_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->win_i_inOpen ) TA_Free( sp->win_i_inOpen );
+   if( sp->winMirror_i_inOpen ) TA_Free( sp->winMirror_i_inOpen );
+   if( sp->win_i_inClose ) TA_Free( sp->win_i_inClose );
+   if( sp->winMirror_i_inClose ) TA_Free( sp->winMirror_i_inClose );
+   TA_Free( sp );
+}
+
+static void TA_IMI_StreamStep( struct TA_IMI_Stream *sp, double inOpen, double inClose, double *outReal )
+{
+   double upsum;
+   double downsum;
+   int i;
+   double close;
+   double open;
+
+   sp->win_i_inOpen[sp->winPos_i] = inOpen;
+   sp->win_i_inClose[sp->winPos_i] = inClose;
+   upsum = 0.0;
+   downsum = 0.0;
+   for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
+   {
+      close = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
+      open = sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
+      if( close > open )
+      {
+         upsum += close - open;
+      } else 
+      {
+         downsum += open - close;
+      }
+      *outReal= 100.0 * (upsum / (upsum + downsum));
+   }
+   sp->winPos_i = sp->winPos_i + 1;
+   if( sp->winPos_i >= sp->winCap_i )
+   {
+      sp->winPos_i = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Open( int optInTimePeriod, const double inOpen[], const double inClose[], int historyLen, TA_IMI_Stream **stream, double *outReal )
+{
+   struct TA_IMI_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int lookback;
+      int outIdx = 0;
+      lookback = TA_IMI_Lookback(optInTimePeriod);
+      if( startIdx < lookback )
+      {
+         startIdx = lookback;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      dummyBegIdx = startIdx;
+      while( startIdx <= endIdx )
+      {
+         double upsum = 0.0;
+         double downsum = 0.0;
+         int i;
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
+         {
+            double close = inClose[i];
+            double open = inOpen[i];
+            if( close > open )
+            {
+               upsum += close - open;
+            } else 
+            {
+               downsum += open - close;
+            }
+            lastValue_outReal = 100.0 * (upsum / (upsum + downsum));
+         }
+         startIdx += 1;
+         outIdx += 1;
+      }
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_IMI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->winCap_i = (int)(optInTimePeriod - 1 + 1);
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inOpen ) { TA_IMI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inOpen ) { TA_IMI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inOpen, inOpen + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inClose ) { TA_IMI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inClose ) { TA_IMI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->winPos_i = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_IMI_StreamStep( stream, inOpen, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal )
+{
+   struct TA_IMI_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.win_i_inOpen = stream->winMirror_i_inOpen;
+   memcpy( scratch.win_i_inOpen, stream->win_i_inOpen, sizeof(double) * (size_t)stream->winCap_i );
+   scratch.win_i_inClose = stream->winMirror_i_inClose;
+   memcpy( scratch.win_i_inClose, stream->win_i_inClose, sizeof(double) * (size_t)stream->winCap_i );
+   TA_IMI_StreamStep( &scratch, inOpen, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream )
+{
+   TA_IMI_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

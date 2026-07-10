@@ -111,7 +111,7 @@ DEF_FUNCTION( DX,
               TA_GroupId_MomentumIndicators,
               "Directional Movement Index",
               "Dx",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* DX END */
 
