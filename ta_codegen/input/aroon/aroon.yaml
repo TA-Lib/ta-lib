@@ -2,7 +2,7 @@ name: AROON
 camel_case: Aroon
 group: Momentum Indicators
 hint: Aroon
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHL
     type: price

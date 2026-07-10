@@ -312,7 +312,7 @@ DEF_FUNCTION( AROON,
               TA_GroupId_MomentumIndicators,
               "Aroon",
               "Aroon",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* AROON END */
 
@@ -338,7 +338,7 @@ DEF_FUNCTION( AROONOSC,
               TA_GroupId_MomentumIndicators,
               "Aroon Oscillator",
               "AroonOsc",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* AROONOSC END */
 

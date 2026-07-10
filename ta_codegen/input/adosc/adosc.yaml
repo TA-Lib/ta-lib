@@ -2,8 +2,7 @@ name: ADOSC
 camel_case: AdOsc
 group: Volume Indicators
 hint: Chaikin A/D Oscillator
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inPriceHLCV
     type: price

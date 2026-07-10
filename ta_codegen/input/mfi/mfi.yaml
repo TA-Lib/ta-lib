@@ -2,7 +2,7 @@ name: MFI
 camel_case: Mfi
 group: Momentum Indicators
 hint: Money Flow Index
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHLCV
     type: price

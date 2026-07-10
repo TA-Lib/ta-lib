@@ -149,7 +149,7 @@ DEF_FUNCTION( BETA,
               TA_GroupId_Statistic,
               "Beta",
               "Beta",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* BETA END */
 

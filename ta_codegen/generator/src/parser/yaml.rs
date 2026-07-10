@@ -16,8 +16,6 @@ struct YamlFunc {
     inputs: Vec<YamlInput>,
     optional_inputs: Option<Vec<YamlOptParam>>,
     outputs: Vec<YamlOutput>,
-    /// `streaming: true` opts the function into the generated streaming API.
-    streaming: Option<bool>,
 }
 
 /// Flags can be a single string or a list of strings.
@@ -167,13 +165,18 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         })
         .collect();
 
+    let flags = yaml.flags.into_vec();
+    // `stream` in the flags list opts the function into the generated
+    // streaming API (it maps to TA_FUNC_FLG_STREAM like every other flag).
+    let streaming = flags.iter().any(|f| f == "stream");
+
     FuncDef {
         name: yaml.name,
         group: yaml.group,
         description: yaml.description,
         camel_case: yaml.camel_case,
         hint: yaml.hint,
-        flags: yaml.flags.into_vec(),
+        flags,
         inputs,
         optional_inputs: opt_inputs,
         outputs,
@@ -185,6 +188,6 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
-        streaming: yaml.streaming.unwrap_or(false),
+        streaming,
     }
 }

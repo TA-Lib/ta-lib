@@ -393,6 +393,9 @@
 		<CamelCaseName>Aroon</CamelCaseName>
 		<ShortDescription>Aroon</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -443,6 +446,9 @@
 		<CamelCaseName>AroonOsc</CamelCaseName>
 		<ShortDescription>Aroon Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -762,6 +768,9 @@
 		<CamelCaseName>Beta</CamelCaseName>
 		<ShortDescription>Beta</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -844,6 +853,9 @@
 		<CamelCaseName>Cci</CamelCaseName>
 		<ShortDescription>Commodity Channel Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -3451,6 +3463,9 @@
 		<CamelCaseName>Correl</CamelCaseName>
 		<ShortDescription>Pearson&apos;s Correlation Coefficient (r)</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -3993,6 +4008,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4035,6 +4051,7 @@
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4075,6 +4092,9 @@
 		<CamelCaseName>LinearRegAngle</CamelCaseName>
 		<ShortDescription>Linear Regression Angle</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4116,6 +4136,7 @@
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4156,6 +4177,9 @@
 		<CamelCaseName>LinearRegSlope</CamelCaseName>
 		<ShortDescription>Linear Regression Slope</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4661,6 +4685,7 @@
 		<GroupId>Math Operators</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4701,6 +4726,9 @@
 		<CamelCaseName>MaxIndex</CamelCaseName>
 		<ShortDescription>Index of highest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4772,6 +4800,9 @@
 		<CamelCaseName>Mfi</CamelCaseName>
 		<ShortDescription>Money Flow Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -4825,6 +4856,7 @@
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4913,6 +4945,7 @@
 		<GroupId>Math Operators</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4953,6 +4986,9 @@
 		<CamelCaseName>MinIndex</CamelCaseName>
 		<ShortDescription>Index of lowest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4994,6 +5030,7 @@
 		<GroupId>Math Operators</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5041,6 +5078,9 @@
 		<CamelCaseName>MinMaxIndex</CamelCaseName>
 		<ShortDescription>Indexes of lowest and highest values over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5183,6 +5223,9 @@
 		<CamelCaseName>Mom</CamelCaseName>
 		<ShortDescription>Momentum</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5488,6 +5531,9 @@
 		<CamelCaseName>Roc</CamelCaseName>
 		<ShortDescription>Rate of change : ((price/prevPrice)-1)*100</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5527,6 +5573,9 @@
 		<CamelCaseName>RocP</CamelCaseName>
 		<ShortDescription>Rate of change Percentage: (price-prevPrice)/prevPrice</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5566,6 +5615,9 @@
 		<CamelCaseName>RocR</CamelCaseName>
 		<ShortDescription>Rate of change ratio: (price/prevPrice)</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5605,6 +5657,9 @@
 		<CamelCaseName>RocR100</CamelCaseName>
 		<ShortDescription>Rate of change ratio 100 scale: (price/prevPrice)*100</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5950,6 +6005,7 @@
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6347,6 +6403,9 @@
 		<CamelCaseName>Sum</CamelCaseName>
 		<ShortDescription>Summation</ShortDescription>
 		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -6662,6 +6721,7 @@
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6811,6 +6871,9 @@
 		<CamelCaseName>Variance</CamelCaseName>
 		<ShortDescription>Variance</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -6900,6 +6963,9 @@
 		<CamelCaseName>WillR</CamelCaseName>
 		<ShortDescription>Williams&apos; %R</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>

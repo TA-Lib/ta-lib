@@ -2,8 +2,7 @@ name: TEMA
 camel_case: Tema
 group: Overlap Studies
 hint: Triple Exponential Moving Average
-flags: [overlap]
-streaming: true
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

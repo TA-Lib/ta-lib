@@ -1126,7 +1126,7 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
     let group_id = group_id_string(&func.group);
     let hint = func.hint.as_deref().unwrap_or("");
     let camel = func.camel_case.as_deref().unwrap_or(name);
-    let flags_str = func_flags_string(&func.flags, func.streaming);
+    let flags_str = func_flags_string(&func.flags);
 
     let _ = writeln!(
         o,
@@ -1525,24 +1525,21 @@ fn opt_input_flags_c(flags: &[String]) -> String {
     }
 }
 
-/// Build the C flags string for function flags. `streaming` comes from the
-/// YAML `streaming: true` bool (not the flags list) and marks functions with
-/// a generated streaming API (TA_FUNC_FLG_STREAM) so wrappers can discover
-/// the stream surface through ta_abstract.
-fn func_flags_string(flags: &[String], streaming: bool) -> String {
-    let mut mapped: Vec<&str> = flags
+/// Build the C flags string for function flags. `stream` marks functions
+/// with a generated streaming API (TA_FUNC_FLG_STREAM) so wrappers can
+/// discover the stream surface through ta_abstract.
+fn func_flags_string(flags: &[String]) -> String {
+    let mapped: Vec<&str> = flags
         .iter()
         .filter_map(|f| match f.as_str() {
             "overlap" => Some("TA_FUNC_FLG_OVERLAP"),
+            "stream" => Some("TA_FUNC_FLG_STREAM"),
             "volume" => Some("TA_FUNC_FLG_VOLUME"),
             "unstable_period" => Some("TA_FUNC_FLG_UNST_PER"),
             "candlestick" => Some("TA_FUNC_FLG_CANDLESTICK"),
             _ => None,
         })
         .collect();
-    if streaming {
-        mapped.push("TA_FUNC_FLG_STREAM");
-    }
     if mapped.is_empty() {
         "0".to_string()
     } else {

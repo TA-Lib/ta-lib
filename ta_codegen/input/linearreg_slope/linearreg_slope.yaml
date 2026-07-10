@@ -2,7 +2,7 @@ name: LINEARREG_SLOPE
 camel_case: LinearRegSlope
 group: Statistic Functions
 hint: Linear Regression Slope
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

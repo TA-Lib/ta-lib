@@ -408,7 +408,7 @@ DEF_FUNCTION( SMA,
               TA_GroupId_OverlapStudies,
               "Simple Moving Average",
               "Sma",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* SMA END */
 
@@ -772,7 +772,7 @@ DEF_FUNCTION( SUM,
               TA_GroupId_MathOperators,
               "Summation",
               "Sum",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* SUM END */
 

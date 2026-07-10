@@ -1754,7 +1754,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffset
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_SAREXT_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInStartValue = optInStartValue;
       sp->optInOffsetOnReverse = optInOffsetOnReverse;

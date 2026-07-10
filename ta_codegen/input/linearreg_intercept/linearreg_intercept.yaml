@@ -2,7 +2,7 @@ name: LINEARREG_INTERCEPT
 camel_case: LinearRegIntercept
 group: Statistic Functions
 hint: Linear Regression Intercept
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

@@ -2,7 +2,7 @@ name: VAR
 camel_case: Variance
 group: Statistic Functions
 hint: Variance
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

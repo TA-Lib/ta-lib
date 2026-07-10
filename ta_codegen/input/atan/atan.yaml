@@ -2,8 +2,7 @@ name: ATAN
 camel_case: Atan
 group: Math Transform
 hint: Vector Trigonometric ATan
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

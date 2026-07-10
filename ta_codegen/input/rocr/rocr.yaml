@@ -2,7 +2,7 @@ name: ROCR
 camel_case: RocR
 group: Momentum Indicators
 hint: "Rate of change ratio: (price/prevPrice)"
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

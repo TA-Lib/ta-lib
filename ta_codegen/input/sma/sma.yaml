@@ -2,7 +2,7 @@ name: SMA
 camel_case: Sma
 group: Overlap Studies
 hint: Simple Moving Average
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

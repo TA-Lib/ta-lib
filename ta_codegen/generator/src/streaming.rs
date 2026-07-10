@@ -15,7 +15,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::ir::{BinOp, Expr, FuncDef, ParamType, Statement, StreamTier, VarType};
+use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, FuncDef, ParamType, Statement, StreamTier, VarType};
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -61,6 +61,80 @@ impl std::fmt::Display for StreamError {
 pub struct LagSlot {
     pub array: String,
     pub depth: i64,
+}
+
+/// One trailing-window ring: a batch index variable that walks the inputs a
+/// fixed distance behind the cursor (`in[trailingIdx]`, SMA-style). The
+/// stream keeps one position/capacity per index variable and one buffer per
+/// input array it reads (CDL-style windows read several arrays through the
+/// same trailing index). The capacity (`cursor - var`, loop-invariant) is
+/// captured NUMERICALLY at the end of open — no symbolic analysis.
+///
+/// Phase-free only: the transition reads exactly `ring[pos]` (the oldest
+/// slot). Batch code that iterates a buffer in storage order (CCI-class
+/// CIRCBUF sums) has a rotation-phase-dependent FP order and is handled by
+/// the CIRCBUF tranche, not this model.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RingSpec {
+    /// The batch trailing index variable (dropped from the transition).
+    pub var: String,
+    /// Input arrays read through it, in signature order.
+    pub arrays: Vec<String>,
+}
+
+/// One bounded rescan window: an inner loop reads `in[cursor - w]` where `w`
+/// is that loop's counter, bounded by a parameter expression (LINEARREG's
+/// `for(i=P; i--!=0;)`, AVGDEV's `for(i=0; i<P; i++)`). The stream keeps the
+/// last `cap` bars (current bar included) in a ring written BEFORE the
+/// transition body; reads become `win[(pos + cap - w) % cap]`, so the loaded
+/// value sequence — and therefore the FP summation order — is exactly the
+/// batch's. O(cap) work per update, same as the batch's own per-bar rescan.
+#[derive(Debug, Clone)]
+pub struct WindowSpec {
+    /// The inner-loop counter variable (stays a live local in the transition).
+    pub var: String,
+    /// Window capacity: the loop bound (a parameter expression; max offset
+    /// is `cap - 1`, offset 0 is the current bar).
+    pub cap: Expr,
+    /// Input arrays read through it, in signature order.
+    pub arrays: Vec<String>,
+}
+
+/// One CIRCBUF-backed batch buffer carried as stream state. The batch loop
+/// already maintains the circular buffer across iterations (CCI/MFI class),
+/// so the stream captures the LIVE buffer — contents AND rotation phase —
+/// at the end of open. Storage-order sums (`for j: sum += buf[j]`) therefore
+/// see the exact byte sequence batch would, which is the ring-ORDER
+/// constraint from the proposal satisfied by construction.
+#[derive(Debug, Clone)]
+pub struct CircState {
+    /// CIRCBUF id (`circBuffer` in CCI).
+    pub id: String,
+    /// Storage layout: one buffer (Plain) or one per field (Class).
+    pub layout: CircBufLayout,
+}
+
+/// Absolute-index automaton (T4 extrema class: MIN/MAX/WILLR/MININDEX/
+/// AROON...). The batch keeps a cached extremum INDEX and rescans the
+/// window when it expires — tie-breaking differs between the rescan and
+/// incoming paths, so no deque can reproduce it; instead the stream
+/// transcribes the automaton verbatim: the cursor and every index local
+/// become absolute-position state ints, and every input read `in[X]` maps
+/// to `ring[X % cap]` over a ring of the last `cap` bars. Indices stay
+/// batch-absolute (index outputs match batch bit-for-bit); the absolute
+/// counters share batch's own int range (the contract is vacuous past
+/// INT_MAX bars for batch too).
+#[derive(Debug, Clone)]
+pub struct ExtremaState {
+    /// The paced window-start variable (advances once per bar with the
+    /// cursor; `cursor - trailing + 1` = ring capacity, captured
+    /// numerically at open).
+    pub trailing: String,
+    /// All other absolute-index locals of the automaton (cached extremum
+    /// index, rescan cursor, ...). Kept as state ints.
+    pub index_vars: Vec<String>,
+    /// Input arrays read through absolute indices, in signature order.
+    pub arrays: Vec<String>,
 }
 
 /// A recognized param-degenerate identity path: `if (<param> == 1) { copy
@@ -118,6 +192,15 @@ pub struct StreamModel<'a> {
     pub temps: Vec<(String, VarType)>,
     /// Bounded look-back lags, in input signature order.
     pub lags: Vec<LagSlot>,
+    /// Trailing-window rings (T3), one per trailing index variable.
+    pub rings: Vec<RingSpec>,
+    /// Bounded rescan windows (T3), one per inner-loop counter variable.
+    pub windows: Vec<WindowSpec>,
+    /// CIRCBUF-backed buffers referenced by the steady loop.
+    pub circs: Vec<CircState>,
+    /// Absolute-index automaton (T4). When set, the cursor is carried state
+    /// (not dropped) and inputs are read through the automaton ring.
+    pub extrema: Option<ExtremaState>,
     /// Recognized param==1 identity path, if the batch body has one.
     pub identity: Option<IdentityPath>,
 }
@@ -128,9 +211,15 @@ impl StreamModel<'_> {
     #[must_use]
     pub fn dropped_vars(&self) -> BTreeSet<String> {
         let mut d: BTreeSet<String> = self.out_index_vars.clone();
-        d.insert(self.cursor.clone());
+        if self.extrema.is_none() {
+            // Extrema automatons carry the cursor as absolute state.
+            d.insert(self.cursor.clone());
+        }
         if let Some(c) = &self.counter {
             d.insert(c.clone());
+        }
+        for r in &self.rings {
+            d.insert(r.var.clone());
         }
         d
     }
@@ -667,43 +756,35 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     let bar_inputs = input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     for o in &func.outputs {
-        if o.param_type != ParamType::Real {
+        if !matches!(o.param_type, ParamType::Real | ParamType::Integer) {
             return Err(StreamError::Unsupported(format!(
-                "non-real output `{}` is beyond stage 1",
+                "unsupported output type for `{}`",
                 o.name
             )));
         }
     }
 
-    let param_name_list: Vec<String> = func
-        .optional_inputs
-        .iter()
-        .map(|p| p.name.clone())
-        .collect();
+    let param_name_list: Vec<String> =
+        func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let (identity, identity_idx) =
         detect_identity_path(body, &bar_inputs, &outputs, &param_name_list);
     check_return_paths(body, identity_idx)?;
 
-    let steady = find_steady_loop(body)?;
-
-    // Transition source: loop body (+ `for` increment clause).
-    let mut steady_stmts: Vec<Statement> = steady.body.to_vec();
-    if let Some(u) = steady.for_update {
-        steady_stmts.push(u.clone());
-    }
-
-    // --- cursor -----------------------------------------------------------
-    let (cursor, counter) = if steady.form == LoopForm::Countdown {
-        let counter = countdown_counter(steady.condition).ok_or(StreamError::NoSteadyLoop)?;
-        let c = countdown_cursor(&steady_stmts, &bar_inputs, &counter)?;
-        (c, Some(counter))
-    } else {
-        let c = endidx_cursor(steady.condition).ok_or(StreamError::NoSteadyLoop)?;
-        (c, None)
-    };
+    let (loop_form, steady_stmts, cursor, counter) = extract_steady(body, &bar_inputs)?;
 
     // --- array accesses ----------------------------------------------------
-    let (lags, out_index_vars) = scan_accesses(&steady_stmts, &bar_inputs, &outputs, &cursor)?;
+
+    let scanned = scan_accesses(&steady_stmts, &bar_inputs, &outputs, &cursor)?;
+    let ScannedAccesses {
+        lags,
+        trailing,
+        windows: scanned_windows,
+        out_index_vars,
+    } = scanned;
+    let ring_vars: BTreeSet<String> = trailing.keys().cloned().collect();
+    check_window_disjoint(&scanned_windows, &ring_vars, &cursor)?;
+    let rings = assemble_rings(trailing.clone(), &bar_inputs);
+    let windows = assemble_windows(scanned_windows, &bar_inputs);
 
     // Outputs may only appear as assignment targets (no read-back).
     for s in &steady_stmts {
@@ -715,16 +796,23 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     }
 
     // --- locals ------------------------------------------------------------
-    let (state, temps) = classify_locals(
+    let (circs, circ_extra) = discover_circs(body, &steady_stmts);
+
+    let ctx = ClassifyCtx {
         body,
-        &steady_stmts,
+        steady_stmts: &steady_stmts,
         func,
-        &cursor,
-        counter.as_deref(),
-        &out_index_vars,
-        &bar_inputs,
-        &outputs,
-    )?;
+        cursor: &cursor,
+        counter: counter.as_deref(),
+        out_index_vars: &out_index_vars,
+        bar_inputs: &bar_inputs,
+        outputs: &outputs,
+        circ_extra: &circ_extra,
+    };
+    let (extrema, (mut state, temps)) =
+        classify_or_extrema(&ctx, &ring_vars, &trailing, &windows, &circs)?;
+    let rings_effective: Vec<RingSpec> = if extrema.is_some() { Vec::new() } else { rings };
+    force_circ_index_state(&circs, &mut state, &temps);
 
     // Lags in input signature order.
     let lag_slots: Vec<LagSlot> = bar_inputs
@@ -737,17 +825,21 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
         })
         .collect();
 
-    let tier = if state.is_empty() && lag_slots.is_empty() && counter.is_none() {
-        StreamTier::T1
-    } else {
-        StreamTier::T2
-    };
+    let tier = derive_tier(
+        &state,
+        &lag_slots,
+        &rings_effective,
+        &windows,
+        &circs,
+        counter.as_deref(),
+        extrema.as_ref(),
+    );
 
     Ok(StreamModel {
         func,
         body,
         tier,
-        loop_form: steady.form,
+        loop_form,
         steady_stmts,
         cursor,
         counter,
@@ -757,6 +849,10 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
         state,
         temps,
         lags: lag_slots,
+        rings: rings_effective,
+        windows,
+        circs,
+        extrema,
         identity,
     })
 }
@@ -766,12 +862,60 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
 /// the proposal): a batch rewrite that breaks stream analyzability fails
 /// HERE, not at release. The tier is derived, never declared.
 pub fn validate_streamable(func: &FuncDef) -> Result<StreamModel<'_>, String> {
-    analyze(func).map_err(|e| {
+    struct GateNames;
+    impl NameMap for GateNames {
+        fn state(&self, name: &str) -> String {
+            format!("sp->{name}")
+        }
+        fn bar(&self, array: &str) -> String {
+            array.to_string()
+        }
+        fn output(&self, name: &str) -> Expr {
+            Expr::PointerDeref(name.to_string())
+        }
+        fn ring_buf(&self, var: &str, array: &str) -> String {
+            format!("sp->ring_{var}_{array}")
+        }
+        fn ring_pos(&self, var: &str) -> String {
+            format!("sp->ringPos_{var}")
+        }
+        fn ring_cap(&self, var: &str) -> String {
+            format!("sp->ringCap_{var}")
+        }
+        fn win_buf(&self, var: &str, array: &str) -> String {
+            format!("sp->win_{var}_{array}")
+        }
+        fn win_pos(&self, var: &str) -> String {
+            format!("sp->winPos_{var}")
+        }
+        fn win_cap(&self, var: &str) -> String {
+            format!("sp->winCap_{var}")
+        }
+        fn circ_buf(&self, storage: &str) -> String {
+            format!("sp->cb_{storage}")
+        }
+        fn extrema_buf(&self, array: &str) -> String {
+            format!("sp->x_{array}")
+        }
+        fn extrema_cap(&self) -> String {
+            "sp->xCap".to_string()
+        }
+    }
+    let model = analyze(func).map_err(|e| {
         format!(
             "{}: YAML declares `streaming: true` but the function is not streamable at stage 1: {e}",
             func.name
         )
-    })
+    })?;
+    // The transition must BUILD, too — analysis success alone would let a
+    // seeded function pass the gate and then panic in the emitter.
+    build_transition(&model, &GateNames).map_err(|e| {
+        format!(
+            "{}: streamable by analysis but the transition cannot be built: {e}",
+            func.name
+        )
+    })?;
+    Ok(model)
 }
 
 /// Scan the transition statements for array accesses and stateful calls.
@@ -781,10 +925,30 @@ fn scan_accesses(
     bar_inputs: &[String],
     outputs: &[String],
     cursor: &str,
-) -> Result<(BTreeMap<String, i64>, BTreeSet<String>), StreamError> {
+) -> Result<ScannedAccesses, StreamError> {
     let mut lags: BTreeMap<String, i64> = BTreeMap::new();
+    let mut trailing: BTreeMap<String, BTreeSet<String>> = BTreeMap::new(); // var -> arrays
     let mut out_index_vars: BTreeSet<String> = BTreeSet::new();
     let mut access_err: Option<StreamError> = None;
+
+    // Inner-loop counters usable as rescan-window offsets (var -> bound).
+    let mut bound_list: Vec<(String, Expr)> = Vec::new();
+    collect_window_bounds(steady_stmts, &mut bound_list);
+    let mut window_bounds: BTreeMap<String, Expr> = BTreeMap::new();
+    for (v, e) in bound_list {
+        match window_bounds.get(&v) {
+            None => {
+                window_bounds.insert(v, e);
+            }
+            Some(prev) if format!("{prev:?}") == format!("{e:?}") => {}
+            Some(_) => {
+                return Err(StreamError::Unsupported(format!(
+                    "window counter `{v}` has inconsistent loop bounds"
+                )))
+            }
+        }
+    }
+    let mut windows: BTreeMap<String, BTreeSet<String>> = BTreeMap::new(); // var -> arrays
     for s in steady_stmts {
         walk_stmt_exprs(s, &mut |e| {
             walk_expr(e, &mut |x| {
@@ -800,7 +964,16 @@ fn scan_accesses(
                                 *d = (*d).max(k);
                             }
                             InputIndex::OtherVar(v) => {
-                                access_err = Some(StreamError::NeedsRing(v));
+                                trailing.entry(v).or_default().insert(name.clone());
+                            }
+                            InputIndex::WindowVar(w) => {
+                                if window_bounds.contains_key(&w) {
+                                    windows.entry(w).or_default().insert(name.clone());
+                                } else {
+                                    access_err = Some(StreamError::UnsupportedAccess(format!(
+                                        "{name}[cursor - {w}] with unbounded offset var"
+                                    )));
+                                }
                             }
                             InputIndex::Unsupported => {
                                 access_err = Some(StreamError::UnsupportedAccess(format!(
@@ -839,7 +1012,456 @@ fn scan_accesses(
             return Err(e);
         }
     }
-    Ok((lags, out_index_vars))
+    let window_specs: Vec<(String, Expr, BTreeSet<String>)> = windows
+        .into_iter()
+        .map(|(v, arrs)| {
+            let cap = window_bounds[&v].clone();
+            (v, cap, arrs)
+        })
+        .collect();
+    Ok(ScannedAccesses {
+        lags,
+        trailing,
+        windows: window_specs,
+        out_index_vars,
+    })
+}
+
+/// Collect inner-loop counter bounds usable as rescan windows: For-countdown
+/// (`for(i=E; i--!=0;)` — body sees i in [0, E-1]) and ForC ascending from 0
+/// (`for(i=0; i<E; i++)`). Returns var -> bound expr; a var bound twice with
+/// a different expr is rejected by the caller via the Debug-format compare.
+fn collect_window_bounds(stmts: &[Statement], out: &mut Vec<(String, Expr)>) {
+    for st in stmts {
+        match st {
+            // NOTE: Statement::For (the countdown-only IR node) is never
+            // produced by the C parser (all for-loops parse as ForC); its
+            // body range is [1, count], NOT [0, count-1], so registering it
+            // here would be an off-by-one. Recurse only.
+            Statement::For { body, .. } => {
+                collect_window_bounds(body, out);
+            }
+            Statement::ForC {
+                init,
+                condition,
+                body,
+                ..
+            } => {
+                // Ascending: for (v = 0; v < E; v++) — offsets 0..E-1.
+                if let (
+                    Statement::Assign {
+                        target: Expr::Var(v),
+                        value: Expr::IntLiteral(0),
+                        ..
+                    },
+                    Expr::BinOp(l, BinOp::Less, r),
+                ) = (init.as_ref(), condition)
+                {
+                    if matches!(l.as_ref(), Expr::Var(lv) if lv == v) {
+                        out.push((v.clone(), (**r).clone()));
+                    }
+                }
+                // Countdown: for (v = E; v-- != 0;) — body sees v in 0..E-1.
+                if let (
+                    Statement::Assign {
+                        target: Expr::Var(v),
+                        value: bound,
+                        ..
+                    },
+                    Expr::BinOp(l, BinOp::NotEq | BinOp::Greater, r),
+                ) = (init.as_ref(), condition)
+                {
+                    if matches!(r.as_ref(), Expr::IntLiteral(0))
+                        && matches!(
+                            l.as_ref(),
+                            Expr::PostDecrement(b) if matches!(b.as_ref(), Expr::Var(lv) if lv == v)
+                        )
+                        && !matches!(bound, Expr::IntLiteral(0))
+                    {
+                        out.push((v.clone(), bound.clone()));
+                    }
+                }
+                collect_window_bounds(body, out);
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::Block { body } => collect_window_bounds(body, out),
+            Statement::If {
+                then_body,
+                else_body,
+                ..
+            } => {
+                collect_window_bounds(then_body, out);
+                collect_window_bounds(else_body, out);
+            }
+            Statement::Switch { cases, default, .. } => {
+                for (_, sts) in cases {
+                    collect_window_bounds(sts, out);
+                }
+                collect_window_bounds(default, out);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Locate the steady loop and derive (form, transition statements, cursor,
+/// countdown counter).
+fn extract_steady(
+    body: &[Statement],
+    bar_inputs: &[String],
+) -> Result<(LoopForm, Vec<Statement>, String, Option<String>), StreamError> {
+    let steady = find_steady_loop(body)?;
+
+    // Transition source: loop body (+ `for` increment clause).
+    let mut steady_stmts: Vec<Statement> = steady.body.to_vec();
+    if let Some(u) = steady.for_update {
+        steady_stmts.push(u.clone());
+    }
+
+    let (cursor, counter) = if steady.form == LoopForm::Countdown {
+        let counter = countdown_counter(steady.condition).ok_or(StreamError::NoSteadyLoop)?;
+        let c = countdown_cursor(&steady_stmts, bar_inputs, &counter)?;
+        (c, Some(counter))
+    } else {
+        let c = endidx_cursor(steady.condition).ok_or(StreamError::NoSteadyLoop)?;
+        (c, None)
+    };
+    Ok((steady.form, steady_stmts, cursor, counter))
+}
+
+/// Bundled inputs for local classification (analyze() internals).
+struct ClassifyCtx<'a> {
+    body: &'a [Statement],
+    steady_stmts: &'a [Statement],
+    func: &'a FuncDef,
+    cursor: &'a str,
+    counter: Option<&'a str>,
+    out_index_vars: &'a BTreeSet<String>,
+    bar_inputs: &'a [String],
+    outputs: &'a [String],
+    circ_extra: &'a [(String, VarType)],
+}
+
+type Classified = (Vec<ScalarField>, Vec<ScalarField>);
+
+/// Classify locals; when the bookkeeping-purity gate trips on a cached-index
+/// automaton, retry in absolute-index (extrema) mode: the cursor and every
+/// index local become carried state and inputs read through the automaton
+/// ring.
+fn classify_or_extrema(
+    ctx: &ClassifyCtx,
+    ring_vars: &BTreeSet<String>,
+    trailing: &BTreeMap<String, BTreeSet<String>>,
+    windows: &[WindowSpec],
+    circs: &[CircState],
+) -> Result<(Option<ExtremaState>, Classified), StreamError> {
+    let run = |rings: &BTreeSet<String>| {
+        classify_locals(
+            ctx.body,
+            ctx.steady_stmts,
+            ctx.func,
+            ctx.cursor,
+            ctx.counter,
+            ctx.out_index_vars,
+            rings,
+            ctx.bar_inputs,
+            ctx.outputs,
+            ctx.circ_extra,
+        )
+    };
+    match run(ring_vars) {
+        Ok(st) => Ok((None, st)),
+        Err(StreamError::Unsupported(ref msg)) if msg.contains("index bookkeeping") => {
+            if !windows.is_empty() || !circs.is_empty() || ctx.counter.is_some() {
+                return Err(StreamError::Unsupported(
+                    "extrema automaton mixed with other buffer forms".into(),
+                ));
+            }
+            let ex = build_extrema(
+                ctx.steady_stmts,
+                ctx.cursor,
+                ctx.out_index_vars,
+                trailing,
+                ctx.bar_inputs,
+            )?;
+            let mut st = run(&BTreeSet::new())?; // index locals = plain int state
+            if !st.0.iter().any(|(n2, _)| n2 == ctx.cursor) {
+                st.0.push((ctx.cursor.to_string(), VarType::Integer));
+            }
+            Ok((Some(ex), st))
+        }
+        Err(e) => Err(e),
+    }
+}
+
+/// Build the absolute-index automaton description. The paced variable is
+/// the one advanced exactly once per bar at the loop's top level (the
+/// window start); everything else that indexes the inputs is a free
+/// automaton index. Reads through those indices are trusted to stay inside
+/// `[trailing, cursor]` — the batch automaton guarantees it, and any
+/// violation reads a stale ring slot and fails the bitwise gate loudly.
+fn build_extrema(
+    steady_stmts: &[Statement],
+    cursor: &str,
+    out_index_vars: &BTreeSet<String>,
+    trailing: &BTreeMap<String, BTreeSet<String>>,
+    bar_inputs: &[String],
+) -> Result<ExtremaState, StreamError> {
+    // Paced vars: top-level `v = v + 1` or `v++` (excluding cursor/outIdx).
+    let mut paced: Vec<String> = Vec::new();
+    for st in steady_stmts {
+        let v = match st {
+            Statement::Assign {
+                target: Expr::Var(v),
+                value:
+                    Expr::BinOp(l, BinOp::Add, r),
+                ..
+            } if matches!(l.as_ref(), Expr::Var(lv) if lv == v)
+                && matches!(r.as_ref(), Expr::IntLiteral(1)) =>
+            {
+                Some(v.clone())
+            }
+            Statement::Expr(Expr::PostIncrement(b) | Expr::PreIncrement(b)) => match b.as_ref() {
+                Expr::Var(v) => Some(v.clone()),
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(v) = v {
+            if v != cursor && !out_index_vars.contains(&v) && !paced.contains(&v) {
+                paced.push(v);
+            }
+        }
+    }
+    // The window start is the paced var that is NOT itself an input reader
+    // (cached indices read inputs; the trailing bound usually does not) —
+    // when ambiguous, a single paced var wins.
+    // Strict: exactly one paced variable. A heuristic pick among several
+    // could silently choose a wrong window start (wrong ring capacity);
+    // nothing in the corpus needs more than one.
+    if paced.len() != 1 {
+        return Err(StreamError::Unsupported(format!(
+            "extrema automaton: expected exactly one window-start variable, found {paced:?}"
+        )));
+    }
+    let trailing_var = paced.remove(0);
+    let _ = &trailing; // arrays derived below; map retained for callers
+    let index_vars: Vec<String> = trailing
+        .keys()
+        .filter(|v| **v != trailing_var)
+        .cloned()
+        .collect();
+    // The ring must cover every input array the loop reads.
+    let mut used: BTreeSet<String> = BTreeSet::new();
+    for st in steady_stmts {
+        walk_stmt_exprs(st, &mut |e| {
+            walk_expr(e, &mut |x| {
+                if let Expr::ArrayAccess(n2, _) = x {
+                    if bar_inputs.iter().any(|a| a == n2) {
+                        used.insert(n2.clone());
+                    }
+                }
+            });
+        });
+    }
+    Ok(ExtremaState {
+        trailing: trailing_var,
+        index_vars,
+        arrays: bar_inputs.iter().filter(|a| used.contains(*a)).cloned().collect(),
+    })
+}
+
+/// The CIRCBUF index scalars are read/written inside the opaque
+/// CIRCBUF_NEXT statement (invisible to the expression walkers): force both
+/// into carried state so the transition's expansion has its fields.
+fn force_circ_index_state(
+    circs: &[CircState],
+    state: &mut Vec<ScalarField>,
+    temps: &[ScalarField],
+) {
+    for c in circs {
+        for n2 in [format!("{}_Idx", c.id), format!("maxIdx_{}", c.id)] {
+            if !state.iter().any(|(sn, _)| *sn == n2)
+                && !temps.iter().any(|(tn, _)| *tn == n2)
+            {
+                state.push((n2, VarType::Integer));
+            }
+        }
+    }
+}
+
+/// CIRCBUF buffers the steady loop touches, plus the synthetic decls for
+/// the index scalars / storage pointers the macros introduce.
+fn discover_circs(
+    body: &[Statement],
+    steady_stmts: &[Statement],
+) -> (Vec<CircState>, Vec<(String, VarType)>) {
+    let mut all_circs: Vec<CircState> = Vec::new();
+    collect_circ_prologs(body, &mut all_circs);
+    let mut loop_names = BTreeSet::new();
+    for st in steady_stmts {
+        stmt_var_names(st, &mut loop_names);
+    }
+    let circs: Vec<CircState> = all_circs
+        .into_iter()
+        .filter(|c| {
+            circ_storages(c).iter().any(|(n, _)| loop_names.contains(n))
+                || loop_names.contains(&format!("{}_Idx", c.id))
+        })
+        .collect();
+    let circ_extra: Vec<(String, VarType)> = circs
+        .iter()
+        .flat_map(|c| {
+            let mut v = vec![
+                (format!("{}_Idx", c.id), VarType::Integer),
+                (format!("maxIdx_{}", c.id), VarType::Integer),
+            ];
+            for (storage, _) in circ_storages(c) {
+                v.push((storage, VarType::RealPointer)); // excluded from scalars
+            }
+            v
+        })
+        .collect();
+    (circs, circ_extra)
+}
+
+/// Storage buffer names of a CIRCBUF (mirrors backends::c::circbuf_fields):
+/// Plain -> [`id`]; Class -> [`id_field`, ...].
+pub fn circ_storages(c: &CircState) -> Vec<(String, VarType)> {
+    match &c.layout {
+        CircBufLayout::Plain(t) => vec![(c.id.clone(), t.clone())],
+        CircBufLayout::Class(fields) => fields
+            .iter()
+            .map(|(f, t)| (format!("{}_{f}", c.id), t.clone()))
+            .collect(),
+    }
+}
+
+/// Collect CIRCBUF prologs anywhere in the body (they are hoisted decls).
+fn collect_circ_prologs(stmts: &[Statement], out: &mut Vec<CircState>) {
+    for st in stmts {
+        match st {
+            Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) => {
+                if !out.iter().any(|c| c.id == *id) {
+                    out.push(CircState {
+                        id: id.clone(),
+                        layout: layout.clone(),
+                    });
+                }
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::Block { body } => collect_circ_prologs(body, out),
+            Statement::If {
+                then_body,
+                else_body,
+                ..
+            } => {
+                collect_circ_prologs(then_body, out);
+                collect_circ_prologs(else_body, out);
+            }
+            Statement::Switch { cases, default, .. } => {
+                for (_, sts) in cases {
+                    collect_circ_prologs(sts, out);
+                }
+                collect_circ_prologs(default, out);
+            }
+            Statement::ForC { init, body, .. } => {
+                collect_circ_prologs(std::slice::from_ref(init), out);
+                collect_circ_prologs(body, out);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// A window counter cannot double as trailing index or cursor.
+fn check_window_disjoint(
+    scanned_windows: &[(String, Expr, BTreeSet<String>)],
+    ring_vars: &BTreeSet<String>,
+    cursor: &str,
+) -> Result<(), StreamError> {
+    for (w, _, _) in scanned_windows {
+        if ring_vars.contains(w) || w == cursor {
+            return Err(StreamError::Unsupported(format!(
+                "`{w}` is both a window counter and another index kind"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Windows in a stable order, arrays in signature order.
+fn assemble_windows(
+    scanned: Vec<(String, Expr, BTreeSet<String>)>,
+    bar_inputs: &[String],
+) -> Vec<WindowSpec> {
+    scanned
+        .into_iter()
+        .map(|(var, cap, arrs)| WindowSpec {
+            var,
+            cap,
+            arrays: bar_inputs
+                .iter()
+                .filter(|a| arrs.contains(*a))
+                .cloned()
+                .collect(),
+        })
+        .collect()
+}
+
+/// T3 when any buffer state exists; T1 for stateless maps; T2 otherwise.
+#[allow(clippy::too_many_arguments)]
+fn derive_tier(
+    state: &[ScalarField],
+    lags: &[LagSlot],
+    rings: &[RingSpec],
+    windows: &[WindowSpec],
+    circs: &[CircState],
+    counter: Option<&str>,
+    extrema: Option<&ExtremaState>,
+) -> StreamTier {
+    if extrema.is_some() {
+        StreamTier::T4
+    } else if !rings.is_empty() || !windows.is_empty() || !circs.is_empty() {
+        StreamTier::T3
+    } else if state.is_empty() && lags.is_empty() && counter.is_none() {
+        StreamTier::T1
+    } else {
+        StreamTier::T2
+    }
+}
+
+/// Rings in a stable order: by variable name, arrays in signature order.
+fn assemble_rings(
+    trailing: BTreeMap<String, BTreeSet<String>>,
+    bar_inputs: &[String],
+) -> Vec<RingSpec> {
+    trailing
+        .into_iter()
+        .map(|(var, arrs)| RingSpec {
+            var,
+            arrays: bar_inputs
+                .iter()
+                .filter(|a| arrs.contains(*a))
+                .cloned()
+                .collect(),
+        })
+        .collect()
+}
+
+/// Result of scanning the transition statements for array accesses.
+struct ScannedAccesses {
+    /// Per-array max bounded look-back depth (`in[cursor - K]`).
+    lags: BTreeMap<String, i64>,
+    /// Trailing index variables and the input arrays each one reads.
+    trailing: BTreeMap<String, BTreeSet<String>>,
+    /// Rescan windows: (counter var, bound expr, arrays read).
+    windows: Vec<(String, Expr, BTreeSet<String>)>,
+    /// Output-index variables (dropped in the transition).
+    out_index_vars: BTreeSet<String>,
 }
 
 /// A named scalar with its declared type — one state field or temp local.
@@ -855,11 +1477,24 @@ fn classify_locals(
     cursor: &str,
     counter: Option<&str>,
     out_index_vars: &BTreeSet<String>,
+    ring_vars: &BTreeSet<String>,
     bar_inputs: &[String],
     outputs: &[String],
+    circ_extra: &[(String, VarType)],
 ) -> Result<(Vec<ScalarField>, Vec<ScalarField>), StreamError> {
     let mut decls = BTreeMap::new();
     collect_var_decls(body, &mut decls);
+    // CIRCBUF macros introduce names without VarDecl statements: the shared
+    // index scalars (state candidates) and the storage pointers (excluded —
+    // the buffers themselves are captured separately).
+    let mut circ_buffers: BTreeSet<String> = BTreeSet::new();
+    for (n2, t) in circ_extra {
+        if matches!(t, VarType::RealPointer) {
+            circ_buffers.insert(n2.clone());
+        } else {
+            decls.insert(n2.clone(), t.clone());
+        }
+    }
 
     let mut loop_vars = BTreeSet::new();
     for s in steady_stmts {
@@ -887,6 +1522,8 @@ fn classify_locals(
         if *v == cursor
             || Some(v.as_str()) == counter
             || out_index_vars.contains(v)
+            || ring_vars.contains(v)
+            || circ_buffers.contains(v)
             || param_names.contains(v)
             || bar_inputs.contains(v)
             || outputs.contains(v)
@@ -905,7 +1542,9 @@ fn classify_locals(
     // Bookkeeping purity: statements the transition deleter will drop
     // must not read or mutate anything but index vars — a side effect
     // hiding in a dropped statement would be lost silently.
-    check_bookkeeping_purity(steady_stmts, cursor, counter, out_index_vars)?;
+    let mut index_vars: BTreeSet<String> = out_index_vars.clone();
+    index_vars.extend(ring_vars.iter().cloned());
+    check_bookkeeping_purity(steady_stmts, cursor, counter, &index_vars)?;
 
     // Carried vs temp split (sound): a candidate is a TEMP only if the
     // straight-line prefix of the transition assigns it whole (non-compound)
@@ -913,9 +1552,15 @@ fn classify_locals(
     // else is carried state.
     let temps_set = written_before_read(steady_stmts, &candidates);
 
-    // Deterministic order: follow first-declaration order in the body.
+    // Deterministic order: follow first-declaration order in the body;
+    // synthetic CIRCBUF index names append after (stable: circ_extra order).
     let mut decl_order: Vec<String> = Vec::new();
     collect_decl_order(body, &mut decl_order);
+    for (n2, t) in circ_extra {
+        if !matches!(t, VarType::RealPointer) && !decl_order.contains(n2) {
+            decl_order.push(n2.clone());
+        }
+    }
     let ordered = |names: &BTreeSet<String>| -> Vec<(String, VarType)> {
         decl_order
             .iter()
@@ -1006,6 +1651,8 @@ enum InputIndex {
     Current,
     Lag(i64),
     OtherVar(String),
+    /// `in[cursor - w]` with a variable offset (rescan window candidate).
+    WindowVar(String),
     Unsupported,
 }
 
@@ -1020,6 +1667,7 @@ fn classify_input_index(idx: &Expr, cursor: &str) -> InputIndex {
         },
         Expr::BinOp(l, BinOp::Sub, r) => match (l.as_ref(), r.as_ref()) {
             (Expr::Var(v), Expr::IntLiteral(k)) if v == cursor && *k >= 1 => InputIndex::Lag(*k),
+            (Expr::Var(v), Expr::Var(w)) if v == cursor => InputIndex::WindowVar(w.clone()),
             _ => InputIndex::Unsupported,
         },
         _ => InputIndex::Unsupported,
@@ -1266,6 +1914,24 @@ pub trait NameMap {
     fn bar(&self, array: &str) -> String;
     /// The out-pointer for output array `name`.
     fn output(&self, name: &str) -> Expr;
+    /// The ring buffer holding `array`'s window behind trailing var `var`.
+    fn ring_buf(&self, var: &str, array: &str) -> String;
+    /// The shared ring position for trailing var `var`.
+    fn ring_pos(&self, var: &str) -> String;
+    /// The shared ring capacity for trailing var `var`.
+    fn ring_cap(&self, var: &str) -> String;
+    /// The rescan-window buffer for counter `var` over `array`.
+    fn win_buf(&self, var: &str, array: &str) -> String;
+    /// The rescan-window write position for counter `var`.
+    fn win_pos(&self, var: &str) -> String;
+    /// The rescan-window capacity for counter `var`.
+    fn win_cap(&self, var: &str) -> String;
+    /// The captured CIRCBUF storage buffer named `storage`.
+    fn circ_buf(&self, storage: &str) -> String;
+    /// The extrema-automaton ring buffer for `array`.
+    fn extrema_buf(&self, array: &str) -> String;
+    /// The extrema-automaton ring capacity.
+    fn extrema_cap(&self) -> String;
 }
 
 /// Build the transition statements: the steady-loop body with
@@ -1340,9 +2006,7 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     }
 
     let mut out = rewritten;
-    if let Some(b) = identity_branch {
-        out.insert(0, b);
-    }
+    insert_transition_prologue(&mut out, model, names, identity_branch);
     // Lag shifts, deepest slot first, then the new bar into lag1.
     for lag in &model.lags {
         for k in (2..=lag.depth).rev() {
@@ -1358,7 +2022,166 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
             compound: false,
         });
     }
+    // Ring pushes: newest bar replaces the oldest slot, then the shared
+    // position advances with the conditional-reset idiom (house style; a
+    // modulo costs ~10 cycles on ARM). Order preserved vs the batch reads
+    // above: reads happened on the OLD slot contents.
+    for ring in &model.rings {
+        push_ring_advance(&mut out, ring, names);
+    }
+    // Rescan windows: the current bar was written at `pos` before the body;
+    // advance the position for the next update.
+    for win in &model.windows {
+        push_window_advance(&mut out, win, names);
+    }
     Ok(out)
+}
+
+/// `win[pos] = bar;` — the current bar enters the window before the body.
+fn window_prewrite(win: &WindowSpec, arr: &str, names: &dyn NameMap) -> Statement {
+    Statement::Assign {
+        target: Expr::ArrayAccess(
+            names.win_buf(&win.var, arr),
+            Box::new(Expr::Var(names.win_pos(&win.var))),
+        ),
+        value: Expr::Var(names.bar(arr)),
+        compound: false,
+    }
+}
+
+/// Advance a window's write position (wrap at capacity).
+fn push_window_advance(out: &mut Vec<Statement>, win: &WindowSpec, names: &dyn NameMap) {
+    out.push(Statement::Assign {
+        target: Expr::Var(names.win_pos(&win.var)),
+        value: Expr::BinOp(
+            Box::new(Expr::Var(names.win_pos(&win.var))),
+            BinOp::Add,
+            Box::new(Expr::IntLiteral(1)),
+        ),
+        compound: false,
+    });
+    out.push(Statement::If {
+        condition: Expr::BinOp(
+            Box::new(Expr::Var(names.win_pos(&win.var))),
+            BinOp::GreaterEq,
+            Box::new(Expr::Var(names.win_cap(&win.var))),
+        ),
+        then_body: vec![Statement::Assign {
+            target: Expr::Var(names.win_pos(&win.var)),
+            value: Expr::IntLiteral(0),
+            compound: false,
+        }],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
+}
+
+/// Prepend the transition prologue (in reverse insertion order): identity
+/// short-circuit, ring cap-0 guards, window pre-writes, and the extrema
+/// automaton's absolute-slot bar store (the body's own tail increments
+/// advanced the cursor state after the previous bar, so it already holds
+/// this bar's index).
+fn insert_transition_prologue(
+    out: &mut Vec<Statement>,
+    model: &StreamModel,
+    names: &dyn NameMap,
+    identity_branch: Option<Statement>,
+) {
+    if let Some(ex) = &model.extrema {
+        for arr in ex.arrays.iter().rev() {
+            out.insert(
+                0,
+                Statement::Assign {
+                    target: Expr::ArrayAccess(
+                        names.extrema_buf(arr),
+                        Box::new(Expr::BinOp(
+                            Box::new(Expr::Var(names.state(&model.cursor))),
+                            BinOp::Mod,
+                            Box::new(Expr::Var(names.extrema_cap())),
+                        )),
+                    ),
+                    value: Expr::Var(names.bar(arr)),
+                    compound: false,
+                },
+            );
+        }
+    }
+    for win in model.windows.iter().rev() {
+        for arr in win.arrays.iter().rev() {
+            out.insert(0, window_prewrite(win, arr, names));
+        }
+    }
+    for ring in model.rings.iter().rev() {
+        out.insert(0, ring_cap0_guard(ring, names));
+    }
+    if let Some(b) = identity_branch {
+        out.insert(0, b);
+    }
+}
+
+/// `if (cap == 0) ring[0] = bar;` for every array of a ring — makes the
+/// zero-lag degenerate case read the current bar through the same slot.
+fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
+    let then_body = ring
+        .arrays
+        .iter()
+        .map(|arr| Statement::Assign {
+            target: Expr::ArrayAccess(
+                names.ring_buf(&ring.var, arr),
+                Box::new(Expr::IntLiteral(0)),
+            ),
+            value: Expr::Var(names.bar(arr)),
+            compound: false,
+        })
+        .collect();
+    Statement::If {
+        condition: Expr::BinOp(
+            Box::new(Expr::Var(names.ring_cap(&ring.var))),
+            BinOp::Eq,
+            Box::new(Expr::IntLiteral(0)),
+        ),
+        then_body,
+        else_body: vec![],
+        cond_comments: vec![],
+    }
+}
+
+/// Append the end-of-update ring maintenance: store the new bar(s) into the
+/// current slot, advance the shared position, wrap at capacity.
+fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn NameMap) {
+    for arr in &ring.arrays {
+        out.push(Statement::Assign {
+            target: Expr::ArrayAccess(
+                names.ring_buf(&ring.var, arr),
+                Box::new(Expr::Var(names.ring_pos(&ring.var))),
+            ),
+            value: Expr::Var(names.bar(arr)),
+            compound: false,
+        });
+    }
+    out.push(Statement::Assign {
+        target: Expr::Var(names.ring_pos(&ring.var)),
+        value: Expr::BinOp(
+            Box::new(Expr::Var(names.ring_pos(&ring.var))),
+            BinOp::Add,
+            Box::new(Expr::IntLiteral(1)),
+        ),
+        compound: false,
+    });
+    out.push(Statement::If {
+        condition: Expr::BinOp(
+            Box::new(Expr::Var(names.ring_pos(&ring.var))),
+            BinOp::GreaterEq,
+            Box::new(Expr::Var(names.ring_cap(&ring.var))),
+        ),
+        then_body: vec![Statement::Assign {
+            target: Expr::Var(names.ring_pos(&ring.var)),
+            value: Expr::IntLiteral(0),
+            compound: false,
+        }],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
 }
 
 fn rewrite_expr_for_transition(
@@ -1368,12 +2191,75 @@ fn rewrite_expr_for_transition(
     state_names: &BTreeSet<String>,
 ) -> Expr {
     match e {
+        Expr::ArrayAccess(n, idx)
+            if model.extrema.is_some() && model.bar_inputs.contains(&n) =>
+        {
+            // Absolute-index automaton: every input read maps to the ring
+            // slot of its absolute position (the index expression's vars
+            // were already state-mapped bottom-up).
+            Expr::ArrayAccess(
+                names.extrema_buf(&n),
+                Box::new(Expr::BinOp(idx, BinOp::Mod, Box::new(Expr::Var(names.extrema_cap())))),
+            )
+        }
         Expr::ArrayAccess(n, idx) if model.bar_inputs.contains(&n) => {
             match classify_input_index(&idx, &model.cursor) {
                 InputIndex::Current => Expr::Var(names.bar(&n)),
                 InputIndex::Lag(k) => Expr::Var(names.state(&StreamModel::lag_field(&n, k))),
+                InputIndex::OtherVar(v)
+                    if model.rings.iter().any(|r| r.var == v) =>
+                {
+                    // Oldest slot of the trailing window: ring[pos].
+                    Expr::ArrayAccess(
+                        names.ring_buf(&v, &n),
+                        Box::new(Expr::Var(names.ring_pos(&v))),
+                    )
+                }
+                InputIndex::WindowVar(w0) => {
+                    // Bottom-up rewriting may already have state-mapped the
+                    // offset var; resolve back to the window it belongs to.
+                    let win = model.windows.iter().find(|win| {
+                        win.var == w0 || names.state(&win.var) == w0
+                    });
+                    match win {
+                        Some(win) => {
+                            // win[(pos + cap - w) % cap]: bar `w` back from
+                            // the current one (slot `pos` holds the current
+                            // bar — written before the transition body).
+                            let pos = Expr::Var(names.win_pos(&win.var));
+                            let cap = Expr::Var(names.win_cap(&win.var));
+                            let idx_expr = Expr::BinOp(
+                                Box::new(Expr::BinOp(
+                                    Box::new(Expr::BinOp(
+                                        Box::new(pos),
+                                        BinOp::Add,
+                                        Box::new(cap.clone()),
+                                    )),
+                                    BinOp::Sub,
+                                    Box::new(Expr::Var(w0)),
+                                )),
+                                BinOp::Mod,
+                                Box::new(cap),
+                            );
+                            Expr::ArrayAccess(
+                                names.win_buf(&win.var, &n),
+                                Box::new(idx_expr),
+                            )
+                        }
+                        None => Expr::ArrayAccess(n, idx),
+                    }
+                }
                 _ => Expr::ArrayAccess(n, idx),
             }
+        }
+        Expr::ArrayAccess(n, idx)
+            if model
+                .circs
+                .iter()
+                .flat_map(circ_storages)
+                .any(|(st, _)| st == n) =>
+        {
+            Expr::ArrayAccess(names.circ_buf(&n), idx)
         }
         Expr::Var(n) if state_names.contains(&n) => Expr::Var(names.state(&n)),
         other => other,
@@ -1388,6 +2274,41 @@ fn drop_bookkeeping(
     names: &dyn NameMap,
 ) -> Option<Statement> {
     match s {
+        // CIRCBUF_NEXT: expand to the exact macro semantics on state names
+        // (idx++; if (idx > maxIdx) idx = 0 — conditional reset, not modulo).
+        Statement::CircBuf(CircBuf::Next { ref id })
+            if model.circs.iter().any(|c| c.id == *id) =>
+        {
+            let idx = names.state(&format!("{id}_Idx"));
+            let max = names.state(&format!("maxIdx_{id}"));
+            Some(Statement::Block {
+                body: vec![
+                    Statement::Assign {
+                        target: Expr::Var(idx.clone()),
+                        value: Expr::BinOp(
+                            Box::new(Expr::Var(idx.clone())),
+                            BinOp::Add,
+                            Box::new(Expr::IntLiteral(1)),
+                        ),
+                        compound: false,
+                    },
+                    Statement::If {
+                        condition: Expr::BinOp(
+                            Box::new(Expr::Var(idx.clone())),
+                            BinOp::Greater,
+                            Box::new(Expr::Var(max)),
+                        ),
+                        then_body: vec![Statement::Assign {
+                            target: Expr::Var(idx),
+                            value: Expr::IntLiteral(0),
+                            compound: false,
+                        }],
+                        else_body: vec![],
+                        cond_comments: vec![],
+                    },
+                ],
+            })
+        }
         // out[idx] = expr  ->  <output target> = expr
         Statement::Assign {
             target: Expr::ArrayAccess(n, _),
@@ -1770,8 +2691,8 @@ mod tests {
     }
 
     #[test]
-    fn trailing_window_rejected_as_ring() {
-        // out = in[i] - in[trailingIdx]; trailingIdx++  -> T3, rejected.
+    fn trailing_window_derives_t3_ring() {
+        // out = in[i] - in[trailingIdx]; trailingIdx++  -> T3 ring.
         let f = func_with_body(vec![
             decl("i", VarType::Integer),
             decl("outIdx", VarType::Integer),
@@ -1792,10 +2713,21 @@ mod tests {
                 ],
             },
         ]);
-        assert!(matches!(
-            analyze(&f),
-            Err(StreamError::NeedsRing(v)) if v == "trailingIdx"
-        ));
+        let m = analyze(&f).expect("analyzes as T3");
+        assert_eq!(m.tier, StreamTier::T3);
+        assert_eq!(m.rings.len(), 1);
+        assert_eq!(m.rings[0].var, "trailingIdx");
+        assert_eq!(m.rings[0].arrays, ["inReal"]);
+        // Transition: cap-0 guard first, ring read in the body, push+advance
+        // at the end, and no trailingIdx leakage.
+        let t = build_transition(&m, &TestNames).unwrap();
+        let mut names = BTreeSet::new();
+        for st in &t {
+            stmt_var_names(st, &mut names);
+        }
+        assert!(!names.contains("trailingIdx"));
+        assert!(names.contains("sp->ring_trailingIdx_inReal"));
+        assert!(names.contains("sp->ringPos_trailingIdx"));
     }
 
     #[test]
@@ -1906,6 +2838,33 @@ mod tests {
         }
         fn output(&self, name: &str) -> Expr {
             Expr::PointerDeref(format!("out_{name}"))
+        }
+        fn ring_buf(&self, var: &str, array: &str) -> String {
+            format!("sp->ring_{var}_{array}")
+        }
+        fn ring_pos(&self, var: &str) -> String {
+            format!("sp->ringPos_{var}")
+        }
+        fn ring_cap(&self, var: &str) -> String {
+            format!("sp->ringCap_{var}")
+        }
+        fn win_buf(&self, var: &str, array: &str) -> String {
+            format!("sp->win_{var}_{array}")
+        }
+        fn win_pos(&self, var: &str) -> String {
+            format!("sp->winPos_{var}")
+        }
+        fn win_cap(&self, var: &str) -> String {
+            format!("sp->winCap_{var}")
+        }
+        fn circ_buf(&self, storage: &str) -> String {
+            format!("sp->cb_{storage}")
+        }
+        fn extrema_buf(&self, array: &str) -> String {
+            format!("sp->x_{array}")
+        }
+        fn extrema_cap(&self) -> String {
+            "sp->xCap".to_string()
         }
     }
 

@@ -68,11 +68,12 @@ fn ad_countdown_loop_is_t2() {
 }
 
 #[test]
-fn sma_needs_a_ring() {
-    assert!(matches!(
-        streaming::analyze(&load("sma")),
-        Err(StreamError::NeedsRing(_))
-    ));
+fn sma_is_t3_ring() {
+    let f = load("sma");
+    let m = streaming::analyze(&f).expect("SMA analyzes");
+    assert_eq!(m.tier, StreamTier::T3);
+    assert_eq!(m.rings.len(), 1);
+    assert_eq!(m.rings[0].arrays, ["inReal"]);
 }
 
 #[test]

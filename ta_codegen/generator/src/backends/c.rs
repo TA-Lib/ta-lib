@@ -2004,9 +2004,12 @@ mod tests {
 
         // Logic function should NOT have range checks
         // Find end of the logic function body (before the next function)
+        // Boundary: the single-precision variants follow the logic fn (they
+        // carry no TA_LIB_API); the streaming section (TA_LIB_API-prefixed)
+        // comes after those, so prefer the TA_S_ marker.
         let logic_end = logic_body
-            .find("TA_LIB_API")
-            .or_else(|| logic_body.find("TA_RetCode TA_S_"))
+            .find("TA_RetCode TA_S_")
+            .or_else(|| logic_body.find("TA_LIB_API"))
             .unwrap_or(logic_body.len());
         let logic_section = &logic_body[..logic_end];
         assert!(

@@ -2,8 +2,7 @@ name: COSH
 camel_case: Cosh
 group: Math Transform
 hint: Vector Trigonometric Cosh
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

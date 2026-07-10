@@ -209,7 +209,7 @@ TA_LIB_API TA_RetCode TA_ADD_Open( const double inReal0[], const double inReal1[
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ADD_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       *outReal = lastValue_outReal;
       *stream = sp;

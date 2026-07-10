@@ -2,8 +2,7 @@ name: DIV
 camel_case: Div
 group: Math Operators
 hint: Vector Arithmetic Div
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal0
     type: real

@@ -2,8 +2,7 @@ name: BOP
 camel_case: Bop
 group: Momentum Indicators
 hint: Balance Of Power
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inPriceOHLC
     type: price

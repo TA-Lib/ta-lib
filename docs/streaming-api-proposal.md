@@ -405,13 +405,17 @@ Structural notes:
 
 ### How it fits ta_codegen
 
-1. **Metadata, not logic, in YAML**: each function's YAML gains a single
-   `streaming: true` flag (absent = no stream code, ever). Everything else —
-   the tier, the state shape — is **derived from the IR**, never authored:
-   there is nothing for a developer to figure out when adding a function.
-   `ta_codegen stream-census` reports what each function derives
-   (`--seed-yaml` writes the flags), and `generate` **fails** if a declared
-   function is no longer analyzable (the maintenance-coupling gate).
+1. **Metadata, not logic, in YAML**: a function opts in by adding `stream`
+   to its existing `flags:` list (`flags: [overlap, stream]`) — the same
+   list that already carries `unstable_period` etc., and the flag maps to
+   `TA_FUNC_FLG_STREAM` in ta_abstract like every other entry. No flag = no
+   stream code, ever. Everything else — the tier, the state shape — is
+   **derived from the IR**, never authored: there is nothing for a
+   developer to figure out when adding a function. `ta_codegen
+   stream-census` reports what each function derives (`--seed-yaml` writes
+   the flags), and `generate` **fails** if a flagged function is no longer
+   analyzable or its transition can no longer be built (the
+   maintenance-coupling gate).
 2. **Loop identification + analysis pass** (`generator/src/streaming.rs`).
    The parser does *not* pre-isolate the steady-state loop — `FuncDef.body`
    is a flat statement list and the loop appears as `while(i<=endIdx)`,
@@ -529,17 +533,36 @@ claim in *Motivation* gets measured, not asserted).
    param-degenerate paths the whole-body transcription cannot yet mirror —
    RSI/CMO (`memmove` identity + a Metastock mid-loop exit),
    MINUS/PLUS_DI/DM (unsmoothed `period<=1` alternate path), ATR/NATR
-   (`period<=1` delegates to TRANGE). Next: the Rust emitter.
-2. **T3 ring machinery** — rolling-sum class first (O(1)/tick), then the
-   window-recomputers (LINEARREG family etc., O(period)/tick to stay
-   bit-exact — still fine for live use at real-world periods), with the
-   ring-order (CCI-class) constraint enforced by replay-through-ring opens.
-   CIRCBUF-backed functions (CCI, MFI, HT_\*, MAMA) ride this stage — their
-   buffers map 1:1 to state-struct rings.
-3. **T4a deques; T4b cached-index transcription.**
-4. **TC composed functions** (needs 1–3's sub-streams; MA-dispatch design
-   spiked first: hand-write a STOCH stream over generated SMA/EMA streams and
-   diff against batch across the MAType×period grid).
-5. **T5 leftovers**: MAVP documented-unsupported.
-6. **Java/.NET emitters** once C/Rust stabilize (managed C# emitter, not
-   P/Invoke — see lifecycle section).
+   (`period<=1` delegates to TRANGE).
+2. **T3 ring machinery — DONE** (+18: SMA SUM VAR MOM ROC ROCP ROCR
+   ROCR100 KAMA BETA CORREL as trailing rings; LINEARREG ×4 + TSF as
+   O(period)/tick rescan windows over a ring in identical FP order; CCI +
+   MFI as CIRCBUF state — the batch loop already carries the circular
+   buffer, so open captures the LIVE buffer contents and rotation phase and
+   the ring-order constraint holds by construction, no replay needed).
+   HT_\* and MAMA remain blocked on deeper shapes (cursor-aliased
+   `startIdx`, `in[idx--]` reads, fixed-size array locals).
+3. **T4 extrema — DONE** (+10: MIN MAX MININDEX MAXINDEX MINMAX
+   MINMAXINDEX MIDPOINT WILLR AROON AROONOSC), and **not** via deques: the
+   cached-index automaton is transcribed verbatim over an absolute-index
+   ring (`in[X]` → `ring[X % cap]`; the cursor and cached indices are
+   batch-absolute state ints, periodically rebased by a multiple of the
+   capacity long before INT_MAX — index differences and residues are
+   invariant, so values never change; index-observable outputs report the
+   rebased position beyond ~2^30 bars, where the batch contract is
+   inherently out of int range anyway). Ties, indices and values are
+   batch-exact by construction. Integer outputs are supported end-to-end.
+4. **CDL candlestick family** (multi-array lag windows through the candle
+   helpers, candle-settings reads inside update — the settings-stability
+   rule becomes operative).
+5. **Stage-1.5 param-degenerate paths** (dual steady loops, memmove
+   identity, open-time delegation) — a controlled preview of composition.
+6. **TC composed functions** (needs the earlier tiers' sub-streams;
+   MA-dispatch design spiked first: hand-write a STOCH stream over generated
+   SMA/EMA streams and diff against batch across the MAType×period grid).
+   **Strategy: exhaust the C emitter tier by tier — every gotcha is
+   language-neutral — and only then port the proven model to Rust; the Rust
+   emitter is a re-rendering of settled machinery, not a second discovery.**
+7. **T5 leftovers**: MAVP documented-unsupported; HT_\* deep shapes.
+8. **Rust emitter** (re-applying the exhausted C model), then Java/.NET
+   (managed C# emitter, not P/Invoke — see lifecycle section).

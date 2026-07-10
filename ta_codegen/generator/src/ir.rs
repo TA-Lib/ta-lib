@@ -33,11 +33,12 @@ pub struct FuncDef {
     /// (see docs/ta_codegen_input_doc.md). Prose only — numbers stay in the YAML
     /// and are injected at render time.
     pub doc: Option<DocDef>,
-    /// `streaming: true` in the function YAML: generate the streaming API
-    /// for this function (docs/streaming-api-proposal.md). Absent or false =
-    /// no stream code. The generator derives everything else (tier, state)
-    /// from the IR and fails `generate` if a declared function is no longer
-    /// analyzable (the maintenance-coupling gate).
+    /// True when the YAML `flags:` list contains `stream`: generate the
+    /// streaming API for this function (docs/streaming-api-proposal.md; the
+    /// flag maps to TA_FUNC_FLG_STREAM in ta_abstract). Derived convenience
+    /// mirror of `flags` — no flag = no stream code. The generator fails
+    /// `generate` if a flagged function is no longer analyzable (the
+    /// maintenance-coupling gate).
     pub streaming: bool,
 }
 
@@ -50,6 +51,11 @@ pub enum StreamTier {
     T1,
     /// Scalar recurrence — O(1) carried scalars and/or bounded lag reads.
     T2,
+    /// Fixed trailing window — ring buffer(s) of O(period).
+    T3,
+    /// Window extrema — cached-index automaton over a ring (amortized O(1),
+    /// worst-case O(period) per bar, exactly like batch).
+    T4,
 }
 
 impl StreamTier {
@@ -58,6 +64,8 @@ impl StreamTier {
         match self {
             Self::T1 => "T1",
             Self::T2 => "T2",
+            Self::T3 => "T3",
+            Self::T4 => "T4",
         }
     }
 }

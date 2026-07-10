@@ -2,7 +2,7 @@ name: MIDPOINT
 camel_case: MidPoint
 group: Overlap Studies
 hint: MidPoint over period
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

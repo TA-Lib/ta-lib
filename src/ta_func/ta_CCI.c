@@ -516,3 +516,249 @@ TA_RetCode TA_S_CCI_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_CCI_Stream {
+   int optInTimePeriod;
+   double tempReal;
+   double tempReal2;
+   double theAverage;
+   int j;
+   int circBuffer_Idx;
+   int maxIdx_circBuffer;
+   int cbSize_circBuffer;
+   double *cb_circBuffer;
+   double *cbMirror_circBuffer;
+};
+
+static void TA_CCI_StreamRelease( struct TA_CCI_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->cb_circBuffer ) TA_Free( sp->cb_circBuffer );
+   if( sp->cbMirror_circBuffer ) TA_Free( sp->cbMirror_circBuffer );
+   TA_Free( sp );
+}
+
+static void TA_CCI_StreamStep( struct TA_CCI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double lastValue;
+
+   lastValue = (inHigh + inLow + inClose) / 3;
+   sp->cb_circBuffer[sp->circBuffer_Idx] = lastValue;
+   /* Calculate the average for the whole period. */
+   sp->theAverage = 0;
+   for( sp->j = 0; sp->j < sp->optInTimePeriod; sp->j += 1 )
+   {
+      sp->theAverage += sp->cb_circBuffer[sp->j];
+   }
+   sp->theAverage /= sp->optInTimePeriod;
+   /* Do the summation of the ABS(TypePrice-average)
+    * for the whole period.
+    */
+   sp->tempReal2 = 0;
+   for( sp->j = 0; sp->j < sp->optInTimePeriod; sp->j += 1 )
+   {
+      sp->tempReal2 += fabs(sp->cb_circBuffer[sp->j] - sp->theAverage);
+   }
+   /* And finally, the CCI... */
+   sp->tempReal = lastValue - sp->theAverage;
+   if( !TA_IS_ZERO(sp->tempReal) && !TA_IS_ZERO(sp->tempReal2) )
+   {
+      *outReal= sp->tempReal / (0.015 * (sp->tempReal2 / sp->optInTimePeriod));
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   /* Move forward the circular buffer indexes. */
+   sp->circBuffer_Idx = sp->circBuffer_Idx + 1;
+   if( sp->circBuffer_Idx > sp->maxIdx_circBuffer )
+   {
+      sp->circBuffer_Idx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CCI_Stream **stream, double *outReal )
+{
+   struct TA_CCI_Stream *sp;
+   double local_circBuffer[30];
+   double *circBuffer;
+   int circBuffer_Idx;
+   int maxIdx_circBuffer;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double theAverage = 0.0;
+      double lastValue;
+      int i;
+      int j = 0;
+      int outIdx;
+      int lookbackTotal;
+      /* This ptr will points on a circular buffer of
+       * at least "optInTimePeriod" element.
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Allocate a circular buffer equal to the requested
+       * period.
+       */
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
+      {
+         circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !circBuffer )
+         {
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         circBuffer = &local_circBuffer[0];
+      }
+      maxIdx_circBuffer = (optInTimePeriod-1);
+      circBuffer_Idx = 0;
+      /* Do the MA calculation using tight loops. */
+      /* Add-up the initial period, except for the last value.
+       * Fill up the circular buffer at the same time.
+       */
+      i = startIdx - lookbackTotal;
+      if( optInTimePeriod > 1 )
+      {
+         while( i < startIdx )
+         {
+            circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+            i += 1;
+            circBuffer_Idx++;
+            if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
+         }
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the inReal and
+       * outReal to be the same buffer.
+       */
+      outIdx = 0;
+      do
+      {
+         lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
+         circBuffer[circBuffer_Idx] = lastValue;
+         /* Calculate the average for the whole period. */
+         theAverage = 0;
+         for( j = 0; j < optInTimePeriod; j += 1 )
+         {
+            theAverage += circBuffer[j];
+         }
+         theAverage /= optInTimePeriod;
+         /* Do the summation of the ABS(TypePrice-average)
+          * for the whole period.
+          */
+         tempReal2 = 0;
+         for( j = 0; j < optInTimePeriod; j += 1 )
+         {
+            tempReal2 += fabs(circBuffer[j] - theAverage);
+         }
+         /* And finally, the CCI... */
+         tempReal = lastValue - theAverage;
+         if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
+         {
+            lastValue_outReal = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+         /* Move forward the circular buffer indexes. */
+         circBuffer_Idx++;
+         if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+      /* Free the circular buffer if it was dynamically allocated. */
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CCI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->tempReal = tempReal;
+      sp->tempReal2 = tempReal2;
+      sp->theAverage = theAverage;
+      sp->j = j;
+      sp->circBuffer_Idx = circBuffer_Idx;
+      sp->maxIdx_circBuffer = maxIdx_circBuffer;
+      sp->cbSize_circBuffer = maxIdx_circBuffer + 1;
+      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
+      if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
+      if( !sp->cbMirror_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_circBuffer, circBuffer, sizeof(double) * (size_t)sp->cbSize_circBuffer );
+      if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_CCI_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_CCI_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.cb_circBuffer = stream->cbMirror_circBuffer;
+   memcpy( scratch.cb_circBuffer, stream->cb_circBuffer, sizeof(double) * (size_t)stream->cbSize_circBuffer );
+   TA_CCI_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Close( TA_CCI_Stream *stream )
+{
+   TA_CCI_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

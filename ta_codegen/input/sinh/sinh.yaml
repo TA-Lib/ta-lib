@@ -2,8 +2,7 @@ name: SINH
 camel_case: Sinh
 group: Math Transform
 hint: Vector Trigonometric Sinh
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

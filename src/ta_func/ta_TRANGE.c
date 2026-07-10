@@ -445,7 +445,7 @@ TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_TRANGE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];

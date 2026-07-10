@@ -1036,7 +1036,7 @@ TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, in
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_MACD_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;

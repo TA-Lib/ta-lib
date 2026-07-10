@@ -751,7 +751,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Open( int optInFastPeriod, int optInSlowPeriod, c
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ADOSC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;

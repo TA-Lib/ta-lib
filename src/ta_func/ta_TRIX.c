@@ -789,7 +789,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Open( int optInTimePeriod, const double inReal[], 
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_TRIX_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevEMA1 = prevEMA1;

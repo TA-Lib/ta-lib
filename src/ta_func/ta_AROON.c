@@ -493,3 +493,291 @@ TA_RetCode TA_S_AROON_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_AROON_Stream {
+   int optInTimePeriod;
+   double lowest;
+   double highest;
+   double factor;
+   int trailingIdx;
+   int lowestIdx;
+   int highestIdx;
+   int i;
+   int today;
+   int xCap;
+   double *x_inHigh;
+   double *xMirror_inHigh;
+   double *x_inLow;
+   double *xMirror_inLow;
+};
+
+static void TA_AROON_StreamRelease( struct TA_AROON_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
+   if( sp->xMirror_inHigh ) TA_Free( sp->xMirror_inHigh );
+   if( sp->x_inLow ) TA_Free( sp->x_inLow );
+   if( sp->xMirror_inLow ) TA_Free( sp->xMirror_inLow );
+   TA_Free( sp );
+}
+
+static void TA_AROON_StreamStep( struct TA_AROON_Stream *sp, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )
+{
+   double tmp;
+
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inHigh[sp->today % sp->xCap] = inHigh;
+   sp->x_inLow[sp->today % sp->xCap] = inLow;
+   /* Keep track of the lowestIdx */
+   tmp = sp->x_inLow[sp->today % sp->xCap];
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
+      sp->i = sp->lowestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inLow[sp->i % sp->xCap];
+         if( tmp <= sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = tmp;
+         }
+      }
+   } else if( tmp <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = tmp;
+   }
+   /* Keep track of the highestIdx */
+   tmp = sp->x_inHigh[sp->today % sp->xCap];
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
+      sp->i = sp->highestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inHigh[sp->i % sp->xCap];
+         if( tmp >= sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = tmp;
+         }
+      }
+   } else if( tmp >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = tmp;
+   }
+   /* Note: Do not forget that input and output buffer can be the same,
+    *       so writing to the output is the last thing being done here.
+    */
+   *outAroonUp= sp->factor * (sp->optInTimePeriod - (sp->today - sp->highestIdx));
+   *outAroonDown= sp->factor * (sp->optInTimePeriod - (sp->today - sp->lowestIdx));
+   sp->trailingIdx += 1;
+   sp->today += 1;
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROON_Stream **stream, double *outAroonDown, double *outAroonUp )
+{
+   struct TA_AROON_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outAroonDown;
+   double lastValue_outAroonUp;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outAroonDown = 0.0;
+   lastValue_outAroonUp = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double lowest = 0.0;
+      double highest = 0.0;
+      double tmp;
+      double factor = 0.0;
+      int outIdx;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int today = 0;
+      int i = 0;
+      /* This function is using a speed optimized algorithm
+       * for the min/max logic.
+       *
+       * You might want to first look at how TA_MIN/TA_MAX works
+       * and this function will become easier to understand.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < optInTimePeriod )
+      {
+         startIdx = optInTimePeriod;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - optInTimePeriod;
+      lowestIdx = 0 - 1;
+      highestIdx = 0 - 1;
+      lowest = 0.0;
+      highest = 0.0;
+      factor = (double)100.0 / (double)optInTimePeriod;
+      while( today <= endIdx )
+      {
+         /* Keep track of the lowestIdx */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = inLow[i];
+               if( tmp <= lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmp = inHigh[i];
+               if( tmp >= highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         lastValue_outAroonUp = factor * (optInTimePeriod - (today - highestIdx));
+         lastValue_outAroonDown = factor * (optInTimePeriod - (today - lowestIdx));
+         outIdx += 1;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AROON_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lowest = lowest;
+      sp->highest = highest;
+      sp->factor = factor;
+      sp->trailingIdx = trailingIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->highestIdx = highestIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_AROON_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inHigh ) { TA_AROON_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inHigh ) { TA_AROON_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inLow ) { TA_AROON_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inLow ) { TA_AROON_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inHigh[fillJ % sp->xCap] = inHigh[fillJ];
+           sp->x_inLow[fillJ % sp->xCap] = inLow[fillJ];
+        }
+      }
+      *outAroonDown = lastValue_outAroonDown;
+      *outAroonUp = lastValue_outAroonUp;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )
+{
+   if( !stream || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
+   TA_AROON_StreamStep( stream, inHigh, inLow, outAroonDown, outAroonUp );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )
+{
+   struct TA_AROON_Stream scratch;
+
+   if( !stream || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.x_inHigh = stream->xMirror_inHigh;
+   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
+   scratch.x_inLow = stream->xMirror_inLow;
+   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
+   TA_AROON_StreamStep( &scratch, inHigh, inLow, outAroonDown, outAroonUp );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Close( TA_AROON_Stream *stream )
+{
+   TA_AROON_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

@@ -2,7 +2,7 @@ name: CORREL
 camel_case: Correl
 group: Statistic Functions
 hint: Pearson's Correlation Coefficient (r)
-flags: []
+flags: [stream]
 inputs:
   - name: inReal0
     type: real

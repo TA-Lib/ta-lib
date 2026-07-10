@@ -2,8 +2,7 @@ name: ADD
 camel_case: Add
 group: Math Operators
 hint: Vector Arithmetic Add
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal0
     type: real

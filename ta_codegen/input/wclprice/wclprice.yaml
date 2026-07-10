@@ -2,8 +2,7 @@ name: WCLPRICE
 camel_case: WclPrice
 group: Price Transform
 hint: Weighted Close Price
-flags: [overlap]
-streaming: true
+flags: [overlap, stream]
 inputs:
   - name: inPriceHLC
     type: price

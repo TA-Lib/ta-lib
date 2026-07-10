@@ -2,8 +2,7 @@ name: SQRT
 camel_case: Sqrt
 group: Math Transform
 hint: Vector Square Root
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

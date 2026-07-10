@@ -2,7 +2,7 @@ name: ROCR100
 camel_case: RocR100
 group: Momentum Indicators
 hint: "Rate of change ratio 100 scale: (price/prevPrice)*100"
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

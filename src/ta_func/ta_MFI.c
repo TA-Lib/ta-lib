@@ -694,3 +694,294 @@ TA_RetCode TA_S_MFI_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MFI_Stream {
+   int optInTimePeriod;
+   double posSumMF;
+   double negSumMF;
+   double prevValue;
+   double tempValue1;
+   double tempValue2;
+   int mflow_Idx;
+   int maxIdx_mflow;
+   int cbSize_mflow;
+   double *cb_mflow_positive;
+   double *cbMirror_mflow_positive;
+   double *cb_mflow_negative;
+   double *cbMirror_mflow_negative;
+};
+
+static void TA_MFI_StreamRelease( struct TA_MFI_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->cb_mflow_positive ) TA_Free( sp->cb_mflow_positive );
+   if( sp->cbMirror_mflow_positive ) TA_Free( sp->cbMirror_mflow_positive );
+   if( sp->cb_mflow_negative ) TA_Free( sp->cb_mflow_negative );
+   if( sp->cbMirror_mflow_negative ) TA_Free( sp->cbMirror_mflow_negative );
+   TA_Free( sp );
+}
+
+static void TA_MFI_StreamStep( struct TA_MFI_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   sp->posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
+   sp->negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
+   sp->tempValue1 = (inHigh + inLow + inClose) / 3.0;
+   sp->tempValue2 = sp->tempValue1 - sp->prevValue;
+   sp->prevValue = sp->tempValue1;
+   sp->tempValue1 *= inVolume;
+   if( sp->tempValue2 < 0 )
+   {
+      sp->cb_mflow_negative[sp->mflow_Idx] = sp->tempValue1;
+      sp->negSumMF += sp->tempValue1;
+      sp->cb_mflow_positive[sp->mflow_Idx] = 0.0;
+   } else if( sp->tempValue2 > 0 )
+   {
+      sp->cb_mflow_positive[sp->mflow_Idx] = sp->tempValue1;
+      sp->posSumMF += sp->tempValue1;
+      sp->cb_mflow_negative[sp->mflow_Idx] = 0.0;
+   } else 
+   {
+      sp->cb_mflow_positive[sp->mflow_Idx] = 0.0;
+      sp->cb_mflow_negative[sp->mflow_Idx] = 0.0;
+   }
+   sp->tempValue1 = sp->posSumMF + sp->negSumMF;
+   if( sp->tempValue1 < 1.0 )
+   {
+      *outReal= 0.0;
+   } else 
+   {
+      *outReal= 100.0 * (sp->posSumMF / sp->tempValue1);
+   }
+   sp->mflow_Idx = sp->mflow_Idx + 1;
+   if( sp->mflow_Idx > sp->maxIdx_mflow )
+   {
+      sp->mflow_Idx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_MFI_Stream **stream, double *outReal )
+{
+   struct TA_MFI_Stream *sp;
+   double local_mflow_positive[50];
+   double *mflow_positive;
+   double local_mflow_negative[50];
+   double *mflow_negative;
+   int mflow_Idx;
+   int maxIdx_mflow;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double posSumMF = 0.0;
+      double negSumMF = 0.0;
+      double prevValue = 0.0;
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      int lookbackTotal;
+      int outIdx;
+      int i;
+      int today;
+      /* Id, Type, Static Size */
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
+      {
+         mflow_positive = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !mflow_positive )
+         {
+            return TA_ALLOC_ERR;
+         }
+         mflow_negative = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !mflow_negative )
+         {
+            TA_Free( mflow_positive );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         mflow_positive = &local_mflow_positive[0];
+         mflow_negative = &local_mflow_negative[0];
+      }
+      maxIdx_mflow = (optInTimePeriod-1);
+      mflow_Idx = 0;
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = optInTimePeriod;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
+         if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+         return TA_BAD_PARAM;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      /* Accumulate the positive and negative money flow
+       * among the initial period.
+       */
+      today = startIdx - lookbackTotal;
+      prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+      posSumMF = 0.0;
+      negSumMF = 0.0;
+      today += 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 )
+      {
+         tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         tempValue1 *= inVolume[today++];
+         if( tempValue2 < 0 )
+         {
+            mflow_negative[mflow_Idx] = tempValue1;
+            negSumMF += tempValue1;
+            mflow_positive[mflow_Idx] = 0.0;
+         } else if( tempValue2 > 0 )
+         {
+            mflow_positive[mflow_Idx] = tempValue1;
+            posSumMF += tempValue1;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else 
+         {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         }
+         mflow_Idx++;
+         if( mflow_Idx > maxIdx_mflow ) mflow_Idx = 0;
+      }
+      /* The following two equations are equivalent:
+       *    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
+       *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
+       * The second equation is used here for speed optimization.
+       */
+      /* The first full window is complete: emit its output for startIdx here,
+       * then slide the window over the remaining bars below.
+       */
+      tempValue1 = posSumMF + negSumMF;
+      if( tempValue1 < 1.0 )
+      {
+         lastValue_outReal = 0.0;
+      } else 
+      {
+         lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+      }
+      /* Now continue processing the remaining bars. */
+      while( today <= endIdx )
+      {
+         posSumMF -= mflow_positive[mflow_Idx];
+         negSumMF -= mflow_negative[mflow_Idx];
+         tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         tempValue1 *= inVolume[today++];
+         if( tempValue2 < 0 )
+         {
+            mflow_negative[mflow_Idx] = tempValue1;
+            negSumMF += tempValue1;
+            mflow_positive[mflow_Idx] = 0.0;
+         } else if( tempValue2 > 0 )
+         {
+            mflow_positive[mflow_Idx] = tempValue1;
+            posSumMF += tempValue1;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else 
+         {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         }
+         tempValue1 = posSumMF + negSumMF;
+         if( tempValue1 < 1.0 )
+         {
+            lastValue_outReal = 0.0;
+         } else 
+         {
+            lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+         }
+         mflow_Idx++;
+         if( mflow_Idx > maxIdx_mflow ) mflow_Idx = 0;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MFI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->posSumMF = posSumMF;
+      sp->negSumMF = negSumMF;
+      sp->prevValue = prevValue;
+      sp->tempValue1 = tempValue1;
+      sp->tempValue2 = tempValue2;
+      sp->mflow_Idx = mflow_Idx;
+      sp->maxIdx_mflow = maxIdx_mflow;
+      sp->cbSize_mflow = maxIdx_mflow + 1;
+      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
+      if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
+      if( !sp->cbMirror_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_mflow_positive, mflow_positive, sizeof(double) * (size_t)sp->cbSize_mflow );
+      sp->cb_mflow_negative = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
+      if( !sp->cb_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_mflow_negative = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
+      if( !sp->cbMirror_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_mflow_negative, mflow_negative, sizeof(double) * (size_t)sp->cbSize_mflow );
+      if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); 
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_MFI_StreamStep( stream, inHigh, inLow, inClose, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   struct TA_MFI_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.cb_mflow_positive = stream->cbMirror_mflow_positive;
+   memcpy( scratch.cb_mflow_positive, stream->cb_mflow_positive, sizeof(double) * (size_t)stream->cbSize_mflow );
+   scratch.cb_mflow_negative = stream->cbMirror_mflow_negative;
+   memcpy( scratch.cb_mflow_negative, stream->cb_mflow_negative, sizeof(double) * (size_t)stream->cbSize_mflow );
+   TA_MFI_StreamStep( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream )
+{
+   TA_MFI_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

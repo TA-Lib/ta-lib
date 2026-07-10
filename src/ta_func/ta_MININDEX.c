@@ -363,3 +363,210 @@ TA_RetCode TA_S_MININDEX_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MININDEX_Stream {
+   int optInTimePeriod;
+   double lowest;
+   int trailingIdx;
+   int lowestIdx;
+   int i;
+   int today;
+   int xCap;
+   double *x_inReal;
+   double *xMirror_inReal;
+};
+
+static void TA_MININDEX_StreamRelease( struct TA_MININDEX_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inReal ) TA_Free( sp->x_inReal );
+   if( sp->xMirror_inReal ) TA_Free( sp->xMirror_inReal );
+   TA_Free( sp );
+}
+
+static void TA_MININDEX_StreamStep( struct TA_MININDEX_Stream *sp, double inReal, int *outInteger )
+{
+   double tmp;
+
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inReal[sp->today % sp->xCap] = inReal;
+   tmp = sp->x_inReal[sp->today % sp->xCap];
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
+      sp->i = sp->lowestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inReal[sp->i % sp->xCap];
+         if( tmp < sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = tmp;
+         }
+      }
+   } else if( tmp <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = tmp;
+   }
+   *outInteger= sp->lowestIdx;
+   sp->trailingIdx += 1;
+   sp->today += 1;
+}
+
+TA_LIB_API TA_RetCode TA_MININDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MININDEX_Stream **stream, int *outInteger )
+{
+   struct TA_MININDEX_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   int lastValue_outInteger;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outInteger = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double lowest = 0.0;
+      double tmp;
+      int outIdx;
+      int nbInitialElementNeeded;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int today = 0;
+      int i = 0;
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      lowestIdx = 0 - 1;
+      lowest = 0.0;
+      while( today <= endIdx )
+      {
+         tmp = inReal[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inReal[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = inReal[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         lastValue_outInteger = lowestIdx;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MININDEX_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lowest = lowest;
+      sp->trailingIdx = trailingIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MININDEX_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inReal ) { TA_MININDEX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inReal ) { TA_MININDEX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+        }
+      }
+      *outInteger = lastValue_outInteger;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MININDEX_Update( TA_MININDEX_Stream *stream, double inReal, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   TA_MININDEX_StreamStep( stream, inReal, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double inReal, int *outInteger )
+{
+   struct TA_MININDEX_Stream scratch;
+
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.x_inReal = stream->xMirror_inReal;
+   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
+   TA_MININDEX_StreamStep( &scratch, inReal, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream )
+{
+   TA_MININDEX_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

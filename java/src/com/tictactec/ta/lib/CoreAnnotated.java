@@ -588,7 +588,7 @@ public int aroonLookback(
 @FuncInfo(
         name  = "AROON",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 2
@@ -656,7 +656,7 @@ public int aroonOscLookback(
 @FuncInfo(
         name  = "AROONOSC",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -1100,7 +1100,7 @@ public int betaLookback(
 @FuncInfo(
         name  = "BETA",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 1,
         nbOutput   = 1
@@ -1213,7 +1213,7 @@ public int cciLookback(
 @FuncInfo(
         name  = "CCI",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -4437,7 +4437,7 @@ public int correlLookback(
 @FuncInfo(
         name  = "CORREL",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5218,7 +5218,7 @@ public int kamaLookback(
 @FuncInfo(
         name  = "KAMA",
         group = "Overlap Studies",
-        flags = 150994944,
+        flags = 184549376,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5277,7 +5277,7 @@ public int linearRegLookback(
 @FuncInfo(
         name  = "LINEARREG",
         group = "Statistic Functions",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5336,7 +5336,7 @@ public int linearRegAngleLookback(
 @FuncInfo(
         name  = "LINEARREG_ANGLE",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5395,7 +5395,7 @@ public int linearRegInterceptLookback(
 @FuncInfo(
         name  = "LINEARREG_INTERCEPT",
         group = "Statistic Functions",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5454,7 +5454,7 @@ public int linearRegSlopeLookback(
 @FuncInfo(
         name  = "LINEARREG_SLOPE",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6212,7 +6212,7 @@ public int maxLookback(
 @FuncInfo(
         name  = "MAX",
         group = "Math Operators",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6271,7 +6271,7 @@ public int maxIndexLookback(
 @FuncInfo(
         name  = "MAXINDEX",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6374,7 +6374,7 @@ public int mfiLookback(
 @FuncInfo(
         name  = "MFI",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6439,7 +6439,7 @@ public int midPointLookback(
 @FuncInfo(
         name  = "MIDPOINT",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6559,7 +6559,7 @@ public int minLookback(
 @FuncInfo(
         name  = "MIN",
         group = "Math Operators",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6618,7 +6618,7 @@ public int minIndexLookback(
 @FuncInfo(
         name  = "MININDEX",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6678,7 +6678,7 @@ public int minMaxLookback(
 @FuncInfo(
         name  = "MINMAX",
         group = "Math Operators",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 2
@@ -6744,7 +6744,7 @@ public int minMaxIndexLookback(
 @FuncInfo(
         name  = "MINMAXINDEX",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 2
@@ -6936,7 +6936,7 @@ public int momLookback(
 @FuncInfo(
         name  = "MOM",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7374,7 +7374,7 @@ public int rocLookback(
 @FuncInfo(
         name  = "ROC",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7433,7 +7433,7 @@ public int rocPLookback(
 @FuncInfo(
         name  = "ROCP",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7492,7 +7492,7 @@ public int rocRLookback(
 @FuncInfo(
         name  = "ROCR",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7551,7 +7551,7 @@ public int rocR100Lookback(
 @FuncInfo(
         name  = "ROCR100",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -8043,7 +8043,7 @@ public int smaLookback(
 @FuncInfo(
         name  = "SMA",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -8645,7 +8645,7 @@ public int sumLookback(
 @FuncInfo(
         name  = "SUM",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -9088,7 +9088,7 @@ public int tsfLookback(
 @FuncInfo(
         name  = "TSF",
         group = "Statistic Functions",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -9297,7 +9297,7 @@ public int varianceLookback(
 @FuncInfo(
         name  = "VAR",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -9420,7 +9420,7 @@ public int willRLookback(
 @FuncInfo(
         name  = "WILLR",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

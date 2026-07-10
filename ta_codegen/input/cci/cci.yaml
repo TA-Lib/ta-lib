@@ -2,7 +2,7 @@ name: CCI
 camel_case: Cci
 group: Momentum Indicators
 hint: Commodity Channel Index
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHLC
     type: price

@@ -2,8 +2,7 @@ name: ACOS
 camel_case: Acos
 group: Math Transform
 hint: Vector Trigonometric ACos
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

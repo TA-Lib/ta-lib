@@ -532,3 +532,313 @@ TA_RetCode TA_S_WILLR_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_WILLR_Stream {
+   int optInTimePeriod;
+   double lowest;
+   double highest;
+   double diff;
+   int trailingIdx;
+   int lowestIdx;
+   int highestIdx;
+   int i;
+   int today;
+   int xCap;
+   double *x_inHigh;
+   double *xMirror_inHigh;
+   double *x_inLow;
+   double *xMirror_inLow;
+   double *x_inClose;
+   double *xMirror_inClose;
+};
+
+static void TA_WILLR_StreamRelease( struct TA_WILLR_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
+   if( sp->xMirror_inHigh ) TA_Free( sp->xMirror_inHigh );
+   if( sp->x_inLow ) TA_Free( sp->x_inLow );
+   if( sp->xMirror_inLow ) TA_Free( sp->xMirror_inLow );
+   if( sp->x_inClose ) TA_Free( sp->x_inClose );
+   if( sp->xMirror_inClose ) TA_Free( sp->xMirror_inClose );
+   TA_Free( sp );
+}
+
+static void TA_WILLR_StreamStep( struct TA_WILLR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double tmp;
+
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inHigh[sp->today % sp->xCap] = inHigh;
+   sp->x_inLow[sp->today % sp->xCap] = inLow;
+   sp->x_inClose[sp->today % sp->xCap] = inClose;
+   /* Set the lowest low */
+   tmp = sp->x_inLow[sp->today % sp->xCap];
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
+      sp->i = sp->lowestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inLow[sp->i % sp->xCap];
+         if( tmp < sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = tmp;
+         }
+      }
+      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
+   } else if( tmp <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = tmp;
+      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
+   }
+   /* Set the highest high */
+   tmp = sp->x_inHigh[sp->today % sp->xCap];
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
+      sp->i = sp->highestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inHigh[sp->i % sp->xCap];
+         if( tmp > sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = tmp;
+         }
+      }
+      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
+   } else if( tmp >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = tmp;
+      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
+   }
+   if( sp->diff != 0.0 )
+   {
+      *outReal= (sp->highest - sp->x_inClose[sp->today % sp->xCap]) / sp->diff;
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   sp->trailingIdx += 1;
+   sp->today += 1;
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WILLR_Stream **stream, double *outReal )
+{
+   struct TA_WILLR_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double lowest = 0.0;
+      double highest = 0.0;
+      double tmp;
+      double diff = 0.0;
+      int outIdx;
+      int nbInitialElementNeeded;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int today = 0;
+      int i = 0;
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Initialize 'diff', just to avoid warning. */
+      diff = 0.0;
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      lowestIdx = highestIdx;
+      lowest = 0.0;
+      highest = lowest;
+      diff = highest;
+      while( today <= endIdx )
+      {
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = inLow[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmp = inHigh[i];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         if( diff != 0.0 )
+         {
+            lastValue_outReal = (highest - inClose[today]) / diff;
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_WILLR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lowest = lowest;
+      sp->highest = highest;
+      sp->diff = diff;
+      sp->trailingIdx = trailingIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->highestIdx = highestIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_WILLR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inHigh ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inHigh ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inLow ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inLow ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inClose ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inClose ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inHigh[fillJ % sp->xCap] = inHigh[fillJ];
+           sp->x_inLow[fillJ % sp->xCap] = inLow[fillJ];
+           sp->x_inClose[fillJ % sp->xCap] = inClose[fillJ];
+        }
+      }
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Update( TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_WILLR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_WILLR_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.x_inHigh = stream->xMirror_inHigh;
+   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
+   scratch.x_inLow = stream->xMirror_inLow;
+   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
+   scratch.x_inClose = stream->xMirror_inClose;
+   memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xCap );
+   TA_WILLR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream )
+{
+   TA_WILLR_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

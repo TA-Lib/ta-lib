@@ -2,8 +2,7 @@ name: COS
 camel_case: Cos
 group: Math Transform
 hint: Vector Trigonometric Cos
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

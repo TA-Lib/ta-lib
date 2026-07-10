@@ -2,8 +2,7 @@ name: CEIL
 camel_case: Ceil
 group: Math Transform
 hint: Vector Ceil
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

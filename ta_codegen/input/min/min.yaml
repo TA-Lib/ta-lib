@@ -2,7 +2,7 @@ name: MIN
 camel_case: Min
 group: Math Operators
 hint: Lowest value over a specified period
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

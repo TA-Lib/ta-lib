@@ -696,3 +696,358 @@ TA_RetCode TA_S_BETA_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_BETA_Stream {
+   int optInTimePeriod;
+   double S_xx;
+   double S_xy;
+   double S_x;
+   double S_y;
+   double last_price_x;
+   double last_price_y;
+   double trailing_last_price_x;
+   double trailing_last_price_y;
+   double x;
+   double y;
+   double n;
+   int ringPos_trailingIdx;
+   int ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal0;
+   double *ringMirror_trailingIdx_inReal0;
+   double *ring_trailingIdx_inReal1;
+   double *ringMirror_trailingIdx_inReal1;
+};
+
+static void TA_BETA_StreamRelease( struct TA_BETA_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->ring_trailingIdx_inReal0 ) TA_Free( sp->ring_trailingIdx_inReal0 );
+   if( sp->ringMirror_trailingIdx_inReal0 ) TA_Free( sp->ringMirror_trailingIdx_inReal0 );
+   if( sp->ring_trailingIdx_inReal1 ) TA_Free( sp->ring_trailingIdx_inReal1 );
+   if( sp->ringMirror_trailingIdx_inReal1 ) TA_Free( sp->ringMirror_trailingIdx_inReal1 );
+   TA_Free( sp );
+}
+
+static void TA_BETA_StreamStep( struct TA_BETA_Stream *sp, double inReal0, double inReal1, double *outReal )
+{
+   double tmp_real;
+
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      sp->ring_trailingIdx_inReal0[0] = inReal0;
+      sp->ring_trailingIdx_inReal1[0] = inReal1;
+   }
+   tmp_real = inReal0;
+   if( !TA_IS_ZERO(sp->last_price_x) )
+   {
+      sp->x = (tmp_real - sp->last_price_x) / sp->last_price_x;
+   } else 
+   {
+      sp->x = 0.0;
+   }
+   sp->last_price_x = tmp_real;
+   tmp_real = inReal1;
+   if( !TA_IS_ZERO(sp->last_price_y) )
+   {
+      sp->y = (tmp_real - sp->last_price_y) / sp->last_price_y;
+   } else 
+   {
+      sp->y = 0.0;
+   }
+   sp->last_price_y = tmp_real;
+   sp->S_xx += sp->x * sp->x;
+   sp->S_xy += sp->x * sp->y;
+   sp->S_x += sp->x;
+   sp->S_y += sp->y;
+   /* Always read the trailing before writing the output because the input and output
+    * buffer can be the same.
+    */
+   tmp_real = sp->ring_trailingIdx_inReal0[sp->ringPos_trailingIdx];
+   if( !TA_IS_ZERO(sp->trailing_last_price_x) )
+   {
+      sp->x = (tmp_real - sp->trailing_last_price_x) / sp->trailing_last_price_x;
+   } else 
+   {
+      sp->x = 0.0;
+   }
+   sp->trailing_last_price_x = tmp_real;
+   tmp_real = sp->ring_trailingIdx_inReal1[sp->ringPos_trailingIdx];
+   if( !TA_IS_ZERO(sp->trailing_last_price_y) )
+   {
+      sp->y = (tmp_real - sp->trailing_last_price_y) / sp->trailing_last_price_y;
+   } else 
+   {
+      sp->y = 0.0;
+   }
+   sp->trailing_last_price_y = tmp_real;
+   /* Write the output */
+   tmp_real = sp->n * sp->S_xx - sp->S_x * sp->S_x;
+   if( !TA_IS_ZERO(tmp_real) )
+   {
+      *outReal= (sp->n * sp->S_xy - sp->S_x * sp->S_y) / tmp_real;
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   /* Remove the calculation starting with the trailingIdx. */
+   sp->S_xx -= sp->x * sp->x;
+   sp->S_xy -= sp->x * sp->y;
+   sp->S_x -= sp->x;
+   sp->S_y -= sp->y;
+   sp->ring_trailingIdx_inReal0[sp->ringPos_trailingIdx] = inReal0;
+   sp->ring_trailingIdx_inReal1[sp->ringPos_trailingIdx] = inReal1;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_BETA_Stream **stream, double *outReal )
+{
+   struct TA_BETA_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 5;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double S_xx = 0.0;
+      /* sum of x * x */
+      double S_xy = 0.0;
+      /* sum of x * y */
+      double S_x = 0.0;
+      /* sum of x */
+      double S_y = 0.0;
+      /* sum of y */
+      double last_price_x = 0.0;
+      /* the last price read from inReal0 */
+      double last_price_y = 0.0;
+      /* the last price read from inReal1 */
+      double trailing_last_price_x = 0.0;
+      /* same as last_price_x except used to remove elements from the trailing summation */
+      double trailing_last_price_y = 0.0;
+      /* same as last_price_y except used to remove elements from the trailing summation */
+      double tmp_real = 0.0;
+      /* temporary variable */
+      double x = 0.0;
+      /* the 'x' value, which is the last change between values in inReal0 */
+      double y = 0.0;
+      /* the 'y' value, which is the last change between values in inReal1 */
+      double n = 0.0;
+      int i;
+      int outIdx;
+      int trailingIdx;
+      int nbInitialElementNeeded;
+      /* DESCRIPTION OF ALGORITHM:
+       *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The stock prices
+       *   are given in inReal0 and the index prices are give in inReal1. The size of these vectors
+       *   should be equal. The algorithm is to calculate the change between prices in both vectors
+       *   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
+       *   is market return and the y value is the security return. The beta value is the slope of a
+       *   linear regression through these points. A beta of 1 is simple the line y=x, so the stock
+       *   varies percisely with the market. A beta of less than one means the stock varies less than
+       *   the market and a beta of more than one means the stock varies more than market. A related
+       *   value is the Alpha value (see TA_ALPHA) which is the Y-intercept of the same linear regression.
+       */
+      /* Validate the calculation method type and
+       * identify the minimum number of input
+       * consume before the first value is output..
+       */
+      nbInitialElementNeeded = optInTimePeriod;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Consume first input. */
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      trailing_last_price_x = inReal0[trailingIdx];
+      last_price_x = trailing_last_price_x;
+      trailing_last_price_y = inReal1[trailingIdx];
+      last_price_y = trailing_last_price_y;
+      /* Process remaining of lookback until ready to output the first value. */
+      i = ++trailingIdx;
+      while( i < startIdx )
+      {
+         tmp_real = inReal0[i];
+         if( !TA_IS_ZERO(last_price_x) )
+         {
+            x = (tmp_real - last_price_x) / last_price_x;
+         } else 
+         {
+            x = 0.0;
+         }
+         last_price_x = tmp_real;
+         tmp_real = inReal1[i++];
+         if( !TA_IS_ZERO(last_price_y) )
+         {
+            y = (tmp_real - last_price_y) / last_price_y;
+         } else 
+         {
+            y = 0.0;
+         }
+         last_price_y = tmp_real;
+         S_xx += x * x;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
+      }
+      outIdx = 0;
+      /* First output always start at index zero */
+      n = (double)optInTimePeriod;
+      do
+      {
+         tmp_real = inReal0[i];
+         if( !TA_IS_ZERO(last_price_x) )
+         {
+            x = (tmp_real - last_price_x) / last_price_x;
+         } else 
+         {
+            x = 0.0;
+         }
+         last_price_x = tmp_real;
+         tmp_real = inReal1[i++];
+         if( !TA_IS_ZERO(last_price_y) )
+         {
+            y = (tmp_real - last_price_y) / last_price_y;
+         } else 
+         {
+            y = 0.0;
+         }
+         last_price_y = tmp_real;
+         S_xx += x * x;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
+         /* Always read the trailing before writing the output because the input and output
+          * buffer can be the same.
+          */
+         tmp_real = inReal0[trailingIdx];
+         if( !TA_IS_ZERO(trailing_last_price_x) )
+         {
+            x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
+         } else 
+         {
+            x = 0.0;
+         }
+         trailing_last_price_x = tmp_real;
+         tmp_real = inReal1[trailingIdx++];
+         if( !TA_IS_ZERO(trailing_last_price_y) )
+         {
+            y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
+         } else 
+         {
+            y = 0.0;
+         }
+         trailing_last_price_y = tmp_real;
+         /* Write the output */
+         tmp_real = n * S_xx - S_x * S_x;
+         if( !TA_IS_ZERO(tmp_real) )
+         {
+            lastValue_outReal = (n * S_xy - S_x * S_y) / tmp_real;
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+         /* Remove the calculation starting with the trailingIdx. */
+         S_xx -= x * x;
+         S_xy -= x * y;
+         S_x -= x;
+         S_y -= y;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_BETA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->S_xx = S_xx;
+      sp->S_xy = S_xy;
+      sp->S_x = S_x;
+      sp->S_y = S_y;
+      sp->last_price_x = last_price_x;
+      sp->last_price_y = last_price_y;
+      sp->trailing_last_price_x = trailing_last_price_x;
+      sp->trailing_last_price_y = trailing_last_price_y;
+      sp->x = x;
+      sp->y = y;
+      sp->n = n;
+      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_BETA_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal0 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal0 ) { TA_BETA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal0 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal0 ) { TA_BETA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal0, inReal0 + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+        sp->ring_trailingIdx_inReal1 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal1 ) { TA_BETA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal1 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal1 ) { TA_BETA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal1, inReal1 + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_BETA_StreamStep( stream, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   struct TA_BETA_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.ring_trailingIdx_inReal0 = stream->ringMirror_trailingIdx_inReal0;
+   memcpy( scratch.ring_trailingIdx_inReal0, stream->ring_trailingIdx_inReal0, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
+   scratch.ring_trailingIdx_inReal1 = stream->ringMirror_trailingIdx_inReal1;
+   memcpy( scratch.ring_trailingIdx_inReal1, stream->ring_trailingIdx_inReal1, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
+   TA_BETA_StreamStep( &scratch, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Close( TA_BETA_Stream *stream )
+{
+   TA_BETA_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

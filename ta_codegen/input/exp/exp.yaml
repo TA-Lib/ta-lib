@@ -2,8 +2,7 @@ name: EXP
 camel_case: Exp
 group: Math Transform
 hint: Vector Arithmetic Exp
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

@@ -2,7 +2,7 @@ name: SUM
 camel_case: Sum
 group: Math Operators
 hint: Summation
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

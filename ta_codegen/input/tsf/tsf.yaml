@@ -2,7 +2,7 @@ name: TSF
 camel_case: Tsf
 group: Statistic Functions
 hint: Time Series Forecast
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

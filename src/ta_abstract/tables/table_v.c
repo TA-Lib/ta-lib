@@ -61,7 +61,7 @@ DEF_FUNCTION( VAR,
               TA_GroupId_Statistic,
               "Variance",
               "Variance",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* VAR END */
 

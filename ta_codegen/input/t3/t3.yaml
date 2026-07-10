@@ -2,8 +2,7 @@ name: T3
 camel_case: T3
 group: Overlap Studies
 hint: Triple Exponential Moving Average (T3)
-flags: [overlap, unstable_period]
-streaming: true
+flags: [overlap, unstable_period, stream]
 inputs:
   - name: inReal
     type: real

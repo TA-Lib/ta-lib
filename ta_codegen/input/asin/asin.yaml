@@ -2,8 +2,7 @@ name: ASIN
 camel_case: Asin
 group: Math Transform
 hint: Vector Trigonometric ASin
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

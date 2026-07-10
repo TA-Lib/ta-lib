@@ -646,6 +646,31 @@ fn generate_c_abstract_handlers() -> String {
     "#include \"ta_abstract_serve.c\"\n\n".to_string()
 }
 
+/// Emit the per-output bitwise (double) / exact (int) comparison lines of a
+/// stream_verify leg.
+fn emit_sv_compare(
+    s: &mut String,
+    out_is_int: &[bool],
+    bbuf: &[String],
+    pad: &str,
+    idx: &str,
+    bar: &str,
+    pre: &str,
+) {
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let b = &bbuf[i];
+        if *is_int {
+            let _ = std::fmt::Write::write_fmt(s, format_args!(
+                "{pad}if( {pre} v{i} != {b}[{idx}] ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = (double){b}[{idx}]; sv = (double)v{i}; }}\n"
+            ));
+        } else {
+            let _ = std::fmt::Write::write_fmt(s, format_args!(
+                "{pad}if( {pre} sv_bitne(v{i}, {b}[{idx}]) ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = {b}[{idx}]; sv = v{i}; }}\n"
+            ));
+        }
+    }
+}
+
 /// The fuzz-convention input array for one expanded input name: price
 /// components map to their OHLCV series; generic reals map real0→close,
 /// real1→volume (matches abstract_call/fuzz-064 and the driver).
@@ -682,6 +707,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];\n");
     s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
     s.push_str("static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];\n");
+    s.push_str("static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];\n");
     s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n\n");
     s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
     s.push_str("    int fnLen = 0;\n");
@@ -788,10 +814,42 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         for a in &input_arrays {
             let _ = std::fmt::Write::write_fmt(&mut in_args, format_args!("{a}, "));
         }
+        let out_is_int: Vec<bool> = func
+            .outputs
+            .iter()
+            .map(|ou| ou.param_type == ParamType::Integer)
+            .collect();
         let mut out_args = String::new();
-        for i in 0..n_outs {
-            let _ = std::fmt::Write::write_fmt(&mut out_args, format_args!(", sv_b{i}"));
+        {
+            let (mut ri, mut ii) = (0usize, 0usize);
+            for is_int in &out_is_int {
+                if *is_int {
+                    let _ = std::fmt::Write::write_fmt(&mut out_args, format_args!(", sv_ib{ii}"));
+                    ii += 1;
+                } else {
+                    let _ = std::fmt::Write::write_fmt(&mut out_args, format_args!(", sv_b{ri}"));
+                    ri += 1;
+                }
+            }
         }
+        // Per-output batch buffer expression (indexed by output position).
+        let bbuf: Vec<String> = {
+            let (mut ri, mut ii) = (0usize, 0usize);
+            out_is_int
+                .iter()
+                .map(|is_int| {
+                    if *is_int {
+                        let e = format!("sv_ib{ii}");
+                        ii += 1;
+                        e
+                    } else {
+                        let e = format!("sv_b{ri}");
+                        ri += 1;
+                        e
+                    }
+                })
+                .collect()
+        };
         s.push_str(&format!(
             "        rc = {method}(0, svN - 1, {in_args}{opt_args}&svBeg, &svNb{out_args});\n"
         ));
@@ -805,7 +863,16 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("            int openRejects = 0;\n");
         s.push_str(&format!(
             "            {{ TA_{name}_Stream *st = NULL; {} TA_RetCode orc = TA_{name}_Open({opt_args}{in_args}svN, &st, {});\n",
-            (0..n_outs).map(|i| format!("double v{i} = 0.0;")).collect::<Vec<_>>().join(" "),
+            out_is_int
+                .iter()
+                .enumerate()
+                .map(|(i, is_int)| if *is_int {
+                    format!("int v{i} = 0;")
+                } else {
+                    format!("double v{i} = 0.0;")
+                })
+                .collect::<Vec<_>>()
+                .join(" "),
             (0..n_outs).map(|i| format!("&v{i}")).collect::<Vec<_>>().join(", ")
         ));
         s.push_str(&format!(
@@ -837,8 +904,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;\n");
         s.push_str("            double bv = 0.0, sv = 0.0;\n");
         s.push_str(&format!("            TA_{name}_Stream *st = NULL;\n"));
-        for i in 0..n_outs {
-            s.push_str(&format!("            double v{i} = 0.0, pk{i} = 0.0;\n"));
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            if *is_int {
+                s.push_str(&format!("            int v{i} = 0, pk{i} = 0;\n"));
+            } else {
+                s.push_str(&format!("            double v{i} = 0.0, pk{i} = 0.0;\n"));
+            }
         }
         let vout_args: String = (0..n_outs)
             .map(|i| format!("&v{i}"))
@@ -853,11 +924,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         ));
         s.push_str("            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }\n");
         // Compare the open value (bar P-1).
-        for i in 0..n_outs {
-            s.push_str(&format!(
-                "            if( ok && sv_bitne(v{i}, sv_b{i}[(P - 1) - svBeg]) ) {{ ok = 0; badBar = P - 1; badOut = {i}; bv = sv_b{i}[(P - 1) - svBeg]; sv = v{i}; }}\n"
-            ));
-        }
+        emit_sv_compare(&mut s, &out_is_int, &bbuf, "            ", "(P - 1) - svBeg", "P - 1", "ok &&");
         // Update the remaining bars.
         let mut bar_args = String::new();
         for a in &input_arrays {
@@ -872,17 +939,19 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             "                TA_{name}_Update(st, {bar_args}{vout_args});\n"
         ));
         let peek_ne: Vec<String> = (0..n_outs)
-            .map(|i| format!("sv_bitne(pk{i}, v{i})"))
+            .map(|i| {
+                if out_is_int[i] {
+                    format!("(pk{i} != v{i})")
+                } else {
+                    format!("sv_bitne(pk{i}, v{i})")
+                }
+            })
             .collect();
         s.push_str(&format!(
             "                if( doPeek && ({}) ) pkOk = 0;\n",
             peek_ne.join(" || ")
         ));
-        for i in 0..n_outs {
-            s.push_str(&format!(
-                "                if( sv_bitne(v{i}, sv_b{i}[t - svBeg]) ) {{ ok = 0; badBar = t; badOut = {i}; bv = sv_b{i}[t - svBeg]; sv = v{i}; }}\n"
-            ));
-        }
+        emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
         s.push_str("            }\n");
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");

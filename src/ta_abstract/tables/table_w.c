@@ -84,7 +84,7 @@ DEF_FUNCTION( WILLR,
               TA_GroupId_MomentumIndicators,
               "Williams' %R",
               "WillR",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* WILLR END */
 

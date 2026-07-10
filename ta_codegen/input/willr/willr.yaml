@@ -2,7 +2,7 @@ name: WILLR
 camel_case: WillR
 group: Momentum Indicators
 hint: Williams' %R
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHLC
     type: price

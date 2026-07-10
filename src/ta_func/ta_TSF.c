@@ -340,3 +340,192 @@ TA_RetCode TA_S_TSF_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_TSF_Stream {
+   int optInTimePeriod;
+   double SumX;
+   double Divisor;
+   double m;
+   double b;
+   int i;
+   double tempValue1;
+   int winPos_i;
+   int winCap_i;
+   double *win_i_inReal;
+   double *winMirror_i_inReal;
+};
+
+static void TA_TSF_StreamRelease( struct TA_TSF_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->win_i_inReal ) TA_Free( sp->win_i_inReal );
+   if( sp->winMirror_i_inReal ) TA_Free( sp->winMirror_i_inReal );
+   TA_Free( sp );
+}
+
+static void TA_TSF_StreamStep( struct TA_TSF_Stream *sp, double inReal, double *outReal )
+{
+   double SumXY;
+   double SumY;
+
+   sp->win_i_inReal[sp->winPos_i] = inReal;
+   SumXY = 0;
+   SumY = 0;
+   for( sp->i = sp->optInTimePeriod; sp->i-- != 0;  )
+   {
+      sp->tempValue1 = sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i) % sp->winCap_i];
+      SumY += sp->tempValue1;
+      SumXY += (double)sp->i * sp->tempValue1;
+   }
+   sp->m = (sp->optInTimePeriod * SumXY - sp->SumX * SumY) / sp->Divisor;
+   sp->b = (SumY - sp->m * sp->SumX) / (double)sp->optInTimePeriod;
+   *outReal= sp->b + sp->m * (double)sp->optInTimePeriod;
+   sp->winPos_i = sp->winPos_i + 1;
+   if( sp->winPos_i >= sp->winCap_i )
+   {
+      sp->winPos_i = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_TSF_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TSF_Stream **stream, double *outReal )
+{
+   struct TA_TSF_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int today;
+      int lookbackTotal;
+      double SumX = 0.0;
+      double SumXY;
+      double SumY;
+      double SumXSqr;
+      double Divisor = 0.0;
+      double m = 0.0;
+      double b = 0.0;
+      int i = 0;
+      double tempValue1 = 0.0;
+      /* Linear Regression is a concept also known as the
+       * "least squares method" or "best fit." Linear
+       * Regression attempts to fit a straight line between
+       * several data points in such a way that distance
+       * between each data point and the line is minimized.
+       *
+       * For each point, a straight line over the specified
+       * previous bar period is determined in terms
+       * of y = b + m*x:
+       *
+       * TA_LINEARREG          : Returns b+m*(period-1)
+       * TA_LINEARREG_SLOPE    : Returns 'm'
+       * TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+       * TA_LINEARREG_INTERCEPT: Returns 'b'
+       * TA_TSF                : Returns b+m*(period)
+       */
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = TA_TSF_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      today = startIdx;
+      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+      while( today <= endIdx )
+      {
+         SumXY = 0;
+         SumY = 0;
+         for( i = optInTimePeriod; i-- != 0;  )
+         {
+            tempValue1 = inReal[today - i];
+            SumY += tempValue1;
+            SumXY += (double)i * tempValue1;
+         }
+         m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         b = (SumY - m * SumX) / (double)optInTimePeriod;
+         lastValue_outReal = b + m * (double)optInTimePeriod;
+         today += 1;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TSF_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->SumX = SumX;
+      sp->Divisor = Divisor;
+      sp->m = m;
+      sp->b = b;
+      sp->i = i;
+      sp->tempValue1 = tempValue1;
+      sp->winCap_i = (int)(optInTimePeriod);
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_TSF_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inReal ) { TA_TSF_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inReal ) { TA_TSF_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->winPos_i = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_TSF_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSF_Peek( const TA_TSF_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_TSF_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.win_i_inReal = stream->winMirror_i_inReal;
+   memcpy( scratch.win_i_inReal, stream->win_i_inReal, sizeof(double) * (size_t)stream->winCap_i );
+   TA_TSF_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSF_Close( TA_TSF_Stream *stream )
+{
+   TA_TSF_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

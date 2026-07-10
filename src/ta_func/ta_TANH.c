@@ -201,7 +201,7 @@ TA_LIB_API TA_RetCode TA_TANH_Open( const double inReal[], int historyLen, TA_TA
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_TANH_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       *outReal = lastValue_outReal;
       *stream = sp;

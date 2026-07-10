@@ -2,7 +2,7 @@ name: ROC
 camel_case: Roc
 group: Momentum Indicators
 hint: "Rate of change : ((price/prevPrice)-1)*100"
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

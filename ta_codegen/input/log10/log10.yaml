@@ -2,8 +2,7 @@ name: LOG10
 camel_case: Log10
 group: Math Transform
 hint: Vector Log10
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

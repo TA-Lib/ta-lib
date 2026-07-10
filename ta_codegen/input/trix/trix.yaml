@@ -2,8 +2,7 @@ name: TRIX
 camel_case: Trix
 group: Momentum Indicators
 hint: 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
-flags: []
-streaming: true
+flags: [stream]
 inputs:
   - name: inReal
     type: real

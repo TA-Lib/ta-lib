@@ -2,7 +2,7 @@ name: MINMAXINDEX
 camel_case: MinMaxIndex
 group: Math Operators
 hint: Indexes of lowest and highest values over a specified period
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

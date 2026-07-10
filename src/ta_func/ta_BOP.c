@@ -282,7 +282,7 @@ TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[],
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_BOP_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       *outReal = lastValue_outReal;
       *stream = sp;

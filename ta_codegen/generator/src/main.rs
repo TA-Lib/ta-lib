@@ -273,6 +273,8 @@ fn stream_census(seed_yaml: bool) -> i32 {
     let funcs = load_func_defs(None, &root);
     let mut derived_t1 = 0usize;
     let mut derived_t2 = 0usize;
+    let mut derived_t3 = 0usize;
+    let mut derived_t4 = 0usize;
     let mut mismatches = 0usize;
     let mut seeded = 0usize;
 
@@ -282,6 +284,8 @@ fn stream_census(seed_yaml: bool) -> i32 {
                 match m.tier {
                     ir::StreamTier::T1 => derived_t1 += 1,
                     ir::StreamTier::T2 => derived_t2 += 1,
+                    ir::StreamTier::T3 => derived_t3 += 1,
+                    ir::StreamTier::T4 => derived_t4 += 1,
                 }
                 let status = if func.streaming { "streamed" } else { "candidate" };
                 println!(
@@ -318,28 +322,40 @@ fn stream_census(seed_yaml: bool) -> i32 {
         }
     }
     println!(
-        "\n{} functions: {derived_t1} derive T1, {derived_t2} derive T2, {mismatches} declaration mismatch(es){}",
+        "\n{} functions: {derived_t1} derive T1, {derived_t2} derive T2, {derived_t3} derive T3, {derived_t4} derive T4, {mismatches} declaration mismatch(es){}",
         funcs.len(),
         if seed_yaml { std::format!(", {seeded} YAML(s) seeded") } else { String::new() }
     );
     i32::from(mismatches > 0)
 }
 
-/// Insert `streaming: true` into a function YAML, before the `inputs:` key
-/// (house key order puts metadata before the parameter lists).
+/// Append `stream` to the single-line `flags: [...]` list of a function
+/// YAML (the flag maps to TA_FUNC_FLG_STREAM like every other entry).
 fn seed_streaming_flag(yaml_path: &Path) -> Result<(), String> {
     let content = std::fs::read_to_string(yaml_path).map_err(|e| e.to_string())?;
-    if content.contains("\nstreaming:") || content.starts_with("streaming:") {
-        return Ok(()); // already declared
+    let start = content
+        .find("\nflags: [")
+        .map(|p| p + 1)
+        .or_else(|| content.starts_with("flags: [").then_some(0))
+        .ok_or_else(|| "no single-line `flags: [...]` found".to_string())?;
+    let line_end = content[start..]
+        .find(']')
+        .map(|p| start + p)
+        .ok_or_else(|| "unterminated flags list".to_string())?;
+    let inner = &content[start + "flags: [".len()..line_end];
+    if inner.split(',').any(|f| f.trim() == "stream") {
+        return Ok(()); // already flagged
     }
-    let anchor = "\ninputs:";
-    let pos = content
-        .find(anchor)
-        .ok_or_else(|| "no `inputs:` key found".to_string())?;
-    let mut out = String::with_capacity(content.len() + 24);
-    out.push_str(&content[..pos]);
-    out.push_str("\nstreaming: true");
-    out.push_str(&content[pos..]);
+    let new_inner = if inner.trim().is_empty() {
+        "stream".to_string()
+    } else {
+        format!("{inner}, stream")
+    };
+    let mut out = String::with_capacity(content.len() + 16);
+    out.push_str(&content[..start]);
+    out.push_str("flags: [");
+    out.push_str(&new_inner);
+    out.push_str(&content[line_end..]);
     std::fs::write(yaml_path, out).map_err(|e| e.to_string())
 }
 

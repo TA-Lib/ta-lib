@@ -483,3 +483,264 @@ TA_RetCode TA_S_CORREL_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_CORREL_Stream {
+   int optInTimePeriod;
+   double sumXY;
+   double sumX;
+   double sumY;
+   double sumX2;
+   double sumY2;
+   double x;
+   double y;
+   double trailingX;
+   double trailingY;
+   double tempReal;
+   int ringPos_trailingIdx;
+   int ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal0;
+   double *ringMirror_trailingIdx_inReal0;
+   double *ring_trailingIdx_inReal1;
+   double *ringMirror_trailingIdx_inReal1;
+};
+
+static void TA_CORREL_StreamRelease( struct TA_CORREL_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->ring_trailingIdx_inReal0 ) TA_Free( sp->ring_trailingIdx_inReal0 );
+   if( sp->ringMirror_trailingIdx_inReal0 ) TA_Free( sp->ringMirror_trailingIdx_inReal0 );
+   if( sp->ring_trailingIdx_inReal1 ) TA_Free( sp->ring_trailingIdx_inReal1 );
+   if( sp->ringMirror_trailingIdx_inReal1 ) TA_Free( sp->ringMirror_trailingIdx_inReal1 );
+   TA_Free( sp );
+}
+
+static void TA_CORREL_StreamStep( struct TA_CORREL_Stream *sp, double inReal0, double inReal1, double *outReal )
+{
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      sp->ring_trailingIdx_inReal0[0] = inReal0;
+      sp->ring_trailingIdx_inReal1[0] = inReal1;
+   }
+   /* Remove trailing values */
+   sp->sumX -= sp->trailingX;
+   sp->sumX2 -= sp->trailingX * sp->trailingX;
+   sp->sumXY -= sp->trailingX * sp->trailingY;
+   sp->sumY -= sp->trailingY;
+   sp->sumY2 -= sp->trailingY * sp->trailingY;
+   /* Add new values */
+   sp->x = inReal0;
+   sp->sumX += sp->x;
+   sp->sumX2 += sp->x * sp->x;
+   sp->y = inReal1;
+   sp->sumXY += sp->x * sp->y;
+   sp->sumY += sp->y;
+   sp->sumY2 += sp->y * sp->y;
+   /* Output new coefficient.
+    * Save first the trailing values since the input
+    * and output might be the same array,
+    */
+   sp->trailingX = sp->ring_trailingIdx_inReal0[sp->ringPos_trailingIdx];
+   sp->trailingY = sp->ring_trailingIdx_inReal1[sp->ringPos_trailingIdx];
+   sp->tempReal = (sp->sumX2 - sp->sumX * sp->sumX / sp->optInTimePeriod) * (sp->sumY2 - sp->sumY * sp->sumY / sp->optInTimePeriod);
+   if( !TA_IS_ZERO_OR_NEG(sp->tempReal) )
+   {
+      *outReal= (sp->sumXY - sp->sumX * sp->sumY / sp->optInTimePeriod) / sqrt(sp->tempReal);
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   sp->ring_trailingIdx_inReal0[sp->ringPos_trailingIdx] = inReal0;
+   sp->ring_trailingIdx_inReal1[sp->ringPos_trailingIdx] = inReal1;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_CORREL_Stream **stream, double *outReal )
+{
+   struct TA_CORREL_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double sumXY = 0.0;
+      double sumX = 0.0;
+      double sumY = 0.0;
+      double sumX2 = 0.0;
+      double sumY2 = 0.0;
+      double x = 0.0;
+      double y = 0.0;
+      double trailingX = 0.0;
+      double trailingY = 0.0;
+      double tempReal = 0.0;
+      int lookbackTotal;
+      int today;
+      int trailingIdx;
+      int outIdx;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      dummyBegIdx = startIdx;
+      trailingIdx = startIdx - lookbackTotal;
+      /* Calculate the initial values. */
+      sumY2 = 0.0;
+      sumX2 = sumY2;
+      sumY = sumX2;
+      sumX = sumY;
+      sumXY = sumX;
+      for( today = trailingIdx; today <= startIdx; today += 1 )
+      {
+         x = inReal0[today];
+         sumX += x;
+         sumX2 += x * x;
+         y = inReal1[today];
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
+      }
+      /* Write the first output.
+       * Save first the trailing values since the input
+       * and output might be the same array,
+       */
+      trailingX = inReal0[trailingIdx];
+      trailingY = inReal1[trailingIdx++];
+      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
+      if( !TA_IS_ZERO_OR_NEG(tempReal) )
+      {
+         lastValue_outReal = (sumXY - sumX * sumY / optInTimePeriod) / sqrt(tempReal);
+      } else 
+      {
+         lastValue_outReal = 0.0;
+      }
+      /* Tight loop to do subsequent values. */
+      outIdx = 1;
+      while( today <= endIdx )
+      {
+         /* Remove trailing values */
+         sumX -= trailingX;
+         sumX2 -= trailingX * trailingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= trailingY * trailingY;
+         /* Add new values */
+         x = inReal0[today];
+         sumX += x;
+         sumX2 += x * x;
+         y = inReal1[today++];
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
+         /* Output new coefficient.
+          * Save first the trailing values since the input
+          * and output might be the same array,
+          */
+         trailingX = inReal0[trailingIdx];
+         trailingY = inReal1[trailingIdx++];
+         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
+         if( !TA_IS_ZERO_OR_NEG(tempReal) )
+         {
+            lastValue_outReal = (sumXY - sumX * sumY / optInTimePeriod) / sqrt(tempReal);
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+      }
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CORREL_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->sumXY = sumXY;
+      sp->sumX = sumX;
+      sp->sumY = sumY;
+      sp->sumX2 = sumX2;
+      sp->sumY2 = sumY2;
+      sp->x = x;
+      sp->y = y;
+      sp->trailingX = trailingX;
+      sp->trailingY = trailingY;
+      sp->tempReal = tempReal;
+      sp->ringCap_trailingIdx = (int)(today - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_CORREL_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal0 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal0 ) { TA_CORREL_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal0 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal0 ) { TA_CORREL_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal0, inReal0 + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+        sp->ring_trailingIdx_inReal1 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal1 ) { TA_CORREL_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal1 = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal1 ) { TA_CORREL_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal1, inReal1 + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_CORREL_StreamStep( stream, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Peek( const TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   struct TA_CORREL_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.ring_trailingIdx_inReal0 = stream->ringMirror_trailingIdx_inReal0;
+   memcpy( scratch.ring_trailingIdx_inReal0, stream->ring_trailingIdx_inReal0, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
+   scratch.ring_trailingIdx_inReal1 = stream->ringMirror_trailingIdx_inReal1;
+   memcpy( scratch.ring_trailingIdx_inReal1, stream->ring_trailingIdx_inReal1, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
+   TA_CORREL_StreamStep( &scratch, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Close( TA_CORREL_Stream *stream )
+{
+   TA_CORREL_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

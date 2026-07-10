@@ -2,7 +2,7 @@ name: MOM
 camel_case: Mom
 group: Momentum Indicators
 hint: Momentum
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

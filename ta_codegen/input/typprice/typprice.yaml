@@ -2,8 +2,7 @@ name: TYPPRICE
 camel_case: TypPrice
 group: Price Transform
 hint: Typical Price
-flags: [overlap]
-streaming: true
+flags: [overlap, stream]
 inputs:
   - name: inPriceHLC
     type: price

@@ -1664,7 +1664,7 @@ TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], c
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ADX_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevHigh = prevHigh;

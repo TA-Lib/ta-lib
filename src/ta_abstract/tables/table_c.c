@@ -60,7 +60,7 @@ DEF_FUNCTION( CCI,
               TA_GroupId_MomentumIndicators,
               "Commodity Channel Index",
               "Cci",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* CCI END */
 
@@ -1615,7 +1615,7 @@ DEF_FUNCTION( CORREL,
               TA_GroupId_Statistic,
               "Pearson's Correlation Coefficient (r)",
               "Correl",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* CORREL END */
 

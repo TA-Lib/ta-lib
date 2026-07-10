@@ -2,7 +2,7 @@ name: KAMA
 camel_case: Kama
 group: Overlap Studies
 hint: Kaufman Adaptive Moving Average
-flags: [overlap, unstable_period]
+flags: [overlap, unstable_period, stream]
 inputs:
   - name: inReal
     type: real

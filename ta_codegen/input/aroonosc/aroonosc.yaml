@@ -2,7 +2,7 @@ name: AROONOSC
 camel_case: AroonOsc
 group: Momentum Indicators
 hint: Aroon Oscillator
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHL
     type: price

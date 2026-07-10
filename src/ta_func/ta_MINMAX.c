@@ -479,3 +479,268 @@ TA_RetCode TA_S_MINMAX_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MINMAX_Stream {
+   int optInTimePeriod;
+   double highest;
+   double lowest;
+   double tmpHigh;
+   double tmpLow;
+   int trailingIdx;
+   int i;
+   int highestIdx;
+   int lowestIdx;
+   int today;
+   int xCap;
+   double *x_inReal;
+   double *xMirror_inReal;
+};
+
+static void TA_MINMAX_StreamRelease( struct TA_MINMAX_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inReal ) TA_Free( sp->x_inReal );
+   if( sp->xMirror_inReal ) TA_Free( sp->xMirror_inReal );
+   TA_Free( sp );
+}
+
+static void TA_MINMAX_StreamStep( struct TA_MINMAX_Stream *sp, double inReal, double *outMin, double *outMax )
+{
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inReal[sp->today % sp->xCap] = inReal;
+   sp->tmpHigh = sp->x_inReal[sp->today % sp->xCap];
+   sp->tmpLow = sp->tmpHigh;
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = sp->x_inReal[sp->highestIdx % sp->xCap];
+      sp->i = sp->highestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         sp->tmpHigh = sp->x_inReal[sp->i % sp->xCap];
+         if( sp->tmpHigh > sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = sp->tmpHigh;
+         }
+      }
+   } else if( sp->tmpHigh >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = sp->tmpHigh;
+   }
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
+      sp->i = sp->lowestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         sp->tmpLow = sp->x_inReal[sp->i % sp->xCap];
+         if( sp->tmpLow < sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = sp->tmpLow;
+         }
+      }
+   } else if( sp->tmpLow <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = sp->tmpLow;
+   }
+   *outMax= sp->highest;
+   *outMin= sp->lowest;
+   sp->trailingIdx += 1;
+   sp->today += 1;
+}
+
+TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAX_Stream **stream, double *outMin, double *outMax )
+{
+   struct TA_MINMAX_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outMin;
+   double lastValue_outMax;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outMin || !outMax ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outMin = 0.0;
+   lastValue_outMax = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double highest = 0.0;
+      double lowest = 0.0;
+      double tmpHigh = 0.0;
+      double tmpLow = 0.0;
+      int outIdx;
+      int nbInitialElementNeeded;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int highestIdx = 0;
+      int lowestIdx = 0;
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      highest = 0.0;
+      lowestIdx = 0 - 1;
+      lowest = 0.0;
+      while( today <= endIdx )
+      {
+         tmpHigh = inReal[today];
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inReal[highestIdx];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmpHigh = inReal[i];
+               if( tmpHigh > highest )
+               {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest )
+         {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inReal[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmpLow = inReal[i];
+               if( tmpLow < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         lastValue_outMax = highest;
+         lastValue_outMin = lowest;
+         outIdx += 1;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MINMAX_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->highest = highest;
+      sp->lowest = lowest;
+      sp->tmpHigh = tmpHigh;
+      sp->tmpLow = tmpLow;
+      sp->trailingIdx = trailingIdx;
+      sp->i = i;
+      sp->highestIdx = highestIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MINMAX_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inReal ) { TA_MINMAX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inReal ) { TA_MINMAX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+        }
+      }
+      *outMin = lastValue_outMin;
+      *outMax = lastValue_outMax;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )
+{
+   if( !stream || !outMin || !outMax ) return TA_BAD_PARAM;
+   TA_MINMAX_StreamStep( stream, inReal, outMin, outMax );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINMAX_Peek( const TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )
+{
+   struct TA_MINMAX_Stream scratch;
+
+   if( !stream || !outMin || !outMax ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.x_inReal = stream->xMirror_inReal;
+   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
+   TA_MINMAX_StreamStep( &scratch, inReal, outMin, outMax );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINMAX_Close( TA_MINMAX_Stream *stream )
+{
+   TA_MINMAX_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

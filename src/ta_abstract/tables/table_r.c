@@ -60,7 +60,7 @@ DEF_FUNCTION( ROC,
               TA_GroupId_MomentumIndicators,
               "Rate of change : ((price/prevPrice)-1)*100",
               "Roc",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ROC END */
 
@@ -86,7 +86,7 @@ DEF_FUNCTION( ROCP,
               TA_GroupId_MomentumIndicators,
               "Rate of change Percentage: (price-prevPrice)/prevPrice",
               "RocP",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ROCP END */
 
@@ -112,7 +112,7 @@ DEF_FUNCTION( ROCR,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio: (price/prevPrice)",
               "RocR",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ROCR END */
 
@@ -138,7 +138,7 @@ DEF_FUNCTION( ROCR100,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio 100 scale: (price/prevPrice)*100",
               "RocR100",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ROCR100 END */
 

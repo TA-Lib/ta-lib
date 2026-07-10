@@ -428,7 +428,7 @@ DEF_FUNCTION( MAX,
               TA_GroupId_MathOperators,
               "Highest value over a specified period",
               "Max",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAX END */
 
@@ -454,7 +454,7 @@ DEF_FUNCTION( MAXINDEX,
               TA_GroupId_MathOperators,
               "Index of highest value over a specified period",
               "MaxIndex",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MAXINDEX END */
 
@@ -504,7 +504,7 @@ DEF_FUNCTION( MFI,
               TA_GroupId_MomentumIndicators,
               "Money Flow Index",
               "Mfi",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MFI END */
 
@@ -530,7 +530,7 @@ DEF_FUNCTION( MIDPOINT,
               TA_GroupId_OverlapStudies,
               "MidPoint over period",
               "MidPoint",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIDPOINT END */
 
@@ -582,7 +582,7 @@ DEF_FUNCTION( MIN,
               TA_GroupId_MathOperators,
               "Lowest value over a specified period",
               "Min",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIN END */
 
@@ -608,7 +608,7 @@ DEF_FUNCTION( MININDEX,
               TA_GroupId_MathOperators,
               "Index of lowest value over a specified period",
               "MinIndex",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MININDEX END */
 
@@ -641,7 +641,7 @@ DEF_FUNCTION( MINMAX,
               TA_GroupId_MathOperators,
               "Lowest and highest values over a specified period",
               "MinMax",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MINMAX END */
 
@@ -674,7 +674,7 @@ DEF_FUNCTION( MINMAXINDEX,
               TA_GroupId_MathOperators,
               "Indexes of lowest and highest values over a specified period",
               "MinMaxIndex",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MINMAXINDEX END */
 
@@ -752,7 +752,7 @@ DEF_FUNCTION( MOM,
               TA_GroupId_MomentumIndicators,
               "Momentum",
               "Mom",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MOM END */
 

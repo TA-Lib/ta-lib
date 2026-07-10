@@ -261,7 +261,7 @@ DEF_FUNCTION( TSF,
               TA_GroupId_Statistic,
               "Time Series Forecast",
               "Tsf",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TSF END */
 

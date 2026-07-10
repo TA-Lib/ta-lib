@@ -2,7 +2,7 @@ name: BETA
 camel_case: Beta
 group: Statistic Functions
 hint: Beta
-flags: []
+flags: [stream]
 inputs:
   - name: inReal0
     type: real

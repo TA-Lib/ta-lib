@@ -760,7 +760,7 @@ TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, cons
    {
       if( historyLen < TA_T3_Lookback( optInTimePeriod, optInVFactor ) + 1 ) return TA_BAD_PARAM;
       sp = (struct TA_T3_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInVFactor = optInVFactor;
@@ -931,7 +931,7 @@ TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, cons
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_T3_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInVFactor = optInVFactor;

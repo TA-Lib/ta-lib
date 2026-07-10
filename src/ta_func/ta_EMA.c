@@ -525,7 +525,7 @@ TA_LIB_API TA_RetCode TA_EMA_Open( int optInTimePeriod, const double inReal[], i
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) return TA_ALLOC_ERR;
+      if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInK_1 = optInK_1;
