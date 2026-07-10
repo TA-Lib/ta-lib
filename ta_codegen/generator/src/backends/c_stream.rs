@@ -275,9 +275,496 @@ pub fn generate(
         StreamPlan::Dispatch(dp) => {
             emit_dispatch(&mut o, func, dp, enums, registry, helpers, &counter);
         }
+        StreamPlan::Composed(cp) => {
+            emit_composed(&mut o, func, cp, enums, registry, helpers, &counter);
+        }
     }
 
     o
+}
+
+// ---------------------------------------------------------------------------
+// Composed emission (STOCH class): producer loop + pipeline over the
+// callees' PUBLIC streams. See streaming::ComposedPlan.
+// ---------------------------------------------------------------------------
+
+/// C name mapping for the composed producer transition: identical to the
+/// loop tier except the intermediate series' "output" write lands in a
+/// local scalar (`cur_<series>`) the pipeline then consumes.
+struct ComposedNames {
+    series: String,
+}
+
+impl streaming::NameMap for ComposedNames {
+    fn state(&self, name: &str) -> String {
+        format!("sp->{name}")
+    }
+    fn bar(&self, array: &str) -> String {
+        array.to_string()
+    }
+    fn output(&self, name: &str) -> Expr {
+        if name == self.series {
+            Expr::Var(format!("cur_{name}"))
+        } else {
+            Expr::PointerDeref(name.to_string())
+        }
+    }
+    fn ring_buf(&self, var: &str, array: &str) -> String {
+        format!("sp->ring_{var}_{array}")
+    }
+    fn ring_pos(&self, var: &str) -> String {
+        format!("sp->ringPos_{var}")
+    }
+    fn ring_lag(&self, var: &str) -> String {
+        format!("sp->ringLag_{var}")
+    }
+    fn ring_cap(&self, var: &str) -> String {
+        format!("sp->ringCap_{var}")
+    }
+    fn win_buf(&self, var: &str, array: &str) -> String {
+        format!("sp->win_{var}_{array}")
+    }
+    fn win_pos(&self, var: &str) -> String {
+        format!("sp->winPos_{var}")
+    }
+    fn win_cap(&self, var: &str) -> String {
+        format!("sp->winCap_{var}")
+    }
+    fn circ_buf(&self, storage: &str) -> String {
+        format!("sp->cb_{storage}")
+    }
+    fn extrema_buf(&self, array: &str) -> String {
+        format!("sp->x_{array}")
+    }
+    fn extrema_cap(&self) -> String {
+        "sp->xCap".to_string()
+    }
+}
+
+/// Cleanup text for Open failure paths BEFORE the handle exists: close every
+/// sub handle opened so far (Close(NULL) is a no-op) and free the scratch
+/// output arrays. No trailing semicolon (rendered contexts add their own).
+fn composed_cleanup(cp: &streaming::ComposedPlan, outputs: &[String]) -> String {
+    let mut s = String::new();
+    for (i, sub) in cp.subs.iter().enumerate() {
+        let _ = write!(s, "{}_Close( sub{i} ); ", callee_prefix(&sub.callee));
+    }
+    for out in outputs {
+        let _ = write!(s, "TA_Free( sc_{out} ); ");
+    }
+    s.trim_end().trim_end_matches(';').to_string()
+}
+
+#[allow(clippy::too_many_lines)]
+fn emit_composed(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let model = &cp.producer;
+    let inputs = streaming::input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let cleanup = composed_cleanup(cp, &outputs);
+
+    // --- state struct: producer fields + peek mode + typed sub handles ------
+    let mut extra = String::new();
+    let _ = writeln!(
+        extra,
+        "   /* Peek runs the SAME step body on a scratch copy; sub handles are\n    * heap pointers a struct copy cannot clone, so the copy carries this\n    * flag and the step calls sub-Peek instead of sub-Update. */"
+    );
+    let _ = writeln!(extra, "   int peekMode;");
+    for (i, sub) in cp.subs.iter().enumerate() {
+        let _ = writeln!(extra, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
+    }
+    emit_state_struct_ex(o, func, model, &extra);
+    emit_release(o, func, model);
+
+    // --- StreamStep -----------------------------------------------------------
+    let bars = bar_params_sig(func);
+    let outs = out_params_sig(func);
+    let _ = writeln!(
+        o,
+        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+    );
+    for (name, ty) in &model.temps {
+        let _ = writeln!(o, "   {};", c_decl(ty, name));
+    }
+    let _ = writeln!(o, "   double cur_{};", cp.series);
+    for sub in &cp.subs {
+        if sub.dst != sub.src {
+            let _ = writeln!(o, "   double cur_{};", sub.dst);
+        }
+    }
+    let _ = writeln!(o);
+    emit_extrema_rebase(o, model);
+    let names = ComposedNames {
+        series: cp.series.clone(),
+    };
+    let transition = streaming::build_transition(model, &names)
+        .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+    let mut body_c = String::new();
+    for s in &transition {
+        body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
+    }
+    let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
+    if !step_settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, 3));
+    }
+    o.push_str(&body_c);
+    // Pipeline: the batch tail, one scalar per bar through the sub handles.
+    let _ = writeln!(o, "\n   /* Pipeline the new bar through the sub-streams (batch tail order). */");
+    let mut cur: std::collections::BTreeMap<String, String> =
+        std::iter::once((cp.series.clone(), format!("cur_{}", cp.series))).collect();
+    for step in &cp.steps {
+        match step {
+            streaming::UpdateStep::Sub { sub_idx } => {
+                let sub = &cp.subs[*sub_idx];
+                let cpfx = callee_prefix(&sub.callee);
+                let src = cur.get(&sub.src).expect("analyzer ordered").clone();
+                let dst = format!("cur_{}", sub.dst);
+                let _ = writeln!(o, "   if( sp->peekMode )");
+                let _ = writeln!(
+                    o,
+                    "      {cpfx}_Peek( (const {cpfx}_Stream *)sp->sub{sub_idx}, {src}, &{dst} );"
+                );
+                let _ = writeln!(o, "   else");
+                let _ = writeln!(
+                    o,
+                    "      {cpfx}_Update( sp->sub{sub_idx}, {src}, &{dst} );"
+                );
+                cur.insert(sub.dst.clone(), dst);
+            }
+            streaming::UpdateStep::Align { dst, src } => {
+                let alias = cur.get(src).expect("analyzer ordered").clone();
+                cur.insert(dst.clone(), alias);
+            }
+        }
+    }
+    for out in &outputs {
+        let _ = writeln!(o, "   *{out} = {};", cur.get(out).expect("analyzer gated"));
+    }
+    let _ = writeln!(o, "}}\n");
+
+    // --- Open ------------------------------------------------------------------
+    emit_composed_open(o, func, cp, &outputs, &inputs, &cleanup, enums, registry, helpers, counter);
+
+    // --- Update / Peek / Close ---------------------------------------------------
+    emit_update(o, func);
+    // Peek: scratch copy + producer buffer mirrors + peekMode.
+    {
+        let bars_v: Vec<String> = inputs.clone();
+        let _ = writeln!(o, "{}\n{{", peek_signature(func));
+        let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
+        let checks: Vec<String> = std::iter::once("!stream".to_string())
+            .chain(outputs.iter().map(|x| format!("!{x}")))
+            .collect();
+        let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
+        let _ = writeln!(o, "   scratch = *stream;");
+        emit_peek_mirror_fixups(o, model);
+        let _ = writeln!(o, "   scratch.peekMode = 1;");
+        let args: Vec<String> = bars_v
+            .iter()
+            .cloned()
+            .chain(outputs.iter().cloned())
+            .collect();
+        let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
+        let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    }
+    // Close: subs first, then the producer buffers + handle.
+    let _ = writeln!(o, "{}\n{{", close_signature(func));
+    let _ = writeln!(o, "   if( !stream ) return TA_SUCCESS;");
+    for (i, sub) in cp.subs.iter().enumerate() {
+        let _ = writeln!(o, "   {}_Close( stream->sub{i} );", callee_prefix(&sub.callee));
+    }
+    if model.rings.is_empty()
+        && model.windows.is_empty()
+        && model.circs.is_empty()
+        && model.extrema.is_none()
+    {
+        let _ = writeln!(o, "   TA_Free( stream );");
+    } else {
+        let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+    }
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
+/// Composed Open: scratch output arrays + verbatim transcription of the
+/// batch body with sub-streams opened on the materialized series at the
+/// exact points batch consumes them, then producer-state capture.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn emit_composed_open(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    outputs: &[String],
+    inputs: &[String],
+    cleanup: &str,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let model = &cp.producer;
+    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
+    let _ = writeln!(o, "   int startIdx;");
+    let _ = writeln!(o, "   int endIdx;");
+    let _ = writeln!(o, "   int dummyBegIdx;");
+    let _ = writeln!(o, "   int dummyNBElement;");
+    let _ = writeln!(o, "   TA_RetCode subRc;");
+    let _ = writeln!(o, "   double subOpenDummy;");
+    for out in outputs {
+        let _ = writeln!(o, "   double *sc_{out};");
+    }
+    for (i, sub) in cp.subs.iter().enumerate() {
+        let _ = writeln!(o, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
+    }
+
+    emit_open_validation(o, func, outputs, inputs);
+
+    let _ = writeln!(o, "\n   startIdx = 0;");
+    let _ = writeln!(o, "   endIdx = historyLen - 1;");
+    let _ = writeln!(o, "   dummyBegIdx = 0;");
+    let _ = writeln!(o, "   dummyNBElement = 0;");
+    let _ = writeln!(o, "   subRc = TA_SUCCESS;");
+    let _ = writeln!(o, "   subOpenDummy = 0.0;");
+    for (i, _) in cp.subs.iter().enumerate() {
+        let _ = writeln!(o, "   sub{i} = NULL;");
+    }
+    let _ = writeln!(
+        o,
+        "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;"
+    );
+    // Scratch output arrays: the batch tail writes REAL arrays (sub-call
+    // out args, memmoves) — a last-value scalar cannot stand in here.
+    for (k, out) in outputs.iter().enumerate() {
+        let _ = writeln!(
+            o,
+            "   sc_{out} = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );"
+        );
+        let prior: String = outputs[..k]
+            .iter()
+            .fold(String::new(), |mut s, p| {
+                let _ = write!(s, "TA_Free( sc_{p} ); ");
+                s
+            });
+        let _ = writeln!(o, "   if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
+    }
+
+    // --- transcription ---------------------------------------------------------
+    let _ = writeln!(o, "\n   {{");
+    let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
+    let mut region_c = String::new();
+    for s in &region_stmts {
+        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+    }
+    let open_settings = crate::candle_settings::detect_candle_settings(model.body);
+    if !open_settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&open_settings, &region_c, 6));
+    }
+    o.push_str(&region_c);
+
+    // Tail: statement by statement, opening each sub-stream on its source
+    // series IMMEDIATELY BEFORE the batch call that consumes it (in-place
+    // smoothing overwrites the raw series right here — order is the whole
+    // point; the spike's wrong-order sabotage fails 4,394 legs).
+    let open_map = composed_open_expr_fn(outputs);
+    for (i, stmt) in tail_stmts.iter().enumerate() {
+        for (si, sub) in cp.subs.iter().enumerate() {
+            if sub.tail_idx == i {
+                let cpfx = callee_prefix(&sub.callee);
+                let opt_str: String = sub.opt_args.iter().fold(String::new(), |mut s, a| {
+                    let _ = write!(s, "{}, ", render_expression(a, registry, helpers, counter));
+                    s
+                });
+                let lb_args: String = sub
+                    .opt_args
+                    .iter()
+                    .map(|a| render_expression(a, registry, helpers, counter))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let s_arg = render_expression(
+                    &streaming::rewrite_expr(&sub.s_arg, &open_map),
+                    registry,
+                    helpers,
+                    counter,
+                );
+                let e_arg = render_expression(
+                    &streaming::rewrite_expr(&sub.e_arg, &open_map),
+                    registry,
+                    helpers,
+                    counter,
+                );
+                let src = if outputs.contains(&sub.src) {
+                    format!("sc_{}", sub.src)
+                } else {
+                    sub.src.clone()
+                };
+                let _ = writeln!(o, "      /* Sub-stream {si}: {} over `{}` — the same series the", sub.callee, sub.src);
+                let _ = writeln!(o, "       * batch call below consumes, anchored at its seeding point. */");
+                let _ = writeln!(o, "      {{");
+                let _ = writeln!(o, "         int subOff;");
+                let _ = writeln!(o, "         subOff = ({s_arg}) - {cpfx}_Lookback( {lb_args} );");
+                let _ = writeln!(o, "         if( subOff < 0 ) subOff = 0;");
+                let _ = writeln!(
+                    o,
+                    "         subRc = {cpfx}_Open( {opt_str}&{src}[subOff], ({e_arg}) - subOff + 1, &sub{si}, &subOpenDummy );"
+                );
+                let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
+                let _ = writeln!(o, "         {{");
+                // This return is INSERTED into the batch flow: the batch's
+                // early returns free the live series buffer themselves, an
+                // inserted one must replay the batch's own guarded free or
+                // every honest rejection (unsupported MAType arm) leaks it.
+                if let Some(sf) = &cp.series_free {
+                    o.push_str(&render_statement(sf, 12, false, enums, registry, helpers, counter));
+                }
+                let _ = writeln!(o, "            {cleanup};");
+                let _ = writeln!(o, "            return subRc;");
+                let _ = writeln!(o, "         }}");
+                let _ = writeln!(o, "      }}");
+            }
+        }
+        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter));
+    }
+
+    // --- capture ----------------------------------------------------------------
+    let _ = writeln!(o, "\n      /* Capture the live producer state + sub handles. */");
+    let _ = writeln!(
+        o,
+        "      if( dummyNBElement < 1 ) {{ {cleanup}; return TA_BAD_PARAM; }}"
+    );
+    o.push_str(&alloc_and_capture(
+        func, model, "      ", /*with_state=*/ true, cleanup, registry, helpers, counter,
+    ));
+    for lag in &model.lags {
+        for k in 1..=lag.depth {
+            let _ = writeln!(
+                o,
+                "      sp->{} = {}[historyLen - {k}];",
+                StreamModel::lag_field(&lag.array, k),
+                lag.array
+            );
+        }
+    }
+    for (i, _) in cp.subs.iter().enumerate() {
+        let _ = writeln!(o, "      sp->sub{i} = sub{i};");
+    }
+    for out in outputs {
+        let _ = writeln!(o, "      *{out} = sc_{out}[dummyNBElement - 1];");
+    }
+    for out in outputs {
+        let _ = writeln!(o, "      TA_Free( sc_{out} );");
+    }
+    let _ = writeln!(o, "      *stream = sp;");
+    let _ = writeln!(o, "      return TA_SUCCESS;");
+    let _ = writeln!(o, "   }}\n}}\n");
+}
+
+/// The composed-Open expression mapping: out-meta pointers to the dummies —
+/// in BOTH forms: `*outNBElement` reads/writes (deref) AND `outNBElement`
+/// passed through as a pointer argument to the batch sub-calls — plus
+/// output arrays renamed to their scratch names (`outX` -> `sc_outX`, both
+/// bare Var pointer uses and ArrayAccess bases).
+fn composed_open_expr_fn(outputs: &[String]) -> impl Fn(Expr) -> Expr + '_ {
+    move |e: Expr| -> Expr {
+        match e {
+            Expr::PointerDeref(nm) if nm == "outBegIdx" => Expr::Var("dummyBegIdx".into()),
+            Expr::PointerDeref(nm) if nm == "outNBElement" => {
+                Expr::Var("dummyNBElement".into())
+            }
+            Expr::Var(v) if v == "outBegIdx" => {
+                Expr::AddressOf(Box::new(Expr::Var("dummyBegIdx".into())))
+            }
+            Expr::Var(v) if v == "outNBElement" => {
+                Expr::AddressOf(Box::new(Expr::Var("dummyNBElement".into())))
+            }
+            Expr::Var(v) if outputs.contains(&v) => Expr::Var(format!("sc_{v}")),
+            Expr::ArrayAccess(name, idx) if outputs.contains(&name) => {
+                Expr::ArrayAccess(format!("sc_{name}"), idx)
+            }
+            other => other,
+        }
+    }
+}
+
+/// The transcribed (region, tail) statement lists for the composed Open:
+/// out-meta pointers to dummies, output arrays renamed to scratch, early
+/// returns mapped (success -> BAD_PARAM) with the cleanup prepended, final
+/// tail return dropped.
+fn build_composed_open_bodies(
+    cp: &streaming::ComposedPlan,
+    outputs: &[String],
+    cleanup: &str,
+) -> (Vec<Statement>, Vec<Statement>) {
+    let fe = composed_open_expr_fn(outputs);
+    let cleanup_owned = cleanup.to_string();
+    let series = cp.series.clone();
+    let fs = move |s: Statement| -> Option<Statement> {
+        match s {
+            // The batch bodies malloc the intermediate series without a
+            // NULL check (a pre-existing batch defect that surfaces as UB
+            // on a NEW API surface here): inject the check so Open fails
+            // with a clean TA_ALLOC_ERR like its every other allocation.
+            Statement::Assign {
+                target: Expr::Var(v),
+                value: Expr::FuncCall(name, args),
+                compound,
+            } if v == series && name == "malloc" => Some(Statement::Block {
+                body: vec![
+                    Statement::Assign {
+                        target: Expr::Var(v.clone()),
+                        value: Expr::FuncCall(name, args),
+                        compound,
+                    },
+                    Statement::If {
+                        condition: Expr::Not(Box::new(Expr::Var(v))),
+                        then_body: vec![
+                            Statement::Expr(Expr::Var(cleanup_owned.clone())),
+                            Statement::Return {
+                                value: Some(Expr::Var("ALLOC_ERR".into())),
+                            },
+                        ],
+                        else_body: vec![],
+                        cond_comments: vec![],
+                    },
+                ],
+            }),
+            Statement::Return { value } => {
+                let mapped = match value {
+                    Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
+                        Some(Expr::Var("BAD_PARAM".into()))
+                    }
+                    other => other,
+                };
+                // Close the subs opened so far and free the scratch arrays
+                // on every early exit (Close(NULL) is a no-op, so one
+                // uniform cleanup text is safe on every path).
+                Some(Statement::Block {
+                    body: vec![
+                        Statement::Expr(Expr::Var(cleanup_owned.clone())),
+                        Statement::Return { value: mapped },
+                    ],
+                })
+            }
+            other => Some(other),
+        }
+    };
+    let region: Vec<Statement> = cp.producer.body.to_vec();
+    let mut tail: Vec<Statement> = cp.tail.to_vec();
+    if matches!(tail.last(), Some(Statement::Return { .. })) {
+        tail.pop();
+    }
+    (
+        streaming::rewrite_stmts(&region, &fe, &fs),
+        streaming::rewrite_stmts(&tail, &fe, &fs),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -494,6 +981,12 @@ fn emit_dispatch(
 }
 
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
+    emit_state_struct_ex(o, func, model, "");
+}
+
+/// State struct with extra trailing fields (composed tier: peekMode + typed
+/// sub handles appended after the producer's own fields).
+fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: &str) {
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     for p in &func.optional_inputs {
@@ -551,8 +1044,10 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
             let _ = writeln!(o, "   double *xMirror_{arr};");
         }
     }
+    o.push_str(extra);
     // A struct must have at least one member (T1 maps carry none).
-    if func.optional_inputs.is_empty()
+    if extra.is_empty()
+        && func.optional_inputs.is_empty()
         && func.private_extra_params.is_empty()
         && model.state.is_empty()
         && model.lags.is_empty()
@@ -635,28 +1130,7 @@ fn emit_step(
     {
         let _ = writeln!(o, "   (void)sp;");
     }
-    // Extrema automatons carry batch-absolute int indices that grow by one
-    // per bar. Rebase them by a multiple of the ring capacity long before
-    // INT_MAX: index differences and `% cap` residues are invariant, so the
-    // automaton (and bit-exactness vs any batch-comparable range, which is
-    // itself bounded by int) is untouched. Index-observable outputs
-    // (MININDEX...) report the rebased position beyond ~2^30 bars — the
-    // batch contract is inherently vacuous past INT_MAX bars.
-    if let Some(ex) = &model.extrema {
-        let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
-        vars.extend(ex.index_vars.iter().cloned());
-        let _ = writeln!(o, "   if( sp->{} >= 1073741824 )", model.cursor);
-        let _ = writeln!(o, "   {{");
-        let _ = writeln!(
-            o,
-            "      int rebaseShift = ( sp->{} / sp->xCap ) * sp->xCap;",
-            ex.trailing
-        );
-        for v in &vars {
-            let _ = writeln!(o, "      sp->{v} -= rebaseShift;");
-        }
-        let _ = writeln!(o, "   }}");
-    }
+    emit_extrema_rebase(o, model);
     let transition = streaming::build_transition(model, &CNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let mut body_c = String::new();
@@ -673,6 +1147,31 @@ fn emit_step(
     }
     o.push_str(&body_c);
     let _ = writeln!(o, "}}\n");
+}
+
+/// Extrema automatons carry batch-absolute int indices that grow by one
+/// per bar. Rebase them by a multiple of the ring capacity long before
+/// INT_MAX: index differences and `% cap` residues are invariant, so the
+/// automaton (and bit-exactness vs any batch-comparable range, which is
+/// itself bounded by int) is untouched. Index-observable outputs
+/// (MININDEX...) report the rebased position beyond ~2^30 bars — the
+/// batch contract is inherently vacuous past INT_MAX bars.
+fn emit_extrema_rebase(o: &mut String, model: &StreamModel) {
+    if let Some(ex) = &model.extrema {
+        let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
+        vars.extend(ex.index_vars.iter().cloned());
+        let _ = writeln!(o, "   if( sp->{} >= 1073741824 )", model.cursor);
+        let _ = writeln!(o, "   {{");
+        let _ = writeln!(
+            o,
+            "      int rebaseShift = ( sp->{} / sp->xCap ) * sp->xCap;",
+            ex.trailing
+        );
+        for v in &vars {
+            let _ = writeln!(o, "      sp->{v} -= rebaseShift;");
+        }
+        let _ = writeln!(o, "   }}");
+    }
 }
 
 /// Emit candle-settings unpacking lines only for the `<Set>_<prop>` locals
@@ -730,7 +1229,7 @@ fn emit_open(
         opt_names.push(&p.name);
     }
 
-    emit_open_validation(o, func, model, &inputs);
+    emit_open_validation(o, func, &model.outputs, &inputs);
 
     // --- initialization (after defaults are substituted) ---------------------
     let _ = writeln!(o, "\n   startIdx = 0;");
@@ -775,7 +1274,7 @@ fn emit_open(
     // --- state capture --------------------------------------------------------
     let _ = writeln!(o, "\n      /* Capture the live batch state into the handle. */");
     o.push_str(&alloc_and_capture(
-        func, model, "      ", /*with_state=*/ true, registry, helpers, counter,
+        func, model, "      ", /*with_state=*/ true, "", registry, helpers, counter,
     ));
     for lag in &model.lags {
         for k in 1..=lag.depth {
@@ -840,6 +1339,17 @@ fn emit_open_tail(o: &mut String, func: &FuncDef, model: &StreamModel) {
     let _ = writeln!(o, "      return TA_SUCCESS;");
 }
 
+/// Cleanup prefix for a capture-failure return (composed Open: close subs +
+/// free scratch before releasing the half-built handle). Formatted as
+/// statements or empty.
+fn pre_fail_stmt(pre_fail: &str) -> String {
+    if pre_fail.is_empty() {
+        String::new()
+    } else {
+        format!("{pre_fail}; ")
+    }
+}
+
 /// `sp = TA_Malloc(...); memset; param/extra capture[; state capture]` at the
 /// given indent. memset keeps unused fields (identity path) deterministic
 /// and NULLs the ring pointers so `StreamRelease` is safe mid-allocation.
@@ -857,11 +1367,13 @@ fn alloc_and_capture(
     model: &StreamModel,
     pad: &str,
     with_state: bool,
+    pre_fail: &str,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) -> String {
     let n = uname(func);
+    let pre = pre_fail_stmt(pre_fail);
     let mut s = String::new();
     let _ = writeln!(
         s,
@@ -874,7 +1386,7 @@ fn alloc_and_capture(
     } else {
         String::new()
     };
-    let _ = writeln!(s, "{pad}if( !sp ) {{ {sp_fail}return TA_ALLOC_ERR; }}");
+    let _ = writeln!(s, "{pad}if( !sp ) {{ {pre}{sp_fail}return TA_ALLOC_ERR; }}");
     let _ = writeln!(s, "{pad}memset( sp, 0, sizeof(*sp) );");
     for p in &func.optional_inputs {
         let _ = writeln!(s, "{pad}sp->{0} = {0};", p.name);
@@ -903,7 +1415,7 @@ fn alloc_and_capture(
     let fail = if model.rings.is_empty() {
         String::new()
     } else {
-        format!("{{ TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}")
+        format!("{{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}")
     };
     for ring in &model.rings {
         let v = &ring.var;
@@ -918,14 +1430,14 @@ fn alloc_and_capture(
                 );
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}",
+                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}",
                     fwd = ring.fwd
                 );
             } else {
                 let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
                 );
             }
         } else if back > 0 {
@@ -995,19 +1507,19 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
         );
         for arr in &win.arrays {
             let _ = writeln!(
                 s,
                 "{pad}sp->win_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->win_{v}_{arr} ) {{ TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->win_{v}_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 s,
                 "{pad}sp->winMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->winMirror_{v}_{arr} ) {{ TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->winMirror_{v}_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
             // Fill with the history tail: slot cap-1 = last bar, so the next
             // update writes the new bar at pos 0 and (pos+cap-w)%cap walks
             // back w bars.
@@ -1034,19 +1546,19 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
         );
         for arr in &ex.arrays {
             let _ = writeln!(
                 s,
                 "{pad}sp->x_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 s,
                 "{pad}sp->xMirror_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
         }
         if with_state {
             // Absolute slots: bar j lives at j % cap (matches the automaton's
@@ -1093,7 +1605,7 @@ fn emit_identity_fast_path(
             lookback_args.join(", ")
         );
         o.push_str(&alloc_and_capture(
-            func, model, "      ", /*with_state=*/ false, registry, helpers, counter,
+            func, model, "      ", /*with_state=*/ false, "", registry, helpers, counter,
         ));
         for (out, inp) in &idp.pairs {
             let _ = writeln!(o, "      *{out} = {inp}[historyLen - 1];");
@@ -1106,13 +1618,13 @@ fn emit_identity_fast_path(
 
 /// Open's argument validation: NULL checks, minimum history, and the same
 /// optional-parameter default-substitution/range checks the batch uses.
-fn emit_open_validation(o: &mut String, func: &FuncDef, model: &StreamModel, inputs: &[String]) {
+fn emit_open_validation(o: &mut String, func: &FuncDef, outputs: &[String], inputs: &[String]) {
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
     let null_checks: Vec<String> = inputs
         .iter()
         .map(|i| format!("!{i}"))
-        .chain(model.outputs.iter().map(|out| format!("!{out}")))
+        .chain(outputs.iter().map(|out| format!("!{out}")))
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
@@ -1306,9 +1818,21 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
         .collect();
     let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
     let _ = writeln!(o, "   scratch = *stream;");
-    // Rings: run the step against the handle's pre-allocated scratch
-    // mirrors so the live window is never touched (the handle is logically
-    // const; single-writer covers the mirror — see the proposal).
+    emit_peek_mirror_fixups(o, model);
+    let args: Vec<String> = bars
+        .iter()
+        .cloned()
+        .chain(outs.iter().cloned())
+        .collect();
+    let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
+/// Rings/windows/circs/extrema: run the step against the handle's
+/// pre-allocated scratch mirrors so the live buffers are never touched (the
+/// handle is logically const; single-writer covers the mirror — see the
+/// proposal).
+fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
     for ring in &model.rings {
         let v = &ring.var;
         for arr in &ring.arrays {
@@ -1349,13 +1873,6 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
             );
         }
     }
-    let args: Vec<String> = bars
-        .iter()
-        .cloned()
-        .chain(outs.iter().cloned())
-        .collect();
-    let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
-    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
 fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {

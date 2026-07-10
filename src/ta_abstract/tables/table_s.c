@@ -566,7 +566,7 @@ DEF_FUNCTION( STOCH,
               TA_GroupId_MomentumIndicators,
               "Stochastic",
               "Stoch",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* STOCH END */
 
@@ -643,7 +643,7 @@ DEF_FUNCTION( STOCHF,
               TA_GroupId_MomentumIndicators,
               "Stochastic Fast",
               "StochF",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* STOCHF END */
 

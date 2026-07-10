@@ -6193,6 +6193,9 @@
 		<CamelCaseName>Stoch</CamelCaseName>
 		<ShortDescription>Stochastic</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -6285,6 +6288,9 @@
 		<CamelCaseName>StochF</CamelCaseName>
 		<ShortDescription>Stochastic Fast</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>

@@ -253,16 +253,82 @@ impl DispatchPlan<'_> {
     }
 }
 
+/// One whole-range sub-call in a composed tail: `retCode = callee(sArg,
+/// eArg, src, <opt args>, <begIdx recv>, <nb recv>, dst)`. Open opens the
+/// callee's public stream on the materialized `src` at this exact point
+/// (anchor `max(0, sArg - callee_lookback)`); Update pipes `src`'s current
+/// scalar through the sub handle into `dst`'s.
+#[derive(Debug, Clone)]
+pub struct SubCallStep {
+    /// Index of the call statement within the composed tail.
+    pub tail_idx: usize,
+    /// Callee indicator (input-level lowercase name, e.g. `ma`).
+    pub callee: String,
+    /// Callee optional-input argument expressions, positional and pure.
+    pub opt_args: Vec<Expr>,
+    /// The call's startIdx / endIdx argument expressions (evaluated in the
+    /// transcribed Open scope for the sub-open anchor).
+    pub s_arg: Expr,
+    pub e_arg: Expr,
+    /// Source and destination series (buffer local or output name; equal
+    /// for in-place smoothing).
+    pub src: String,
+    pub dst: String,
+}
+
+/// One per-bar step of a composed Update pipeline, in tail order.
+#[derive(Debug, Clone)]
+pub enum UpdateStep {
+    /// Feed `src`'s current scalar through sub handle `sub_idx` into `dst`.
+    Sub { sub_idx: usize },
+    /// Tail-aligning copy (`memmove(dst, &src[k], nb)`): the current scalars
+    /// coincide, `dst`'s becomes `src`'s.
+    Align { dst: String, src: String },
+}
+
+/// A recognized composed body (STOCH/STOCHF class): a steady producer loop
+/// materializing an intermediate series, then a tail of whole-range
+/// sub-calls over materialized series + tail-aligning copies + guards/frees.
+/// Composition goes through the callees' PUBLIC stream handles; peek uses a
+/// `peekMode` flag in the scratch state copy so the ONE step body calls
+/// sub-Peek instead of sub-Update (heap sub-handles cannot be cloned by a
+/// struct copy).
+#[derive(Debug)]
+pub struct ComposedPlan<'a> {
+    pub func: &'a FuncDef,
+    /// Loop model of the producer region (`body[..=loop]`), with the
+    /// intermediate series as its output.
+    pub producer: StreamModel<'a>,
+    /// The intermediate series local the producer loop writes.
+    pub series: String,
+    /// Sub-calls in tail order.
+    pub subs: Vec<SubCallStep>,
+    /// The per-bar pipeline in tail order (subs + aligns interleaved).
+    pub steps: Vec<UpdateStep>,
+    /// The tail statements (everything after the producer loop), for the
+    /// Open transcription.
+    pub tail: &'a [Statement],
+    /// The batch's own guarded free of the intermediate series (`if
+    /// (bufferIsAllocated) free(tempBuffer)`), replayed on the emitter's
+    /// inserted sub-open failure returns — the batch's early returns free
+    /// the buffer themselves, but an inserted return must do it explicitly
+    /// or every honest Open rejection leaks the series (LeakSanitizer
+    /// found exactly this on the expected-reject legs).
+    pub series_free: Option<Statement>,
+}
+
 /// The derived stream implementation plan for one function: a steady-loop
-/// transition model, or a dispatch over other functions' public streams.
+/// transition model, a dispatch over other functions' public streams, or a
+/// composed producer-plus-pipeline over public sub-streams.
 // One short-lived plan exists per generated function; the size skew between
-// the loop model and a dispatch plan is irrelevant, and boxing would only
-// add deref noise at every emitter call site.
+// the variants is irrelevant, and boxing would only add deref noise at
+// every emitter call site.
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum StreamPlan<'a> {
     Loop(StreamModel<'a>),
     Dispatch(DispatchPlan<'a>),
+    Composed(ComposedPlan<'a>),
 }
 
 /// Syntactic form of the steady-state loop (informational; open() transcribes
@@ -956,11 +1022,6 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     } else {
         &func.body
     };
-    if body.is_empty() {
-        return Err(StreamError::Unsupported("empty body".into()));
-    }
-
-    let bar_inputs = input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     for o in &func.outputs {
         if !matches!(o.param_type, ParamType::Real | ParamType::Integer) {
@@ -970,7 +1031,23 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
             )));
         }
     }
+    analyze_region(func, body, outputs)
+}
 
+/// [`analyze`] over an explicit body region with an outputs override. The
+/// composed tier analyzes its PRODUCER region this way: the statements up to
+/// and including the steady loop, with the intermediate series local
+/// (STOCH's `tempBuffer`) standing in as the output the loop writes.
+pub fn analyze_region<'a>(
+    func: &'a FuncDef,
+    body: &'a [Statement],
+    outputs: Vec<String>,
+) -> Result<StreamModel<'a>, StreamError> {
+    if body.is_empty() {
+        return Err(StreamError::Unsupported("empty body".into()));
+    }
+
+    let bar_inputs = input_array_names(func);
     let param_name_list: Vec<String> =
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let (identity, identity_idx) =
@@ -1189,6 +1266,355 @@ pub fn analyze_dispatch<'a>(
         arms,
         identity,
     })
+}
+
+/// Recognize a composed body (STOCH/STOCHF class): a steady producer loop
+/// materializing exactly one intermediate series, then a tail of
+/// whole-range sub-calls to stream-flagged callees over materialized
+/// series, tail-aligning memmoves into outputs, and guard/free/bookkeeping
+/// statements. Strict: any unrecognized tail statement is an error, and a
+/// sub-call to an unflagged callee is an error (a composed function only
+/// streams when every piece does — there is no per-arm reject here).
+#[allow(clippy::too_many_lines)]
+pub fn analyze_composed<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<ComposedPlan<'a>, StreamError> {
+    let body: &[Statement] = if func.has_explicit_private {
+        &func.private_body
+    } else {
+        &func.body
+    };
+    let bar_inputs = input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+
+    // Producer loop = the LAST top-level loop over endIdx.
+    let is_endidx_loop = |s: &Statement| match s {
+        Statement::While { condition, .. }
+        | Statement::DoWhile { condition, .. }
+        | Statement::ForC { condition, .. } => endidx_cursor(condition).is_some(),
+        _ => false,
+    };
+    let loop_pos = body
+        .iter()
+        .rposition(is_endidx_loop)
+        .ok_or(StreamError::NoSteadyLoop)?;
+    let region = &body[..=loop_pos];
+    let tail = &body[loop_pos + 1..];
+    // Composed-shaped = the tail delegates to another indicator. A tail of
+    // plain bookkeeping (outBegIdx writes, the final return) is an ordinary
+    // loop function: report NoSteadyLoop so the loop-tier error surfaces.
+    let tail_has_subcall = tail.iter().any(|s| {
+        matches!(s,
+            Statement::Assign { value: Expr::FuncCall(name, _), .. }
+                if lookup.callee(name).is_some())
+    });
+    if !tail_has_subcall {
+        return Err(StreamError::NoSteadyLoop);
+    }
+
+    // The intermediate series: the ONE non-output local array the loop
+    // writes (STOCH's tempBuffer).
+    let loop_body: &[Statement] = match &body[loop_pos] {
+        Statement::While { body, .. }
+        | Statement::DoWhile { body, .. }
+        | Statement::ForC { body, .. } => body,
+        _ => unreachable!("matched as loop above"),
+    };
+    let mut written: BTreeSet<String> = BTreeSet::new();
+    for st in loop_body {
+        walk_assign_targets(st, &mut |t| {
+            if let Expr::ArrayAccess(name, _) = t {
+                written.insert(name.clone());
+            }
+        });
+    }
+    written.retain(|n| !outputs.contains(n) && !bar_inputs.contains(n));
+    if written.len() != 1 {
+        return Err(StreamError::Unsupported(format!(
+            "composed producer loop must write exactly one intermediate series, found {}",
+            written.len()
+        )));
+    }
+    let series = written.into_iter().next().expect("len checked");
+
+    // Producer model over the region, with the series as its output.
+    let producer = analyze_region(func, region, vec![series.clone()])?;
+
+    // --- tail pipeline -------------------------------------------------------
+    let params: BTreeSet<String> = func
+        .optional_inputs
+        .iter()
+        .map(|p| p.name.clone())
+        .collect();
+    let mut subs: Vec<SubCallStep> = Vec::new();
+    let mut steps: Vec<UpdateStep> = Vec::new();
+    let mut series_free: Option<Statement> = None;
+    let mut defined: BTreeSet<String> = std::iter::once(series.clone()).collect();
+    for (i, st) in tail.iter().enumerate() {
+        match st {
+            Statement::Comment(_) => {}
+            // Whole-range sub-call over a materialized series.
+            Statement::Assign {
+                target: Expr::Var(_),
+                value: Expr::FuncCall(callee, args),
+                compound: false,
+            } if lookup.callee(callee).is_some() => {
+                let sig = lookup.callee(callee).expect("checked");
+                if !sig.streaming {
+                    return Err(StreamError::UnsupportedCall(format!(
+                        "composed sub-call `{callee}` has no stream"
+                    )));
+                }
+                if sig.n_inputs != 1 || sig.n_outputs != 1 {
+                    return Err(StreamError::Unsupported(format!(
+                        "composed sub-call `{callee}` is not single-input/single-output"
+                    )));
+                }
+                if args.len() != 2 + 1 + sig.n_opts + 2 + 1 {
+                    return Err(StreamError::Unsupported(format!(
+                        "composed sub-call `{callee}` has an unexpected argument count"
+                    )));
+                }
+                let src = match &args[2] {
+                    Expr::Var(v) => v.clone(),
+                    _ => {
+                        return Err(StreamError::Unsupported(format!(
+                            "composed sub-call `{callee}` input is not a plain series"
+                        )));
+                    }
+                };
+                let dst = match args.last().expect("len checked") {
+                    Expr::Var(v) => v.clone(),
+                    _ => {
+                        return Err(StreamError::Unsupported(format!(
+                            "composed sub-call `{callee}` output is not a plain series"
+                        )));
+                    }
+                };
+                if !defined.contains(&src) {
+                    return Err(StreamError::Unsupported(format!(
+                        "composed sub-call `{callee}` reads `{src}` before it is materialized"
+                    )));
+                }
+                if dst != src && !outputs.contains(&dst) {
+                    return Err(StreamError::Unsupported(format!(
+                        "composed sub-call `{callee}` writes unrecognized series `{dst}`"
+                    )));
+                }
+                let opt_args: Vec<Expr> = args[3..3 + sig.n_opts].to_vec();
+                for a in &opt_args {
+                    let mut names = BTreeSet::new();
+                    expr_var_names(a, &mut names);
+                    if !names.iter().all(|nm| params.contains(nm)) {
+                        return Err(StreamError::Unsupported(format!(
+                            "composed sub-call `{callee}` has an impure optional argument"
+                        )));
+                    }
+                }
+                defined.insert(dst.clone());
+                steps.push(UpdateStep::Sub {
+                    sub_idx: subs.len(),
+                });
+                subs.push(SubCallStep {
+                    tail_idx: i,
+                    callee: callee.clone(),
+                    opt_args,
+                    s_arg: args[0].clone(),
+                    e_arg: args[1].clone(),
+                    src,
+                    dst,
+                });
+            }
+            // Tail-aligning copy into an output.
+            Statement::Expr(Expr::FuncCall(name, args))
+                if name == "memmove" && args.len() == 3 =>
+            {
+                let dst = match &args[0] {
+                    Expr::Var(v) => v.clone(),
+                    _ => {
+                        return Err(StreamError::Unsupported(
+                            "composed memmove destination is not a plain series".into(),
+                        ));
+                    }
+                };
+                let src = match &args[1] {
+                    Expr::AddressOf(inner) => match inner.as_ref() {
+                        Expr::ArrayAccess(s, _) => s.clone(),
+                        _ => {
+                            return Err(StreamError::Unsupported(
+                                "composed memmove source is not a series tail".into(),
+                            ));
+                        }
+                    },
+                    _ => {
+                        return Err(StreamError::Unsupported(
+                            "composed memmove source is not a series tail".into(),
+                        ));
+                    }
+                };
+                if !defined.contains(&src) || !outputs.contains(&dst) {
+                    return Err(StreamError::Unsupported(
+                        "composed memmove does not align a series into an output".into(),
+                    ));
+                }
+                defined.insert(dst.clone());
+                steps.push(UpdateStep::Align { dst, src });
+            }
+            // Guards (retCode / nbElement checks with early returns) and the
+            // bufferIsAllocated free: transcribed verbatim in Open, absent
+            // from the per-bar pipeline. Strictly bounded shape.
+            Statement::If { .. } => {
+                check_composed_guard(st, &defined, lookup)?;
+                if series_free.is_none() && guard_frees_series(st, &series) {
+                    series_free = Some(st.clone());
+                }
+            }
+            // Out-meta bookkeeping (Open maps them to dummies).
+            Statement::Assign {
+                target: Expr::PointerDeref(p),
+                ..
+            } if p == "outBegIdx" || p == "outNBElement" => {}
+            Statement::Expr(Expr::FuncCall(name, args)) if name == "free" => {
+                // A bare unconditional free of the series is just as
+                // replayable on inserted failure returns as the guarded
+                // form (a sub-call can never legally read the series after
+                // batch freed it, so the replay is always pre-free).
+                if series_free.is_none()
+                    && matches!(args.first(), Some(Expr::Var(v)) if v == &series)
+                {
+                    series_free = Some(st.clone());
+                }
+            }
+            Statement::Return { .. } if i == tail.len() - 1 => {}
+            other => {
+                return Err(StreamError::Unsupported(format!(
+                    "composed tail has an unrecognized statement ({})",
+                    stmt_kind(other)
+                )));
+            }
+        }
+    }
+    if subs.is_empty() {
+        return Err(StreamError::Unsupported(
+            "composed tail has no sub-calls".into(),
+        ));
+    }
+    // A heap-allocated series with no replayable free would make every
+    // inserted failure return (honest Open rejections included) leak it —
+    // the exact class LeakSanitizer caught during this tranche. Refuse to
+    // build such a plan.
+    if series_free.is_none() && region_mallocs_series(region, &series) {
+        return Err(StreamError::Unsupported(format!(
+            "composed series `{series}` is heap-allocated but the tail has no \
+             replayable free for the inserted failure returns"
+        )));
+    }
+    for out in &outputs {
+        if !defined.contains(out) {
+            return Err(StreamError::Unsupported(format!(
+                "composed pipeline never defines output `{out}`"
+            )));
+        }
+    }
+    Ok(ComposedPlan {
+        func,
+        producer,
+        series,
+        subs,
+        steps,
+        tail,
+        series_free,
+    })
+}
+
+/// True when the producer region heap-allocates the series
+/// (`series = malloc(...)` anywhere in the region, including branches).
+fn region_mallocs_series(region: &[Statement], series: &str) -> bool {
+    fn walk(stmts: &[Statement], series: &str, found: &mut bool) {
+        for st in stmts {
+            match st {
+                Statement::Assign {
+                    target: Expr::Var(v),
+                    value: Expr::FuncCall(name, _),
+                    ..
+                } if v == series && name == "malloc" => *found = true,
+                Statement::If {
+                    then_body,
+                    else_body,
+                    ..
+                } => {
+                    walk(then_body, series, found);
+                    walk(else_body, series, found);
+                }
+                Statement::While { body, .. }
+                | Statement::DoWhile { body, .. }
+                | Statement::ForC { body, .. }
+                | Statement::For { body, .. }
+                | Statement::Block { body } => walk(body, series, found),
+                _ => {}
+            }
+        }
+    }
+    let mut found = false;
+    walk(region, series, &mut found);
+    found
+}
+
+/// True for the MINIMAL guarded free of the series — an If whose then-body
+/// is exactly `free(<series>)` (comments aside) with no else branch. The
+/// larger retCode guards also free the series on their way out, but they
+/// return as well; only the standalone form is replayable on an inserted
+/// failure path.
+fn guard_frees_series(st: &Statement, series: &str) -> bool {
+    let Statement::If {
+        then_body,
+        else_body,
+        ..
+    } = st
+    else {
+        return false;
+    };
+    if !else_body.is_empty() {
+        return false;
+    }
+    let meaningful: Vec<&Statement> = then_body
+        .iter()
+        .filter(|s| !matches!(s, Statement::Comment(_)))
+        .collect();
+    matches!(meaningful.as_slice(),
+        [Statement::Expr(Expr::FuncCall(name, args))]
+            if name == "free"
+                && matches!(args.first(), Some(Expr::Var(v)) if v == series))
+}
+
+/// A composed-tail guard must be pure control flow over scalars: no
+/// indicator calls, no writes to any materialized series or output array,
+/// only frees / out-meta writes / returns / nested guards inside.
+fn check_composed_guard(
+    st: &Statement,
+    defined: &BTreeSet<String>,
+    lookup: &dyn CalleeLookup,
+) -> Result<(), StreamError> {
+    if !find_indicator_calls(std::slice::from_ref(st), lookup).is_empty() {
+        return Err(StreamError::Unsupported(
+            "composed tail guard calls an indicator".into(),
+        ));
+    }
+    let mut bad = false;
+    walk_assign_targets(st, &mut |t| {
+        if let Expr::ArrayAccess(name, _) = t {
+            if defined.contains(name) {
+                bad = true;
+            }
+        }
+    });
+    if bad {
+        return Err(StreamError::Unsupported(
+            "composed tail guard writes a materialized series".into(),
+        ));
+    }
+    Ok(())
 }
 
 /// Compact statement-kind label for diagnostics (a full IR Debug dump is
@@ -1417,18 +1843,39 @@ pub fn validate_streamable<'a>(
         Err(e) => e,
     };
     match analyze_dispatch(func, lookup) {
-        Ok(plan) => Ok(StreamPlan::Dispatch(plan)),
-        // NoSteadyLoop = "no switch found": the body is not a dispatch, so
-        // the loop error names the real blocker. Any other dispatch error
+        Ok(plan) => return Ok(StreamPlan::Dispatch(plan)),
+        // NoSteadyLoop = "no switch found": the body is not a dispatch;
+        // fall through to the composed analysis. Any other dispatch error
         // means the body IS switch-shaped and that error is the actionable
         // one (e.g. a stream-flagged callee arm losing its delegation shape
         // must fail loudly, never fall back to the generic loop error).
+        Err(StreamError::NoSteadyLoop) => {}
+        Err(dispatch_err) => {
+            return Err(format!(
+                "{}: YAML declares `streaming: true` but the dispatch body is not streamable: {dispatch_err}",
+                func.name
+            ));
+        }
+    }
+    match analyze_composed(func, lookup) {
+        Ok(plan) => {
+            // The producer transition must BUILD, too (same chicken-egg gate
+            // as the loop tier).
+            build_transition(&plan.producer, &GateNames).map_err(|e| {
+                format!(
+                    "{}: composed by analysis but the producer transition cannot be built: {e}",
+                    func.name
+                )
+            })?;
+            Ok(StreamPlan::Composed(plan))
+        }
+        // Not composed-shaped either: the loop error names the blocker.
         Err(StreamError::NoSteadyLoop) => Err(format!(
             "{}: YAML declares `streaming: true` but the function is not streamable at stage 1: {loop_err}",
             func.name
         )),
-        Err(dispatch_err) => Err(format!(
-            "{}: YAML declares `streaming: true` but the dispatch body is not streamable: {dispatch_err}",
+        Err(composed_err) => Err(format!(
+            "{}: YAML declares `streaming: true` but the composed body is not streamable: {composed_err}",
             func.name
         )),
     }

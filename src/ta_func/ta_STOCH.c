@@ -834,3 +834,527 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_STOCH_Stream {
+   int optInFastK_Period;
+   int optInSlowK_Period;
+   TA_MAType optInSlowK_MAType;
+   int optInSlowD_Period;
+   TA_MAType optInSlowD_MAType;
+   double lowest;
+   double highest;
+   double diff;
+   int lowestIdx;
+   int highestIdx;
+   int trailingIdx;
+   int i;
+   int today;
+   int xCap;
+   double *x_inHigh;
+   double *xMirror_inHigh;
+   double *x_inLow;
+   double *xMirror_inLow;
+   double *x_inClose;
+   double *xMirror_inClose;
+   /* Peek runs the SAME step body on a scratch copy; sub handles are
+    * heap pointers a struct copy cannot clone, so the copy carries this
+    * flag and the step calls sub-Peek instead of sub-Update. */
+   int peekMode;
+   TA_MA_Stream *sub0;
+   TA_MA_Stream *sub1;
+};
+
+static void TA_STOCH_StreamRelease( struct TA_STOCH_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
+   if( sp->xMirror_inHigh ) TA_Free( sp->xMirror_inHigh );
+   if( sp->x_inLow ) TA_Free( sp->x_inLow );
+   if( sp->xMirror_inLow ) TA_Free( sp->xMirror_inLow );
+   if( sp->x_inClose ) TA_Free( sp->x_inClose );
+   if( sp->xMirror_inClose ) TA_Free( sp->xMirror_inClose );
+   TA_Free( sp );
+}
+
+static void TA_STOCH_StreamStep( struct TA_STOCH_Stream *sp, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )
+{
+   double tmp;
+   double cur_tempBuffer;
+   double cur_outSlowD;
+
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inHigh[sp->today % sp->xCap] = inHigh;
+   sp->x_inLow[sp->today % sp->xCap] = inLow;
+   sp->x_inClose[sp->today % sp->xCap] = inClose;
+   /* Set the lowest low */
+   tmp = sp->x_inLow[sp->today % sp->xCap];
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
+      sp->i = sp->lowestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inLow[sp->i % sp->xCap];
+         if( tmp < sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = tmp;
+         }
+      }
+      sp->diff = (sp->highest - sp->lowest) / 100.0;
+   } else if( tmp <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = tmp;
+      sp->diff = (sp->highest - sp->lowest) / 100.0;
+   }
+   /* Set the highest high */
+   tmp = sp->x_inHigh[sp->today % sp->xCap];
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
+      sp->i = sp->highestIdx;
+      while( ++sp->i <= sp->today )
+      {
+         tmp = sp->x_inHigh[sp->i % sp->xCap];
+         if( tmp > sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = tmp;
+         }
+      }
+      sp->diff = (sp->highest - sp->lowest) / 100.0;
+   } else if( tmp >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = tmp;
+      sp->diff = (sp->highest - sp->lowest) / 100.0;
+   }
+   /* Calculate stochastic. */
+   if( sp->diff != 0.0 )
+   {
+      cur_tempBuffer = (sp->x_inClose[sp->today % sp->xCap] - sp->lowest) / sp->diff;
+   } else 
+   {
+      cur_tempBuffer = 0.0;
+   }
+   sp->trailingIdx += 1;
+   sp->today += 1;
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   if( sp->peekMode )
+      TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, cur_tempBuffer, &cur_tempBuffer );
+   else
+      TA_MA_Update( sp->sub0, cur_tempBuffer, &cur_tempBuffer );
+   if( sp->peekMode )
+      TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, cur_tempBuffer, &cur_outSlowD );
+   else
+      TA_MA_Update( sp->sub1, cur_tempBuffer, &cur_outSlowD );
+   *outSlowK = cur_tempBuffer;
+   *outSlowD = cur_outSlowD;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Open( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCH_Stream **stream, double *outSlowK, double *outSlowD )
+{
+   struct TA_STOCH_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outSlowK;
+   double *sc_outSlowD;
+   TA_MA_Stream *sub0;
+   TA_MA_Stream *sub1;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInFastK_Period == (int)0x80000000 )
+      optInFastK_Period = 5;
+   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_Period == (int)0x80000000 )
+      optInSlowK_Period = 3;
+   else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_MAType == (int)0x80000000 )
+      optInSlowK_MAType = 0;
+   if( (int)optInSlowD_Period == (int)0x80000000 )
+      optInSlowD_Period = 3;
+   else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowD_MAType == (int)0x80000000 )
+      optInSlowD_MAType = 0;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   sub1 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outSlowK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outSlowK ) { return TA_ALLOC_ERR; }
+   sc_outSlowD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outSlowD ) { TA_Free( sc_outSlowK ); return TA_ALLOC_ERR; }
+
+   {
+      TA_RetCode retCode;
+      double lowest;
+      double highest;
+      double tmp;
+      double diff;
+      double *tempBuffer;
+      int outIdx;
+      int lowestIdx;
+      int highestIdx;
+      int lookbackTotal;
+      int lookbackK;
+      int lookbackKSlow;
+      int lookbackDSlow;
+      int trailingIdx;
+      int today;
+      int i;
+      int bufferIsAllocated;
+      /* With stochastic, there is a total of 4 different lines that
+       * are defined: FASTK, FASTD, SLOWK and SLOWD.
+       *
+       * The D is the signal line usually drawn over its
+       * corresponding K function.
+       *
+       *                    (Today's Close - LowestLow)
+       *  FASTK(Kperiod) =  --------------------------- * 100
+       *                     (HighestHigh - LowestLow)
+       *
+       *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
+       *
+       *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
+       *
+       *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
+       *
+       * The HighestHigh and LowestLow are the extreme values among the
+       * last 'Kperiod'.
+       *
+       * SLOWK and FASTD are equivalent when using the same period.
+       *
+       * The following shows how these four lines are made available in TA-LIB:
+       *
+       *  TA_STOCH  : Returns the SLOWK and SLOWD
+       *  TA_STOCHF : Returns the FASTK and FASTD
+       *
+       * The TA_STOCH function correspond to the more widely implemented version
+       * found in many software/charting package. The TA_STOCHF is more rarely
+       * used because its higher volatility cause often whipsaws.
+       */
+      /* Identify the lookback needed. */
+      lookbackK = optInFastK_Period - 1;
+      lookbackKSlow = TA_MA_Lookback(optInSlowK_Period,optInSlowK_MAType);
+      lookbackDSlow = TA_MA_Lookback(optInSlowD_Period,optInSlowD_MAType);
+      lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         /* Succeed... but no data in the output. */
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         return TA_BAD_PARAM;
+      }
+      /* Do the K calculation:
+       *
+       *    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
+       *
+       * Kt is today stochastic
+       * Ct is today closing price.
+       * Lt is the lowest price of the last K Period (including today)
+       * Ht is the highest price of the last K Period (including today)
+       */
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      /* Calculate just enough K for ending up with the caller
+       * requested range. (The range of k must consider all
+       * the lookback involve with the smoothing).
+       */
+      trailingIdx = startIdx - lookbackTotal;
+      today = trailingIdx + lookbackK;
+      highestIdx = 0 - 1;
+      lowestIdx = highestIdx;
+      lowest = 0.0;
+      highest = lowest;
+      diff = highest;
+      /* Allocate a temporary buffer large enough to
+       * store the K.
+       *
+       * If the output is the same as the input, great
+       * we just save ourself one memory allocation.
+       */
+      bufferIsAllocated = 0;
+      if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose )
+      {
+         tempBuffer = sc_outSlowK;
+      } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose )
+      {
+         tempBuffer = sc_outSlowD;
+      } else 
+      {
+         bufferIsAllocated = 1;
+         tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
+         if( !tempBuffer )
+         {
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            return TA_ALLOC_ERR;
+         }
+      }
+      /* Do the K calculation */
+      while( today <= endIdx )
+      {
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = inLow[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmp = inHigh[i];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Calculate stochastic. */
+         if( diff != 0.0 )
+         {
+            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+         } else 
+         {
+            tempBuffer[outIdx++] = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Un-smoothed K calculation completed. This K calculation is not returned
+       * to the caller. It is always smoothed and then return.
+       * Some documentation will refer to the smoothed version as being
+       * "K-Slow", but often this end up to be shorten to "K".
+       */
+      /* Sub-stream 0: ma over `tempBuffer` — the same series the
+       * batch call below consumes, anchored at its seeding point. */
+      {
+         int subOff;
+         subOff = (0) - TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType );
+         if( subOff < 0 ) subOff = 0;
+         subRc = TA_MA_Open( optInSlowK_Period, optInSlowK_MAType, &tempBuffer[subOff], (outIdx - 1) - subOff + 1, &sub0, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            if( bufferIsAllocated )
+            {
+               free(tempBuffer);
+            }
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
+      {
+         if( bufferIsAllocated )
+         {
+            free(tempBuffer);
+         }
+         /* Something wrong happen? No further data? */
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         return retCode;
+      }
+      /* Calculate the %D which is simply a moving average of
+       * the already smoothed %K.
+       */
+      /* Sub-stream 1: ma over `tempBuffer` — the same series the
+       * batch call below consumes, anchored at its seeding point. */
+      {
+         int subOff;
+         subOff = (0) - TA_MA_Lookback( optInSlowD_Period, optInSlowD_MAType );
+         if( subOff < 0 ) subOff = 0;
+         subRc = TA_MA_Open( optInSlowD_Period, optInSlowD_MAType, &tempBuffer[subOff], ((int)dummyNBElement - 1) - subOff + 1, &sub1, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            if( bufferIsAllocated )
+            {
+               free(tempBuffer);
+            }
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      /* Copy tempBuffer into the caller buffer.
+       * (Calculation could not be done directly in the
+       *  caller buffer because more input data then the
+       *  requested range was needed for doing %D).
+       */
+      /* memmove, not memcpy: tempBuffer aliases outSlowK when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
+      memmove(sc_outSlowK,&tempBuffer[lookbackDSlow],(int)dummyNBElement * sizeof(double));
+      /* Don't need K anymore, free it if it was allocated here. */
+      if( bufferIsAllocated )
+      {
+         free(tempBuffer);
+      }
+      if( retCode != TA_SUCCESS )
+      {
+         /* Something wrong happen while processing %D? */
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         return retCode;
+      }
+      /* Note: Keep the outBegIdx relative to the
+       *       caller input before returning.
+       */
+      dummyBegIdx = startIdx;
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); return TA_BAD_PARAM; }
+      sp = (struct TA_STOCH_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInFastK_Period = optInFastK_Period;
+      sp->optInSlowK_Period = optInSlowK_Period;
+      sp->optInSlowK_MAType = optInSlowK_MAType;
+      sp->optInSlowD_Period = optInSlowD_Period;
+      sp->optInSlowD_MAType = optInSlowD_MAType;
+      sp->lowest = lowest;
+      sp->highest = highest;
+      sp->diff = diff;
+      sp->lowestIdx = lowestIdx;
+      sp->highestIdx = highestIdx;
+      sp->trailingIdx = trailingIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inHigh[fillJ % sp->xCap] = inHigh[fillJ];
+           sp->x_inLow[fillJ % sp->xCap] = inLow[fillJ];
+           sp->x_inClose[fillJ % sp->xCap] = inClose[fillJ];
+        }
+      }
+      sp->sub0 = sub0;
+      sp->sub1 = sub1;
+      *outSlowK = sc_outSlowK[dummyNBElement - 1];
+      *outSlowD = sc_outSlowD[dummyNBElement - 1];
+      TA_Free( sc_outSlowK );
+      TA_Free( sc_outSlowD );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )
+{
+   if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   TA_STOCH_StreamStep( stream, inHigh, inLow, inClose, outSlowK, outSlowD );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )
+{
+   struct TA_STOCH_Stream scratch;
+
+   if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.x_inHigh = stream->xMirror_inHigh;
+   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
+   scratch.x_inLow = stream->xMirror_inLow;
+   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
+   scratch.x_inClose = stream->xMirror_inClose;
+   memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xCap );
+   scratch.peekMode = 1;
+   TA_STOCH_StreamStep( &scratch, inHigh, inLow, inClose, outSlowK, outSlowD );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
+{
+   if( !stream ) return TA_SUCCESS;
+   TA_MA_Close( stream->sub0 );
+   TA_MA_Close( stream->sub1 );
+   TA_STOCH_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

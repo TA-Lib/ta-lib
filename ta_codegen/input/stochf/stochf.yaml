@@ -2,7 +2,7 @@ name: STOCHF
 camel_case: StochF
 group: Momentum Indicators
 hint: Stochastic Fast
-flags: []
+flags: [stream]
 inputs:
   - name: inPriceHLC
     type: price

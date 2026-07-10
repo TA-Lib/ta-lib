@@ -2138,7 +2138,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( legs <= 0 )
     {
         printf("STREAM VACUOUS [TA_%s]: 0 verified legs (%d expected-reject "
-               "arm legs)\n", funcInfo->name, rejArms);
+               "probes)\n", funcInfo->name, rejArms);
         ctx->failed++;
         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
         return;
@@ -2238,7 +2238,7 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamRejectArms  = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
-                   "%d expected-reject arm legs, %d without a stream\n",
+                   "%d expected-reject probes, %d without a stream\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
                    ctx.streamSkipped);
         }

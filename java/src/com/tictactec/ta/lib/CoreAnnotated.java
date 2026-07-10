@@ -8231,7 +8231,7 @@ public int stochLookback(
 @FuncInfo(
         name  = "STOCH",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 5,
         nbOutput   = 2
@@ -8371,7 +8371,7 @@ public int stochFLookback(
 @FuncInfo(
         name  = "STOCHF",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 2

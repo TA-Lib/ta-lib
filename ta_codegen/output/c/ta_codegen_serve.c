@@ -5521,7 +5521,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) )
+        if( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) )
         {
             TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
@@ -5535,20 +5535,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int pref[4]; int pc[4];
-        TA_SetUnstablePeriod(5, (unsigned int)svK);
-        TA_SetUnstablePeriod(13, (unsigned int)svK);
-        TA_SetUnstablePeriod(14, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
+        TA_SetUnstablePeriod(14, (unsigned int)svK);
+        TA_SetUnstablePeriod(13, (unsigned int)svK);
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
         rc = TA_MA(0, svN - 1, sv_c, optInTimePeriod, optInMAType, &svBeg, &svNb, sv_b0);
         lb = TA_MA_Lookback(optInTimePeriod, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
             { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(optInTimePeriod, optInMAType, sv_c, svN, &st, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MA_Close(st); }
-            TA_SetUnstablePeriod(5, 0);
-            TA_SetUnstablePeriod(13, 0);
-            TA_SetUnstablePeriod(14, 0);
             TA_SetUnstablePeriod(23, 0);
+            TA_SetUnstablePeriod(14, 0);
+            TA_SetUnstablePeriod(13, 0);
+            TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
             return;
@@ -5584,10 +5584,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
-        TA_SetUnstablePeriod(5, 0);
-        TA_SetUnstablePeriod(13, 0);
-        TA_SetUnstablePeriod(14, 0);
         TA_SetUnstablePeriod(23, 0);
+        TA_SetUnstablePeriod(14, 0);
+        TA_SetUnstablePeriod(13, 0);
+        TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
         return;
@@ -6810,6 +6810,164 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
+        return;
+    }
+    else if( fnLen == 8 && strncmp(fn, "TA_STOCH", 8) == 0 ) {
+        int optInFastK_Period = json_find_int(json, "optInFastK_Period");
+        int optInSlowK_Period = json_find_int(json, "optInSlowK_Period");
+        TA_MAType optInSlowK_MAType = (TA_MAType)json_find_int(json, "optInSlowK_MAType");
+        int optInSlowD_Period = json_find_int(json, "optInSlowD_Period");
+        TA_MAType optInSlowD_MAType = (TA_MAType)json_find_int(json, "optInSlowD_MAType");
+        if( ( ( !(optInSlowK_Period == 1) && ( optInSlowK_MAType == TA_MAType_TRIMA || optInSlowK_MAType == TA_MAType_MAMA ) ) || ( !(optInSlowD_Period == 1) && ( optInSlowD_MAType == TA_MAType_TRIMA || optInSlowD_MAType == TA_MAType_MAMA ) ) ) )
+        {
+            TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
+            int rejected;
+            orc = TA_STOCH_Open( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1 );
+            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
+            if( st ) TA_STOCH_Close( st );
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
+            return;
+        }
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(23, (unsigned int)svK);
+        TA_SetUnstablePeriod(14, (unsigned int)svK);
+        TA_SetUnstablePeriod(13, (unsigned int)svK);
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
+        rc = TA_STOCH(0, svN - 1, sv_h, sv_l, sv_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &svBeg, &svNb, sv_b0, sv_b1);
+        lb = TA_STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCH_Open(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCH_Close(st); }
+            TA_SetUnstablePeriod(23, 0);
+            TA_SetUnstablePeriod(14, 0);
+            TA_SetUnstablePeriod(13, 0);
+            TA_SetUnstablePeriod(5, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_STOCH_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0;
+            rc = TA_STOCH_Open(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, P, &st, &v0, &v1);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_STOCH_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_STOCH_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
+                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
+            }
+            if( st ) TA_STOCH_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        TA_SetUnstablePeriod(23, 0);
+        TA_SetUnstablePeriod(14, 0);
+        TA_SetUnstablePeriod(13, 0);
+        TA_SetUnstablePeriod(5, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
+        return;
+    }
+    else if( fnLen == 9 && strncmp(fn, "TA_STOCHF", 9) == 0 ) {
+        int optInFastK_Period = json_find_int(json, "optInFastK_Period");
+        int optInFastD_Period = json_find_int(json, "optInFastD_Period");
+        TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
+        if( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_TRIMA || optInFastD_MAType == TA_MAType_MAMA ) ) ) )
+        {
+            TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
+            int rejected;
+            orc = TA_STOCHF_Open( optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1 );
+            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
+            if( st ) TA_STOCHF_Close( st );
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
+            return;
+        }
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(23, (unsigned int)svK);
+        TA_SetUnstablePeriod(14, (unsigned int)svK);
+        TA_SetUnstablePeriod(13, (unsigned int)svK);
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
+        rc = TA_STOCHF(0, svN - 1, sv_h, sv_l, sv_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &svBeg, &svNb, sv_b0, sv_b1);
+        lb = TA_STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHF_Open(optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHF_Close(st); }
+            TA_SetUnstablePeriod(23, 0);
+            TA_SetUnstablePeriod(14, 0);
+            TA_SetUnstablePeriod(13, 0);
+            TA_SetUnstablePeriod(5, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_STOCHF_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0;
+            rc = TA_STOCHF_Open(optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, P, &st, &v0, &v1);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_STOCHF_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_STOCHF_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
+                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
+            }
+            if( st ) TA_STOCHF_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        TA_SetUnstablePeriod(23, 0);
+        TA_SetUnstablePeriod(14, 0);
+        TA_SetUnstablePeriod(13, 0);
+        TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
         return;

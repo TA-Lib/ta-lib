@@ -6409,3 +6409,49 @@ fn test_c_ma_dispatch_stream_section() {
         "const sub cast in Peek"
     );
 }
+
+/// Pin the generated STOCH composed stream section: producer extrema state +
+/// peekMode + typed sub handles; Open opens each sub-stream on the
+/// materialized series BEFORE the batch call that consumes it (in-place
+/// smoothing overwrites the raw %K right there — order is the contract);
+/// the step pipelines through sub Update/Peek on the peekMode flag.
+#[test]
+fn test_c_stoch_composed_stream_section() {
+    let (mut func, enums) = load_indicator("stoch");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
+
+    // Handle: producer extrema + peek flag + typed subs.
+    assert!(stream.contains("int peekMode;"));
+    assert!(stream.contains("TA_MA_Stream *sub0;"));
+    assert!(stream.contains("TA_MA_Stream *sub1;"));
+
+    // Open: sub0 opens on the RAW series strictly BEFORE the in-place
+    // smoothing call; sub1 after it, before the %D call.
+    let sub0 = stream.find("subRc = TA_MA_Open( optInSlowK_Period, optInSlowK_MAType, &tempBuffer[subOff]").expect("sub0 open");
+    let ma1 = stream.find("retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
+    let sub1 = stream.find("subRc = TA_MA_Open( optInSlowD_Period, optInSlowD_MAType, &tempBuffer[subOff]").expect("sub1 open");
+    let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
+    assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
+
+    // Out-meta pointers mapped to the dummies in the transcription (the
+    // Open signature has no outBegIdx/outNBElement).
+    assert!(stream.contains("&dummyBegIdx,&dummyNBElement"));
+    assert!(!stream.contains(",outBegIdx,"), "raw out-meta arg leaked");
+
+    // Step: ONE body; sub calls dispatch on the scratch copy's peekMode.
+    assert!(stream.contains("if( sp->peekMode )"));
+    assert!(stream.contains("TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, cur_tempBuffer, &cur_tempBuffer );"));
+    assert!(stream.contains("TA_MA_Update( sp->sub0, cur_tempBuffer, &cur_tempBuffer );"));
+    assert!(stream.contains("TA_MA_Update( sp->sub1, cur_tempBuffer, &cur_outSlowD );"));
+    assert!(stream.contains("*outSlowK = cur_tempBuffer;"), "memmove tail-align");
+    assert!(stream.contains("*outSlowD = cur_outSlowD;"));
+
+    // Peek sets the flag on the scratch copy; Close closes subs then frees.
+    assert!(stream.contains("scratch.peekMode = 1;"));
+    assert!(stream.contains("TA_MA_Close( stream->sub0 );"));
+    assert!(stream.contains("TA_STOCH_StreamRelease( stream );"));
+}

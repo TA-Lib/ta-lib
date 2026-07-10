@@ -630,17 +630,40 @@ claim in *Motivation* gets measured, not asserted).
      4,394 legs, proving the harness. Bit-exactness composes by induction:
      each sub-stream is bit-exact against its own batch over the full
      intermediate series, which is exactly what the composed batch computes.
-   - **Remaining:** generalize the pipeline model in the analyzer/emitter
-     (sub-open anchor `max(0, sArg − callee_lookback)` at each consuming
-     call site; intermediate-series scalars in the transition; combine-loop
-     alignment algebra) and roll STOCH, STOCHF, STDDEV, APO/PPO, STOCHRSI,
-     MACDEXT, ADXR (sub-output ring), BBANDS. Then the delegating
-     param-degenerates (ATR/NATR period 1 = an embedded TRANGE stream;
-     MACDFIX = generation-time inlining of macd's IR with substituted
-     `0,0` args — those select the FIXED k=0.15/0.075 coefficients inside
-     macd's body, so the public `TA_MACD_Open` validation can never accept
-     them), while DI/DM, TRIMA and MIDPRICE need a dual transition selected
-     once at Open by the fixed param.
+   - **Generalized composed emitter — STOCH + STOCHF DONE (134
+     streamable).** The analyzer derives a `ComposedPlan`: the producer
+     region (`body[..=loop]`) re-analyzed through the ordinary loop
+     machinery with the intermediate series (`tempBuffer`) standing in as
+     its output, plus a strictly-parsed tail pipeline (whole-range
+     sub-calls over materialized series, tail-aligning memmoves into
+     outputs, guard/free/bookkeeping statements — anything else errors).
+     The emitter renders ONE step body: the producer transition writes the
+     series' current scalar, which pipelines through the sub handles
+     (`peekMode` in the scratch copy selects sub-Peek — the binding
+     one-transition-body decision holds). Open allocates scratch output
+     arrays (the tail writes real arrays), transcribes the batch body
+     verbatim with out-meta mapped to dummies in both pointer forms, and
+     opens each sub-stream on its source series at the anchor
+     `max(0, sArg − callee_lookback)` IMMEDIATELY before the batch call
+     that consumes it; inserted failure returns replay the batch's own
+     guarded series free (LeakSanitizer caught the omission on the
+     honest-rejection legs). The expect-reject precheck composes
+     RECURSIVELY: STOCH inherits MA's unsupported arms with its argument
+     expressions substituted (`!(optInSlowK_Period == 1) &&
+     optInSlowK_MAType == TA_MAType_TRIMA || ...`), so TRIMA landing later
+     narrows every dependent precheck on regenerate. Wrong-order sub-open
+     sabotage caught; ASan/UBSan/LSan clean over the STOCH 10×9 MAType
+     grid.
+   - **Remaining:** loopless pipelines (STOCHRSI = RSI→STOCHF chain, APO/
+     PPO 2-MA combine, STDDEV = VAR + sqrt map, MACDEXT), combine-loop
+     alignment algebra (APO offset j=i+begDiff, ADXR's sub-output ring),
+     BBANDS. Then the delegating param-degenerates (ATR/NATR period 1 =
+     an embedded TRANGE stream; MACDFIX = generation-time inlining of
+     macd's IR with substituted `0,0` args — those select the FIXED
+     k=0.15/0.075 coefficients inside macd's body, so the public
+     `TA_MACD_Open` validation can never accept them), while DI/DM, TRIMA
+     and MIDPRICE need a dual transition selected once at Open by the
+     fixed param.
    **Strategy: exhaust the C emitter tier by tier — every gotcha is
    language-neutral — and only then port the proven model to Rust; the Rust
    emitter is a re-rendering of settled machinery, not a second discovery.**

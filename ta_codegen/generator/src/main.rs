@@ -317,6 +317,18 @@ fn stream_census(seed_yaml: bool) -> i32 {
                             if dp.identity.is_some() { "yes" } else { "no" }
                         );
                     }
+                    ta_codegen_lib::streaming::StreamPlan::Composed(cmp) => {
+                        derived_tc += 1;
+                        println!(
+                            "{:<10} {:<14} TC composed({}) producer={} subs={} outs={}",
+                            status,
+                            func.name,
+                            cmp.series,
+                            cmp.producer.tier.as_str(),
+                            cmp.subs.len(),
+                            cmp.producer.outputs.len()
+                        );
+                    }
                 }
                 if seed_yaml && !func.streaming {
                     let yaml_path = root

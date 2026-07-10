@@ -142,7 +142,7 @@ fn all_declared_functions_are_streamable() {
             checked += 1;
         }
     }
-    assert!(checked >= 132, "expected 132+ declared functions, saw {checked}");
+    assert!(checked >= 134, "expected 134+ declared functions, saw {checked}");
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
@@ -414,4 +414,85 @@ fn imi_cursor_anchored_window_reindexed() {
     assert_eq!(m.tier, StreamTier::T3);
     assert!(!m.windows.is_empty(), "reindexed rescan window");
     assert!(m.state.is_empty(), "pure window recompute carries no state");
+}
+
+/* ---- TC composed tier: producer + pipeline plans ---- */
+
+#[test]
+fn stoch_derives_composed_plan() {
+    let f = load("stoch");
+    assert!(f.streaming, "stoch.yaml must carry the stream flag");
+    let lk = lookup();
+    let plan = streaming::validate_streamable(&f, &lk).expect("STOCH derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("STOCH must derive a composed plan");
+    };
+    assert_eq!(cp.series, "tempBuffer");
+    assert_eq!(cp.producer.tier, StreamTier::T4, "raw %K extrema producer");
+    assert_eq!(cp.producer.outputs, ["tempBuffer"]);
+    assert_eq!(cp.subs.len(), 2);
+    // Sub 0: in-place smoothing of the raw %K; sub 1: %D from smoothed %K.
+    assert_eq!(
+        (cp.subs[0].callee.as_str(), cp.subs[0].src.as_str(), cp.subs[0].dst.as_str()),
+        ("ma", "tempBuffer", "tempBuffer")
+    );
+    assert_eq!(
+        (cp.subs[1].callee.as_str(), cp.subs[1].src.as_str(), cp.subs[1].dst.as_str()),
+        ("ma", "tempBuffer", "outSlowD")
+    );
+    // Pipeline: sub0, sub1, then the memmove tail-align of outSlowK.
+    assert_eq!(cp.steps.len(), 3);
+    assert!(matches!(cp.steps[0], streaming::UpdateStep::Sub { sub_idx: 0 }));
+    assert!(matches!(cp.steps[1], streaming::UpdateStep::Sub { sub_idx: 1 }));
+    assert!(matches!(
+        &cp.steps[2],
+        streaming::UpdateStep::Align { dst, src } if dst == "outSlowK" && src == "tempBuffer"
+    ));
+}
+
+#[test]
+fn stochf_derives_composed_plan() {
+    let f = load("stochf");
+    assert!(f.streaming, "stochf.yaml must carry the stream flag");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("STOCHF derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("STOCHF must derive a composed plan");
+    };
+    assert_eq!(cp.subs.len(), 1);
+    assert_eq!(cp.subs[0].dst, "outFastD");
+    assert!(matches!(
+        &cp.steps[1],
+        streaming::UpdateStep::Align { dst, src } if dst == "outFastK" && src == "tempBuffer"
+    ));
+}
+
+#[test]
+fn composed_hard_errors_when_subcall_callee_lacks_stream() {
+    // A composed function only streams when every sub-call does: a callee
+    // without a stream is a loud error (actionable census line), never a
+    // silent skip — STOCHRSI stays blocked this way until its pieces land.
+    struct MaUnflagged;
+    impl streaming::CalleeLookup for MaUnflagged {
+        fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
+            (name == "ma").then_some(streaming::CalleeSig {
+                streaming: false,
+                n_inputs: 1,
+                n_opts: 2,
+                n_outputs: 1,
+            })
+        }
+    }
+    let f = load("stoch");
+    let err = streaming::analyze_composed(&f, &MaUnflagged).unwrap_err();
+    assert!(
+        matches!(err, StreamError::UnsupportedCall(ref m) if m.contains("no stream")),
+        "expected no-stream sub-call error, got: {err}"
+    );
+}
+
+#[test]
+fn stochrsi_not_composed_yet() {
+    // STOCHRSI has no producer loop (pure sub-call pipeline over the RSI
+    // buffer) — a later shape. It must NOT accidentally derive a plan.
+    assert!(streaming::validate_streamable(&load("stochrsi"), &lookup()).is_err());
 }

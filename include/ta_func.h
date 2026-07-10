@@ -7012,6 +7012,26 @@ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 
                                            int           optInSlowD_Period, /* From 1 to 100000 */
                                            TA_MAType     optInSlowD_MAType );
 
+
+/*
+ * Streaming API for TA_STOCH — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_STOCH_Stream TA_STOCH_Stream;
+
+TA_LIB_API TA_RetCode TA_STOCH_Open( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCH_Stream **stream, double *outSlowK, double *outSlowD );
+
+TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD );
+
+TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD );
+
+TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream );
+
 /*
  * TA_STOCHF - Stochastic Fast
  * 
@@ -7060,6 +7080,26 @@ TA_LIB_API TA_RetCode TA_S_STOCHF( int    startIdx,
 TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
                                             int           optInFastD_Period, /* From 1 to 100000 */
                                             TA_MAType     optInFastD_MAType );
+
+
+/*
+ * Streaming API for TA_STOCHF — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_STOCHF_Stream TA_STOCHF_Stream;
+
+TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCHF_Stream **stream, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream );
 
 /*
  * TA_STOCHRSI - Stochastic Relative Strength Index

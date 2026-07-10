@@ -736,36 +736,8 @@ fn emit_sv_dispatch_precheck(
     n_outs: usize,
     name: &str,
 ) {
-    let lookup = crate::streaming::FuncsLookup(funcs);
-    let Ok(crate::streaming::StreamPlan::Dispatch(dp)) =
-        crate::streaming::validate_streamable(func, &lookup)
-    else {
+    let Some(guard) = sv_reject_condition(func, funcs, None) else {
         return;
-    };
-    let unsupported = dp.unsupported_labels();
-    if unsupported.is_empty() {
-        return;
-    }
-    // IR case labels are TA-stripped; the C constant is TA_-prefixed.
-    let arm_match = unsupported
-        .iter()
-        .map(|l| {
-            let c_const = if l.starts_with("TA_") {
-                (*l).to_string()
-            } else {
-                format!("TA_{l}")
-            };
-            format!("{} == {c_const}", dp.param)
-        })
-        .collect::<Vec<_>>()
-        .join(" || ");
-    let guard = match dp
-        .identity
-        .as_ref()
-        .and_then(|i| sv_identity_guard(&i.condition))
-    {
-        Some(g) => format!("!({g}) && ( {arm_match} )"),
-        None => format!("( {arm_match} )"),
     };
     let mut pre_opt_args = String::new();
     for o in &func.optional_inputs {
@@ -797,19 +769,159 @@ fn emit_sv_dispatch_precheck(
     ));
 }
 
-/// Render a dispatch identity guard for the verify precheck. The identity
-/// detector only accepts `<param> == 1` / `<param> <= 1`, so the shape is
-/// closed — no general expression renderer needed here.
-fn sv_identity_guard(cond: &crate::ir::Expr) -> Option<String> {
+/// Unstable-period ids a function's stream values depend on: its own id
+/// plus every unstable id reachable through the TRANSITIVE closure of
+/// `<base>_lookback` calls starting from its lookback body (STOCH ->
+/// ma_lookback -> ema_lookback -> EMA). Composed/dispatch functions honor
+/// ambient K only through the callees' lookbacks, so the lookback closure
+/// covers exactly the sub-stream selection space.
+fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef]) -> Vec<i32> {
+    let mut pin_ids: Vec<i32> = Vec::new();
+    let mut visited: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut queue: Vec<String> = vec![func.name.to_uppercase()];
+    while let Some(cur) = queue.pop() {
+        if !visited.insert(cur.clone()) {
+            continue;
+        }
+        if let Some(id) = func_unst_id(&cur) {
+            if !pin_ids.contains(&id) {
+                pin_ids.push(id);
+            }
+        }
+        let Some(fd) = funcs.iter().find(|f| f.name.eq_ignore_ascii_case(&cur)) else {
+            continue;
+        };
+        if let Some(crate::ir::LookbackExpr::Code(stmts)) = &fd.lookback {
+            for st in stmts {
+                crate::streaming::walk_stmt_exprs(st, &mut |e| {
+                    crate::streaming::walk_expr(e, &mut |x| {
+                        if let crate::ir::Expr::FuncCall(fname, _) = x {
+                            if let Some(base) = fname.strip_suffix("_lookback") {
+                                queue.push(base.to_uppercase());
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    }
+    pin_ids
+}
+
+/// The C condition under which a function's stream Open HONESTLY rejects a
+/// param set the batch accepts (a documented capability limitation), or
+/// None when no such set exists. Composes recursively:
+/// - Dispatch (MA): `!identity && (param in unsupported labels)`.
+/// - Composed (STOCH): OR over its sub-calls, with the sub's optional
+///   argument EXPRESSIONS substituted for the callee's params — so MA's
+///   `optInTimePeriod == 1` identity exemption becomes
+///   `optInSlowK_Period == 1` at the STOCH level, and TRIMA landing later
+///   narrows every dependent precheck automatically on regenerate.
+/// - Loop tier: never (None).
+///
+/// `subst` maps the callee's param names to caller-level argument exprs
+/// (None at the top level: the function's own params are in scope).
+fn sv_reject_condition(
+    func: &FuncDef,
+    funcs: &[FuncDef],
+    subst: Option<&std::collections::BTreeMap<String, crate::ir::Expr>>,
+) -> Option<String> {
+    use crate::ir::Expr;
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    let render_arg = |e: &Expr| -> String {
+        let mapped = match (e, subst) {
+            (Expr::Var(v), Some(m)) => m.get(v).cloned().unwrap_or_else(|| e.clone()),
+            _ => e.clone(),
+        };
+        sv_render_scalar(&mapped)
+    };
+    match crate::streaming::validate_streamable(func, &lookup) {
+        Ok(crate::streaming::StreamPlan::Dispatch(dp)) => {
+            let unsupported = dp.unsupported_labels();
+            if unsupported.is_empty() {
+                return None;
+            }
+            let param_c = render_arg(&Expr::Var(dp.param.clone()));
+            let arm_match = unsupported
+                .iter()
+                .map(|l| {
+                    let c_const = if l.starts_with("TA_") {
+                        (*l).to_string()
+                    } else {
+                        format!("TA_{l}")
+                    };
+                    format!("{param_c} == {c_const}")
+                })
+                .collect::<Vec<_>>()
+                .join(" || ");
+            match dp.identity.as_ref().and_then(|i| {
+                sv_identity_guard_subst(&i.condition, &render_arg)
+            }) {
+                Some(g) => Some(format!("( !({g}) && ( {arm_match} ) )")),
+                None => Some(format!("( {arm_match} )")),
+            }
+        }
+        Ok(crate::streaming::StreamPlan::Composed(cp)) => {
+            let mut parts: Vec<String> = Vec::new();
+            for sub in &cp.subs {
+                let callee = funcs
+                    .iter()
+                    .find(|f| f.name.eq_ignore_ascii_case(&sub.callee))?;
+                // Map the callee's params to the sub-call's argument exprs,
+                // resolved through the CURRENT substitution.
+                let mut m = std::collections::BTreeMap::new();
+                for (p, a) in callee.optional_inputs.iter().zip(sub.opt_args.iter()) {
+                    let resolved = match (a, subst) {
+                        (Expr::Var(v), Some(outer)) => {
+                            outer.get(v).cloned().unwrap_or_else(|| a.clone())
+                        }
+                        _ => a.clone(),
+                    };
+                    m.insert(p.name.clone(), resolved);
+                }
+                if let Some(cond) = sv_reject_condition(callee, funcs, Some(&m)) {
+                    parts.push(cond);
+                }
+            }
+            if parts.is_empty() {
+                None
+            } else {
+                Some(format!("( {} )", parts.join(" || ")))
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Render a param-pure scalar expression for the verify precheck (the
+/// analyzer guarantees purity; anything else is a generate-time panic so a
+/// silently-omitted precheck can never ship).
+fn sv_render_scalar(e: &crate::ir::Expr) -> String {
+    use crate::ir::Expr;
+    match e {
+        Expr::Var(v) => v.clone(),
+        Expr::IntLiteral(k) => k.to_string(),
+        Expr::Literal(x) => format!("{x:?}"),
+        _ => panic!("stream_verify precheck: unrenderable sub-call argument {e:?}"),
+    }
+}
+
+/// The identity guard with the callee's params substituted through
+/// `render_arg` (`optInTimePeriod == 1` -> `optInSlowK_Period == 1`).
+fn sv_identity_guard_subst(
+    cond: &crate::ir::Expr,
+    render_arg: &dyn Fn(&crate::ir::Expr) -> String,
+) -> Option<String> {
     use crate::ir::{BinOp, Expr};
     if let Expr::BinOp(l, op, r) = cond {
-        if let (Expr::Var(v), Expr::IntLiteral(k)) = (l.as_ref(), r.as_ref()) {
+        if let (Expr::Var(_), Expr::IntLiteral(k)) = (l.as_ref(), r.as_ref()) {
             let op_s = match op {
                 BinOp::Eq => "==",
                 BinOp::LessEq => "<=",
                 _ => return None,
             };
-            return Some(format!("{v} {op_s} {k}"));
+            let lhs = render_arg(l);
+            return Some(format!("{lhs} {op_s} {k}"));
         }
     }
     None
@@ -875,33 +987,11 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             .collect();
         let n_outs = func.outputs.len();
         // Unstable ids to pin: the function's own, plus any unstable
-        // dependency visible in its lookback body (DEMA/TEMA/TRIX/MACD call
-        // ema_lookback, so their stream values depend on EMA's ambient K).
-        let mut pin_ids: Vec<i32> = Vec::new();
-        if let Some(id) = func_unst_id(name) {
-            pin_ids.push(id);
-        }
-        if let Some(crate::ir::LookbackExpr::Code(stmts)) = &func.lookback {
-            let mut deps: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-            for st in stmts {
-                crate::streaming::walk_stmt_exprs(st, &mut |e| {
-                    crate::streaming::walk_expr(e, &mut |x| {
-                        if let crate::ir::Expr::FuncCall(fname, _) = x {
-                            if let Some(base) = fname.strip_suffix("_lookback") {
-                                deps.insert(base.to_uppercase());
-                            }
-                        }
-                    });
-                });
-            }
-            for d in deps {
-                if let Some(id) = func_unst_id(&d) {
-                    if !pin_ids.contains(&id) {
-                        pin_ids.push(id);
-                    }
-                }
-            }
-        }
+        // dependency reachable TRANSITIVELY through its lookback body
+        // (DEMA/TEMA/TRIX/MACD call ema_lookback directly; STOCH/STOCHF
+        // reach EMA/KAMA/T3 only through ma_lookback — a non-transitive
+        // scan left their K-legs running vacuously at ambient K=0).
+        let pin_ids: Vec<i32> = collect_pin_ids(func, funcs);
 
 
         s.push_str(&format!(
