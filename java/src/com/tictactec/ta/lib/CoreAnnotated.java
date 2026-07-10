@@ -145,7 +145,7 @@ public int acosLookback(
 @FuncInfo(
         name  = "ACOS",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -186,7 +186,7 @@ public int adLookback(
 @FuncInfo(
         name  = "AD",
         group = "Volume Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -233,7 +233,7 @@ public int addLookback(
 @FuncInfo(
         name  = "ADD",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -283,7 +283,7 @@ public int adOscLookback(
 @FuncInfo(
         name  = "ADOSC",
         group = "Volume Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -366,7 +366,7 @@ public int adxLookback(
 @FuncInfo(
         name  = "ADX",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -717,7 +717,7 @@ public int asinLookback(
 @FuncInfo(
         name  = "ASIN",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -758,7 +758,7 @@ public int atanLookback(
 @FuncInfo(
         name  = "ATAN",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -921,7 +921,7 @@ public int avgPriceLookback(
 @FuncInfo(
         name  = "AVGPRICE",
         group = "Price Transform",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1166,7 +1166,7 @@ public int bopLookback(
 @FuncInfo(
         name  = "BOP",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4337,7 +4337,7 @@ public int ceilLookback(
 @FuncInfo(
         name  = "CEIL",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4503,7 +4503,7 @@ public int cosLookback(
 @FuncInfo(
         name  = "COS",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4544,7 +4544,7 @@ public int coshLookback(
 @FuncInfo(
         name  = "COSH",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4585,7 +4585,7 @@ public int demaLookback(
 @FuncInfo(
         name  = "DEMA",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -4644,7 +4644,7 @@ public int divLookback(
 @FuncInfo(
         name  = "DIV",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4755,7 +4755,7 @@ public int emaLookback(
 @FuncInfo(
         name  = "EMA",
         group = "Overlap Studies",
-        flags = 150994944,
+        flags = 184549376,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -4814,7 +4814,7 @@ public int expLookback(
 @FuncInfo(
         name  = "EXP",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4855,7 +4855,7 @@ public int floorLookback(
 @FuncInfo(
         name  = "FLOOR",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -5513,7 +5513,7 @@ public int lnLookback(
 @FuncInfo(
         name  = "LN",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -5554,7 +5554,7 @@ public int log10Lookback(
 @FuncInfo(
         name  = "LOG10",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -5675,7 +5675,7 @@ public int macdLookback(
 @FuncInfo(
         name  = "MACD",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 3
@@ -6331,7 +6331,7 @@ public int medPriceLookback(
 @FuncInfo(
         name  = "MEDPRICE",
         group = "Price Transform",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -6995,7 +6995,7 @@ public int multLookback(
 @FuncInfo(
         name  = "MULT",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -7106,7 +7106,7 @@ public int obvLookback(
 @FuncInfo(
         name  = "OBV",
         group = "Volume Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -7671,7 +7671,7 @@ public int sarLookback(
 @FuncInfo(
         name  = "SAR",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -7766,7 +7766,7 @@ public int sarExtLookback(
 @FuncInfo(
         name  = "SAREXT",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 8,
         nbOutput   = 1
@@ -7961,7 +7961,7 @@ public int sinLookback(
 @FuncInfo(
         name  = "SIN",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8002,7 +8002,7 @@ public int sinhLookback(
 @FuncInfo(
         name  = "SINH",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8102,7 +8102,7 @@ public int sqrtLookback(
 @FuncInfo(
         name  = "SQRT",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8597,7 +8597,7 @@ public int subLookback(
 @FuncInfo(
         name  = "SUB",
         group = "Math Operators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8706,7 +8706,7 @@ public int t3Lookback(
 @FuncInfo(
         name  = "T3",
         group = "Overlap Studies",
-        flags = 150994944,
+        flags = 184549376,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -8784,7 +8784,7 @@ public int tanLookback(
 @FuncInfo(
         name  = "TAN",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8825,7 +8825,7 @@ public int tanhLookback(
 @FuncInfo(
         name  = "TANH",
         group = "Math Transform",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -8866,7 +8866,7 @@ public int temaLookback(
 @FuncInfo(
         name  = "TEMA",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -8925,7 +8925,7 @@ public int trueRangeLookback(
 @FuncInfo(
         name  = "TRANGE",
         group = "Volatility Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -9029,7 +9029,7 @@ public int trixLookback(
 @FuncInfo(
         name  = "TRIX",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -9147,7 +9147,7 @@ public int typPriceLookback(
 @FuncInfo(
         name  = "TYPPRICE",
         group = "Price Transform",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -9375,7 +9375,7 @@ public int wclPriceLookback(
 @FuncInfo(
         name  = "WCLPRICE",
         group = "Price Transform",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1

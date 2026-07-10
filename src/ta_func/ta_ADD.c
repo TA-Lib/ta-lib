@@ -164,3 +164,79 @@ TA_RetCode TA_S_ADD_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_ADD_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_ADD_StreamStep( struct TA_ADD_Stream *sp, double inReal0, double inReal1, double *outReal )
+{
+   (void)sp;
+   *outReal= inReal0 + inReal1;
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Open( const double inReal0[], const double inReal1[], int historyLen, TA_ADD_Stream **stream, double *outReal )
+{
+   struct TA_ADD_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+      {
+         lastValue_outReal = inReal0[i] + inReal1[i];
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ADD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Update( TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_ADD_StreamStep( stream, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Peek( const TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   struct TA_ADD_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_ADD_StreamStep( &scratch, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Close( TA_ADD_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

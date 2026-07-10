@@ -655,3 +655,291 @@ TA_RetCode TA_S_TEMA_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_TEMA_Stream {
+   int optInTimePeriod;
+   double prevEMA1;
+   double prevEMA2;
+   double prevEMA3;
+   double optInK_1;
+};
+
+static void TA_TEMA_StreamStep( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return;
+   }
+   sp->prevEMA1 = (inReal - sp->prevEMA1) * sp->optInK_1 + sp->prevEMA1;
+   sp->prevEMA2 = (sp->prevEMA1 - sp->prevEMA2) * sp->optInK_1 + sp->prevEMA2;
+   sp->prevEMA3 = (sp->prevEMA2 - sp->prevEMA3) * sp->optInK_1 + sp->prevEMA3;
+   *outReal= sp->prevEMA3 + (3.0 * sp->prevEMA1 - 3.0 * sp->prevEMA2);
+}
+
+TA_LIB_API TA_RetCode TA_TEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TEMA_Stream **stream, double *outReal )
+{
+   struct TA_TEMA_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_TEMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_TEMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
+   {
+      double prevEMA1 = 0.0;
+      double prevEMA2 = 0.0;
+      double prevEMA3 = 0.0;
+      double tempReal;
+      double optInK_1 = 0.0;
+      int i;
+      int today;
+      int outIdx;
+      int lookbackEMA;
+      int lookbackTotal;
+      /* For an explanation of this function, please read:
+       *
+       * Stocks & Commodities V. 12:1 (11-19):
+       *   Smoothing Data With Faster Moving Averages
+       * Stocks & Commodities V. 12:2 (72-80):
+       *   Smoothing Data With Less Lag
+       *
+       * Both magazine articles written by Patrick G. Mulloy
+       *
+       * Essentially, a TEMA of time serie 't' is:
+       *   EMA1 = EMA(t,period)
+       *   EMA2 = EMA(EMA(t,period),period)
+       *   EMA3 = EMA(EMA(EMA(t,period),period))
+       *   TEMA = 3*EMA1 - 3*EMA2 + EMA3
+       *
+       * TEMA offers a moving average with less lags then the
+       * traditional EMA.
+       *
+       * Do not confuse a TEMA with EMA3. Both are called "Triple EMA"
+       * in the litterature.
+       *
+       * DEMA is very similar (and from the same author).
+       */
+      /* Will change only on success. */
+      dummyNBElement = 0;
+      dummyBegIdx = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
+       * contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         while( startIdx <= endIdx )
+         {
+            lastValue_outReal = inReal[startIdx++];
+         }
+         dummyNBElement = outIdx;
+         return TA_BAD_PARAM;
+      }
+      /* The three EMA are computed in a single lockstep pass: each new
+       * EMA1 value is immediately fed into EMA2, and each new EMA2 value
+       * into EMA3. No temporary buffers are needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum
+       *    of its first 'period' inputs, accumulated from 0.0 in
+       *    input order (0.0+x is not x for x=-0.0), divided by
+       *    the period.
+       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
+       *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
+       *    value.
+       *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
+       *    added to EMA3 on the left.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (inReal == outReal) is supported: outReal[outIdx]
+       * is written only after inReal[startIdx+outIdx] was read.
+       */
+      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA * 2 )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
+         tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
+      } else 
+      {
+         /* Metastock/Tradestation: seed EMA1 from the first price
+          * bar, EMA2 from the first EMA1 value.
+          */
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA * 2 )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         }
+         prevEMA2 = prevEMA1;
+      }
+      /* Advance EMA1 and EMA2 in lockstep through the unstable
+       * period of EMA2, up to the bar where EMA3 seeding begins.
+       */
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      }
+      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
+         tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
+      } else 
+      {
+         /* Metastock/Tradestation: seed EMA3 from the first EMA2
+          * value.
+          */
+         prevEMA3 = prevEMA2;
+      }
+      /* Advance all three EMA in lockstep through the unstable
+       * period of EMA3, up to the first output bar.
+       */
+      while( today <= startIdx )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+      }
+      /* Stable zone: keep advancing the three EMA in lockstep and
+       * write the TEMA into the output.
+       */
+      lastValue_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+      outIdx = 1;
+      while( today <= endIdx )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         lastValue_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+      }
+      /* Succeed. Indicate where the output starts relative to
+       * the caller input.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TEMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevEMA1 = prevEMA1;
+      sp->prevEMA2 = prevEMA2;
+      sp->prevEMA3 = prevEMA3;
+      sp->optInK_1 = optInK_1;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_TEMA_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TEMA_Peek( const TA_TEMA_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_TEMA_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_TEMA_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TEMA_Close( TA_TEMA_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

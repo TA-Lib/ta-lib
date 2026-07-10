@@ -58,7 +58,7 @@ DEF_FUNCTION( WCLPRICE,
               TA_GroupId_PriceTransform,
               "Weighted Close Price",
               "WclPrice",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* WCLPRICE END */
 

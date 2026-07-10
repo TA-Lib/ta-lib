@@ -156,3 +156,79 @@ TA_RetCode TA_S_TAN_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_TAN_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_TAN_StreamStep( struct TA_TAN_Stream *sp, double inReal, double *outReal )
+{
+   (void)sp;
+   *outReal= tan(inReal);
+}
+
+TA_LIB_API TA_RetCode TA_TAN_Open( const double inReal[], int historyLen, TA_TAN_Stream **stream, double *outReal )
+{
+   struct TA_TAN_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+      {
+         lastValue_outReal = tan(inReal[i]);
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TAN_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_TAN_Update( TA_TAN_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_TAN_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TAN_Peek( const TA_TAN_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_TAN_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_TAN_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TAN_Close( TA_TAN_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

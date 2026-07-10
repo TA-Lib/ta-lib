@@ -51,7 +51,7 @@ fn write_function(out: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(out, "\t\t<GroupId>{}</GroupId>", func.group);
 
-    write_func_flags(out, &func.flags);
+    write_func_flags(out, &func.flags, func.streaming);
     write_inputs(out, func);
     if !func.optional_inputs.is_empty() {
         write_optional_inputs(out, func);
@@ -73,12 +73,15 @@ const FUNC_FLAGS: &[(&str, &str)] = &[
     ("unstable_period", "Unstable Period"),
 ];
 
-fn write_func_flags(out: &mut String, flags: &[String]) {
-    let matched: Vec<&str> = FUNC_FLAGS
+fn write_func_flags(out: &mut String, flags: &[String], streaming: bool) {
+    let mut matched: Vec<&str> = FUNC_FLAGS
         .iter()
         .filter(|(key, _)| flags.iter().any(|f| f == key))
         .map(|(_, xml)| *xml)
         .collect();
+    if streaming {
+        matched.push("Streaming");
+    }
 
     if matched.is_empty() {
         return;

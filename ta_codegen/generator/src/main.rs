@@ -92,6 +92,10 @@ fn main() {
             let check_only = args.iter().any(|a| a == "--check");
             std::process::exit(format(func_filter.as_deref(), check_only));
         }
+        "stream-census" => {
+            let seed = args.iter().any(|a| a == "--seed-yaml");
+            std::process::exit(stream_census(seed));
+        }
         _ => {
             eprintln!("Usage: ta_codegen <command> [options]");
             eprintln!();
@@ -102,6 +106,8 @@ fn main() {
             eprintln!("  build            Compile generated server source into executables");
             eprintln!("  extract          Extract indicators from C source to ta_codegen/input/");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
+            eprintln!("  stream-census    Report the IR-derived streamability per function");
+            eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
             eprintln!();
             eprintln!("Options for 'format':");
             eprintln!("  --func=NAME[,NAME,...]       Only format matching indicators (default: all)");
@@ -126,54 +132,10 @@ fn main() {
 }
 
 /// Wire parsed C source (guarded + optional private) into a FuncDef.
+/// Thin alias for the shared implementation in `parser::c_source` (also used
+/// by integration tests so fixtures wire exactly like production loads).
 fn wire_parsed_source(func_def: &mut ir::FuncDef, parsed: &parser::c_source::ParsedCSource) {
-    let guarded = parsed
-        .functions
-        .iter()
-        .find(|f| !f.name.ends_with("_private"))
-        .expect("C source must contain at least one function");
-    func_def.body = guarded.body.clone();
-    func_def.lookback = Some(ir::LookbackExpr::Code(parsed.lookback_body.clone()));
-    func_def.header_comments = parsed.header_comments.clone();
-
-    let private_fn = parsed
-        .functions
-        .iter()
-        .find(|f| f.name.ends_with("_private"));
-    if let Some(priv_fn) = private_fn {
-        func_def.private_body = priv_fn.body.clone();
-        func_def.has_explicit_private = true;
-        let guarded_param_names: std::collections::HashSet<_> =
-            guarded.params.iter().map(|(name, _)| name.clone()).collect();
-        func_def.private_extra_params = priv_fn
-            .params
-            .iter()
-            .filter(|(name, _)| !guarded_param_names.contains(name))
-            .cloned()
-            .collect();
-        // Extract init expressions for extra params from the guarded body's VarDecls.
-        // Used by backends to generate S_ variants (which inline the private body
-        // with extra params as local variables instead of function params).
-        let extra_names: std::collections::HashSet<_> = func_def
-            .private_extra_params
-            .iter()
-            .map(|(name, _)| name.as_str())
-            .collect();
-        func_def.private_param_init = guarded
-            .body
-            .iter()
-            .filter_map(|stmt| {
-                if let ir::Statement::VarDecl { name, init: Some(expr), .. } = stmt {
-                    if extra_names.contains(name.as_str()) {
-                        return Some((name.clone(), expr.clone()));
-                    }
-                }
-                None
-            })
-            .collect();
-    } else {
-        func_def.private_body = func_def.body.clone();
-    }
+    parser::c_source::wire_parsed_source(func_def, parsed);
 }
 
 /// Look up a `--flag=value` argument, accepting any of the given flag spellings
@@ -298,6 +260,89 @@ fn format(func_filter: Option<&str>, check_only: bool) -> i32 {
     }
 }
 
+/// `stream-census`: print each function's IR-derived streamability (tier,
+/// state size — all derived, never authored) and audit the `streaming: true`
+/// declarations. This is the stage-0 tool from docs/streaming-api-proposal.md
+/// and the audit trail when a batch rewrite changes a function's shape.
+///
+/// `--seed-yaml` inserts `streaming: true` (before the `inputs:` key) into
+/// the YAML of every function that analyzes clean and has no declaration
+/// yet. Exit code 1 when any declared function is no longer streamable.
+fn stream_census(seed_yaml: bool) -> i32 {
+    let root = repo_root();
+    let funcs = load_func_defs(None, &root);
+    let mut derived_t1 = 0usize;
+    let mut derived_t2 = 0usize;
+    let mut mismatches = 0usize;
+    let mut seeded = 0usize;
+
+    for func in &funcs {
+        match ta_codegen_lib::streaming::analyze(func) {
+            Ok(m) => {
+                match m.tier {
+                    ir::StreamTier::T1 => derived_t1 += 1,
+                    ir::StreamTier::T2 => derived_t2 += 1,
+                }
+                let status = if func.streaming { "streamed" } else { "candidate" };
+                println!(
+                    "{:<10} {:<14} {} state={} lags={} outs={}",
+                    status,
+                    func.name,
+                    m.tier.as_str(),
+                    m.state.len(),
+                    m.lags.len(),
+                    m.outputs.len()
+                );
+                if seed_yaml && !func.streaming {
+                    let yaml_path = root
+                        .join("ta_codegen/input")
+                        .join(func.name.to_lowercase())
+                        .join(format!("{}.yaml", func.name.to_lowercase()));
+                    match seed_streaming_flag(&yaml_path) {
+                        Ok(()) => seeded += 1,
+                        Err(e) => {
+                            eprintln!("error: cannot seed {}: {e}", yaml_path.display());
+                            return 1;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                if func.streaming {
+                    mismatches += 1;
+                    println!("MISMATCH {:<14} declared streaming but: {e}", func.name);
+                } else {
+                    println!("none       {:<14} -- {e}", func.name);
+                }
+            }
+        }
+    }
+    println!(
+        "\n{} functions: {derived_t1} derive T1, {derived_t2} derive T2, {mismatches} declaration mismatch(es){}",
+        funcs.len(),
+        if seed_yaml { std::format!(", {seeded} YAML(s) seeded") } else { String::new() }
+    );
+    i32::from(mismatches > 0)
+}
+
+/// Insert `streaming: true` into a function YAML, before the `inputs:` key
+/// (house key order puts metadata before the parameter lists).
+fn seed_streaming_flag(yaml_path: &Path) -> Result<(), String> {
+    let content = std::fs::read_to_string(yaml_path).map_err(|e| e.to_string())?;
+    if content.contains("\nstreaming:") || content.starts_with("streaming:") {
+        return Ok(()); // already declared
+    }
+    let anchor = "\ninputs:";
+    let pos = content
+        .find(anchor)
+        .ok_or_else(|| "no `inputs:` key found".to_string())?;
+    let mut out = String::with_capacity(content.len() + 24);
+    out.push_str(&content[..pos]);
+    out.push_str("\nstreaming: true");
+    out.push_str(&content[pos..]);
+    std::fs::write(yaml_path, out).map_err(|e| e.to_string())
+}
+
 fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     let root = repo_root();
     let base = root.join("ta_codegen/input");
@@ -400,6 +445,17 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         let mut func_def = parser::yaml::parse_yaml(&yaml_path);
         let parsed = parser::c_source::parse_c_source(&c_path);
         wire_parsed_source(&mut func_def, &parsed);
+
+        // Streaming maintenance-coupling gate (docs/streaming-api-proposal.md):
+        // a YAML-declared tier must match the IR-derived shape, so a batch
+        // rewrite that breaks stream analyzability fails HERE, not at release.
+        if func_def.streaming {
+            if let Err(e) = ta_codegen_lib::streaming::validate_streamable(&func_def) {
+                eprintln!("error: {e}");
+                eprintln!("       (run `ta_codegen stream-census` for the full audit)");
+                std::process::exit(1);
+            }
+        }
 
         // Canonical documentation (third sibling input file) — feeds the rustdoc
         // backend; the website backend reads the .md itself.
@@ -799,6 +855,8 @@ fn build_servers(backend_filter: Option<&str>) {
                 let ta_abstract_dir = src_dir.join("ta_abstract");
                 let ta_frames_dir = ta_abstract_dir.join("frames");
                 let ta_abstract_serve_dir = root.join("ta_codegen/generator/templates/c");
+                // fuzz_data.h (shared seed-generator/hasher) for stream_verify.
+                let ta_regtest_dir = src_dir.join("tools/ta_regtest");
                 let src = c_dir.join("ta_codegen_serve.c");
                 let dst = bin_dir.join("ta_codegen_serve_c");
                 match std::process::Command::new("gcc")
@@ -814,6 +872,7 @@ fn build_servers(backend_filter: Option<&str>) {
                         &format!("-I{}", ta_func_dir.to_str().unwrap()),
                         &format!("-I{}", ta_common_dir.to_str().unwrap()),
                         &format!("-I{}", ta_abstract_serve_dir.to_str().unwrap()),
+                        &format!("-I{}", ta_regtest_dir.to_str().unwrap()),
                     ])
                     .args(COMMON_GCC_FLAGS)
                     .status()

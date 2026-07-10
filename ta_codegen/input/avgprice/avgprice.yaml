@@ -3,6 +3,7 @@ camel_case: AvgPrice
 group: Price Transform
 hint: Average Price
 flags: [overlap]
+streaming: true
 inputs:
   - name: inPriceOHLC
     type: price

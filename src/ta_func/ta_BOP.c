@@ -218,3 +218,98 @@ TA_RetCode TA_S_BOP_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_BOP_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_BOP_StreamStep( struct TA_BOP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double tempReal;
+
+   (void)sp;
+   tempReal = inHigh - inLow;
+   if( TA_IS_ZERO_OR_NEG(tempReal) )
+   {
+      *outReal= 0.0;
+   } else 
+   {
+      *outReal= (inClose - inOpen) / tempReal;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal )
+{
+   struct TA_BOP_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      double tempReal;
+      /* BOP = (Close - Open)/(High - Low) */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         tempReal = inHigh[i] - inLow[i];
+         if( TA_IS_ZERO_OR_NEG(tempReal) )
+         {
+            lastValue_outReal = 0.0;
+         } else 
+         {
+            lastValue_outReal = (inClose[i] - inOpen[i]) / tempReal;
+         }
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_BOP_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_BOP_StreamStep( stream, inOpen, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Peek( const TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_BOP_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_BOP_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Close( TA_BOP_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

@@ -51,33 +51,9 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 
     let mut func_def = parser::yaml::parse_yaml(&yaml_path);
     let parsed = parser::c_source::parse_c_source(&c_path);
-    func_def.body = parsed
-        .functions
-        .first()
-        .expect("C source must contain at least one function")
-        .body
-        .clone();
-    func_def.lookback = Some(ir::LookbackExpr::Code(parsed.lookback_body));
-
-    // Mirror main.rs: check for explicit _unguarded variant in C source.
-    // If present, use it as private_body with its extra params.
-    // Otherwise, copy body to private_body (same body for both variants).
-    let unguarded_name = format!("{}_unguarded", name);
-    if let Some(ung) = parsed.functions.iter().find(|f| f.name == unguarded_name) {
-        func_def.private_body = ung.body.clone();
-        func_def.has_explicit_private = true;
-        // Extra params = params in unguarded but not in guarded (by name)
-        let guarded_param_names: std::collections::HashSet<_> =
-            parsed.functions[0].params.iter().map(|(name, _)| name.clone()).collect();
-        func_def.private_extra_params = ung
-            .params
-            .iter()
-            .filter(|(name, _)| !guarded_param_names.contains(name))
-            .cloned()
-            .collect();
-    } else {
-        func_def.private_body = func_def.body.clone();
-    }
+    // Single source of truth: wire exactly as the production load paths do
+    // (guarded body, lookback, explicit _private variant + extra params).
+    parser::c_source::wire_parsed_source(&mut func_def, &parsed);
 
     (func_def, enums)
 }
@@ -1798,6 +1774,7 @@ fn backends_render_max_min_fmax_fmin_abs() {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     };
 
     let enums = std::collections::HashMap::new();
@@ -2300,6 +2277,7 @@ fn make_func_with_helper_call(
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     }
 }
 
@@ -2450,6 +2428,7 @@ fn inlining_counter_avoids_name_collisions() {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4120,6 +4099,7 @@ fn rust_lookback_param_minus() {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4167,6 +4147,7 @@ fn rust_lookback_none() {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4372,6 +4353,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: false,
     };
     let enums = HashMap::new();
     let registry = make_registry();

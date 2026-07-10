@@ -450,6 +450,14 @@ pub fn generate_c_server(funcs: &[FuncDef]) -> String {
     // Generic ta_abstract handlers (abstract_call, abstract_get_lookback, abstract_for_each_func)
     s.push_str(&generate_c_abstract_handlers());
 
+    // stream_verify: in-process bitwise batch-vs-stream comparison
+    // (docs/streaming-api-proposal.md, Verification). fuzz_data.h is included
+    // HERE — after the indicator code — because its file-scope
+    // `#pragma STDC FP_CONTRACT OFF` must not alter indicator contraction.
+    // Absent entirely under TA_REF_SERVE (frozen libs have no stream symbols).
+    s.push_str("#ifndef TA_REF_SERVE\n#include \"fuzz_data.h\"\n#endif\n\n");
+    s.push_str(&generate_c_stream_verify(funcs));
+
     // Dispatch function
     s.push_str(&generate_c_dispatch(funcs));
 
@@ -638,6 +646,271 @@ fn generate_c_abstract_handlers() -> String {
     "#include \"ta_abstract_serve.c\"\n\n".to_string()
 }
 
+/// The fuzz-convention input array for one expanded input name: price
+/// components map to their OHLCV series; generic reals map real0→close,
+/// real1→volume (matches abstract_call/fuzz-064 and the driver).
+fn sv_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
+    match name {
+        "inOpen" => "sv_o",
+        "inHigh" => "sv_h",
+        "inLow" => "sv_l",
+        "inClose" => "sv_c",
+        "inVolume" => "sv_v",
+        "inOpenInterest" => "sv_oi",
+        _ => {
+            let arr = if *generic_idx == 0 { "sv_c" } else { "sv_v" };
+            *generic_idx += 1;
+            arr
+        }
+    }
+}
+
+/// Emit `handle_stream_verify`: for each streamable function, run batch
+/// (startIdx=0) and the stream trajectory in-process on identical seeded
+/// inputs, compare BITWISE per bar (memcmp on doubles), spot-assert
+/// peek == update, and answer flat JSON (`ok`, per-leg match flags, first
+/// divergence as %a on mismatch). See docs/streaming-api-proposal.md,
+/// Verification. The whole handler is compiled out under TA_REF_SERVE
+/// (frozen reference libraries have no stream symbols).
+#[allow(clippy::too_many_lines)]
+fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
+    let mut s = String::new();
+    s.push_str("/* ---- stream_verify: bitwise batch-vs-stream comparison ---- */\n");
+    s.push_str("#ifndef TA_REF_SERVE\n");
+    s.push_str("#define SV_MAXN 256\n");
+    s.push_str("#define SV_PEEK_EVERY 7\n");
+    s.push_str("static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];\n");
+    s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
+    s.push_str("static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];\n");
+    s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n\n");
+    s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
+    s.push_str("    int fnLen = 0;\n");
+    s.push_str("    const char *fn = json_find_string(json, \"funcName\", &fnLen);\n");
+    s.push_str("    int svShape  = json_find_int(json, \"gen_shape\");\n");
+    s.push_str("    int svSeed   = json_find_int(json, \"gen_seed\");\n");
+    s.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
+    s.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
+    s.push_str("    int svCompat = json_find_int(json, \"compatibility\");\n");
+    s.push_str("    int savedCompat = (int)TA_GetCompatibility();\n");
+    s.push_str("    (void)svK;\n");
+    s.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
+    s.push_str("    if( svN < 2 ) svN = 2;\n");
+    s.push_str("    if( svN > SV_MAXN ) svN = SV_MAXN;\n");
+    s.push_str("    fuzz_gen(svShape, svSeed, svN, sv_o, sv_h, sv_l, sv_c, sv_v, sv_oi);\n");
+    s.push_str("    TA_SetCompatibility((TA_Compatibility)svCompat);\n\n");
+
+    let mut first = true;
+    for func in funcs.iter().filter(|f| f.streaming) {
+        let name = &func.name;
+        let method = format!("TA_{name}");
+        let cond = if first { "if" } else { "else if" };
+        first = false;
+
+        // Input arrays in fuzz convention, in signature order.
+        let input_names = expand_input_names(&func.inputs);
+        let mut generic_idx = 0usize;
+        let input_arrays: Vec<&str> = input_names
+            .iter()
+            .map(|n| sv_input_array(n, &mut generic_idx))
+            .collect();
+        let n_outs = func.outputs.len();
+        // Unstable ids to pin: the function's own, plus any unstable
+        // dependency visible in its lookback body (DEMA/TEMA/TRIX/MACD call
+        // ema_lookback, so their stream values depend on EMA's ambient K).
+        let mut pin_ids: Vec<i32> = Vec::new();
+        if let Some(id) = func_unst_id(name) {
+            pin_ids.push(id);
+        }
+        if let Some(crate::ir::LookbackExpr::Code(stmts)) = &func.lookback {
+            let mut deps: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+            for st in stmts {
+                crate::streaming::walk_stmt_exprs(st, &mut |e| {
+                    crate::streaming::walk_expr(e, &mut |x| {
+                        if let crate::ir::Expr::FuncCall(fname, _) = x {
+                            if let Some(base) = fname.strip_suffix("_lookback") {
+                                deps.insert(base.to_uppercase());
+                            }
+                        }
+                    });
+                });
+            }
+            for d in deps {
+                if let Some(id) = func_unst_id(&d) {
+                    if !pin_ids.contains(&id) {
+                        pin_ids.push(id);
+                    }
+                }
+            }
+        }
+
+
+        s.push_str(&format!(
+            "    {cond}( fnLen == {} && strncmp(fn, \"{method}\", {}) == 0 ) {{\n",
+            method.len(),
+            method.len()
+        ));
+
+        // Optional params from the request.
+        for opt in &func.optional_inputs {
+            if opt.param_type == ParamType::Real {
+                s.push_str(&format!(
+                    "        double {0} = json_find_double(json, \"{0}\");\n",
+                    opt.name
+                ));
+            } else if matches!(&opt.param_type, ParamType::Enum(_)) {
+                s.push_str(&format!(
+                    "        TA_MAType {0} = (TA_MAType)json_find_int(json, \"{0}\");\n",
+                    opt.name
+                ));
+            } else {
+                s.push_str(&format!(
+                    "        int {0} = json_find_int(json, \"{0}\");\n",
+                    opt.name
+                ));
+            }
+        }
+
+        s.push_str("        TA_RetCode rc;\n");
+        s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref = 0, pos, allOk = 1, peekAll = 1;\n");
+        s.push_str("        int pref[4]; int pc[4];\n");
+        for id in &pin_ids {
+            s.push_str(&format!(
+                "        TA_SetUnstablePeriod({id}, (unsigned int)svK);\n"
+            ));
+        }
+
+        // Batch leg (startIdx=0, full range) + intrinsic-in-ambient-K lookback.
+        let mut opt_args = String::new();
+        for o in &func.optional_inputs {
+            let _ = std::fmt::Write::write_fmt(&mut opt_args, format_args!("{}, ", o.name));
+        }
+        let mut in_args = String::new();
+        for a in &input_arrays {
+            let _ = std::fmt::Write::write_fmt(&mut in_args, format_args!("{a}, "));
+        }
+        let mut out_args = String::new();
+        for i in 0..n_outs {
+            let _ = std::fmt::Write::write_fmt(&mut out_args, format_args!(", sv_b{i}"));
+        }
+        s.push_str(&format!(
+            "        rc = {method}(0, svN - 1, {in_args}{opt_args}&svBeg, &svNb{out_args});\n"
+        ));
+        s.push_str(&format!("        lb = {method}_Lookback({});\n", {
+            let a: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+            a.join(", ")
+        }));
+        // Batch failed or produced nothing: report and restore (a valid
+        // stream cannot exist either — driver checks openRejects).
+        s.push_str("        if( rc != TA_SUCCESS || svNb <= 0 ) {\n");
+        s.push_str("            int openRejects = 0;\n");
+        s.push_str(&format!(
+            "            {{ TA_{name}_Stream *st = NULL; {} TA_RetCode orc = TA_{name}_Open({opt_args}{in_args}svN, &st, {});\n",
+            (0..n_outs).map(|i| format!("double v{i} = 0.0;")).collect::<Vec<_>>().join(" "),
+            (0..n_outs).map(|i| format!("&v{i}")).collect::<Vec<_>>().join(", ")
+        ));
+        s.push_str(&format!(
+            "              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_{name}_Close(st); }}\n"
+        ));
+        for id in &pin_ids {
+            s.push_str(&format!("            TA_SetUnstablePeriod({id}, 0);\n"));
+        }
+        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);\n");
+        s.push_str("            return;\n");
+        s.push_str("        }\n");
+
+        // Prefix sweep candidates (dedup, clamped to [lb+1, svN-1]).
+        s.push_str("        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
+        s.push_str("        for( li = 0; li < 4; li++ ) {\n");
+        s.push_str("            int P = pc[li]; int seen = 0, k;\n");
+        s.push_str("            if( P < lb + 1 ) P = lb + 1;\n");
+        s.push_str("            if( P > svN - 1 ) P = svN - 1;\n");
+        s.push_str("            if( P < 1 ) continue;\n");
+        s.push_str("            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;\n");
+        s.push_str("            if( !seen ) pref[npref++] = P;\n");
+        s.push_str("        }\n");
+        s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
+
+        // Per-leg: open on prefix, update the rest, peek spot-asserts,
+        // bitwise compare against the batch outputs at every bar.
+        s.push_str("        for( li = 0; li < npref; li++ ) {\n");
+        s.push_str("            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;\n");
+        s.push_str("            double bv = 0.0, sv = 0.0;\n");
+        s.push_str(&format!("            TA_{name}_Stream *st = NULL;\n"));
+        for i in 0..n_outs {
+            s.push_str(&format!("            double v{i} = 0.0, pk{i} = 0.0;\n"));
+        }
+        let vout_args: String = (0..n_outs)
+            .map(|i| format!("&v{i}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let pkout_args: String = (0..n_outs)
+            .map(|i| format!("&pk{i}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        s.push_str(&format!(
+            "            rc = TA_{name}_Open({opt_args}{in_args}P, &st, {vout_args});\n"
+        ));
+        s.push_str("            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }\n");
+        // Compare the open value (bar P-1).
+        for i in 0..n_outs {
+            s.push_str(&format!(
+                "            if( ok && sv_bitne(v{i}, sv_b{i}[(P - 1) - svBeg]) ) {{ ok = 0; badBar = P - 1; badOut = {i}; bv = sv_b{i}[(P - 1) - svBeg]; sv = v{i}; }}\n"
+            ));
+        }
+        // Update the remaining bars.
+        let mut bar_args = String::new();
+        for a in &input_arrays {
+            let _ = std::fmt::Write::write_fmt(&mut bar_args, format_args!("{a}[t], "));
+        }
+        s.push_str("            for( t = P; ok && t < svN; t++ ) {\n");
+        s.push_str("                int doPeek = ((t % SV_PEEK_EVERY) == 0);\n");
+        s.push_str(&format!(
+            "                if( doPeek ) TA_{name}_Peek(st, {bar_args}{pkout_args});\n"
+        ));
+        s.push_str(&format!(
+            "                TA_{name}_Update(st, {bar_args}{vout_args});\n"
+        ));
+        let peek_ne: Vec<String> = (0..n_outs)
+            .map(|i| format!("sv_bitne(pk{i}, v{i})"))
+            .collect();
+        s.push_str(&format!(
+            "                if( doPeek && ({}) ) pkOk = 0;\n",
+            peek_ne.join(" || ")
+        ));
+        for i in 0..n_outs {
+            s.push_str(&format!(
+                "                if( sv_bitne(v{i}, sv_b{i}[t - svBeg]) ) {{ ok = 0; badBar = t; badOut = {i}; bv = sv_b{i}[t - svBeg]; sv = v{i}; }}\n"
+            ));
+        }
+        s.push_str("            }\n");
+        s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
+        s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
+        s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", li, badBar, li, badOut, li, bv, li, sv); }\n");
+        s.push_str("            if( !pkOk ) peekAll = 0;\n");
+        s.push_str("        }\n");
+        for id in &pin_ids {
+            s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
+        }
+        s.push_str("        TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+        s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", allOk, peekAll);\n");
+        s.push_str("        return;\n");
+        s.push_str("    }\n");
+    }
+
+    // Unknown / non-streamable function.
+    s.push_str("    TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+    s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not_streamable\\\"}\");\n");
+    s.push_str("}\n");
+    s.push_str("#else /* TA_REF_SERVE: frozen libs have no stream symbols */\n");
+    s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
+    s.push_str("    (void)json;\n");
+    s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not supported\\\"}\");\n");
+    s.push_str("}\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n\n");
+    s
+}
+
 #[allow(clippy::too_many_lines)]
 fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
     let mut s = String::new();
@@ -665,6 +938,12 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
     s.push_str("        json_find_double_array(json, \"volume\",        g_refVolume, MAX_ARRAY_SIZE);\n");
     s.push_str("        json_find_double_array(json, \"openInterest\",  g_refOI,     MAX_ARRAY_SIZE);\n");
     s.push_str("        snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\",\\\"n\\\":%d}\", g_refN);\n");
+    s.push_str("        return;\n");
+    s.push_str("    }\n\n");
+
+    // stream_verify: batch-vs-stream bitwise comparison, computed in-process.
+    s.push_str("    if ( methodLen == 13 && strncmp(method, \"stream_verify\", 13) == 0 ) {\n");
+    s.push_str("        handle_stream_verify(json, resp, resp_size);\n");
     s.push_str("        return;\n");
     s.push_str("    }\n\n");
 

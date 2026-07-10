@@ -3,6 +3,7 @@ camel_case: Tanh
 group: Math Transform
 hint: Vector Trigonometric Tanh
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

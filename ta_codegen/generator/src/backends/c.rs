@@ -54,13 +54,18 @@ pub fn generate(
         out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
         out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic
     }
+
+    // Streaming API section (only for YAML-declared streamable functions).
+    if func.streaming {
+        out.push_str(&super::c_stream::generate(func, enums, registry, helpers));
+    }
     out
 }
 
 /// Render a C variable declaration (`type name`, including pointer and array
 /// forms) for the given [`VarType`]. Single source for the per-statement,
 /// hoisted-block, and lookback-local declaration emitters.
-fn c_decl(var_type: &VarType, name: &str) -> String {
+pub(crate) fn c_decl(var_type: &VarType, name: &str) -> String {
     match var_type {
         VarType::Real => format!("double {name}"),
         VarType::Integer | VarType::Index => format!("int {name}"),
@@ -191,7 +196,7 @@ fn gen_header() -> String {
 // Integer optional-param defaults and ranges are stored as `f64` in the IR; casting
 // the integer-valued ones to `i32` for literal emission is exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
-fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
+pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
         match &opt.param_type {
@@ -1476,6 +1481,18 @@ fn render_expr(
     helpers: &HelperRegistry,
 ) -> String {
     CExpr { ctx, registry, helpers }.walk(expr)
+}
+
+/// Crate-visible expression rendering (used by the stream emitter for
+/// private-param init expressions and identity-guard conditions).
+pub(crate) fn render_expression(
+    expr: &Expr,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    inline_counter: &std::cell::Cell<usize>,
+) -> String {
+    let ctx = CRenderCtx { single_precision: false, inline_counter };
+    render_expr(expr, &ctx, registry, helpers)
 }
 
 

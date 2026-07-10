@@ -3,6 +3,7 @@ camel_case: Mult
 group: Math Operators
 hint: Vector Arithmetic Mult
 flags: []
+streaming: true
 inputs:
   - name: inReal0
     type: real

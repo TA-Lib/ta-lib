@@ -3,6 +3,7 @@ camel_case: Atan
 group: Math Transform
 hint: Vector Trigonometric ATan
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

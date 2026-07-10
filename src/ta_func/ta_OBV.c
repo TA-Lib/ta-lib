@@ -229,3 +229,107 @@ TA_RetCode TA_S_OBV_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_OBV_Stream {
+   double prevReal;
+   double prevOBV;
+};
+
+static void TA_OBV_StreamStep( struct TA_OBV_Stream *sp, double inReal, double inVolume, double *outReal )
+{
+   double tempReal;
+
+   tempReal = inReal;
+   if( tempReal > sp->prevReal )
+   {
+      sp->prevOBV += inVolume;
+   } else if( tempReal < sp->prevReal )
+   {
+      sp->prevOBV -= inVolume;
+   }
+   *outReal= sp->prevOBV;
+   sp->prevReal = tempReal;
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[], int historyLen, TA_OBV_Stream **stream, double *outReal )
+{
+   struct TA_OBV_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      double prevReal = 0.0;
+      double tempReal;
+      double prevOBV = 0.0;
+      prevOBV = inVolume[startIdx];
+      prevReal = inReal[startIdx];
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         tempReal = inReal[i];
+         if( tempReal > prevReal )
+         {
+            prevOBV += inVolume[i];
+         } else if( tempReal < prevReal )
+         {
+            prevOBV -= inVolume[i];
+         }
+         lastValue_outReal = prevOBV;
+         prevReal = tempReal;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_OBV_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->prevReal = prevReal;
+      sp->prevOBV = prevOBV;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_OBV_StreamStep( stream, inReal, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
+{
+   struct TA_OBV_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_OBV_StreamStep( &scratch, inReal, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

@@ -162,7 +162,7 @@ DEF_FUNCTION( LN,
               TA_GroupId_MathTransform,
               "Vector Log Natural",
               "Ln",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* LN END */
 
@@ -186,7 +186,7 @@ DEF_FUNCTION( LOG10,
               TA_GroupId_MathTransform,
               "Vector Log10",
               "Log10",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* LOG10 END */
 

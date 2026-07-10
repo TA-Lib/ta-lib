@@ -124,7 +124,11 @@ fn gen_annotation(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
     o.push_str("@FuncInfo(\n");
     let _ = writeln!(o, "        name  = \"{}\",", func.name);
     let _ = writeln!(o, "        group = \"{}\",", func.group);
-    let _ = writeln!(o, "        flags = {},", func_flags_value(&func.flags));
+    let _ = writeln!(
+        o,
+        "        flags = {},",
+        func_flags_value(&func.flags, func.streaming)
+    );
     let _ = writeln!(o, "        nbInput    = {},", descs.len());
     let _ = writeln!(o, "        nbOptInput = {},", func.optional_inputs.len());
     let _ = writeln!(o, "        nbOutput   = {}", func.outputs.len());
@@ -403,8 +407,9 @@ fn emit_output_annotation(o: &mut String, output: &Output, last: bool) {
     o.push('\n');
 }
 
-/// `TA_FuncFlags` numeric value (OR of matched bits).
-fn func_flags_value(flags: &[String]) -> u32 {
+/// `TA_FuncFlags` numeric value (OR of matched bits). `streaming` comes from
+/// the YAML `streaming: true` bool: TA_FUNC_FLG_STREAM.
+fn func_flags_value(flags: &[String], streaming: bool) -> u32 {
     let mut v = 0;
     for f in flags {
         v |= match f.as_str() {
@@ -414,6 +419,9 @@ fn func_flags_value(flags: &[String]) -> u32 {
             "candlestick" => 0x1000_0000,
             _ => 0,
         };
+    }
+    if streaming {
+        v |= 0x0200_0000;
     }
     v
 }

@@ -189,3 +189,81 @@ TA_RetCode TA_S_AVGPRICE_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_AVGPRICE_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_AVGPRICE_StreamStep( struct TA_AVGPRICE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   (void)sp;
+   *outReal= (inHigh + inLow + inClose + inOpen) / 4;
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal )
+{
+   struct TA_AVGPRICE_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      /* Average price = (High + Low + Open + Close) / 4 */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4;
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AVGPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_AVGPRICE_StreamStep( stream, inOpen, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_AVGPRICE_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_AVGPRICE_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Close( TA_AVGPRICE_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

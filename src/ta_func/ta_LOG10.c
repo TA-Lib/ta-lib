@@ -156,3 +156,79 @@ TA_RetCode TA_S_LOG10_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_LOG10_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_LOG10_StreamStep( struct TA_LOG10_Stream *sp, double inReal, double *outReal )
+{
+   (void)sp;
+   *outReal= log10(inReal);
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_Open( const double inReal[], int historyLen, TA_LOG10_Stream **stream, double *outReal )
+{
+   struct TA_LOG10_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+      {
+         lastValue_outReal = log10(inReal[i]);
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_LOG10_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_LOG10_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_Peek( const TA_LOG10_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_LOG10_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_LOG10_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_Close( TA_LOG10_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

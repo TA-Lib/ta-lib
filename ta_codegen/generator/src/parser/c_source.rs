@@ -23,6 +23,64 @@ pub struct ParsedCFunction {
     pub params: Vec<(String, String)>,
 }
 
+/// Wire parsed C source (guarded + optional private) into a FuncDef: body,
+/// lookback, header comments, and the private-variant fields
+/// (`private_body`, `private_extra_params`, `private_param_init`).
+///
+/// This is the single wiring implementation — the `main.rs` load paths and
+/// the integration-test fixtures both call it, so tests see exactly the
+/// FuncDef production sees.
+pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSource) {
+    let guarded = parsed
+        .functions
+        .iter()
+        .find(|f| !f.name.ends_with("_private"))
+        .expect("C source must contain at least one function");
+    func_def.body.clone_from(&guarded.body);
+    func_def.lookback = Some(crate::ir::LookbackExpr::Code(parsed.lookback_body.clone()));
+    func_def.header_comments.clone_from(&parsed.header_comments);
+
+    let private_fn = parsed
+        .functions
+        .iter()
+        .find(|f| f.name.ends_with("_private"));
+    if let Some(priv_fn) = private_fn {
+        func_def.private_body.clone_from(&priv_fn.body);
+        func_def.has_explicit_private = true;
+        let guarded_param_names: HashSet<_> =
+            guarded.params.iter().map(|(name, _)| name.clone()).collect();
+        func_def.private_extra_params = priv_fn
+            .params
+            .iter()
+            .filter(|(name, _)| !guarded_param_names.contains(name))
+            .cloned()
+            .collect();
+        // Extract init expressions for extra params from the guarded body's
+        // VarDecls. Used by backends to generate S_ variants (which inline the
+        // private body with extra params as local variables instead of
+        // function params).
+        let extra_names: HashSet<_> = func_def
+            .private_extra_params
+            .iter()
+            .map(|(name, _)| name.as_str())
+            .collect();
+        func_def.private_param_init = guarded
+            .body
+            .iter()
+            .filter_map(|stmt| {
+                if let Statement::VarDecl { name, init: Some(expr), .. } = stmt {
+                    if extra_names.contains(name.as_str()) {
+                        return Some((name.clone(), expr.clone()));
+                    }
+                }
+                None
+            })
+            .collect();
+    } else {
+        func_def.private_body.clone_from(&func_def.body);
+    }
+}
+
 /// Parse a `.c` source file containing TA-Lib function definitions.
 pub fn parse_c_source(path: &Path) -> ParsedCSource {
     let input = std::fs::read_to_string(path)

@@ -3,6 +3,7 @@ camel_case: Exp
 group: Math Transform
 hint: Vector Arithmetic Exp
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

@@ -33,6 +33,33 @@ pub struct FuncDef {
     /// (see docs/ta_codegen_input_doc.md). Prose only — numbers stay in the YAML
     /// and are injected at render time.
     pub doc: Option<DocDef>,
+    /// `streaming: true` in the function YAML: generate the streaming API
+    /// for this function (docs/streaming-api-proposal.md). Absent or false =
+    /// no stream code. The generator derives everything else (tier, state)
+    /// from the IR and fails `generate` if a declared function is no longer
+    /// analyzable (the maintenance-coupling gate).
+    pub streaming: bool,
+}
+
+/// IR-derived streamability tier (internal — never authored by hand; the
+/// `stream-census` subcommand reports it). Stage 1 ships T1/T2; later stages
+/// extend this enum (T3 rings, T4a/T4b extrema, TC composed).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StreamTier {
+    /// Pure per-bar map — no cross-bar state.
+    T1,
+    /// Scalar recurrence — O(1) carried scalars and/or bounded lag reads.
+    T2,
+}
+
+impl StreamTier {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::T1 => "T1",
+            Self::T2 => "T2",
+        }
+    }
 }
 
 /// Parsed canonical documentation (`<name>.md`) for one function.

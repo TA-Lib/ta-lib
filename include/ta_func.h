@@ -117,6 +117,23 @@ TA_LIB_API TA_RetCode TA_S_ACOS( int    startIdx,
 TA_LIB_API int TA_ACOS_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_ACOS — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ACOS_Stream TA_ACOS_Stream;
+
+TA_LIB_API TA_RetCode TA_ACOS_Open( const double inReal[], int historyLen, TA_ACOS_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ACOS_Peek( const TA_ACOS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ACOS_Close( TA_ACOS_Stream *stream );
+
 /*
  * TA_AD - Chaikin A/D Line
  * 
@@ -147,6 +164,23 @@ TA_LIB_API TA_RetCode TA_S_AD( int    startIdx,
 TA_LIB_API int TA_AD_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_AD — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_AD_Stream TA_AD_Stream;
+
+TA_LIB_API TA_RetCode TA_AD_Open( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_AD_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AD_Peek( const TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AD_Close( TA_AD_Stream *stream );
+
 /*
  * TA_ADD - Vector Arithmetic Add
  * 
@@ -172,6 +206,23 @@ TA_LIB_API TA_RetCode TA_S_ADD( int    startIdx,
 
 TA_LIB_API int TA_ADD_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_ADD — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ADD_Stream TA_ADD_Stream;
+
+TA_LIB_API TA_RetCode TA_ADD_Open( const double inReal0[], const double inReal1[], int historyLen, TA_ADD_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADD_Update( TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADD_Peek( const TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADD_Close( TA_ADD_Stream *stream );
 
 /*
  * TA_ADOSC - Chaikin A/D Oscillator
@@ -217,6 +268,23 @@ TA_LIB_API int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 10
                                            int           optInSlowPeriod );  /* From 2 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_ADOSC — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ADOSC_Stream TA_ADOSC_Stream;
+
+TA_LIB_API TA_RetCode TA_ADOSC_Open( int optInFastPeriod, int optInSlowPeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_ADOSC_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADOSC_Peek( const TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADOSC_Close( TA_ADOSC_Stream *stream );
+
 /*
  * TA_ADX - Average Directional Movement Index
  * 
@@ -252,6 +320,23 @@ TA_LIB_API TA_RetCode TA_S_ADX( int    startIdx,
 
 TA_LIB_API int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_ADX — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ADX_Stream TA_ADX_Stream;
+
+TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADX_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADX_Update( TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADX_Peek( const TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ADX_Close( TA_ADX_Stream *stream );
 
 /*
  * TA_ADXR - Average Directional Movement Index Rating
@@ -426,6 +511,23 @@ TA_LIB_API TA_RetCode TA_S_ASIN( int    startIdx,
 TA_LIB_API int TA_ASIN_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_ASIN — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ASIN_Stream TA_ASIN_Stream;
+
+TA_LIB_API TA_RetCode TA_ASIN_Open( const double inReal[], int historyLen, TA_ASIN_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ASIN_Peek( const TA_ASIN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ASIN_Close( TA_ASIN_Stream *stream );
+
 /*
  * TA_ATAN - Vector Trigonometric ATan
  * 
@@ -449,6 +551,23 @@ TA_LIB_API TA_RetCode TA_S_ATAN( int    startIdx,
 
 TA_LIB_API int TA_ATAN_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_ATAN — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ATAN_Stream TA_ATAN_Stream;
+
+TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_ATAN_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATAN_Update( TA_ATAN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATAN_Peek( const TA_ATAN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATAN_Close( TA_ATAN_Stream *stream );
 
 /*
  * TA_ATR - Average True Range
@@ -547,6 +666,23 @@ TA_LIB_API TA_RetCode TA_S_AVGPRICE( int    startIdx,
 
 TA_LIB_API int TA_AVGPRICE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_AVGPRICE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_AVGPRICE_Stream TA_AVGPRICE_Stream;
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Close( TA_AVGPRICE_Stream *stream );
 
 /*
  * TA_BBANDS - Bollinger Bands
@@ -664,6 +800,23 @@ TA_LIB_API TA_RetCode TA_S_BOP( int    startIdx,
 
 TA_LIB_API int TA_BOP_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_BOP — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_BOP_Stream TA_BOP_Stream;
+
+TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BOP_Peek( const TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BOP_Close( TA_BOP_Stream *stream );
 
 /*
  * TA_CCI - Commodity Channel Index
@@ -2611,6 +2764,23 @@ TA_LIB_API TA_RetCode TA_S_CEIL( int    startIdx,
 TA_LIB_API int TA_CEIL_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_CEIL — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_CEIL_Stream TA_CEIL_Stream;
+
+TA_LIB_API TA_RetCode TA_CEIL_Open( const double inReal[], int historyLen, TA_CEIL_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CEIL_Close( TA_CEIL_Stream *stream );
+
 /*
  * TA_CMO - Chande Momentum Oscillator
  * 
@@ -2701,6 +2871,23 @@ TA_LIB_API TA_RetCode TA_S_COS( int    startIdx,
 TA_LIB_API int TA_COS_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_COS — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_COS_Stream TA_COS_Stream;
+
+TA_LIB_API TA_RetCode TA_COS_Open( const double inReal[], int historyLen, TA_COS_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COS_Peek( const TA_COS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COS_Close( TA_COS_Stream *stream );
+
 /*
  * TA_COSH - Vector Trigonometric Cosh
  * 
@@ -2724,6 +2911,23 @@ TA_LIB_API TA_RetCode TA_S_COSH( int    startIdx,
 
 TA_LIB_API int TA_COSH_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_COSH — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_COSH_Stream TA_COSH_Stream;
+
+TA_LIB_API TA_RetCode TA_COSH_Open( const double inReal[], int historyLen, TA_COSH_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COSH_Update( TA_COSH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COSH_Peek( const TA_COSH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_COSH_Close( TA_COSH_Stream *stream );
 
 /*
  * TA_DEMA - Double Exponential Moving Average
@@ -2757,6 +2961,23 @@ TA_LIB_API TA_RetCode TA_S_DEMA( int    startIdx,
 TA_LIB_API int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_DEMA — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_DEMA_Stream TA_DEMA_Stream;
+
+TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_DEMA_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DEMA_Peek( const TA_DEMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DEMA_Close( TA_DEMA_Stream *stream );
+
 /*
  * TA_DIV - Vector Arithmetic Div
  * 
@@ -2782,6 +3003,23 @@ TA_LIB_API TA_RetCode TA_S_DIV( int    startIdx,
 
 TA_LIB_API int TA_DIV_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_DIV — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_DIV_Stream TA_DIV_Stream;
+
+TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[], int historyLen, TA_DIV_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DIV_Update( TA_DIV_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DIV_Peek( const TA_DIV_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DIV_Close( TA_DIV_Stream *stream );
 
 /*
  * TA_DX - Directional Movement Index
@@ -2851,6 +3089,23 @@ TA_LIB_API TA_RetCode TA_S_EMA( int    startIdx,
 TA_LIB_API int TA_EMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_EMA — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_EMA_Stream TA_EMA_Stream;
+
+TA_LIB_API TA_RetCode TA_EMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_EMA_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMA_Close( TA_EMA_Stream *stream );
+
 /*
  * TA_EXP - Vector Arithmetic Exp
  * 
@@ -2875,6 +3130,23 @@ TA_LIB_API TA_RetCode TA_S_EXP( int    startIdx,
 TA_LIB_API int TA_EXP_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_EXP — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_EXP_Stream TA_EXP_Stream;
+
+TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EXP_Peek( const TA_EXP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EXP_Close( TA_EXP_Stream *stream );
+
 /*
  * TA_FLOOR - Vector Floor
  * 
@@ -2898,6 +3170,23 @@ TA_LIB_API TA_RetCode TA_S_FLOOR( int    startIdx,
 
 TA_LIB_API int TA_FLOOR_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_FLOOR — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_FLOOR_Stream TA_FLOOR_Stream;
+
+TA_LIB_API TA_RetCode TA_FLOOR_Open( const double inReal[], int historyLen, TA_FLOOR_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FLOOR_Update( TA_FLOOR_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FLOOR_Peek( const TA_FLOOR_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FLOOR_Close( TA_FLOOR_Stream *stream );
 
 /*
  * TA_HT_DCPERIOD - Hilbert Transform - Dominant Cycle Period
@@ -3265,6 +3554,23 @@ TA_LIB_API TA_RetCode TA_S_LN( int    startIdx,
 TA_LIB_API int TA_LN_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_LN — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_LN_Stream TA_LN_Stream;
+
+TA_LIB_API TA_RetCode TA_LN_Open( const double inReal[], int historyLen, TA_LN_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LN_Close( TA_LN_Stream *stream );
+
 /*
  * TA_LOG10 - Vector Log10
  * 
@@ -3288,6 +3594,23 @@ TA_LIB_API TA_RetCode TA_S_LOG10( int    startIdx,
 
 TA_LIB_API int TA_LOG10_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_LOG10 — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_LOG10_Stream TA_LOG10_Stream;
+
+TA_LIB_API TA_RetCode TA_LOG10_Open( const double inReal[], int historyLen, TA_LOG10_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LOG10_Peek( const TA_LOG10_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_LOG10_Close( TA_LOG10_Stream *stream );
 
 /*
  * TA_MA - Moving average
@@ -3373,6 +3696,23 @@ TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100
                                           int           optInSlowPeriod, /* From 2 to 100000 */
                                           int           optInSignalPeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_MACD — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MACD_Stream TA_MACD_Stream;
+
+TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int historyLen, TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACD_Peek( const TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACD_Close( TA_MACD_Stream *stream );
 
 /*
  * TA_MACDEXT - MACD with controllable MA type
@@ -3649,6 +3989,23 @@ TA_LIB_API TA_RetCode TA_S_MEDPRICE( int    startIdx,
 
 TA_LIB_API int TA_MEDPRICE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_MEDPRICE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MEDPRICE_Stream TA_MEDPRICE_Stream;
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Open( const double inHigh[], const double inLow[], int historyLen, TA_MEDPRICE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Close( TA_MEDPRICE_Stream *stream );
 
 /*
  * TA_MFI - Money Flow Index
@@ -4014,6 +4371,23 @@ TA_LIB_API TA_RetCode TA_S_MULT( int    startIdx,
 TA_LIB_API int TA_MULT_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_MULT — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MULT_Stream TA_MULT_Stream;
+
+TA_LIB_API TA_RetCode TA_MULT_Open( const double inReal0[], const double inReal1[], int historyLen, TA_MULT_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MULT_Close( TA_MULT_Stream *stream );
+
 /*
  * TA_NATR - Normalized Average True Range
  * 
@@ -4075,6 +4449,23 @@ TA_LIB_API TA_RetCode TA_S_OBV( int    startIdx,
 
 TA_LIB_API int TA_OBV_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_OBV — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_OBV_Stream TA_OBV_Stream;
+
+TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[], int historyLen, TA_OBV_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream );
 
 /*
  * TA_PLUS_DI - Plus Directional Indicator
@@ -4389,6 +4780,23 @@ TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA
                                          double        optInMaximum );  /* From 0 to TA_REAL_MAX */
 
 
+
+/*
+ * Streaming API for TA_SAR — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SAR_Stream TA_SAR_Stream;
+
+TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int historyLen, TA_SAR_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAR_Peek( const TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAR_Close( TA_SAR_Stream *stream );
+
 /*
  * TA_SAREXT - Parabolic SAR - Extended
  * 
@@ -4465,6 +4873,23 @@ TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REA
                                             double        optInAccelerationMaxShort );  /* From 0 to TA_REAL_MAX */
 
 
+
+/*
+ * Streaming API for TA_SAREXT — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SAREXT_Stream TA_SAREXT_Stream;
+
+TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int historyLen, TA_SAREXT_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SAREXT_Close( TA_SAREXT_Stream *stream );
+
 /*
  * TA_SIN - Vector Trigonometric Sin
  * 
@@ -4489,6 +4914,23 @@ TA_LIB_API TA_RetCode TA_S_SIN( int    startIdx,
 TA_LIB_API int TA_SIN_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_SIN — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SIN_Stream TA_SIN_Stream;
+
+TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SIN_Update( TA_SIN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SIN_Peek( const TA_SIN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SIN_Close( TA_SIN_Stream *stream );
+
 /*
  * TA_SINH - Vector Trigonometric Sinh
  * 
@@ -4512,6 +4954,23 @@ TA_LIB_API TA_RetCode TA_S_SINH( int    startIdx,
 
 TA_LIB_API int TA_SINH_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_SINH — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SINH_Stream TA_SINH_Stream;
+
+TA_LIB_API TA_RetCode TA_SINH_Open( const double inReal[], int historyLen, TA_SINH_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SINH_Update( TA_SINH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SINH_Peek( const TA_SINH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SINH_Close( TA_SINH_Stream *stream );
 
 /*
  * TA_SMA - Simple Moving Average
@@ -4568,6 +5027,23 @@ TA_LIB_API TA_RetCode TA_S_SQRT( int    startIdx,
 
 TA_LIB_API int TA_SQRT_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_SQRT — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SQRT_Stream TA_SQRT_Stream;
+
+TA_LIB_API TA_RetCode TA_SQRT_Open( const double inReal[], int historyLen, TA_SQRT_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SQRT_Update( TA_SQRT_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SQRT_Peek( const TA_SQRT_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SQRT_Close( TA_SQRT_Stream *stream );
 
 /*
  * TA_STDDEV - Standard Deviation
@@ -4794,6 +5270,23 @@ TA_LIB_API TA_RetCode TA_S_SUB( int    startIdx,
 TA_LIB_API int TA_SUB_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_SUB — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_SUB_Stream TA_SUB_Stream;
+
+TA_LIB_API TA_RetCode TA_SUB_Open( const double inReal0[], const double inReal1[], int historyLen, TA_SUB_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SUB_Peek( const TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SUB_Close( TA_SUB_Stream *stream );
+
 /*
  * TA_SUM - Summation
  * 
@@ -4864,6 +5357,23 @@ TA_LIB_API int TA_T3_Lookback( int           optInTimePeriod, /* From 1 to 10000
                                         double        optInVFactor );  /* From 0 to 1 */
 
 
+
+/*
+ * Streaming API for TA_T3 — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_T3_Stream TA_T3_Stream;
+
+TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, const double inReal[], int historyLen, TA_T3_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_T3_Close( TA_T3_Stream *stream );
+
 /*
  * TA_TAN - Vector Trigonometric Tan
  * 
@@ -4888,6 +5398,23 @@ TA_LIB_API TA_RetCode TA_S_TAN( int    startIdx,
 TA_LIB_API int TA_TAN_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_TAN — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TAN_Stream TA_TAN_Stream;
+
+TA_LIB_API TA_RetCode TA_TAN_Open( const double inReal[], int historyLen, TA_TAN_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TAN_Update( TA_TAN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TAN_Peek( const TA_TAN_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TAN_Close( TA_TAN_Stream *stream );
+
 /*
  * TA_TANH - Vector Trigonometric Tanh
  * 
@@ -4911,6 +5438,23 @@ TA_LIB_API TA_RetCode TA_S_TANH( int    startIdx,
 
 TA_LIB_API int TA_TANH_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_TANH — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TANH_Stream TA_TANH_Stream;
+
+TA_LIB_API TA_RetCode TA_TANH_Open( const double inReal[], int historyLen, TA_TANH_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TANH_Peek( const TA_TANH_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TANH_Close( TA_TANH_Stream *stream );
 
 /*
  * TA_TEMA - Triple Exponential Moving Average
@@ -4944,6 +5488,23 @@ TA_LIB_API TA_RetCode TA_S_TEMA( int    startIdx,
 TA_LIB_API int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_TEMA — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TEMA_Stream TA_TEMA_Stream;
+
+TA_LIB_API TA_RetCode TA_TEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TEMA_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TEMA_Peek( const TA_TEMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TEMA_Close( TA_TEMA_Stream *stream );
+
 /*
  * TA_TRANGE - True Range
  * 
@@ -4971,6 +5532,23 @@ TA_LIB_API TA_RetCode TA_S_TRANGE( int    startIdx,
 
 TA_LIB_API int TA_TRANGE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_TRANGE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TRANGE_Stream TA_TRANGE_Stream;
+
+TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TRANGE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRANGE_Close( TA_TRANGE_Stream *stream );
 
 /*
  * TA_TRIMA - Triangular Moving Average
@@ -5036,6 +5614,23 @@ TA_LIB_API TA_RetCode TA_S_TRIX( int    startIdx,
 TA_LIB_API int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_TRIX — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TRIX_Stream TA_TRIX_Stream;
+
+TA_LIB_API TA_RetCode TA_TRIX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TRIX_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIX_Close( TA_TRIX_Stream *stream );
+
 /*
  * TA_TSF - Time Series Forecast
  * 
@@ -5095,6 +5690,23 @@ TA_LIB_API TA_RetCode TA_S_TYPPRICE( int    startIdx,
 
 TA_LIB_API int TA_TYPPRICE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_TYPPRICE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TYPPRICE_Stream TA_TYPPRICE_Stream;
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TYPPRICE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Update( TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Peek( const TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Close( TA_TYPPRICE_Stream *stream );
 
 /*
  * TA_ULTOSC - Ultimate Oscillator
@@ -5209,6 +5821,23 @@ TA_LIB_API TA_RetCode TA_S_WCLPRICE( int    startIdx,
 
 TA_LIB_API int TA_WCLPRICE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_WCLPRICE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_WCLPRICE_Stream TA_WCLPRICE_Stream;
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WCLPRICE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Close( TA_WCLPRICE_Stream *stream );
 
 /*
  * TA_WILLR - Williams' %R

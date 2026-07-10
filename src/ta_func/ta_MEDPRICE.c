@@ -178,3 +178,86 @@ TA_RetCode TA_S_MEDPRICE_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MEDPRICE_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_MEDPRICE_StreamStep( struct TA_MEDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
+{
+   (void)sp;
+   *outReal= (inHigh + inLow) / 2.0;
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Open( const double inHigh[], const double inLow[], int historyLen, TA_MEDPRICE_Stream **stream, double *outReal )
+{
+   struct TA_MEDPRICE_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      /* MEDPRICE = (High + Low ) / 2
+       * This is the high and low of the same price bar.
+       *
+       * See MIDPRICE to use instead the highest high and lowest
+       * low over multiple price bar.
+       */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         lastValue_outReal = (inHigh[i] + inLow[i]) / 2.0;
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MEDPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_MEDPRICE_StreamStep( stream, inHigh, inLow, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
+{
+   struct TA_MEDPRICE_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_MEDPRICE_StreamStep( &scratch, inHigh, inLow, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Close( TA_MEDPRICE_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

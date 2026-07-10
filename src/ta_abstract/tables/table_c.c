@@ -1562,7 +1562,7 @@ DEF_FUNCTION( CEIL,
               TA_GroupId_MathTransform,
               "Vector Ceil",
               "Ceil",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* CEIL END */
 
@@ -1639,7 +1639,7 @@ DEF_FUNCTION( COS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Cos",
               "Cos",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* COS END */
 
@@ -1663,7 +1663,7 @@ DEF_FUNCTION( COSH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Cosh",
               "Cosh",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* COSH END */
 

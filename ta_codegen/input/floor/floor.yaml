@@ -3,6 +3,7 @@ camel_case: Floor
 group: Math Transform
 hint: Vector Floor
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

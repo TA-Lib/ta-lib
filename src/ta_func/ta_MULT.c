@@ -180,3 +180,83 @@ TA_RetCode TA_S_MULT_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MULT_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_MULT_StreamStep( struct TA_MULT_Stream *sp, double inReal0, double inReal1, double *outReal )
+{
+   (void)sp;
+   *outReal= inReal0 * inReal1;
+}
+
+TA_LIB_API TA_RetCode TA_MULT_Open( const double inReal0[], const double inReal1[], int historyLen, TA_MULT_Stream **stream, double *outReal )
+{
+   struct TA_MULT_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      outIdx = 0;
+      i = startIdx;
+      while( i <= endIdx )
+      {
+         lastValue_outReal = inReal0[i] * inReal1[i];
+         outIdx += 1;
+         i += 1;
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MULT_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_MULT_StreamStep( stream, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
+{
+   struct TA_MULT_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_MULT_StreamStep( &scratch, inReal0, inReal1, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MULT_Close( TA_MULT_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

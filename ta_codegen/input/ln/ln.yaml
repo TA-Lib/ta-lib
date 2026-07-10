@@ -3,6 +3,7 @@ camel_case: Ln
 group: Math Transform
 hint: Vector Log Natural
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

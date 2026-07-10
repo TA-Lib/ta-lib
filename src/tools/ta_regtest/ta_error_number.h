@@ -305,6 +305,7 @@ typedef enum
   TA_CODEGEN_OUTPUT_MISMATCH         = 1108,
   TA_CODEGEN_JSON_PARSE_FAILED       = 1109,
   TA_CODEGEN_ALLOC_FAILED            = 1110,
+  TA_CODEGEN_STREAM_MISMATCH         = 1111,
 
   /* Abstract codegen test errors */
   TA_ABSTRACT_LOOKBACK_MISMATCH      = 1200,

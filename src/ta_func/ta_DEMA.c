@@ -494,3 +494,220 @@ TA_RetCode TA_S_DEMA_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_DEMA_Stream {
+   int optInTimePeriod;
+   double prevEMA1;
+   double prevEMA2;
+   double optInK_1;
+};
+
+static void TA_DEMA_StreamStep( struct TA_DEMA_Stream *sp, double inReal, double *outReal )
+{
+   sp->prevEMA1 = (inReal - sp->prevEMA1) * sp->optInK_1 + sp->prevEMA1;
+   sp->prevEMA2 = (sp->prevEMA1 - sp->prevEMA2) * sp->optInK_1 + sp->prevEMA2;
+   *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_DEMA_Stream **stream, double *outReal )
+{
+   struct TA_DEMA_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double prevEMA1 = 0.0;
+      double prevEMA2 = 0.0;
+      double tempReal;
+      double optInK_1 = 0.0;
+      int i;
+      int today;
+      int outIdx;
+      int lookbackEMA;
+      int lookbackTotal;
+      /* For an explanation of this function, please read
+       *
+       * Stocks & Commodities V. 12:1 (11-19):
+       *   Smoothing Data With Faster Moving Averages
+       * Stocks & Commodities V. 12:2 (72-80):
+       *   Smoothing Data With Less Lag
+       *
+       * Both magazine articles written by Patrick G. Mulloy
+       *
+       * Essentially, a DEMA of time serie 't' is:
+       *   EMA2 = EMA(EMA(t,period),period)
+       *   DEMA = 2*EMA(t,period)- EMA2
+       *
+       * DEMA offers a moving average with less lags then the
+       * traditional EMA.
+       *
+       * Do not confuse a DEMA with the EMA2. Both are called
+       * "Double EMA" in the litterature, but EMA2 is a simple
+       * EMA of an EMA, while DEMA is a compostie of a single
+       * EMA with EMA2.
+       *
+       * TEMA is very similar (and from the same author).
+       */
+      /* Will change only on success. */
+      dummyNBElement = 0;
+      dummyBegIdx = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 2;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_BAD_PARAM;
+      }
+      /* Both EMA are computed in a single lockstep pass: each new
+       * EMA1 value is immediately fed into EMA2. No temporary
+       * buffers are needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum
+       *    of its first 'period' inputs, accumulated from 0.0 in
+       *    input order (0.0+x is not x for x=-0.0), divided by
+       *    the period.
+       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
+       *    EMA2 from the first EMA1 value.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (inReal == outReal) is supported: outReal[outIdx]
+       * is written only after inReal[startIdx+outIdx] was read.
+       */
+      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
+         tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
+      } else 
+      {
+         /* Metastock/Tradestation: seed each EMA with its first
+          * input value: EMA1 from inReal[0], EMA2 from the first
+          * EMA1 value.
+          */
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA )
+         {
+            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         }
+         prevEMA2 = prevEMA1;
+      }
+      /* Advance both EMA in lockstep through the unstable period
+       * of EMA2, up to the first output bar.
+       */
+      while( today <= startIdx )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      }
+      /* Stable zone: keep advancing both EMA in lockstep and
+       * write the DEMA into the output.
+       */
+      lastValue_outReal = 2.0 * prevEMA1 - prevEMA2;
+      outIdx = 1;
+      while( today <= endIdx )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         lastValue_outReal = 2.0 * prevEMA1 - prevEMA2;
+      }
+      /* Succeed. Indicate where the output starts relative to
+       * the caller input.
+       */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_DEMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevEMA1 = prevEMA1;
+      sp->prevEMA2 = prevEMA2;
+      sp->optInK_1 = optInK_1;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_DEMA_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Peek( const TA_DEMA_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_DEMA_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_DEMA_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Close( TA_DEMA_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

@@ -173,7 +173,7 @@ DEF_FUNCTION( BOP,
               TA_GroupId_MomentumIndicators,
               "Balance Of Power",
               "Bop",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* BOP END */
 

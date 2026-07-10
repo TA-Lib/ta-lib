@@ -3,6 +3,7 @@ camel_case: Cos
 group: Math Transform
 hint: Vector Trigonometric Cos
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

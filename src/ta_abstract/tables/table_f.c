@@ -58,7 +58,7 @@ DEF_FUNCTION( FLOOR,
               TA_GroupId_MathTransform,
               "Vector Floor",
               "Floor",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* FLOOR END */
 

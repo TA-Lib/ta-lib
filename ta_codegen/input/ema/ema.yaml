@@ -3,6 +3,7 @@ camel_case: Ema
 group: Overlap Studies
 hint: Exponential Moving Average
 flags: [overlap, unstable_period]
+streaming: true
 inputs:
   - name: inReal
     type: real

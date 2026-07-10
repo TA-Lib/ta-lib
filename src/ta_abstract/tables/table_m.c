@@ -114,7 +114,7 @@ DEF_FUNCTION( MACD,
               TA_GroupId_MomentumIndicators,
               "Moving Average Convergence/Divergence",
               "Macd",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MACD END */
 
@@ -478,7 +478,7 @@ DEF_FUNCTION( MEDPRICE,
               TA_GroupId_PriceTransform,
               "Median Price",
               "MedPrice",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MEDPRICE END */
 
@@ -777,7 +777,7 @@ DEF_FUNCTION( MULT,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Mult",
               "Mult",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MULT END */
 

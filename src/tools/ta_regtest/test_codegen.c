@@ -1131,6 +1131,10 @@ typedef struct {
     /* Ref differential sweep counters */
     int               sweepVariants;
     int               sweepFunctions;
+    /* Stream verification counters */
+    int               streamFunctions;
+    int               streamLegs;
+    int               streamSkipped;
 } ForEachFuncContext;
 
 static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -1848,6 +1852,202 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     free_outputs(&params);
 }
 
+/* ---- Stream verification pass (batch-vs-stream, in-server bitwise) ----
+ *
+ * For each function the server sends stream_verify: it generates the input
+ * series from a seed (fuzz_data.h), runs BOTH the batch function (startIdx=0)
+ * and the stream trajectory (Open on a warm-up prefix, Update per remaining
+ * bar, Peek spot-asserted equal to the following Update) fully in-process,
+ * and compares BITWISE per bar. The driver only reads the match flags, so
+ * bit-exactness never rides the lossy JSON float path. Non-streamable
+ * functions (and servers without the method) answer with an error and are
+ * counted as skips. See docs/streaming-api-proposal.md, Verification. */
+
+#define STREAM_MAX_OPT 8
+#define STREAM_N       240
+
+static int stream_flag(const char *resp, const char *key)
+{
+    const char *p = strstr(resp, key);
+    if( !p ) return -1;
+    return atoi(p + strlen(key));
+}
+
+static void stream_build_request(char *buf, const TA_FuncInfo *fi,
+                                 const double *optVals,
+                                 int shape, int seed, int n,
+                                 int unstablePeriod, int compat)
+{
+    int pos = sprintf(buf,
+        "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_%s\","
+        "\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d,"
+        "\"unstablePeriod\":%d,\"compatibility\":%d",
+        fi->name, shape, seed, n, unstablePeriod, compat);
+    unsigned int i;
+    for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            pos += sprintf(buf + pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+        else
+            pos += sprintf(buf + pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
+    }
+    sprintf(buf + pos, "}}");
+}
+
+/* Param vectors: defaults, integer params at their true minimum (period==1
+ * territory, issues #93/#94 — deliberately NOT floored at 2 like the 0.6.4
+ * fuzz), and min+1. Real/list params stay at their defaults. */
+static int stream_build_vectors(const TA_FuncInfo *fi,
+                                double vec[3][STREAM_MAX_OPT])
+{
+    unsigned int i;
+    int hasMin = 0, hasMinPlus1 = 0;
+    for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        vec[0][i] = vec[1][i] = vec[2][i] = oi->defaultValue;
+        if( oi->type == TA_OptInput_IntegerRange )
+        {
+            const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+            if( r )
+            {
+                if( (int)r->min != (int)oi->defaultValue )
+                {
+                    vec[1][i] = (double)(int)r->min;
+                    hasMin = 1;
+                }
+                if( (int)r->min + 1 <= (int)r->max &&
+                    (int)r->min + 1 != (int)oi->defaultValue )
+                {
+                    vec[2][i] = (double)((int)r->min + 1);
+                    hasMinPlus1 = 1;
+                }
+            }
+        }
+    }
+    if( hasMin && hasMinPlus1 ) return 3;
+    if( hasMin ) return 2;
+    if( hasMinPlus1 )
+    {
+        for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+            vec[1][i] = vec[2][i];
+        return 2;
+    }
+    return 1;
+}
+
+static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
+{
+    ForEachFuncContext *ctx = (ForEachFuncContext *)opaqueData;
+    double vec[3][STREAM_MAX_OPT];
+    int nvec, v, variant, legs = 0;
+    int isUnstable;
+
+    if( ctx->error != TA_TEST_PASS ) return;
+    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+
+    /* K-leg eligibility: the function's own unstable flag, or an internal
+     * unstable dependency (DEMA/TEMA/TRIX/MACD map to EMA in UNSTABLE_MAP —
+     * their stream values depend on EMA's ambient K). */
+    isUnstable = (funcInfo->flags & TA_FUNC_FLG_UNST_PER) != 0 ||
+                 get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE;
+    nvec = stream_build_vectors(funcInfo, vec);
+
+    /* Silent truncation would quietly stop testing params beyond the cap. */
+    if( funcInfo->nbOptInput > STREAM_MAX_OPT )
+    {
+        printf("STREAM PARAM OVERFLOW [TA_%s]: %u opt params > STREAM_MAX_OPT\n",
+               funcInfo->name, funcInfo->nbOptInput);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+        return;
+    }
+
+    for( v = 0; v < nvec; v++ )
+    {
+        /* Variants: ambient defaults; plus (defaults vector only) one
+         * unstable-period leg, one Metastock-compatibility leg, and the
+         * remaining data shapes so all 7 fuzz shapes (incl. CONSTANT and
+         * TIE_HEAVY) are exercised every run. */
+        for( variant = 0; variant < 7; variant++ )
+        {
+            int K = 0, compat = 0, shape;
+            ErrorNumber pipeErr;
+            if( variant == 1 )
+            {
+                if( v != 0 || !isUnstable ) continue;
+                K = 3;
+            }
+            else if( variant == 2 )
+            {
+                if( v != 0 ) continue;
+                compat = 1;
+            }
+            else if( variant >= 3 )
+            {
+                if( v != 0 ) continue; /* extra shapes: defaults vector only */
+            }
+            shape = (variant >= 3) ? variant : (v + variant) % 7;
+            stream_build_request(ctx->requestBuf, funcInfo, vec[v],
+                                 shape, 1234 + v * 7 + variant, STREAM_N,
+                                 K, compat);
+            pipeErr = codegen_pipe_call(ctx->cp, ctx->requestBuf,
+                                        ctx->responseBuf, JSON_BUF_SIZE);
+            if( pipeErr != TA_TEST_PASS )
+            {
+                printf("STREAM PIPE FAIL [TA_%s]\n", funcInfo->name);
+                ctx->error = pipeErr;
+                return;
+            }
+            if( json_is_error(ctx->responseBuf) ||
+                stream_flag(ctx->responseBuf, "\"ok\":") < 0 )
+            {
+                /* No stream on the server side. The ta_abstract flag is the
+                 * public contract: a TA_FUNC_FLG_STREAM function without a
+                 * server stream (or vice versa below) is a set mismatch. */
+                if( funcInfo->flags & TA_FUNC_FLG_STREAM )
+                {
+                    printf("STREAM SET MISMATCH [TA_%s]: TA_FUNC_FLG_STREAM is set "
+                           "but the server has no stream for it\n", funcInfo->name);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+                ctx->streamSkipped++;
+                return;
+            }
+            if( !(funcInfo->flags & TA_FUNC_FLG_STREAM) )
+            {
+                printf("STREAM SET MISMATCH [TA_%s]: server streams it but "
+                       "TA_FUNC_FLG_STREAM is not set in ta_abstract\n", funcInfo->name);
+                ctx->failed++;
+                ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                return;
+            }
+            if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
+                stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
+            {
+                printf("STREAM MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                       "  request:  %s\n  response: %s\n",
+                       funcInfo->name, v, K, compat,
+                       ctx->requestBuf, ctx->responseBuf);
+                ctx->failed++;
+                ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                return;
+            }
+            {
+                int l = stream_flag(ctx->responseBuf, "\"legs\":");
+                if( l > 0 ) legs += l;
+            }
+        }
+    }
+    ctx->streamFunctions++;
+    ctx->streamLegs += legs;
+}
+
 /* ---- Test orchestration (Task 9) ---- */
 
 static ErrorNumber test_codegen_for_language(
@@ -1916,6 +2116,37 @@ static ErrorNumber test_codegen_for_language(
         printf("  Ref differential sweep: %d variants across %d functions%s\n",
                ctx.sweepVariants, ctx.sweepFunctions,
                ctx.error == TA_TEST_PASS ? ", all match ta_ref_serve" : "");
+    }
+
+    /* Stream verification: batch-vs-stream bitwise, computed in-server.
+     * Capability probe first: only a server implementing stream_verify
+     * answers an unknown-function probe with "not_streamable"; anything
+     * else (unknown method, loose foreign dispatch) would misfire on the
+     * real requests, so the pass is skipped for that server. */
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber probeErr;
+        sprintf(requestBuf,
+                "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_STREAM_PROBE\","
+                "\"gen_shape\":0,\"gen_seed\":1,\"gen_n\":2,\"unstablePeriod\":0,\"compatibility\":0}}");
+        probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
+        if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
+        {
+            ctx.streamFunctions = 0;
+            ctx.streamLegs      = 0;
+            ctx.streamSkipped   = 0;
+            TA_ForEachFunc(stream_one_function, &ctx);
+            printf("  Stream verify: %d functions, %d legs bit-exact vs batch, %d without a stream\n",
+                   ctx.streamFunctions, ctx.streamLegs, ctx.streamSkipped);
+        }
+        else if( probeErr == TA_TEST_PASS )
+        {
+            printf("  Stream verify: not supported by this server (stage 1 is C-only)\n");
+        }
+        else
+        {
+            ctx.error = probeErr;
+        }
     }
 
     free(requestBuf);

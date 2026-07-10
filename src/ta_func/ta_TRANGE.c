@@ -325,3 +325,156 @@ TA_RetCode TA_S_TRANGE_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_TRANGE_Stream {
+   double val3;
+   double lag1_inClose;
+};
+
+static void TA_TRANGE_StreamStep( struct TA_TRANGE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double val2;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
+
+   /* Find the greatest of the 3 values. */
+   tempLT = inLow;
+   tempHT = inHigh;
+   tempCY = sp->lag1_inClose;
+   greatest = tempHT - tempLT;
+   /* val1 */
+   val2 = fabs(tempCY - tempHT);
+   if( val2 > greatest )
+   {
+      greatest = val2;
+   }
+   sp->val3 = fabs(tempCY - tempLT);
+   if( sp->val3 > greatest )
+   {
+      greatest = sp->val3;
+   }
+   *outReal= greatest;
+   sp->lag1_inClose = inClose;
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TRANGE_Stream **stream, double *outReal )
+{
+   struct TA_TRANGE_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int today;
+      int outIdx;
+      double val2;
+      double val3 = 0.0;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      /* True Range is the greatest of the following:
+       *
+       *  val1 = distance from today's high to today's low.
+       *  val2 = distance from yesterday's close to today's high.
+       *  val3 = distance from yesterday's close to today's low.
+       *
+       * Some books and software makes the first TR value to be
+       * the (high - low) of the first bar. This function instead
+       * ignore the first price bar, and only output starting at the
+       * second price bar are valid. This is done for avoiding
+       * inconsistency.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       * Always one price bar gets consumed.
+       */
+      if( startIdx < 1 )
+      {
+         startIdx = 1;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         lastValue_outReal = greatest;
+         today += 1;
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TRANGE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->val3 = val3;
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_TRANGE_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_TRANGE_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_TRANGE_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Close( TA_TRANGE_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

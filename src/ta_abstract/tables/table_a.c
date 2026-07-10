@@ -95,7 +95,7 @@ DEF_FUNCTION( ACOS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ACos",
               "Acos",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ACOS END */
 
@@ -119,7 +119,7 @@ DEF_FUNCTION( AD,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Line",
               "Ad",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* AD END */
 
@@ -144,7 +144,7 @@ DEF_FUNCTION( ADD,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Add",
               "Add",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ADD END */
 
@@ -199,7 +199,7 @@ DEF_FUNCTION( ADOSC,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Oscillator",
               "AdOsc",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ADOSC END */
 
@@ -225,7 +225,7 @@ DEF_FUNCTION( ADX,
               TA_GroupId_MomentumIndicators,
               "Average Directional Movement Index",
               "Adx",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* ADX END */
 
@@ -362,7 +362,7 @@ DEF_FUNCTION( ASIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ASin",
               "Asin",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ASIN END */
 
@@ -386,7 +386,7 @@ DEF_FUNCTION( ATAN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ATan",
               "Atan",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ATAN END */
 
@@ -462,7 +462,7 @@ DEF_FUNCTION( AVGPRICE,
               TA_GroupId_PriceTransform,
               "Average Price",
               "AvgPrice",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* AVGPRICE END */
 

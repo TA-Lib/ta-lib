@@ -3,6 +3,7 @@ camel_case: Sin
 group: Math Transform
 hint: Vector Trigonometric Sin
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

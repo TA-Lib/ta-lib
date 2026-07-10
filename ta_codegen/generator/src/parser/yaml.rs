@@ -16,6 +16,8 @@ struct YamlFunc {
     inputs: Vec<YamlInput>,
     optional_inputs: Option<Vec<YamlOptParam>>,
     outputs: Vec<YamlOutput>,
+    /// `streaming: true` opts the function into the generated streaming API.
+    streaming: Option<bool>,
 }
 
 /// Flags can be a single string or a list of strings.
@@ -183,5 +185,6 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         has_explicit_private: false,
         header_comments: vec![],
         doc: None,
+        streaming: yaml.streaming.unwrap_or(false),
     }
 }

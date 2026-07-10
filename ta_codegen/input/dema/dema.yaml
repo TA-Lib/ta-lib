@@ -3,6 +3,7 @@ camel_case: Dema
 group: Overlap Studies
 hint: Double Exponential Moving Average
 flags: [overlap]
+streaming: true
 inputs:
   - name: inReal
     type: real

@@ -3,6 +3,7 @@ camel_case: Log10
 group: Math Transform
 hint: Vector Log10
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

@@ -3,6 +3,7 @@ camel_case: Ceil
 group: Math Transform
 hint: Vector Ceil
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

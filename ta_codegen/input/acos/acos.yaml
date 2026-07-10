@@ -3,6 +3,7 @@ camel_case: Acos
 group: Math Transform
 hint: Vector Trigonometric ACos
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

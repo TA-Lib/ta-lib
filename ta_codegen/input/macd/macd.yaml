@@ -3,6 +3,7 @@ camel_case: Macd
 group: Momentum Indicators
 hint: Moving Average Convergence/Divergence
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real

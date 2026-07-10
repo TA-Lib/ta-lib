@@ -279,3 +279,127 @@ TA_RetCode TA_S_AD_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_AD_Stream {
+   double ad;
+};
+
+static void TA_AD_StreamStep( struct TA_AD_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   double high;
+   double low;
+   double close;
+   double tmp;
+
+   high = inHigh;
+   low = inLow;
+   tmp = high - low;
+   close = inClose;
+   if( tmp > 0.0 )
+   {
+      sp->ad += (close - low - (high - close)) / tmp * (double)inVolume;
+   }
+   *outReal= sp->ad;
+}
+
+TA_LIB_API TA_RetCode TA_AD_Open( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_AD_Stream **stream, double *outReal )
+{
+   struct TA_AD_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int nbBar;
+      int currentBar;
+      int outIdx;
+      double high;
+      double low;
+      double close;
+      double tmp;
+      double ad = 0.0;
+      /* Note: Results from this function might vary slightly
+       *       from Metastock outputs. The reason being that
+       *       Metastock use float instead of double and this
+       *       cause a different floating-point precision to
+       *       be used.
+       *
+       *       For most function, this is not an apparent difference
+       *       but for function using large cummulative values (like
+       *       this AD function), minor imprecision adds up and becomes
+       *       significative.
+       *
+       *       For better precision, TA-Lib use double in all its
+       *       its calculations.
+       */
+      /* Default return values */
+      nbBar = endIdx - startIdx + 1;
+      dummyNBElement = nbBar;
+      dummyBegIdx = startIdx;
+      currentBar = startIdx;
+      outIdx = 0;
+      ad = 0.0;
+      while( nbBar != 0 )
+      {
+         high = inHigh[currentBar];
+         low = inLow[currentBar];
+         tmp = high - low;
+         close = inClose[currentBar];
+         if( tmp > 0.0 )
+         {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
+         }
+         lastValue_outReal = ad;
+         currentBar += 1;
+         nbBar -= 1;
+      }
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      sp->ad = ad;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_AD_StreamStep( stream, inHigh, inLow, inClose, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AD_Peek( const TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+{
+   struct TA_AD_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_AD_StreamStep( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AD_Close( TA_AD_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

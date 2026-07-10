@@ -156,3 +156,79 @@ TA_RetCode TA_S_FLOOR_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_FLOOR_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_FLOOR_StreamStep( struct TA_FLOOR_Stream *sp, double inReal, double *outReal )
+{
+   (void)sp;
+   *outReal= floor(inReal);
+}
+
+TA_LIB_API TA_RetCode TA_FLOOR_Open( const double inReal[], int historyLen, TA_FLOOR_Stream **stream, double *outReal )
+{
+   struct TA_FLOOR_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+      {
+         lastValue_outReal = floor(inReal[i]);
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_FLOOR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_FLOOR_Update( TA_FLOOR_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_FLOOR_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_FLOOR_Peek( const TA_FLOOR_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_FLOOR_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_FLOOR_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_FLOOR_Close( TA_FLOOR_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

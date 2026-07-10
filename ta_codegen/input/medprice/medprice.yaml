@@ -3,6 +3,7 @@ camel_case: MedPrice
 group: Price Transform
 hint: Median Price
 flags: [overlap]
+streaming: true
 inputs:
   - name: inPriceHL
     type: price

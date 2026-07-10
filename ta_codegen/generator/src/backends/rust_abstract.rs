@@ -88,7 +88,11 @@ fn emit_func(o: &mut String, f: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let _ = writeln!(o, "        group: Group::{},", group_variant(&f.group));
     let hint = f.hint.as_deref().unwrap_or("");
     let _ = writeln!(o, "        hint: {hint:?},");
-    let _ = writeln!(o, "        flags: FuncFlags({:#010x}),", func_flag_bits(&f.flags));
+    let _ = writeln!(
+        o,
+        "        flags: FuncFlags({:#010x}),",
+        func_flag_bits(&f.flags, f.streaming)
+    );
 
     o.push_str("        inputs: ");
     emit_inputs(o, &f.inputs);
@@ -395,7 +399,7 @@ fn unst_variant(name: &str) -> Option<&'static str> {
 
 // --- flag bitmask helpers (exact C values from include/ta_abstract.h) ---
 
-fn func_flag_bits(flags: &[String]) -> u32 {
+fn func_flag_bits(flags: &[String], streaming: bool) -> u32 {
     let mut b = 0u32;
     for f in flags {
         match f.as_str() {
@@ -405,6 +409,9 @@ fn func_flag_bits(flags: &[String]) -> u32 {
             "candlestick" => b |= 0x1000_0000,
             _ => {}
         }
+    }
+    if streaming {
+        b |= 0x0200_0000; // TA_FUNC_FLG_STREAM (YAML `streaming: true`)
     }
     b
 }
@@ -644,6 +651,7 @@ macro_rules! flag_newtype {
 
 flag_newtype!(FuncFlags {
     OVERLAP = 0x0100_0000,
+    STREAM = 0x0200_0000,
     VOLUME = 0x0400_0000,
     UNSTABLE_PERIOD = 0x0800_0000,
     CANDLESTICK = 0x1000_0000,

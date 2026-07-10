@@ -141,7 +141,8 @@ pub fn generate(
     write_if_changed_silent(&base.join("ta_func_api.c"), &gen_ta_func_api_c(repo_root));
 
     // Generate include/ta_func.h — this replaces gen_code's role.
-    // The output MUST be identical to the original (backward compatibility).
+    // Batch prototypes MUST stay byte-identical to the pre-cutover original
+    // (backward compatibility); the streaming declarations are additive.
     write_if_changed_silent(
         &repo_root.join("include").join("ta_func.h"),
         &gen_ta_func_h(&sorted),
@@ -1125,7 +1126,7 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
     let group_id = group_id_string(&func.group);
     let hint = func.hint.as_deref().unwrap_or("");
     let camel = func.camel_case.as_deref().unwrap_or(name);
-    let flags_str = func_flags_string(&func.flags);
+    let flags_str = func_flags_string(&func.flags, func.streaming);
 
     let _ = writeln!(
         o,
@@ -1524,12 +1525,12 @@ fn opt_input_flags_c(flags: &[String]) -> String {
     }
 }
 
-/// Build the C flags string for function flags.
-fn func_flags_string(flags: &[String]) -> String {
-    if flags.is_empty() {
-        return "0".to_string();
-    }
-    let mapped: Vec<&str> = flags
+/// Build the C flags string for function flags. `streaming` comes from the
+/// YAML `streaming: true` bool (not the flags list) and marks functions with
+/// a generated streaming API (TA_FUNC_FLG_STREAM) so wrappers can discover
+/// the stream surface through ta_abstract.
+fn func_flags_string(flags: &[String], streaming: bool) -> String {
+    let mut mapped: Vec<&str> = flags
         .iter()
         .filter_map(|f| match f.as_str() {
             "overlap" => Some("TA_FUNC_FLG_OVERLAP"),
@@ -1539,6 +1540,9 @@ fn func_flags_string(flags: &[String]) -> String {
             _ => None,
         })
         .collect();
+    if streaming {
+        mapped.push("TA_FUNC_FLG_STREAM");
+    }
     if mapped.is_empty() {
         "0".to_string()
     } else {
@@ -2943,6 +2947,12 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef) {
         o.push('\n');
     } else {
         o.push_str("\n\n");
+    }
+
+    // --- Streaming API declarations (only for YAML-declared functions) ---
+    if func.streaming {
+        o.push_str(&crate::backends::c_stream::header_decls(func));
+        o.push('\n');
     }
 }
 

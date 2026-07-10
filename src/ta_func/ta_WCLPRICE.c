@@ -181,3 +181,81 @@ TA_RetCode TA_S_WCLPRICE_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_WCLPRICE_Stream {
+   int unused; /* T1: stateless map */
+};
+
+static void TA_WCLPRICE_StreamStep( struct TA_WCLPRICE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   (void)sp;
+   *outReal= (inHigh + inLow + inClose * 2.0) / 4.0;
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WCLPRICE_Stream **stream, double *outReal )
+{
+   struct TA_WCLPRICE_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
+      }
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_WCLPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) return TA_ALLOC_ERR;
+      memset( sp, 0, sizeof(*sp) );
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_WCLPRICE_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_WCLPRICE_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_WCLPRICE_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Close( TA_WCLPRICE_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

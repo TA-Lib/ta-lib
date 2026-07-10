@@ -3,6 +3,7 @@ camel_case: Cosh
 group: Math Transform
 hint: Vector Trigonometric Cosh
 flags: []
+streaming: true
 inputs:
   - name: inReal
     type: real
