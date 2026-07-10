@@ -2,7 +2,7 @@ name: CDLCOUNTERATTACK
 camel_case: CdlCounterAttack
 group: Pattern Recognition
 hint: Counterattack
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

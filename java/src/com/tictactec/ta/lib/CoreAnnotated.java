@@ -862,7 +862,7 @@ public int avgDevLookback(
 @FuncInfo(
         name  = "AVGDEV",
         group = "Price Transform",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -1276,7 +1276,7 @@ public int cdl2CrowsLookback(
 @FuncInfo(
         name  = "CDL2CROWS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1324,7 +1324,7 @@ public int cdl3BlackCrowsLookback(
 @FuncInfo(
         name  = "CDL3BLACKCROWS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1372,7 +1372,7 @@ public int cdl3InsideLookback(
 @FuncInfo(
         name  = "CDL3INSIDE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1420,7 +1420,7 @@ public int cdl3LineStrikeLookback(
 @FuncInfo(
         name  = "CDL3LINESTRIKE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1468,7 +1468,7 @@ public int cdl3OutsideLookback(
 @FuncInfo(
         name  = "CDL3OUTSIDE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1516,7 +1516,7 @@ public int cdl3StarsInSouthLookback(
 @FuncInfo(
         name  = "CDL3STARSINSOUTH",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1564,7 +1564,7 @@ public int cdl3WhiteSoldiersLookback(
 @FuncInfo(
         name  = "CDL3WHITESOLDIERS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1612,7 +1612,7 @@ public int cdlAbandonedBabyLookback(
 @FuncInfo(
         name  = "CDLABANDONEDBABY",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -1679,7 +1679,7 @@ public int cdlAdvanceBlockLookback(
 @FuncInfo(
         name  = "CDLADVANCEBLOCK",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1727,7 +1727,7 @@ public int cdlBeltHoldLookback(
 @FuncInfo(
         name  = "CDLBELTHOLD",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1775,7 +1775,7 @@ public int cdlBreakawayLookback(
 @FuncInfo(
         name  = "CDLBREAKAWAY",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1823,7 +1823,7 @@ public int cdlClosingMarubozuLookback(
 @FuncInfo(
         name  = "CDLCLOSINGMARUBOZU",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1871,7 +1871,7 @@ public int cdlConcealBabysWallLookback(
 @FuncInfo(
         name  = "CDLCONCEALBABYSWALL",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1919,7 +1919,7 @@ public int cdlCounterAttackLookback(
 @FuncInfo(
         name  = "CDLCOUNTERATTACK",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -1967,7 +1967,7 @@ public int cdlDarkCloudCoverLookback(
 @FuncInfo(
         name  = "CDLDARKCLOUDCOVER",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -2034,7 +2034,7 @@ public int cdlDojiLookback(
 @FuncInfo(
         name  = "CDLDOJI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2082,7 +2082,7 @@ public int cdlDojiStarLookback(
 @FuncInfo(
         name  = "CDLDOJISTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2130,7 +2130,7 @@ public int cdlDragonflyDojiLookback(
 @FuncInfo(
         name  = "CDLDRAGONFLYDOJI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2178,7 +2178,7 @@ public int cdlEngulfingLookback(
 @FuncInfo(
         name  = "CDLENGULFING",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2226,7 +2226,7 @@ public int cdlEveningDojiStarLookback(
 @FuncInfo(
         name  = "CDLEVENINGDOJISTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -2293,7 +2293,7 @@ public int cdlEveningStarLookback(
 @FuncInfo(
         name  = "CDLEVENINGSTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -2360,7 +2360,7 @@ public int cdlGapSideSideWhiteLookback(
 @FuncInfo(
         name  = "CDLGAPSIDESIDEWHITE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2408,7 +2408,7 @@ public int cdlGravestoneDojiLookback(
 @FuncInfo(
         name  = "CDLGRAVESTONEDOJI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2456,7 +2456,7 @@ public int cdlHammerLookback(
 @FuncInfo(
         name  = "CDLHAMMER",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2504,7 +2504,7 @@ public int cdlHangingManLookback(
 @FuncInfo(
         name  = "CDLHANGINGMAN",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2552,7 +2552,7 @@ public int cdlHaramiLookback(
 @FuncInfo(
         name  = "CDLHARAMI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2600,7 +2600,7 @@ public int cdlHaramiCrossLookback(
 @FuncInfo(
         name  = "CDLHARAMICROSS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2648,7 +2648,7 @@ public int cdlHignWaveLookback(
 @FuncInfo(
         name  = "CDLHIGHWAVE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2792,7 +2792,7 @@ public int cdlHomingPigeonLookback(
 @FuncInfo(
         name  = "CDLHOMINGPIGEON",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2840,7 +2840,7 @@ public int cdlIdentical3CrowsLookback(
 @FuncInfo(
         name  = "CDLIDENTICAL3CROWS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2888,7 +2888,7 @@ public int cdlInNeckLookback(
 @FuncInfo(
         name  = "CDLINNECK",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2936,7 +2936,7 @@ public int cdlInvertedHammerLookback(
 @FuncInfo(
         name  = "CDLINVERTEDHAMMER",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2984,7 +2984,7 @@ public int cdlKickingLookback(
 @FuncInfo(
         name  = "CDLKICKING",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3032,7 +3032,7 @@ public int cdlKickingByLengthLookback(
 @FuncInfo(
         name  = "CDLKICKINGBYLENGTH",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3080,7 +3080,7 @@ public int cdlLadderBottomLookback(
 @FuncInfo(
         name  = "CDLLADDERBOTTOM",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3128,7 +3128,7 @@ public int cdlLongLeggedDojiLookback(
 @FuncInfo(
         name  = "CDLLONGLEGGEDDOJI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3176,7 +3176,7 @@ public int cdlLongLineLookback(
 @FuncInfo(
         name  = "CDLLONGLINE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3224,7 +3224,7 @@ public int cdlMarubozuLookback(
 @FuncInfo(
         name  = "CDLMARUBOZU",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3272,7 +3272,7 @@ public int cdlMatchingLowLookback(
 @FuncInfo(
         name  = "CDLMATCHINGLOW",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3320,7 +3320,7 @@ public int cdlMatHoldLookback(
 @FuncInfo(
         name  = "CDLMATHOLD",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -3387,7 +3387,7 @@ public int cdlMorningDojiStarLookback(
 @FuncInfo(
         name  = "CDLMORNINGDOJISTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -3454,7 +3454,7 @@ public int cdlMorningStarLookback(
 @FuncInfo(
         name  = "CDLMORNINGSTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -3521,7 +3521,7 @@ public int cdlOnNeckLookback(
 @FuncInfo(
         name  = "CDLONNECK",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3569,7 +3569,7 @@ public int cdlPiercingLookback(
 @FuncInfo(
         name  = "CDLPIERCING",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3617,7 +3617,7 @@ public int cdlRickshawManLookback(
 @FuncInfo(
         name  = "CDLRICKSHAWMAN",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3665,7 +3665,7 @@ public int cdlRiseFall3MethodsLookback(
 @FuncInfo(
         name  = "CDLRISEFALL3METHODS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3713,7 +3713,7 @@ public int cdlSeperatingLinesLookback(
 @FuncInfo(
         name  = "CDLSEPARATINGLINES",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3761,7 +3761,7 @@ public int cdlShootingStarLookback(
 @FuncInfo(
         name  = "CDLSHOOTINGSTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3809,7 +3809,7 @@ public int cdlShortLineLookback(
 @FuncInfo(
         name  = "CDLSHORTLINE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3857,7 +3857,7 @@ public int cdlSpinningTopLookback(
 @FuncInfo(
         name  = "CDLSPINNINGTOP",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3905,7 +3905,7 @@ public int cdlStalledPatternLookback(
 @FuncInfo(
         name  = "CDLSTALLEDPATTERN",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -3953,7 +3953,7 @@ public int cdlStickSandwichLookback(
 @FuncInfo(
         name  = "CDLSTICKSANDWICH",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4001,7 +4001,7 @@ public int cdlTakuriLookback(
 @FuncInfo(
         name  = "CDLTAKURI",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4049,7 +4049,7 @@ public int cdlTasukiGapLookback(
 @FuncInfo(
         name  = "CDLTASUKIGAP",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4097,7 +4097,7 @@ public int cdlThrustingLookback(
 @FuncInfo(
         name  = "CDLTHRUSTING",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4145,7 +4145,7 @@ public int cdlTristarLookback(
 @FuncInfo(
         name  = "CDLTRISTAR",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4193,7 +4193,7 @@ public int cdlUnique3RiverLookback(
 @FuncInfo(
         name  = "CDLUNIQUE3RIVER",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4241,7 +4241,7 @@ public int cdlUpsideGap2CrowsLookback(
 @FuncInfo(
         name  = "CDLUPSIDEGAP2CROWS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4289,7 +4289,7 @@ public int cdlXSideGap3MethodsLookback(
 @FuncInfo(
         name  = "CDLXSIDEGAP3METHODS",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -4378,7 +4378,7 @@ public int cmoLookback(
 @FuncInfo(
         name  = "CMO",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7610,7 +7610,7 @@ public int rsiLookback(
 @FuncInfo(
         name  = "RSI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -9196,7 +9196,7 @@ public int ultOscLookback(
 @FuncInfo(
         name  = "ULTOSC",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 1
@@ -9483,7 +9483,7 @@ public int wmaLookback(
 @FuncInfo(
         name  = "WMA",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

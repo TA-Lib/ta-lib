@@ -351,3 +351,245 @@ TA_RetCode TA_S_CDLMATCHINGLOW_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_CDLMATCHINGLOW_Stream {
+   double EqualPeriodTotal;
+   double lag1_inOpen;
+   double lag1_inHigh;
+   double lag1_inLow;
+   double lag1_inClose;
+   int ringPos_EqualTrailingIdx;
+   int ringCap_EqualTrailingIdx;
+   int ringLag_EqualTrailingIdx;
+   double *ring_EqualTrailingIdx_inOpen;
+   double *ringMirror_EqualTrailingIdx_inOpen;
+   double *ring_EqualTrailingIdx_inHigh;
+   double *ringMirror_EqualTrailingIdx_inHigh;
+   double *ring_EqualTrailingIdx_inLow;
+   double *ringMirror_EqualTrailingIdx_inLow;
+   double *ring_EqualTrailingIdx_inClose;
+   double *ringMirror_EqualTrailingIdx_inClose;
+};
+
+static void TA_CDLMATCHINGLOW_StreamRelease( struct TA_CDLMATCHINGLOW_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->ring_EqualTrailingIdx_inOpen ) TA_Free( sp->ring_EqualTrailingIdx_inOpen );
+   if( sp->ringMirror_EqualTrailingIdx_inOpen ) TA_Free( sp->ringMirror_EqualTrailingIdx_inOpen );
+   if( sp->ring_EqualTrailingIdx_inHigh ) TA_Free( sp->ring_EqualTrailingIdx_inHigh );
+   if( sp->ringMirror_EqualTrailingIdx_inHigh ) TA_Free( sp->ringMirror_EqualTrailingIdx_inHigh );
+   if( sp->ring_EqualTrailingIdx_inLow ) TA_Free( sp->ring_EqualTrailingIdx_inLow );
+   if( sp->ringMirror_EqualTrailingIdx_inLow ) TA_Free( sp->ringMirror_EqualTrailingIdx_inLow );
+   if( sp->ring_EqualTrailingIdx_inClose ) TA_Free( sp->ring_EqualTrailingIdx_inClose );
+   if( sp->ringMirror_EqualTrailingIdx_inClose ) TA_Free( sp->ringMirror_EqualTrailingIdx_inClose );
+   TA_Free( sp );
+}
+
+static void TA_CDLMATCHINGLOW_StreamStep( struct TA_CDLMATCHINGLOW_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   sp->ring_EqualTrailingIdx_inOpen[sp->ringPos_EqualTrailingIdx] = inOpen;
+   sp->ring_EqualTrailingIdx_inHigh[sp->ringPos_EqualTrailingIdx] = inHigh;
+   sp->ring_EqualTrailingIdx_inLow[sp->ringPos_EqualTrailingIdx] = inLow;
+   sp->ring_EqualTrailingIdx_inClose[sp->ringPos_EqualTrailingIdx] = inClose;
+   if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
+       ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                   /* second black */
+       inClose <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* 1st and 2nd same close */
+       inClose >= sp->lag1_inClose - TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   {
+      *outInteger= 100;
+   } else 
+   {
+      *outInteger= 0;
+   }
+   /* add the current range and subtract the first range: this is done after the pattern recognition
+    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+    */
+   sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - TA_STREAM_CANDLERANGE(Equal,sp->ring_EqualTrailingIdx_inOpen[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx],sp->ring_EqualTrailingIdx_inHigh[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx],sp->ring_EqualTrailingIdx_inLow[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx],sp->ring_EqualTrailingIdx_inClose[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx]);
+   sp->lag1_inOpen = inOpen;
+   sp->lag1_inHigh = inHigh;
+   sp->lag1_inLow = inLow;
+   sp->lag1_inClose = inClose;
+   sp->ring_EqualTrailingIdx_inOpen[sp->ringPos_EqualTrailingIdx] = inOpen;
+   sp->ring_EqualTrailingIdx_inHigh[sp->ringPos_EqualTrailingIdx] = inHigh;
+   sp->ring_EqualTrailingIdx_inLow[sp->ringPos_EqualTrailingIdx] = inLow;
+   sp->ring_EqualTrailingIdx_inClose[sp->ringPos_EqualTrailingIdx] = inClose;
+   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
+   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   {
+      sp->ringPos_EqualTrailingIdx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMATCHINGLOW_Stream **stream, int *outInteger )
+{
+   struct TA_CDLMATCHINGLOW_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   int lastValue_outInteger;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outInteger = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      double EqualPeriodTotal = 0.0;
+      int i;
+      int outIdx;
+      int EqualTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLMATCHINGLOW_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      EqualPeriodTotal = 0;
+      EqualTrailingIdx = startIdx - Equal_avgPeriod;
+      i = EqualTrailingIdx;
+      while( i < startIdx )
+      {
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle: black candle
+       * - second candle: black candle with the close equal to the previous close
+       * The meaning of "equal" is specified with TA_SetCandleSettings
+       * outInteger is always positive (1 to 100): matching low is always bullish;
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* first black */
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* second black */
+             inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* 1st and 2nd same close */
+             inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
+         {
+            lastValue_outInteger = 100;
+         } else 
+         {
+            lastValue_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+         i += 1;
+         EqualTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLMATCHINGLOW_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->EqualPeriodTotal = EqualPeriodTotal;
+      sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
+      sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+        sp->ring_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inOpen ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inOpen ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inOpen[fillJ % sp->ringCap_EqualTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inHigh ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inHigh ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inHigh[fillJ % sp->ringCap_EqualTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inLow ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inLow ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inLow[fillJ % sp->ringCap_EqualTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inClose ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inClose ) { TA_CDLMATCHINGLOW_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inClose[fillJ % sp->ringCap_EqualTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *outInteger = lastValue_outInteger;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Update( TA_CDLMATCHINGLOW_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLMATCHINGLOW_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Peek( const TA_CDLMATCHINGLOW_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   struct TA_CDLMATCHINGLOW_Stream scratch;
+
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.ring_EqualTrailingIdx_inOpen = stream->ringMirror_EqualTrailingIdx_inOpen;
+   memcpy( scratch.ring_EqualTrailingIdx_inOpen, stream->ring_EqualTrailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
+   scratch.ring_EqualTrailingIdx_inHigh = stream->ringMirror_EqualTrailingIdx_inHigh;
+   memcpy( scratch.ring_EqualTrailingIdx_inHigh, stream->ring_EqualTrailingIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
+   scratch.ring_EqualTrailingIdx_inLow = stream->ringMirror_EqualTrailingIdx_inLow;
+   memcpy( scratch.ring_EqualTrailingIdx_inLow, stream->ring_EqualTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
+   scratch.ring_EqualTrailingIdx_inClose = stream->ringMirror_EqualTrailingIdx_inClose;
+   memcpy( scratch.ring_EqualTrailingIdx_inClose, stream->ring_EqualTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
+   TA_CDLMATCHINGLOW_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Close( TA_CDLMATCHINGLOW_Stream *stream )
+{
+   TA_CDLMATCHINGLOW_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

@@ -2,7 +2,7 @@ name: CDLDRAGONFLYDOJI
 camel_case: CdlDragonflyDoji
 group: Pattern Recognition
 hint: Dragonfly Doji
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

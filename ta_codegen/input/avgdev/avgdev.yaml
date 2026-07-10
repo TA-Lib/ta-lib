@@ -2,7 +2,7 @@ name: AVGDEV
 camel_case: AvgDev
 group: Price Transform
 hint: Average Deviation
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

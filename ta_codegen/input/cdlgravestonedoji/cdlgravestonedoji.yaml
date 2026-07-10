@@ -2,7 +2,7 @@ name: CDLGRAVESTONEDOJI
 camel_case: CdlGravestoneDoji
 group: Pattern Recognition
 hint: Gravestone Doji
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

@@ -480,3 +480,353 @@ TA_RetCode TA_S_CDLHARAMICROSS_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_CDLHARAMICROSS_Stream {
+   double BodyDojiPeriodTotal;
+   double BodyLongPeriodTotal;
+   double lag1_inOpen;
+   double lag1_inHigh;
+   double lag1_inLow;
+   double lag1_inClose;
+   int ringPos_BodyDojiTrailingIdx;
+   int ringCap_BodyDojiTrailingIdx;
+   double *ring_BodyDojiTrailingIdx_inOpen;
+   double *ringMirror_BodyDojiTrailingIdx_inOpen;
+   double *ring_BodyDojiTrailingIdx_inHigh;
+   double *ringMirror_BodyDojiTrailingIdx_inHigh;
+   double *ring_BodyDojiTrailingIdx_inLow;
+   double *ringMirror_BodyDojiTrailingIdx_inLow;
+   double *ring_BodyDojiTrailingIdx_inClose;
+   double *ringMirror_BodyDojiTrailingIdx_inClose;
+   int ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_inOpen;
+   double *ringMirror_BodyLongTrailingIdx_inOpen;
+   double *ring_BodyLongTrailingIdx_inHigh;
+   double *ringMirror_BodyLongTrailingIdx_inHigh;
+   double *ring_BodyLongTrailingIdx_inLow;
+   double *ringMirror_BodyLongTrailingIdx_inLow;
+   double *ring_BodyLongTrailingIdx_inClose;
+   double *ringMirror_BodyLongTrailingIdx_inClose;
+};
+
+static void TA_CDLHARAMICROSS_StreamRelease( struct TA_CDLHARAMICROSS_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->ring_BodyDojiTrailingIdx_inOpen ) TA_Free( sp->ring_BodyDojiTrailingIdx_inOpen );
+   if( sp->ringMirror_BodyDojiTrailingIdx_inOpen ) TA_Free( sp->ringMirror_BodyDojiTrailingIdx_inOpen );
+   if( sp->ring_BodyDojiTrailingIdx_inHigh ) TA_Free( sp->ring_BodyDojiTrailingIdx_inHigh );
+   if( sp->ringMirror_BodyDojiTrailingIdx_inHigh ) TA_Free( sp->ringMirror_BodyDojiTrailingIdx_inHigh );
+   if( sp->ring_BodyDojiTrailingIdx_inLow ) TA_Free( sp->ring_BodyDojiTrailingIdx_inLow );
+   if( sp->ringMirror_BodyDojiTrailingIdx_inLow ) TA_Free( sp->ringMirror_BodyDojiTrailingIdx_inLow );
+   if( sp->ring_BodyDojiTrailingIdx_inClose ) TA_Free( sp->ring_BodyDojiTrailingIdx_inClose );
+   if( sp->ringMirror_BodyDojiTrailingIdx_inClose ) TA_Free( sp->ringMirror_BodyDojiTrailingIdx_inClose );
+   if( sp->ring_BodyLongTrailingIdx_inOpen ) TA_Free( sp->ring_BodyLongTrailingIdx_inOpen );
+   if( sp->ringMirror_BodyLongTrailingIdx_inOpen ) TA_Free( sp->ringMirror_BodyLongTrailingIdx_inOpen );
+   if( sp->ring_BodyLongTrailingIdx_inHigh ) TA_Free( sp->ring_BodyLongTrailingIdx_inHigh );
+   if( sp->ringMirror_BodyLongTrailingIdx_inHigh ) TA_Free( sp->ringMirror_BodyLongTrailingIdx_inHigh );
+   if( sp->ring_BodyLongTrailingIdx_inLow ) TA_Free( sp->ring_BodyLongTrailingIdx_inLow );
+   if( sp->ringMirror_BodyLongTrailingIdx_inLow ) TA_Free( sp->ringMirror_BodyLongTrailingIdx_inLow );
+   if( sp->ring_BodyLongTrailingIdx_inClose ) TA_Free( sp->ring_BodyLongTrailingIdx_inClose );
+   if( sp->ringMirror_BodyLongTrailingIdx_inClose ) TA_Free( sp->ringMirror_BodyLongTrailingIdx_inClose );
+   TA_Free( sp );
+}
+
+static void TA_CDLHARAMICROSS_StreamStep( struct TA_CDLHARAMICROSS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( sp->ringCap_BodyDojiTrailingIdx == 0 )
+   {
+      sp->ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
+      sp->ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
+      sp->ring_BodyDojiTrailingIdx_inLow[0] = inLow;
+      sp->ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+   }
+   if( sp->ringCap_BodyLongTrailingIdx == 0 )
+   {
+      sp->ring_BodyLongTrailingIdx_inOpen[0] = inOpen;
+      sp->ring_BodyLongTrailingIdx_inHigh[0] = inHigh;
+      sp->ring_BodyLongTrailingIdx_inLow[0] = inLow;
+      sp->ring_BodyLongTrailingIdx_inClose[0] = inClose;
+   }
+   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   {
+      /* 1st: long */
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      {
+         /* 2nd: doji */
+         if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
+             min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
+         {
+            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 100;
+         } else if( max(inClose,inOpen) <= max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
+             min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; */
+         {
+            /* engulfing guaranteed by "long" and "doji") */
+            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 80;
+         } else 
+         {
+            *outInteger= 0;
+         }
+      } else 
+      {
+         *outInteger= 0;
+      }
+   } else 
+   {
+      *outInteger= 0;
+   }
+   /* add the current range and subtract the first range: this is done after the pattern recognition
+    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+    */
+   sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - TA_STREAM_CANDLERANGE(BodyLong,sp->ring_BodyLongTrailingIdx_inOpen[sp->ringPos_BodyLongTrailingIdx],sp->ring_BodyLongTrailingIdx_inHigh[sp->ringPos_BodyLongTrailingIdx],sp->ring_BodyLongTrailingIdx_inLow[sp->ringPos_BodyLongTrailingIdx],sp->ring_BodyLongTrailingIdx_inClose[sp->ringPos_BodyLongTrailingIdx]);
+   sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - TA_STREAM_CANDLERANGE(BodyDoji,sp->ring_BodyDojiTrailingIdx_inOpen[sp->ringPos_BodyDojiTrailingIdx],sp->ring_BodyDojiTrailingIdx_inHigh[sp->ringPos_BodyDojiTrailingIdx],sp->ring_BodyDojiTrailingIdx_inLow[sp->ringPos_BodyDojiTrailingIdx],sp->ring_BodyDojiTrailingIdx_inClose[sp->ringPos_BodyDojiTrailingIdx]);
+   sp->lag1_inOpen = inOpen;
+   sp->lag1_inHigh = inHigh;
+   sp->lag1_inLow = inLow;
+   sp->lag1_inClose = inClose;
+   sp->ring_BodyDojiTrailingIdx_inOpen[sp->ringPos_BodyDojiTrailingIdx] = inOpen;
+   sp->ring_BodyDojiTrailingIdx_inHigh[sp->ringPos_BodyDojiTrailingIdx] = inHigh;
+   sp->ring_BodyDojiTrailingIdx_inLow[sp->ringPos_BodyDojiTrailingIdx] = inLow;
+   sp->ring_BodyDojiTrailingIdx_inClose[sp->ringPos_BodyDojiTrailingIdx] = inClose;
+   sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
+   if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
+   {
+      sp->ringPos_BodyDojiTrailingIdx = 0;
+   }
+   sp->ring_BodyLongTrailingIdx_inOpen[sp->ringPos_BodyLongTrailingIdx] = inOpen;
+   sp->ring_BodyLongTrailingIdx_inHigh[sp->ringPos_BodyLongTrailingIdx] = inHigh;
+   sp->ring_BodyLongTrailingIdx_inLow[sp->ringPos_BodyLongTrailingIdx] = inLow;
+   sp->ring_BodyLongTrailingIdx_inClose[sp->ringPos_BodyLongTrailingIdx] = inClose;
+   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
+   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   {
+      sp->ringPos_BodyLongTrailingIdx = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHARAMICROSS_Stream **stream, int *outInteger )
+{
+   struct TA_CDLHARAMICROSS_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   int lastValue_outInteger;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outInteger = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+      int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
+      double BodyDojiPeriodTotal = 0.0;
+      double BodyLongPeriodTotal = 0.0;
+      int i;
+      int outIdx;
+      int BodyDojiTrailingIdx;
+      int BodyLongTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLHARAMICROSS_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyLongPeriodTotal = 0;
+      BodyDojiPeriodTotal = 0;
+      BodyLongTrailingIdx = startIdx - 1 - BodyLong_avgPeriod;
+      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+      i = BodyLongTrailingIdx;
+      while( i < startIdx - 1 )
+      {
+         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i);
+         i += 1;
+      }
+      i = BodyDojiTrailingIdx;
+      while( i < startIdx )
+      {
+         BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle: long white (black) real body
+       * - second candle: doji totally engulfed by the first
+       * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
+       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+       * the user should consider that a harami cross is significant when it appears in a downtrend if bullish or
+       * in an uptrend when bearish, while this function does not consider the trend
+       */
+      outIdx = 0;
+      do
+      {
+         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+         {
+            /* 1st: long */
+            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+            {
+               /* 2nd: doji */
+               if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
+                   min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
+               {
+                  lastValue_outInteger = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+               } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
+                   min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; */
+               {
+                  /* engulfing guaranteed by "long" and "doji") */
+                  lastValue_outInteger = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+               } else 
+               {
+                  lastValue_outInteger = 0;
+               }
+            } else 
+            {
+               lastValue_outInteger = 0;
+            }
+         } else 
+         {
+            lastValue_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx);
+         BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
+         i += 1;
+         BodyLongTrailingIdx += 1;
+         BodyDojiTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHARAMICROSS_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+      sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+      sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
+        sp->ring_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyDojiTrailingIdx_inOpen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inOpen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyDojiTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
+        sp->ring_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyDojiTrailingIdx_inHigh ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inHigh ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyDojiTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
+        sp->ring_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyDojiTrailingIdx_inLow ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inLow ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyDojiTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
+        sp->ring_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyDojiTrailingIdx_inClose ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inClose ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyDojiTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
+      }
+      sp->ringPos_BodyDojiTrailingIdx = 0;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+        sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLHARAMICROSS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+      }
+      sp->ringPos_BodyLongTrailingIdx = 0;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *outInteger = lastValue_outInteger;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Update( TA_CDLHARAMICROSS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLHARAMICROSS_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Peek( const TA_CDLHARAMICROSS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   struct TA_CDLHARAMICROSS_Stream scratch;
+
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.ring_BodyDojiTrailingIdx_inOpen = stream->ringMirror_BodyDojiTrailingIdx_inOpen;
+   memcpy( scratch.ring_BodyDojiTrailingIdx_inOpen, stream->ring_BodyDojiTrailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_BodyDojiTrailingIdx > 0 ? stream->ringCap_BodyDojiTrailingIdx : 1) );
+   scratch.ring_BodyDojiTrailingIdx_inHigh = stream->ringMirror_BodyDojiTrailingIdx_inHigh;
+   memcpy( scratch.ring_BodyDojiTrailingIdx_inHigh, stream->ring_BodyDojiTrailingIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_BodyDojiTrailingIdx > 0 ? stream->ringCap_BodyDojiTrailingIdx : 1) );
+   scratch.ring_BodyDojiTrailingIdx_inLow = stream->ringMirror_BodyDojiTrailingIdx_inLow;
+   memcpy( scratch.ring_BodyDojiTrailingIdx_inLow, stream->ring_BodyDojiTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_BodyDojiTrailingIdx > 0 ? stream->ringCap_BodyDojiTrailingIdx : 1) );
+   scratch.ring_BodyDojiTrailingIdx_inClose = stream->ringMirror_BodyDojiTrailingIdx_inClose;
+   memcpy( scratch.ring_BodyDojiTrailingIdx_inClose, stream->ring_BodyDojiTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_BodyDojiTrailingIdx > 0 ? stream->ringCap_BodyDojiTrailingIdx : 1) );
+   scratch.ring_BodyLongTrailingIdx_inOpen = stream->ringMirror_BodyLongTrailingIdx_inOpen;
+   memcpy( scratch.ring_BodyLongTrailingIdx_inOpen, stream->ring_BodyLongTrailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
+   scratch.ring_BodyLongTrailingIdx_inHigh = stream->ringMirror_BodyLongTrailingIdx_inHigh;
+   memcpy( scratch.ring_BodyLongTrailingIdx_inHigh, stream->ring_BodyLongTrailingIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
+   scratch.ring_BodyLongTrailingIdx_inLow = stream->ringMirror_BodyLongTrailingIdx_inLow;
+   memcpy( scratch.ring_BodyLongTrailingIdx_inLow, stream->ring_BodyLongTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
+   scratch.ring_BodyLongTrailingIdx_inClose = stream->ringMirror_BodyLongTrailingIdx_inClose;
+   memcpy( scratch.ring_BodyLongTrailingIdx_inClose, stream->ring_BodyLongTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
+   TA_CDLHARAMICROSS_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Close( TA_CDLHARAMICROSS_Stream *stream )
+{
+   TA_CDLHARAMICROSS_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

@@ -598,6 +598,7 @@
 		<GroupId>Price Transform</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -905,6 +906,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -944,6 +946,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -983,6 +986,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1022,6 +1026,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1061,6 +1066,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1100,6 +1106,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1139,6 +1146,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1178,6 +1186,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1233,6 +1242,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1272,6 +1282,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1311,6 +1322,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1350,6 +1362,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1389,6 +1402,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1428,6 +1442,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1467,6 +1482,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1522,6 +1538,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1561,6 +1578,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1600,6 +1618,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1639,6 +1658,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1678,6 +1698,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1733,6 +1754,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1788,6 +1810,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1827,6 +1850,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1866,6 +1890,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1905,6 +1930,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1944,6 +1970,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -1983,6 +2010,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2022,6 +2050,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2139,6 +2168,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2178,6 +2208,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2217,6 +2248,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2256,6 +2288,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2295,6 +2328,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2334,6 +2368,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2373,6 +2408,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2412,6 +2448,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2451,6 +2488,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2490,6 +2528,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2529,6 +2568,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2568,6 +2608,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2623,6 +2664,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2678,6 +2720,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2733,6 +2776,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2772,6 +2816,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2811,6 +2856,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2850,6 +2896,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2889,6 +2936,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2928,6 +2976,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2967,6 +3016,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3006,6 +3056,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3045,6 +3096,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3084,6 +3136,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3123,6 +3176,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3162,6 +3216,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3201,6 +3256,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3240,6 +3296,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3279,6 +3336,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3318,6 +3376,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3357,6 +3416,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3423,6 +3483,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5701,6 +5762,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6798,6 +6860,9 @@
 		<CamelCaseName>UltOsc</CamelCaseName>
 		<ShortDescription>Ultimate Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -7015,6 +7080,7 @@
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

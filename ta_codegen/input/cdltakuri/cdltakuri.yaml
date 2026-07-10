@@ -2,7 +2,7 @@ name: CDLTAKURI
 camel_case: CdlTakuri
 group: Pattern Recognition
 hint: Takuri (Dragonfly Doji with very long lower shadow)
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

@@ -2,7 +2,7 @@ name: CDLUPSIDEGAP2CROWS
 camel_case: CdlUpsideGap2Crows
 group: Pattern Recognition
 hint: Upside Gap Two Crows
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

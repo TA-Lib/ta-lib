@@ -2,7 +2,7 @@ name: CDLRICKSHAWMAN
 camel_case: CdlRickshawMan
 group: Pattern Recognition
 hint: Rickshaw Man
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

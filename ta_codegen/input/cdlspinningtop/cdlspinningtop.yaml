@@ -2,7 +2,7 @@ name: CDLSPINNINGTOP
 camel_case: CdlSpinningTop
 group: Pattern Recognition
 hint: Spinning Top
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

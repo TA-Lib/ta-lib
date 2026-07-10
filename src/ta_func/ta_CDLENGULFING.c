@@ -314,3 +314,147 @@ TA_RetCode TA_S_CDLENGULFING_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_CDLENGULFING_Stream {
+   double lag1_inOpen;
+   double lag1_inClose;
+};
+
+static void TA_CDLENGULFING_StreamStep( struct TA_CDLENGULFING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp->lag1_inOpen && inOpen < sp->lag1_inClose || inClose > sp->lag1_inOpen && inOpen <= sp->lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp->lag1_inClose && inClose < sp->lag1_inOpen || inOpen > sp->lag1_inClose && inClose <= sp->lag1_inOpen) )
+   {
+      /* white engulfs black */
+      /* black engulfs white */
+      if( inOpen != sp->lag1_inClose && inClose != sp->lag1_inOpen )
+      {
+         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+      } else 
+      {
+         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 80;
+      }
+   } else 
+   {
+      *outInteger= 0;
+   }
+   sp->lag1_inOpen = inOpen;
+   sp->lag1_inClose = inClose;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLENGULFING_Stream **stream, int *outInteger )
+{
+   struct TA_CDLENGULFING_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   int lastValue_outInteger;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outInteger = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLENGULFING_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first: black (white) real body
+       * - second: white (black) real body that engulfs the prior real body
+       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
+       * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
+       * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
+       *   "Candlestick charting explained")
+       * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
+       * while this function does not consider it
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) )
+         {
+            /* white engulfs black */
+            /* black engulfs white */
+            if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
+            {
+               lastValue_outInteger = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+            } else 
+            {
+               lastValue_outInteger = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
+            }
+         } else 
+         {
+            lastValue_outInteger = 0;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLENGULFING_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *outInteger = lastValue_outInteger;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLENGULFING_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   struct TA_CDLENGULFING_Stream scratch;
+
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_CDLENGULFING_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Close( TA_CDLENGULFING_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

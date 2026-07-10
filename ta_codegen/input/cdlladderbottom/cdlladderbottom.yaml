@@ -2,7 +2,7 @@ name: CDLLADDERBOTTOM
 camel_case: CdlLadderBottom
 group: Pattern Recognition
 hint: Ladder Bottom
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

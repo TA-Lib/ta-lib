@@ -2,7 +2,7 @@ name: CDL3BLACKCROWS
 camel_case: Cdl3BlackCrows
 group: Pattern Recognition
 hint: Three Black Crows
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

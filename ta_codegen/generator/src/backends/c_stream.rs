@@ -28,7 +28,10 @@ use crate::ir::{EnumDef, Expr, FuncDef, ParamType, Statement};
 use crate::registry::Registry;
 use crate::streaming::{self, circ_storages, StreamModel};
 
-use super::c::{c_decl, emit_opt_param_validation, render_expression, render_statement};
+use super::c::{
+    c_decl, emit_opt_param_validation, render_expression, render_statement,
+    render_statement_stream,
+};
 
 /// C name mapping for the transition rewrite: state fields through the
 /// handle pointer, current bars as same-named scalar params, outputs as
@@ -50,6 +53,9 @@ impl streaming::NameMap for CNames {
     }
     fn ring_pos(&self, var: &str) -> String {
         format!("sp->ringPos_{var}")
+    }
+    fn ring_lag(&self, var: &str) -> String {
+        format!("sp->ringLag_{var}")
     }
     fn ring_cap(&self, var: &str) -> String {
         format!("sp->ringCap_{var}")
@@ -235,6 +241,9 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
         let v = &ring.var;
         let _ = writeln!(o, "   int ringPos_{v};");
         let _ = writeln!(o, "   int ringCap_{v};");
+        if ring.back > 0 {
+            let _ = writeln!(o, "   int ringLag_{v};");
+        }
         for arr in &ring.arrays {
             let _ = writeln!(o, "   double *ring_{v}_{arr};");
             // Scratch mirror for Peek: pre-allocated at open so Peek stays
@@ -374,10 +383,43 @@ fn emit_step(
     }
     let transition = streaming::build_transition(model, &CNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+    let mut body_c = String::new();
     for s in &transition {
-        o.push_str(&render_statement(s, 3, false, enums, registry, helpers, counter));
+        body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
     }
+    // Candle settings are read where batch reads them (per step, from the
+    // globals — the settings-stability rule). The TA_STREAM_CANDLE* macros
+    // read the globals directly, so hoisted locals are emitted only when
+    // the rendered body actually references them (no dead decls/-Wunused).
+    let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
+    if !step_settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, 3));
+    }
+    o.push_str(&body_c);
     let _ = writeln!(o, "}}\n");
+}
+
+/// Emit candle-settings unpacking lines only for the `<Set>_<prop>` locals
+/// the rendered code actually references.
+fn emit_used_candle_unpacking(
+    settings: &std::collections::BTreeSet<String>,
+    rendered: &str,
+    indent: usize,
+) -> String {
+    let pad = " ".repeat(indent);
+    let mut out = String::new();
+    for set in settings {
+        for (prop, cty) in [("rangeType", "int"), ("avgPeriod", "int"), ("factor", "double")] {
+            let local = format!("{set}_{prop}");
+            if rendered.contains(&local) {
+                let _ = writeln!(
+                    out,
+                    "{pad}{cty} {local} = TA_Globals->candleSettings[TA_{set}].{prop};"
+                );
+            }
+        }
+    }
+    out
 }
 
 fn emit_open(
@@ -444,9 +486,15 @@ fn emit_open(
     // --- transcribed batch body ----------------------------------------------
     let _ = writeln!(o, "\n   {{");
     let open_body = build_open_body(model);
+    let mut open_body_c = String::new();
     for s in &open_body {
-        o.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
+    let open_settings = crate::candle_settings::detect_candle_settings(model.body);
+    if !open_settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&open_settings, &open_body_c, 6));
+    }
+    o.push_str(&open_body_c);
 
     // --- state capture --------------------------------------------------------
     let _ = writeln!(o, "\n      /* Capture the live batch state into the handle. */");
@@ -559,8 +607,18 @@ fn alloc_and_capture(
         let _ = writeln!(s, "{pad}sp->{name} = {name};");
     }
     if with_state {
-        for (name, _) in &model.state {
-            let _ = writeln!(s, "{pad}sp->{name} = {name};");
+        for (name, ty) in &model.state {
+            if matches!(
+                ty,
+                crate::ir::VarType::RealArray(_) | crate::ir::VarType::IntArray(_)
+            ) {
+                let _ = writeln!(
+                    s,
+                    "{pad}memcpy( sp->{name}, {name}, sizeof( sp->{name} ) );"
+                );
+            } else {
+                let _ = writeln!(s, "{pad}sp->{name} = {name};");
+            }
         }
     }
     let fail = if model.rings.is_empty() {
@@ -570,12 +628,30 @@ fn alloc_and_capture(
     };
     for ring in &model.rings {
         let v = &ring.var;
+        let back = ring.back;
         if with_state {
-            let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
-            let _ = writeln!(
-                s,
-                "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
-            );
+            if back > 0 {
+                let _ = writeln!(s, "{pad}sp->ringLag_{v} = (int)({} - {v});", model.cursor);
+                let _ = writeln!(
+                    s,
+                    "{pad}sp->ringCap_{v} = sp->ringLag_{v} + {};",
+                    back + 1
+                );
+                let _ = writeln!(
+                    s,
+                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}",
+                    fwd = ring.fwd
+                );
+            } else {
+                let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
+                let _ = writeln!(
+                    s,
+                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+                );
+            }
+        } else if back > 0 {
+            let _ = writeln!(s, "{pad}sp->ringLag_{v} = 0;");
+            let _ = writeln!(s, "{pad}sp->ringCap_{v} = {};", back + 1);
         } else {
             let _ = writeln!(s, "{pad}sp->ringCap_{v} = 0;");
         }
@@ -595,16 +671,38 @@ fn alloc_and_capture(
             );
             let _ = writeln!(s, "{pad}  if( !sp->ringMirror_{v}_{arr} ) {fail}");
             if with_state {
+                if ring.back > 0 {
+                    let _ = writeln!(s, "{pad}  {{ int fillJ;");
+                    let _ = writeln!(
+                        s,
+                        "{pad}    for( fillJ = historyLen - sp->ringCap_{v}; fillJ < historyLen; fillJ++ )"
+                    );
+                    let _ = writeln!(
+                        s,
+                        "{pad}       sp->ring_{v}_{arr}[fillJ % sp->ringCap_{v}] = {arr}[fillJ];"
+                    );
+                    let _ = writeln!(s, "{pad}  }}");
+                } else {
+                    let _ = writeln!(
+                        s,
+                        "{pad}  memcpy( sp->ring_{v}_{arr}, {arr} + (historyLen - sp->ringCap_{v}), sizeof(double) * (size_t)sp->ringCap_{v} );"
+                    );
+                }
+            } else {
+                // Identity path never reads the ring, but Peek's mirror
+                // memcpy must not copy uninitialized heap (MSan).
                 let _ = writeln!(
                     s,
-                    "{pad}  memcpy( sp->ring_{v}_{arr}, {arr} + (historyLen - sp->ringCap_{v}), sizeof(double) * (size_t)sp->ringCap_{v} );"
+                    "{pad}  memset( sp->ring_{v}_{arr}, 0, sizeof(double) * allocN );"
                 );
-            } else {
-                let _ = writeln!(s, "{pad}  sp->ring_{v}_{arr}[0] = 0.0;");
             }
         }
         let _ = writeln!(s, "{pad}}}");
-        let _ = writeln!(s, "{pad}sp->ringPos_{v} = 0;");
+        if ring.back > 0 && with_state {
+            let _ = writeln!(s, "{pad}sp->ringPos_{v} = historyLen % sp->ringCap_{v};");
+        } else {
+            let _ = writeln!(s, "{pad}sp->ringPos_{v} = 0;");
+        }
     }
     for win in &model.windows {
         let v = &win.var;
@@ -834,6 +932,11 @@ fn build_open_body(model: &StreamModel) -> Vec<Statement> {
             } if state_names.contains_key(&name) => {
                 let zero = match var_type {
                     crate::ir::VarType::Real => Expr::Literal(0.0),
+                    // Renders as `= {0}` — aggregate zero-init for carried
+                    // fixed-size array state.
+                    crate::ir::VarType::RealArray(_) | crate::ir::VarType::IntArray(_) => {
+                        Expr::Var("{0}".into())
+                    }
                     _ => Expr::IntLiteral(0),
                 };
                 Some(Statement::VarDecl {
@@ -853,7 +956,12 @@ fn build_open_body(model: &StreamModel) -> Vec<Statement> {
             }),
             Statement::Return { value } => {
                 let mapped = match value {
-                    // No-data guard: not enough history for a first value.
+                    // Any early success return maps to BAD_PARAM. This is
+                    // not just the no-data guard: a mid-body seed return
+                    // (RSI/CMO under Metastock) exits with state the batch
+                    // would REWIND and rebuild before continuing, so no
+                    // bit-exact continuation exists — the stream honestly
+                    // asks for one more bar instead (strict min-history).
                     Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
                         Some(Expr::Var("BAD_PARAM".into()))
                     }

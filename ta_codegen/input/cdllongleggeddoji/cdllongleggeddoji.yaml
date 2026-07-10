@@ -2,7 +2,7 @@ name: CDLLONGLEGGEDDOJI
 camel_case: CdlLongLeggedDoji
 group: Pattern Recognition
 hint: Long Legged Doji
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

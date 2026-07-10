@@ -367,4 +367,28 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )
 #define TA_CANDLEGAPDOWN(IDX2,IDX1)     ( inHigh[IDX2] < inLow[IDX1] )
 
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
+/* Scalar-argument candle macros for the generated streaming API (C only).
+ * These MUST mirror TA_CANDLERANGE/TA_CANDLEAVERAGE above exactly (same
+ * operations in the same order) with the bar's OHLC supplied as scalar
+ * expressions instead of array reads — the stream transition has no input
+ * arrays.  Any change to the batch macros must be mirrored here, or the
+ * streams lose bit-exactness with batch on the affected range type.
+ */
+#define TA_STREAM_REALBODY(O,H,L,C)     ( std_fabs( (C) - (O) ) )
+#define TA_STREAM_UPPERSHADOW(O,H,L,C)  ( (H) - ( (C) >= (O) ? (C) : (O) ) )
+#define TA_STREAM_LOWERSHADOW(O,H,L,C)  ( ( (C) >= (O) ? (O) : (C) ) - (L) )
+#define TA_STREAM_HIGHLOWRANGE(O,H,L,C) ( (H) - (L) )
+#define TA_STREAM_CANDLERANGE(SET,O,H,L,C) \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_STREAM_REALBODY(O,H,L,C) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_STREAM_HIGHLOWRANGE(O,H,L,C) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows  ? TA_STREAM_UPPERSHADOW(O,H,L,C) + TA_STREAM_LOWERSHADOW(O,H,L,C) : \
+      0 ) ) )
+#define TA_STREAM_CANDLEAVERAGE(SET,SUM,O,H,L,C) \
+    ( TA_CANDLEFACTOR(SET) \
+        * ( TA_CANDLEAVGPERIOD(SET) != 0.0? (SUM) / TA_CANDLEAVGPERIOD(SET) : TA_STREAM_CANDLERANGE(SET,O,H,L,C) ) \
+        / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2.0 : 1.0 ) \
+    )
+#endif
+
 #endif

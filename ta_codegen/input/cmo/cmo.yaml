@@ -2,7 +2,7 @@ name: CMO
 camel_case: Cmo
 group: Momentum Indicators
 hint: Chande Momentum Oscillator
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

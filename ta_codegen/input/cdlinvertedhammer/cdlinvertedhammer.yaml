@@ -2,7 +2,7 @@ name: CDLINVERTEDHAMMER
 camel_case: CdlInvertedHammer
 group: Pattern Recognition
 hint: Inverted Hammer
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

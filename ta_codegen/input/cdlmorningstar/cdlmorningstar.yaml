@@ -2,7 +2,7 @@ name: CDLMORNINGSTAR
 camel_case: CdlMorningStar
 group: Pattern Recognition
 hint: Morning Star
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

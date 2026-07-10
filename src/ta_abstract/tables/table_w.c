@@ -110,7 +110,7 @@ DEF_FUNCTION( WMA,
               TA_GroupId_OverlapStudies,
               "Weighted Moving Average",
               "Wma",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* WMA END */
 

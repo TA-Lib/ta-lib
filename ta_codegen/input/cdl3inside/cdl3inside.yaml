@@ -2,7 +2,7 @@ name: CDL3INSIDE
 camel_case: Cdl3Inside
 group: Pattern Recognition
 hint: Three Inside Up/Down
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

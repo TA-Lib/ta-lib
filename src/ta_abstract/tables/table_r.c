@@ -164,7 +164,7 @@ DEF_FUNCTION( RSI,
               TA_GroupId_MomentumIndicators,
               "Relative Strength Index",
               "Rsi",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* RSI END */
 

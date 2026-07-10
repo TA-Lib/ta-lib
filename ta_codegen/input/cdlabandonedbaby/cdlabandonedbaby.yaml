@@ -2,7 +2,7 @@ name: CDLABANDONEDBABY
 camel_case: CdlAbandonedBaby
 group: Pattern Recognition
 hint: Abandoned Baby
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

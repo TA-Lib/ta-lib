@@ -2,7 +2,7 @@ name: CDLEVENINGDOJISTAR
 camel_case: CdlEveningDojiStar
 group: Pattern Recognition
 hint: Evening Doji Star
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

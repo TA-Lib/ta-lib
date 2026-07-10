@@ -2,7 +2,7 @@ name: CDLDARKCLOUDCOVER
 camel_case: CdlDarkCloudCover
 group: Pattern Recognition
 hint: Dark Cloud Cover
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

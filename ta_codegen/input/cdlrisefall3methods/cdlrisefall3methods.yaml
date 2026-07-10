@@ -2,7 +2,7 @@ name: CDLRISEFALL3METHODS
 camel_case: CdlRiseFall3Methods
 group: Pattern Recognition
 hint: Rising/Falling Three Methods
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

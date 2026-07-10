@@ -2,7 +2,7 @@ name: CDLBELTHOLD
 camel_case: CdlBeltHold
 group: Pattern Recognition
 hint: Belt-hold
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

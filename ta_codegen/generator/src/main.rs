@@ -279,7 +279,10 @@ fn stream_census(seed_yaml: bool) -> i32 {
     let mut seeded = 0usize;
 
     for func in &funcs {
-        match ta_codegen_lib::streaming::analyze(func) {
+        // Full validation (analysis + transition build) — the same gate
+        // generate() enforces, so census can never seed a function the
+        // emitter cannot actually build.
+        match ta_codegen_lib::streaming::validate_streamable(func) {
             Ok(m) => {
                 match m.tier {
                     ir::StreamTier::T1 => derived_t1 += 1,

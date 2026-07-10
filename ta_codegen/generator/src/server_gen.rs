@@ -697,6 +697,24 @@ fn sv_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 /// divergence as %a on mismatch). See docs/streaming-api-proposal.md,
 /// Verification. The whole handler is compiled out under TA_REF_SERVE
 /// (frozen reference libraries have no stream symbols).
+/// Tail of the batch-failure branch: candle functions record the outcome and
+/// continue to the next settings round (a failed round must not truncate the
+/// sweep); non-candle functions respond and return as before.
+fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
+    if candle {
+        s.push_str("            if( !((rc == TA_SUCCESS) ? openRejects : 1) ) allOk = 0;\n");
+        s.push_str("            if( rd + 1 < rounds ) continue;\n");
+        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+        s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
+        s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);\n");
+    } else {
+        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);\n");
+    }
+    s.push_str("            return;\n");
+    s.push_str("        }\n");
+}
+
 #[allow(clippy::too_many_lines)]
 fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
     let mut s = String::new();
@@ -708,7 +726,21 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
     s.push_str("static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];\n");
     s.push_str("static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];\n");
-    s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n\n");
+    s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n");
+    // Candle-settings variation for CDL streams: rounds 1/2 re-run the
+    // batch-vs-stream comparison with every setting's avgPeriod bumped (+3)
+    // or zeroed (the instant-candle degenerate, runtime trailing lag 0).
+    // mode 0: avgPeriod += 3; mode 1: avgPeriod = 0 (instant candle, runtime
+    // trailing lag 0); mode 2: rangeType = Shadows everywhere (gates the
+    // TA_STREAM Shadows arithmetic, which no default setting exercises).
+    s.push_str("static void sv_candle_avg(int mode) {\n");
+    s.push_str("    int i;\n");
+    s.push_str("    for( i = 0; i < (int)TA_AllCandleSettings; i++ )\n");
+    s.push_str("        TA_SetCandleSettings( (TA_CandleSettingType)i,\n");
+    s.push_str("                              mode == 2 ? TA_RangeType_Shadows : TA_Globals->candleSettings[i].rangeType,\n");
+    s.push_str("                              mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),\n");
+    s.push_str("                              TA_Globals->candleSettings[i].factor );\n");
+    s.push_str("}\n\n");
     s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
     s.push_str("    int fnLen = 0;\n");
     s.push_str("    const char *fn = json_find_string(json, \"funcName\", &fnLen);\n");
@@ -717,6 +749,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
     s.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
     s.push_str("    int svCompat = json_find_int(json, \"compatibility\");\n");
+    s.push_str("    int svCandle = json_find_int(json, \"candleLegs\");\n");
+    s.push_str("    (void)svCandle;\n");
     s.push_str("    int savedCompat = (int)TA_GetCompatibility();\n");
     s.push_str("    (void)svK;\n");
     s.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
@@ -796,9 +830,16 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             }
         }
 
+        let candle = func.flags.iter().any(|f| f == "candlestick");
         s.push_str("        TA_RetCode rc;\n");
-        s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref = 0, pos, allOk = 1, peekAll = 1;\n");
+        s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
+        if candle {
+            // Candle functions honor "candleLegs": re-run the whole sweep
+            // under bumped and zeroed avgPeriods (settings-stability rule:
+            // settings are fixed per round; each round reopens its streams).
+            s.push_str("        int rounds = svCandle ? 4 : 1; int rd, lgi = 0;\n");
+        }
         for id in &pin_ids {
             s.push_str(&format!(
                 "        TA_SetUnstablePeriod({id}, (unsigned int)svK);\n"
@@ -850,6 +891,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
                 })
                 .collect()
         };
+        if candle {
+            s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0\");\n");
+            s.push_str("        for( rd = 0; rd < rounds; rd++ ) {\n");
+            s.push_str("        if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
+            s.push_str("        if( rd > 0 ) sv_candle_avg(rd - 1);\n");
+        }
         s.push_str(&format!(
             "        rc = {method}(0, svN - 1, {in_args}{opt_args}&svBeg, &svNb{out_args});\n"
         ));
@@ -881,13 +928,21 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         for id in &pin_ids {
             s.push_str(&format!("            TA_SetUnstablePeriod({id}, 0);\n"));
         }
-        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
-        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, (rc == TA_SUCCESS) ? openRejects : 1);\n");
-        s.push_str("            return;\n");
-        s.push_str("        }\n");
+        emit_sv_batch_fail_tail(&mut s, candle);
 
         // Prefix sweep candidates (dedup, clamped to [lb+1, svN-1]).
-        s.push_str("        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
+        // Seed-boundary functions (RSI/CMO under Metastock) honestly reject
+        // Open at exactly lookback+1 — the batch would rewind past that
+        // state — so the boundary leg starts one bar later there.
+        let seed_shift = crate::streaming::analyze(func)
+            .map(|m| m.seed_boundary)
+            .unwrap_or(false);
+        s.push_str("        npref = 0;\n");
+        if seed_shift {
+            s.push_str("        pc[0] = lb + 1 + ((svCompat == 1) ? 1 : 0); pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
+        } else {
+            s.push_str("        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
+        }
         s.push_str("        for( li = 0; li < 4; li++ ) {\n");
         s.push_str("            int P = pc[li]; int seen = 0, k;\n");
         s.push_str("            if( P < lb + 1 ) P = lb + 1;\n");
@@ -896,7 +951,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;\n");
         s.push_str("            if( !seen ) pref[npref++] = P;\n");
         s.push_str("        }\n");
-        s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
+        if !candle {
+            s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
+        }
 
         // Per-leg: open on prefix, update the rest, peek spot-asserts,
         // bitwise compare against the batch outputs at every bar.
@@ -954,15 +1011,31 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
         s.push_str("            }\n");
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
-        s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
-        s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", li, badBar, li, badOut, li, bv, li, sv); }\n");
-        s.push_str("            if( !pkOk ) peekAll = 0;\n");
-        s.push_str("        }\n");
+        if candle {
+            s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
+            s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }\n");
+            s.push_str("            if( !pkOk ) peekAll = 0;\n");
+            s.push_str("            lgi++;\n");
+            s.push_str("        }\n");
+        } else {
+            s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
+            s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", li, badBar, li, badOut, li, bv, li, sv); }\n");
+            s.push_str("            if( !pkOk ) peekAll = 0;\n");
+            s.push_str("        }\n");
+        }
+        if candle {
+            s.push_str("        }\n");
+            s.push_str("        if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
+        }
         for id in &pin_ids {
             s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
         }
         s.push_str("        TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
-        s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", allOk, peekAll);\n");
+        if candle {
+            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, allOk, peekAll);\n");
+        } else {
+            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", allOk, peekAll);\n");
+        }
         s.push_str("        return;\n");
         s.push_str("    }\n");
     }

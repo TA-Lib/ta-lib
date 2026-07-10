@@ -104,7 +104,7 @@ DEF_FUNCTION( ULTOSC,
               TA_GroupId_MomentumIndicators,
               "Ultimate Oscillator",
               "UltOsc",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* ULTOSC END */
 

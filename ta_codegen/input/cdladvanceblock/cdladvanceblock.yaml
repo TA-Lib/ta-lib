@@ -2,7 +2,7 @@ name: CDLADVANCEBLOCK
 camel_case: CdlAdvanceBlock
 group: Pattern Recognition
 hint: Advance Block
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

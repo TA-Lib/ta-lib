@@ -2,7 +2,7 @@ name: CDLPIERCING
 camel_case: CdlPiercing
 group: Pattern Recognition
 hint: Piercing Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

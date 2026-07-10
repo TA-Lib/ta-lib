@@ -552,10 +552,38 @@ claim in *Motivation* gets measured, not asserted).
    rebased position beyond ~2^30 bars, where the batch contract is
    inherently out of int range anyway). Ties, indices and values are
    batch-exact by construction. Integer outputs are supported end-to-end.
-4. **CDL candlestick family** (multi-array lag windows through the candle
-   helpers, candle-settings reads inside update — the settings-stability
-   rule becomes operative).
-5. **Stage-1.5 param-degenerate paths** (dual steady loops, memmove
+4. **CDL candlestick family — DONE** (+59 of 61, plus ULTOSC as a
+   side-effect = 125 streamable). The candle helpers are pure scalar
+   functions, so their calls transcribe directly; the transition renders
+   them as `TA_STREAM_CANDLE*` macros that mirror the batch macros'
+   arithmetic exactly (the helper source's algebraically-equal-but-
+   differently-rounded Shadows form must never be inlined). Settings are
+   read where batch reads them (per step, from the globals) under the
+   settings-stability rule; the harness re-verifies every CDL under
+   bumped and zeroed avgPeriods. New mechanisms, all language-neutral:
+   back/forward/counter-offset trailing rings (absolute-mod layout,
+   `cap = lag + back + 1`, current bar pre-written at `pos`), fixed-size
+   array locals as carried state, ternary-index normalization
+   (`in[c ? a : b]` → `c ? in[a] : in[b]`), widest-literal merge for
+   multi-bound rescan counters. CDLHIKKAKE/CDLHIKKAKEMOD stay batch-only
+   for now (they save bar indices — absolute-index recall beyond the
+   extrema automaton).
+5. **Stage-1.5 param-degenerate paths — PARTIALLY DONE** (+RSI, CMO, WMA,
+   AVGDEV = 129 streamable): the period-1 `memmove` form now matches the
+   identity fast path, and block-scoped loop locals classify as temps.
+   One honest contract nuance came out of RSI/CMO under Metastock: their
+   batch emits a seed output and, when continuing, REWINDS and rebuilds
+   state — so no bit-exact continuation exists from the seed exit. Open
+   returns `TA_BAD_PARAM` at exactly `lookback+1` in that mode (one more
+   bar is required); the verifier knows statically which functions have a
+   seed boundary and shifts its boundary leg. The remaining members
+   (ATR/NATR/MACDEXT/MACDFIX delegate to other functions at period 1,
+   DI/DM have a dual unsmoothed loop) belong with the composed tier.
+   Also from review: the candle-settings harness now runs FOUR rounds
+   (defaults, +3, zeroed, all-Shadows — the last gates the Shadows
+   macro arithmetic no default exercises), rounds continue past a
+   too-short-history rejection, and assigning a candle-setting local in
+   a steady loop is a hard analyzer error. (dual steady loops, memmove
    identity, open-time delegation) — a controlled preview of composition.
 6. **TC composed functions** (needs the earlier tiers' sub-streams;
    MA-dispatch design spiked first: hand-write a STOCH stream over generated

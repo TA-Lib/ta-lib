@@ -2,7 +2,7 @@ name: CDLMATCHINGLOW
 camel_case: CdlMatchingLow
 group: Pattern Recognition
 hint: Matching Low
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

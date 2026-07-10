@@ -2,7 +2,7 @@ name: CDL2CROWS
 camel_case: Cdl2Crows
 group: Pattern Recognition
 hint: Two Crows
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

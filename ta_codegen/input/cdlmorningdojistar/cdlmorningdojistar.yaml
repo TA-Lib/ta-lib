@@ -2,7 +2,7 @@ name: CDLMORNINGDOJISTAR
 camel_case: CdlMorningDojiStar
 group: Pattern Recognition
 hint: Morning Doji Star
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

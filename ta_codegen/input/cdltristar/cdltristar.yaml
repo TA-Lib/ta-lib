@@ -2,7 +2,7 @@ name: CDLTRISTAR
 camel_case: CdlTristar
 group: Pattern Recognition
 hint: Tristar Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

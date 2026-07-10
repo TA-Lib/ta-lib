@@ -798,7 +798,7 @@ TA_LIB_API TA_RetCode TA_KAMA_Open( int optInTimePeriod, const double inReal[], 
         if( !sp->ring_trailingIdx_inReal ) { TA_KAMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ringMirror_trailingIdx_inReal ) { TA_KAMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
-        sp->ring_trailingIdx_inReal[0] = 0.0;
+        memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
       }
       sp->ringPos_trailingIdx = 0;
       *outReal = inReal[historyLen - 1];

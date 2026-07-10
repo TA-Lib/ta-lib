@@ -2,7 +2,7 @@ name: CDLUNIQUE3RIVER
 camel_case: CdlUnique3River
 group: Pattern Recognition
 hint: Unique 3 River
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

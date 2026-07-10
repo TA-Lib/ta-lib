@@ -2,7 +2,7 @@ name: CDLSHOOTINGSTAR
 camel_case: CdlShootingStar
 group: Pattern Recognition
 hint: Shooting Star
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

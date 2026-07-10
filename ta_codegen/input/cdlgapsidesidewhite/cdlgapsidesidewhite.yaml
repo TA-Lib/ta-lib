@@ -2,7 +2,7 @@ name: CDLGAPSIDESIDEWHITE
 camel_case: CdlGapSideSideWhite
 group: Pattern Recognition
 hint: Up/Down-gap side-by-side white lines
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

@@ -290,3 +290,156 @@ TA_RetCode TA_S_AVGDEV_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_AVGDEV_Stream {
+   int optInTimePeriod;
+   int winPos_i;
+   int winCap_i;
+   double *win_i_inReal;
+   double *winMirror_i_inReal;
+};
+
+static void TA_AVGDEV_StreamRelease( struct TA_AVGDEV_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->win_i_inReal ) TA_Free( sp->win_i_inReal );
+   if( sp->winMirror_i_inReal ) TA_Free( sp->winMirror_i_inReal );
+   TA_Free( sp );
+}
+
+static void TA_AVGDEV_StreamStep( struct TA_AVGDEV_Stream *sp, double inReal, double *outReal )
+{
+   double todaySum;
+   double todayDev;
+   int i;
+
+   sp->win_i_inReal[sp->winPos_i] = inReal;
+   todaySum = 0.0;
+   for( i = 0; i < sp->optInTimePeriod; i += 1 )
+   {
+      todaySum += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
+   }
+   todayDev = 0.0;
+   for( i = 0; i < sp->optInTimePeriod; i += 1 )
+   {
+      todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i] - todaySum / sp->optInTimePeriod);
+   }
+   *outReal= todayDev / sp->optInTimePeriod;
+   sp->winPos_i = sp->winPos_i + 1;
+   if( sp->winPos_i >= sp->winCap_i )
+   {
+      sp->winPos_i = 0;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_AVGDEV_Stream **stream, double *outReal )
+{
+   struct TA_AVGDEV_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int today;
+      int outIdx;
+      int lookback;
+      lookback = optInTimePeriod - 1;
+      if( startIdx < lookback )
+      {
+         startIdx = lookback;
+      }
+      today = startIdx;
+      /* Make sure there is still something to evaluate. */
+      if( today > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Process the initial DM and TR */
+      dummyBegIdx = today;
+      outIdx = 0;
+      while( today <= endIdx )
+      {
+         double todaySum;
+         double todayDev;
+         int i;
+         todaySum = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 )
+         {
+            todaySum += inReal[today - i];
+         }
+         todayDev = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 )
+         {
+            todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+         }
+         lastValue_outReal = todayDev / optInTimePeriod;
+         outIdx += 1;
+         today += 1;
+      }
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AVGDEV_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->winCap_i = (int)(optInTimePeriod);
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inReal ) { TA_AVGDEV_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->winPos_i = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_AVGDEV_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_AVGDEV_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.win_i_inReal = stream->winMirror_i_inReal;
+   memcpy( scratch.win_i_inReal, stream->win_i_inReal, sizeof(double) * (size_t)stream->winCap_i );
+   TA_AVGDEV_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Close( TA_AVGDEV_Stream *stream )
+{
+   TA_AVGDEV_StreamRelease( stream );
+   return TA_SUCCESS;
+}
+

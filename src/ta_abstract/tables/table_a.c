@@ -438,7 +438,7 @@ DEF_FUNCTION( AVGDEV,
               TA_GroupId_PriceTransform,
               "Average Deviation",
               "AvgDev",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* AVGDEV END */
 

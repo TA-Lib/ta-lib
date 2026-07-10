@@ -2,7 +2,7 @@ name: CDL3STARSINSOUTH
 camel_case: Cdl3StarsInSouth
 group: Pattern Recognition
 hint: Three Stars In The South
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

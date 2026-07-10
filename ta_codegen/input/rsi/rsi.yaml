@@ -2,7 +2,7 @@ name: RSI
 camel_case: Rsi
 group: Momentum Indicators
 hint: Relative Strength Index
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

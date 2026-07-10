@@ -2,7 +2,7 @@ name: CDLENGULFING
 camel_case: CdlEngulfing
 group: Pattern Recognition
 hint: Engulfing Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

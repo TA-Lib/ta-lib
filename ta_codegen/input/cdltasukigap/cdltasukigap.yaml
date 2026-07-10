@@ -2,7 +2,7 @@ name: CDLTASUKIGAP
 camel_case: CdlTasukiGap
 group: Pattern Recognition
 hint: Tasuki Gap
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

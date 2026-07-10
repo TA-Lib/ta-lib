@@ -2,7 +2,7 @@ name: CDLONNECK
 camel_case: CdlOnNeck
 group: Pattern Recognition
 hint: On-Neck Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

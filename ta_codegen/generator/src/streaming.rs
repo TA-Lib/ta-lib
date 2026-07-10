@@ -80,6 +80,15 @@ pub struct RingSpec {
     pub var: String,
     /// Input arrays read through it, in signature order.
     pub arrays: Vec<String>,
+    /// Max constant back-offset read through the var (`in[var - K]`,
+    /// shifted-candle averages). 0 means a plain oldest-slot ring (legacy
+    /// layout); positive values switch to the absolute-mod layout (slot =
+    /// bar index % cap with cap = runtime lag + back + 1).
+    pub back: i64,
+    /// Max forward offset (`in[var + K]`). Legal only when the runtime lag
+    /// is >= fwd (batch legality guarantees it; Open re-checks and fails
+    /// TA_INTERNAL_ERROR otherwise).
+    pub fwd: i64,
 }
 
 /// One bounded rescan window: an inner loop reads `in[cursor - w]` where `w`
@@ -177,6 +186,10 @@ pub struct StreamModel<'a> {
     pub steady_stmts: Vec<Statement>,
     /// Variable indexing the inputs at the current bar.
     pub cursor: String,
+    /// True when a guarded mid-body success return follows an output write
+    /// (Metastock seed boundary): Open rejects at exactly lookback+1 there,
+    /// so verification shifts its boundary leg by one bar.
+    pub seed_boundary: bool,
     /// Countdown loops only: the iteration-count variable (dropped).
     pub counter: Option<String>,
     /// Output-index variables (dropped in the transition).
@@ -489,6 +502,16 @@ fn detect_identity_path(
         let mut clean = true;
         for st in then_body {
             walk_stmt_exprs(st, &mut |_| {});
+            // Whole-range block copy: memmove(&out[0], &in[startIdx], n) is
+            // the same identity as the element loop (RSI/CMO/WMA period 1).
+            if let Statement::Expr(Expr::FuncCall(fname, args)) = st {
+                if fname == "memmove" && args.len() == 3 {
+                    match identity_memmove_pair(args, inputs, outputs) {
+                        Some(pair) => pairs.push(pair),
+                        None => clean = false,
+                    }
+                }
+            }
             if let Statement::While { body: lb, .. }
             | Statement::DoWhile { body: lb, .. }
             | Statement::ForC { body: lb, .. } = st
@@ -547,16 +570,60 @@ fn detect_identity_path(
     (None, None)
 }
 
-fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<(), StreamError> {
+/// Validates all return paths and reports whether any guarded success return
+/// occurs AFTER an output write (a "seed boundary", e.g. RSI/CMO under
+/// Metastock). Such an exit carries state the batch would rewind and rebuild
+/// before continuing, so Open rejects there (min-history is one bar stricter)
+/// and the verify harness shifts its boundary leg accordingly.
+/// Match `memmove(&out[0] | out, &in[startIdx], n)` as an identity copy.
+fn identity_memmove_pair(
+    args: &[Expr],
+    inputs: &[String],
+    outputs: &[String],
+) -> Option<(String, String)> {
+    let dst_out = match &args[0] {
+        Expr::AddressOf(d) => match d.as_ref() {
+            Expr::ArrayAccess(out_name, out_idx)
+                if matches!(out_idx.as_ref(), Expr::IntLiteral(0)) =>
+            {
+                Some(out_name.clone())
+            }
+            _ => None,
+        },
+        Expr::Var(out_name) => Some(out_name.clone()),
+        _ => None,
+    };
+    let src_in = match &args[1] {
+        Expr::AddressOf(sr) => match sr.as_ref() {
+            Expr::ArrayAccess(in_name, in_idx)
+                if matches!(in_idx.as_ref(), Expr::Var(v) if v == "startIdx") =>
+            {
+                Some(in_name.clone())
+            }
+            _ => None,
+        },
+        _ => None,
+    };
+    match (dst_out, src_in) {
+        (Some(o), Some(i2)) if outputs.contains(&o) && inputs.contains(&i2) => Some((o, i2)),
+        _ => None,
+    }
+}
+
+fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<bool, StreamError> {
     fn is_no_data_guard(cond: &Expr) -> bool {
+        // `startIdx > endIdx`, or the post-clamp cursor form `<var> > endIdx`
+        // (AVGDEV clamps startIdx into a local first). Either way a taken
+        // guard means the batch emits zero outputs for the full range, so
+        // Open maps its success return to BAD_PARAM (no last value exists).
         match cond {
             Expr::BinOp(l, BinOp::Greater, r) => {
-                matches!(l.as_ref(), Expr::Var(v) if v == "startIdx")
+                matches!(l.as_ref(), Expr::Var(_))
                     && matches!(r.as_ref(), Expr::Var(v) if v == "endIdx")
             }
             Expr::BinOp(l, BinOp::Less, r) => {
                 matches!(l.as_ref(), Expr::Var(v) if v == "endIdx")
-                    && matches!(r.as_ref(), Expr::Var(v) if v == "startIdx")
+                    && matches!(r.as_ref(), Expr::Var(_))
             }
             _ => false,
         }
@@ -570,11 +637,30 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<(),
             _ => false,
         }
     }
+    struct WalkState {
+        /// An output-array write was seen before the current point.
+        wrote_output: bool,
+        /// A guarded success return was seen after an output write.
+        seed_boundary: bool,
+    }
+    fn saw_output_write(s: &Statement, st: &mut WalkState) {
+        if st.wrote_output {
+            return;
+        }
+        walk_stmt_exprs(s, &mut |e| {
+            if let Expr::ArrayAccess(n, _) = e {
+                if n.starts_with("out") {
+                    st.wrote_output = true;
+                }
+            }
+        });
+    }
     fn walk(
         stmts: &[Statement],
         in_guard: bool,
         is_top: bool,
         skip_idx: Option<usize>,
+        st: &mut WalkState,
     ) -> Result<(), StreamError> {
         for (i, s) in stmts.iter().enumerate() {
             if is_top && Some(i) == skip_idx {
@@ -590,6 +676,9 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<(),
                                 .into(),
                         ));
                     }
+                    if !last_top && in_guard && st.wrote_output {
+                        st.seed_boundary = true;
+                    }
                 }
                 Statement::If {
                     condition,
@@ -598,30 +687,36 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<(),
                     ..
                 } => {
                     let guard = in_guard || is_no_data_guard(condition);
-                    walk(then_body, guard, false, None)?;
-                    walk(else_body, in_guard, false, None)?;
+                    walk(then_body, guard, false, None, st)?;
+                    walk(else_body, in_guard, false, None, st)?;
                 }
                 Statement::While { body, .. }
                 | Statement::DoWhile { body, .. }
                 | Statement::For { body, .. }
-                | Statement::Block { body } => walk(body, in_guard, false, None)?,
+                | Statement::Block { body } => walk(body, in_guard, false, None, st)?,
                 Statement::Switch { cases, default, .. } => {
                     for (_, sts) in cases {
-                        walk(sts, in_guard, false, None)?;
+                        walk(sts, in_guard, false, None, st)?;
                     }
-                    walk(default, in_guard, false, None)?;
+                    walk(default, in_guard, false, None, st)?;
                 }
                 Statement::ForC { init, update, body, .. } => {
-                    walk(std::slice::from_ref(init), in_guard, false, None)?;
-                    walk(std::slice::from_ref(update), in_guard, false, None)?;
-                    walk(body, in_guard, false, None)?;
+                    walk(std::slice::from_ref(init), in_guard, false, None, st)?;
+                    walk(std::slice::from_ref(update), in_guard, false, None, st)?;
+                    walk(body, in_guard, false, None, st)?;
                 }
                 _ => {}
             }
+            saw_output_write(s, st);
         }
         Ok(())
     }
-    walk(body, false, true, skip_idx)
+    let mut st = WalkState {
+        wrote_output: false,
+        seed_boundary: false,
+    };
+    walk(body, false, true, skip_idx, &mut st)?;
+    Ok(st.seed_boundary)
 }
 
 struct SteadyLoop<'a> {
@@ -728,10 +823,13 @@ fn find_steady_loop(body: &[Statement]) -> Result<SteadyLoop<'_>, StreamError> {
 /// never legal inside a transition body.
 fn is_stateful_call(name: &str) -> bool {
     let lower = name.to_ascii_lowercase();
+    // NOTE: the candle helpers (ta_candleaverage, ta_candlecolor, ...) are
+    // deliberately NOT here — they are pure scalar functions whose candle
+    // settings arrive as hoisted-local arguments (the settings-stability
+    // rule: streams read settings exactly where batch reads them).
     lower.contains("lookback")
         || lower.contains("compatibility")
         || lower.contains("unstable")
-        || lower.contains("candle")
         || lower.starts_with("array_")
         || lower.starts_with("circbuf")
         || name == "TA_Malloc"
@@ -768,9 +866,13 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let (identity, identity_idx) =
         detect_identity_path(body, &bar_inputs, &outputs, &param_name_list);
-    check_return_paths(body, identity_idx)?;
+    let seed_boundary = check_return_paths(body, identity_idx)?;
 
     let (loop_form, steady_stmts, cursor, counter) = extract_steady(body, &bar_inputs)?;
+    // Normalize `in[cond ? a : b]` into `cond ? in[a] : in[b]` so index
+    // classification sees plain index forms (CDLKICKINGBYLENGTH). Pure
+    // expressions only; semantics and FP behavior are identical.
+    let steady_stmts = hoist_ternary_indices(&steady_stmts);
 
     // --- array accesses ----------------------------------------------------
 
@@ -778,12 +880,14 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
     let ScannedAccesses {
         lags,
         trailing,
+        ring_back,
+        ring_fwd,
         windows: scanned_windows,
         out_index_vars,
     } = scanned;
     let ring_vars: BTreeSet<String> = trailing.keys().cloned().collect();
     check_window_disjoint(&scanned_windows, &ring_vars, &cursor)?;
-    let rings = assemble_rings(trailing.clone(), &bar_inputs);
+    let rings = assemble_rings(trailing.clone(), &ring_back, &ring_fwd, &bar_inputs);
     let windows = assemble_windows(scanned_windows, &bar_inputs);
 
     // Outputs may only appear as assignment targets (no read-back).
@@ -837,6 +941,7 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
 
     Ok(StreamModel {
         func,
+        seed_boundary,
         body,
         tier,
         loop_form,
@@ -878,6 +983,9 @@ pub fn validate_streamable(func: &FuncDef) -> Result<StreamModel<'_>, String> {
         }
         fn ring_pos(&self, var: &str) -> String {
             format!("sp->ringPos_{var}")
+        }
+        fn ring_lag(&self, var: &str) -> String {
+            format!("sp->ringLag_{var}")
         }
         fn ring_cap(&self, var: &str) -> String {
             format!("sp->ringCap_{var}")
@@ -926,29 +1034,12 @@ fn scan_accesses(
     outputs: &[String],
     cursor: &str,
 ) -> Result<ScannedAccesses, StreamError> {
-    let mut lags: BTreeMap<String, i64> = BTreeMap::new();
-    let mut trailing: BTreeMap<String, BTreeSet<String>> = BTreeMap::new(); // var -> arrays
+    let mut acc = AccessAcc::default();
     let mut out_index_vars: BTreeSet<String> = BTreeSet::new();
     let mut access_err: Option<StreamError> = None;
 
     // Inner-loop counters usable as rescan-window offsets (var -> bound).
-    let mut bound_list: Vec<(String, Expr)> = Vec::new();
-    collect_window_bounds(steady_stmts, &mut bound_list);
-    let mut window_bounds: BTreeMap<String, Expr> = BTreeMap::new();
-    for (v, e) in bound_list {
-        match window_bounds.get(&v) {
-            None => {
-                window_bounds.insert(v, e);
-            }
-            Some(prev) if format!("{prev:?}") == format!("{e:?}") => {}
-            Some(_) => {
-                return Err(StreamError::Unsupported(format!(
-                    "window counter `{v}` has inconsistent loop bounds"
-                )))
-            }
-        }
-    }
-    let mut windows: BTreeMap<String, BTreeSet<String>> = BTreeMap::new(); // var -> arrays
+    let window_bounds = merge_window_bounds(steady_stmts)?;
     for s in steady_stmts {
         walk_stmt_exprs(s, &mut |e| {
             walk_expr(e, &mut |x| {
@@ -957,30 +1048,8 @@ fn scan_accesses(
                 }
                 if let Expr::ArrayAccess(name, idx) = x {
                     if bar_inputs.iter().any(|i| i == name) {
-                        match classify_input_index(idx, cursor) {
-                            InputIndex::Current => {}
-                            InputIndex::Lag(k) => {
-                                let d = lags.entry(name.clone()).or_insert(0);
-                                *d = (*d).max(k);
-                            }
-                            InputIndex::OtherVar(v) => {
-                                trailing.entry(v).or_default().insert(name.clone());
-                            }
-                            InputIndex::WindowVar(w) => {
-                                if window_bounds.contains_key(&w) {
-                                    windows.entry(w).or_default().insert(name.clone());
-                                } else {
-                                    access_err = Some(StreamError::UnsupportedAccess(format!(
-                                        "{name}[cursor - {w}] with unbounded offset var"
-                                    )));
-                                }
-                            }
-                            InputIndex::Unsupported => {
-                                access_err = Some(StreamError::UnsupportedAccess(format!(
-                                    "{name}[{idx:?}]"
-                                )));
-                            }
-                        }
+                        access_err =
+                            record_input_access(name, idx, cursor, &window_bounds, &mut acc);
                     } else if outputs.iter().any(|o| o == name) {
                         let idx_var = match idx.as_ref() {
                             Expr::Var(v) => Some(v.clone()),
@@ -1012,7 +1081,8 @@ fn scan_accesses(
             return Err(e);
         }
     }
-    let window_specs: Vec<(String, Expr, BTreeSet<String>)> = windows
+    let window_specs: Vec<(String, Expr, BTreeSet<String>)> = acc
+        .windows
         .into_iter()
         .map(|(v, arrs)| {
             let cap = window_bounds[&v].clone();
@@ -1020,11 +1090,122 @@ fn scan_accesses(
         })
         .collect();
     Ok(ScannedAccesses {
-        lags,
-        trailing,
+        lags: acc.lags,
+        trailing: acc.trailing,
+        ring_back: acc.ring_back,
+        ring_fwd: acc.ring_fwd,
         windows: window_specs,
         out_index_vars,
     })
+}
+
+/// Accumulators for the input-array access scan.
+#[derive(Default)]
+struct AccessAcc {
+    lags: BTreeMap<String, i64>,
+    trailing: BTreeMap<String, BTreeSet<String>>,
+    ring_back: BTreeMap<String, i64>,
+    ring_fwd: BTreeMap<String, i64>,
+    windows: BTreeMap<String, BTreeSet<String>>,
+}
+
+/// Record one bar-input array access into the scan accumulators; returns an
+/// error to raise when the index form is unsupported.
+fn record_input_access(
+    name: &str,
+    idx: &Expr,
+    cursor: &str,
+    window_bounds: &BTreeMap<String, Expr>,
+    acc: &mut AccessAcc,
+) -> Option<StreamError> {
+    match classify_input_index(idx, cursor) {
+        InputIndex::Current => None,
+        InputIndex::Lag(k) => {
+            let d = acc.lags.entry(name.to_string()).or_insert(0);
+            *d = (*d).max(k);
+            None
+        }
+        InputIndex::OtherVar(v) => {
+            acc.trailing.entry(v).or_default().insert(name.to_string());
+            None
+        }
+        InputIndex::OtherVarLag(v, k) => {
+            acc.trailing
+                .entry(v.clone())
+                .or_default()
+                .insert(name.to_string());
+            if k >= 0 {
+                let b = acc.ring_back.entry(v).or_insert(0);
+                *b = (*b).max(k);
+            } else {
+                // Forward read: capacity is unchanged but the layout must be
+                // absolute-mod.
+                acc.ring_back.entry(v.clone()).or_insert(0);
+                let f = acc.ring_fwd.entry(v).or_insert(0);
+                *f = (*f).max(-k);
+            }
+            None
+        }
+        InputIndex::OtherVarWinLag(v, w) => match window_bounds.get(&w) {
+            Some(Expr::IntLiteral(bound)) => {
+                acc.trailing
+                    .entry(v.clone())
+                    .or_default()
+                    .insert(name.to_string());
+                let b = acc.ring_back.entry(v).or_insert(0);
+                // Counter values span [0, bound-1].
+                *b = (*b).max(bound - 1).max(1);
+                None
+            }
+            _ => Some(StreamError::UnsupportedAccess(format!(
+                "{name}[{v} - {w}] without a literal loop bound"
+            ))),
+        },
+        InputIndex::WindowVar(w) => {
+            if window_bounds.contains_key(&w) {
+                acc.windows.entry(w).or_default().insert(name.to_string());
+                None
+            } else {
+                Some(StreamError::UnsupportedAccess(format!(
+                    "{name}[cursor - {w}] with unbounded offset var"
+                )))
+            }
+        }
+        InputIndex::Unsupported => Some(StreamError::UnsupportedAccess(format!("{name}[{idx:?}]"))),
+    }
+}
+
+/// Collect and merge inner-loop counter bounds: a counter bound by several
+/// loops keeps the widest literal bound; mixed literal/expression bounds are
+/// unsupported.
+fn merge_window_bounds(steady_stmts: &[Statement]) -> Result<BTreeMap<String, Expr>, StreamError> {
+    let mut bound_list: Vec<(String, Expr)> = Vec::new();
+    collect_window_bounds(steady_stmts, &mut bound_list);
+    let mut window_bounds: BTreeMap<String, Expr> = BTreeMap::new();
+    for (v, e) in bound_list {
+        match window_bounds.get(&v) {
+            None => {
+                window_bounds.insert(v, e);
+            }
+            Some(prev) if format!("{prev:?}") == format!("{e:?}") => {}
+            Some(Expr::IntLiteral(p)) => {
+                if let Expr::IntLiteral(nn) = e {
+                    let widest = (*p).max(nn);
+                    window_bounds.insert(v, Expr::IntLiteral(widest));
+                } else {
+                    return Err(StreamError::Unsupported(format!(
+                        "window counter `{v}` has inconsistent loop bounds"
+                    )));
+                }
+            }
+            Some(_) => {
+                return Err(StreamError::Unsupported(format!(
+                    "window counter `{v}` has inconsistent loop bounds"
+                )));
+            }
+        }
+    }
+    Ok(window_bounds)
 }
 
 /// Collect inner-loop counter bounds usable as rescan windows: For-countdown
@@ -1059,6 +1240,32 @@ fn collect_window_bounds(stmts: &[Statement], out: &mut Vec<(String, Expr)>) {
                 {
                     if matches!(l.as_ref(), Expr::Var(lv) if lv == v) {
                         out.push((v.clone(), (**r).clone()));
+                    }
+                }
+                // Descending inclusive: for (v = E; v >= B; v--) with a
+                // literal floor B >= 0 — offsets stay within 0..E, so the
+                // window bound (exclusive) is E + 1.
+                if let (
+                    Statement::Assign {
+                        target: Expr::Var(v),
+                        value: bound,
+                        ..
+                    },
+                    Expr::BinOp(l, BinOp::GreaterEq, r),
+                ) = (init.as_ref(), condition)
+                {
+                    if matches!(r.as_ref(), Expr::IntLiteral(b) if *b >= 0)
+                        && matches!(l.as_ref(), Expr::Var(lv) if lv == v)
+                    {
+                        let excl = match bound {
+                            Expr::IntLiteral(k) => Expr::IntLiteral(k + 1),
+                            other => Expr::BinOp(
+                                Box::new(other.clone()),
+                                BinOp::Add,
+                                Box::new(Expr::IntLiteral(1)),
+                            ),
+                        };
+                        out.push((v.clone(), excl));
                     }
                 }
                 // Countdown: for (v = E; v-- != 0;) — body sees v in 0..E-1.
@@ -1437,11 +1644,19 @@ fn derive_tier(
 /// Rings in a stable order: by variable name, arrays in signature order.
 fn assemble_rings(
     trailing: BTreeMap<String, BTreeSet<String>>,
+    ring_back: &BTreeMap<String, i64>,
+    ring_fwd: &BTreeMap<String, i64>,
     bar_inputs: &[String],
 ) -> Vec<RingSpec> {
     trailing
         .into_iter()
         .map(|(var, arrs)| RingSpec {
+            back: ring_back
+                .get(&var)
+                .copied()
+                .unwrap_or(0)
+                .max(i64::from(ring_fwd.contains_key(&var))),
+            fwd: ring_fwd.get(&var).copied().unwrap_or(0),
             var,
             arrays: bar_inputs
                 .iter()
@@ -1458,6 +1673,10 @@ struct ScannedAccesses {
     lags: BTreeMap<String, i64>,
     /// Trailing index variables and the input arrays each one reads.
     trailing: BTreeMap<String, BTreeSet<String>>,
+    /// Per trailing var: max constant back-offset (`in[var - K]`).
+    ring_back: BTreeMap<String, i64>,
+    /// Per trailing var: max forward offset (`in[var + K]`).
+    ring_fwd: BTreeMap<String, i64>,
     /// Rescan windows: (counter var, bound expr, arrays read).
     windows: Vec<(String, Expr, BTreeSet<String>)>,
     /// Output-index variables (dropped in the transition).
@@ -1508,6 +1727,21 @@ fn classify_locals(
         .chain(func.private_extra_params.iter().map(|(n, _)| n.clone()))
         .collect();
 
+    // Candle-setting locals (BodyDoji_rangeType, ...) are hoisted per-call
+    // constants in batch; the stream emitters unpack them at the top of both
+    // Open and StreamStep (settings-stability rule), so they are neither
+    // state nor temps here.
+    let candle_locals: BTreeSet<String> = {
+        let mut set = BTreeSet::new();
+        for base in crate::candle_settings::detect_candle_settings(steady_stmts) {
+            for prop in ["rangeType", "avgPeriod", "factor"] {
+                set.insert(format!("{base}_{prop}"));
+            }
+        }
+        set
+    };
+    reject_candle_local_writes(steady_stmts, &candle_locals)?;
+
     // The batch index space must not leak into the transition.
     for n in ["endIdx", "startIdx"] {
         if loop_vars.contains(n) && n != cursor && Some(n) != counter {
@@ -1527,6 +1761,7 @@ fn classify_locals(
             || param_names.contains(v)
             || bar_inputs.contains(v)
             || outputs.contains(v)
+            || candle_locals.contains(v)
             || v == "endIdx"
             || v == "startIdx"
         {
@@ -1534,6 +1769,13 @@ fn classify_locals(
         }
         match decls.get(v) {
             Some(VarType::Real | VarType::Integer | VarType::Index) => candidates.push(v.clone()),
+            // Fixed-size local arrays (CDL per-candle period totals) carry
+            // whole; the emitter copies them by memcpy / struct assignment.
+            Some(VarType::RealArray(sz) | VarType::IntArray(sz))
+                if sz.parse::<u32>().is_ok() =>
+            {
+                candidates.push(v.clone());
+            }
             Some(_) => return Err(StreamError::NonScalarState(v.clone())),
             None => return Err(StreamError::UnknownSymbol(v.clone())),
         }
@@ -1550,7 +1792,20 @@ fn classify_locals(
     // straight-line prefix of the transition assigns it whole (non-compound)
     // before any read and before the first branching statement; everything
     // else is carried state.
-    let temps_set = written_before_read(steady_stmts, &candidates);
+    let mut temps_set = written_before_read(steady_stmts, &candidates);
+    // Any variable DECLARED inside the steady loop body is per-iteration by
+    // C scoping (indeterminate on scope re-entry unless assigned) — always a
+    // temp, never carried state (AVGDEV declares its window accumulators
+    // in-loop).
+    {
+        let mut loop_decls: Vec<String> = Vec::new();
+        collect_decl_order(steady_stmts, &mut loop_decls);
+        for n2 in loop_decls {
+            if candidates.contains(&n2) {
+                temps_set.insert(n2);
+            }
+        }
+    }
 
     // Deterministic order: follow first-declaration order in the body;
     // synthetic CIRCBUF index names append after (stable: circ_extra order).
@@ -1651,6 +1906,11 @@ enum InputIndex {
     Current,
     Lag(i64),
     OtherVar(String),
+    /// `in[v - K]` behind a non-cursor index var (ring back-offset;
+    /// K < 0 encodes a forward read `in[v + |K|]`).
+    OtherVarLag(String, i64),
+    /// `in[v - w]` where `w` is a literal-bounded inner-loop counter.
+    OtherVarWinLag(String, String),
     /// `in[cursor - w]` with a variable offset (rescan window candidate).
     WindowVar(String),
     Unsupported,
@@ -1667,7 +1927,17 @@ fn classify_input_index(idx: &Expr, cursor: &str) -> InputIndex {
         },
         Expr::BinOp(l, BinOp::Sub, r) => match (l.as_ref(), r.as_ref()) {
             (Expr::Var(v), Expr::IntLiteral(k)) if v == cursor && *k >= 1 => InputIndex::Lag(*k),
+            (Expr::Var(v), Expr::IntLiteral(k)) if *k >= 1 => {
+                InputIndex::OtherVarLag(v.clone(), *k)
+            }
             (Expr::Var(v), Expr::Var(w)) if v == cursor => InputIndex::WindowVar(w.clone()),
+            (Expr::Var(v), Expr::Var(w)) => InputIndex::OtherVarWinLag(v.clone(), w.clone()),
+            _ => InputIndex::Unsupported,
+        },
+        Expr::BinOp(l, BinOp::Add, r) => match (l.as_ref(), r.as_ref()) {
+            (Expr::Var(v), Expr::IntLiteral(k)) if v != cursor && *k >= 1 => {
+                InputIndex::OtherVarLag(v.clone(), -k)
+            }
             _ => InputIndex::Unsupported,
         },
         _ => InputIndex::Unsupported,
@@ -1918,6 +2188,8 @@ pub trait NameMap {
     fn ring_buf(&self, var: &str, array: &str) -> String;
     /// The shared ring position for trailing var `var`.
     fn ring_pos(&self, var: &str) -> String;
+    /// Runtime trailing lag of a back-offset ring (`back > 0` only).
+    fn ring_lag(&self, var: &str) -> String;
     /// The shared ring capacity for trailing var `var`.
     fn ring_cap(&self, var: &str) -> String;
     /// The rescan-window buffer for counter `var` over `array`.
@@ -1963,7 +2235,25 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     let rewritten = rewrite_stmts(
         &model.steady_stmts,
         &|e| rewrite_expr_for_transition(e, model, names, &state_names),
-        &|s| drop_bookkeeping(s, &dropped, model, names),
+        &|s| {
+            // In-loop VarDecls: the flattened step declares all temps at the
+            // top, so re-declaring here would shadow (and mid-body decls are
+            // not C89). Keep the initializer as an assignment.
+            let s = match s {
+                Statement::VarDecl {
+                    name,
+                    init: Some(init),
+                    ..
+                } => Statement::Assign {
+                    target: Expr::Var(name),
+                    value: init,
+                    compound: false,
+                },
+                Statement::VarDecl { init: None, .. } => return None,
+                other => other,
+            };
+            drop_bookkeeping(s, &dropped, model, names)
+        },
     );
 
     // param==1 identity short-circuit, mirroring the batch's explicit path
@@ -2112,11 +2402,116 @@ fn insert_transition_prologue(
         }
     }
     for ring in model.rings.iter().rev() {
-        out.insert(0, ring_cap0_guard(ring, names));
+        if ring.back > 0 {
+            // Absolute-mod layout: slot `pos` (== bar index % cap) holds the
+            // current bar so the runtime-lag-0 case reads it through the
+            // same formula. cap = lag + back + 1, so this slot never
+            // collides with any `in[var - K]` read.
+            for arr in ring.arrays.iter().rev() {
+                out.insert(
+                    0,
+                    Statement::Assign {
+                        target: Expr::ArrayAccess(
+                            names.ring_buf(&ring.var, arr),
+                            Box::new(Expr::Var(names.ring_pos(&ring.var))),
+                        ),
+                        value: Expr::Var(names.bar(arr)),
+                        compound: false,
+                    },
+                );
+            }
+        } else {
+            out.insert(0, ring_cap0_guard(ring, names));
+        }
     }
     if let Some(b) = identity_branch {
         out.insert(0, b);
     }
+}
+
+/// Rewrite `arr[cond ? a : b]` to `cond ? arr[a] : arr[b]` bottom-up,
+/// wherever all three sub-expressions are side-effect-free.
+fn hoist_ternary_indices(stmts: &[Statement]) -> Vec<Statement> {
+    let fe = |e: Expr| -> Expr {
+        match e {
+            Expr::ArrayAccess(n, idx) => match *idx {
+                Expr::Ternary(c, a, b)
+                    if expr_is_pure(&c) && expr_is_pure(&a) && expr_is_pure(&b) =>
+                {
+                    Expr::Ternary(
+                        c,
+                        Box::new(Expr::ArrayAccess(n.clone(), a)),
+                        Box::new(Expr::ArrayAccess(n, b)),
+                    )
+                }
+                other => Expr::ArrayAccess(n, Box::new(other)),
+            },
+            other => other,
+        }
+    };
+    rewrite_stmts(stmts, &fe, &Some)
+}
+
+/// True when evaluating the expression has no side effects.
+fn expr_is_pure(e: &Expr) -> bool {
+    match e {
+        Expr::PostIncrement(_)
+        | Expr::PostDecrement(_)
+        | Expr::PreIncrement(_)
+        | Expr::PreDecrement(_) => false,
+        Expr::FuncCall(n, args) => !is_stateful_call(n) && args.iter().all(expr_is_pure),
+        Expr::ArrayAccess(_, i)
+        | Expr::Cast(_, i)
+        | Expr::Not(i)
+        | Expr::AddressOf(i) => expr_is_pure(i),
+        Expr::BinOp(l, _, r) => expr_is_pure(l) && expr_is_pure(r),
+        Expr::Ternary(c, a, b) => expr_is_pure(c) && expr_is_pure(a) && expr_is_pure(b),
+        _ => true,
+    }
+}
+
+/// Read `in[var - k]` from an absolute-mod ring: `ring[(pos + cap - lag - k) % cap]`.
+/// `pos` is the current bar's slot (bar index % cap), `lag` the runtime
+/// distance cursor-var, and `lag + k < cap` by construction, so the single
+/// mod suffices and the slot never collides with the current bar's.
+fn ring_offset_read(
+    ring: &RingSpec,
+    array: &str,
+    k: Option<i64>,
+    var_off: Option<Expr>,
+    names: &dyn NameMap,
+) -> Expr {
+    let mut idx = Expr::BinOp(
+        Box::new(Expr::BinOp(
+            Box::new(Expr::Var(names.ring_pos(&ring.var))),
+            BinOp::Add,
+            Box::new(Expr::Var(names.ring_cap(&ring.var))),
+        )),
+        BinOp::Sub,
+        Box::new(Expr::Var(names.ring_lag(&ring.var))),
+    );
+    match k {
+        Some(k) if k > 0 => {
+            idx = Expr::BinOp(Box::new(idx), BinOp::Sub, Box::new(Expr::IntLiteral(k)));
+        }
+        Some(k) if k < 0 => {
+            // Forward read in[var + |k|]; runtime lag >= fwd keeps the slot
+            // behind the current bar.
+            idx = Expr::BinOp(Box::new(idx), BinOp::Add, Box::new(Expr::IntLiteral(-k)));
+        }
+        _ => {}
+    }
+    if let Some(off) = var_off {
+        idx = Expr::BinOp(Box::new(idx), BinOp::Sub, Box::new(off));
+    }
+    Expr::ArrayAccess(
+        names.ring_buf(&ring.var, array),
+        Box::new(Expr::BinOp(
+            Box::new(idx),
+            BinOp::Mod,
+            Box::new(Expr::Var(names.ring_cap(&ring.var))),
+        )),
+    )
 }
 
 /// `if (cap == 0) ring[0] = bar;` for every array of a ring — makes the
@@ -2202,6 +2597,9 @@ fn rewrite_expr_for_transition(
                 Box::new(Expr::BinOp(idx, BinOp::Mod, Box::new(Expr::Var(names.extrema_cap())))),
             )
         }
+        Expr::ArrayAccess(n, idx) if state_names.contains(&n) => {
+            Expr::ArrayAccess(names.state(&n), idx)
+        }
         Expr::ArrayAccess(n, idx) if model.bar_inputs.contains(&n) => {
             match classify_input_index(&idx, &model.cursor) {
                 InputIndex::Current => Expr::Var(names.bar(&n)),
@@ -2209,11 +2607,28 @@ fn rewrite_expr_for_transition(
                 InputIndex::OtherVar(v)
                     if model.rings.iter().any(|r| r.var == v) =>
                 {
-                    // Oldest slot of the trailing window: ring[pos].
-                    Expr::ArrayAccess(
-                        names.ring_buf(&v, &n),
-                        Box::new(Expr::Var(names.ring_pos(&v))),
-                    )
+                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    if ring.back > 0 {
+                        ring_offset_read(ring, &n, Some(0), None, names)
+                    } else {
+                        // Oldest slot of the trailing window: ring[pos].
+                        Expr::ArrayAccess(
+                            names.ring_buf(&v, &n),
+                            Box::new(Expr::Var(names.ring_pos(&v))),
+                        )
+                    }
+                }
+                InputIndex::OtherVarLag(v, k)
+                    if model.rings.iter().any(|r| r.var == v) =>
+                {
+                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    ring_offset_read(ring, &n, Some(k), None, names)
+                }
+                InputIndex::OtherVarWinLag(v, w)
+                    if model.rings.iter().any(|r| r.var == v) =>
+                {
+                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    ring_offset_read(ring, &n, None, Some(Expr::Var(w)), names)
                 }
                 InputIndex::WindowVar(w0) => {
                     // Bottom-up rewriting may already have state-mapped the
@@ -2434,6 +2849,75 @@ pub fn rewrite_stmts(
         }
     }
     out
+}
+
+/// A batch body that ASSIGNS a settings local would carry the mutation
+/// across bars, while the step re-unpacks from the globals every bar —
+/// silent divergence. No input does this today; reject if one ever does.
+fn reject_candle_local_writes(
+    steady_stmts: &[Statement],
+    candle_locals: &BTreeSet<String>,
+) -> Result<(), StreamError> {
+    for st in steady_stmts {
+        let mut err: Option<String> = None;
+        walk_assign_targets(st, &mut |t| {
+            if let Expr::Var(v) = t {
+                if candle_locals.contains(v) && err.is_none() {
+                    err = Some(v.clone());
+                }
+            }
+        });
+        if let Some(v) = err {
+            return Err(StreamError::Unsupported(format!(
+                "steady loop assigns candle-setting local `{v}`"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Walk every `Assign` target in a statement tree.
+fn walk_assign_targets(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+    match s {
+        Statement::Assign { target, .. } => f(target),
+        Statement::While { body, .. }
+        | Statement::DoWhile { body, .. }
+        | Statement::For { body, .. }
+        | Statement::Block { body } => {
+            for st in body {
+                walk_assign_targets(st, f);
+            }
+        }
+        Statement::If {
+            then_body,
+            else_body,
+            ..
+        } => {
+            for st in then_body.iter().chain(else_body) {
+                walk_assign_targets(st, f);
+            }
+        }
+        Statement::Switch { cases, default, .. } => {
+            for (_, sts) in cases {
+                for st in sts {
+                    walk_assign_targets(st, f);
+                }
+            }
+            for st in default {
+                walk_assign_targets(st, f);
+            }
+        }
+        Statement::ForC {
+            init, update, body, ..
+        } => {
+            walk_assign_targets(init, f);
+            walk_assign_targets(update, f);
+            for st in body {
+                walk_assign_targets(st, f);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Rewrite an expression bottom-up (`f` sees each node after its children).
@@ -2844,6 +3328,9 @@ mod tests {
         }
         fn ring_pos(&self, var: &str) -> String {
             format!("sp->ringPos_{var}")
+        }
+        fn ring_lag(&self, var: &str) -> String {
+            format!("sp->ringLag_{var}")
         }
         fn ring_cap(&self, var: &str) -> String {
             format!("sp->ringCap_{var}")

@@ -2,7 +2,7 @@ name: CDLCONCEALBABYSWALL
 camel_case: CdlConcealBabysWall
 group: Pattern Recognition
 hint: Concealing Baby Swallow
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

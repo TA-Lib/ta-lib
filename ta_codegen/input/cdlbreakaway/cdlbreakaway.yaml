@@ -2,7 +2,7 @@ name: CDLBREAKAWAY
 camel_case: CdlBreakaway
 group: Pattern Recognition
 hint: Breakaway
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

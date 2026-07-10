@@ -2,7 +2,7 @@ name: CDLSTALLEDPATTERN
 camel_case: CdlStalledPattern
 group: Pattern Recognition
 hint: Stalled Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

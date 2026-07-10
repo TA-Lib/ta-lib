@@ -1883,6 +1883,10 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
         "\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d,"
         "\"unstablePeriod\":%d,\"compatibility\":%d",
         fi->name, shape, seed, n, unstablePeriod, compat);
+    /* Candle functions: ask the server for the settings-variation rounds
+     * (avgPeriods bumped, then zeroed) on top of the default-settings legs. */
+    if( fi->flags & TA_FUNC_FLG_CANDLESTICK )
+        pos += sprintf(buf + pos, ",\"candleLegs\":1");
     unsigned int i;
     for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
     {

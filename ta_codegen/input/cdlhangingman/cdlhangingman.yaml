@@ -2,7 +2,7 @@ name: CDLHANGINGMAN
 camel_case: CdlHangingMan
 group: Pattern Recognition
 hint: Hanging Man
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

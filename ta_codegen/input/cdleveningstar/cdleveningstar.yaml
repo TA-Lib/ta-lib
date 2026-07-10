@@ -2,7 +2,7 @@ name: CDLEVENINGSTAR
 camel_case: CdlEveningStar
 group: Pattern Recognition
 hint: Evening Star
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

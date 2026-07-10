@@ -25,6 +25,11 @@ const C_CANDLE_MACRO_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 struct CRenderCtx<'a> {
     single_precision: bool,
     inline_counter: &'a std::cell::Cell<usize>,
+    /// Stream-transition rendering: candle helper calls take scalar bar
+    /// values, so they render as TA_STREAM_CANDLE* macros (mirroring the
+    /// batch macros' arithmetic exactly) instead of the array-indexed
+    /// TA_CANDLE* macros.
+    stream_scalar_candles: bool,
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -453,7 +458,7 @@ fn gen_func_inner(
     }
 
     let inline_counter = Cell::new(0);
-    let ctx = &CRenderCtx { single_precision, inline_counter: &inline_counter };
+    let ctx = &CRenderCtx { single_precision, inline_counter: &inline_counter, stream_scalar_candles: false };
 
     // For S_ variants with explicit _private: emit private_param_init as local VarDecls.
     // These provide the extra params (e.g., k factor) that the inlined private body needs.
@@ -680,7 +685,26 @@ pub fn render_statement(
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
 ) -> String {
-    let ctx = CRenderCtx { single_precision, inline_counter };
+    let ctx = CRenderCtx { single_precision, inline_counter, stream_scalar_candles: false };
+    render_stmt(stmt, indent, &ctx, enums, registry, helpers)
+}
+
+/// Like [`render_statement`], but for generated stream-transition bodies:
+/// candle helper calls render as scalar TA_STREAM_CANDLE* macros.
+#[allow(clippy::implicit_hasher)]
+pub fn render_statement_stream(
+    stmt: &Statement,
+    indent: usize,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    inline_counter: &Cell<usize>,
+) -> String {
+    let ctx = CRenderCtx {
+        single_precision: false,
+        inline_counter,
+        stream_scalar_candles: true,
+    };
     render_stmt(stmt, indent, &ctx, enums, registry, helpers)
 }
 
@@ -901,8 +925,13 @@ impl StatementEmitter for CStmt<'_> {
     fn expr_stmt(&self, e: &Expr, indent: usize) -> String {
         let pad = " ".repeat(indent);
         // Statement-level expression: render a bare call/macro for its side effects.
-        // Skip bare variable statements (no side effects — e.g. inlined identity helpers)
-        if matches!(e, Expr::Var(_)) {
+        // Skip bare variable statements (no side effects — e.g. inlined identity
+        // helpers). Exception: a Var containing whitespace is a verbatim
+        // statement escape (the stream emitter's `goto TA_stream_capture_`).
+        if let Expr::Var(v) = e {
+            if v.contains(' ') {
+                return format!("{pad}{v};\n");
+            }
             return String::new();
         }
         if let Expr::FuncCall(fname, args) = e {
@@ -1491,7 +1520,7 @@ pub(crate) fn render_expression(
     helpers: &HelperRegistry,
     inline_counter: &std::cell::Cell<usize>,
 ) -> String {
-    let ctx = CRenderCtx { single_precision: false, inline_counter };
+    let ctx = CRenderCtx { single_precision: false, inline_counter, stream_scalar_candles: false };
     render_expr(expr, &ctx, registry, helpers)
 }
 
@@ -1584,6 +1613,43 @@ fn try_render_candle_macro(
     }
 }
 
+/// Render candle range/average helper calls in stream-transition context:
+/// scalar OHLC args (bar values or ring reads) map onto the
+/// TA_STREAM_CANDLERANGE / TA_STREAM_CANDLEAVERAGE macros of ta_utility.h.
+fn try_render_stream_candle_macro(
+    fname: &str,
+    args: &[Expr],
+    ctx: &CRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> Option<String> {
+    match fname {
+        "ta_candlerange" if args.len() == 5 => {
+            // ta_candlerange(SET_rangeType, o, h, l, c)
+            let setting = extract_candle_setting_name(&args[0])?;
+            let ohlc: Vec<String> = args[1..5]
+                .iter()
+                .map(|a| render_expr(a, ctx, registry, helpers))
+                .collect();
+            Some(format!("TA_STREAM_CANDLERANGE({setting},{})", ohlc.join(",")))
+        }
+        "ta_candleaverage" if args.len() == 8 => {
+            // ta_candleaverage(SET_rangeType, SET_avgPeriod, SET_factor, sum, o, h, l, c)
+            let setting = extract_candle_setting_name(&args[0])?;
+            let sum_str = render_expr(&args[3], ctx, registry, helpers);
+            let ohlc: Vec<String> = args[4..8]
+                .iter()
+                .map(|a| render_expr(a, ctx, registry, helpers))
+                .collect();
+            Some(format!(
+                "TA_STREAM_CANDLEAVERAGE({setting},{sum_str},{})",
+                ohlc.join(",")
+            ))
+        }
+        _ => None,
+    }
+}
+
 /// Extract the candle setting name from a `_rangeType` variable reference.
 /// `Expr::Var("ShadowVeryShort_rangeType")` → `Some("ShadowVeryShort")`
 fn extract_candle_setting_name(expr: &Expr) -> Option<String> {
@@ -1615,7 +1681,14 @@ fn render_func_call(
 ) -> String {
     // C candle macros: emit preprocessor macro calls instead of expanded code.
     // This enables compiler loop-unswitching, matching the reference library.
-    if let Some(macro_call) = try_render_candle_macro(fname, args, ctx, registry, helpers) {
+    // Stream transitions have scalar bars (no input arrays), so they use the
+    // scalar TA_STREAM_CANDLE* mirrors instead — and must NOT hit the batch
+    // matcher, whose array-access pattern would false-match ring reads.
+    if ctx.stream_scalar_candles {
+        if let Some(macro_call) = try_render_stream_candle_macro(fname, args, ctx, registry, helpers) {
+            return macro_call;
+        }
+    } else if let Some(macro_call) = try_render_candle_macro(fname, args, ctx, registry, helpers) {
         return macro_call;
     }
 
@@ -1767,7 +1840,7 @@ fn render_lookback_code(
 ) -> String {
     let mut out = String::new();
     let inline_counter = Cell::new(0);
-    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter };
+    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false };
 
     // Declare local variables (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();

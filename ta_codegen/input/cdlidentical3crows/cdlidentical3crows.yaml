@@ -2,7 +2,7 @@ name: CDLIDENTICAL3CROWS
 camel_case: CdlIdentical3Crows
 group: Pattern Recognition
 hint: Identical Three Crows
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

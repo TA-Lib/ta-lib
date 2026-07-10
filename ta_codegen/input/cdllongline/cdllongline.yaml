@@ -2,7 +2,7 @@ name: CDLLONGLINE
 camel_case: CdlLongLine
 group: Pattern Recognition
 hint: Long Line Candle
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

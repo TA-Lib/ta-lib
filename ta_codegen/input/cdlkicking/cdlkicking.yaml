@@ -2,7 +2,7 @@ name: CDLKICKING
 camel_case: CdlKicking
 group: Pattern Recognition
 hint: Kicking
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

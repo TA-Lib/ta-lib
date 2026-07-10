@@ -2,7 +2,7 @@ name: CDLMATHOLD
 camel_case: CdlMatHold
 group: Pattern Recognition
 hint: Mat Hold
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

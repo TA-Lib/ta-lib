@@ -2,7 +2,7 @@ name: CDLHARAMI
 camel_case: CdlHarami
 group: Pattern Recognition
 hint: Harami Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

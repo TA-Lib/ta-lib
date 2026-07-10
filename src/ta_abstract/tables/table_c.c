@@ -84,7 +84,7 @@ DEF_FUNCTION( CDL2CROWS,
               TA_GroupId_PatternRecognition,
               "Two Crows",
               "Cdl2Crows",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL2CROWS END */
 
@@ -108,7 +108,7 @@ DEF_FUNCTION( CDL3BLACKCROWS,
               TA_GroupId_PatternRecognition,
               "Three Black Crows",
               "Cdl3BlackCrows",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3BLACKCROWS END */
 
@@ -132,7 +132,7 @@ DEF_FUNCTION( CDL3INSIDE,
               TA_GroupId_PatternRecognition,
               "Three Inside Up/Down",
               "Cdl3Inside",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3INSIDE END */
 
@@ -156,7 +156,7 @@ DEF_FUNCTION( CDL3LINESTRIKE,
               TA_GroupId_PatternRecognition,
               "Three-Line Strike",
               "Cdl3LineStrike",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3LINESTRIKE END */
 
@@ -180,7 +180,7 @@ DEF_FUNCTION( CDL3OUTSIDE,
               TA_GroupId_PatternRecognition,
               "Three Outside Up/Down",
               "Cdl3Outside",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3OUTSIDE END */
 
@@ -204,7 +204,7 @@ DEF_FUNCTION( CDL3STARSINSOUTH,
               TA_GroupId_PatternRecognition,
               "Three Stars In The South",
               "Cdl3StarsInSouth",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3STARSINSOUTH END */
 
@@ -228,7 +228,7 @@ DEF_FUNCTION( CDL3WHITESOLDIERS,
               TA_GroupId_PatternRecognition,
               "Three Advancing White Soldiers",
               "Cdl3WhiteSoldiers",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDL3WHITESOLDIERS END */
 
@@ -254,7 +254,7 @@ DEF_FUNCTION( CDLABANDONEDBABY,
               TA_GroupId_PatternRecognition,
               "Abandoned Baby",
               "CdlAbandonedBaby",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLABANDONEDBABY END */
 
@@ -278,7 +278,7 @@ DEF_FUNCTION( CDLADVANCEBLOCK,
               TA_GroupId_PatternRecognition,
               "Advance Block",
               "CdlAdvanceBlock",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLADVANCEBLOCK END */
 
@@ -302,7 +302,7 @@ DEF_FUNCTION( CDLBELTHOLD,
               TA_GroupId_PatternRecognition,
               "Belt-hold",
               "CdlBeltHold",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLBELTHOLD END */
 
@@ -326,7 +326,7 @@ DEF_FUNCTION( CDLBREAKAWAY,
               TA_GroupId_PatternRecognition,
               "Breakaway",
               "CdlBreakaway",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLBREAKAWAY END */
 
@@ -350,7 +350,7 @@ DEF_FUNCTION( CDLCLOSINGMARUBOZU,
               TA_GroupId_PatternRecognition,
               "Closing Marubozu",
               "CdlClosingMarubozu",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLCLOSINGMARUBOZU END */
 
@@ -374,7 +374,7 @@ DEF_FUNCTION( CDLCONCEALBABYSWALL,
               TA_GroupId_PatternRecognition,
               "Concealing Baby Swallow",
               "CdlConcealBabysWall",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLCONCEALBABYSWALL END */
 
@@ -398,7 +398,7 @@ DEF_FUNCTION( CDLCOUNTERATTACK,
               TA_GroupId_PatternRecognition,
               "Counterattack",
               "CdlCounterAttack",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLCOUNTERATTACK END */
 
@@ -424,7 +424,7 @@ DEF_FUNCTION( CDLDARKCLOUDCOVER,
               TA_GroupId_PatternRecognition,
               "Dark Cloud Cover",
               "CdlDarkCloudCover",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLDARKCLOUDCOVER END */
 
@@ -448,7 +448,7 @@ DEF_FUNCTION( CDLDOJI,
               TA_GroupId_PatternRecognition,
               "Doji",
               "CdlDoji",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLDOJI END */
 
@@ -472,7 +472,7 @@ DEF_FUNCTION( CDLDOJISTAR,
               TA_GroupId_PatternRecognition,
               "Doji Star",
               "CdlDojiStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLDOJISTAR END */
 
@@ -496,7 +496,7 @@ DEF_FUNCTION( CDLDRAGONFLYDOJI,
               TA_GroupId_PatternRecognition,
               "Dragonfly Doji",
               "CdlDragonflyDoji",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLDRAGONFLYDOJI END */
 
@@ -520,7 +520,7 @@ DEF_FUNCTION( CDLENGULFING,
               TA_GroupId_PatternRecognition,
               "Engulfing Pattern",
               "CdlEngulfing",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLENGULFING END */
 
@@ -546,7 +546,7 @@ DEF_FUNCTION( CDLEVENINGDOJISTAR,
               TA_GroupId_PatternRecognition,
               "Evening Doji Star",
               "CdlEveningDojiStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLEVENINGDOJISTAR END */
 
@@ -572,7 +572,7 @@ DEF_FUNCTION( CDLEVENINGSTAR,
               TA_GroupId_PatternRecognition,
               "Evening Star",
               "CdlEveningStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLEVENINGSTAR END */
 
@@ -596,7 +596,7 @@ DEF_FUNCTION( CDLGAPSIDESIDEWHITE,
               TA_GroupId_PatternRecognition,
               "Up/Down-gap side-by-side white lines",
               "CdlGapSideSideWhite",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLGAPSIDESIDEWHITE END */
 
@@ -620,7 +620,7 @@ DEF_FUNCTION( CDLGRAVESTONEDOJI,
               TA_GroupId_PatternRecognition,
               "Gravestone Doji",
               "CdlGravestoneDoji",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLGRAVESTONEDOJI END */
 
@@ -644,7 +644,7 @@ DEF_FUNCTION( CDLHAMMER,
               TA_GroupId_PatternRecognition,
               "Hammer",
               "CdlHammer",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHAMMER END */
 
@@ -668,7 +668,7 @@ DEF_FUNCTION( CDLHANGINGMAN,
               TA_GroupId_PatternRecognition,
               "Hanging Man",
               "CdlHangingMan",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHANGINGMAN END */
 
@@ -692,7 +692,7 @@ DEF_FUNCTION( CDLHARAMI,
               TA_GroupId_PatternRecognition,
               "Harami Pattern",
               "CdlHarami",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHARAMI END */
 
@@ -716,7 +716,7 @@ DEF_FUNCTION( CDLHARAMICROSS,
               TA_GroupId_PatternRecognition,
               "Harami Cross Pattern",
               "CdlHaramiCross",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHARAMICROSS END */
 
@@ -740,7 +740,7 @@ DEF_FUNCTION( CDLHIGHWAVE,
               TA_GroupId_PatternRecognition,
               "High-Wave Candle",
               "CdlHignWave",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHIGHWAVE END */
 
@@ -812,7 +812,7 @@ DEF_FUNCTION( CDLHOMINGPIGEON,
               TA_GroupId_PatternRecognition,
               "Homing Pigeon",
               "CdlHomingPigeon",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHOMINGPIGEON END */
 
@@ -836,7 +836,7 @@ DEF_FUNCTION( CDLIDENTICAL3CROWS,
               TA_GroupId_PatternRecognition,
               "Identical Three Crows",
               "CdlIdentical3Crows",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLIDENTICAL3CROWS END */
 
@@ -860,7 +860,7 @@ DEF_FUNCTION( CDLINNECK,
               TA_GroupId_PatternRecognition,
               "In-Neck Pattern",
               "CdlInNeck",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLINNECK END */
 
@@ -884,7 +884,7 @@ DEF_FUNCTION( CDLINVERTEDHAMMER,
               TA_GroupId_PatternRecognition,
               "Inverted Hammer",
               "CdlInvertedHammer",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLINVERTEDHAMMER END */
 
@@ -908,7 +908,7 @@ DEF_FUNCTION( CDLKICKING,
               TA_GroupId_PatternRecognition,
               "Kicking",
               "CdlKicking",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLKICKING END */
 
@@ -932,7 +932,7 @@ DEF_FUNCTION( CDLKICKINGBYLENGTH,
               TA_GroupId_PatternRecognition,
               "Kicking - bull/bear determined by the longer marubozu",
               "CdlKickingByLength",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLKICKINGBYLENGTH END */
 
@@ -956,7 +956,7 @@ DEF_FUNCTION( CDLLADDERBOTTOM,
               TA_GroupId_PatternRecognition,
               "Ladder Bottom",
               "CdlLadderBottom",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLLADDERBOTTOM END */
 
@@ -980,7 +980,7 @@ DEF_FUNCTION( CDLLONGLEGGEDDOJI,
               TA_GroupId_PatternRecognition,
               "Long Legged Doji",
               "CdlLongLeggedDoji",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLLONGLEGGEDDOJI END */
 
@@ -1004,7 +1004,7 @@ DEF_FUNCTION( CDLLONGLINE,
               TA_GroupId_PatternRecognition,
               "Long Line Candle",
               "CdlLongLine",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLLONGLINE END */
 
@@ -1028,7 +1028,7 @@ DEF_FUNCTION( CDLMARUBOZU,
               TA_GroupId_PatternRecognition,
               "Marubozu",
               "CdlMarubozu",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLMARUBOZU END */
 
@@ -1052,7 +1052,7 @@ DEF_FUNCTION( CDLMATCHINGLOW,
               TA_GroupId_PatternRecognition,
               "Matching Low",
               "CdlMatchingLow",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLMATCHINGLOW END */
 
@@ -1078,7 +1078,7 @@ DEF_FUNCTION( CDLMATHOLD,
               TA_GroupId_PatternRecognition,
               "Mat Hold",
               "CdlMatHold",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLMATHOLD END */
 
@@ -1104,7 +1104,7 @@ DEF_FUNCTION( CDLMORNINGDOJISTAR,
               TA_GroupId_PatternRecognition,
               "Morning Doji Star",
               "CdlMorningDojiStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLMORNINGDOJISTAR END */
 
@@ -1130,7 +1130,7 @@ DEF_FUNCTION( CDLMORNINGSTAR,
               TA_GroupId_PatternRecognition,
               "Morning Star",
               "CdlMorningStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLMORNINGSTAR END */
 
@@ -1154,7 +1154,7 @@ DEF_FUNCTION( CDLONNECK,
               TA_GroupId_PatternRecognition,
               "On-Neck Pattern",
               "CdlOnNeck",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLONNECK END */
 
@@ -1178,7 +1178,7 @@ DEF_FUNCTION( CDLPIERCING,
               TA_GroupId_PatternRecognition,
               "Piercing Pattern",
               "CdlPiercing",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLPIERCING END */
 
@@ -1202,7 +1202,7 @@ DEF_FUNCTION( CDLRICKSHAWMAN,
               TA_GroupId_PatternRecognition,
               "Rickshaw Man",
               "CdlRickshawMan",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLRICKSHAWMAN END */
 
@@ -1226,7 +1226,7 @@ DEF_FUNCTION( CDLRISEFALL3METHODS,
               TA_GroupId_PatternRecognition,
               "Rising/Falling Three Methods",
               "CdlRiseFall3Methods",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLRISEFALL3METHODS END */
 
@@ -1250,7 +1250,7 @@ DEF_FUNCTION( CDLSEPARATINGLINES,
               TA_GroupId_PatternRecognition,
               "Separating Lines",
               "CdlSeperatingLines",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSEPARATINGLINES END */
 
@@ -1274,7 +1274,7 @@ DEF_FUNCTION( CDLSHOOTINGSTAR,
               TA_GroupId_PatternRecognition,
               "Shooting Star",
               "CdlShootingStar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSHOOTINGSTAR END */
 
@@ -1298,7 +1298,7 @@ DEF_FUNCTION( CDLSHORTLINE,
               TA_GroupId_PatternRecognition,
               "Short Line Candle",
               "CdlShortLine",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSHORTLINE END */
 
@@ -1322,7 +1322,7 @@ DEF_FUNCTION( CDLSPINNINGTOP,
               TA_GroupId_PatternRecognition,
               "Spinning Top",
               "CdlSpinningTop",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSPINNINGTOP END */
 
@@ -1346,7 +1346,7 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,
               TA_GroupId_PatternRecognition,
               "Stalled Pattern",
               "CdlStalledPattern",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSTALLEDPATTERN END */
 
@@ -1370,7 +1370,7 @@ DEF_FUNCTION( CDLSTICKSANDWICH,
               TA_GroupId_PatternRecognition,
               "Stick Sandwich",
               "CdlStickSandwich",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLSTICKSANDWICH END */
 
@@ -1394,7 +1394,7 @@ DEF_FUNCTION( CDLTAKURI,
               TA_GroupId_PatternRecognition,
               "Takuri (Dragonfly Doji with very long lower shadow)",
               "CdlTakuri",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLTAKURI END */
 
@@ -1418,7 +1418,7 @@ DEF_FUNCTION( CDLTASUKIGAP,
               TA_GroupId_PatternRecognition,
               "Tasuki Gap",
               "CdlTasukiGap",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLTASUKIGAP END */
 
@@ -1442,7 +1442,7 @@ DEF_FUNCTION( CDLTHRUSTING,
               TA_GroupId_PatternRecognition,
               "Thrusting Pattern",
               "CdlThrusting",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLTHRUSTING END */
 
@@ -1466,7 +1466,7 @@ DEF_FUNCTION( CDLTRISTAR,
               TA_GroupId_PatternRecognition,
               "Tristar Pattern",
               "CdlTristar",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLTRISTAR END */
 
@@ -1490,7 +1490,7 @@ DEF_FUNCTION( CDLUNIQUE3RIVER,
               TA_GroupId_PatternRecognition,
               "Unique 3 River",
               "CdlUnique3River",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLUNIQUE3RIVER END */
 
@@ -1514,7 +1514,7 @@ DEF_FUNCTION( CDLUPSIDEGAP2CROWS,
               TA_GroupId_PatternRecognition,
               "Upside Gap Two Crows",
               "CdlUpsideGap2Crows",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLUPSIDEGAP2CROWS END */
 
@@ -1538,7 +1538,7 @@ DEF_FUNCTION( CDLXSIDEGAP3METHODS,
               TA_GroupId_PatternRecognition,
               "Upside/Downside Gap Three Methods",
               "CdlXSideGap3Methods",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLXSIDEGAP3METHODS END */
 
@@ -1588,7 +1588,7 @@ DEF_FUNCTION( CMO,
               TA_GroupId_MomentumIndicators,
               "Chande Momentum Oscillator",
               "Cmo",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* CMO END */
 
