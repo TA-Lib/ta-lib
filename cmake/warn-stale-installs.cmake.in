@@ -1,0 +1,53 @@
+# Runs at `cmake --install` time: warn when files from another (typically
+# older) TA-Lib installation are present and could shadow this one. Diagnosis
+# only — nothing is deleted (issue #105; this replaced a deletion script that
+# reached outside the install prefix, see microsoft/vcpkg#52719).
+#
+# Configured with @ONLY: only @LIB_HEADERS_FILENAMES@ is baked in at configure
+# time; DESTDIR and CMAKE_INSTALL_PREFIX resolve when the install runs.
+
+# Staged installs (deb/rpm packaging, vcpkg, conan, ...) are not system
+# installs; stay silent.
+if(NOT "$ENV{DESTDIR}" STREQUAL "")
+    return()
+endif()
+
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
+    set(_ta_other_prefix "/usr/local")
+elseif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+    set(_ta_other_prefix "/usr")
+else()
+    return()
+endif()
+
+# Pre-0.6.0 library naming ("ta_lib"), either system prefix.
+file(GLOB _ta_stale /usr/lib/*ta_lib* /usr/local/lib/*ta_lib*)
+
+# Pre-0.6.0 header layout: TA-Lib headers directly under include/ instead of
+# include/ta-lib/.
+foreach(_ta_header @LIB_HEADERS_FILENAMES@)
+    foreach(_ta_incdir /usr/include /usr/local/include)
+        if(EXISTS "${_ta_incdir}/${_ta_header}")
+            list(APPEND _ta_stale "${_ta_incdir}/${_ta_header}")
+        endif()
+    endforeach()
+endforeach()
+
+# A ta-lib installation under the other system prefix.
+if(EXISTS "${_ta_other_prefix}/include/ta-lib")
+    list(APPEND _ta_stale "${_ta_other_prefix}/include/ta-lib/")
+endif()
+file(GLOB _ta_other_libs "${_ta_other_prefix}/lib/*ta-lib*")
+list(APPEND _ta_stale ${_ta_other_libs})
+
+if(_ta_stale)
+    list(REMOVE_DUPLICATES _ta_stale)
+    list(JOIN _ta_stale "\n  " _ta_stale_lines)
+    message(WARNING
+        "Files from another TA-Lib installation were found:\n"
+        "  ${_ta_stale_lines}\n"
+        "They may shadow or conflict with the copy just installed to "
+        "${CMAKE_INSTALL_PREFIX}. Nothing was removed. If a package manager "
+        "(apt, dnf, brew, ...) owns these files, remove them with that tool; "
+        "otherwise delete them manually.")
+endif()

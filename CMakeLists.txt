@@ -489,39 +489,16 @@ else()
     )
 endif()
 
-# Cleanup to avoid potential conflict with older installation:
-#  - Remove deprecated "ta_lib" libs. New name is "ta-lib"
-#  - Remove headers directly under /usr/include and /usr/local/include
-#    Headers are now in ta-lib subdir (e.g. /usr/local/include/ta-lib/*)
-#
-# Also, if the user now installs under /usr/local, clean-up "conflicting"
-# installation directly under /usr (and vice-versa).
-#
+# Warn when another TA-Lib installation could shadow this
+# one (pre-0.6.0 "ta_lib" libs, headers directly under include/, or a ta-lib
+# install in the other system prefix).
 if(UNIX)
-	file(WRITE ${CMAKE_BINARY_DIR}/cleanup_glob.cmake
-		"message(STATUS \"Running cleanup script with prefix [${CMAKE_INSTALL_PREFIX}]\")\n"
-    	"file(GLOB OLD_LIB_FILES /usr/lib/*ta_lib* /usr/local/lib/*ta_lib*)\n"
-    	"foreach(file \${OLD_LIB_FILES})\n"
-    	"    file(REMOVE \${file})\n"
-    	"endforeach()\n"
-		"foreach(header ${LIB_HEADERS_FILENAMES})\n"
-    	"    file(REMOVE /usr/local/include/\${header} /usr/include/\${header})\n"
-    	"endforeach()\n"
-		"if(\"${CMAKE_INSTALL_PREFIX}\" STREQUAL \"/usr\")\n"
-        "    file(REMOVE_RECURSE /usr/local/include/ta-lib)\n"
-        "    file(GLOB OLD_LIB_FILES /usr/local/lib/*ta-lib*)\n"
-        "    foreach(file \${OLD_LIB_FILES})\n"
-        "        file(REMOVE \${file})\n"
-        "    endforeach()\n"
-        "elseif(\"${CMAKE_INSTALL_PREFIX}\" STREQUAL \"/usr/local\")\n"
-        "    file(REMOVE_RECURSE /usr/include/ta-lib)\n"
-        "    file(GLOB OLD_LIB_FILES /usr/lib/*ta-lib*)\n"
-        "    foreach(file \${OLD_LIB_FILES})\n"
-        "        file(REMOVE \${file})\n"
-        "    endforeach()\n"
-        "endif()\n"
+	configure_file(
+		"${CMAKE_CURRENT_SOURCE_DIR}/cmake/warn-stale-installs.cmake.in"
+		"${CMAKE_BINARY_DIR}/warn-stale-installs.cmake"
+		@ONLY
 	)
-	install(SCRIPT ${CMAKE_BINARY_DIR}/cleanup_glob.cmake )
+	install(SCRIPT "${CMAKE_BINARY_DIR}/warn-stale-installs.cmake")
 endif()
 
 # The dev tools use internal, non-exported library symbols, so they need the
@@ -607,11 +584,6 @@ if(_TA_BUILD_TOOLS)
 	# Set the output directory for the ta_regtest executable during the build process
 	set_target_properties(ta_regtest PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
-	)
-
-	# Automatically install ta_regtest in ta-lib/bin after a successful build.
-	install(TARGETS ta_regtest
-		RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
 	)
 
 	############
