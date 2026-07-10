@@ -6140,6 +6140,9 @@
 		<CamelCaseName>StdDev</CamelCaseName>
 		<ShortDescription>Standard Deviation</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -6366,6 +6369,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

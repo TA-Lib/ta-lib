@@ -301,3 +301,183 @@ TA_RetCode TA_S_STDDEV_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_STDDEV_Stream {
+   int optInTimePeriod;
+   double optInNbDev;
+   /* Peek runs the SAME step body on a scratch copy; sub handles are
+    * heap pointers a struct copy cannot clone, so the copy carries this
+    * flag and the step calls sub-Peek instead of sub-Update. */
+   int peekMode;
+   TA_VAR_Stream *sub0;
+};
+
+static void TA_STDDEV_StreamStep( struct TA_STDDEV_Stream *sp, double inReal, double *outReal )
+{
+   double tempReal;
+   double cur_outReal;
+
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   if( sp->peekMode )
+      TA_VAR_Peek( (const TA_VAR_Stream *)sp->sub0, inReal, &cur_outReal );
+   else
+      TA_VAR_Update( sp->sub0, inReal, &cur_outReal );
+   /* Combine map (batch tail, per bar). */
+   if( sp->optInNbDev != 1.0 )
+   {
+      tempReal = cur_outReal;
+      if( !TA_IS_ZERO_OR_NEG(tempReal) )
+      {
+         cur_outReal = sqrt(tempReal) * sp->optInNbDev;
+      } else 
+      {
+         cur_outReal = (double)0.0;
+      }
+   } else 
+   {
+      tempReal = cur_outReal;
+      if( !TA_IS_ZERO_OR_NEG(tempReal) )
+      {
+         cur_outReal = sqrt(tempReal);
+      } else 
+      {
+         cur_outReal = (double)0.0;
+      }
+   }
+   *outReal = cur_outReal;
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal )
+{
+   struct TA_STDDEV_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outReal;
+   TA_VAR_Stream *sub0;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 5;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( optInNbDev == -4e37 )
+      optInNbDev = 1;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+
+   {
+      int i;
+      TA_RetCode retCode;
+      double tempReal;
+      /* Calculate the variance. */
+      /* Sub-stream 0: var over `inReal` — the same series the
+       * batch call below consumes, anchored at its seeding point. */
+      {
+         int subOff;
+         subOff = (startIdx) - TA_VAR_Lookback( optInTimePeriod, 1.0 );
+         if( subOff < 0 ) subOff = 0;
+         subRc = TA_VAR_Open( optInTimePeriod, 1.0, &inReal[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
+            return subRc;
+         }
+      }
+      retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      if( retCode != TA_SUCCESS )
+      {
+         TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
+         return retCode;
+      }
+      /* Calculate the square root of each variance, this
+       * is the standard deviation.
+       *
+       * Multiply also by the ratio specified.
+       */
+      if( optInNbDev != 1.0 )
+      {
+         for( i = 0; i < (int)dummyNBElement; i += 1 )
+         {
+            tempReal = sc_outReal[i];
+            if( !TA_IS_ZERO_OR_NEG(tempReal) )
+            {
+               sc_outReal[i] = sqrt(tempReal) * optInNbDev;
+            } else 
+            {
+               sc_outReal[i] = (double)0.0;
+            }
+         }
+      } else 
+      {
+         for( i = 0; i < (int)dummyNBElement; i += 1 )
+         {
+            tempReal = sc_outReal[i];
+            if( !TA_IS_ZERO_OR_NEG(tempReal) )
+            {
+               sc_outReal[i] = sqrt(tempReal);
+            } else 
+            {
+               sc_outReal[i] = (double)0.0;
+            }
+         }
+      }
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { TA_VAR_Close( sub0 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      sp = (struct TA_STDDEV_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { TA_VAR_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->optInNbDev = optInNbDev;
+      sp->sub0 = sub0;
+      *outReal = sc_outReal[dummyNBElement - 1];
+      TA_Free( sc_outReal );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_STDDEV_StreamStep( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_STDDEV_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.peekMode = 1;
+   TA_STDDEV_StreamStep( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream )
+{
+   if( !stream ) return TA_SUCCESS;
+   TA_VAR_Close( stream->sub0 );
+   TA_Free( stream );
+   return TA_SUCCESS;
+}
+

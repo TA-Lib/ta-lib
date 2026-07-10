@@ -6951,6 +6951,26 @@ TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 1
                                             double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
+
+/*
+ * Streaming API for TA_STDDEV — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_STDDEV_Stream TA_STDDEV_Stream;
+
+TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream );
+
 /*
  * TA_STOCH - Stochastic
  * 
@@ -7151,6 +7171,26 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to
                                               int           optInFastK_Period, /* From 1 to 100000 */
                                               int           optInFastD_Period, /* From 1 to 100000 */
                                               TA_MAType     optInFastD_MAType );
+
+
+/*
+ * Streaming API for TA_STOCHRSI — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_STOCHRSI_Stream TA_STOCHRSI_Stream;
+
+TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int historyLen, TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD );
+
+TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream );
 
 /*
  * TA_SUB - Vector Arithmetic Subtraction

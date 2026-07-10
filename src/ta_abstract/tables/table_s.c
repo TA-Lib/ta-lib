@@ -459,7 +459,7 @@ DEF_FUNCTION( STDDEV,
               TA_GroupId_Statistic,
               "Standard Deviation",
               "StdDev",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* STDDEV END */
 
@@ -721,7 +721,7 @@ DEF_FUNCTION( STOCHRSI,
               TA_GroupId_MomentumIndicators,
               "Stochastic Relative Strength Index",
               "StochRsi",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* STOCHRSI END */
 

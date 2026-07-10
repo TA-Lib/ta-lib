@@ -654,10 +654,39 @@ claim in *Motivation* gets measured, not asserted).
      narrows every dependent precheck on regenerate. Wrong-order sub-open
      sabotage caught; ASan/UBSan/LSan clean over the STOCH 10×9 MAType
      grid.
-   - **Remaining:** loopless pipelines (STOCHRSI = RSI→STOCHF chain, APO/
-     PPO 2-MA combine, STDDEV = VAR + sqrt map, MACDEXT), combine-loop
-     alignment algebra (APO offset j=i+begDiff, ADXR's sub-output ring),
-     BBANDS. Then the delegating param-degenerates (ATR/NATR period 1 =
+   - **Loopless composed pipelines — STDDEV + STOCHRSI DONE (136
+     streamable, 8,913 legs).** A composed body needs no producer loop: the
+     plan's `producer`/`series` are optional and the tail pipeline runs
+     directly over the caller's real input. STDDEV is `var(inReal)` in place
+     then a per-bar sqrt combine map (a param-selected `if (optInNbDev !=
+     1.0)` scaling variant); STOCHRSI is `rsi(inReal)` into a freshly
+     `malloc`'d intermediate, then `stochf` over it (a three-input,
+     two-output sub-call), then a bare `free`. New machinery, all
+     language-neutral: the analyzer resolves each per-bar step through a
+     cur-map (bar inputs are the update scalars, sub destinations get a
+     `cur_*` scalar, tail-aligning copies are aliases); the combine map is
+     transcribed by rewriting `series[cursor]` reads to the current scalar
+     and optional-param reads through the handle, then dropping the loop
+     shells; a multi-input sub-open shares one anchor with one `&src[subOff]`
+     per input; the fresh heap intermediate's `free` is captured as a
+     replayable series-free and re-emitted on every inserted sub-open
+     failure return (LeakSanitizer confirmed a deliberately-dropped replay
+     leaks the buffer on the honest-rejection legs, and the shipped code is
+     leak-clean). A same-shape gate (`check_composed_emittable`) replays the
+     cur-map at analysis time so a plan the emitter could not render is
+     rejected loudly. STOCHRSI inherits RSI's Metastock **seed boundary**
+     transitively (its `rsi` sub-stream cannot open at its own seed exit, so
+     STOCHRSI's Open honestly rejects one bar longer): the verifier derives
+     this through the same `<base>_lookback` closure the unstable-period pins
+     use and shifts the boundary leg. The stream sweep now also moves each
+     RealRange param to a non-default value, so STDDEV's scaling branch is
+     verified rather than run vacuously. A 1e-9 output perturbation fails
+     every leg; the unsupported `optInFastD_MAType` arms (TRIMA/MAMA)
+     expect-reject through the recursive STOCHRSI→stochf→ma precheck.
+   - **Remaining:** the other loopless pipelines (APO/PPO 2-MA combine,
+     MACDEXT), combine-loop alignment algebra (APO offset j=i+begDiff,
+     ADXR's sub-output ring), BBANDS. Then the delegating param-degenerates
+     (ATR/NATR period 1 =
      an embedded TRANGE stream; MACDFIX = generation-time inlining of
      macd's IR with substituted `0,0` args — those select the FIXED
      k=0.15/0.075 coefficients inside macd's body, so the public

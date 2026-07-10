@@ -8145,7 +8145,7 @@ public int stdDevLookback(
 @FuncInfo(
         name  = "STDDEV",
         group = "Statistic Functions",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -8480,7 +8480,7 @@ public int stochRsiLookback(
 @FuncInfo(
         name  = "STOCHRSI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 4,
         nbOutput   = 2

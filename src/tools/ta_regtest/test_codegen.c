@@ -2004,6 +2004,57 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
             }
         }
     }
+
+    /* Real-param sweep: one extra vector with every RealRange optional param
+     * moved to a non-default suggested value. Without it STDDEV/VAR's
+     * `optInNbDev != 1.0` scaling branch of the sqrt combine map is verified
+     * VACUOUSLY (every stream leg runs the default 1.0 branch only). Kept off
+     * the enum cross above so it stays a single default-shape leg
+     * (vecIsEnum == 0 -> variant 0 only). Non-default value comes from the
+     * abstract suggested_start/end (the same source the guarded sweep uses),
+     * filtered to a finite, in-range, non-default candidate. */
+    {
+        unsigned int j;
+        int haveReal = 0;
+        double rvec[STREAM_MAX_OPT];
+        for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+            rvec[j] = vec[0][j];
+        for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+        {
+            const TA_OptInputParameterInfo *oi;
+            TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+            if( oi->type == TA_OptInput_RealRange )
+            {
+                const TA_RealRange *r = (const TA_RealRange *)oi->dataSet;
+                double sugg[2];
+                int b;
+                if( !r ) continue;
+                sugg[0] = r->suggested_start;
+                sugg[1] = r->suggested_end;
+                for( b = 0; b < 2; b++ )
+                {
+                    double vv = sugg[b];
+                    if( fabs(vv) > 1e30 ) continue;          /* unbounded sentinel */
+                    if( vv < r->min || vv > r->max ) continue;
+                    if( vv == oi->defaultValue ) continue;
+                    rvec[i] = vv;
+                    haveReal = 1;
+                    break;
+                }
+            }
+        }
+        if( haveReal )
+        {
+            if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; }
+            else
+            {
+                for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                    vec[nvec][j] = rvec[j];
+                vecIsEnum[nvec] = 0;
+                nvec++;
+            }
+        }
+    }
     return nvec;
 }
 

@@ -2,7 +2,7 @@ name: STOCHRSI
 camel_case: StochRsi
 group: Momentum Indicators
 hint: Stochastic Relative Strength Index
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

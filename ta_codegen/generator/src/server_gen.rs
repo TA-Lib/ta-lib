@@ -808,6 +808,50 @@ fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef]) -> Vec<i32> {
     pin_ids
 }
 
+/// True when `func`'s stream honestly rejects Open at exactly `lookback+1`
+/// under Metastock — a seed boundary — either directly (RSI/CMO emit a seed
+/// output then rewind, so no bit-exact continuation exists from the seed exit)
+/// or through composition: a composed/dispatch function that consumes a
+/// seed-boundary callee inherits the boundary (STOCHRSI's `rsi` sub-stream
+/// cannot open at its own seed boundary, so STOCHRSI's Open rejects one bar
+/// longer). The closure is the same `<base>_lookback` transitive walk
+/// [`collect_pin_ids`] uses — every stream-composed callee appears there — so
+/// the verifier shifts the boundary leg for exactly the functions whose stream
+/// rejects it.
+fn func_has_seed_boundary(func: &FuncDef, funcs: &[FuncDef]) -> bool {
+    let mut visited: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut queue: Vec<String> = vec![func.name.to_uppercase()];
+    while let Some(cur) = queue.pop() {
+        if !visited.insert(cur.clone()) {
+            continue;
+        }
+        let Some(fd) = funcs.iter().find(|f| f.name.eq_ignore_ascii_case(&cur)) else {
+            continue;
+        };
+        // Direct (loop-tier) seed boundary. `analyze` is Err for composed /
+        // dispatch bodies — those inherit the boundary through their callees.
+        if let Ok(m) = crate::streaming::analyze(fd) {
+            if m.seed_boundary {
+                return true;
+            }
+        }
+        if let Some(crate::ir::LookbackExpr::Code(stmts)) = &fd.lookback {
+            for st in stmts {
+                crate::streaming::walk_stmt_exprs(st, &mut |e| {
+                    crate::streaming::walk_expr(e, &mut |x| {
+                        if let crate::ir::Expr::FuncCall(fname, _) = x {
+                            if let Some(base) = fname.strip_suffix("_lookback") {
+                                queue.push(base.to_uppercase());
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    }
+    false
+}
+
 /// The C condition under which a function's stream Open HONESTLY rejects a
 /// param set the batch accepts (a documented capability limitation), or
 /// None when no such set exists. Composes recursively:
@@ -1126,9 +1170,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         // Seed-boundary functions (RSI/CMO under Metastock) honestly reject
         // Open at exactly lookback+1 — the batch would rewind past that
         // state — so the boundary leg starts one bar later there.
-        let seed_shift = crate::streaming::analyze(func)
-            .map(|m| m.seed_boundary)
-            .unwrap_or(false);
+        let seed_shift = func_has_seed_boundary(func, funcs);
         s.push_str("        npref = 0;\n");
         if seed_shift {
             s.push_str("        pc[0] = lb + 1 + ((svCompat == 1) ? 1 : 0); pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");

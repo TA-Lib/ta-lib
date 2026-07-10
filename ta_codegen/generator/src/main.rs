@@ -319,14 +319,19 @@ fn stream_census(seed_yaml: bool) -> i32 {
                     }
                     ta_codegen_lib::streaming::StreamPlan::Composed(cmp) => {
                         derived_tc += 1;
+                        let producer = cmp
+                            .producer
+                            .as_ref()
+                            .map_or("loopless".to_string(), |m| {
+                                format!("loop/{}", m.tier.as_str())
+                            });
+                        let series = cmp.series.as_deref().unwrap_or("-");
                         println!(
-                            "{:<10} {:<14} TC composed({}) producer={} subs={} outs={}",
+                            "{:<10} {:<14} TC composed({series}) producer={producer} subs={} inter={}",
                             status,
                             func.name,
-                            cmp.series,
-                            cmp.producer.tier.as_str(),
                             cmp.subs.len(),
-                            cmp.producer.outputs.len()
+                            cmp.intermediates.len()
                         );
                     }
                 }

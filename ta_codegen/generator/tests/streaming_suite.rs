@@ -142,7 +142,7 @@ fn all_declared_functions_are_streamable() {
             checked += 1;
         }
     }
-    assert!(checked >= 134, "expected 134+ declared functions, saw {checked}");
+    assert!(checked >= 136, "expected 136+ declared functions, saw {checked}");
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
@@ -427,18 +427,27 @@ fn stoch_derives_composed_plan() {
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("STOCH must derive a composed plan");
     };
-    assert_eq!(cp.series, "tempBuffer");
-    assert_eq!(cp.producer.tier, StreamTier::T4, "raw %K extrema producer");
-    assert_eq!(cp.producer.outputs, ["tempBuffer"]);
+    assert_eq!(cp.series.as_deref(), Some("tempBuffer"));
+    let producer = cp.producer.as_ref().expect("STOCH has a producer loop");
+    assert_eq!(producer.tier, StreamTier::T4, "raw %K extrema producer");
+    assert_eq!(producer.outputs, ["tempBuffer"]);
     assert_eq!(cp.subs.len(), 2);
     // Sub 0: in-place smoothing of the raw %K; sub 1: %D from smoothed %K.
     assert_eq!(
-        (cp.subs[0].callee.as_str(), cp.subs[0].src.as_str(), cp.subs[0].dst.as_str()),
-        ("ma", "tempBuffer", "tempBuffer")
+        (
+            cp.subs[0].callee.as_str(),
+            cp.subs[0].srcs.as_slice(),
+            cp.subs[0].dsts.as_slice(),
+        ),
+        ("ma", ["tempBuffer".to_string()].as_slice(), ["tempBuffer".to_string()].as_slice())
     );
     assert_eq!(
-        (cp.subs[1].callee.as_str(), cp.subs[1].src.as_str(), cp.subs[1].dst.as_str()),
-        ("ma", "tempBuffer", "outSlowD")
+        (
+            cp.subs[1].callee.as_str(),
+            cp.subs[1].srcs.as_slice(),
+            cp.subs[1].dsts.as_slice(),
+        ),
+        ("ma", ["tempBuffer".to_string()].as_slice(), ["outSlowD".to_string()].as_slice())
     );
     // Pipeline: sub0, sub1, then the memmove tail-align of outSlowK.
     assert_eq!(cp.steps.len(), 3);
@@ -459,7 +468,7 @@ fn stochf_derives_composed_plan() {
         panic!("STOCHF must derive a composed plan");
     };
     assert_eq!(cp.subs.len(), 1);
-    assert_eq!(cp.subs[0].dst, "outFastD");
+    assert_eq!(cp.subs[0].dsts, ["outFastD"]);
     assert!(matches!(
         &cp.steps[1],
         streaming::UpdateStep::Align { dst, src } if dst == "outFastK" && src == "tempBuffer"
@@ -491,8 +500,56 @@ fn composed_hard_errors_when_subcall_callee_lacks_stream() {
 }
 
 #[test]
-fn stochrsi_not_composed_yet() {
-    // STOCHRSI has no producer loop (pure sub-call pipeline over the RSI
-    // buffer) — a later shape. It must NOT accidentally derive a plan.
-    assert!(streaming::validate_streamable(&load("stochrsi"), &lookup()).is_err());
+fn stochrsi_derives_loopless_composed_plan() {
+    // STOCHRSI has no producer loop: a pure sub-call pipeline
+    // rsi(inReal) -> tempRSIBuffer, then stochf(tempRSIBuffer x3) -> outFastK/D.
+    let f = load("stochrsi");
+    assert!(f.streaming, "stochrsi.yaml must carry the stream flag");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("STOCHRSI derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("STOCHRSI must derive a composed plan");
+    };
+    assert!(cp.producer.is_none(), "loopless pipeline: no producer loop");
+    assert_eq!(cp.series, None);
+    // The RSI buffer is a fresh malloc'd intermediate.
+    assert_eq!(cp.intermediates, ["tempRSIBuffer"]);
+    assert_eq!(cp.subs.len(), 2);
+    assert_eq!(cp.subs[0].callee, "rsi");
+    assert_eq!(cp.subs[0].srcs, ["inReal"]);
+    assert_eq!(cp.subs[0].dsts, ["tempRSIBuffer"]);
+    assert_eq!(cp.subs[1].callee, "stochf");
+    assert_eq!(cp.subs[1].srcs, ["tempRSIBuffer", "tempRSIBuffer", "tempRSIBuffer"]);
+    assert_eq!(cp.subs[1].dsts, ["outFastK", "outFastD"]);
+    // The bare `free(tempRSIBuffer)` is captured as the replayable series free.
+    assert_eq!(cp.series_frees.len(), 1);
+    // Both steps are sub-calls (no producer transition, no combine map).
+    assert_eq!(cp.steps.len(), 2);
+    assert!(matches!(cp.steps[0], streaming::UpdateStep::Sub { sub_idx: 0 }));
+    assert!(matches!(cp.steps[1], streaming::UpdateStep::Sub { sub_idx: 1 }));
+}
+
+#[test]
+fn stddev_derives_loopless_composed_plan() {
+    // STDDEV = var(inReal) -> outReal in place, then a param-selected sqrt
+    // combine map (optInNbDev != 1.0 scales; otherwise plain sqrt).
+    let f = load("stddev");
+    assert!(f.streaming, "stddev.yaml must carry the stream flag");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("STDDEV derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("STDDEV must derive a composed plan");
+    };
+    assert!(cp.producer.is_none(), "loopless pipeline: no producer loop");
+    assert!(cp.intermediates.is_empty(), "var writes the output in place");
+    assert_eq!(cp.subs.len(), 1);
+    assert_eq!(cp.subs[0].callee, "var");
+    assert_eq!(cp.subs[0].srcs, ["inReal"]);
+    assert_eq!(cp.subs[0].dsts, ["outReal"]);
+    // var sub-call, then the sqrt combine map.
+    assert_eq!(cp.steps.len(), 2);
+    assert!(matches!(cp.steps[0], streaming::UpdateStep::Sub { sub_idx: 0 }));
+    assert!(matches!(cp.steps[1], streaming::UpdateStep::Map { .. }));
+    // The map references tempReal as a step-local temp.
+    assert!(cp.map_temps.iter().any(|(n, _)| n == "tempReal"));
+    // No heap series -> no replayable free needed.
+    assert!(cp.series_frees.is_empty());
 }

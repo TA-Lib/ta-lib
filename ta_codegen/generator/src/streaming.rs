@@ -254,10 +254,10 @@ impl DispatchPlan<'_> {
 }
 
 /// One whole-range sub-call in a composed tail: `retCode = callee(sArg,
-/// eArg, src, <opt args>, <begIdx recv>, <nb recv>, dst)`. Open opens the
-/// callee's public stream on the materialized `src` at this exact point
-/// (anchor `max(0, sArg - callee_lookback)`); Update pipes `src`'s current
-/// scalar through the sub handle into `dst`'s.
+/// eArg, <srcs>, <opt args>, <begIdx recv>, <nb recv>, <dsts>)`. Open opens
+/// the callee's public stream on the materialized sources at this exact
+/// point (anchor `max(0, sArg - callee_lookback)`); Update pipes the
+/// sources' current scalars through the sub handle into the destinations'.
 #[derive(Debug, Clone)]
 pub struct SubCallStep {
     /// Index of the call statement within the composed tail.
@@ -270,20 +270,39 @@ pub struct SubCallStep {
     /// transcribed Open scope for the sub-open anchor).
     pub s_arg: Expr,
     pub e_arg: Expr,
-    /// Source and destination series (buffer local or output name; equal
-    /// for in-place smoothing).
-    pub src: String,
-    pub dst: String,
+    /// Source series per callee input, in callee signature order: an
+    /// already-materialized series, or the caller's own single real bar
+    /// input (STOCHRSI feeds `rsi(inReal)`; STOCHF's three price inputs
+    /// all receive the same RSI series).
+    pub srcs: Vec<String>,
+    /// Destination series per callee output, in callee signature order: an
+    /// in-place source, a caller output, or a FRESH intermediate series.
+    pub dsts: Vec<String>,
 }
 
 /// One per-bar step of a composed Update pipeline, in tail order.
 #[derive(Debug, Clone)]
 pub enum UpdateStep {
-    /// Feed `src`'s current scalar through sub handle `sub_idx` into `dst`.
+    /// Feed the sources' current scalars through sub handle `sub_idx`.
     Sub { sub_idx: usize },
     /// Tail-aligning copy (`memmove(dst, &src[k], nb)`): the current scalars
     /// coincide, `dst`'s becomes `src`'s.
     Align { dst: String, src: String },
+    /// A per-bar combine map (a series-map loop, possibly under a
+    /// param-selected variant If): the emitter transforms series reads and
+    /// writes into current scalars, drops the loop shells and cursors, and
+    /// reads params through the handle. `tail_idx` names the statement.
+    Map { tail_idx: usize },
+}
+
+/// A non-returning free of an intermediate series in the tail: the
+/// series' liveness boundary AND the statement inserted failure returns
+/// replay (frees inside returning guards never affect fall-through
+/// liveness and are transcribed verbatim anyway).
+#[derive(Debug, Clone)]
+pub struct SeriesFree {
+    pub tail_idx: usize,
+    pub stmt: Statement,
 }
 
 /// A recognized composed body (STOCH/STOCHF class): a steady producer loop
@@ -297,24 +316,35 @@ pub enum UpdateStep {
 pub struct ComposedPlan<'a> {
     pub func: &'a FuncDef,
     /// Loop model of the producer region (`body[..=loop]`), with the
-    /// intermediate series as its output.
-    pub producer: StreamModel<'a>,
-    /// The intermediate series local the producer loop writes.
-    pub series: String,
+    /// intermediate series as its output. None for loopless pipelines
+    /// (STDDEV, STOCHRSI): the body is prologue + sub-call tail only.
+    pub producer: Option<StreamModel<'a>>,
+    /// The intermediate series the producer loop writes (when present).
+    pub series: Option<String>,
+    /// Every intermediate series in creation order (the producer's, then
+    /// fresh sub-call destinations). Outputs are not listed.
+    pub intermediates: Vec<String>,
     /// Sub-calls in tail order.
     pub subs: Vec<SubCallStep>,
-    /// The per-bar pipeline in tail order (subs + aligns interleaved).
+    /// The per-bar pipeline in tail order (subs/aligns/maps interleaved).
     pub steps: Vec<UpdateStep>,
-    /// The tail statements (everything after the producer loop), for the
-    /// Open transcription.
+    /// The tail statements (everything after the producer loop, or after
+    /// the prologue for loopless pipelines), for the Open transcription.
     pub tail: &'a [Statement],
-    /// The batch's own guarded free of the intermediate series (`if
-    /// (bufferIsAllocated) free(tempBuffer)`), replayed on the emitter's
-    /// inserted sub-open failure returns — the batch's early returns free
-    /// the buffer themselves, but an inserted return must do it explicitly
-    /// or every honest Open rejection leaks the series (LeakSanitizer
-    /// found exactly this on the expected-reject legs).
-    pub series_free: Option<Statement>,
+    /// The region BEFORE the tail (`body[..tail_start]`): the producer loop
+    /// and its setup for the producer case, or the pure-scalar prologue for
+    /// loopless pipelines. Open transcribes this verbatim, then the tail.
+    /// (For the producer case this equals `producer.body`.)
+    pub region: &'a [Statement],
+    /// Non-returning frees of intermediate series (`if (bufferIsAllocated)
+    /// free(tempBuffer)` or a bare `free(buf)`), replayed on the emitter's
+    /// inserted sub-open failure returns for every series still live there
+    /// — the batch's own early returns free the buffers themselves, but an
+    /// inserted return must do it explicitly or every honest Open rejection
+    /// leaks the series (LeakSanitizer found exactly this class).
+    pub series_frees: Vec<SeriesFree>,
+    /// Function-local temps referenced by Map steps (step-local decls).
+    pub map_temps: Vec<(String, VarType)>,
 }
 
 /// The derived stream implementation plan for one function: a steady-loop
@@ -1268,10 +1298,11 @@ pub fn analyze_dispatch<'a>(
     })
 }
 
-/// Recognize a composed body (STOCH/STOCHF class): a steady producer loop
-/// materializing exactly one intermediate series, then a tail of
+/// Recognize a composed body: an optional steady producer loop
+/// materializing one intermediate series, then a tail pipeline of
 /// whole-range sub-calls to stream-flagged callees over materialized
-/// series, tail-aligning memmoves into outputs, and guard/free/bookkeeping
+/// series (or the caller's single real bar input), tail-aligning memmoves
+/// into outputs, per-bar combine maps, and guard/free/bookkeeping
 /// statements. Strict: any unrecognized tail statement is an error, and a
 /// sub-call to an unflagged callee is an error (a composed function only
 /// streams when every piece does — there is no per-arm reject here).
@@ -1288,58 +1319,93 @@ pub fn analyze_composed<'a>(
     let bar_inputs = input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
 
-    // Producer loop = the LAST top-level loop over endIdx.
+    // Producer loop = the LAST top-level loop over endIdx, if any.
     let is_endidx_loop = |s: &Statement| match s {
         Statement::While { condition, .. }
         | Statement::DoWhile { condition, .. }
         | Statement::ForC { condition, .. } => endidx_cursor(condition).is_some(),
         _ => false,
     };
-    let loop_pos = body
-        .iter()
-        .rposition(is_endidx_loop)
-        .ok_or(StreamError::NoSteadyLoop)?;
-    let region = &body[..=loop_pos];
-    let tail = &body[loop_pos + 1..];
-    // Composed-shaped = the tail delegates to another indicator. A tail of
-    // plain bookkeeping (outBegIdx writes, the final return) is an ordinary
-    // loop function: report NoSteadyLoop so the loop-tier error surfaces.
-    let tail_has_subcall = tail.iter().any(|s| {
+    let loop_pos = body.iter().rposition(is_endidx_loop);
+
+    // The tail starts after the producer loop, or (loopless pipelines) at
+    // the first sub-call statement; everything before is the prologue.
+    let is_subcall = |s: &Statement| {
         matches!(s,
             Statement::Assign { value: Expr::FuncCall(name, _), .. }
                 if lookup.callee(name).is_some())
-    });
-    if !tail_has_subcall {
+    };
+    let tail_start = match loop_pos {
+        Some(lp) => lp + 1,
+        None => body
+            .iter()
+            .position(is_subcall)
+            .ok_or(StreamError::NoSteadyLoop)?,
+    };
+    let region = &body[..tail_start];
+    let tail = &body[tail_start..];
+    // Composed-shaped = the tail delegates to another indicator. A tail of
+    // plain bookkeeping (outBegIdx writes, the final return) is an ordinary
+    // loop function: report NoSteadyLoop so the loop-tier error surfaces.
+    if !tail.iter().any(is_subcall) {
         return Err(StreamError::NoSteadyLoop);
     }
 
-    // The intermediate series: the ONE non-output local array the loop
-    // writes (STOCH's tempBuffer).
-    let loop_body: &[Statement] = match &body[loop_pos] {
-        Statement::While { body, .. }
-        | Statement::DoWhile { body, .. }
-        | Statement::ForC { body, .. } => body,
-        _ => unreachable!("matched as loop above"),
+    // Producer analysis (when a loop exists): the ONE non-output local
+    // array the loop writes is the intermediate series.
+    let mut intermediates: Vec<String> = Vec::new();
+    let (producer, series) = if let Some(lp) = loop_pos {
+        let loop_body: &[Statement] = match &body[lp] {
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::ForC { body, .. } => body,
+            _ => unreachable!("matched as loop above"),
+        };
+        let mut written: BTreeSet<String> = BTreeSet::new();
+        for st in loop_body {
+            walk_assign_targets(st, &mut |t| {
+                if let Expr::ArrayAccess(name, _) = t {
+                    written.insert(name.clone());
+                }
+            });
+        }
+        written.retain(|n| !outputs.contains(n) && !bar_inputs.contains(n));
+        if written.len() != 1 {
+            return Err(StreamError::Unsupported(format!(
+                "composed producer loop must write exactly one intermediate series, found {}",
+                written.len()
+            )));
+        }
+        let series = written.into_iter().next().expect("len checked");
+        intermediates.push(series.clone());
+        let producer = analyze_region(func, region, vec![series.clone()])?;
+        (Some(producer), Some(series))
+    } else {
+        // Loopless: the prologue must be pure scalar setup (no array
+        // writes at all — guards/decls/lookback computations only).
+        let mut bad = false;
+        for st in region {
+            walk_assign_targets(st, &mut |t| {
+                if matches!(t, Expr::ArrayAccess(..)) {
+                    bad = true;
+                }
+            });
+        }
+        if bad {
+            return Err(StreamError::Unsupported(
+                "loopless composed prologue writes an array".into(),
+            ));
+        }
+        (None, None)
     };
-    let mut written: BTreeSet<String> = BTreeSet::new();
-    for st in loop_body {
-        walk_assign_targets(st, &mut |t| {
-            if let Expr::ArrayAccess(name, _) = t {
-                written.insert(name.clone());
-            }
-        });
-    }
-    written.retain(|n| !outputs.contains(n) && !bar_inputs.contains(n));
-    if written.len() != 1 {
-        return Err(StreamError::Unsupported(format!(
-            "composed producer loop must write exactly one intermediate series, found {}",
-            written.len()
-        )));
-    }
-    let series = written.into_iter().next().expect("len checked");
 
-    // Producer model over the region, with the series as its output.
-    let producer = analyze_region(func, region, vec![series.clone()])?;
+    // The caller's single real input may feed a sub-call directly
+    // (STOCHRSI's rsi(inReal); STDDEV's var(inReal)).
+    let direct_input: Option<&String> = if func.inputs.len() == 1 && bar_inputs.len() == 1 {
+        Some(&bar_inputs[0])
+    } else {
+        None
+    };
 
     // --- tail pipeline -------------------------------------------------------
     let params: BTreeSet<String> = func
@@ -1349,12 +1415,14 @@ pub fn analyze_composed<'a>(
         .collect();
     let mut subs: Vec<SubCallStep> = Vec::new();
     let mut steps: Vec<UpdateStep> = Vec::new();
-    let mut series_free: Option<Statement> = None;
-    let mut defined: BTreeSet<String> = std::iter::once(series.clone()).collect();
+    let mut series_frees: Vec<SeriesFree> = Vec::new();
+    let mut freed: BTreeSet<String> = BTreeSet::new();
+    let mut map_temp_names: BTreeSet<String> = BTreeSet::new();
+    let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
     for (i, st) in tail.iter().enumerate() {
         match st {
             Statement::Comment(_) => {}
-            // Whole-range sub-call over a materialized series.
+            // Whole-range sub-call over materialized series / the bar input.
             Statement::Assign {
                 target: Expr::Var(_),
                 value: Expr::FuncCall(callee, args),
@@ -1366,43 +1434,46 @@ pub fn analyze_composed<'a>(
                         "composed sub-call `{callee}` has no stream"
                     )));
                 }
-                if sig.n_inputs != 1 || sig.n_outputs != 1 {
-                    return Err(StreamError::Unsupported(format!(
-                        "composed sub-call `{callee}` is not single-input/single-output"
-                    )));
-                }
-                if args.len() != 2 + 1 + sig.n_opts + 2 + 1 {
+                if args.len() != 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs {
                     return Err(StreamError::Unsupported(format!(
                         "composed sub-call `{callee}` has an unexpected argument count"
                     )));
                 }
-                let src = match &args[2] {
-                    Expr::Var(v) => v.clone(),
-                    _ => {
-                        return Err(StreamError::Unsupported(format!(
-                            "composed sub-call `{callee}` input is not a plain series"
-                        )));
+                let as_series = |e: &Expr| -> Result<String, StreamError> {
+                    match e {
+                        Expr::Var(v) => Ok(v.clone()),
+                        _ => Err(StreamError::Unsupported(format!(
+                            "composed sub-call `{callee}` uses a non-plain series argument"
+                        ))),
                     }
                 };
-                let dst = match args.last().expect("len checked") {
-                    Expr::Var(v) => v.clone(),
-                    _ => {
+                let mut srcs = Vec::new();
+                for k in 0..sig.n_inputs {
+                    let src = as_series(&args[2 + k])?;
+                    if !defined.contains(&src) && Some(&src) != direct_input {
                         return Err(StreamError::Unsupported(format!(
-                            "composed sub-call `{callee}` output is not a plain series"
+                            "composed sub-call `{callee}` reads `{src}` before it is materialized"
                         )));
                     }
-                };
-                if !defined.contains(&src) {
-                    return Err(StreamError::Unsupported(format!(
-                        "composed sub-call `{callee}` reads `{src}` before it is materialized"
-                    )));
+                    srcs.push(src);
                 }
-                if dst != src && !outputs.contains(&dst) {
-                    return Err(StreamError::Unsupported(format!(
-                        "composed sub-call `{callee}` writes unrecognized series `{dst}`"
-                    )));
+                let dst_arg_base = 2 + sig.n_inputs + sig.n_opts + 2;
+                let mut dsts = Vec::new();
+                for k in 0..sig.n_outputs {
+                    let dst = as_series(&args[dst_arg_base + k])?;
+                    if !srcs.contains(&dst)
+                        && !outputs.contains(&dst)
+                        && !defined.contains(&dst)
+                    {
+                        // A fresh intermediate series (STOCHRSI's RSI buffer).
+                        intermediates.push(dst.clone());
+                    }
+                    defined.insert(dst.clone());
+                    dsts.push(dst);
                 }
-                let opt_args: Vec<Expr> = args[3..3 + sig.n_opts].to_vec();
+                let first_opt_arg = 2 + sig.n_inputs;
+                let opt_args: Vec<Expr> =
+                    args[first_opt_arg..first_opt_arg + sig.n_opts].to_vec();
                 for a in &opt_args {
                     let mut names = BTreeSet::new();
                     expr_var_names(a, &mut names);
@@ -1412,7 +1483,6 @@ pub fn analyze_composed<'a>(
                         )));
                     }
                 }
-                defined.insert(dst.clone());
                 steps.push(UpdateStep::Sub {
                     sub_idx: subs.len(),
                 });
@@ -1422,8 +1492,8 @@ pub fn analyze_composed<'a>(
                     opt_args,
                     s_arg: args[0].clone(),
                     e_arg: args[1].clone(),
-                    src,
-                    dst,
+                    srcs,
+                    dsts,
                 });
             }
             // Tail-aligning copy into an output.
@@ -1440,7 +1510,7 @@ pub fn analyze_composed<'a>(
                 };
                 let src = match &args[1] {
                     Expr::AddressOf(inner) => match inner.as_ref() {
-                        Expr::ArrayAccess(s, _) => s.clone(),
+                        Expr::ArrayAccess(sname, _) => sname.clone(),
                         _ => {
                             return Err(StreamError::Unsupported(
                                 "composed memmove source is not a series tail".into(),
@@ -1461,13 +1531,45 @@ pub fn analyze_composed<'a>(
                 defined.insert(dst.clone());
                 steps.push(UpdateStep::Align { dst, src });
             }
+            // Per-bar combine map over materialized series (STDDEV's sqrt
+            // variants), possibly wrapped in a param-selected If.
+            Statement::ForC { .. } => {
+                check_map_step(st, &defined, &params, lookup, &mut map_temp_names)?;
+                steps.push(UpdateStep::Map { tail_idx: i });
+            }
+            Statement::If {
+                condition,
+                then_body,
+                else_body,
+                ..
+            } if is_map_variant_if(then_body, else_body) => {
+                let mut names = BTreeSet::new();
+                expr_var_names(condition, &mut names);
+                if !names.iter().all(|nm| params.contains(nm)) {
+                    return Err(StreamError::Unsupported(
+                        "composed map variant condition is not param-pure".into(),
+                    ));
+                }
+                for branch in [then_body, else_body] {
+                    for bst in branch.iter().filter(|x| !matches!(x, Statement::Comment(_))) {
+                        check_map_step(bst, &defined, &params, lookup, &mut map_temp_names)?;
+                    }
+                }
+                steps.push(UpdateStep::Map { tail_idx: i });
+            }
             // Guards (retCode / nbElement checks with early returns) and the
             // bufferIsAllocated free: transcribed verbatim in Open, absent
             // from the per-bar pipeline. Strictly bounded shape.
             Statement::If { .. } => {
                 check_composed_guard(st, &defined, lookup)?;
-                if series_free.is_none() && guard_frees_series(st, &series) {
-                    series_free = Some(st.clone());
+                for ser in intermediates.clone() {
+                    if !freed.contains(&ser) && guard_frees_series(st, &ser) {
+                        freed.insert(ser);
+                        series_frees.push(SeriesFree {
+                            tail_idx: i,
+                            stmt: st.clone(),
+                        });
+                    }
                 }
             }
             // Out-meta bookkeeping (Open maps them to dummies).
@@ -1475,15 +1577,24 @@ pub fn analyze_composed<'a>(
                 target: Expr::PointerDeref(p),
                 ..
             } if p == "outBegIdx" || p == "outNBElement" => {}
+            // Scalar tail locals (APO's alignment offset): Open-only.
+            Statement::Assign {
+                target: Expr::Var(v),
+                ..
+            } if !defined.contains(v) && !outputs.contains(v) => {}
             Statement::Expr(Expr::FuncCall(name, args)) if name == "free" => {
-                // A bare unconditional free of the series is just as
-                // replayable on inserted failure returns as the guarded
-                // form (a sub-call can never legally read the series after
-                // batch freed it, so the replay is always pre-free).
-                if series_free.is_none()
-                    && matches!(args.first(), Some(Expr::Var(v)) if v == &series)
-                {
-                    series_free = Some(st.clone());
+                // A bare unconditional free of an intermediate series is
+                // just as replayable on inserted failure returns as the
+                // guarded form (a sub-call can never legally read a series
+                // after batch freed it, so the replay is always pre-free).
+                if let Some(Expr::Var(v)) = args.first() {
+                    if intermediates.contains(v) && !freed.contains(v) {
+                        freed.insert(v.clone());
+                        series_frees.push(SeriesFree {
+                            tail_idx: i,
+                            stmt: st.clone(),
+                        });
+                    }
                 }
             }
             Statement::Return { .. } if i == tail.len() - 1 => {}
@@ -1496,19 +1607,19 @@ pub fn analyze_composed<'a>(
         }
     }
     if subs.is_empty() {
-        return Err(StreamError::Unsupported(
-            "composed tail has no sub-calls".into(),
-        ));
+        return Err(StreamError::NoSteadyLoop);
     }
     // A heap-allocated series with no replayable free would make every
     // inserted failure return (honest Open rejections included) leak it —
     // the exact class LeakSanitizer caught during this tranche. Refuse to
     // build such a plan.
-    if series_free.is_none() && region_mallocs_series(region, &series) {
-        return Err(StreamError::Unsupported(format!(
-            "composed series `{series}` is heap-allocated but the tail has no \
-             replayable free for the inserted failure returns"
-        )));
+    for ser in &intermediates {
+        if !freed.contains(ser) && region_mallocs_series(body, ser) {
+            return Err(StreamError::Unsupported(format!(
+                "composed series `{ser}` is heap-allocated but the tail has no \
+                 replayable free for the inserted failure returns"
+            )));
+        }
     }
     for out in &outputs {
         if !defined.contains(out) {
@@ -1517,28 +1628,222 @@ pub fn analyze_composed<'a>(
             )));
         }
     }
+    // Map temps: function-local scalars the maps reference; resolve types
+    // from the body's declarations.
+    let mut decls: BTreeMap<String, VarType> = BTreeMap::new();
+    collect_var_decls(body, &mut decls);
+    let mut map_temps: Vec<(String, VarType)> = Vec::new();
+    for name in &map_temp_names {
+        let Some(ty) = decls.get(name) else {
+            return Err(StreamError::Unsupported(format!(
+                "composed map references `{name}` with no visible declaration"
+            )));
+        };
+        map_temps.push((name.clone(), ty.clone()));
+    }
     Ok(ComposedPlan {
         func,
         producer,
         series,
+        intermediates,
         subs,
         steps,
         tail,
-        series_free,
+        region,
+        series_frees,
+        map_temps,
     })
 }
 
+/// Replay the emitter's cur-map over a composed plan: every sub source and
+/// align source must already be materialized when consumed, and every output
+/// must end up produced. This mirrors [`crate::backends::c_stream`]'s step
+/// emission exactly, so any plan it accepts here the emitter can render (and
+/// any plan it rejects would have panicked the emitter — the loud gate the
+/// loopless tier needs in place of a producer transition build).
+fn check_composed_emittable(plan: &ComposedPlan) -> Result<(), StreamError> {
+    let bar_inputs = input_array_names(plan.func);
+    let outputs: Vec<String> = plan.func.outputs.iter().map(|o| o.name.clone()).collect();
+    let mut cur: BTreeSet<String> = bar_inputs.into_iter().collect();
+    if let Some(series) = &plan.series {
+        cur.insert(series.clone());
+    }
+    for step in &plan.steps {
+        match step {
+            UpdateStep::Sub { sub_idx } => {
+                let sub = &plan.subs[*sub_idx];
+                for s in &sub.srcs {
+                    if !cur.contains(s) {
+                        return Err(StreamError::Unsupported(format!(
+                            "composed sub `{}` reads `{s}` before it is materialized",
+                            sub.callee
+                        )));
+                    }
+                }
+                for d in &sub.dsts {
+                    cur.insert(d.clone());
+                }
+            }
+            UpdateStep::Align { dst, src } => {
+                if !cur.contains(src) {
+                    return Err(StreamError::Unsupported(format!(
+                        "composed align reads `{src}` before it is materialized"
+                    )));
+                }
+                cur.insert(dst.clone());
+            }
+            UpdateStep::Map { .. } => {}
+        }
+    }
+    for out in &outputs {
+        if !cur.contains(out) {
+            return Err(StreamError::Unsupported(format!(
+                "composed pipeline never produces output `{out}`"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// True when an If's branches consist solely of map loops (and comments):
+/// STDDEV's `if (optInNbDev != 1.0) { for... } else { for... }` variant
+/// selector, as opposed to a retCode guard.
+fn is_map_variant_if(then_body: &[Statement], else_body: &[Statement]) -> bool {
+    let only_maps = |stmts: &[Statement]| {
+        let meaningful: Vec<&Statement> = stmts
+            .iter()
+            .filter(|s| !matches!(s, Statement::Comment(_)))
+            .collect();
+        !meaningful.is_empty() && meaningful.iter().all(|s| matches!(s, Statement::ForC { .. }))
+    };
+    only_maps(then_body) && (else_body.is_empty() || only_maps(else_body))
+}
+
+/// Validate one map loop: `for (v = 0; v < NB; v++) { <per-bar body> }`
+/// whose body reads/writes ONLY series[cursor], params, and scalar temps —
+/// no indicator or stateful calls, no other array accesses. The emitter
+/// later drops the shell and turns series accesses into current scalars;
+/// everything checked here is what makes that transformation faithful.
+fn check_map_step(
+    st: &Statement,
+    defined: &BTreeSet<String>,
+    params: &BTreeSet<String>,
+    lookup: &dyn CalleeLookup,
+    temps: &mut BTreeSet<String>,
+) -> Result<(), StreamError> {
+    let Statement::ForC {
+        init,
+        condition: _,
+        update: _,
+        body,
+    } = st
+    else {
+        return Err(StreamError::Unsupported(
+            "composed map variant contains a non-loop statement".into(),
+        ));
+    };
+    // Cursors: the init targets. Ascending-from-zero only for now (the
+    // same-bar alignment case; lagged secondary cursors are a later shape).
+    let mut cursors: BTreeSet<String> = BTreeSet::new();
+    let inits: Vec<&Statement> = match init.as_ref() {
+        Statement::Block { body } => body.iter().collect(),
+        one => vec![one],
+    };
+    for ist in inits {
+        match ist {
+            Statement::Assign {
+                target: Expr::Var(v),
+                value: Expr::IntLiteral(0),
+                ..
+            } => {
+                cursors.insert(v.clone());
+            }
+            _ => {
+                return Err(StreamError::Unsupported(
+                    "composed map cursor does not start at 0 (lagged reads are a later shape)"
+                        .into(),
+                ));
+            }
+        }
+    }
+    if !find_indicator_calls(std::slice::from_ref(st), lookup).is_empty() {
+        return Err(StreamError::Unsupported(
+            "composed map calls an indicator".into(),
+        ));
+    }
+    let mut err: Option<StreamError> = None;
+    for bst in body {
+        walk_stmt_exprs(bst, &mut |e| {
+            if err.is_some() {
+                return;
+            }
+            match e {
+                Expr::ArrayAccess(name, idx) => {
+                    let plain_cursor =
+                        matches!(idx.as_ref(), Expr::Var(v) if cursors.contains(v));
+                    if !defined.contains(name) || !plain_cursor {
+                        err = Some(StreamError::Unsupported(format!(
+                            "composed map accesses `{name}` outside series[cursor] form"
+                        )));
+                    }
+                }
+                Expr::FuncCall(name, _) => {
+                    if is_stateful_call(name) {
+                        err = Some(StreamError::UnsupportedCall(name.clone()));
+                    }
+                }
+                Expr::Var(v) => {
+                    if !cursors.contains(v) && !params.contains(v) && !defined.contains(v) {
+                        temps.insert(v.clone());
+                    }
+                }
+                _ => {}
+            }
+        });
+    }
+    if let Some(e) = err {
+        return Err(e);
+    }
+    Ok(())
+}
+
+/// True when an expression heap-allocates: a `malloc`/`TA_Malloc` call
+/// anywhere inside it, so cast-wrapped forms (`(double *)malloc(...)`) and the
+/// library allocator are recognized, not just a bare top-level `malloc`.
+pub fn expr_allocates(e: &Expr) -> bool {
+    let mut found = false;
+    walk_expr(e, &mut |x| {
+        if let Expr::FuncCall(name, _) = x {
+            if name == "malloc" || name == "TA_Malloc" {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
 /// True when the producer region heap-allocates the series
-/// (`series = malloc(...)` anywhere in the region, including branches).
+/// (`series = malloc(...)` anywhere in the region, including branches). Both
+/// the assignment and declaration-with-initializer forms count, and the
+/// allocation may be cast-wrapped or a `TA_Malloc` — the leak-refusal gate
+/// must fire on ANY heap intermediate without a replayable free.
 fn region_mallocs_series(region: &[Statement], series: &str) -> bool {
     fn walk(stmts: &[Statement], series: &str, found: &mut bool) {
         for st in stmts {
             match st {
                 Statement::Assign {
                     target: Expr::Var(v),
-                    value: Expr::FuncCall(name, _),
+                    value,
                     ..
-                } if v == series && name == "malloc" => *found = true,
+                } if v == series && expr_allocates(value) => *found = true,
+                // Declaration-with-initializer form (STOCHRSI's
+                // `double *tempRSIBuffer = malloc(...)`): the same heap
+                // allocation the Assign form catches, spelled as a VarDecl.
+                Statement::VarDecl {
+                    name,
+                    init: Some(init),
+                    ..
+                } if name == series && expr_allocates(init) => *found = true,
                 Statement::If {
                     then_body,
                     else_body,
@@ -1638,17 +1943,25 @@ fn stmt_kind(s: &Statement) -> &'static str {
     }
 }
 
-/// Every distinct `Expr::FuncCall` name in `stmts` the lookup knows (i.e.
-/// indicator calls, as opposed to malloc/free/math builtins), in first-seen
-/// order. Nested calls count too (walk_stmt_exprs recurses into every
-/// expression).
+/// Every distinct `Expr::FuncCall` that is an actual cross-indicator
+/// INVOCATION in `stmts`, in first-seen order. A call counts only when the
+/// lookup knows the name AND the argument count matches the callee's full TA
+/// signature shape (`startIdx, endIdx, <inputs>, <opts>, outBegIdx,
+/// outNBElement, <outputs>`). This is what separates a scalar math builtin
+/// from a same-named indicator: `sqrt(tempReal)` (one scalar arg) is libm's
+/// sqrt, not the `TA_SQRT` vector indicator (whose input-level name is also
+/// `sqrt` but takes six args). Nested calls count too (walk_stmt_exprs
+/// recurses into every expression).
 fn find_indicator_calls(stmts: &[Statement], lookup: &dyn CalleeLookup) -> Vec<String> {
     let mut found: Vec<String> = Vec::new();
     for s in stmts {
         walk_stmt_exprs(s, &mut |e| {
-            if let Expr::FuncCall(name, _) = e {
-                if lookup.callee(name).is_some() && !found.contains(name) {
-                    found.push(name.clone());
+            if let Expr::FuncCall(name, args) = e {
+                if let Some(sig) = lookup.callee(name) {
+                    let ta_arity = 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs;
+                    if args.len() == ta_arity && !found.contains(name) {
+                        found.push(name.clone());
+                    }
                 }
             }
         });
@@ -1860,10 +2173,23 @@ pub fn validate_streamable<'a>(
     match analyze_composed(func, lookup) {
         Ok(plan) => {
             // The producer transition must BUILD, too (same chicken-egg gate
-            // as the loop tier).
-            build_transition(&plan.producer, &GateNames).map_err(|e| {
+            // as the loop tier); loopless pipelines have no producer.
+            if let Some(producer) = &plan.producer {
+                build_transition(producer, &GateNames).map_err(|e| {
+                    format!(
+                        "{}: composed by analysis but the producer transition cannot be built: {e}",
+                        func.name
+                    )
+                })?;
+            }
+            // The per-bar pipeline must resolve every sub source, align source,
+            // and output to a materialized series — the same cur-map the
+            // emitter walks, so a plan the emitter would panic on is rejected
+            // loudly here instead (the loopless tier has no producer transition
+            // to lean on, so this is its build gate).
+            check_composed_emittable(&plan).map_err(|e| {
                 format!(
-                    "{}: composed by analysis but the producer transition cannot be built: {e}",
+                    "{}: composed by analysis but the per-bar pipeline cannot be emitted: {e}",
                     func.name
                 )
             })?;

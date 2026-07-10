@@ -355,7 +355,203 @@ fn composed_cleanup(cp: &streaming::ComposedPlan, outputs: &[String]) -> String 
     s.trim_end().trim_end_matches(';').to_string()
 }
 
+/// The `cur_<name>` scalars the composed step declares: the producer's
+/// intermediate series (if any), then each sub-call's destination series in
+/// tail order (deduplicated; bar inputs are scalar parameters, not `cur_*`).
+/// Align destinations alias an existing scalar and get no declaration of
+/// their own.
+fn composed_cur_scalars(cp: &streaming::ComposedPlan, bar_inputs: &[String]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    if let Some(series) = &cp.series {
+        seen.insert(series.clone());
+        out.push(series.clone());
+    }
+    for sub in &cp.subs {
+        for d in &sub.dsts {
+            if !bar_inputs.contains(d) && seen.insert(d.clone()) {
+                out.push(d.clone());
+            }
+        }
+    }
+    out
+}
+
+/// Drop the shells of the map's `for` loops, keeping any inner param-selected
+/// `if` structure. The per-bar step evaluates each element body exactly once,
+/// so the loop cursor and bounds vanish (the array reads were already rewritten
+/// to `cur_*` scalars by [`emit_composed_step`]).
+fn drop_forc_shells(st: &Statement) -> Vec<Statement> {
+    match st {
+        Statement::ForC { body, .. } => body.iter().flat_map(drop_forc_shells).collect(),
+        Statement::If {
+            condition,
+            then_body,
+            else_body,
+            cond_comments,
+        } => vec![Statement::If {
+            condition: condition.clone(),
+            then_body: then_body.iter().flat_map(drop_forc_shells).collect(),
+            else_body: else_body.iter().flat_map(drop_forc_shells).collect(),
+            cond_comments: cond_comments.clone(),
+        }],
+        other => vec![other.clone()],
+    }
+}
+
+/// Transform one combine-map tail statement into the per-bar scalar form:
+/// rewrite every `series[cursor]` read/write into the series' current scalar
+/// (`cur[series]`) and every optional-param read into `sp-><param>`, then drop
+/// the `for` shells. `map_temps` stay as plain step locals.
+fn transform_map_step(
+    st: &Statement,
+    cur: &std::collections::BTreeMap<String, String>,
+    params: &std::collections::BTreeSet<String>,
+) -> Vec<Statement> {
+    let fe = |e: Expr| -> Expr {
+        match e {
+            Expr::ArrayAccess(name, _) if cur.contains_key(&name) => {
+                Expr::Var(cur.get(&name).expect("checked").clone())
+            }
+            Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp->{v}")),
+            other => other,
+        }
+    };
+    let rewritten = streaming::rewrite_stmts(std::slice::from_ref(st), &fe, &|s| Some(s));
+    rewritten.iter().flat_map(drop_forc_shells).collect()
+}
+
+/// The composed StreamStep: the producer transition (when present) writes the
+/// intermediate series' scalar, which pipelines through the sub handles;
+/// combine maps run per-bar. `peekMode` selects sub-Peek over sub-Update so
+/// the single step body serves both.
 #[allow(clippy::too_many_lines)]
+fn emit_composed_step(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    inputs: &[String],
+    outputs: &[String],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let bars = bar_params_sig(func);
+    let outs = out_params_sig(func);
+    let _ = writeln!(
+        o,
+        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+    );
+    if let Some(model) = &cp.producer {
+        for (name, ty) in &model.temps {
+            let _ = writeln!(o, "   {};", c_decl(ty, name));
+        }
+    }
+    for (name, ty) in &cp.map_temps {
+        let _ = writeln!(o, "   {};", c_decl(ty, name));
+    }
+    let cur_scalars = composed_cur_scalars(cp, inputs);
+    for name in &cur_scalars {
+        let _ = writeln!(o, "   double cur_{name};");
+    }
+    let _ = writeln!(o);
+
+    // The cur-map: bar inputs are the step's scalar parameters; the producer
+    // series (when present) is written by the producer transition below.
+    let mut cur: std::collections::BTreeMap<String, String> = inputs
+        .iter()
+        .map(|b| (b.clone(), b.clone()))
+        .collect();
+
+    if let Some(model) = &cp.producer {
+        emit_extrema_rebase(o, model);
+        let names = ComposedNames {
+            series: cp.series.clone().expect("producer plan carries a series"),
+        };
+        let transition = streaming::build_transition(model, &names)
+            .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+        let mut body_c = String::new();
+        for s in &transition {
+            body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
+        }
+        let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
+        if !step_settings.is_empty() {
+            o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, 3));
+        }
+        o.push_str(&body_c);
+        let series = cp.series.clone().expect("producer plan carries a series");
+        cur.insert(series.clone(), format!("cur_{series}"));
+    }
+
+    // Pipeline: the batch tail, one scalar per bar through the sub handles.
+    let _ = writeln!(o, "\n   /* Pipeline the new bar through the sub-streams (batch tail order). */");
+    let params: std::collections::BTreeSet<String> =
+        func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    for step in &cp.steps {
+        match step {
+            streaming::UpdateStep::Sub { sub_idx } => {
+                let sub = &cp.subs[*sub_idx];
+                let cpfx = callee_prefix(&sub.callee);
+                let mut args: Vec<String> = sub
+                    .srcs
+                    .iter()
+                    .map(|s| cur.get(s).expect("analyzer ordered sub srcs").clone())
+                    .collect();
+                for d in &sub.dsts {
+                    args.push(format!("&cur_{d}"));
+                }
+                let arg_str = args.join(", ");
+                let _ = writeln!(o, "   if( sp->peekMode )");
+                let _ = writeln!(
+                    o,
+                    "      {cpfx}_Peek( (const {cpfx}_Stream *)sp->sub{sub_idx}, {arg_str} );"
+                );
+                let _ = writeln!(o, "   else");
+                let _ = writeln!(o, "      {cpfx}_Update( sp->sub{sub_idx}, {arg_str} );");
+                for d in &sub.dsts {
+                    cur.insert(d.clone(), format!("cur_{d}"));
+                }
+            }
+            streaming::UpdateStep::Align { dst, src } => {
+                let alias = cur.get(src).expect("analyzer ordered align src").clone();
+                cur.insert(dst.clone(), alias);
+            }
+            streaming::UpdateStep::Map { tail_idx } => {
+                let _ = writeln!(o, "   /* Combine map (batch tail, per bar). */");
+                for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params) {
+                    o.push_str(&render_statement_stream(st, 3, enums, registry, helpers, counter));
+                }
+            }
+        }
+    }
+    for out in outputs {
+        let _ = writeln!(o, "   *{out} = {};", cur.get(out).expect("analyzer gated output"));
+    }
+    let _ = writeln!(o, "}}\n");
+}
+
+/// Composed Close: release the sub handles, then the producer buffers + handle
+/// (a loopless pipeline has no producer buffers, so a plain free suffices).
+fn emit_composed_close(o: &mut String, func: &FuncDef, cp: &streaming::ComposedPlan) {
+    let n = uname(func);
+    let _ = writeln!(o, "{}\n{{", close_signature(func));
+    let _ = writeln!(o, "   if( !stream ) return TA_SUCCESS;");
+    for (i, sub) in cp.subs.iter().enumerate() {
+        let _ = writeln!(o, "   {}_Close( stream->sub{i} );", callee_prefix(&sub.callee));
+    }
+    let has_buffers = cp.producer.as_ref().is_some_and(|m| {
+        !m.rings.is_empty() || !m.windows.is_empty() || !m.circs.is_empty() || m.extrema.is_some()
+    });
+    if has_buffers {
+        let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+    } else {
+        let _ = writeln!(o, "   TA_Free( stream );");
+    }
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
 fn emit_composed(
     o: &mut String,
     func: &FuncDef,
@@ -366,12 +562,11 @@ fn emit_composed(
     counter: &Cell<usize>,
 ) {
     let n = uname(func);
-    let model = &cp.producer;
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let cleanup = composed_cleanup(cp, &outputs);
 
-    // --- state struct: producer fields + peek mode + typed sub handles ------
+    // --- state struct: producer fields (if any) + peek mode + sub handles ---
     let mut extra = String::new();
     let _ = writeln!(
         extra,
@@ -381,83 +576,26 @@ fn emit_composed(
     for (i, sub) in cp.subs.iter().enumerate() {
         let _ = writeln!(extra, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
     }
-    emit_state_struct_ex(o, func, model, &extra);
-    emit_release(o, func, model);
+    match &cp.producer {
+        Some(model) => {
+            emit_state_struct_ex(o, func, model, &extra);
+            emit_release(o, func, model);
+        }
+        None => emit_composed_struct_noproducer(o, func, &extra),
+    }
 
     // --- StreamStep -----------------------------------------------------------
-    let bars = bar_params_sig(func);
-    let outs = out_params_sig(func);
-    let _ = writeln!(
-        o,
-        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
-    );
-    for (name, ty) in &model.temps {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
-    }
-    let _ = writeln!(o, "   double cur_{};", cp.series);
-    for sub in &cp.subs {
-        if sub.dst != sub.src {
-            let _ = writeln!(o, "   double cur_{};", sub.dst);
-        }
-    }
-    let _ = writeln!(o);
-    emit_extrema_rebase(o, model);
-    let names = ComposedNames {
-        series: cp.series.clone(),
-    };
-    let transition = streaming::build_transition(model, &names)
-        .unwrap_or_else(|e| panic!("streaming transition: {e}"));
-    let mut body_c = String::new();
-    for s in &transition {
-        body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
-    }
-    let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
-    if !step_settings.is_empty() {
-        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, 3));
-    }
-    o.push_str(&body_c);
-    // Pipeline: the batch tail, one scalar per bar through the sub handles.
-    let _ = writeln!(o, "\n   /* Pipeline the new bar through the sub-streams (batch tail order). */");
-    let mut cur: std::collections::BTreeMap<String, String> =
-        std::iter::once((cp.series.clone(), format!("cur_{}", cp.series))).collect();
-    for step in &cp.steps {
-        match step {
-            streaming::UpdateStep::Sub { sub_idx } => {
-                let sub = &cp.subs[*sub_idx];
-                let cpfx = callee_prefix(&sub.callee);
-                let src = cur.get(&sub.src).expect("analyzer ordered").clone();
-                let dst = format!("cur_{}", sub.dst);
-                let _ = writeln!(o, "   if( sp->peekMode )");
-                let _ = writeln!(
-                    o,
-                    "      {cpfx}_Peek( (const {cpfx}_Stream *)sp->sub{sub_idx}, {src}, &{dst} );"
-                );
-                let _ = writeln!(o, "   else");
-                let _ = writeln!(
-                    o,
-                    "      {cpfx}_Update( sp->sub{sub_idx}, {src}, &{dst} );"
-                );
-                cur.insert(sub.dst.clone(), dst);
-            }
-            streaming::UpdateStep::Align { dst, src } => {
-                let alias = cur.get(src).expect("analyzer ordered").clone();
-                cur.insert(dst.clone(), alias);
-            }
-        }
-    }
-    for out in &outputs {
-        let _ = writeln!(o, "   *{out} = {};", cur.get(out).expect("analyzer gated"));
-    }
-    let _ = writeln!(o, "}}\n");
+    emit_composed_step(o, func, cp, &inputs, &outputs, enums, registry, helpers, counter);
 
     // --- Open ------------------------------------------------------------------
     emit_composed_open(o, func, cp, &outputs, &inputs, &cleanup, enums, registry, helpers, counter);
 
     // --- Update / Peek / Close ---------------------------------------------------
     emit_update(o, func);
-    // Peek: scratch copy + producer buffer mirrors + peekMode.
+    // Peek: scratch copy + (producer only) buffer mirrors + peekMode. A
+    // loopless pipeline has no producer buffers, so the struct copy alone
+    // (sub handles shared, peekMode routing sub-Peek) is const-correct.
     {
-        let bars_v: Vec<String> = inputs.clone();
         let _ = writeln!(o, "{}\n{{", peek_signature(func));
         let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
         let checks: Vec<String> = std::iter::once("!stream".to_string())
@@ -465,9 +603,11 @@ fn emit_composed(
             .collect();
         let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
         let _ = writeln!(o, "   scratch = *stream;");
-        emit_peek_mirror_fixups(o, model);
+        if let Some(model) = &cp.producer {
+            emit_peek_mirror_fixups(o, model);
+        }
         let _ = writeln!(o, "   scratch.peekMode = 1;");
-        let args: Vec<String> = bars_v
+        let args: Vec<String> = inputs
             .iter()
             .cloned()
             .chain(outputs.iter().cloned())
@@ -475,22 +615,118 @@ fn emit_composed(
         let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
         let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     }
-    // Close: subs first, then the producer buffers + handle.
-    let _ = writeln!(o, "{}\n{{", close_signature(func));
-    let _ = writeln!(o, "   if( !stream ) return TA_SUCCESS;");
-    for (i, sub) in cp.subs.iter().enumerate() {
-        let _ = writeln!(o, "   {}_Close( stream->sub{i} );", callee_prefix(&sub.callee));
+    emit_composed_close(o, func, cp);
+}
+
+/// State struct for a loopless composed pipeline (no producer loop): the
+/// optional params (referenced by combine maps as `sp-><param>`), plus the
+/// peek flag and typed sub handles. Dispatch-style — no ring/window/circ/
+/// extrema fields, so no `StreamRelease`.
+fn emit_composed_struct_noproducer(o: &mut String, func: &FuncDef, extra: &str) {
+    let n = uname(func);
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
-    if model.rings.is_empty()
-        && model.windows.is_empty()
-        && model.circs.is_empty()
-        && model.extrema.is_none()
-    {
-        let _ = writeln!(o, "   TA_Free( stream );");
-    } else {
-        let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+    for (name, c_type) in &func.private_extra_params {
+        let _ = writeln!(o, "   {c_type} {name};");
     }
-    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    o.push_str(extra);
+    let _ = writeln!(o, "}};\n");
+}
+
+/// Open one sub-stream on its source series at the anchor
+/// `max(0, sArg − callee_lookback)`, IMMEDIATELY before the batch call that
+/// consumes it. Multi-input callees receive one `&src[subOff]` per input (all
+/// sharing the single anchor — every batch body is startIdx-relative after
+/// clamping, and the anchor is time-invariant in composed bodies), and
+/// multi-output callees get one `&subOpenDummy` per output. On failure, the
+/// inserted return replays every intermediate free the batch performs LATER
+/// than this call (`series_frees` with a greater tail index): those series are
+/// live here, and only an inserted return — not the batch's own early returns —
+/// must free them (LeakSanitizer caught the omission on honest-rejection legs).
+#[allow(clippy::too_many_arguments)]
+fn emit_composed_sub_open(
+    o: &mut String,
+    cp: &streaming::ComposedPlan,
+    sub: &streaming::SubCallStep,
+    si: usize,
+    outputs: &[String],
+    cleanup: &str,
+    open_map: &dyn Fn(Expr) -> Expr,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let cpfx = callee_prefix(&sub.callee);
+    let opt_str: String = sub.opt_args.iter().fold(String::new(), |mut s, a| {
+        let _ = write!(s, "{}, ", render_expression(a, registry, helpers, counter));
+        s
+    });
+    let lb_args: String = sub
+        .opt_args
+        .iter()
+        .map(|a| render_expression(a, registry, helpers, counter))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let s_arg = render_expression(
+        &streaming::rewrite_expr(&sub.s_arg, open_map),
+        registry,
+        helpers,
+        counter,
+    );
+    let e_arg = render_expression(
+        &streaming::rewrite_expr(&sub.e_arg, open_map),
+        registry,
+        helpers,
+        counter,
+    );
+    // One `&src[subOff]` per callee input (caller outputs live in the scratch
+    // arrays; materialized intermediates and bar inputs keep their name).
+    let src_ptrs: String = sub
+        .srcs
+        .iter()
+        .map(|src| {
+            let base = if outputs.contains(src) {
+                format!("sc_{src}")
+            } else {
+                src.clone()
+            };
+            format!("&{base}[subOff]")
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    // One initial-output dummy per callee output.
+    let out_dummies: String = std::iter::repeat_n("&subOpenDummy", sub.dsts.len())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let _ = writeln!(
+        o,
+        "      /* Sub-stream {si}: {} over `{}` — the same series the",
+        sub.callee,
+        sub.srcs.join(", ")
+    );
+    let _ = writeln!(o, "       * batch call below consumes, anchored at its seeding point. */");
+    let _ = writeln!(o, "      {{");
+    let _ = writeln!(o, "         int subOff;");
+    let _ = writeln!(o, "         subOff = ({s_arg}) - {cpfx}_Lookback( {lb_args} );");
+    let _ = writeln!(o, "         if( subOff < 0 ) subOff = 0;");
+    let _ = writeln!(
+        o,
+        "         subRc = {cpfx}_Open( {opt_str}{src_ptrs}, ({e_arg}) - subOff + 1, &sub{si}, {out_dummies} );"
+    );
+    let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
+    let _ = writeln!(o, "         {{");
+    for sf in &cp.series_frees {
+        if sf.tail_idx > sub.tail_idx {
+            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter));
+        }
+    }
+    let _ = writeln!(o, "            {cleanup};");
+    let _ = writeln!(o, "            return subRc;");
+    let _ = writeln!(o, "         }}");
+    let _ = writeln!(o, "      }}");
 }
 
 /// Composed Open: scratch output arrays + verbatim transcription of the
@@ -510,7 +746,6 @@ fn emit_composed_open(
     counter: &Cell<usize>,
 ) {
     let n = uname(func);
-    let model = &cp.producer;
     let _ = writeln!(o, "{}\n{{", open_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int startIdx;");
@@ -564,7 +799,7 @@ fn emit_composed_open(
     for s in &region_stmts {
         region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
-    let open_settings = crate::candle_settings::detect_candle_settings(model.body);
+    let open_settings = crate::candle_settings::detect_candle_settings(cp.region);
     if !open_settings.is_empty() {
         o.push_str(&emit_used_candle_unpacking(&open_settings, &region_c, 6));
     }
@@ -578,57 +813,9 @@ fn emit_composed_open(
     for (i, stmt) in tail_stmts.iter().enumerate() {
         for (si, sub) in cp.subs.iter().enumerate() {
             if sub.tail_idx == i {
-                let cpfx = callee_prefix(&sub.callee);
-                let opt_str: String = sub.opt_args.iter().fold(String::new(), |mut s, a| {
-                    let _ = write!(s, "{}, ", render_expression(a, registry, helpers, counter));
-                    s
-                });
-                let lb_args: String = sub
-                    .opt_args
-                    .iter()
-                    .map(|a| render_expression(a, registry, helpers, counter))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                let s_arg = render_expression(
-                    &streaming::rewrite_expr(&sub.s_arg, &open_map),
-                    registry,
-                    helpers,
-                    counter,
+                emit_composed_sub_open(
+                    o, cp, sub, si, outputs, cleanup, &open_map, enums, registry, helpers, counter,
                 );
-                let e_arg = render_expression(
-                    &streaming::rewrite_expr(&sub.e_arg, &open_map),
-                    registry,
-                    helpers,
-                    counter,
-                );
-                let src = if outputs.contains(&sub.src) {
-                    format!("sc_{}", sub.src)
-                } else {
-                    sub.src.clone()
-                };
-                let _ = writeln!(o, "      /* Sub-stream {si}: {} over `{}` — the same series the", sub.callee, sub.src);
-                let _ = writeln!(o, "       * batch call below consumes, anchored at its seeding point. */");
-                let _ = writeln!(o, "      {{");
-                let _ = writeln!(o, "         int subOff;");
-                let _ = writeln!(o, "         subOff = ({s_arg}) - {cpfx}_Lookback( {lb_args} );");
-                let _ = writeln!(o, "         if( subOff < 0 ) subOff = 0;");
-                let _ = writeln!(
-                    o,
-                    "         subRc = {cpfx}_Open( {opt_str}&{src}[subOff], ({e_arg}) - subOff + 1, &sub{si}, &subOpenDummy );"
-                );
-                let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
-                let _ = writeln!(o, "         {{");
-                // This return is INSERTED into the batch flow: the batch's
-                // early returns free the live series buffer themselves, an
-                // inserted one must replay the batch's own guarded free or
-                // every honest rejection (unsupported MAType arm) leaks it.
-                if let Some(sf) = &cp.series_free {
-                    o.push_str(&render_statement(sf, 12, false, enums, registry, helpers, counter));
-                }
-                let _ = writeln!(o, "            {cleanup};");
-                let _ = writeln!(o, "            return subRc;");
-                let _ = writeln!(o, "         }}");
-                let _ = writeln!(o, "      }}");
             }
         }
         o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter));
@@ -640,17 +827,30 @@ fn emit_composed_open(
         o,
         "      if( dummyNBElement < 1 ) {{ {cleanup}; return TA_BAD_PARAM; }}"
     );
-    o.push_str(&alloc_and_capture(
-        func, model, "      ", /*with_state=*/ true, cleanup, registry, helpers, counter,
-    ));
-    for lag in &model.lags {
-        for k in 1..=lag.depth {
-            let _ = writeln!(
-                o,
-                "      sp->{} = {}[historyLen - {k}];",
-                StreamModel::lag_field(&lag.array, k),
-                lag.array
-            );
+    if let Some(model) = &cp.producer {
+        o.push_str(&alloc_and_capture(
+            func, model, "      ", /*with_state=*/ true, cleanup, registry, helpers, counter,
+        ));
+        for lag in &model.lags {
+            for k in 1..=lag.depth {
+                let _ = writeln!(
+                    o,
+                    "      sp->{} = {}[historyLen - {k}];",
+                    StreamModel::lag_field(&lag.array, k),
+                    lag.array
+                );
+            }
+        }
+    } else {
+        // Loopless pipeline: no producer state to capture, just the params.
+        let _ = writeln!(o, "      sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
+        let _ = writeln!(o, "      if( !sp ) {{ {cleanup}; return TA_ALLOC_ERR; }}");
+        let _ = writeln!(o, "      memset( sp, 0, sizeof(*sp) );");
+        for p in &func.optional_inputs {
+            let _ = writeln!(o, "      sp->{0} = {0};", p.name);
+        }
+        for (name, _) in &func.private_extra_params {
+            let _ = writeln!(o, "      sp->{name} = {name};");
         }
     }
     for (i, _) in cp.subs.iter().enumerate() {
@@ -694,6 +894,36 @@ fn composed_open_expr_fn(outputs: &[String]) -> impl Fn(Expr) -> Expr + '_ {
     }
 }
 
+/// `name = malloc(...); if (!name) { cleanup; return ALLOC_ERR; }` — the batch
+/// bodies malloc intermediate series without a NULL check (a pre-existing batch
+/// defect that surfaces as UB on this NEW API surface). The `= malloc` is
+/// lowered to a plain assignment so the declaration-with-initializer form
+/// (STOCHRSI's `double *tempRSIBuffer = malloc(...)`) does not re-declare a
+/// series the body already declares elsewhere — matching what the batch
+/// backend's decl-hoisting does.
+fn malloc_null_check_block(name: &str, call: Expr, cleanup: &str) -> Statement {
+    Statement::Block {
+        body: vec![
+            Statement::Assign {
+                target: Expr::Var(name.to_string()),
+                value: call,
+                compound: false,
+            },
+            Statement::If {
+                condition: Expr::Not(Box::new(Expr::Var(name.to_string()))),
+                then_body: vec![
+                    Statement::Expr(Expr::Var(cleanup.to_string())),
+                    Statement::Return {
+                        value: Some(Expr::Var("ALLOC_ERR".into())),
+                    },
+                ],
+                else_body: vec![],
+                cond_comments: vec![],
+            },
+        ],
+    }
+}
+
 /// The transcribed (region, tail) statement lists for the composed Open:
 /// out-meta pointers to dummies, output arrays renamed to scratch, early
 /// returns mapped (success -> BAD_PARAM) with the cleanup prepended, final
@@ -705,37 +935,28 @@ fn build_composed_open_bodies(
 ) -> (Vec<Statement>, Vec<Statement>) {
     let fe = composed_open_expr_fn(outputs);
     let cleanup_owned = cleanup.to_string();
-    let series = cp.series.clone();
+    let intermediates: std::collections::BTreeSet<String> =
+        cp.intermediates.iter().cloned().collect();
     let fs = move |s: Statement| -> Option<Statement> {
         match s {
-            // The batch bodies malloc the intermediate series without a
-            // NULL check (a pre-existing batch defect that surfaces as UB
-            // on a NEW API surface here): inject the check so Open fails
-            // with a clean TA_ALLOC_ERR like its every other allocation.
+            // Assignment form (`tempBuffer = malloc(...)`, STOCH). A
+            // cast-wrapped or TA_Malloc allocation is recognized too.
             Statement::Assign {
                 target: Expr::Var(v),
-                value: Expr::FuncCall(name, args),
-                compound,
-            } if v == series && name == "malloc" => Some(Statement::Block {
-                body: vec![
-                    Statement::Assign {
-                        target: Expr::Var(v.clone()),
-                        value: Expr::FuncCall(name, args),
-                        compound,
-                    },
-                    Statement::If {
-                        condition: Expr::Not(Box::new(Expr::Var(v))),
-                        then_body: vec![
-                            Statement::Expr(Expr::Var(cleanup_owned.clone())),
-                            Statement::Return {
-                                value: Some(Expr::Var("ALLOC_ERR".into())),
-                            },
-                        ],
-                        else_body: vec![],
-                        cond_comments: vec![],
-                    },
-                ],
-            }),
+                value,
+                ..
+            } if intermediates.contains(&v) && streaming::expr_allocates(&value) => {
+                Some(malloc_null_check_block(&v, value, &cleanup_owned))
+            }
+            // Declaration-with-initializer form
+            // (`double *tempRSIBuffer = malloc(...)`, STOCHRSI).
+            Statement::VarDecl {
+                name,
+                init: Some(init),
+                ..
+            } if intermediates.contains(&name) && streaming::expr_allocates(&init) => {
+                Some(malloc_null_check_block(&name, init, &cleanup_owned))
+            }
             Statement::Return { value } => {
                 let mapped = match value {
                     Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
@@ -756,7 +977,7 @@ fn build_composed_open_bodies(
             other => Some(other),
         }
     };
-    let region: Vec<Statement> = cp.producer.body.to_vec();
+    let region: Vec<Statement> = cp.region.to_vec();
     let mut tail: Vec<Statement> = cp.tail.to_vec();
     if matches!(tail.last(), Some(Statement::Return { .. })) {
         tail.pop();
