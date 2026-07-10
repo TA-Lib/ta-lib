@@ -58,6 +58,21 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     cp->from_child_fd = -1;
     cp->child_pid = -1;
 
+    /* Pre-flight: the C-family servers are launched by explicit path
+     * (e.g. "./ta_codegen_serve_c"), which resolves against the current
+     * working directory. If ta_regtest is not run from the directory that
+     * holds the servers (bin/), fork+execvp would still "succeed" here and the
+     * failure would only surface later as a misleading wall of per-call errors.
+     * Detect the missing server up front and say so clearly (#106). Commands
+     * resolved via PATH (java, dotnet) have no '/', so they are left to execvp. */
+    if( strchr(argv[0], '/') != NULL && access(argv[0], X_OK) != 0 )
+    {
+        printf("  server not found: %s\n"
+               "  (run ta_regtest from the directory holding the servers, e.g. cd bin)\n",
+               argv[0]);
+        return TA_CODEGEN_PIPE_SERVER_NOT_FOUND;
+    }
+
     if( pipe(parent_to_child) != 0 )
         return TA_CODEGEN_PIPE_OPEN_FAILED;
 
