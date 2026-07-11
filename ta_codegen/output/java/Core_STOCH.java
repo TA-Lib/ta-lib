@@ -3,14 +3,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
+ *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
+ *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  */
 
    public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -221,8 +224,11 @@
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. */
-         if( diff != 0.0 ) {
+         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+          * a machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+          */
+         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -370,7 +376,7 @@
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         if( diff != 0.0 ) {
+         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -517,7 +523,7 @@
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         if( diff != 0.0 ) {
+         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
             tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -643,7 +649,7 @@
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         if( diff != 0.0 ) {
+         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
             tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;

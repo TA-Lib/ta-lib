@@ -3527,6 +3527,17 @@ fn render_func_call(
                 }
                 "false".to_string()
             }
+            SpecialBuiltin::IsZeroScaled => {
+                // IS_ZERO_SCALED(v, scale) -> (v).abs() <= 1e-14 * (scale)
+                // Keep the multiply-and-compare form (never `v - 1e-14*scale <= 0`)
+                // so no FMA-contractible `c - x*y` appears — bit-stable across backends.
+                if args.len() == 2 {
+                    let v = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
+                    let scale = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
+                    return format!("(({v}).abs() <= 1e-14 * ({scale}))");
+                }
+                "false".to_string()
+            }
             SpecialBuiltin::IsZeroOrNeg => {
                 if let Some(arg) = args.first() {
                     let x = render_expr(arg, ctx, opt_real_params, registry, helpers);

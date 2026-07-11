@@ -53,6 +53,7 @@
 /**** Headers ****/
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -117,6 +118,8 @@ typedef struct
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
+static ErrorNumber test_stoch_epsilon_issue107( void );
+static ErrorNumber test_stochrsi_epsilon_issue107( void );
 
 static TA_RetCode referenceStoch( TA_Integer    startIdx,
                                   TA_Integer    endIdx,
@@ -203,6 +206,25 @@ ErrorNumber test_func_stoch( TA_History *history )
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
+   /* Regression test for issue #107 (STOCHRSI): the STOCH/STOCHF divide guard
+    * must treat a machine-epsilon-flat window as flat (output 0), not divide a
+    * sub-epsilon residue into full-scale noise. Crafted degenerate data. */
+   retValue = test_stoch_epsilon_issue107();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed: STOCH/STOCHF epsilon issue #107 regression test (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
+   retValue = test_stochrsi_epsilon_issue107();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed: STOCHRSI epsilon issue #107 regression test (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
    for( i=0; i < NB_TEST; i++ )
    {
       if( (int)tableTest[i].expectedNbElement > (int)history->nbBars )
@@ -229,6 +251,139 @@ ErrorNumber test_func_stoch( TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
+/* Issue #107 (STOCHRSI): STOCHF decides Fast-K as (close-lowest)/((highest-
+ * lowest)/100). STOCHRSI feeds it a COMPUTED RSI series, so a window that is
+ * flat to machine precision has highest-lowest = a sub-epsilon residue rather
+ * than exactly 0. The old exact `diff != 0.0` guard then divides that residue,
+ * amplifying pure rounding noise into an arbitrary value across the full [0,100]
+ * range. The fix guards with TA_IS_ZERO(diff) (the same near-zero test CCI/
+ * ULTOSC/NATR already use), so a flat window yields 0.
+ *
+ * This reproduces the exact internal state with a hand-built window of values a
+ * few ULP apart (what STOCHRSI produces when RSI is flat) fed straight into
+ * STOCHF and STOCH. Pre-fix, STOCHF Fast-K is e.g. [0,100,0,33.33,0,66.67];
+ * post-fix it must be all 0.
+ */
+static ErrorNumber test_stoch_epsilon_issue107( void )
+{
+   /* A machine-flat window: values 0..3 ULP above 50.0 — a real move can never
+    * be this small (a 1-satoshi BTC tick is ~1e5 ULP), so "flat" is correct. */
+   double v[10];
+   TA_Real outK[16], outD[16];
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+   int i;
+   const int n = 10;
+   const int fastK = 5;              /* lookback = fastK-1 + ma_lookback(1) = 4 */
+
+   v[0] = 50.0;
+   v[1] = nextafter( 50.0, 100.0 );  /* +1 ULP */
+   v[2] = 50.0;
+   v[3] = nextafter( v[1], 100.0 );  /* +2 ULP */
+   v[4] = 50.0;
+   v[5] = nextafter( v[3], 100.0 );  /* +3 ULP */
+   v[6] = 50.0;
+   v[7] = nextafter( 50.0, 100.0 );  /* +1 ULP */
+   v[8] = 50.0;
+   v[9] = nextafter( v[7], 100.0 );  /* +2 ULP */
+
+   /* --- STOCHF (the variant STOCHRSI uses): FastD_Period=1 => raw Fast-K --- */
+   retCode = TA_STOCHF( 0, n-1, v, v, v, fastK, 1, TA_MAType_SMA,
+                        &outBegIdx, &outNbElement, outK, outD );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "  issue#107 STOCHF: retCode=%d\n", retCode );
+      return TA_STOCH_EPSILON_ISSUE107_BAD_RETCODE;
+   }
+   if( outBegIdx != fastK-1 || outNbElement != n-(fastK-1) )
+   {
+      printf( "  issue#107 STOCHF: bad range outBegIdx=%d outNbElement=%d\n",
+              outBegIdx, outNbElement );
+      return TA_STOCH_EPSILON_ISSUE107_BAD_RANGE;
+   }
+   for( i=0; i < outNbElement; i++ )
+   {
+      if( fabs(outK[i]) > 1e-9 )
+      {
+         printf( "  issue#107 STOCHF: Fast-K[%d]=%.6f but the window is flat "
+                 "within machine epsilon, so it must be 0.0 (residue divided "
+                 "into full-scale noise)\n", i, outK[i] );
+         return TA_STOCH_EPSILON_ISSUE107_WRONG_VALUE;
+      }
+   }
+
+   /* --- STOCH (slow variant): same guard, SlowK/SlowD periods = 1 --- */
+   retCode = TA_STOCH( 0, n-1, v, v, v, fastK,
+                       1, TA_MAType_SMA, 1, TA_MAType_SMA,
+                       &outBegIdx, &outNbElement, outK, outD );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "  issue#107 STOCH: retCode=%d\n", retCode );
+      return TA_STOCH_EPSILON_ISSUE107_BAD_RETCODE;
+   }
+   for( i=0; i < outNbElement; i++ )
+   {
+      if( fabs(outK[i]) > 1e-9 )
+      {
+         printf( "  issue#107 STOCH: Slow-K[%d]=%.6f but the window is flat "
+                 "within machine epsilon, so it must be 0.0\n", i, outK[i] );
+         return TA_STOCH_EPSILON_ISSUE107_WRONG_VALUE;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* Issue #107 end-to-end through STOCHRSI (which is where it was reported). This
+ * tie-heavy integer series drives Wilder RSI onto windows whose values sit 1 ULP
+ * apart, so the internal STOCHF divide guard fires and reports 0 where the old
+ * exact `diff != 0.0` divided the residue into 100. These golden FastK values are
+ * the FIXED output — an A/B rebuild confirmed they differ from the pre-fix output
+ * (reverting the guard flips several FastK entries from 0 back to 100). This pins
+ * the new behaviour directly, without comparing against the wrong 0.6.4 oracle
+ * (STOCHRSI is excluded from --fuzz-064 for exactly that reason). */
+static ErrorNumber test_stochrsi_epsilon_issue107( void )
+{
+   static const double in[40] = {
+      6, 7, 7, 6, 4, 3, 5, 7, 5, 7,  5, 3, 4, 4, 3, 3, 3, 4, 6, 5,
+      6, 7, 7, 3, 3, 3, 5, 4, 6, 3,  4, 6, 4, 6, 3, 4, 5, 7, 4, 4 };
+   /* FastK for TA_STOCHRSI(period=14, fastK=2, fastD=3, SMA); 11 of 23 are the
+    * flat-RSI-window zeros the fix produces (pre-fix several were 100). */
+   static const double expFastK[23] = {
+      100, 100, 0, 100, 100, 0, 0, 0, 0, 100,  0, 100, 0, 100, 100, 0, 100, 0, 100, 100,  100, 0, 0 };
+   const int nbBars = 40, period = 14, fastK = 2, fastD = 3;
+   const int expBeg = 17, expNb = 23;
+   TA_Real outK[40], outD[40];
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+   int i;
+
+   retCode = TA_STOCHRSI( 0, nbBars-1, in, period, fastK, fastD, TA_MAType_SMA,
+                          &outBegIdx, &outNbElement, outK, outD );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "  issue#107 STOCHRSI: retCode=%d\n", retCode );
+      return TA_STOCH_EPSILON_ISSUE107_BAD_RETCODE;
+   }
+   if( outBegIdx != expBeg || outNbElement != expNb )
+   {
+      printf( "  issue#107 STOCHRSI: bad range outBegIdx=%d (exp %d) outNbElement=%d (exp %d)\n",
+              outBegIdx, expBeg, outNbElement, expNb );
+      return TA_STOCH_EPSILON_ISSUE107_BAD_RANGE;
+   }
+   for( i=0; i < outNbElement; i++ )
+   {
+      if( fabs(outK[i] - expFastK[i]) > 1e-6 )
+      {
+         printf( "  issue#107 STOCHRSI: FastK[%d]=%.6f expected %.6f "
+                 "(flat-RSI-window handling changed?)\n", i, outK[i], expFastK[i] );
+         return TA_STOCH_EPSILON_ISSUE107_WRONG_VALUE;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
 static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                                      TA_Integer    endIdx,
                                      TA_Real      *outputBuffer,

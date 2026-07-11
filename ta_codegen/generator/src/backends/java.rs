@@ -53,7 +53,7 @@ fn is_boolean_expr(expr: &Expr, helpers: &HelperRegistry) -> bool {
         ),
         Expr::Not(_) => true,
         Expr::FuncCall(name, args) => {
-            if matches!(name.as_str(), "IS_ZERO" | "IS_ZERO_OR_NEG") {
+            if matches!(name.as_str(), "IS_ZERO" | "IS_ZERO_SCALED" | "IS_ZERO_OR_NEG") {
                 return true;
             }
             if let Some(helper) = helpers.get(name) {
@@ -1856,6 +1856,16 @@ fn render_func_call(
                 if let Some(arg) = args.first() {
                     let x = render_expr(arg, ctx, registry, helpers);
                     return format!("((-0.00000000000001 < {x}) && ({x} < 0.00000000000001))");
+                }
+                "false".to_string()
+            }
+            SpecialBuiltin::IsZeroScaled => {
+                // IS_ZERO_SCALED(v, scale) -> Math.abs(v) <= 1e-14 * (scale)
+                // Multiply-and-compare form only (no FMA-contractible subtraction).
+                if args.len() == 2 {
+                    let v = render_expr(&args[0], ctx, registry, helpers);
+                    let scale = render_expr(&args[1], ctx, registry, helpers);
+                    return format!("(Math.abs({v}) <= 0.00000000000001 * ({scale}))");
                 }
                 "false".to_string()
             }

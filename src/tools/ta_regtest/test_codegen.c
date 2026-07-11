@@ -568,6 +568,24 @@ static int build_json_request(CodegenRangeTestParam *p,
 
 /* ---- Generic output comparison (Task 8) ---- */
 
+/* Functions whose OUTPUT VALUES intentionally diverge from the frozen pre-cutover
+ * reference (ta_ref_serve) and are pinned by hand-written tests instead.
+ * STOCHRSI (issue #107): its internal STOCHF now guards the divide with
+ * TA_IS_ZERO where the reference divided a sub-epsilon flat-RSI-window residue
+ * into full-scale [0,100] noise — so ta_ref_serve is the wrong value oracle for
+ * it (same reason it is excluded from --fuzz-064). STOCHRSI's structural parity
+ * (retCode/outBegIdx/outNBElement) stays strict on every backend, and its values
+ * are pinned by test_stoch.c (test_stochrsi_epsilon_issue107). Standalone STOCH/
+ * STOCHF keep the same guard but do NOT diverge from the reference on raw OHLC
+ * (a flat raw window has highest==lowest exactly, diff==0), so they stay strictly
+ * value-compared. This exemption applies ONLY to comparisons whose baseline is
+ * the frozen reference — NOT the float leg, whose baseline is the current double
+ * variant (a self-consistency check, see the widenFloatInputs guard at callsite). */
+static int codegen_ref_value_exempt(const char *name)
+{
+    return strcmp(name, "STOCHRSI") == 0;
+}
+
 static void compare_codegen_output_generic(
     CodegenRangeTestParam *p,
     unsigned int outputNb)
@@ -617,6 +635,13 @@ static void compare_codegen_output_generic(
         p->codegenError = TA_CODEGEN_NBELEMENT_MISMATCH;
         return;
     }
+
+    /* Structural parity verified above; skip the VALUE diff for functions that
+     * intentionally diverge from the frozen reference (issue #107 STOCHRSI).
+     * NOT in the float leg (widenFloatInputs): there the baseline is the current
+     * double variant, so TA_S_ vs TA_ self-consistency must stay strictly checked. */
+    if( !p->widenFloatInputs && codegen_ref_value_exempt(p->funcInfo->name) )
+        return;
 
     /* Compare output values for the requested outputNb */
     if( p->outputIsInteger[outputNb] )
@@ -1534,6 +1559,11 @@ static void sweep_compare_guarded(CodegenRangeTestParam *p)
         p->codegenError = TA_CODEGEN_BEGIDX_MISMATCH;
         return;
     }
+
+    /* Structural parity verified above; skip the VALUE diff for functions that
+     * intentionally diverge from the frozen reference (issue #107 STOCHRSI). */
+    if( codegen_ref_value_exempt(p->funcInfo->name) )
+        return;
 
     for( i = 0; i < p->funcInfo->nbOutput && i < MAX_OUTPUTS; i++ )
     {
@@ -2708,6 +2738,7 @@ typedef struct {
     long long    comparisons, matches, benign, failures;
     long long    skipped98;   /* TRIX startIdx>lookback cases (issue #98 fix) */
     long long    cciTol;      /* CCI near-zero cases tolerated vs 0.6.4 (issue #7 fix) */
+    long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
     int          serverRestarts;
@@ -2965,6 +2996,14 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         if( !strstr(ctx->funcList, needle) ) { ctx->funcsSkipped++; return; }
     }
 
+    /* STOCHRSI intentionally diverges from 0.6.4 (issue #107): its internal
+     * STOCHF now guards the divide with TA_IS_ZERO where 0.6.4 divided a sub-
+     * epsilon flat-RSI-window residue into full-scale [0,100] noise. That makes
+     * 0.6.4 the wrong oracle for STOCHRSI, so it is excluded from the differential
+     * fuzz; the new behaviour is pinned by hardcoded tests in test_stoch.c.
+     * (STOCH/STOCHF on raw OHLC do NOT diverge and stay strictly compared.) */
+    if( strcmp(funcInfo->name, "STOCHRSI") == 0 ) { ctx->stochRsiSkipped++; return; }
+
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
         const TA_InputParameterInfo *ii;
@@ -3170,6 +3209,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.cciTol > 0 )
         printf("cci-tolerated: %lld CCI near-zero case(s) within %g vs 0.6.4 (issue #7 zero-value fix)\n",
                ctx.cciTol, (double)FUZZ_CCI_064_TOL);
+    if( ctx.stochRsiSkipped > 0 )
+        printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
+               ctx.stochRsiSkipped);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )
@@ -3180,7 +3222,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.failures == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — current library is bit-identical to v0.6.4 at period>=2"
-               " (benign signed-zero and CCI issue-#7 near-zero tolerance aside).\n");
+               " (benign signed-zero and CCI issue-#7 tolerance aside; STOCHRSI excluded, issue #107).\n");
         return TA_TEST_PASS;
     }
     printf("FAIL — %lld real divergence(s) across %d function(s).\n",

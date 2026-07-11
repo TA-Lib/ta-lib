@@ -19,6 +19,9 @@
  *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
  *               term (and the now-dead unstable-skip loop) so
  *               TA_SetUnstablePeriod is a no-op for it.
+ *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
+ *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
+ *               epsilon-flat typical price is "no movement", not a spurious move.
  */
 
 int mfi_lookback(int optInTimePeriod)
@@ -36,7 +39,7 @@ TA_RetCode mfi(int startIdx, int endIdx,
    double outReal[])
 {
    double posSumMF, negSumMF, prevValue;
-   double tempValue1, tempValue2;
+   double tempValue1, tempValue2, tempValue3;
    int lookbackTotal, outIdx, i, today;
 
    typedef struct { double positive; double negative; } MoneyFlow;
@@ -75,23 +78,26 @@ TA_RetCode mfi(int startIdx, int endIdx,
    {
       tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
       tempValue2 = tempValue1 - prevValue;
+      /* Dead-zone scaled to the two typical prices being compared (issue #107).
+       * Captured before prevValue/tempValue1 are repurposed below. */
+      tempValue3 = fabs(tempValue1) + fabs(prevValue);
       prevValue  = tempValue1;
       tempValue1 *= inVolume[today++];
-      if( tempValue2 < 0 )
+      if( TA_IS_ZERO_SCALED(tempValue2,tempValue3) )
+      {
+         mflow_positive[mflow_Idx] = 0.0;
+         mflow_negative[mflow_Idx] = 0.0;
+      }
+      else if( tempValue2 < 0 )
       {
          mflow_negative[mflow_Idx] = tempValue1;
          negSumMF += tempValue1;
          mflow_positive[mflow_Idx] = 0.0;
       }
-      else if( tempValue2 > 0 )
+      else
       {
          mflow_positive[mflow_Idx] = tempValue1;
          posSumMF += tempValue1;
-         mflow_negative[mflow_Idx] = 0.0;
-      }
-      else
-      {
-         mflow_positive[mflow_Idx] = 0.0;
          mflow_negative[mflow_Idx] = 0.0;
       }
 
@@ -120,23 +126,26 @@ TA_RetCode mfi(int startIdx, int endIdx,
 
       tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
       tempValue2 = tempValue1 - prevValue;
+      /* Dead-zone scaled to the two typical prices being compared (issue #107).
+       * Captured before prevValue/tempValue1 are repurposed below. */
+      tempValue3 = fabs(tempValue1) + fabs(prevValue);
       prevValue  = tempValue1;
       tempValue1 *= inVolume[today++];
-      if( tempValue2 < 0 )
+      if( TA_IS_ZERO_SCALED(tempValue2,tempValue3) )
+      {
+         mflow_positive[mflow_Idx] = 0.0;
+         mflow_negative[mflow_Idx] = 0.0;
+      }
+      else if( tempValue2 < 0 )
       {
          mflow_negative[mflow_Idx] = tempValue1;
          negSumMF += tempValue1;
          mflow_positive[mflow_Idx] = 0.0;
       }
-      else if( tempValue2 > 0 )
+      else
       {
          mflow_positive[mflow_Idx] = tempValue1;
          posSumMF += tempValue1;
-         mflow_negative[mflow_Idx] = 0.0;
-      }
-      else
-      {
-         mflow_positive[mflow_Idx] = 0.0;
          mflow_negative[mflow_Idx] = 0.0;
       }
 

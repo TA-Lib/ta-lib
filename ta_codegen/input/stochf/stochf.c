@@ -4,14 +4,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  EKO      echo999@ifrance.com
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  051103 EKO  Found bug and fix related to outFastD.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  051103 EKO   Found bug and fix related to outFastD.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
+ *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
+ *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  *
  */
 
@@ -203,8 +207,10 @@ TA_RetCode stochf(int startIdx, int endIdx,
          diff = (highest - lowest)/100.0;
       }
 
-      /* Calculate stochastic. */
-      if( diff != 0.0 )
+      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+       * a machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI). */
+      if( !TA_IS_ZERO(diff) )
          tempBuffer[outIdx++] = (inClose[today]-lowest)/diff;
       else
          tempBuffer[outIdx++] = 0.0;

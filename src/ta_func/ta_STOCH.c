@@ -47,14 +47,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
+ *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
+ *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -292,8 +295,11 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      /* Calculate stochastic. */
-      if( diff != 0.0 )
+      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+       * a machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI).
+       */
+      if( !TA_IS_ZERO(diff) )
       {
          tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
       } else 
@@ -465,7 +471,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      if( diff != 0.0 )
+      if( !TA_IS_ZERO(diff) )
       {
          tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
       } else 
@@ -647,7 +653,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      if( diff != 0.0 )
+      if( !TA_IS_ZERO(diff) )
       {
          tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
       } else 
@@ -797,7 +803,7 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      if( diff != 0.0 )
+      if( !TA_IS_ZERO(diff) )
       {
          tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
       } else 
@@ -941,8 +947,11 @@ static void TA_STOCH_StreamStep( struct TA_STOCH_Stream *sp, double inHigh, doub
       sp->highest = tmp;
       sp->diff = (sp->highest - sp->lowest) / 100.0;
    }
-   /* Calculate stochastic. */
-   if( sp->diff != 0.0 )
+   /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+    * a machine-flat window leaves a sub-epsilon residue that an exact check
+    * would divide into [0,100] noise (issue #107 / STOCHRSI).
+    */
+   if( !TA_IS_ZERO(sp->diff) )
    {
       cur_tempBuffer = (sp->x_inClose[sp->today % sp->xCap] - sp->lowest) / sp->diff;
    } else 
@@ -1180,8 +1189,11 @@ TA_LIB_API TA_RetCode TA_STOCH_Open( int optInFastK_Period, int optInSlowK_Perio
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. */
-         if( diff != 0.0 )
+         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+          * a machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+          */
+         if( !TA_IS_ZERO(diff) )
          {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else 

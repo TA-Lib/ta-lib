@@ -267,6 +267,13 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_IS_ZERO(v)        (((-TA_EPSILON)<v)&&(v<TA_EPSILON))
 #define TA_IS_ZERO_OR_NEG(v) (v<TA_EPSILON)
 
+/* Scale-aware zero test (issue #107): treats v as zero within TA_EPSILON of the
+ * operands' magnitude ('scale' = |a|+|b|) — a ~90-ULP relative dead-zone. Use
+ * when v is a DIFFERENCE of comparable magnitudes; a fixed band (TA_IS_ZERO)
+ * misses the tie once the operands grow past ~1.0. Keep the multiply-compare
+ * form: `fabs(v) - E*scale <= 0` would contract to an FMA and diverge per-backend. */
+#define TA_IS_ZERO_SCALED(v,scale) (fabs(v) <= (TA_EPSILON*(scale)))
+
 /* The following macros are being used to do
  * the Hilbert Transform logic as documented
  * in John Ehlers books "Rocket Science For Traders".

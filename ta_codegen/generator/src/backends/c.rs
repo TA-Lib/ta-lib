@@ -1731,6 +1731,15 @@ fn render_func_call(
                 }
                 "TA_IS_ZERO(0)".to_string()
             }
+            SpecialBuiltin::IsZeroScaled => {
+                // IS_ZERO_SCALED(v, scale) -> TA_IS_ZERO_SCALED(v, scale)
+                if args.len() == 2 {
+                    let v = render_expr(&args[0], ctx, registry, helpers);
+                    let scale = render_expr(&args[1], ctx, registry, helpers);
+                    return format!("TA_IS_ZERO_SCALED({v}, {scale})");
+                }
+                "TA_IS_ZERO(0)".to_string()
+            }
             SpecialBuiltin::IsZeroOrNeg => {
                 // IS_ZERO_OR_NEG(x) -> TA_IS_ZERO_OR_NEG(x)
                 if let Some(arg) = args.first() {

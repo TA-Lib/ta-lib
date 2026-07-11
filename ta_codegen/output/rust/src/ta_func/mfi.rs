@@ -60,6 +60,9 @@
  *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
  *               term (and the now-dead unstable-skip loop) so
  *               TA_SetUnstablePeriod is a no-op for it.
+ *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
+ *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
+ *               epsilon-flat typical price is "no movement", not a spurious move.
  */
 
 // Import types from parent module
@@ -194,6 +197,7 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
+        let mut tempValue3: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
@@ -233,18 +237,21 @@ impl Core {
         while i > 0 {
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if tempValue2 < 0_f64 {
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
                 mflow_negative[mflow_Idx] = tempValue1;
                 negSumMF += tempValue1;
                 mflow_positive[mflow_Idx] = 0.0;
-            } else if tempValue2 > 0_f64 {
+            } else {
                 mflow_positive[mflow_Idx] = tempValue1;
                 posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = 0.0;
                 mflow_negative[mflow_Idx] = 0.0;
             }
             mflow_Idx += 1;
@@ -271,18 +278,21 @@ impl Core {
             negSumMF -= mflow_negative[mflow_Idx];
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if tempValue2 < 0_f64 {
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
                 mflow_negative[mflow_Idx] = tempValue1;
                 negSumMF += tempValue1;
                 mflow_positive[mflow_Idx] = 0.0;
-            } else if tempValue2 > 0_f64 {
+            } else {
                 mflow_positive[mflow_Idx] = tempValue1;
                 posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = 0.0;
                 mflow_negative[mflow_Idx] = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
@@ -325,6 +335,7 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
+        let mut tempValue3: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
@@ -365,18 +376,19 @@ impl Core {
         while i > 0 {
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if tempValue2 < 0_f64 {
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
                 mflow_negative[mflow_Idx] = tempValue1;
                 negSumMF += tempValue1;
                 mflow_positive[mflow_Idx] = 0.0;
-            } else if tempValue2 > 0_f64 {
+            } else {
                 mflow_positive[mflow_Idx] = tempValue1;
                 posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = 0.0;
                 mflow_negative[mflow_Idx] = 0.0;
             }
             mflow_Idx += 1;
@@ -396,18 +408,19 @@ impl Core {
             negSumMF -= mflow_negative[mflow_Idx];
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if tempValue2 < 0_f64 {
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
                 mflow_negative[mflow_Idx] = tempValue1;
                 negSumMF += tempValue1;
                 mflow_positive[mflow_Idx] = 0.0;
-            } else if tempValue2 > 0_f64 {
+            } else {
                 mflow_positive[mflow_Idx] = tempValue1;
                 posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = 0.0;
                 mflow_negative[mflow_Idx] = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;

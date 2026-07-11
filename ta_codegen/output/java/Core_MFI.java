@@ -19,6 +19,9 @@
  *  070726 MW,CC Fix #4. MFI has no unstable period; drop the unstable-period
  *               term (and the now-dead unstable-skip loop) so
  *               TA_SetUnstablePeriod is a no-op for it.
+ *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
+ *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
+ *               epsilon-flat typical price is "no movement", not a spurious move.
  */
 
    public int mfiLookback( int optInTimePeriod )
@@ -47,6 +50,7 @@
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
+      double tempValue3 = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
@@ -96,18 +100,22 @@
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         /* Dead-zone scaled to the two typical prices being compared (issue #107).
+          * Captured before prevValue/tempValue1 are repurposed below.
+          */
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          mflow_Idx++;
@@ -133,18 +141,22 @@
          negSumMF -= mflow_negative[mflow_Idx];
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         /* Dead-zone scaled to the two typical prices being compared (issue #107).
+          * Captured before prevValue/tempValue1 are repurposed below.
+          */
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
@@ -176,6 +188,7 @@
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
+      double tempValue3 = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
@@ -207,18 +220,19 @@
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          mflow_Idx++;
@@ -235,18 +249,19 @@
          negSumMF -= mflow_negative[mflow_Idx];
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
@@ -278,6 +293,7 @@
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
+      double tempValue3 = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
@@ -320,18 +336,19 @@
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          mflow_Idx++;
@@ -348,18 +365,19 @@
          negSumMF -= mflow_negative[mflow_Idx];
          tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
@@ -391,6 +409,7 @@
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
+      double tempValue3 = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
@@ -422,18 +441,19 @@
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          mflow_Idx++;
@@ -450,18 +470,19 @@
          negSumMF -= mflow_negative[mflow_Idx];
          tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
          tempValue2 = tempValue1 - prevValue;
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( tempValue2 < 0 ) {
+         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
+            mflow_positive[mflow_Idx] = 0.0;
+            mflow_negative[mflow_Idx] = 0.0;
+         } else if( tempValue2 < 0 ) {
             mflow_negative[mflow_Idx] = tempValue1;
             negSumMF += tempValue1;
             mflow_positive[mflow_Idx] = 0.0;
-         } else if( tempValue2 > 0 ) {
+         } else {
             mflow_positive[mflow_Idx] = tempValue1;
             posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = 0.0;
             mflow_negative[mflow_Idx] = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
