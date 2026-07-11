@@ -3553,7 +3553,7 @@ fn render_func_call(
                     .iter()
                     .map(|a| render_expr(a, ctx, opt_real_params, registry, helpers))
                     .collect();
-                return rust_predicate_expr(pred, &rendered);
+                rust_predicate_expr(pred, &rendered)
             }
             SpecialBuiltin::ArrayCopy => {
                 if args.len() == 5 {

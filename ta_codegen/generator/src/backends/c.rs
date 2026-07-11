@@ -1755,7 +1755,7 @@ fn render_func_call(
                     .iter()
                     .map(|a| render_expr(a, ctx, registry, helpers))
                     .collect();
-                return c_predicate_expr(pred, &rendered);
+                c_predicate_expr(pred, &rendered)
             }
             SpecialBuiltin::ArrayCopy => {
                 // ARRAY_COPY(dst, dstOff, src, srcOff, count)

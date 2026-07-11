@@ -13,11 +13,11 @@ use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
 use std::collections::HashMap;
 use std::path::Path;
 
-/// The three boolean near-zero builtins exposed by the `eval_predicate` JSON-RPC
-/// method (integer `which` selector: 0=IS_ZERO, 1=IS_ZERO_SCALED, 2=IS_ZERO_OR_NEG).
-/// IS_ZERO_SCALED consumes a parallel `scale` array; the other two ignore it.
-/// The per-backend expression for each is produced by the same `*_predicate_expr`
-/// the indicator code path uses, so this test verifies the real emitted form.
+// The three boolean near-zero builtins exposed by the `eval_predicate` JSON-RPC
+// method (integer `which` selector: 0=IS_ZERO, 1=IS_ZERO_SCALED, 2=IS_ZERO_OR_NEG).
+// IS_ZERO_SCALED consumes a parallel `scale` array; the other two ignore it.
+// The per-backend expression for each is produced by the same `*_predicate_expr`
+// the indicator code path uses, so this test verifies the real emitted form.
 
 /// The comma-separated `FuncUnstId` variant names from enums.yaml (the source of
 /// truth), in ordinal order. Empty if the enum is somehow missing.

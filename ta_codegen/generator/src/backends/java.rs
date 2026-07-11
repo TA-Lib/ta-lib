@@ -1885,7 +1885,7 @@ fn render_func_call(
                     .iter()
                     .map(|a| render_expr(a, ctx, registry, helpers))
                     .collect();
-                return java_predicate_expr(pred, &rendered);
+                java_predicate_expr(pred, &rendered)
             }
             SpecialBuiltin::ArrayCopy => {
                 // ARRAY_COPY(dst, dstOff, src, srcOff, count)
