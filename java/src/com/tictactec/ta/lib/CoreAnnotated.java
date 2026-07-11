@@ -496,7 +496,7 @@ public int apoLookback(
 @FuncInfo(
         name  = "APO",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 1
@@ -7282,7 +7282,7 @@ public int ppoLookback(
 @FuncInfo(
         name  = "PPO",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 1

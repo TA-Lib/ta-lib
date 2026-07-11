@@ -114,7 +114,7 @@ DEF_FUNCTION( PPO,
               TA_GroupId_MomentumIndicators,
               "Percentage Price Oscillator",
               "Ppo",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* PPO END */
 

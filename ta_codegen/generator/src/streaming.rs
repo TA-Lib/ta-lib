@@ -1443,7 +1443,7 @@ pub fn analyze_dispatch<'a>(
 /// statements. Strict: any unrecognized tail statement is an error, and a
 /// sub-call to an unflagged callee is an error (a composed function only
 /// streams when every piece does — there is no per-arm reject here).
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 pub fn analyze_composed<'a>(
     func: &'a FuncDef,
     lookup: &dyn CalleeLookup,
@@ -1556,6 +1556,13 @@ pub fn analyze_composed<'a>(
     let mut freed: BTreeSet<String> = BTreeSet::new();
     let mut map_temp_names: BTreeSet<String> = BTreeSet::new();
     let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
+    // Out-meta provenance for the same-bar proof a combine map's `series[cursor
+    // + off]` read needs: each series' element-count receiver and producing
+    // endIdx, and each scalar local that is an element-count difference of two
+    // of them.
+    let mut series_nbelem: BTreeMap<String, RecvVar> = BTreeMap::new();
+    let mut series_endidx: BTreeMap<String, Expr> = BTreeMap::new();
+    let mut diff_locals: BTreeMap<String, (RecvVar, RecvVar)> = BTreeMap::new();
     for (i, st) in tail.iter().enumerate() {
         match st {
             Statement::Comment(_) => {}
@@ -1620,6 +1627,16 @@ pub fn analyze_composed<'a>(
                         )));
                     }
                 }
+                // Record each destination's element-count receiver and its
+                // producing endIdx (all of a callee's outputs share the one
+                // `outNBElement`, the second of the two out-meta pointers).
+                let nb_recv = recv_var(&args[2 + sig.n_inputs + sig.n_opts + 1]);
+                for d in &dsts {
+                    if let Some(nb) = &nb_recv {
+                        series_nbelem.insert(d.clone(), nb.clone());
+                    }
+                    series_endidx.insert(d.clone(), args[1].clone());
+                }
                 steps.push(UpdateStep::Sub {
                     sub_idx: subs.len(),
                 });
@@ -1671,7 +1688,16 @@ pub fn analyze_composed<'a>(
             // Per-bar combine map over materialized series (STDDEV's sqrt
             // variants), possibly wrapped in a param-selected If.
             Statement::ForC { .. } => {
-                check_map_step(st, &defined, &params, lookup, &mut map_temp_names)?;
+                check_map_step(
+                    st,
+                    &defined,
+                    &params,
+                    lookup,
+                    &mut map_temp_names,
+                    &series_nbelem,
+                    &series_endidx,
+                    &diff_locals,
+                )?;
                 steps.push(UpdateStep::Map { tail_idx: i });
             }
             Statement::If {
@@ -1689,7 +1715,16 @@ pub fn analyze_composed<'a>(
                 }
                 for branch in [then_body, else_body] {
                     for bst in branch.iter().filter(|x| !matches!(x, Statement::Comment(_))) {
-                        check_map_step(bst, &defined, &params, lookup, &mut map_temp_names)?;
+                        check_map_step(
+                            bst,
+                            &defined,
+                            &params,
+                            lookup,
+                            &mut map_temp_names,
+                            &series_nbelem,
+                            &series_endidx,
+                            &diff_locals,
+                        )?;
                     }
                 }
                 steps.push(UpdateStep::Map { tail_idx: i });
@@ -1714,11 +1749,25 @@ pub fn analyze_composed<'a>(
                 target: Expr::PointerDeref(p),
                 ..
             } if p == "outBegIdx" || p == "outNBElement" => {}
-            // Scalar tail locals (APO's alignment offset): Open-only.
+            // Scalar tail locals (APO/PPO's alignment offset): Open-only. When
+            // one is an element-count difference (`off = fastNb - *outNBElement`),
+            // record its provenance so a later combine map can prove `series[
+            // cursor + off]` is same-bar; any other write to it clears the record.
             Statement::Assign {
                 target: Expr::Var(v),
+                value,
                 ..
-            } if !defined.contains(v) && !outputs.contains(v) => {}
+            } if !defined.contains(v) && !outputs.contains(v) => {
+                let known: Vec<RecvVar> = series_nbelem.values().cloned().collect();
+                match nb_difference(value, &known) {
+                    Some(prov) => {
+                        diff_locals.insert(v.clone(), prov);
+                    }
+                    None => {
+                        diff_locals.remove(v);
+                    }
+                }
+            }
             Statement::Expr(Expr::FuncCall(name, args)) if name == "free" => {
                 // A bare unconditional free of an intermediate series is
                 // just as replayable on inserted failure returns as the
@@ -1856,17 +1905,155 @@ fn is_map_variant_if(then_body: &[Statement], else_body: &[Statement]) -> bool {
     only_maps(then_body) && (else_body.is_empty() || only_maps(else_body))
 }
 
-/// Validate one map loop: `for (v = 0; v < NB; v++) { <per-bar body> }`
-/// whose body reads/writes ONLY series[cursor], params, and scalar temps —
-/// no indicator or stateful calls, no other array accesses. The emitter
-/// later drops the shell and turns series accesses into current scalars;
-/// everything checked here is what makes that transformation faithful.
+/// An out-meta receiver — where a sub-call writes its `outBegIdx` or
+/// `outNBElement`. Two spellings occur and the read form is part of the
+/// identity: `&fastNb` (an int local, read back as `fastNb`) versus the
+/// function's own out-pointer `outNBElement` (read back as `*outNBElement`).
+#[derive(Clone, PartialEq, Eq, Debug)]
+enum RecvVar {
+    /// Passed as `&local`; read as `Var(local)`.
+    Local(String),
+    /// Passed as the out-pointer `p`; read as `PointerDeref(p)`.
+    Pointer(String),
+}
+
+/// The out-meta receiver a sub-call argument names, or None for shapes we do
+/// not track (`&x` → `Local(x)`; a plain pointer `p` → `Pointer(p)`; anything
+/// else → None).
+fn recv_var(arg: &Expr) -> Option<RecvVar> {
+    match arg {
+        Expr::AddressOf(inner) => match inner.as_ref() {
+            Expr::Var(v) => Some(RecvVar::Local(v.clone())),
+            _ => None,
+        },
+        Expr::Var(v) => Some(RecvVar::Pointer(v.clone())),
+        _ => None,
+    }
+}
+
+/// How a difference operand reads an out-meta receiver: `x` → `Local(x)`,
+/// `*p` → `Pointer(p)`. Any other expression is not a receiver read.
+fn recv_read(e: &Expr) -> Option<RecvVar> {
+    match e {
+        Expr::Var(v) => Some(RecvVar::Local(v.clone())),
+        Expr::PointerDeref(p) => Some(RecvVar::Pointer(p.clone())),
+        _ => None,
+    }
+}
+
+/// If `value` is `a - b` where both operands read *known* out-element-count
+/// receivers, return their provenance `(a, b)`. This is what proves an APO/PPO
+/// alignment offset (`fastNb - *outNBElement`) is an element-count difference.
+///
+/// The element-count form is used rather than the begIdx difference
+/// (`*outBegIdx - fastBeg`) because it is identical in value — for two sub-calls
+/// sharing an endIdx, `nb(a) - nb(b) == begIdx(b) - begIdx(a)` — yet cannot
+/// underflow: the wider window (the fast MA here) always has at least as many
+/// outputs, so the subtraction is non-negative. The begIdx form underflows as a
+/// Rust `usize` when the narrower output is empty (issue: Rust-debug-only
+/// underflow class). A genuine lag (ADXR's `period - 1`) is a param expression,
+/// not a receiver difference, so it returns None.
+fn nb_difference(value: &Expr, known: &[RecvVar]) -> Option<(RecvVar, RecvVar)> {
+    let Expr::BinOp(l, BinOp::Sub, r) = value else {
+        return None;
+    };
+    let a = recv_read(l)?;
+    let b = recv_read(r)?;
+    if known.contains(&a) && known.contains(&b) {
+        Some((a, b))
+    } else {
+        None
+    }
+}
+
+/// Structural expression equality — used to confirm two sub-calls share an
+/// endIdx argument (so an element-count difference really is a same-bar shift).
+/// BinOp has no `PartialEq`, so operators compare by discriminant.
+fn exprs_equal(a: &Expr, b: &Expr) -> bool {
+    match (a, b) {
+        (Expr::Var(x), Expr::Var(y))
+        | (Expr::PointerDeref(x), Expr::PointerDeref(y)) => x == y,
+        (Expr::IntLiteral(x), Expr::IntLiteral(y)) => x == y,
+        // Structural (bit-exact) equality, not numeric — and float_cmp-clean.
+        (Expr::Literal(x), Expr::Literal(y)) => x.to_bits() == y.to_bits(),
+        (Expr::ArrayAccess(n1, i1), Expr::ArrayAccess(n2, i2)) => {
+            n1 == n2 && exprs_equal(i1, i2)
+        }
+        (Expr::BinOp(l1, o1, r1), Expr::BinOp(l2, o2, r2)) => {
+            std::mem::discriminant(o1) == std::mem::discriminant(o2)
+                && exprs_equal(l1, l2)
+                && exprs_equal(r1, r2)
+        }
+        (Expr::Cast(t1, e1), Expr::Cast(t2, e2)) => t1 == t2 && exprs_equal(e1, e2),
+        (Expr::Not(e1), Expr::Not(e2)) | (Expr::AddressOf(e1), Expr::AddressOf(e2)) => {
+            exprs_equal(e1, e2)
+        }
+        (Expr::FuncCall(n1, a1), Expr::FuncCall(n2, a2)) => {
+            n1 == n2 && a1.len() == a2.len() && a1.iter().zip(a2).all(|(x, y)| exprs_equal(x, y))
+        }
+        _ => false,
+    }
+}
+
+/// The index shape of a combine-map array access.
+enum IndexForm {
+    /// `series[cursor]` — the current bar.
+    PlainCursor,
+    /// `series[cursor + off]` — a candidate same-bar shift; `off` must still be
+    /// proven a begIdx difference before it is accepted.
+    CursorPlus(String),
+    /// Anything else (a literal lag, a nested expression): never same-bar.
+    Other,
+}
+
+/// Classify a `series[idx]` access index against the loop's single cursor.
+/// Accepts `cursor + off` in either operand order; rejects `cursor - off`,
+/// `cursor + off + 1`, literal offsets, and anything more nested.
+fn offset_index_form(idx: &Expr, cursors: &BTreeSet<String>) -> IndexForm {
+    if let Expr::Var(v) = idx {
+        return if cursors.contains(v) {
+            IndexForm::PlainCursor
+        } else {
+            IndexForm::Other
+        };
+    }
+    if let Expr::BinOp(l, BinOp::Add, r) = idx {
+        for (a, b) in [(l.as_ref(), r.as_ref()), (r.as_ref(), l.as_ref())] {
+            if let (Expr::Var(c), Expr::Var(off)) = (a, b) {
+                if cursors.contains(c) && !cursors.contains(off) {
+                    return IndexForm::CursorPlus(off.clone());
+                }
+            }
+        }
+    }
+    IndexForm::Other
+}
+
+/// Deep variant of [`walk_stmt_exprs`]: `f` sees every sub-expression of every
+/// statement expression, not only the top-level target/value/condition nodes
+/// (the plain walker stops there, so a `tempBuffer[i+offset]` nested inside a
+/// `BinOp` would slip past an offset check — this recurses in).
+fn walk_stmt_exprs_deep(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+    walk_stmt_exprs(s, &mut |top| walk_expr(top, f));
+}
+
+/// Validate one map loop: `for (i = 0; i < NB; i++) { <per-bar body> }` whose
+/// body reads/writes ONLY `series[cursor]`, params, and scalar temps — plus
+/// the one same-bar-shifted form `series[cursor + off]` where `off` is a
+/// proven begIdx difference (APO/PPO's `tempBuffer[i + offset]`). The emitter
+/// later drops the shell and turns EVERY series access into a current scalar
+/// (it is index-blind), so the soundness that the shifted read really is
+/// same-bar has to be proven HERE; everything checked makes that faithful.
+#[allow(clippy::too_many_lines)]
 fn check_map_step(
     st: &Statement,
     defined: &BTreeSet<String>,
     params: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
     temps: &mut BTreeSet<String>,
+    series_nbelem: &BTreeMap<String, RecvVar>,
+    series_endidx: &BTreeMap<String, Expr>,
+    diff_locals: &BTreeMap<String, (RecvVar, RecvVar)>,
 ) -> Result<(), StreamError> {
     let Statement::ForC {
         init,
@@ -1879,13 +2066,24 @@ fn check_map_step(
             "composed map variant contains a non-loop statement".into(),
         ));
     };
-    // Cursors: the init targets. Ascending-from-zero only for now (the
-    // same-bar alignment case; lagged secondary cursors are a later shape).
-    let mut cursors: BTreeSet<String> = BTreeSet::new();
+    // One cursor only. A multi-cursor init (the pre-Flat-B APO/PPO `i=0,j=off`
+    // form) is the streamable-source-form violation G1 names: guide the author
+    // to fold the second cursor into a begIdx-offset index.
     let inits: Vec<&Statement> = match init.as_ref() {
-        Statement::Block { body } => body.iter().collect(),
+        Statement::Block { body } => body
+            .iter()
+            .filter(|s| !matches!(s, Statement::Comment(_)))
+            .collect(),
         one => vec![one],
     };
+    if inits.len() > 1 {
+        return Err(StreamError::Unsupported(
+            "multi-cursor combine loop; rewrite as a single cursor with a \
+             begIdx-offset index (see APO)"
+                .into(),
+        ));
+    }
+    let mut cursors: BTreeSet<String> = BTreeSet::new();
     for ist in inits {
         match ist {
             Statement::Assign {
@@ -1908,29 +2106,93 @@ fn check_map_step(
             "composed map calls an indicator".into(),
         ));
     }
+
+    // The map's primary output = the one series it writes at the plain cursor
+    // (APO/PPO write `outReal[i]`). It anchors the same-bar proof for any offset
+    // read: `series[cursor + off]` is same-bar iff `off` is the element-count
+    // difference `nb(series) - nb(primary_out)` AND the two producers share an
+    // endIdx (then that difference equals `begIdx(primary_out) - begIdx(series)`
+    // exactly — the shift that aligns the two windows).
+    let mut written_series: BTreeSet<String> = BTreeSet::new();
+    for bst in body {
+        walk_assign_targets(bst, &mut |t| {
+            if let Expr::ArrayAccess(name, idx) = t {
+                if matches!(idx.as_ref(), Expr::Var(v) if cursors.contains(v)) {
+                    written_series.insert(name.clone());
+                }
+            }
+        });
+    }
+    let primary_out: Option<&String> = if written_series.len() == 1 {
+        written_series.iter().next()
+    } else {
+        None
+    };
+
+    let mut recognized_off: BTreeSet<String> = BTreeSet::new();
     let mut err: Option<StreamError> = None;
     for bst in body {
-        walk_stmt_exprs(bst, &mut |e| {
+        walk_stmt_exprs_deep(bst, &mut |e| {
             if err.is_some() {
                 return;
             }
             match e {
-                Expr::ArrayAccess(name, idx) => {
-                    let plain_cursor =
-                        matches!(idx.as_ref(), Expr::Var(v) if cursors.contains(v));
-                    if !defined.contains(name) || !plain_cursor {
+                Expr::ArrayAccess(name, idx) => match offset_index_form(idx, &cursors) {
+                    IndexForm::PlainCursor => {
+                        if !defined.contains(name) {
+                            err = Some(StreamError::Unsupported(format!(
+                                "composed map accesses `{name}` outside series[cursor] form"
+                            )));
+                        }
+                    }
+                    IndexForm::CursorPlus(off) => {
+                        // Same-bar iff `off == nb(name) - nb(primary_out)` and
+                        // the two producers share an endIdx.
+                        let same_bar = defined.contains(name)
+                            && primary_out.is_some_and(|po| {
+                                let prov_ok = matches!(
+                                    (
+                                        diff_locals.get(&off),
+                                        series_nbelem.get(name),
+                                        series_nbelem.get(po),
+                                    ),
+                                    (Some((a, b)), Some(this), Some(prim))
+                                        if a == this && b == prim
+                                );
+                                let end_ok = matches!(
+                                    (series_endidx.get(name), series_endidx.get(po)),
+                                    (Some(e1), Some(e2)) if exprs_equal(e1, e2)
+                                );
+                                prov_ok && end_ok
+                            });
+                        if same_bar {
+                            recognized_off.insert(off);
+                        } else {
+                            err = Some(StreamError::Unsupported(format!(
+                                "composed map reads `{name}[cursor+{off}]` but `{off}` is not a \
+                                 proven same-bar shift — it must be the element-count difference \
+                                 of the two sub-outputs sharing an endIdx (as in APO's \
+                                 `fastNb - *outNBElement`); a genuine lag needs a ring, not a \
+                                 combine map"
+                            )));
+                        }
+                    }
+                    IndexForm::Other => {
                         err = Some(StreamError::Unsupported(format!(
                             "composed map accesses `{name}` outside series[cursor] form"
                         )));
                     }
-                }
+                },
                 Expr::FuncCall(name, _) => {
                     if is_stateful_call(name) {
                         err = Some(StreamError::UnsupportedCall(name.clone()));
                     }
                 }
                 Expr::Var(v)
-                    if !cursors.contains(v) && !params.contains(v) && !defined.contains(v) =>
+                    if !cursors.contains(v)
+                        && !params.contains(v)
+                        && !defined.contains(v)
+                        && !recognized_off.contains(v) =>
                 {
                     temps.insert(v.clone());
                 }
@@ -2040,7 +2302,9 @@ fn check_composed_guard(
 ) -> Result<(), StreamError> {
     if !find_indicator_calls(std::slice::from_ref(st), lookup).is_empty() {
         return Err(StreamError::Unsupported(
-            "composed tail guard calls an indicator".into(),
+            "sub-call nested inside an `if (rc == TA_SUCCESS) { ... }` success-guard; \
+             flatten to a top-level `if (rc != TA_SUCCESS) return rc;` error-guard (see STDDEV)"
+                .into(),
         ));
     }
     let mut bad = false;

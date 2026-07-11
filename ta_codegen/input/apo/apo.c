@@ -4,15 +4,19 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AA       Andrew Atkinson
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  062804 MF   Resolve div by zero bug on limit case.
- *  020605 AA   Fix #1117666 Lookback & out-of-bound bug.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  062804 MF     Resolve div by zero bug on limit case.
+ *  020605 AA     Fix #1117666 Lookback & out-of-bound bug.
+ *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
+ *                offset index (offset = fastNb - *outNBElement). Bit-identical,
+ *                streamable, and index-safe.
  */
 
 int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
@@ -32,9 +36,9 @@ TA_RetCode apo(int startIdx, int endIdx,
    double *tempBuffer;
    TA_RetCode retCode;
    int tempInteger;
-   int outBegIdx1, outNbElement1;
-   int outBegIdx2, outNbElement2;
-   int i, j;
+   int fastBeg, fastNb;
+   int offset;
+   int i;
 
    /* Allocate an intermediate buffer. */
    tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
@@ -57,38 +61,38 @@ TA_RetCode apo(int startIdx, int endIdx,
       inReal,
       optInFastPeriod,
       optInMAType,
-      &outBegIdx2, &outNbElement2,
+      &fastBeg, &fastNb,
       tempBuffer );
-
-   if( retCode == TA_SUCCESS )
+   if( retCode != TA_SUCCESS )
    {
-      /* Calculate the slow MA into the output. */
-      retCode = ma( startIdx, endIdx,
-         inReal,
-         optInSlowPeriod,
-         optInMAType,
-         &outBegIdx1, &outNbElement1,
-         outReal );
-
-      if( retCode == TA_SUCCESS )
-      {
-         /* The slow MA begins at or after the fast MA, so the offset is
-          * valid whenever the slow MA produced output. Guard it so the empty
-          * case leaves the difference loop untouched. */
-         if( outNbElement1 > 0 )
-         {
-            tempInteger = outBegIdx1 - outBegIdx2;
-            /* Calculate (fast MA)-(slow MA) in the output. */
-            for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-               outReal[i] = tempBuffer[j]-outReal[i];
-         }
-
-         *outBegIdx    = outBegIdx1;
-         *outNBElement = outNbElement1;
-      }
+      free( tempBuffer );
+      return retCode;
    }
 
-   free(tempBuffer);
+   /* Calculate the slow MA into the output. */
+   retCode = ma( startIdx, endIdx,
+      inReal,
+      optInSlowPeriod,
+      optInMAType,
+      outBegIdx, outNBElement,
+      outReal );
+   if( retCode != TA_SUCCESS )
+   {
+      free( tempBuffer );
+      return retCode;
+   }
 
-   return retCode;
+   /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+    * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+    * outReal[i], with a non-negative index. An empty slow MA skips the loop.
+    */
+   offset = fastNb - *outNBElement;
+
+   /* Calculate (fast MA)-(slow MA) in the output. */
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i+offset] - outReal[i];
+
+   free( tempBuffer );
+
+   return TA_SUCCESS;
 }

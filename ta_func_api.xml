@@ -335,6 +335,9 @@
 		<CamelCaseName>Apo</CamelCaseName>
 		<ShortDescription>Absolute Price Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5539,6 +5542,9 @@
 		<CamelCaseName>Ppo</CamelCaseName>
 		<ShortDescription>Percentage Price Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>

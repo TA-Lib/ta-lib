@@ -279,7 +279,7 @@ DEF_FUNCTION( APO,
               TA_GroupId_MomentumIndicators,
               "Absolute Price Oscillator",
               "Apo",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* APO END */
 

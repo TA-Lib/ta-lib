@@ -553,3 +553,263 @@ fn stddev_derives_loopless_composed_plan() {
     // No heap series -> no replayable free needed.
     assert!(cp.series_frees.is_empty());
 }
+
+/* ---- Streamable-source-form guiding errors (G1 / G2) ----
+ *
+ * These pin the two "here's the fix" errors the analyzer hands a TA author who
+ * writes a combine in a non-streamable form. They are dev-experience infra,
+ * not APO/PPO plumbing: any future two-MA combine (BBANDS, …) gets guided
+ * through the same two fixes. Each fixture is a genuinely non-conforming body
+ * (real APO metadata, hand-written source), so the error is proven to fire on
+ * real source, never vacuously. */
+
+/// Load a function's real YAML metadata but wire a hand-written source body —
+/// lets a test exercise a non-conforming shape without a fake input tree entry.
+fn load_with_source(name: &str, source: &str) -> FuncDef {
+    let dir = input_dir().join(name);
+    let mut func = parser::yaml::parse_yaml(&dir.join(format!("{name}.yaml")));
+    let parsed = parser::c_source::parse_c_source_str(source);
+    parser::c_source::wire_parsed_source(&mut func, &parsed);
+    func
+}
+
+#[test]
+fn g2_success_guard_subcall_guides_to_error_guard() {
+    // The pre-Flat-B APO shape: the slow-MA sub-call sits inside an
+    // `if (retCode == TA_SUCCESS) { ... }` success-guard. G2 must name the
+    // fix — flatten to a top-level `if (rc != TA_SUCCESS) return rc;`.
+    let src = r#"
+TA_RetCode apo( int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempBuffer;
+   TA_RetCode retCode;
+   int outBegIdx1, outNbElement1;
+   int outBegIdx2, outNbElement2;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer )
+      return TA_ALLOC_ERR;
+
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &outBegIdx2, &outNbElement2, tempBuffer );
+   if( retCode == TA_SUCCESS )
+   {
+      retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+         &outBegIdx1, &outNbElement1, outReal );
+   }
+   free(tempBuffer);
+   return retCode;
+}
+"#;
+    let f = load_with_source("apo", src);
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m)
+            if m.contains("success-guard") && m.contains("flatten")),
+        "G2 must guide to the error-guard flatten, got: {err}"
+    );
+}
+
+#[test]
+fn g1_multi_cursor_combine_loop_guides_to_single_cursor() {
+    // Flattened guards (G2 satisfied) but the combine is still a two-cursor
+    // `for (i=0, j=offset; ...; i++, j++)` loop. G1 must name the fix — fold
+    // the second cursor into a single-cursor begIdx-offset index.
+    let src = r#"
+TA_RetCode apo( int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempBuffer;
+   TA_RetCode retCode;
+   int fastBeg, fastNb;
+   int offset;
+   int i, j;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer )
+      return TA_ALLOC_ERR;
+
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   offset = *outBegIdx - fastBeg;
+   for( i=0, j=offset; i < (int)*outNBElement; i++, j++ )
+      outReal[i] = tempBuffer[j] - outReal[i];
+   free(tempBuffer);
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("apo", src);
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("multi-cursor")),
+        "G1 must guide to the single-cursor begIdx-offset form, got: {err}"
+    );
+}
+
+#[test]
+fn apo_derives_composed_plan_with_same_bar_offset_map() {
+    // The shipped (Flat-B) APO: fast MA -> tempBuffer, slow MA -> outReal, then
+    // a single-cursor combine map reading tempBuffer[i + offset] where
+    // `offset = fastNb - *outNBElement` is proven a same-bar element-count
+    // difference (both sub-calls share endIdx).
+    let f = load("apo");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("APO derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("APO must derive a composed plan");
+    };
+    assert!(cp.producer.is_none(), "loopless pipeline: no producer loop");
+    assert_eq!(cp.intermediates, ["tempBuffer"]);
+    assert_eq!(cp.subs.len(), 2);
+    assert_eq!(cp.subs[0].callee, "ma");
+    assert_eq!(cp.subs[0].srcs, ["inReal"]);
+    assert_eq!(cp.subs[0].dsts, ["tempBuffer"]);
+    assert_eq!(cp.subs[1].callee, "ma");
+    assert_eq!(cp.subs[1].srcs, ["inReal"]);
+    assert_eq!(cp.subs[1].dsts, ["outReal"]);
+    // fast sub, slow sub, then the begIdx-offset combine map.
+    assert_eq!(cp.steps.len(), 3);
+    assert!(matches!(cp.steps[0], streaming::UpdateStep::Sub { sub_idx: 0 }));
+    assert!(matches!(cp.steps[1], streaming::UpdateStep::Sub { sub_idx: 1 }));
+    assert!(matches!(cp.steps[2], streaming::UpdateStep::Map { .. }));
+    // The bare free(tempBuffer) is the replayable series free.
+    assert_eq!(cp.series_frees.len(), 1);
+}
+
+#[test]
+fn ppo_derives_composed_plan_with_division_map() {
+    // PPO is APO plus the TA_IS_ZERO-guarded division; the combine map still
+    // reads tempBuffer[i + offset] at the same bar and carries tempReal.
+    let f = load("ppo");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("PPO derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("PPO must derive a composed plan");
+    };
+    assert_eq!(cp.subs.len(), 2);
+    assert_eq!(cp.subs[1].dsts, ["outReal"]);
+    assert!(matches!(cp.steps[2], streaming::UpdateStep::Map { .. }));
+    assert!(cp.map_temps.iter().any(|(n, _)| n == "tempReal"));
+}
+
+#[test]
+fn begidx_offset_form_rejected_steers_to_count_difference() {
+    // The begIdx difference `*outBegIdx - fastBeg` is the same VALUE as the
+    // element-count difference APO ships, but it underflows as a Rust `usize`
+    // when the slow MA is empty (0 - fastBeg). The analyzer refuses it and
+    // points at the count-difference form rather than blessing a form that
+    // panics in Rust debug builds.
+    let src = r#"
+TA_RetCode apo( int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempBuffer;
+   TA_RetCode retCode;
+   int fastBeg, fastNb;
+   int offset;
+   int i;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer )
+      return TA_ALLOC_ERR;
+
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   offset = *outBegIdx - fastBeg;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i+offset] - outReal[i];
+   free(tempBuffer);
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("apo", src);
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m)
+            if m.contains("element-count difference") && m.contains("same-bar")),
+        "begIdx offset must be refused with the count-difference guidance, got: {err}"
+    );
+}
+
+#[test]
+fn mismatched_endidx_combine_rejected() {
+    // The count-difference `nb(a) - nb(b)` equals the begIdx shift ONLY when the
+    // two producers share an endIdx. Here the slow MA runs over `endIdx - 1`, so
+    // `offset = fastNb - *outNBElement` still satisfies the receiver-provenance
+    // check but is NOT a same-bar shift (the windows end on different bars). The
+    // shared-endIdx clause must reject it — otherwise the emitter's index-blind
+    // rewrite would ship a silently-lagged stream. This pins that clause (its
+    // provenance sibling is pinned by the begIdx-form test above).
+    let src = r#"
+TA_RetCode apo( int startIdx, int endIdx,
+   const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempBuffer;
+   TA_RetCode retCode;
+   int fastBeg, fastNb;
+   int offset;
+   int i;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer )
+      return TA_ALLOC_ERR;
+
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   retCode = ma( startIdx, endIdx-1, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   if( retCode != TA_SUCCESS )
+   {
+      free(tempBuffer);
+      return retCode;
+   }
+   offset = fastNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i+offset] - outReal[i];
+   free(tempBuffer);
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("apo", src);
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
+        "combine over sub-calls with different endIdx must be refused as not same-bar, got: {err}"
+    );
+}

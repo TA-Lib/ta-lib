@@ -4,14 +4,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AA       Andrew Atkinson
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  020605 AA   Fix #1117666 Lookback bug.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  020605 AA     Fix #1117666 Lookback bug.
+ *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
+ *                offset index (offset = fastNb - *outNBElement). Bit-identical,
+ *                streamable, and index-safe; the TA_IS_ZERO guard is unchanged.
  */
 
    public int ppoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -44,12 +48,10 @@
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      MInteger fastBeg = new MInteger();
+      MInteger fastNb = new MInteger();
+      int offset = 0;
       int i = 0;
-      int j = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -78,32 +80,30 @@
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, outBegIdx2, outNbElement2, tempBuffer);
-      if( retCode == RetCode.Success ) {
-         /* Calculate the slow MA into the output. */
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
-         if( retCode == RetCode.Success ) {
-            /* The slow MA begins at or after the fast MA, so the offset is
-             * valid whenever the slow MA produced output. Guard it so the empty
-             * case leaves the difference loop untouched.
-             */
-            if( outNbElement1.value > 0 ) {
-               tempInteger = outBegIdx1.value - outBegIdx2.value;
-               /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-                  tempReal = outReal[i];
-                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-                  } else {
-                     outReal[i] = 0.0;
-                  }
-               }
-            }
-            outBegIdx.value = outBegIdx1.value;
-            outNBElement.value = outNbElement1.value;
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      /* Calculate the slow MA into the output. */
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+       * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+       * outReal[i], with a non-negative index. An empty slow MA skips the loop.
+       */
+      offset = fastNb.value - outNBElement.value;
+      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+         tempReal = outReal[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else {
+            outReal[i] = 0.0;
          }
       }
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode ppoUnguarded( int startIdx,
                                 int endIdx,
@@ -119,38 +119,34 @@
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      MInteger fastBeg = new MInteger();
+      MInteger fastNb = new MInteger();
+      int offset = 0;
       int i = 0;
-      int j = 0;
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, outBegIdx2, outNbElement2, tempBuffer);
-      if( retCode == RetCode.Success ) {
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
-         if( retCode == RetCode.Success ) {
-            if( outNbElement1.value > 0 ) {
-               tempInteger = outBegIdx1.value - outBegIdx2.value;
-               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-                  tempReal = outReal[i];
-                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-                  } else {
-                     outReal[i] = 0.0;
-                  }
-               }
-            }
-            outBegIdx.value = outBegIdx1.value;
-            outNBElement.value = outNbElement1.value;
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      offset = fastNb.value - outNBElement.value;
+      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+         tempReal = outReal[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else {
+            outReal[i] = 0.0;
          }
       }
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode ppo( int startIdx,
                        int endIdx,
@@ -166,12 +162,10 @@
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      MInteger fastBeg = new MInteger();
+      MInteger fastNb = new MInteger();
+      int offset = 0;
       int i = 0;
-      int j = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -194,26 +188,24 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, outBegIdx2, outNbElement2, tempBuffer);
-      if( retCode == RetCode.Success ) {
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
-         if( retCode == RetCode.Success ) {
-            if( outNbElement1.value > 0 ) {
-               tempInteger = outBegIdx1.value - outBegIdx2.value;
-               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-                  tempReal = outReal[i];
-                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-                  } else {
-                     outReal[i] = 0.0;
-                  }
-               }
-            }
-            outBegIdx.value = outBegIdx1.value;
-            outNBElement.value = outNbElement1.value;
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      offset = fastNb.value - outNBElement.value;
+      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+         tempReal = outReal[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else {
+            outReal[i] = 0.0;
          }
       }
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode ppoUnguarded( int startIdx,
                                 int endIdx,
@@ -229,36 +221,32 @@
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
+      MInteger fastBeg = new MInteger();
+      MInteger fastNb = new MInteger();
+      int offset = 0;
       int i = 0;
-      int j = 0;
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, outBegIdx2, outNbElement2, tempBuffer);
-      if( retCode == RetCode.Success ) {
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
-         if( retCode == RetCode.Success ) {
-            if( outNbElement1.value > 0 ) {
-               tempInteger = outBegIdx1.value - outBegIdx2.value;
-               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-                  tempReal = outReal[i];
-                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-                  } else {
-                     outReal[i] = 0.0;
-                  }
-               }
-            }
-            outBegIdx.value = outBegIdx1.value;
-            outNBElement.value = outNbElement1.value;
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      offset = fastNb.value - outNBElement.value;
+      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+         tempReal = outReal[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else {
+            outReal[i] = 0.0;
          }
       }
-      return retCode ;
+      return RetCode.Success ;
    }

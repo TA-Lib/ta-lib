@@ -2,7 +2,7 @@ name: APO
 camel_case: Apo
 group: Momentum Indicators
 hint: Absolute Price Oscillator
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

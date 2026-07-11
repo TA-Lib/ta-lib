@@ -2,7 +2,7 @@ name: PPO
 camel_case: Ppo
 group: Momentum Indicators
 hint: Percentage Price Oscillator
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

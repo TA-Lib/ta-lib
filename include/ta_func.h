@@ -432,6 +432,26 @@ TA_LIB_API int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 1000
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
 
+
+/*
+ * Streaming API for TA_APO — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_APO_Stream TA_APO_Stream;
+
+TA_LIB_API TA_RetCode TA_APO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_APO_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_APO_Close( TA_APO_Stream *stream );
+
 /*
  * TA_AROON - Aroon
  * 
@@ -6312,6 +6332,26 @@ TA_LIB_API TA_RetCode TA_S_PPO( int    startIdx,
 TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
+
+
+/*
+ * Streaming API for TA_PPO — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_PPO_Stream TA_PPO_Stream;
+
+TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_PPO_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PPO_Peek( const TA_PPO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream );
 
 /*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
