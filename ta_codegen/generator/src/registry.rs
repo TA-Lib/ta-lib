@@ -73,6 +73,17 @@ impl Registry {
         Registry { indicators, java_names, callee_sigs }
     }
 
+    /// Create an empty registry (for rendering self-contained expressions that
+    /// reference no indicators or helpers, e.g. the boolean-builtin predicates
+    /// emitted into the JSON-RPC servers for the cross-language eval_predicate test).
+    pub fn empty() -> Self {
+        Registry {
+            indicators: Vec::new(),
+            java_names: HashMap::new(),
+            callee_sigs: HashMap::new(),
+        }
+    }
+
     /// The Java camelCase base method name for an indicator dir-name, falling back
     /// to a naive camel-case conversion if the indicator carries no `camel_case`.
     fn java_base(&self, key: &str) -> String {

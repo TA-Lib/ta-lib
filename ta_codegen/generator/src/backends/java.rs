@@ -1682,6 +1682,30 @@ fn render_expr(
     JavaExpr { ctx, registry, helpers }.walk(expr)
 }
 
+/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
+/// IS_ZERO_OR_NEG) in Java from already-rendered argument strings. Single source
+/// of the Java form for these predicates — used by both the indicator render path
+/// and the `eval_predicate` server handler (see the C backend for the rationale).
+pub(crate) fn java_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String {
+    match which {
+        SpecialBuiltin::IsZero => args.first().map_or_else(
+            || "false".to_string(),
+            |x| format!("((-0.00000000000001 < {x}) && ({x} < 0.00000000000001))"),
+        ),
+        SpecialBuiltin::IsZeroScaled => {
+            if args.len() == 2 {
+                format!("(Math.abs({}) <= 0.00000000000001 * ({}))", args[0], args[1])
+            } else {
+                "false".to_string()
+            }
+        }
+        SpecialBuiltin::IsZeroOrNeg => args
+            .first()
+            .map_or_else(|| "false".to_string(), |x| format!("({x} < 0.00000000000001)")),
+        _ => "false".to_string(),
+    }
+}
+
 /// Convert a function identifier to `PascalCase`.
 /// e.g., "RSI" -> "Rsi", "ADX" -> "Adx", "HT_DCPERIOD" -> "HtDcperiod"
 fn to_pascal_case(s: &str) -> String {
@@ -1851,31 +1875,17 @@ fn render_func_call(
                 // COMPATIBILITY() -> this.compatibility
                 "this.compatibility".to_string()
             }
-            SpecialBuiltin::IsZero => {
-                // IS_ZERO(x) -> inline epsilon check
-                if let Some(arg) = args.first() {
-                    let x = render_expr(arg, ctx, registry, helpers);
-                    return format!("((-0.00000000000001 < {x}) && ({x} < 0.00000000000001))");
-                }
-                "false".to_string()
-            }
-            SpecialBuiltin::IsZeroScaled => {
-                // IS_ZERO_SCALED(v, scale) -> Math.abs(v) <= 1e-14 * (scale)
-                // Multiply-and-compare form only (no FMA-contractible subtraction).
-                if args.len() == 2 {
-                    let v = render_expr(&args[0], ctx, registry, helpers);
-                    let scale = render_expr(&args[1], ctx, registry, helpers);
-                    return format!("(Math.abs({v}) <= 0.00000000000001 * ({scale}))");
-                }
-                "false".to_string()
-            }
-            SpecialBuiltin::IsZeroOrNeg => {
-                // IS_ZERO_OR_NEG(x) -> (x < epsilon)
-                if let Some(arg) = args.first() {
-                    let x = render_expr(arg, ctx, registry, helpers);
-                    return format!("({x} < 0.00000000000001)");
-                }
-                "false".to_string()
+            pred @ (SpecialBuiltin::IsZero
+                   | SpecialBuiltin::IsZeroScaled
+                   | SpecialBuiltin::IsZeroOrNeg) => {
+                // IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG -> the Java epsilon form.
+                // java_predicate_expr is the single source of that form (also used by
+                // the eval_predicate server handler).
+                let rendered: Vec<String> = args
+                    .iter()
+                    .map(|a| render_expr(a, ctx, registry, helpers))
+                    .collect();
+                return java_predicate_expr(pred, &rendered);
             }
             SpecialBuiltin::ArrayCopy => {
                 // ARRAY_COPY(dst, dstOff, src, srcOff, count)

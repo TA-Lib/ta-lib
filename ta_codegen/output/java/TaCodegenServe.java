@@ -63184,6 +63184,23 @@ public class TaCodegenServe {
             core.compatibility = (mode == 1) ? Compatibility.Metastock : Compatibility.Default;
             return "{\"status\":\"ok\"}";
         }
+        else if (json.contains("\"eval_predicate\"")) {
+            int which = jsonInt(json, "which");
+            double[] values = jsonDoubleArray(json, "values");
+            double[] scale = jsonDoubleArray(json, "scale");
+            int n = values.length;
+            int[] out = new int[n];
+            for (int i = 0; i < n; i++) {
+                double v = values[i];
+                double s = (i < scale.length) ? scale[i] : 0.0;
+                boolean r;
+                if (which == 1) r = (Math.abs(v) <= 0.00000000000001 * (s));
+                else if (which == 2) r = (v < 0.00000000000001);
+                else r = ((-0.00000000000001 < v) && (v < 0.00000000000001));
+                out[i] = r ? 1 : 0;
+            }
+            return "{\"outInteger\":" + intArrayToJson(out, n) + "}";
+        }
         else {
             return "{\"error\":\"Unknown method\"}";
         }

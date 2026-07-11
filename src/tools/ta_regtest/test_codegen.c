@@ -38,6 +38,7 @@ int g_hideUnguarded = 0;
 
 #include "ta_libc.h"
 #include "ta_abstract.h"
+#include "ta_utility.h"  /* TA_IS_ZERO / TA_IS_ZERO_SCALED / TA_IS_ZERO_OR_NEG (predicate parity truth) */
 #include "fuzz_data.h"   /* shared, byte-identical input generator + output hasher */
 
 /* Timing now comes from each server's JSON-RPC timing_ns field (the reference
@@ -2231,6 +2232,99 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
 /* ---- Test orchestration (Task 9) ---- */
 
+/* Cross-language parity for the boolean near-zero builtins (issue #107 follow-up).
+ * IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG are emitted as different but
+ * semantically-equal forms per backend (C two-sided macro, Rust `.abs() < eps`,
+ * Java two-sided). The eval_predicate server method evaluates the SAME form the
+ * indicators use; here we drive a finite boundary-input table through one
+ * language server and require every 0/1 result to match the in-process C macro.
+ * This is the only place IS_ZERO_SCALED's firing branch is exercised across
+ * languages (MFI never fires it on the --codegen history data). */
+static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage *lang,
+                                         char *reqBuf, char *respBuf)
+{
+    /* .NET P/Invokes the C library and does not re-implement these builtins, so
+     * eval_predicate is a C/Rust/Java check only. */
+    if( strcmp(lang->name, "dotnet") == 0 )
+        return TA_TEST_PASS;
+
+    /* Finite boundary table (NaN/inf excluded: the servers parse them
+     * inconsistently and TA-Lib does not define NaN behaviour). Values are sent
+     * with %.17g. The forms are semantically identical, so the goal is to catch a
+     * *form* divergence (wrong epsilon, missing abs, wrong operator, un-applied
+     * scale) — NOT sub-ULP JSON-transport differences. We therefore test values
+     * comfortably inside/outside the band (0.5x/0.9x vs 1.1x/2x the threshold),
+     * plus the exact boundary only at CLEAN values (0, +/-E, E*1.0) that strtod,
+     * serde and Double.parseDouble all parse to the identical double. */
+    double vals[160], scales[160];
+    int n = 0;
+    const double E = 1e-14;   /* TA_EPSILON */
+    const double b1[] = {
+        0.0, -0.0, E, -E,                        /* clean exact boundary (E is 1e-14) */
+        0.5 * E, 0.9 * E, -0.5 * E, -0.9 * E,    /* inside the |v| < E band */
+        1.1 * E, 2.0 * E, -1.1 * E, -2.0 * E,    /* outside */
+        1.0, -1.0, 100.0, -100.0, 1e-300, -1e-300, 5e-324, -5e-324
+    };
+    for( unsigned k = 0; k < sizeof(b1) / sizeof(b1[0]) && n < 160; k++ )
+    { vals[n] = b1[k]; scales[n] = 1.0; n++; }
+    const double scaleSet[] = { 0.0, 1e-6, 1.0, 100.0, 1e6, 1e12 };
+    for( unsigned k = 0; k < sizeof(scaleSet) / sizeof(scaleSet[0]); k++ )
+    {
+        double sc = scaleSet[k], thr = E * sc;
+        /* Fractional offsets only — robust to a sub-ULP parse of the ugly E*sc
+         * product; the clean scale==1 case above already exercises v==E exactly. */
+        double around[] = { 0.5 * thr, 0.9 * thr, 1.1 * thr, 2.0 * thr,
+                            -0.5 * thr, -1.1 * thr };
+        for( unsigned j = 0; j < sizeof(around) / sizeof(around[0]) && n < 160; j++ )
+        { vals[n] = around[j]; scales[n] = sc; n++; }
+    }
+
+    for( int which = 0; which <= 2; which++ )
+    {
+        int pos = snprintf(reqBuf, JSON_BUF_SIZE,
+            "{\"method\":\"eval_predicate\",\"params\":{\"which\":%d,\"values\":[", which);
+        for( int i = 0; i < n; i++ )
+            pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "%s%.17g", i ? "," : "", vals[i]);
+        pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "],\"scale\":[");
+        for( int i = 0; i < n; i++ )
+            pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "%s%.17g", i ? "," : "", scales[i]);
+        snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "]}}");
+
+        if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+            || json_is_error(respBuf) )
+        {
+            printf("  PREDICATE PARITY [%s]: eval_predicate call failed (which=%d)\n",
+                   lang->display, which);
+            return TA_PREDICATE_PARITY_CALL_FAILED;
+        }
+        int got[160];
+        int parsed = json_get_int_array(respBuf, "outInteger", got, 160);
+        if( parsed != n )
+        {
+            printf("  PREDICATE PARITY [%s]: expected %d results, got %d (which=%d)\n",
+                   lang->display, n, parsed, which);
+            return TA_PREDICATE_PARITY_MISMATCH;
+        }
+        for( int i = 0; i < n; i++ )
+        {
+            double v = vals[i], s = scales[i];
+            int truth = ( which == 1 ) ? ( TA_IS_ZERO_SCALED(v, s) ? 1 : 0 )
+                      : ( which == 2 ) ? ( TA_IS_ZERO_OR_NEG(v)    ? 1 : 0 )
+                      :                  ( TA_IS_ZERO(v)           ? 1 : 0 );
+            if( got[i] != truth )
+            {
+                const char *pn = ( which == 1 ) ? "IS_ZERO_SCALED"
+                               : ( which == 2 ) ? "IS_ZERO_OR_NEG" : "IS_ZERO";
+                printf("  PREDICATE PARITY [%s]: %s(v=%.17g, scale=%.17g) = %d but C macro = %d\n",
+                       lang->display, pn, v, s, got[i], truth);
+                return TA_PREDICATE_PARITY_MISMATCH;
+            }
+        }
+    }
+    printf("  Predicate parity (IS_ZERO family): %d values x 3 builtins match the C macro\n", n);
+    return TA_TEST_PASS;
+}
+
 static ErrorNumber test_codegen_for_language(
     const CodegenLanguage *lang,
     int langIndex,
@@ -2286,6 +2380,19 @@ static ErrorNumber test_codegen_for_language(
     ctx.lang           = lang;
 
     TA_ForEachFunc(test_one_function, &ctx);
+
+    /* Cross-language boolean-builtin parity (IS_ZERO family) vs the in-process
+     * C macro. Independent of the frozen reference (ta_ref_serve predates the
+     * eval_predicate method), so it runs against the current language server. */
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber predErr = test_predicate_parity(&cp, lang, requestBuf, responseBuf);
+        if( predErr != TA_TEST_PASS )
+        {
+            ctx.error = predErr;
+            ctx.failed++;
+        }
+    }
 
     /* Ref differential sweep: broaden the ta_ref_serve comparison beyond the
      * default and large-period points (see sweep_one_function). */

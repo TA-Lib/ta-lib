@@ -1512,6 +1512,27 @@ fn render_expr(
     CExpr { ctx, registry, helpers }.walk(expr)
 }
 
+/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
+/// IS_ZERO_OR_NEG) in C from already-rendered argument strings. This is the
+/// single source of the C form for these predicates: both the indicator
+/// `render_func_call` path and the `eval_predicate` server handler call it, so
+/// the cross-language predicate test verifies exactly the form indicators use.
+pub(crate) fn c_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String {
+    let a0 = args.first().map_or("0", String::as_str);
+    match which {
+        SpecialBuiltin::IsZero => format!("TA_IS_ZERO({a0})"),
+        SpecialBuiltin::IsZeroScaled => {
+            if args.len() == 2 {
+                format!("TA_IS_ZERO_SCALED({}, {})", args[0], args[1])
+            } else {
+                "TA_IS_ZERO(0)".to_string()
+            }
+        }
+        SpecialBuiltin::IsZeroOrNeg => format!("TA_IS_ZERO_OR_NEG({a0})"),
+        _ => "TA_IS_ZERO(0)".to_string(),
+    }
+}
+
 /// Crate-visible expression rendering (used by the stream emitter for
 /// private-param init expressions and identity-guard conditions).
 pub(crate) fn render_expression(
@@ -1723,30 +1744,18 @@ fn render_func_call(
                 // COMPATIBILITY() -> TA_GLOBALS_COMPATIBILITY
                 "TA_GLOBALS_COMPATIBILITY".to_string()
             }
-            SpecialBuiltin::IsZero => {
-                // IS_ZERO(x) -> TA_IS_ZERO(x)
-                if let Some(arg) = args.first() {
-                    let x = render_expr(arg, ctx, registry, helpers);
-                    return format!("TA_IS_ZERO({x})");
-                }
-                "TA_IS_ZERO(0)".to_string()
-            }
-            SpecialBuiltin::IsZeroScaled => {
-                // IS_ZERO_SCALED(v, scale) -> TA_IS_ZERO_SCALED(v, scale)
-                if args.len() == 2 {
-                    let v = render_expr(&args[0], ctx, registry, helpers);
-                    let scale = render_expr(&args[1], ctx, registry, helpers);
-                    return format!("TA_IS_ZERO_SCALED({v}, {scale})");
-                }
-                "TA_IS_ZERO(0)".to_string()
-            }
-            SpecialBuiltin::IsZeroOrNeg => {
-                // IS_ZERO_OR_NEG(x) -> TA_IS_ZERO_OR_NEG(x)
-                if let Some(arg) = args.first() {
-                    let x = render_expr(arg, ctx, registry, helpers);
-                    return format!("TA_IS_ZERO_OR_NEG({x})");
-                }
-                "TA_IS_ZERO_OR_NEG(0)".to_string()
+            pred @ (SpecialBuiltin::IsZero
+                   | SpecialBuiltin::IsZeroScaled
+                   | SpecialBuiltin::IsZeroOrNeg) => {
+                // IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG -> the C macro form.
+                // c_predicate_expr is the single source of that form (also used by
+                // the eval_predicate server handler), so the cross-language test
+                // exercises exactly what the indicators emit.
+                let rendered: Vec<String> = args
+                    .iter()
+                    .map(|a| render_expr(a, ctx, registry, helpers))
+                    .collect();
+                return c_predicate_expr(pred, &rendered);
             }
             SpecialBuiltin::ArrayCopy => {
                 // ARRAY_COPY(dst, dstOff, src, srcOff, count)

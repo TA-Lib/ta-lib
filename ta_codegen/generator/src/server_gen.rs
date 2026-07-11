@@ -4,10 +4,20 @@
 //! the generated TA function implementations, and writes JSON responses to stdout.
 //! All servers speak the same protocol as the existing Rust server in server.rs.
 
+use crate::backends::builtins::SpecialBuiltin;
+use crate::backends::c::c_predicate_expr;
+use crate::backends::java::java_predicate_expr;
 use crate::backends::java::to_java_method_name;
+use crate::backends::rust_lang::rust_predicate_expr;
 use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
 use std::collections::HashMap;
 use std::path::Path;
+
+/// The three boolean near-zero builtins exposed by the `eval_predicate` JSON-RPC
+/// method (integer `which` selector: 0=IS_ZERO, 1=IS_ZERO_SCALED, 2=IS_ZERO_OR_NEG).
+/// IS_ZERO_SCALED consumes a parallel `scale` array; the other two ignore it.
+/// The per-backend expression for each is produced by the same `*_predicate_expr`
+/// the indicator code path uses, so this test verifies the real emitted form.
 
 /// The comma-separated `FuncUnstId` variant names from enums.yaml (the source of
 /// truth), in ordinal order. Empty if the enum is somehow missing.
@@ -1634,6 +1644,34 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
     s.push_str("        snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
     s.push_str("    }\n");
 
+    // eval_predicate — evaluate a boolean near-zero builtin on each input value,
+    // returning a 0/1 int array. Uses the SAME rendered form the indicators use.
+    s.push_str("    else if ( methodLen == 14 && strncmp(method, \"eval_predicate\", 14) == 0 ) {\n");
+    s.push_str("        double _pv[512]; double _ps[512]; int _pr[512];\n");
+    s.push_str("        int _pw  = json_find_int(json, \"which\");\n");
+    s.push_str("        int _pn  = json_find_double_array(json, \"values\", _pv, 512);\n");
+    s.push_str("        int _pns = json_find_double_array(json, \"scale\", _ps, 512);\n");
+    s.push_str("        for( int i = 0; i < _pn; i++ ) {\n");
+    s.push_str("            double v = _pv[i];\n");
+    s.push_str("            double s = ( i < _pns ) ? _ps[i] : 0.0;\n");
+    s.push_str(&format!(
+        "            if( _pw == 1 )      _pr[i] = ( {} ) ? 1 : 0;\n",
+        c_predicate_expr(SpecialBuiltin::IsZeroScaled, &["v".to_string(), "s".to_string()])
+    ));
+    s.push_str(&format!(
+        "            else if( _pw == 2 ) _pr[i] = ( {} ) ? 1 : 0;\n",
+        c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, &["v".to_string()])
+    ));
+    s.push_str(&format!(
+        "            else                _pr[i] = ( {} ) ? 1 : 0;\n",
+        c_predicate_expr(SpecialBuiltin::IsZero, &["v".to_string()])
+    ));
+    s.push_str("        }\n");
+    s.push_str("        int _pp = snprintf(resp, resp_size, \"{\\\"outInteger\\\":\");\n");
+    s.push_str("        _pp += json_write_int_array(resp + _pp, resp_size - _pp, _pr, _pn);\n");
+    s.push_str("        snprintf(resp + _pp, resp_size - _pp, \"}\");\n");
+    s.push_str("    }\n");
+
     // abstract_call — generic function call via ta_abstract
     s.push_str("    else if ( methodLen == 13 && strncmp(method, \"abstract_call\", 13) == 0 ) {\n");
     s.push_str("        handle_abstract_call(json, resp, resp_size);\n");
@@ -1924,6 +1962,34 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            int mode = jsonInt(json, \"mode\");\n");
     s.push_str("            core.compatibility = (mode == 1) ? Compatibility.Metastock : Compatibility.Default;\n");
     s.push_str("            return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("        }\n");
+
+    // eval_predicate method — boolean near-zero builtin on each input value.
+    s.push_str("        else if (json.contains(\"\\\"eval_predicate\\\"\")) {\n");
+    s.push_str("            int which = jsonInt(json, \"which\");\n");
+    s.push_str("            double[] values = jsonDoubleArray(json, \"values\");\n");
+    s.push_str("            double[] scale = jsonDoubleArray(json, \"scale\");\n");
+    s.push_str("            int n = values.length;\n");
+    s.push_str("            int[] out = new int[n];\n");
+    s.push_str("            for (int i = 0; i < n; i++) {\n");
+    s.push_str("                double v = values[i];\n");
+    s.push_str("                double s = (i < scale.length) ? scale[i] : 0.0;\n");
+    s.push_str("                boolean r;\n");
+    s.push_str(&format!(
+        "                if (which == 1) r = {};\n",
+        java_predicate_expr(SpecialBuiltin::IsZeroScaled, &["v".to_string(), "s".to_string()])
+    ));
+    s.push_str(&format!(
+        "                else if (which == 2) r = {};\n",
+        java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, &["v".to_string()])
+    ));
+    s.push_str(&format!(
+        "                else r = {};\n",
+        java_predicate_expr(SpecialBuiltin::IsZero, &["v".to_string()])
+    ));
+    s.push_str("                out[i] = r ? 1 : 0;\n");
+    s.push_str("            }\n");
+    s.push_str("            return \"{\\\"outInteger\\\":\" + intArrayToJson(out, n) + \"}\";\n");
     s.push_str("        }\n");
 
     s.push_str("        else {\n");
@@ -2930,6 +2996,32 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     );
     s.push_str("        }\n");
 
+    // eval_predicate method — boolean near-zero builtin on each input value.
+    s.push_str("        \"eval_predicate\" => {\n");
+    s.push_str("            let which = params[\"which\"].as_i64().unwrap_or(0);\n");
+    s.push_str("            let values = parse_f64_array(&params[\"values\"]);\n");
+    s.push_str("            let scale = parse_f64_array(&params[\"scale\"]);\n");
+    s.push_str("            let out: Vec<i32> = values.iter().enumerate().map(|(i, &v)| {\n");
+    s.push_str("                let s = *scale.get(i).unwrap_or(&0.0);\n");
+    s.push_str("                let r = match which {\n");
+    s.push_str(&format!(
+        "                    1 => {},\n",
+        rust_predicate_expr(SpecialBuiltin::IsZeroScaled, &["v".to_string(), "s".to_string()])
+    ));
+    s.push_str(&format!(
+        "                    2 => {},\n",
+        rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, &["v".to_string()])
+    ));
+    s.push_str(&format!(
+        "                    _ => {},\n",
+        rust_predicate_expr(SpecialBuiltin::IsZero, &["v".to_string()])
+    ));
+    s.push_str("                };\n");
+    s.push_str("                i32::from(r)\n");
+    s.push_str("            }).collect();\n");
+    s.push_str("            format!(\"{{\\\"outInteger\\\":{}}}\", json_i32_array(&out))\n");
+    s.push_str("        }\n");
+
     // Abstract/introspection metadata handlers (mirror ta_abstract_serve.c),
     // backed by the generated abstract_api registry. Used by ta_regtest to lock
     // Rust introspection metadata parity against the C reference.
@@ -3180,3 +3272,36 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
             format!("{{\"length\":{},\"checksum\":{}}}", length, checksum)
         }
 "#;
+
+#[cfg(test)]
+mod predicate_form_tests {
+    use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
+
+    /// Pin the exact per-backend form of the boolean near-zero builtins. These are
+    /// the single source shared by the indicator code path AND the eval_predicate
+    /// server handler, so any drift here is caught fast (and the runtime
+    /// cross-language predicate-parity test in ta_regtest re-verifies equivalence).
+    #[test]
+    fn predicate_forms_are_stable() {
+        let v = &["v".to_string()];
+        let vs = &["v".to_string(), "s".to_string()];
+
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZero, v), "TA_IS_ZERO(v)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "TA_IS_ZERO_SCALED(v, s)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "TA_IS_ZERO_OR_NEG(v)");
+
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZero, v), "(v).abs() < 1e-14");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "((v).abs() <= 1e-14 * (s))");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v) < 1e-14");
+
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZero, v),
+            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
+        );
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
+            "(Math.abs(v) <= 0.00000000000001 * (s))"
+        );
+        assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
+    }
+}

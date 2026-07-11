@@ -20128,6 +20128,22 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         TA_SetCompatibility((TA_Compatibility)mode);
         snprintf(resp, resp_size, "{\"status\":\"ok\"}");
     }
+    else if ( methodLen == 14 && strncmp(method, "eval_predicate", 14) == 0 ) {
+        double _pv[512]; double _ps[512]; int _pr[512];
+        int _pw  = json_find_int(json, "which");
+        int _pn  = json_find_double_array(json, "values", _pv, 512);
+        int _pns = json_find_double_array(json, "scale", _ps, 512);
+        for( int i = 0; i < _pn; i++ ) {
+            double v = _pv[i];
+            double s = ( i < _pns ) ? _ps[i] : 0.0;
+            if( _pw == 1 )      _pr[i] = ( TA_IS_ZERO_SCALED(v, s) ) ? 1 : 0;
+            else if( _pw == 2 ) _pr[i] = ( TA_IS_ZERO_OR_NEG(v) ) ? 1 : 0;
+            else                _pr[i] = ( TA_IS_ZERO(v) ) ? 1 : 0;
+        }
+        int _pp = snprintf(resp, resp_size, "{\"outInteger\":");
+        _pp += json_write_int_array(resp + _pp, resp_size - _pp, _pr, _pn);
+        snprintf(resp + _pp, resp_size - _pp, "}");
+    }
     else if ( methodLen == 13 && strncmp(method, "abstract_call", 13) == 0 ) {
         handle_abstract_call(json, resp, resp_size);
     }

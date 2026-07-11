@@ -335,6 +335,10 @@ typedef enum
   TA_STOCH_EPSILON_ISSUE107_BAD_RANGE   = 1511,
   TA_STOCH_EPSILON_ISSUE107_WRONG_VALUE = 1512,
 
+  /* Cross-language boolean-builtin (IS_ZERO family) parity */
+  TA_PREDICATE_PARITY_CALL_FAILED  = 1520,
+  TA_PREDICATE_PARITY_MISMATCH     = 1521,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif

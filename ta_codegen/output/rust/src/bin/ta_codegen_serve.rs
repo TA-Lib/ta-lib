@@ -9276,6 +9276,21 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             *core = core.to_builder().compatibility(compat).build();
             "{\"status\":\"ok\"}".to_string()
         }
+        "eval_predicate" => {
+            let which = params["which"].as_i64().unwrap_or(0);
+            let values = parse_f64_array(&params["values"]);
+            let scale = parse_f64_array(&params["scale"]);
+            let out: Vec<i32> = values.iter().enumerate().map(|(i, &v)| {
+                let s = *scale.get(i).unwrap_or(&0.0);
+                let r = match which {
+                    1 => ((v).abs() <= 1e-14 * (s)),
+                    2 => (v) < 1e-14,
+                    _ => (v).abs() < 1e-14,
+                };
+                i32::from(r)
+            }).collect();
+            format!("{{\"outInteger\":{}}}", json_i32_array(&out))
+        }
         "TA_GetFuncInfo" => {
             let name = params["funcName"].as_str().unwrap_or("");
             match abstract_api::get_func_handle(name) {
