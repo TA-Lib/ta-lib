@@ -349,8 +349,11 @@ pub struct ComposedPlan<'a> {
     /// The region BEFORE the tail (`body[..tail_start]`): the producer loop
     /// and its setup for the producer case, or the pure-scalar prologue for
     /// loopless pipelines. Open transcribes this verbatim, then the tail.
-    /// (For the producer case this equals `producer.body`.)
-    pub region: &'a [Statement],
+    /// (For the producer case this equals `producer.body`.) Owned because any
+    /// leading parameter-guarded fast-path block ([`is_fastpath_block`]) is
+    /// filtered out here — the stream composes the general path, not the
+    /// specialization.
+    pub region: Vec<Statement>,
     /// Non-returning frees of intermediate series (`if (bufferIsAllocated)
     /// free(tempBuffer)` or a bare `free(buf)`), replayed on the emitter's
     /// inserted sub-open failure returns for every series still live there
@@ -1499,6 +1502,19 @@ pub fn analyze_composed<'a>(
     };
     let region = &body[..tail_start];
     let tail = &body[tail_start..];
+    // A leading parameter-guarded fast-path block (BBANDS's SMA path) is a
+    // batch-only specialization: exclude it from the region Open transcribes, so
+    // the stream composes the general path below for every parameter value. The
+    // sub-calls that make it non-streamable in place are nested inside the block,
+    // so the top-level `is_subcall` scan above never selected it as the tail
+    // start (`tail` therefore has no fast-path block to filter).
+    let params_pre: BTreeSet<String> =
+        func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let region_open: Vec<Statement> = region
+        .iter()
+        .filter(|st| !is_fastpath_block(st, &params_pre, lookup))
+        .cloned()
+        .collect();
     // Composed-shaped = the tail delegates to another indicator. A tail of
     // plain bookkeeping (outBegIdx writes, the final return) is an ordinary
     // loop function: report NoSteadyLoop so the loop-tier error surfaces.
@@ -1537,9 +1553,10 @@ pub fn analyze_composed<'a>(
         (Some(producer), Some(series))
     } else {
         // Loopless: the prologue must be pure scalar setup (no array
-        // writes at all — guards/decls/lookback computations only).
+        // writes at all — guards/decls/lookback computations only). The
+        // excluded fast-path block is not part of it.
         let mut bad = false;
-        for st in region {
+        for st in &region_open {
             walk_assign_targets(st, &mut |t| {
                 if matches!(t, Expr::ArrayAccess(..)) {
                     bad = true;
@@ -1862,7 +1879,7 @@ pub fn analyze_composed<'a>(
         subs,
         steps,
         tail,
-        region,
+        region: region_open,
         series_frees,
         map_temps,
         sub_lag_rings,
@@ -2419,6 +2436,58 @@ fn guard_frees_series(st: &Statement, series: &str) -> bool {
         [Statement::Expr(Expr::FuncCall(name, args))]
             if name == "free"
                 && matches!(args.first(), Some(Expr::Var(v)) if v == series))
+}
+
+/// A parameter-guarded fast-path block: `if( <param test> ) { ...; return; }`
+/// with an empty else whose body calls a sub-indicator. This is a batch-only
+/// specialization — BBANDS's SMA path reuses the moving average as the mean
+/// instead of a separate STDDEV pass. It is EXCLUDED from the composed pipeline:
+/// the stream composes the GENERAL path (below the block) for every parameter
+/// value, and `stream_verify` proves that path bit-exact against the batch
+/// fast-path across the swept parameters (SMA included). The sub-call requirement
+/// tells it apart from a plain error guard (which never calls an indicator — the
+/// G2 rule) and from a `period == 1` identity path (a plain copy, no sub-call).
+///
+/// The condition must be a compile-time parameter test: it names at least one
+/// optional parameter and reads no series, pointers or calls (enum constants such
+/// as `TA_MAType_SMA` are plain `Var`s and are allowed).
+fn is_fastpath_block(
+    st: &Statement,
+    params: &BTreeSet<String>,
+    lookup: &dyn CalleeLookup,
+) -> bool {
+    let Statement::If {
+        condition,
+        then_body,
+        else_body,
+        ..
+    } = st
+    else {
+        return false;
+    };
+    if !else_body.is_empty() {
+        return false;
+    }
+    let mut refs_param = false;
+    let mut data_dependent = false;
+    walk_expr(condition, &mut |e| match e {
+        Expr::Var(v) if params.contains(v) => refs_param = true,
+        Expr::ArrayAccess(..) | Expr::PointerDeref(_) | Expr::FuncCall(..) => {
+            data_dependent = true;
+        }
+        _ => {}
+    });
+    if !refs_param || data_dependent {
+        return false;
+    }
+    let ends_in_return = matches!(
+        then_body
+            .iter()
+            .rev()
+            .find(|s| !matches!(s, Statement::Comment(_))),
+        Some(Statement::Return { .. })
+    );
+    ends_in_return && !find_indicator_calls(then_body, lookup).is_empty()
 }
 
 /// A composed-tail guard must be pure control flow over scalars: no

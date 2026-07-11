@@ -974,7 +974,7 @@ public int bbandsLookback(
 @FuncInfo(
         name  = "BBANDS",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 4,
         nbOutput   = 3

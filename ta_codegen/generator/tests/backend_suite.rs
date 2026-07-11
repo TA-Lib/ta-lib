@@ -58,6 +58,24 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     (func_def, enums)
 }
 
+/// Like [`load_indicator`], but wires a hand-written source body onto the real
+/// YAML metadata — for fixtures that no shipped `.c` provides. Mirrors the
+/// production load path (`wire_parsed_source`), matching the function by name.
+fn load_indicator_with_source(
+    name: &str,
+    source: &str,
+) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let mut func_def = parser::yaml::parse_yaml(&base.join(format!("{name}/{name}.yaml")));
+    let parsed = parser::c_source::parse_c_source_str(source);
+    parser::c_source::wire_parsed_source(&mut func_def, &parsed);
+    // A hand-written fixture body is not a real stream target; suppress the
+    // streaming gate the borrowed YAML may otherwise trigger.
+    func_def.streaming = false;
+    (func_def, enums)
+}
+
 /// All backend outputs for a single indicator.
 struct AllOutputs {
     c: String,
@@ -959,25 +977,51 @@ fn test_wma_lookback_uses_time_period() {
 /// A `memmove` into the *same* backing array (an in-place, possibly overlapping
 /// move) must lower to `slice::copy_within`, not `copy_from_slice`: the latter
 /// needs a simultaneous `&mut` and `&` borrow of one slice — which does not
-/// compile — and is UB on overlap regardless. BBANDS realigns its middle-band
-/// buffer with exactly such a move. WMA copies between *distinct* buffers
-/// (`outReal` <- `inReal`), where `copy_from_slice` is correct and must stay.
+/// compile — and is UB on overlap regardless. A move between *distinct* buffers
+/// stays `copy_from_slice`.
 ///
-/// Before the lowering fix this test is red: BBANDS emitted
-/// `tempBuffer1[..].copy_from_slice(&tempBuffer1[..])` (which fails to compile)
-/// and no `copy_within`. After the fix it is green.
+/// No shipped indicator carries a same-buffer memmove any more (BBANDS was
+/// restructured for streaming: its #99 realign now copies `tempBuffer1` into the
+/// *distinct* middle-band output), so a synthetic fixture pins the lowering. It
+/// carries both a same-buffer move (`tempBuffer` <- `&tempBuffer[shiftIdx]`) and
+/// a distinct-buffer move (`outReal` <- `&inReal[startIdx]`). WMA additionally
+/// covers a real distinct-buffer move.
 #[test]
 fn test_rust_memmove_same_buffer_uses_copy_within() {
-    let (bbands, enums) = load_indicator("bbands");
-    let rust = generate_all(&bbands, &enums).rust;
+    let src = r#"
+int sma_lookback( int optInTimePeriod )
+{
+   return optInTimePeriod - 1;
+}
+
+TA_RetCode sma( int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[] )
+{
+   double *tempBuffer;
+   int shiftIdx;
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   shiftIdx = optInTimePeriod;
+   memmove( tempBuffer, &tempBuffer[shiftIdx], (endIdx-startIdx+1) * sizeof(double) );
+   memmove( outReal, &inReal[startIdx], (endIdx-startIdx+1) * sizeof(double) );
+   *outBegIdx = startIdx;
+   *outNBElement = endIdx - startIdx + 1;
+   free( tempBuffer );
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("sma", src);
+    let rust = generate_all(&func, &enums).rust;
 
     assert!(
-        rust.contains("tempBuffer1.copy_within("),
-        "BBANDS: in-place memmove must lower to copy_within (overlap-safe)"
+        rust.contains("tempBuffer.copy_within("),
+        "in-place (same-buffer) memmove must lower to copy_within (overlap-safe)"
     );
     assert!(
-        !rust.contains("tempBuffer1[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n])"),
-        "BBANDS: in-place memmove must NOT lower to a self-borrowing copy_from_slice"
+        rust.contains("copy_from_slice("),
+        "distinct-buffer memmove must stay copy_from_slice"
     );
 
     // The fix must stay surgical: a move between distinct buffers is still a
@@ -6486,4 +6530,54 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     let close = &c[c.find("TA_RetCode TA_ADXR_Close").expect("ADXR Close")..];
     assert!(close.contains("TA_Free( stream->lagRing_adx );"));
     assert!(close.contains("TA_Free( stream->lagRingMirror_adx );"));
+}
+
+/// Pin the BBANDS composed Open's allocation-failure cleanup. The general
+/// (non-SMA) path allocates TWO intermediates — `tempBuffer1` for the moving
+/// average, then `tempBuffer2` for the standard deviation. If `tempBuffer2`'s
+/// malloc fails, `tempBuffer1` must be freed or it leaks: the auto-injected
+/// null-check must free every intermediate allocated before it. Same OOM
+/// discipline as ADXR (each malloc-failure path frees everything allocated so
+/// far — no goto, no fault-injection), caught here at generate time.
+#[test]
+fn test_c_bbands_open_frees_prior_intermediate_on_oom() {
+    let (mut func, enums) = load_indicator("bbands");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let open = &c[c.find("TA_RetCode TA_BBANDS_Open").expect("BBANDS Open")..];
+
+    // tempBuffer2's malloc-failure block frees the prior intermediate tempBuffer1.
+    let tb2 = &open[open.find("tempBuffer2 = malloc").expect("tempBuffer2 malloc")..];
+    let check = tb2.find("if( !tempBuffer2 )").expect("tempBuffer2 null check");
+    let ret = tb2[check..]
+        .find("return TA_ALLOC_ERR")
+        .expect("tempBuffer2 alloc-err return");
+    assert!(
+        tb2[check..check + ret].contains("free( tempBuffer1 )"),
+        "tempBuffer2 malloc-failure must free the prior intermediate tempBuffer1 (else OOM leaks it)"
+    );
+
+    // tempBuffer1's own malloc-failure block must NOT reference the
+    // not-yet-allocated tempBuffer2 (nothing prior is live at that point).
+    let tb1 = &open[open.find("tempBuffer1 = malloc").expect("tempBuffer1 malloc")..];
+    let tb1_check = tb1.find("if( !tempBuffer1 )").expect("tempBuffer1 null check");
+    let tb1_ret = tb1[tb1_check..]
+        .find("return TA_ALLOC_ERR")
+        .expect("tempBuffer1 alloc-err return");
+    assert!(
+        !tb1[tb1_check..tb1_check + tb1_ret].contains("tempBuffer2"),
+        "tempBuffer1 malloc-failure must not touch the not-yet-allocated tempBuffer2"
+    );
+
+    // The scratch output arrays clean up progressively (each failure frees the
+    // ones already allocated).
+    assert!(
+        open.contains(
+            "if( !sc_outRealLowerBand ) { TA_Free( sc_outRealUpperBand ); \
+             TA_Free( sc_outRealMiddleBand );"
+        ),
+        "scratch output arrays must clean up progressively on OOM"
+    );
 }

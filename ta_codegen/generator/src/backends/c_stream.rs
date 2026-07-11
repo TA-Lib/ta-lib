@@ -906,7 +906,7 @@ fn emit_composed_open(
     for s in &region_stmts {
         region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
-    let open_settings = crate::candle_settings::detect_candle_settings(cp.region);
+    let open_settings = crate::candle_settings::detect_candle_settings(&cp.region);
     if !open_settings.is_empty() {
         o.push_str(&emit_used_candle_unpacking(&open_settings, &region_c, 6));
     }
@@ -1092,6 +1092,27 @@ fn build_composed_open_bodies(
     let cleanup_owned = cleanup.to_string();
     let intermediates: std::collections::BTreeSet<String> =
         cp.intermediates.iter().cloned().collect();
+    // Each intermediate's malloc-failure cleanup must free every intermediate
+    // allocated BEFORE it (BBANDS allocates tempBuffer1 then tempBuffer2 — if
+    // tempBuffer2's malloc fails, tempBuffer1 must be freed or it leaks). Track
+    // them in the order the region allocates them; a malloc's cleanup prepends
+    // `free()` of the ones already live. The base cleanup (close subs + free
+    // scratch) is enough for a plain early `Return`, whose source already frees
+    // its own intermediates explicitly.
+    let cleanup_for_malloc = cleanup_owned.clone();
+    let allocated_before: std::cell::RefCell<Vec<String>> = std::cell::RefCell::new(Vec::new());
+    let malloc_cleanup = move |name: &str| -> String {
+        let prior: String =
+            allocated_before
+                .borrow()
+                .iter()
+                .fold(String::new(), |mut s, n: &String| {
+                    let _ = std::fmt::Write::write_fmt(&mut s, format_args!("free( {n} ); "));
+                    s
+                });
+        allocated_before.borrow_mut().push(name.to_string());
+        format!("{prior}{cleanup_for_malloc}")
+    };
     let fs = move |s: Statement| -> Option<Statement> {
         match s {
             // Assignment form (`tempBuffer = malloc(...)`, STOCH). A
@@ -1101,7 +1122,8 @@ fn build_composed_open_bodies(
                 value,
                 ..
             } if intermediates.contains(&v) && streaming::expr_allocates(&value) => {
-                Some(malloc_null_check_block(&v, value, &cleanup_owned))
+                let cu = malloc_cleanup(&v);
+                Some(malloc_null_check_block(&v, value, &cu))
             }
             // Declaration-with-initializer form
             // (`double *tempRSIBuffer = malloc(...)`, STOCHRSI).
@@ -1110,7 +1132,8 @@ fn build_composed_open_bodies(
                 init: Some(init),
                 ..
             } if intermediates.contains(&name) && streaming::expr_allocates(&init) => {
-                Some(malloc_null_check_block(&name, init, &cleanup_owned))
+                let cu = malloc_cleanup(&name);
+                Some(malloc_null_check_block(&name, init, &cu))
             }
             Statement::Return { value } => {
                 let mapped = match value {
@@ -1132,7 +1155,7 @@ fn build_composed_open_bodies(
             other => Some(other),
         }
     };
-    let region: Vec<Statement> = cp.region.to_vec();
+    let region: Vec<Statement> = cp.region.clone();
     let mut tail: Vec<Statement> = cp.tail.to_vec();
     if matches!(tail.last(), Some(Statement::Return { .. })) {
         tail.pop();

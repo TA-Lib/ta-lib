@@ -18,6 +18,9 @@
  *                deviation clamps to a later begIdx than the
  *                (period-independent) MAMA lookback, for
  *                optInTimePeriod >= 34.
+ *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
+ *                mean) and a general MA + STDDEV path, so BBANDS streams as a
+ *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
  *
  */
 
@@ -55,64 +58,56 @@ TA_RetCode bbands(int startIdx, int endIdx,
    double *tempBuffer1;
    double *tempBuffer2;
 
-   /* Identify TWO temporary buffer among the outputs.
-    *
-    * These temporary buffers allows to perform the
-    * calculation without any memory allocation.
-    *
-    * Whenever possible, make the tempBuffer1 be the
-    * middle band output. This will save one copy operation.
-    */
-   if( inReal == outRealUpperBand )
-   {
-      tempBuffer1 = outRealMiddleBand;
-      tempBuffer2 = outRealLowerBand;
-   }
-   else if( inReal == outRealLowerBand )
-   {
-      tempBuffer1 = outRealMiddleBand;
-      tempBuffer2 = outRealUpperBand;
-   }
-   else if( inReal == outRealMiddleBand )
-   {
-      tempBuffer1 = outRealLowerBand;
-      tempBuffer2 = outRealUpperBand;
-   }
-   else
-   {
-      tempBuffer1 = outRealMiddleBand;
-      tempBuffer2 = outRealUpperBand;
-   }
-   /* Check that the caller is not doing tricky things.
-    * (like using the input buffer in two output!)
-    */
-   if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
-      return TA_BAD_PARAM;
-
-   /* Calculate the middle band, which is a moving average.
-    * The other two bands will simply add/substract the
-    * standard deviation from this middle band.
-    */
-   retCode = ma( startIdx, endIdx, inReal,
-      optInTimePeriod, optInMAType,
-      outBegIdx, outNBElement, tempBuffer1 );
-
-   if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
-   {
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   /* Remember where the moving average begins, to realign it below. */
-   maBegIdx = *outBegIdx;
-
-   /* Calculate the standard deviation into tempBuffer2. */
    if( optInMAType == TA_MAType_SMA )
    {
-      /* A small speed optimization by re-using the
-       * already calculated SMA.
+      /* SMA fast path: the middle band is a simple moving average, which is
+       * also the mean the standard deviation is measured against - so the SMA
+       * is reused instead of recomputing the mean. Bit-identical to the general
+       * MA + STDDEV path below (which the stream composes for every MA type).
+       *
+       * Identify TWO temporary buffers among the outputs so the calculation
+       * needs no memory allocation; whenever possible make tempBuffer1 be the
+       * middle band output, saving one copy operation.
        */
-      /* Inline stddev_using_precalc_ma */
+      if( inReal == outRealUpperBand )
+      {
+         tempBuffer1 = outRealMiddleBand;
+         tempBuffer2 = outRealLowerBand;
+      }
+      else if( inReal == outRealLowerBand )
+      {
+         tempBuffer1 = outRealMiddleBand;
+         tempBuffer2 = outRealUpperBand;
+      }
+      else if( inReal == outRealMiddleBand )
+      {
+         tempBuffer1 = outRealLowerBand;
+         tempBuffer2 = outRealUpperBand;
+      }
+      else
+      {
+         tempBuffer1 = outRealMiddleBand;
+         tempBuffer2 = outRealUpperBand;
+      }
+      /* Check that the caller is not doing tricky things.
+       * (like using the input buffer in two output!)
+       */
+      if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
+         return TA_BAD_PARAM;
+
+      retCode = ma( startIdx, endIdx, inReal,
+         optInTimePeriod, optInMAType,
+         outBegIdx, outNBElement, tempBuffer1 );
+
+      if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
+      {
+         *outNBElement = 0;
+         return retCode;
+      }
+
+      /* Calculate the standard deviation into tempBuffer2, re-using the
+       * already calculated SMA (Inline stddev_using_precalc_ma).
+       */
       {
          double _tempReal, _periodTotal2, _meanValue2;
          int _outIdx;
@@ -144,64 +139,18 @@ TA_RetCode bbands(int startIdx, int endIdx,
                tempBuffer2[_outIdx] = 0.0;
          }
       }
-   }
-   else
-   {
-      /* Calculate the Standard Deviation */
-      retCode = stddev( (int)*outBegIdx, endIdx, inReal,
-         optInTimePeriod, 1.0,
-         outBegIdx, outNBElement, tempBuffer2 );
 
-      if( retCode != TA_SUCCESS )
+      /* Copy the MA calculation into the middle band ouput, unless
+       * the calculation was done into it already!
+       */
+      if( tempBuffer1 != outRealMiddleBand )
       {
-         *outNBElement = 0;
-         return retCode;
+         memcpy(outRealMiddleBand, tempBuffer1, (*outNBElement) * sizeof(double));
       }
-   }
 
-   /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
-    * begIdx than the moving average did - as with TA_MAType_MAMA (constant
-    * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
-    * at the earlier maBegIdx. Shift it forward so each band value pairs the
-    * moving average and standard deviation of the same bar.
-    */
-   if( *outBegIdx > maBegIdx )
-   {
-      shiftIdx = *outBegIdx - maBegIdx;
-      memmove( tempBuffer1, &tempBuffer1[shiftIdx], (*outNBElement) * sizeof(double) );
-   }
-
-   /* Copy the MA calculation into the middle band ouput, unless
-    * the calculation was done into it already!
-    */
-   if( tempBuffer1 != outRealMiddleBand )
-   {
-      memcpy(outRealMiddleBand, tempBuffer1, (*outNBElement) * sizeof(double));
-   }
-
-   /* Now do a tight loop to calculate the upper/lower band at
-    * the same time.
-    *
-    * All the following 5 loops are doing the same, except there
-    * is an attempt to speed optimize by eliminating uneeded
-    * multiplication.
-    */
-   if( optInNbDevUp == optInNbDevDn )
-   {
-      if(  optInNbDevUp == 1.0 )
+      /* Now do a tight loop to calculate the upper/lower band at the same time. */
+      if( optInNbDevUp == optInNbDevDn )
       {
-         /* No standard deviation multiplier needed. */
-         for( i=0; i < (int)*outNBElement; i++ )
-         {
-            tempReal  = tempBuffer2[i];
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal;
-            outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      }
-      else
-      {
-         /* Upper/lower band use the same standard deviation multiplier. */
          for( i=0; i < (int)*outNBElement; i++ )
          {
             tempReal  = tempBuffer2[i] * optInNbDevUp;
@@ -210,40 +159,102 @@ TA_RetCode bbands(int startIdx, int endIdx,
             outRealLowerBand[i] = tempReal2 - tempReal;
          }
       }
+      else
+      {
+         for( i=0; i < (int)*outNBElement; i++ )
+         {
+            tempReal  = tempBuffer2[i];
+            tempReal2 = outRealMiddleBand[i];
+            outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
+            outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+         }
+      }
+
+      return TA_SUCCESS;
    }
-   else if( optInNbDevUp == 1.0 )
+
+   /* General path (every MA type other than SMA): the middle band is the moving
+    * average and the deviation is the standard deviation of the input, combined
+    * at the same bar. Two intermediate buffers are allocated so the input may
+    * safely alias an output (it is only read here).
+    */
+   tempBuffer1 = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer1 )
+      return TA_ALLOC_ERR;
+   tempBuffer2 = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( !tempBuffer2 )
    {
-      /* Only lower band has a standard deviation multiplier. */
+      free( tempBuffer1 );
+      return TA_ALLOC_ERR;
+   }
+
+   /* Calculate the middle band moving average. */
+   retCode = ma( startIdx, endIdx, inReal,
+      optInTimePeriod, optInMAType,
+      outBegIdx, outNBElement, tempBuffer1 );
+
+   if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
+   {
+      *outNBElement = 0;
+      free( tempBuffer1 );
+      free( tempBuffer2 );
+      return retCode;
+   }
+
+   /* Remember where the moving average begins, to realign it below. */
+   maBegIdx = (int)*outBegIdx;
+
+   /* Calculate the Standard Deviation into tempBuffer2. */
+   retCode = stddev( (int)*outBegIdx, endIdx, inReal,
+      optInTimePeriod, 1.0,
+      outBegIdx, outNBElement, tempBuffer2 );
+
+   if( retCode != TA_SUCCESS )
+   {
+      *outNBElement = 0;
+      free( tempBuffer1 );
+      free( tempBuffer2 );
+      return retCode;
+   }
+
+   /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+    * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+    * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+    * at the earlier maBegIdx. Copy it forward from that shift into the middle
+    * band so each band value pairs the moving average and standard deviation of
+    * the same bar. The guarded subtraction keeps shiftIdx non-negative even when
+    * the standard deviation produced no output (an empty range leaves *outBegIdx
+    * at 0), which the unconditional copy below then handles as a zero-length move.
+    */
+   if( (int)*outBegIdx > maBegIdx )
+      shiftIdx = (int)*outBegIdx - maBegIdx;
+   else
+      shiftIdx = 0;
+   memmove( outRealMiddleBand, &tempBuffer1[shiftIdx], (*outNBElement) * sizeof(double) );
+
+   /* Now do a tight loop to calculate the upper/lower band at the same time. */
+   if( optInNbDevUp == optInNbDevDn )
+   {
       for( i=0; i < (int)*outNBElement; i++ )
       {
-         tempReal  = tempBuffer2[i];
+         tempReal  = tempBuffer2[i] * optInNbDevUp;
          tempReal2 = outRealMiddleBand[i];
          outRealUpperBand[i] = tempReal2 + tempReal;
-         outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
-      }
-   }
-   else if( optInNbDevDn == 1.0 )
-   {
-      /* Only upper band has a standard deviation multiplier. */
-      for( i=0; i < (int)*outNBElement; i++ )
-      {
-         tempReal  = tempBuffer2[i];
-         tempReal2 = outRealMiddleBand[i];
          outRealLowerBand[i] = tempReal2 - tempReal;
-         outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
       }
    }
    else
    {
-      /* Upper/lower band have distinctive standard deviation multiplier. */
       for( i=0; i < (int)*outNBElement; i++ )
       {
-         tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
-         outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+         outRealUpperBand[i] = tempReal2 + (tempBuffer2[i] * optInNbDevUp);
+         outRealLowerBand[i] = tempReal2 - (tempBuffer2[i] * optInNbDevDn);
       }
    }
+
+   free( tempBuffer1 );
+   free( tempBuffer2 );
 
    return TA_SUCCESS;
 }

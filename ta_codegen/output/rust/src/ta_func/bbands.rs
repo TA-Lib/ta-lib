@@ -59,6 +59,9 @@
  *                deviation clamps to a later begIdx than the
  *                (period-independent) MAMA lookback, for
  *                optInTimePeriod >= 34.
+ *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
+ *                mean) and a general MA + STDDEV path, so BBANDS streams as a
+ *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
  */
 
 // Import types from parent module
@@ -210,46 +213,40 @@ impl Core {
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
-        // Identify TWO temporary buffer among the outputs.
-        //
-        // These temporary buffers allows to perform the
-        // calculation without any memory allocation.
-        //
-        // Whenever possible, make the tempBuffer1 be the
-        // middle band output. This will save one copy operation.
-        if inReal.as_ptr() == outRealUpperBand.as_ptr() {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealLowerBand.to_vec();
-        } else if inReal.as_ptr() == outRealLowerBand.as_ptr() {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        } else if inReal.as_ptr() == outRealMiddleBand.as_ptr() {
-            tempBuffer1 = outRealLowerBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        } else {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        }
-        // Check that the caller is not doing tricky things.
-        // (like using the input buffer in two output!)
-        if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
-            return RetCode::BadParam;
-        }
-        // Calculate the middle band, which is a moving average.
-        // The other two bands will simply add/substract the
-        // standard deviation from this middle band.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // Remember where the moving average begins, to realign it below.
-        maBegIdx = (*outBegIdx);
-        // Calculate the standard deviation into tempBuffer2.
         if (optInMAType) as usize == 0 {
-            // A small speed optimization by re-using the
-            // already calculated SMA.
-            // Inline stddev_using_precalc_ma
+            // SMA fast path: the middle band is a simple moving average, which is
+            // also the mean the standard deviation is measured against - so the SMA
+            // is reused instead of recomputing the mean. Bit-identical to the general
+            // MA + STDDEV path below (which the stream composes for every MA type).
+            //
+            // Identify TWO temporary buffers among the outputs so the calculation
+            // needs no memory allocation; whenever possible make tempBuffer1 be the
+            // middle band output, saving one copy operation.
+            if inReal.as_ptr() == outRealUpperBand.as_ptr() {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealLowerBand.to_vec();
+            } else if inReal.as_ptr() == outRealLowerBand.as_ptr() {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            } else if inReal.as_ptr() == outRealMiddleBand.as_ptr() {
+                tempBuffer1 = outRealLowerBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            } else {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            }
+            // Check that the caller is not doing tricky things.
+            // (like using the input buffer in two output!)
+            if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
+                return RetCode::BadParam;
+            }
+            retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+            if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+                (*outNBElement) = 0;
+                return retCode;
+            }
+            // Calculate the standard deviation into tempBuffer2, re-using the
+            // already calculated SMA (Inline stddev_using_precalc_ma).
             let mut _tempReal: f64 = 0.0_f64;
             let mut _periodTotal2: f64 = 0.0_f64;
             let mut _meanValue2: f64 = 0.0_f64;
@@ -289,58 +286,18 @@ impl Core {
                 _startSum += 1;
                 _endSum += 1;
             }
-        } else {
-            // Calculate the Standard Deviation
-            retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
-            if retCode != RetCode::Success {
-                (*outNBElement) = 0;
-                return retCode;
-            }
-        }
-        // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
-        // begIdx than the moving average did - as with TA_MAType_MAMA (constant
-        // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
-        // at the earlier maBegIdx. Shift it forward so each band value pairs the
-        // moving average and standard deviation of the same bar.
-        if (*outBegIdx) > maBegIdx {
-            shiftIdx = (*outBegIdx) - maBegIdx;
-            {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (shiftIdx) as usize;
-            tempBuffer1.copy_within(_si.._si + _n, _di);
-        };
-        }
-        // Copy the MA calculation into the middle band ouput, unless
-        // the calculation was done into it already!
-        if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
-            {
+            // Copy the MA calculation into the middle band ouput, unless
+            // the calculation was done into it already!
+            if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
+                {
             let _n = ((*outNBElement) * 1) as usize;
             let _di = (0) as usize;
             let _si = (0) as usize;
             outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
         };
-        }
-        // Now do a tight loop to calculate the upper/lower band at
-        // the same time.
-        //
-        // All the following 5 loops are doing the same, except there
-        // is an attempt to speed optimize by eliminating uneeded
-        // multiplication.
-        if optInNbDevUp == optInNbDevDn {
-            if optInNbDevUp == 1.0 {
-                // No standard deviation multiplier needed.
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
-                i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
-                    tempReal = tempBuffer2[i];
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = tempReal2 + tempReal;
-                    outRealLowerBand[i] = tempReal2 - tempReal;
-                    i += 1;
-                }
-            } else {
-                // Upper/lower band use the same standard deviation multiplier.
+            }
+            // Now do a tight loop to calculate the upper/lower band at the same time.
+            if optInNbDevUp == optInNbDevDn {
                 // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
                 i = 0;
                 while i < (((*outNBElement) as usize)) as usize {
@@ -350,38 +307,76 @@ impl Core {
                     outRealLowerBand[i] = tempReal2 - tempReal;
                     i += 1;
                 }
+            } else {
+                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                i = 0;
+                while i < (((*outNBElement) as usize)) as usize {
+                    tempReal = tempBuffer2[i];
+                    tempReal2 = outRealMiddleBand[i];
+                    outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+                    outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
+                    i += 1;
+                }
             }
-        } else if optInNbDevUp == 1.0 {
-            // Only lower band has a standard deviation multiplier.
+            return RetCode::Success;
+        }
+        // General path (every MA type other than SMA): the middle band is the moving
+        // average and the deviation is the standard deviation of the input, combined
+        // at the same bar. Two intermediate buffers are allocated so the input may
+        // safely alias an output (it is only read here).
+        tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+        tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+        // Calculate the middle band moving average.
+        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            (*outNBElement) = 0;
+            return retCode;
+        }
+        // Remember where the moving average begins, to realign it below.
+        maBegIdx = ((*outBegIdx) as usize) as usize;
+        // Calculate the Standard Deviation into tempBuffer2.
+        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        if retCode != RetCode::Success {
+            (*outNBElement) = 0;
+            return retCode;
+        }
+        // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+        // begIdx than the moving average did - as with TA_MAType_MAMA (constant
+        // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+        // at the earlier maBegIdx. Copy it forward from that shift into the middle
+        // band so each band value pairs the moving average and standard deviation of
+        // the same bar. The guarded subtraction keeps shiftIdx non-negative even when
+        // the standard deviation produced no output (an empty range leaves *outBegIdx
+        // at 0), which the unconditional copy below then handles as a zero-length move.
+        if (((*outBegIdx) as usize)) as usize > maBegIdx {
+            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        } else {
+            shiftIdx = 0;
+        }
+        {
+            let _n = ((*outNBElement) * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (shiftIdx) as usize;
+            outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
+        };
+        // Now do a tight loop to calculate the upper/lower band at the same time.
+        if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
+                tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = tempReal2 + tempReal;
-                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-                i += 1;
-            }
-        } else if optInNbDevDn == 1.0 {
-            // Only upper band has a standard deviation multiplier.
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
-            i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
-                tempReal2 = outRealMiddleBand[i];
                 outRealLowerBand[i] = tempReal2 - tempReal;
-                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
                 i += 1;
             }
         } else {
-            // Upper/lower band have distinctive standard deviation multiplier.
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
                 tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
-                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
+                outRealUpperBand[i] = ((tempReal2 + tempBuffer2[i] * optInNbDevUp) as f64);
+                outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
                 i += 1;
             }
         }
@@ -423,29 +418,28 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
-        if inReal.as_ptr() == outRealUpperBand.as_ptr() {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealLowerBand.to_vec();
-        } else if inReal.as_ptr() == outRealLowerBand.as_ptr() {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        } else if inReal.as_ptr() == outRealMiddleBand.as_ptr() {
-            tempBuffer1 = outRealLowerBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        } else {
-            tempBuffer1 = outRealMiddleBand.to_vec();
-            tempBuffer2 = outRealUpperBand.to_vec();
-        }
-        if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
-            return RetCode::BadParam;
-        }
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        maBegIdx = (*outBegIdx);
         if (optInMAType) as usize == 0 {
+            if inReal.as_ptr() == outRealUpperBand.as_ptr() {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealLowerBand.to_vec();
+            } else if inReal.as_ptr() == outRealLowerBand.as_ptr() {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            } else if inReal.as_ptr() == outRealMiddleBand.as_ptr() {
+                tempBuffer1 = outRealLowerBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            } else {
+                tempBuffer1 = outRealMiddleBand.to_vec();
+                tempBuffer2 = outRealUpperBand.to_vec();
+            }
+            if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
+                return RetCode::BadParam;
+            }
+            retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+            if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+                (*outNBElement) = 0;
+                return retCode;
+            }
             let mut _tempReal: f64 = 0.0_f64;
             let mut _periodTotal2: f64 = 0.0_f64;
             let mut _meanValue2: f64 = 0.0_f64;
@@ -485,42 +479,15 @@ impl Core {
                 _startSum += 1;
                 _endSum += 1;
             }
-        } else {
-            retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
-            if retCode != RetCode::Success {
-                (*outNBElement) = 0;
-                return retCode;
-            }
-        }
-        if (*outBegIdx) > maBegIdx {
-            shiftIdx = (*outBegIdx) - maBegIdx;
-            {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (shiftIdx) as usize;
-            tempBuffer1.copy_within(_si.._si + _n, _di);
-        };
-        }
-        if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
-            {
+            if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
+                {
             let _n = ((*outNBElement) * 1) as usize;
             let _di = (0) as usize;
             let _si = (0) as usize;
             outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
         };
-        }
-        if optInNbDevUp == optInNbDevDn {
-            if optInNbDevUp == 1.0 {
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
-                i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
-                    tempReal = tempBuffer2[i];
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = tempReal2 + tempReal;
-                    outRealLowerBand[i] = tempReal2 - tempReal;
-                    i += 1;
-                }
-            } else {
+            }
+            if optInNbDevUp == optInNbDevDn {
                 // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
                 i = 0;
                 while i < (((*outNBElement) as usize)) as usize {
@@ -530,35 +497,60 @@ impl Core {
                     outRealLowerBand[i] = tempReal2 - tempReal;
                     i += 1;
                 }
+            } else {
+                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                i = 0;
+                while i < (((*outNBElement) as usize)) as usize {
+                    tempReal = tempBuffer2[i];
+                    tempReal2 = outRealMiddleBand[i];
+                    outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+                    outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
+                    i += 1;
+                }
             }
-        } else if optInNbDevUp == 1.0 {
+            return RetCode::Success;
+        }
+        tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+        tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            (*outNBElement) = 0;
+            return retCode;
+        }
+        maBegIdx = ((*outBegIdx) as usize) as usize;
+        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        if retCode != RetCode::Success {
+            (*outNBElement) = 0;
+            return retCode;
+        }
+        if (((*outBegIdx) as usize)) as usize > maBegIdx {
+            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        } else {
+            shiftIdx = 0;
+        }
+        {
+            let _n = ((*outNBElement) * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (shiftIdx) as usize;
+            outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
+        };
+        if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
+                tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = tempReal2 + tempReal;
-                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-                i += 1;
-            }
-        } else if optInNbDevDn == 1.0 {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
-            i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
-                tempReal2 = outRealMiddleBand[i];
                 outRealLowerBand[i] = tempReal2 - tempReal;
-                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
                 i += 1;
             }
         } else {
             // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
             i = 0;
             while i < (((*outNBElement) as usize)) as usize {
-                tempReal = tempBuffer2[i];
                 tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
-                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
+                outRealUpperBand[i] = ((tempReal2 + tempBuffer2[i] * optInNbDevUp) as f64);
+                outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
                 i += 1;
             }
         }

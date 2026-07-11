@@ -2,7 +2,7 @@ name: BBANDS
 camel_case: Bbands
 group: Overlap Studies
 hint: Bollinger Bands
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

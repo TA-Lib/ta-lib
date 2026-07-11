@@ -122,7 +122,7 @@ DEF_FUNCTION( BBANDS,
               TA_GroupId_OverlapStudies,
               "Bollinger Bands",
               "Bbands",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* BBANDS END */
 
