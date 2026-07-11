@@ -51,16 +51,16 @@ Every stream, in every language, is the same lifecycle:
 2. **`update(handle, bar) → value` — once per closed bar.** Takes the handle
    and the new input(s) (OHLCV for multi-input functions) and always produces
    the new current value. `update` performs **no allocation** — the handle is
-   memory sized at open.
+   sized at open.
 3. **`close(handle)`.** Releases the stream — explicit in C, implicit
-   (automatic) in managed backends (Rust/Java).
+   in managed languages (Rust/Java).
 
 Parameters and history are fixed at `open`; changing a parameter means a new stream.
 
 The handle is opaque and tied to the library version that created it — don't
 persist it across versions.
 
-Per-language signatures are in the *API shape per backend* section below.
+Signatures are in the *API shape per language* section below.
 
 After open, the initial history can be "freed" by the caller (everything needed is kept within the handle).
 
@@ -82,7 +82,7 @@ the surface includes:
 bit-identical, guaranteed by construction: it is the same generated code as
 `update`, run without committing.
 
-Its overhead is an alloc/free to maintain a throw away deep-copy of the handle (on every update).
+Its overhead is a throw away deep-copy of the handle (on every update).
 
 ### Semantic definition (the contract tests enforce)
 
@@ -96,7 +96,7 @@ batch_F(startIdx=0, endIdx=t, x[0..t])   at that bar,
 ```
 
 computed under the same compatibility and candle settings — which must not
-change over the stream's lifetime (see *Concurrency across tiers*) — and the
+change over the stream's lifetime (see *Concurrency across languages*) — and the
 unstable period in effect at `open`.
 
 Notes that make this precise:
@@ -122,7 +122,7 @@ We purposely avoid code re-use between the generated batch and stream API,
 reducing risk of introducing common/invisible bugs. (Both are generated from
 the same IR, but through independent emitters — see *How it fits ta_codegen*.)
 
-### API shape per backend (signatures)
+### API shape per language (signatures)
 
 C — every entry point returns `TA_RetCode` like the rest of the library;
 "Stream" appears only in the handle type, the functions use the lifecycle
@@ -170,13 +170,13 @@ Integer-output functions (CDL\*) use `int *outInteger`.
 Rust:
 
 ```rust
-let mut s = SmaStream::open(14, &history)?;      // warm from history
-for &x in new_bars { let v = s.update(x); /* always a value */ }
-let provisional = s.peek(forming_bar_close);      // &self is NOT enough: peek
-                                                  // uses the handle's scratch
-                                                  // mirror → &mut self, or an
-                                                  // interior scratch; decided
-                                                  // at implementation time
+let core = Core::builder().build();               // immutable settings (issue #104)
+let mut s = core.sma_open(14, &history)?;         // &self method on Core; the
+                                                  // handle holds an Arc<Core>
+for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
+let provisional = s.peek(forming_bar_close);       // &self: runs the same
+                                                  // transition on a throwaway
+                                                  // copy, never commits
 ```
 
 Java/.NET: small handle objects with the same `open(params, history)` +
@@ -217,13 +217,13 @@ above:
   still be moved between threads (e.g. a work-stealing pool) as long as it is
   never driven from two at once.
 
-Stricter than the C tier, where `TA_Globals` is a process-wide mutable and
+Stricter than in C, where `TA_Globals` is a process-wide mutable and
 concurrent batch is safe only if nothing calls `TA_SetX` meanwhile.
 
-### Concurrency across tiers (C / Java / .NET)
+### Concurrency across languages (C / Java / .NET)
 
-The Rust guarantees above rest on one rule that holds in every backend, each
-tier enforcing it its own way:
+The Rust guarantees above rest on one rule that holds in every language, each
+enforcing it its own way:
 
 > **A stream's value-affecting settings (compatibility, candle settings) must
 > not change over its lifetime.** Nothing is copied into the handle — settings
@@ -253,8 +253,8 @@ tier enforcing it its own way:
 ### Python (future consumer — exploration, not in scope)
 
 The Python wrapper is a separate project, but it is the origin of the
-`talib.stream` prior art and the largest consumer of the C library, so the C
-tier is checked here against how Python *would* wrap it:
+`talib.stream` prior art and the largest consumer of the C library, so C
+is checked here against how Python *would* wrap it:
 
 - **Discovery.** `TA_GetFuncInfo()->flags & TA_FUNC_FLG_STREAM` — the same
   bitmask `talib.abstract` already reads — tells the wrapper which functions
@@ -265,12 +265,12 @@ tier is checked here against how Python *would* wrap it:
   removes both `talib.stream` limitations at the source: retained state makes
   it O(1)/tick, and full-history seeding at open removes the
   recursive-function divergence.
-- **Single-bar update is worth it from Python.** A Python→C call costs on the
-  order of ~100 ns; the update itself is nanoseconds. That overhead is real
+- **Single-bar update is worth it from Python.** A Python→C call costs ~100 ns;
+  the update itself is nanoseconds. That overhead is real
   but replaces today's O(lookback) reach-back *plus* the same call overhead —
   strictly better, and far below tick rates that matter to a Python strategy
   loop.
-- **No `TA_XXX_UpdateMany` in the C tier now.** Chunked updates only matter
+- **No `TA_XXX_UpdateMany` in C now.** Chunked updates only matter
   for replaying history, and `open(history)` already consumes history in one
   C pass; live use is inherently one bar per call. If profiling of a real
   consumer ever shows per-call overhead dominating, a generic
@@ -280,7 +280,7 @@ tier is checked here against how Python *would* wrap it:
   release/reacquire costs more than the sub-microsecond update it unblocks.
   (An eventual `update_many` should release it.)
 - **Free-threaded Python (3.13+).** One handle per thread — the same
-  single-writer rule the Rust tier enforces — is safe with no GIL, because
+  single-writer rule Rust enforces — is safe with no GIL, because
   update touches only handle-local state plus read-only settings (the
   settings-stability rule above).
 - **multiprocessing / persistence.** Handles are not serializable — restating
@@ -339,21 +339,13 @@ mechanism end-to-end:
   which is *why* bit-exactness holds by construction. This also means the
   bit-exactness argument survives batch-code evolution: the stream is
   re-derived from the same IR on every generate.
-- **Analyzer census** (naive spike analyzer over all 161): 62 analyze clean as
-  single self-contained loops (incl. RSI, ADX, KAMA, SAR/SAREXT, MACD, T3,
-  DEMA/TEMA/TRIX, MIN/MAX family, ADOSC). Every remaining failure falls into
-  one of four *mechanical* categories: multi-array trailing rings (the CDL\*
-  family — one trailing index over 4 price arrays — plus ULTOSC/WILLR/DX);
-  window-rescan reads (`in[today-i]` inner loops: LINEARREG family, AVGDEV,
-  CORREL, IMI, TSF); CIRCBUF-backed state (CCI, MFI, HT_\* family, MAMA — the
-  IR already models CIRCBUF, it lowers naturally to state-struct rings); and
-  no-steady-loop bodies (countdown loops: AD, ATR; plus the composed
-  functions below).
+- **Analyzer census.** The naive spike census (62/161 clean) is superseded by
+  the Staging results below (138 streamable); its four failure categories have
+  nearly all landed — only the CIRCBUF deep shapes (HT_\* family, MAMA) remain.
 
 ### Streamability tiers (classification of all 161 functions)
 
-Corrected after a full 161-function audit (38 corrections to the original
-table):
+Corrected after a full 161-function audit:
 
 | Tier | Shape | State | Per-update cost | Examples (not exhaustive) |
 |------|-------|-------|-----------------|---------------------------|
@@ -433,8 +425,9 @@ Structural notes:
    - `update` = the steady-loop body with the variable remapping, emitted
      **once** as the transition function; `peek` is a two-line wrapper — an
      O(state) copy of the state struct (a stack copy for the scalar tiers;
-     ring tiers will pre-allocate a scratch mirror in the handle at open),
-     then a call to that *same* transition function. One body means there is no
+     ring tiers redirect the copy to a scratch mirror pre-allocated in the
+     handle at open; composed tiers set a `peekMode` flag so the step calls
+     sub-`Peek`), then a call to that *same* transition function. One body means there is no
      peek-specific logic to drift; `stream_verify` still asserts
      peek == update. T4a substitutes the deque; T4b
      transcribes the cached-index automaton over a ring; TC emits sub-stream
@@ -493,12 +486,12 @@ Instead (implemented, riding the fuzz-064 seed-in idea one step further):
   land) are detected by a capability probe and skipped, not failed;
   non-streamable functions answer `not_streamable` and count as skips.
 - Bit-exactness is verified as a *within-language* property; cross-language
-  batch equivalence is already covered at epsilon by the existing pass.
-  Follow-ups: sanitizer legs (the server build does not yet take the
-  ENABLE_SANITIZERS flags) and a second-compiler leg (bit-exactness is
-  currently proven in the gcc-built single-TU server; MSVC/clang builds of
-  the shipped library are exercised by CI compiles but not stream-verified).
-  Candle-settings variations join when CDL\* streams land (T3).
+  batch equivalence is already covered at epsilon by the existing pass. The
+  stream grids run under ASan/UBSan/LSan (LSan has caught real sub-open leaks)
+  and, for CDL\*, under bumped/zeroed/all-Shadows candle settings. The
+  remaining follow-up is a second-compiler leg — bit-exactness is proven in
+  the gcc-built single-TU server; MSVC/clang builds are exercised by CI
+  compiles but not stream-verified.
 
 ### Delivery surface (owned by ta_codegen, must ship together)
 
@@ -516,7 +509,7 @@ claim in *Motivation* gets measured, not asserted).
 0. **Census + flag authoring — DONE.** `ta_codegen stream-census` derives
    each function's streamability from the IR (`--seed-yaml` writes the
    `streaming: true` flags); `generate` fails if a declared function stops
-   being analyzable, and the same gate runs in `cargo test`. The Rust tier's
+   being analyzable, and the same gate runs in `cargo test`. Rust's
    pre-requisite, issue #104 (immutable `Core`), is closed.
 1. **T1 + T2 for C — DONE** (37 functions: 24 T1 maps and price transforms,
    13 T2 recurrences — AD, ADOSC, ADX, DEMA, EMA, MACD, OBV, SAR, SAREXT,
