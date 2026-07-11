@@ -1929,10 +1929,10 @@ fn check_map_step(
                         err = Some(StreamError::UnsupportedCall(name.clone()));
                     }
                 }
-                Expr::Var(v) => {
-                    if !cursors.contains(v) && !params.contains(v) && !defined.contains(v) {
-                        temps.insert(v.clone());
-                    }
+                Expr::Var(v)
+                    if !cursors.contains(v) && !params.contains(v) && !defined.contains(v) =>
+                {
+                    temps.insert(v.clone());
                 }
                 _ => {}
             }
