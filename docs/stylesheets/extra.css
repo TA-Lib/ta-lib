@@ -1,0 +1,13 @@
+/* About Us — credits tables.
+   Hide the column-header row and frame each table with a stronger
+   rule at the top and bottom. Scoped to `.credits` so ordinary tables
+   elsewhere (function docs, install, etc.) are untouched. */
+
+.md-typeset .credits table:not([class]) {
+  border-top: 2px solid var(--md-default-fg-color);
+  border-bottom: 2px solid var(--md-default-fg-color);
+}
+
+.md-typeset .credits table:not([class]) thead {
+  display: none;
+}

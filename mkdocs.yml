@@ -7,6 +7,9 @@ site_description: >-
 repo_name: Github (Core C Library)
 repo_url: https://github.com/TA-Lib/ta-lib
 
+extra_css:
+  - stylesheets/extra.css
+
 theme:
   name: material
   icon:

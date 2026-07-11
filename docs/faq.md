@@ -1,30 +1,12 @@
 **Is TA-Lib maintained?**
 
-Yes.
+Yes — and more actively than it has been in years!
 
-*The Good News*
+TA-Lib has been a trusted part of the trading toolkit for over 20 years. Its C core is rock-solid and battle-tested, which is exactly why so many popular libraries still build on it today. That stability meant releases could slow down without anyone noticing much — and between 2014 and 2024 they largely did.
 
-Many projects depending on TA-Lib are actively maintained.
+Things changed in 2025. Packaging was modernized so a new release is now just a "push of a button" with GitHub Actions, and development picked up real momentum. A native Rust implementation — generated and verified bit-for-bit against the C reference — and a new streaming API are both under active development, bringing TA-Lib to modern toolchains and real-time use cases.
 
-The C/C++ source code have remained in-use for >20 years.
-
-A large portion of TA-Lib is stable. Therefore, there is no further change needed for most TA functions.
-
-*The Bad News*
-
-Contributions to produce new TA functions are very rare.
-
-Implementing speed efficient TA functions in C is harder compare to high-level languages provided by commercial software/website (e.g. tradingview, tradestation etc...).
-
-Releases went stale between 2014 and 2024, one "excuse" is the packaging process was outdated and time-consuming.
-
-*Ongoing Initiatives*
-
-In 2024, work started to automate packaging with Github actions. Goal is to have new maintainers be able to trig a release at the "push of a button".
-
-There is also a native Rust version, generated and verified against the C reference (a public crate release is still pending).
-
-Most importantly, there is intent to make the ta-lib-python installation easier.
+The classic C library is as reliable as ever, and the project is once again moving forward.
 
 
 **How to get support?**
