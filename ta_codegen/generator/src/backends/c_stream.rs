@@ -541,9 +541,7 @@ fn emit_composed_close(o: &mut String, func: &FuncDef, cp: &streaming::ComposedP
     for (i, sub) in cp.subs.iter().enumerate() {
         let _ = writeln!(o, "   {}_Close( stream->sub{i} );", callee_prefix(&sub.callee));
     }
-    let has_buffers = cp.producer.as_ref().is_some_and(|m| {
-        !m.rings.is_empty() || !m.windows.is_empty() || !m.circs.is_empty() || m.extrema.is_some()
-    });
+    let has_buffers = cp.producer.as_ref().is_some_and(StreamModel::needs_release);
     if has_buffers {
         let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
     } else {
@@ -1227,7 +1225,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
             let _ = writeln!(o, "   double {};", StreamModel::lag_field(&lag.array, k));
         }
     }
-    for ring in &model.rings {
+    for ring in model.rings() {
         let v = &ring.var;
         let _ = writeln!(o, "   int ringPos_{v};");
         let _ = writeln!(o, "   int ringCap_{v};");
@@ -1241,7 +1239,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
             let _ = writeln!(o, "   double *ringMirror_{v}_{arr};");
         }
     }
-    for win in &model.windows {
+    for win in model.windows() {
         let v = &win.var;
         let _ = writeln!(o, "   int winPos_{v};");
         let _ = writeln!(o, "   int winCap_{v};");
@@ -1250,7 +1248,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
             let _ = writeln!(o, "   double *winMirror_{v}_{arr};");
         }
     }
-    for circ in &model.circs {
+    for circ in model.circs() {
         let _ = writeln!(o, "   int cbSize_{};", circ.id);
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
@@ -1258,7 +1256,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
             let _ = writeln!(o, "   {et} *cbMirror_{storage};");
         }
     }
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         let _ = writeln!(o, "   int xCap;");
         for arr in &ex.arrays {
             let _ = writeln!(o, "   double *x_{arr};");
@@ -1282,36 +1280,32 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
 /// handle itself. Emitted only for ring models; safe on partially-allocated
 /// handles (open memsets the struct, so unallocated buffers are NULL).
 fn emit_release(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    if model.rings.is_empty()
-        && model.windows.is_empty()
-        && model.circs.is_empty()
-        && model.extrema.is_none()
-    {
+    if !model.needs_release() {
         return;
     }
     let n = uname(func);
     let _ = writeln!(o, "static void TA_{n}_StreamRelease( struct TA_{n}_Stream *sp )
 {{");
     let _ = writeln!(o, "   if( !sp ) return;");
-    for ring in &model.rings {
+    for ring in model.rings() {
         for arr in &ring.arrays {
             let _ = writeln!(o, "   if( sp->ring_{0}_{arr} ) TA_Free( sp->ring_{0}_{arr} );", ring.var);
             let _ = writeln!(o, "   if( sp->ringMirror_{0}_{arr} ) TA_Free( sp->ringMirror_{0}_{arr} );", ring.var);
         }
     }
-    for win in &model.windows {
+    for win in model.windows() {
         for arr in &win.arrays {
             let _ = writeln!(o, "   if( sp->win_{0}_{arr} ) TA_Free( sp->win_{0}_{arr} );", win.var);
             let _ = writeln!(o, "   if( sp->winMirror_{0}_{arr} ) TA_Free( sp->winMirror_{0}_{arr} );", win.var);
         }
     }
-    for circ in &model.circs {
+    for circ in model.circs() {
         for (storage, _) in circ_storages(circ) {
             let _ = writeln!(o, "   if( sp->cb_{storage} ) TA_Free( sp->cb_{storage} );");
             let _ = writeln!(o, "   if( sp->cbMirror_{storage} ) TA_Free( sp->cbMirror_{storage} );");
         }
     }
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         for arr in &ex.arrays {
             let _ = writeln!(o, "   if( sp->x_{arr} ) TA_Free( sp->x_{arr} );");
             let _ = writeln!(o, "   if( sp->xMirror_{arr} ) TA_Free( sp->xMirror_{arr} );");
@@ -1378,7 +1372,7 @@ fn emit_step(
 /// (MININDEX...) report the rebased position beyond ~2^30 bars — the
 /// batch contract is inherently vacuous past INT_MAX bars.
 fn emit_extrema_rebase(o: &mut String, model: &StreamModel) {
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
         vars.extend(ex.index_vars.iter().cloned());
         let _ = writeln!(o, "   if( sp->{} >= 1073741824 )", model.cursor);
@@ -1518,7 +1512,7 @@ fn emit_open(
 /// withheld so the capture below can read them).
 fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
     let free_batch = free_batch_storages(model);
-    for circ in &model.circs {
+    for circ in model.circs() {
         let id = &circ.id;
         let _ = writeln!(o, "      sp->cbSize_{id} = maxIdx_{id} + 1;");
         let _ = writeln!(
@@ -1545,7 +1539,7 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
             );
         }
     }
-    if !model.circs.is_empty() {
+    if !model.circs().is_empty() {
         let _ = writeln!(o, "      {free_batch}");
     }
 }
@@ -1602,7 +1596,7 @@ fn alloc_and_capture(
     );
     // Circ models: the batch's own circular buffer is still live here (its
     // top-level destroy was withheld for the capture) — free it on failure.
-    let sp_fail: String = if with_state && !model.circs.is_empty() {
+    let sp_fail: String = if with_state && !model.circs().is_empty() {
         free_batch_storages(model)
     } else {
         String::new()
@@ -1633,12 +1627,12 @@ fn alloc_and_capture(
             }
         }
     }
-    let fail = if model.rings.is_empty() {
+    let fail = if model.rings().is_empty() {
         String::new()
     } else {
         format!("{{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}")
     };
-    for ring in &model.rings {
+    for ring in model.rings() {
         let v = &ring.var;
         let back = ring.back;
         if with_state {
@@ -1716,7 +1710,7 @@ fn alloc_and_capture(
             let _ = writeln!(s, "{pad}sp->ringPos_{v} = 0;");
         }
     }
-    for win in &model.windows {
+    for win in model.windows() {
         let v = &win.var;
         if with_state {
             let cap = render_expression(&win.cap, registry, helpers, counter);
@@ -1755,7 +1749,7 @@ fn alloc_and_capture(
         }
         let _ = writeln!(s, "{pad}sp->winPos_{v} = 0;");
     }
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         if with_state {
             let _ = writeln!(
                 s,
@@ -1856,14 +1850,14 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, outputs: &[String], inpu
 /// the frees a failure path owes for the withheld top-level destroys.
 fn free_batch_storages(model: &StreamModel) -> String {
     let mut s = String::new();
-    for (storage, _) in model.circs.iter().flat_map(circ_storages) {
+    for (storage, _) in model.circs().iter().flat_map(circ_storages) {
         let _ = write!(s, "if( {storage} != &local_{storage}[0] ) TA_Free( {storage} ); ");
     }
     s
 }
 
 fn emit_circ_hoist(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    for circ in &model.circs {
+    for circ in model.circs() {
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
             let _ = writeln!(o, "   {et} local_{storage}[{}];", circ_static_size(func, &circ.id));
@@ -2054,7 +2048,7 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
 /// handle is logically const; single-writer covers the mirror — see the
 /// proposal).
 fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
-    for ring in &model.rings {
+    for ring in model.rings() {
         let v = &ring.var;
         for arr in &ring.arrays {
             let _ = writeln!(o, "   scratch.ring_{v}_{arr} = stream->ringMirror_{v}_{arr};");
@@ -2064,7 +2058,7 @@ fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
             );
         }
     }
-    for win in &model.windows {
+    for win in model.windows() {
         let v = &win.var;
         for arr in &win.arrays {
             let _ = writeln!(o, "   scratch.win_{v}_{arr} = stream->winMirror_{v}_{arr};");
@@ -2074,7 +2068,7 @@ fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
             );
         }
     }
-    for circ in &model.circs {
+    for circ in model.circs() {
         let id = &circ.id;
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
@@ -2085,7 +2079,7 @@ fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
             );
         }
     }
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         for arr in &ex.arrays {
             let _ = writeln!(o, "   scratch.x_{arr} = stream->xMirror_{arr};");
             let _ = writeln!(
@@ -2099,14 +2093,10 @@ fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
 fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {
     let n = uname(func);
     let _ = writeln!(o, "{}\n{{", close_signature(func));
-    if model.rings.is_empty()
-        && model.windows.is_empty()
-        && model.circs.is_empty()
-        && model.extrema.is_none()
-    {
-        let _ = writeln!(o, "   if( stream ) TA_Free( stream );");
-    } else {
+    if model.needs_release() {
         let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+    } else {
+        let _ = writeln!(o, "   if( stream ) TA_Free( stream );");
     }
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }

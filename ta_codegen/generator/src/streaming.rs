@@ -373,6 +373,40 @@ pub enum LoopForm {
     Countdown,
 }
 
+/// The steady-state kind — the ONE exclusivity the analyzer proves
+/// fundamental. `analyze_region` clears any trailing rings when an extrema
+/// automaton is present (the `rings_effective` fold) and `build_extrema`
+/// refuses to run when windows/circs/counter exist, so a model is never both
+/// an ordinary batch-walker and an absolute-index automaton. Encoding that as
+/// an enum makes the illegal combination unrepresentable (it deletes only
+/// states the analyzer never constructs — no reachable flexibility is lost).
+#[derive(Debug)]
+pub enum Steady {
+    /// Ordinary batch-walking steady state (T1/T2/T3): the cursor is a plain
+    /// array walker, dropped from the transition. All-empty/None == a pure
+    /// scalar T1/T2 recurrence.
+    ///
+    /// INVARIANT — do NOT split into finer variants. `rings`, `windows`, and
+    /// `circs` are only *incidentally* exclusive: they come from independent
+    /// analyzer passes (`assemble_rings` / `assemble_windows` / `discover_circs`)
+    /// and can legally co-occur (a trailing ring alongside a rescan window is
+    /// representable). Separate arms would silently drop those reachable states.
+    Batch {
+        /// Trailing-window rings (T3), one per trailing index variable.
+        rings: Vec<RingSpec>,
+        /// Bounded rescan windows (T3), one per inner-loop counter variable.
+        windows: Vec<WindowSpec>,
+        /// CIRCBUF-backed buffers referenced by the steady loop.
+        circs: Vec<CircState>,
+        /// Countdown loops only: the iteration-count variable (dropped).
+        counter: Option<String>,
+    },
+    /// Absolute-index automaton (T4): the cursor is carried state (not dropped)
+    /// and inputs are read through the automaton ring. By construction excludes
+    /// every ring/window/circ/counter.
+    Extrema(ExtremaState),
+}
+
 /// Everything the stream emitters need, derived from one [`FuncDef`].
 #[derive(Debug)]
 pub struct StreamModel<'a> {
@@ -380,7 +414,9 @@ pub struct StreamModel<'a> {
     /// The body `open()` transcribes: guarded body, or the private body when
     /// the function has an explicit `_private` variant.
     pub body: &'a [Statement],
-    /// Derived tier (must match the YAML declaration).
+    /// Derived tier (must match the YAML declaration). Kept cached (read by the
+    /// census + declared-tier gate); the constructor debug-asserts it against
+    /// [`derive_tier`] so it can never drift from the data.
     pub tier: StreamTier,
     pub loop_form: LoopForm,
     /// Statements of the per-bar transition, in batch order (loop body plus,
@@ -392,8 +428,6 @@ pub struct StreamModel<'a> {
     /// (Metastock seed boundary): Open rejects at exactly lookback+1 there,
     /// so verification shifts its boundary leg by one bar.
     pub seed_boundary: bool,
-    /// Countdown loops only: the iteration-count variable (dropped).
-    pub counter: Option<String>,
     /// Output-index variables (dropped in the transition).
     pub out_index_vars: BTreeSet<String>,
     /// Outputs whose PREVIOUS value the steady loop reads (`out[idx-1]`,
@@ -408,36 +442,100 @@ pub struct StreamModel<'a> {
     pub state: Vec<(String, VarType)>,
     /// Written-before-read scalars: plain locals of the transition function.
     pub temps: Vec<(String, VarType)>,
-    /// Bounded look-back lags, in input signature order.
+    /// Bounded look-back lags, in input signature order. Flat, NOT part of
+    /// [`Steady`]: lags co-occur with every steady kind (`lag_slots` is built
+    /// unconditionally and never zeroed under extrema), so folding them into a
+    /// variant would lose the `extrema + lags` state.
     pub lags: Vec<LagSlot>,
-    /// Trailing-window rings (T3), one per trailing index variable.
-    pub rings: Vec<RingSpec>,
-    /// Bounded rescan windows (T3), one per inner-loop counter variable.
-    pub windows: Vec<WindowSpec>,
-    /// CIRCBUF-backed buffers referenced by the steady loop.
-    pub circs: Vec<CircState>,
-    /// Absolute-index automaton (T4). When set, the cursor is carried state
-    /// (not dropped) and inputs are read through the automaton ring.
-    pub extrema: Option<ExtremaState>,
+    /// The fundamentally-exclusive steady-state kind (batch-walker vs automaton).
+    pub steady: Steady,
     /// Recognized param==1 identity path, if the batch body has one.
     pub identity: Option<IdentityPath>,
 }
 
 impl StreamModel<'_> {
+    /// Trailing rings (empty for the extrema automaton — it reads through its
+    /// own ring). Byte-identical to the old `rings` field, which
+    /// `analyze_region` force-emptied under extrema.
+    #[must_use]
+    pub fn rings(&self) -> &[RingSpec] {
+        match &self.steady {
+            Steady::Batch { rings, .. } => rings,
+            Steady::Extrema(_) => &[],
+        }
+    }
+
+    /// Rescan windows (empty under extrema by construction).
+    #[must_use]
+    pub fn windows(&self) -> &[WindowSpec] {
+        match &self.steady {
+            Steady::Batch { windows, .. } => windows,
+            Steady::Extrema(_) => &[],
+        }
+    }
+
+    /// CIRCBUF-backed buffers (empty under extrema by construction).
+    #[must_use]
+    pub fn circs(&self) -> &[CircState] {
+        match &self.steady {
+            Steady::Batch { circs, .. } => circs,
+            Steady::Extrema(_) => &[],
+        }
+    }
+
+    /// The countdown iteration-count variable (None under extrema).
+    #[must_use]
+    pub fn counter(&self) -> Option<&str> {
+        match &self.steady {
+            Steady::Batch { counter, .. } => counter.as_deref(),
+            Steady::Extrema(_) => None,
+        }
+    }
+
+    /// The absolute-index automaton, if this is the extrema kind.
+    #[must_use]
+    pub fn extrema(&self) -> Option<&ExtremaState> {
+        match &self.steady {
+            Steady::Extrema(e) => Some(e),
+            Steady::Batch { .. } => None,
+        }
+    }
+
+    /// True iff the model owns any heap buffer and therefore needs a
+    /// `TA_<N>_StreamRelease` (per-buffer `TA_Free`) instead of a plain free.
+    /// Replaces the OR-chains previously duplicated across the emitter.
+    #[must_use]
+    pub fn needs_release(&self) -> bool {
+        match &self.steady {
+            Steady::Extrema(_) => true,
+            Steady::Batch {
+                rings,
+                windows,
+                circs,
+                ..
+            } => !(rings.is_empty() && windows.is_empty() && circs.is_empty()),
+        }
+    }
+
     /// Variables that exist only to walk the batch arrays and are dropped
     /// from the transition (their bookkeeping statements are deleted).
     #[must_use]
     pub fn dropped_vars(&self) -> BTreeSet<String> {
         let mut d: BTreeSet<String> = self.out_index_vars.clone();
-        if self.extrema.is_none() {
-            // Extrema automatons carry the cursor as absolute state.
-            d.insert(self.cursor.clone());
-        }
-        if let Some(c) = &self.counter {
-            d.insert(c.clone());
-        }
-        for r in &self.rings {
-            d.insert(r.var.clone());
+        match &self.steady {
+            Steady::Batch {
+                rings, counter, ..
+            } => {
+                // Ordinary walkers drop the cursor; extrema carries it.
+                d.insert(self.cursor.clone());
+                if let Some(c) = counter {
+                    d.insert(c.clone());
+                }
+                for r in rings {
+                    d.insert(r.var.clone());
+                }
+            }
+            Steady::Extrema(_) => {}
         }
         d
     }
@@ -1068,6 +1166,7 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
 /// composed tier analyzes its PRODUCER region this way: the statements up to
 /// and including the steady loop, with the intermediate series local
 /// (STOCH's `tempBuffer`) standing in as the output the loop writes.
+#[allow(clippy::too_many_lines)]
 pub fn analyze_region<'a>(
     func: &'a FuncDef,
     body: &'a [Statement],
@@ -1130,7 +1229,6 @@ pub fn analyze_region<'a>(
     };
     let (extrema, (mut state, temps)) =
         classify_or_extrema(&ctx, &ring_vars, &trailing, &windows, &circs)?;
-    let rings_effective: Vec<RingSpec> = if extrema.is_some() { Vec::new() } else { rings };
     force_circ_index_state(&circs, &mut state, &temps);
 
     // Lags in input signature order.
@@ -1144,17 +1242,44 @@ pub fn analyze_region<'a>(
         })
         .collect();
 
-    let tier = derive_tier(
-        &state,
-        &lag_slots,
-        &rings_effective,
-        &windows,
-        &circs,
-        counter.as_deref(),
-        extrema.as_ref(),
-    );
+    // The fundamentally-exclusive steady kind. `classify_or_extrema` /
+    // `build_extrema` guarantee rings/windows/circs/counter are empty when an
+    // extrema automaton is present, so the `Extrema` arm carries none of them
+    // and the `Batch` arm takes the trailing rings directly — the enum IS the
+    // "effective rings" fold (no separate temporary that could go stale).
+    let steady = match extrema {
+        Some(e) => Steady::Extrema(e),
+        None => Steady::Batch {
+            rings,
+            windows,
+            circs,
+            counter,
+        },
+    };
 
-    Ok(StreamModel {
+    // Tier is derived from the steady kind's effective view: an extrema
+    // automaton reads through its own ring, so it presents no trailing
+    // rings/windows/circs (byte-identical to the old `rings_effective` inputs,
+    // since those fields are provably empty on that arm).
+    let tier = match &steady {
+        Steady::Extrema(e) => derive_tier(&state, &lag_slots, &[], &[], &[], None, Some(e)),
+        Steady::Batch {
+            rings,
+            windows,
+            circs,
+            counter,
+        } => derive_tier(
+            &state,
+            &lag_slots,
+            rings,
+            windows,
+            circs,
+            counter.as_deref(),
+            None,
+        ),
+    };
+
+    let model = StreamModel {
         func,
         seed_boundary,
         out_feedback,
@@ -1163,19 +1288,31 @@ pub fn analyze_region<'a>(
         loop_form,
         steady_stmts,
         cursor,
-        counter,
         out_index_vars,
         bar_inputs,
         outputs,
         state,
         temps,
         lags: lag_slots,
-        rings: rings_effective,
-        windows,
-        circs,
-        extrema,
+        steady,
         identity,
-    })
+    };
+    // Drift-proof the cached tier: re-derive it from the FINAL model (through
+    // the accessors) and confirm it matches. Catches any construction bug that
+    // drops tier-relevant data into the wrong steady arm.
+    debug_assert_eq!(
+        model.tier,
+        derive_tier(
+            &model.state,
+            &model.lags,
+            model.rings(),
+            model.windows(),
+            model.circs(),
+            model.counter(),
+            model.extrema(),
+        )
+    );
+    Ok(model)
 }
 
 /// Recognize a dispatch body: optional identity path, then a single switch
@@ -3560,12 +3697,12 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     // position advances with the conditional-reset idiom (house style; a
     // modulo costs ~10 cycles on ARM). Order preserved vs the batch reads
     // above: reads happened on the OLD slot contents.
-    for ring in &model.rings {
+    for ring in model.rings() {
         push_ring_advance(&mut out, ring, names);
     }
     // Rescan windows: the current bar was written at `pos` before the body;
     // advance the position for the next update.
-    for win in &model.windows {
+    for win in model.windows() {
         push_window_advance(&mut out, win, names);
     }
     Ok(out)
@@ -3621,7 +3758,7 @@ fn insert_transition_prologue(
     names: &dyn NameMap,
     identity_branch: Option<Statement>,
 ) {
-    if let Some(ex) = &model.extrema {
+    if let Some(ex) = model.extrema() {
         for arr in ex.arrays.iter().rev() {
             out.insert(
                 0,
@@ -3640,12 +3777,12 @@ fn insert_transition_prologue(
             );
         }
     }
-    for win in model.windows.iter().rev() {
+    for win in model.windows().iter().rev() {
         for arr in win.arrays.iter().rev() {
             out.insert(0, window_prewrite(win, arr, names));
         }
     }
-    for ring in model.rings.iter().rev() {
+    for ring in model.rings().iter().rev() {
         if ring.back > 0 {
             // Absolute-mod layout: slot `pos` (== bar index % cap) holds the
             // current bar so the runtime-lag-0 case reads it through the
@@ -3968,7 +4105,7 @@ fn rewrite_expr_for_transition(
 ) -> Expr {
     match e {
         Expr::ArrayAccess(n, idx)
-            if model.extrema.is_some() && model.bar_inputs.contains(&n) =>
+            if model.extrema().is_some() && model.bar_inputs.contains(&n) =>
         {
             // Absolute-index automaton: every input read maps to the ring
             // slot of its absolute position (the index expression's vars
@@ -3991,9 +4128,9 @@ fn rewrite_expr_for_transition(
                 InputIndex::Current => Expr::Var(names.bar(&n)),
                 InputIndex::Lag(k) => Expr::Var(names.state(&StreamModel::lag_field(&n, k))),
                 InputIndex::OtherVar(v)
-                    if model.rings.iter().any(|r| r.var == v) =>
+                    if model.rings().iter().any(|r| r.var == v) =>
                 {
-                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    let ring = model.rings().iter().find(|r| r.var == v).unwrap();
                     if ring.back > 0 {
                         ring_offset_read(ring, &n, Some(0), None, names)
                     } else {
@@ -4005,21 +4142,21 @@ fn rewrite_expr_for_transition(
                     }
                 }
                 InputIndex::OtherVarLag(v, k)
-                    if model.rings.iter().any(|r| r.var == v) =>
+                    if model.rings().iter().any(|r| r.var == v) =>
                 {
-                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    let ring = model.rings().iter().find(|r| r.var == v).unwrap();
                     ring_offset_read(ring, &n, Some(k), None, names)
                 }
                 InputIndex::OtherVarWinLag(v, w)
-                    if model.rings.iter().any(|r| r.var == v) =>
+                    if model.rings().iter().any(|r| r.var == v) =>
                 {
-                    let ring = model.rings.iter().find(|r| r.var == v).unwrap();
+                    let ring = model.rings().iter().find(|r| r.var == v).unwrap();
                     ring_offset_read(ring, &n, None, Some(Expr::Var(w)), names)
                 }
                 InputIndex::WindowVar(w0) => {
                     // Bottom-up rewriting may already have state-mapped the
                     // offset var; resolve back to the window it belongs to.
-                    let win = model.windows.iter().find(|win| {
+                    let win = model.windows().iter().find(|win| {
                         win.var == w0 || names.state(&win.var) == w0
                     });
                     match win {
@@ -4055,7 +4192,7 @@ fn rewrite_expr_for_transition(
         }
         Expr::ArrayAccess(n, idx)
             if model
-                .circs
+                .circs()
                 .iter()
                 .flat_map(circ_storages)
                 .any(|(st, _)| st == n) =>
@@ -4078,7 +4215,7 @@ fn drop_bookkeeping(
         // CIRCBUF_NEXT: expand to the exact macro semantics on state names
         // (idx++; if (idx > maxIdx) idx = 0 — conditional reset, not modulo).
         Statement::CircBuf(CircBuf::Next { ref id })
-            if model.circs.iter().any(|c| c.id == *id) =>
+            if model.circs().iter().any(|c| c.id == *id) =>
         {
             let idx = names.state(&format!("{id}_Idx"));
             let max = names.state(&format!("maxIdx_{id}"));
@@ -4585,9 +4722,9 @@ mod tests {
         ]);
         let m = analyze(&f).expect("analyzes as T3");
         assert_eq!(m.tier, StreamTier::T3);
-        assert_eq!(m.rings.len(), 1);
-        assert_eq!(m.rings[0].var, "trailingIdx");
-        assert_eq!(m.rings[0].arrays, ["inReal"]);
+        assert_eq!(m.rings().len(), 1);
+        assert_eq!(m.rings()[0].var, "trailingIdx");
+        assert_eq!(m.rings()[0].arrays, ["inReal"]);
         // Transition: cap-0 guard first, ring read in the body, push+advance
         // at the end, and no trailingIdx leakage.
         let t = build_transition(&m, &TestNames).unwrap();
@@ -4834,7 +4971,7 @@ mod tests {
         let m = analyze(&f).expect("analyzes");
         assert_eq!(m.loop_form, LoopForm::Countdown);
         assert_eq!(m.cursor, "today");
-        assert_eq!(m.counter.as_deref(), Some("nbBar"));
+        assert_eq!(m.counter(), Some("nbBar"));
         assert_eq!(m.tier, StreamTier::T2);
         assert_eq!(m.state, vec![("ad".into(), VarType::Real)]);
         // Transition must drop today/outIdx/nbBar bookkeeping.

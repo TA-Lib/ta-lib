@@ -70,7 +70,7 @@ fn ad_countdown_loop_is_t2() {
     let f = load("ad");
     let m = streaming::analyze(&f).expect("AD analyzes");
     assert_eq!(m.tier, StreamTier::T2);
-    assert!(m.counter.is_some());
+    assert!(m.counter().is_some());
 }
 
 #[test]
@@ -78,8 +78,8 @@ fn sma_is_t3_ring() {
     let f = load("sma");
     let m = streaming::analyze(&f).expect("SMA analyzes");
     assert_eq!(m.tier, StreamTier::T3);
-    assert_eq!(m.rings.len(), 1);
-    assert_eq!(m.rings[0].arrays, ["inReal"]);
+    assert_eq!(m.rings().len(), 1);
+    assert_eq!(m.rings()[0].arrays, ["inReal"]);
 }
 
 #[test]
@@ -152,8 +152,8 @@ fn cdldoji_is_t3_with_plain_ohlc_ring() {
     let f = load("cdldoji");
     let m = streaming::analyze(&f).expect("CDLDOJI analyzes");
     assert_eq!(m.tier, StreamTier::T3);
-    assert_eq!(m.rings.len(), 1);
-    let r = &m.rings[0];
+    assert_eq!(m.rings().len(), 1);
+    let r = &m.rings()[0];
     assert_eq!(r.var, "BodyDojiTrailingIdx");
     assert_eq!(r.arrays, ["inOpen", "inHigh", "inLow", "inClose"]);
     assert_eq!((r.back, r.fwd), (0, 0), "plain oldest-slot ring");
@@ -167,7 +167,7 @@ fn cdlonneck_ring_has_back_offset() {
     let f = load("cdlonneck");
     let m = streaming::analyze(&f).expect("CDLONNECK analyzes");
     let r = m
-        .rings
+        .rings()
         .iter()
         .find(|r| r.var == "EqualTrailingIdx")
         .expect("Equal ring");
@@ -180,7 +180,7 @@ fn cdleveningstar_ring_has_forward_offset() {
     let f = load("cdleveningstar");
     let m = streaming::analyze(&f).expect("CDLEVENINGSTAR analyzes");
     let r = m
-        .rings
+        .rings()
         .iter()
         .find(|r| r.var == "BodyShortTrailingIdx")
         .expect("BodyShort ring");
@@ -196,12 +196,12 @@ fn cdl3blackcrows_var_offset_ring_window_and_array_state() {
     let f = load("cdl3blackcrows");
     let m = streaming::analyze(&f).expect("CDL3BLACKCROWS analyzes");
     let r = m
-        .rings
+        .rings()
         .iter()
         .find(|r| r.var == "ShadowVeryShortTrailingIdx")
         .expect("ShadowVeryShort ring");
     assert!(r.back >= 2, "counter-offset ring, got {}", r.back);
-    assert!(!m.windows.is_empty(), "in[i - totIdx] rescan window");
+    assert!(!m.windows().is_empty(), "in[i - totIdx] rescan window");
     assert!(
         m.state
             .iter()
@@ -217,7 +217,7 @@ fn cdlkickingbylength_ternary_index_hoisted() {
     let f = load("cdlkickingbylength");
     let m = streaming::analyze(&f).expect("CDLKICKINGBYLENGTH analyzes");
     assert_eq!(m.tier, StreamTier::T3);
-    assert_eq!(m.rings.len(), 2, "BodyLong + ShadowVeryShort rings");
+    assert_eq!(m.rings().len(), 2, "BodyLong + ShadowVeryShort rings");
 }
 
 #[test]
@@ -226,7 +226,7 @@ fn cdladvanceblock_merges_window_bounds_to_widest() {
     // the widest literal bound instead of rejecting.
     let f = load("cdladvanceblock");
     let m = streaming::analyze(&f).expect("CDLADVANCEBLOCK analyzes");
-    let w = m.windows.iter().find(|w| w.var == "totIdx").expect("totIdx window");
+    let w = m.windows().iter().find(|w| w.var == "totIdx").expect("totIdx window");
     assert!(
         matches!(w.cap, ta_codegen_lib::ir::Expr::IntLiteral(3)),
         "widest inclusive bound 2 -> exclusive cap 3, got {:?}",
@@ -412,7 +412,7 @@ fn imi_cursor_anchored_window_reindexed() {
     let f = load("imi");
     let m = streaming::analyze(&f).expect("IMI analyzes");
     assert_eq!(m.tier, StreamTier::T3);
-    assert!(!m.windows.is_empty(), "reindexed rescan window");
+    assert!(!m.windows().is_empty(), "reindexed rescan window");
     assert!(m.state.is_empty(), "pure window recompute carries no state");
 }
 
