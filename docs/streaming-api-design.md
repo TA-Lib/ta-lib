@@ -1,26 +1,22 @@
-# Proposal: Generated Streaming (Incremental) API for ta_codegen
+# Generated Streaming (Incremental) API for ta_codegen
 
-Status: design finalized 2026-07-09 after a design review and a ta_codegen
-feasibility spike (spike results in the *Implementation* section; the spike
-prototype was retired once the production implementation superseded it).
-**Stage 1 is implemented** — T1+T2 C tier (37 functions), `stream_verify`
-harness, regtest gate; see *Staging* for what remains proposal-only.
+Status: Implementation in progress, planned for release 0.7.2
 
 ## Design
 
 ### Motivation
 Live-trading users often want the latest indicator value updated in O(1) per new bar — not a full recompute each tick. This has been requested over the years, and some TA-Lib derivative works have already attempted it (see prior art).
 
-This proposal is to add an official **streaming API** to TA-Lib for C, Rust and Java (other language may be later).
+This design adds an official **streaming API** to TA-Lib for C, Rust and Java (other languages may be added later).
 
-The hard parts are **maintenance** and **validation**, and both are solvable with recent automation added to TA-Lib 0.7.1.
+The hard parts are **maintenance** and **validation**, and both are solvable when combining recent ta_codegen refactoring done in TA-Lib 0.7.1, and AI-advancement for automation.
 
 ### Prior art: `talib.stream`
 
 The Python wrapper's streaming module returns the latest value by calling the C
 function at a single index (`startIdx = endIdx = len-1`), reaching back only
 `lookback` bars instead of building the whole array — cheaper than the Function
-API. A good experimental first cut; two limitations this proposal removes:
+API. A good experimental first cut; two limitations:
 
 - **No retained state** — every tick redoes the `lookback` reach-back, so it is
   O(lookback)/tick, not O(1); nothing is carried between bars.
@@ -35,9 +31,9 @@ TA-Lib** that adds exactly this kind of incremental API.
 
 So the *concept* — per-indicator state + per-bar update — is not novel; ta-lib-rt got there first.
 
-ta-lib-rt shows it can be done. It is a great reference and inspiration to this proposal.
+ta-lib-rt shows it can be done. It is a great reference and inspiration to this design.
 
-This proposal adds **maintenance automation** to keep an official streaming API updated lockstep with the official TA-Lib batch API.
+This design adds **maintenance automation** to keep an official streaming API updated lockstep with the official TA-Lib batch API.
 
 ### Public API (stream lifecycle)
 
@@ -51,12 +47,11 @@ Every stream, in every language, is the same lifecycle:
    the function's lookback + 1, including any unstable period in effect
    (i.e. exactly `TA_XXX_Lookback() + 1`); with less history there
    is no defined value yet and open fails. This keeps rule 2 unconditionally
-   true. Everything needed is kept in the handle (the initial history can be
-   "freed").
+   true.
 2. **`update(handle, bar) → value` — once per closed bar.** Takes the handle
    and the new input(s) (OHLCV for multi-input functions) and always produces
    the new current value. `update` performs **no allocation** — the handle is
-   sized at open (rings/deques are bounded by the fixed params).
+   memory sized at open.
 3. **`close(handle)`.** Releases the stream — explicit in C, implicit
    (automatic) in managed backends (Rust/Java).
 
@@ -67,10 +62,11 @@ persist it across versions.
 
 Per-language signatures are in the *API shape per backend* section below.
 
+After open, the initial history can be "freed" by the caller (everything needed is kept within the handle).
+
 Multi-output functions (MACD, BBANDS, STOCH) produce one value per output per
 update (a tuple/struct in managed languages, one out-pointer per output in C).
-All outputs of a function share the same warm-up; no function has divergent
-per-output lookbacks at the API level (verified across the 161).
+
 
 ### Forming bar (peek)
 
@@ -84,8 +80,9 @@ the surface includes:
 
 `peek` returns exactly the value `update` would return for that bar —
 bit-identical, guaranteed by construction: it is the same generated code as
-`update`, run without committing (see *How it fits ta_codegen*). Its overhead
-is a small state copy.
+`update`, run without committing.
+
+Its overhead is an alloc/free to maintain a throw away deep-copy of the handle (on every update).
 
 ### Semantic definition (the contract tests enforce)
 
@@ -114,14 +111,12 @@ Notes that make this precise:
   history — it only delays the first visible output: `open` requires
   `TA_XXX_Lookback() + 1` bars; values are unaffected. It is read once at
   `open`; changing it later affects only future opens, never a live stream.
-- **NaN.** As in batch: inputs must be finite, and outputs never contain NaN.
+- **NaN.** Are not supported in inputs, and never produced at output.
   Wrappers (e.g. Python) may layer their own NaN handling.
 
 ta_regtest automation validates the batch API exhaustively including comparison
 against frozen references (e.g. 0.6.4). The stream tier is verified against
 batch (see *Verification*); what transfers is full-range value correctness.
-Batch-only properties (startIdx>0 re-seeding coherency, unstable-period
-convergence envelopes) have no stream analog by design.
 
 We purposely avoid code re-use between the generated batch and stream API,
 reducing risk of introducing common/invisible bugs. (Both are generated from
@@ -193,7 +188,7 @@ is ordinary heap state, so "close" is literally nothing: no `AutoCloseable`,
 no finalizer; GC suffices. The same holds for .NET **provided the .NET stream
 tier is a managed C# emitter** mirroring the Java one (the plan — staging
 step 6). A P/Invoke wrapper over the C handles would instead own native memory
-and need `SafeHandle`/`IDisposable` — a worse API; this proposal chooses the
+and need `SafeHandle`/`IDisposable` — a worse API; this design chooses the
 managed emitter and accepts the later delivery date.
 
 ### Rust concurrency
@@ -683,9 +678,32 @@ claim in *Motivation* gets measured, not asserted).
      verified rather than run vacuously. A 1e-9 output perturbation fails
      every leg; the unsupported `optInFastD_MAType` arms (TRIMA/MAMA)
      expect-reject through the recursive STOCHRSI→stochf→ma precheck.
-   - **Remaining:** the other loopless pipelines (APO/PPO 2-MA combine,
-     MACDEXT), combine-loop alignment algebra (APO offset j=i+begDiff,
-     ADXR's sub-output ring), BBANDS. Then the delegating param-degenerates
+   - **Same-bar combine maps — APO + PPO DONE (138 streamable).** A composed
+     combine map may now read a sub-output at a proven same-bar shift:
+     `outReal[i] = tempBuffer[i + offset] - outReal[i]`, where the fast MA fills
+     `tempBuffer` and the slow MA fills `outReal`. The offset comes from the two
+     sub-calls' element counts (`fastNb - *outNBElement`), which — for calls
+     sharing an endIdx — equals the begIdx shift `slowBeg - fastBeg` yet stays
+     non-negative (the wider fast window always has at least as many outputs), so
+     it never underflows the Rust `usize` index the way the begIdx difference
+     does when the slow MA is empty. The analyzer proves same-bar from that
+     element-count provenance **plus** a shared-endIdx check (a genuine lag —
+     ADXR's `period − 1` sub-output offset is a param expression, not an
+     element-count difference — is correctly refused, so it still needs a real
+     ring); the emitter's index-blind rewrite then collapses the read to the
+     current scalar. Two **streamable-source-form guiding errors** landed with it
+     (the real forward win — they teach every future combine author the shape):
+     G1 fires on a multi-cursor combine loop ("rewrite as a single cursor with a
+     same-bar offset index"), G2 on a sub-call left inside an
+     `if (rc == TA_SUCCESS) { … }` success-guard ("flatten to a top-level
+     `if (rc != TA_SUCCESS) return rc;`"). The source was rewritten to that form
+     — bit-identical to the guarded two-cursor original (the fuzz-064 differential
+     vs 0.6.4 is unchanged before/after) and portable (a plain array index, no
+     pointer or memmove).
+   - **Remaining:** MACDEXT (loopless, three MA subs + an all-EMA arm), ADXR
+     (its combine reads a past ADX output at a param lag, not a same-bar shift,
+     so the combine-map gate rejects it — it needs a real lag ring), BBANDS.
+     Then the delegating param-degenerates
      (ATR/NATR period 1 =
      an embedded TRANGE stream; MACDFIX = generation-time inlining of
      macd's IR with substituted `0,0` args — those select the FIXED
