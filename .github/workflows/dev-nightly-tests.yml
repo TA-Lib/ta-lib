@@ -372,6 +372,43 @@ jobs:
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
         run: ./ta_regtest
 
+  # Memory-safety gate for the STREAMING tier. The `sanitizers` job above runs
+  # only the batch C-reference suite; it never calls the generated stream
+  # functions (Open/Update/Peek/Close, rings, sub-handles). This builds the C
+  # JSON-RPC stream server single-TU with -fsanitize=address,undefined (address
+  # bundles LeakSanitizer) and drives stream_verify for every stream-flagged
+  # function, closing stdin so the server exits CLEANLY and LeakSanitizer runs at
+  # exit (driving it through ta_regtest kills the server, so LSan would stay
+  # silent). A leak / OOB / UB on any exercised path fails the job. Only needs
+  # gcc + Python (the server compiles from the committed generated sources — no
+  # cargo). Allocation-failure branches are guarded by generate-time generator
+  # tests instead (they require malloc to fail, which no run exercises). C-only,
+  # GCC, gated on 'test'.
+  stream-sanitizers:
+    name: ASan/UBSan/LSan (streaming API)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install PyYAML
+        shell: bash
+        run: pip install pyyaml
+
+      - name: Build sanitized stream server + drive stream_verify (ASan/UBSan/LSan)
+        shell: bash
+        run: python3 scripts/stream_sanitize.py
+
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
   # recipe). Gated on the C hero job like the other non-hero jobs.
