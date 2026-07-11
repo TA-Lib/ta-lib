@@ -2575,7 +2575,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // File-level attributes
     s.push_str("#![forbid(unsafe_code)]\n");
-    s.push_str("#![allow(non_snake_case, unused_variables, dead_code, clippy::all)]\n\n");
+    s.push_str(
+        "#![allow(non_snake_case, unused_variables, dead_code, unused_parens, clippy::all)]\n\n",
+    );
 
     // Imports
     s.push_str("use serde_json::{self, Value};\n");
