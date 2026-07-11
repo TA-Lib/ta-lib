@@ -223,7 +223,7 @@ fn build_full_param_str(func: &FuncDef) -> String {
             ParamType::Real => params.push(format!("const double {}[]", input.name)),
             ParamType::Price(components) => {
                 for comp in components {
-                    let name = format!("in{}{}", &comp[..1].to_uppercase(), &comp[1..]);
+                    let name = format!("in{}{}", comp[..1].to_uppercase(), &comp[1..]);
                     params.push(format!("const double {name}[]"));
                 }
             }
