@@ -450,7 +450,7 @@ pub static FUNCS: [FuncInfo; 161] = [
         camel_case_name: "Adxr",
         group: Group::MomentumIndicators,
         hint: "Average Directional Movement Index Rating",
-        flags: FuncFlags(0x08000000),
+        flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],

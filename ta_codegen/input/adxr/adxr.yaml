@@ -2,7 +2,7 @@ name: ADXR
 camel_case: Adxr
 group: Momentum Indicators
 hint: Average Directional Movement Index Rating
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inPriceHLC
     type: price

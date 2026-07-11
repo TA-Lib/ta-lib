@@ -45,14 +45,19 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  082303 MF     Fix #792298. Remove rounding. Bug reported by AM.
+ *  071126 MF,CC  Rewrite the ADX combine as a single cursor: outReal[k] =
+ *                (adx[k+(period-1)] + adx[k])/2 (current ADX + ADX lagged by
+ *                period-1). Bit-identical to the two-cursor form, and the
+ *                streamable-source form (a sub-output lag ring).
  */
 
 // Import types from parent module
@@ -184,8 +189,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut adx: Vec<f64> = Vec::new();
         let mut adxrLookback: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -214,20 +217,24 @@ impl Core {
             return RetCode::Success;
         }
         adx = vec![0.0_f64; ((endIdx - startIdx + (optInTimePeriod) as usize) * 1) as usize];
+        // Compute ADX over a range that starts (period-1) bars earlier, so each
+        // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         retCode = self.adx_unguarded((startIdx - ((optInTimePeriod - 1)) as usize) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
-        i = (optInTimePeriod - 1) as usize;
-        j = 0;
+        // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
+        // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
+        // is adx[k]; the ADX range holds (period-1) more elements than the output.
+        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
-        nbElement = endIdx - startIdx + 2;
-        while { nbElement = nbElement.wrapping_sub(1); nbElement } != 0 {
-            outReal[outIdx] = ((((adx[{ let _v = i; i += 1; _v }] + adx[{ let _v = j; j += 1; _v }]) / 2.0)) as f64);
+        while outIdx < nbElement {
+            outReal[outIdx] = ((((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0)) as f64);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        (*outNBElement) = nbElement;
         return RetCode::Success;
     }
     /// Unguarded variant of [`Core::adxr`], used for internal cross-indicator calls.
@@ -251,8 +258,6 @@ impl Core {
     ) -> RetCode {
         let mut adx: Vec<f64> = Vec::new();
         let mut adxrLookback: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -276,16 +281,15 @@ impl Core {
         if retCode != RetCode::Success {
             return retCode;
         }
-        i = (optInTimePeriod - 1) as usize;
-        j = 0;
+        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
-        nbElement = endIdx - startIdx + 2;
-        while { nbElement = nbElement.wrapping_sub(1); nbElement } != 0 {
-            outReal[outIdx] = ((((adx[{ let _v = i; i += 1; _v }] + adx[{ let _v = j; j += 1; _v }]) / 2.0)) as f64);
+        while outIdx < nbElement {
+            outReal[outIdx] = ((((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0)) as f64);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        (*outNBElement) = nbElement;
         return RetCode::Success;
     }
 }

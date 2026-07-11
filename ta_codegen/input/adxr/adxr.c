@@ -4,14 +4,19 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  082303 MF     Fix #792298. Remove rounding. Bug reported by AM.
+ *  071126 MF,CC  Rewrite the ADX combine as a single cursor: outReal[k] =
+ *                (adx[k+(period-1)] + adx[k])/2 (current ADX + ADX lagged by
+ *                period-1). Bit-identical to the two-cursor form, and the
+ *                streamable-source form (a sub-output lag ring).
  */
 
 int adxr_lookback(int optInTimePeriod)
@@ -31,7 +36,7 @@ TA_RetCode adxr(int startIdx, int endIdx,
    double outReal[])
 {
    double *adx;
-   int adxrLookback, i, j, outIdx, nbElement;
+   int adxrLookback, outIdx, nbElement;
    TA_RetCode retCode;
 
    /* Original implementation from Wilder's book was doing some integer
@@ -63,10 +68,13 @@ TA_RetCode adxr(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   double *adx = malloc((endIdx-startIdx+optInTimePeriod) * sizeof(double));
+   adx = malloc((endIdx-startIdx+optInTimePeriod) * sizeof(double));
    if( !adx )
       return TA_ALLOC_ERR;
 
+   /* Compute ADX over a range that starts (period-1) bars earlier, so each
+    * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
+    */
    retCode = adx( startIdx-(optInTimePeriod-1), endIdx,
       inHigh, inLow, inClose,
       optInTimePeriod, outBegIdx, outNBElement, adx );
@@ -77,17 +85,18 @@ TA_RetCode adxr(int startIdx, int endIdx,
       return retCode;
    }
 
-   i = optInTimePeriod-1;
-   j = 0;
-   outIdx = 0;
-   nbElement = endIdx-startIdx+2;
-   while( --nbElement != 0 )
-      outReal[outIdx++] = ta_round_pos( (adx[i++]+adx[j++])/2.0 );
+   /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
+    * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
+    * is adx[k]; the ADX range holds (period-1) more elements than the output.
+    */
+   nbElement = *outNBElement - (optInTimePeriod-1);
+   for( outIdx = 0; outIdx < nbElement; outIdx++ )
+      outReal[outIdx] = ta_round_pos( (adx[outIdx+(optInTimePeriod-1)] + adx[outIdx]) / 2.0 );
 
    free(adx);
 
    *outBegIdx    = startIdx;
-   *outNBElement = outIdx;
+   *outNBElement = nbElement;
 
    return TA_SUCCESS;
 }

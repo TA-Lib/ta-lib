@@ -251,7 +251,7 @@ DEF_FUNCTION( ADXR,
               TA_GroupId_MomentumIndicators,
               "Average Directional Movement Index Rating",
               "Adxr",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* ADXR END */
 

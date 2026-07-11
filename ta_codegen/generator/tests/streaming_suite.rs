@@ -708,6 +708,83 @@ fn ppo_derives_composed_plan_with_division_map() {
 }
 
 #[test]
+fn adxr_derives_composed_plan_with_sub_lag_ring() {
+    // ADXR = adx(inHigh,inLow,inClose) over an extended range -> adx buffer,
+    // then outReal[k] = (adx[k+(period-1)] + adx[k])/2: the current ADX plus the
+    // ADX from (period-1) bars ago. That self-lag over the sub-output is a lag
+    // ring (a param depth), NOT a same-bar combine.
+    let f = load("adxr");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("ADXR derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("ADXR must derive a composed plan");
+    };
+    assert!(cp.producer.is_none(), "loopless pipeline");
+    assert_eq!(cp.intermediates, ["adx"]);
+    assert_eq!(cp.subs.len(), 1);
+    assert_eq!(cp.subs[0].callee, "adx");
+    // Multi-price direct feed: the three raw price inputs go straight to adx().
+    assert_eq!(cp.subs[0].srcs, ["inHigh", "inLow", "inClose"]);
+    assert_eq!(cp.subs[0].dsts, ["adx"]);
+    // The lag ring over the ADX sub-output.
+    assert_eq!(cp.sub_lag_rings.len(), 1, "one sub-output lag ring");
+    assert_eq!(cp.sub_lag_rings[0].series, "adx");
+    // The lag depth is the parameter expression optInTimePeriod - 1.
+    use ta_codegen_lib::ir::{BinOp, Expr};
+    match &cp.sub_lag_rings[0].lag {
+        Expr::BinOp(l, BinOp::Sub, r) => {
+            assert!(matches!(l.as_ref(), Expr::Var(v) if v == "optInTimePeriod"));
+            assert!(matches!(r.as_ref(), Expr::IntLiteral(1)));
+        }
+        other => panic!("lag depth must be optInTimePeriod - 1, got {other:?}"),
+    }
+}
+
+#[test]
+fn data_dependent_lag_offset_rejected() {
+    // A lag ring has a FIXED capacity sized at open, so its depth must be a
+    // parameter expression. A data-dependent offset (here `*outNBElement / 2`,
+    // varying with history length) cannot be a ring and must be refused —
+    // otherwise the analyzer would size a ring from a value it cannot know
+    // at open. This pins the param-purity guard on the lag depth.
+    let src = r#"
+TA_RetCode adxr( int startIdx, int endIdx,
+   const double inHigh[], const double inLow[], const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *adx;
+   int outIdx, nbElement, runtimeLag;
+   TA_RetCode retCode;
+
+   adx = malloc((endIdx-startIdx+optInTimePeriod) * sizeof(double));
+   if( !adx )
+      return TA_ALLOC_ERR;
+   retCode = adx( startIdx-(optInTimePeriod-1), endIdx, inHigh, inLow, inClose,
+      optInTimePeriod, outBegIdx, outNBElement, adx );
+   if( retCode != TA_SUCCESS )
+   {
+      free(adx);
+      return retCode;
+   }
+   runtimeLag = *outNBElement / 2;
+   nbElement = *outNBElement - runtimeLag;
+   for( outIdx = 0; outIdx < nbElement; outIdx++ )
+      outReal[outIdx] = (adx[outIdx + runtimeLag] + adx[outIdx]) / 2.0;
+   free(adx);
+   *outBegIdx = startIdx;
+   *outNBElement = nbElement;
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("adxr", src);
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar shift")),
+        "a data-dependent lag must be refused (not sized into a fixed ring), got: {err}"
+    );
+}
+
+#[test]
 fn begidx_offset_form_rejected_steers_to_count_difference() {
     // The begIdx difference `*outBegIdx - fastBeg` is the same VALUE as the
     // element-count difference APO ships, but it underflows as a Rust `usize`

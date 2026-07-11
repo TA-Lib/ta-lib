@@ -2281,14 +2281,19 @@ class Core {
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *  AM       Adrian Michel
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010802 MF   Template creation.
-     *  052603 MF   Adapt code to compile with .NET Managed C++
-     *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+     *  010802 MF     Template creation.
+     *  052603 MF     Adapt code to compile with .NET Managed C++
+     *  082303 MF     Fix #792298. Remove rounding. Bug reported by AM.
+     *  071126 MF,CC  Rewrite the ADX combine as a single cursor: outReal[k] =
+     *                (adx[k+(period-1)] + adx[k])/2 (current ADX + ADX lagged by
+     *                period-1). Bit-identical to the two-cursor form, and the
+     *                streamable-source form (a sub-output lag ring).
      */
 
        public int adxrLookback( int optInTimePeriod )
@@ -2317,8 +2322,6 @@ class Core {
        {
           double[] adx;
           int adxrLookback = 0;
-          int i = 0;
-          int j = 0;
           int outIdx = 0;
           int nbElement = 0;
           RetCode retCode;
@@ -2360,19 +2363,23 @@ class Core {
              return RetCode.Success ;
           }
           adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
+          /* Compute ADX over a range that starts (period-1) bars earlier, so each
+           * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
+           */
           retCode = adxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          i = optInTimePeriod - 1;
-          j = 0;
-          outIdx = 0;
-          nbElement = endIdx - startIdx + 2;
-          while( --nbElement != 0 ) {
-             outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+          /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
+           * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
+           * is adx[k]; the ADX range holds (period-1) more elements than the output.
+           */
+          nbElement = outNBElement.value - (optInTimePeriod - 1);
+          for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
+             outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
+          outNBElement.value = nbElement;
           return RetCode.Success ;
        }
        public RetCode adxrUnguarded( int startIdx,
@@ -2387,8 +2394,6 @@ class Core {
        {
           double[] adx;
           int adxrLookback = 0;
-          int i = 0;
-          int j = 0;
           int outIdx = 0;
           int nbElement = 0;
           RetCode retCode;
@@ -2406,15 +2411,12 @@ class Core {
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          i = optInTimePeriod - 1;
-          j = 0;
-          outIdx = 0;
-          nbElement = endIdx - startIdx + 2;
-          while( --nbElement != 0 ) {
-             outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+          nbElement = outNBElement.value - (optInTimePeriod - 1);
+          for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
+             outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
+          outNBElement.value = nbElement;
           return RetCode.Success ;
        }
        public RetCode adxr( int startIdx,
@@ -2429,8 +2431,6 @@ class Core {
        {
           double[] adx;
           int adxrLookback = 0;
-          int i = 0;
-          int j = 0;
           int outIdx = 0;
           int nbElement = 0;
           RetCode retCode;
@@ -2459,15 +2459,12 @@ class Core {
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          i = optInTimePeriod - 1;
-          j = 0;
-          outIdx = 0;
-          nbElement = endIdx - startIdx + 2;
-          while( --nbElement != 0 ) {
-             outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+          nbElement = outNBElement.value - (optInTimePeriod - 1);
+          for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
+             outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
+          outNBElement.value = nbElement;
           return RetCode.Success ;
        }
        public RetCode adxrUnguarded( int startIdx,
@@ -2482,8 +2479,6 @@ class Core {
        {
           double[] adx;
           int adxrLookback = 0;
-          int i = 0;
-          int j = 0;
           int outIdx = 0;
           int nbElement = 0;
           RetCode retCode;
@@ -2501,15 +2496,12 @@ class Core {
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          i = optInTimePeriod - 1;
-          j = 0;
-          outIdx = 0;
-          nbElement = endIdx - startIdx + 2;
-          while( --nbElement != 0 ) {
-             outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+          nbElement = outNBElement.value - (optInTimePeriod - 1);
+          for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
+             outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
+          outNBElement.value = nbElement;
           return RetCode.Success ;
        }
     /* List of contributors:
@@ -2528,13 +2520,9 @@ class Core {
      *  052603 MF     Adapt code to compile with .NET Managed C++
      *  062804 MF     Resolve div by zero bug on limit case.
      *  020605 AA     Fix #1117666 Lookback & out-of-bound bug.
-     *  071126 MF,CC  Rewrite the fast/slow-MA combine into flat error-guards and a
-     *                single-cursor same-bar offset index (outReal[i] =
-     *                tempBuffer[i+offset] - outReal[i], offset = fastNb -
-     *                *outNBElement). Bit-identical to the guarded two-cursor form,
-     *                the streamable-source form the combine-map analyzer accepts,
-     *                and underflow-safe (the count difference is non-negative,
-     *                unlike the equivalent begIdx difference *outBegIdx - fastBeg).
+     *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
+     *                offset index (offset = fastNb - *outNBElement). Bit-identical,
+     *                streamable, and index-safe.
      */
 
        public int apoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -2607,11 +2595,9 @@ class Core {
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          /* The fast MA produces at least as many outputs as the slow MA (its
-           * lookback is shorter), so this element-count difference is >= 0 and equals
-           * the begIdx shift (*outBegIdx - fastBeg): tempBuffer[i+offset] is thus the
-           * fast MA at the same bar as outReal[i]. Using the counts keeps the
-           * subtraction non-negative; an empty slow MA leaves the loop untouched.
+          /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+           * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+           * outReal[i], with a non-negative index. An empty slow MA skips the loop.
            */
           offset = fastNb.value - outNBElement.value;
           /* Calculate (fast MA)-(slow MA) in the output. */
@@ -51091,13 +51077,9 @@ class Core {
      *  112400 MF     Template creation.
      *  052603 MF     Adapt code to compile with .NET Managed C++
      *  020605 AA     Fix #1117666 Lookback bug.
-     *  071126 MF,CC  Rewrite the fast/slow-MA combine into flat error-guards and a
-     *                single-cursor same-bar offset index (tempBuffer[i+offset],
-     *                offset = fastNb - *outNBElement). Bit-identical to the guarded
-     *                two-cursor form, the streamable-source form the combine-map
-     *                analyzer accepts, and underflow-safe (the count difference is
-     *                non-negative, unlike the equivalent begIdx difference). The
-     *                TA_IS_ZERO division guard is unchanged.
+     *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
+     *                offset index (offset = fastNb - *outNBElement). Bit-identical,
+     *                streamable, and index-safe; the TA_IS_ZERO guard is unchanged.
      */
 
        public int ppoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -51171,11 +51153,9 @@ class Core {
           if( retCode != RetCode.Success ) {
              return retCode ;
           }
-          /* The fast MA produces at least as many outputs as the slow MA (its
-           * lookback is shorter), so this element-count difference is >= 0 and equals
-           * the begIdx shift (*outBegIdx - fastBeg): tempBuffer[i+offset] is thus the
-           * fast MA at the same bar as outReal[i]. Using the counts keeps the
-           * subtraction non-negative; an empty slow MA leaves the loop untouched.
+          /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+           * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+           * outReal[i], with a non-negative index. An empty slow MA skips the loop.
            */
           offset = fastNb.value - outNBElement.value;
           /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */

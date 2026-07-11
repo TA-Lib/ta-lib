@@ -429,7 +429,7 @@ public int adxrLookback(
 @FuncInfo(
         name  = "ADXR",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

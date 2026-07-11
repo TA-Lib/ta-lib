@@ -63,6 +63,21 @@ pub struct LagSlot {
     pub depth: i64,
 }
 
+/// A composed combine that reads a sub-output series at two offsets: the
+/// current bar (`series[cursor + lag]`, the newest value) and a fixed
+/// parameter lag behind it (`series[cursor]`). ADXR is the case:
+/// `outReal[k] = (adx[k + (period-1)] + adx[k]) / 2` — the current ADX plus the
+/// ADX from `period-1` bars ago. The stream keeps a ring of the last `lag`
+/// sub-output values (cap captured at open from `lag`, a param expression), so
+/// each update is O(1): read the oldest slot, combine, push the new value.
+#[derive(Debug, Clone)]
+pub struct SubLagRing {
+    /// The sub-output series read at a self-lag.
+    pub series: String,
+    /// The lag depth `= ring capacity`, a parameter expression (`period-1`).
+    pub lag: Expr,
+}
+
 /// One trailing-window ring: a batch index variable that walks the inputs a
 /// fixed distance behind the cursor (`in[trailingIdx]`, SMA-style). The
 /// stream keeps one position/capacity per index variable and one buffer per
@@ -345,6 +360,9 @@ pub struct ComposedPlan<'a> {
     pub series_frees: Vec<SeriesFree>,
     /// Function-local temps referenced by Map steps (step-local decls).
     pub map_temps: Vec<(String, VarType)>,
+    /// Sub-output self-lag rings a combine map reads (ADXR's ADX lag). Empty
+    /// for the same-bar-only combines (APO/PPO/STDDEV).
+    pub sub_lag_rings: Vec<SubLagRing>,
 }
 
 /// The derived stream implementation plan for one function: a steady-loop
@@ -1536,13 +1554,11 @@ pub fn analyze_composed<'a>(
         (None, None)
     };
 
-    // The caller's single real input may feed a sub-call directly
-    // (STOCHRSI's rsi(inReal); STDDEV's var(inReal)).
-    let direct_input: Option<&String> = if func.inputs.len() == 1 && bar_inputs.len() == 1 {
-        Some(&bar_inputs[0])
-    } else {
-        None
-    };
+    // The caller's own bar inputs may feed a sub-call directly — a single real
+    // input (STOCHRSI's rsi(inReal); STDDEV's var(inReal)) or several price
+    // inputs (ADXR's adx(inHigh, inLow, inClose)). In the stream these arrive
+    // as the update scalars, so the sub handle is fed them per bar.
+    let direct_inputs: BTreeSet<String> = bar_inputs.iter().cloned().collect();
 
     // --- tail pipeline -------------------------------------------------------
     let params: BTreeSet<String> = func
@@ -1555,6 +1571,7 @@ pub fn analyze_composed<'a>(
     let mut series_frees: Vec<SeriesFree> = Vec::new();
     let mut freed: BTreeSet<String> = BTreeSet::new();
     let mut map_temp_names: BTreeSet<String> = BTreeSet::new();
+    let mut sub_lag_rings: Vec<SubLagRing> = Vec::new();
     let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
     // Out-meta provenance for the same-bar proof a combine map's `series[cursor
     // + off]` read needs: each series' element-count receiver and producing
@@ -1594,7 +1611,7 @@ pub fn analyze_composed<'a>(
                 let mut srcs = Vec::new();
                 for k in 0..sig.n_inputs {
                     let src = as_series(&args[2 + k])?;
-                    if !defined.contains(&src) && Some(&src) != direct_input {
+                    if !defined.contains(&src) && !direct_inputs.contains(&src) {
                         return Err(StreamError::Unsupported(format!(
                             "composed sub-call `{callee}` reads `{src}` before it is materialized"
                         )));
@@ -1691,13 +1708,18 @@ pub fn analyze_composed<'a>(
                 check_map_step(
                     st,
                     &defined,
+                    &outputs,
                     &params,
                     lookup,
                     &mut map_temp_names,
                     &series_nbelem,
                     &series_endidx,
                     &diff_locals,
+                    &mut sub_lag_rings,
                 )?;
+                for o in map_output_writes(st, &outputs) {
+                    defined.insert(o);
+                }
                 steps.push(UpdateStep::Map { tail_idx: i });
             }
             Statement::If {
@@ -1718,14 +1740,19 @@ pub fn analyze_composed<'a>(
                         check_map_step(
                             bst,
                             &defined,
+                            &outputs,
                             &params,
                             lookup,
                             &mut map_temp_names,
                             &series_nbelem,
                             &series_endidx,
                             &diff_locals,
+                            &mut sub_lag_rings,
                         )?;
                     }
+                }
+                for o in map_output_writes(st, &outputs) {
+                    defined.insert(o);
                 }
                 steps.push(UpdateStep::Map { tail_idx: i });
             }
@@ -1838,6 +1865,7 @@ pub fn analyze_composed<'a>(
         region,
         series_frees,
         map_temps,
+        sub_lag_rings,
     })
 }
 
@@ -1878,7 +1906,11 @@ fn check_composed_emittable(plan: &ComposedPlan) -> Result<(), StreamError> {
                 }
                 cur.insert(dst.clone());
             }
-            UpdateStep::Map { .. } => {}
+            UpdateStep::Map { tail_idx } => {
+                for o in map_output_writes(&plan.tail[*tail_idx], &outputs) {
+                    cur.insert(o);
+                }
+            }
         }
     }
     for out in &outputs {
@@ -2029,6 +2061,55 @@ fn offset_index_form(idx: &Expr, cursors: &BTreeSet<String>) -> IndexForm {
     IndexForm::Other
 }
 
+/// The output series a combine map writes (at any index): a map may DEFINE an
+/// output from sub-outputs (ADXR writes `outReal` from the ADX lag ring), so
+/// those outputs become materialized once the map runs.
+pub fn map_output_writes(stmt: &Statement, outputs: &[String]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    walk_assign_targets(stmt, &mut |t| {
+        if let Expr::ArrayAccess(name, _) = t {
+            if outputs.contains(name) && !out.contains(name) {
+                out.push(name.clone());
+            }
+        }
+    });
+    out
+}
+
+/// If `idx` is `cursor + <expr>` in either operand order, return the offset
+/// expression — unlike [`offset_index_form`] this accepts a compound offset
+/// (a parameter expression like `optInTimePeriod - 1`), used to recognize a
+/// sub-output self-lag read `series[cursor + (period-1)]`.
+fn cursor_plus_expr(idx: &Expr, cursors: &BTreeSet<String>) -> Option<Expr> {
+    let Expr::BinOp(l, BinOp::Add, r) = idx else {
+        return None;
+    };
+    match (l.as_ref(), r.as_ref()) {
+        (Expr::Var(c), other) | (other, Expr::Var(c)) if cursors.contains(c) => {
+            // Reject a plain cursor+cursor (both operands cursors).
+            if matches!(other, Expr::Var(v) if cursors.contains(v)) {
+                None
+            } else {
+                Some(other.clone())
+            }
+        }
+        _ => None,
+    }
+}
+
+/// True when `e` reads only parameters, literals and arithmetic of them — no
+/// series, pointers, cursors or calls. A sub-output lag depth must be such a
+/// constant-per-stream parameter expression (`optInTimePeriod - 1`).
+fn expr_is_param_pure(e: &Expr, params: &BTreeSet<String>) -> bool {
+    let mut ok = true;
+    walk_expr(e, &mut |x| match x {
+        Expr::Var(v) if !params.contains(v) => ok = false,
+        Expr::ArrayAccess(..) | Expr::PointerDeref(_) | Expr::FuncCall(..) => ok = false,
+        _ => {}
+    });
+    ok
+}
+
 /// Deep variant of [`walk_stmt_exprs`]: `f` sees every sub-expression of every
 /// statement expression, not only the top-level target/value/condition nodes
 /// (the plain walker stops there, so a `tempBuffer[i+offset]` nested inside a
@@ -2048,12 +2129,14 @@ fn walk_stmt_exprs_deep(s: &Statement, f: &mut dyn FnMut(&Expr)) {
 fn check_map_step(
     st: &Statement,
     defined: &BTreeSet<String>,
+    outputs: &[String],
     params: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
     temps: &mut BTreeSet<String>,
     series_nbelem: &BTreeMap<String, RecvVar>,
     series_endidx: &BTreeMap<String, Expr>,
     diff_locals: &BTreeMap<String, (RecvVar, RecvVar)>,
+    sub_lag_rings: &mut Vec<SubLagRing>,
 ) -> Result<(), StreamError> {
     let Statement::ForC {
         init,
@@ -2129,6 +2212,34 @@ fn check_map_step(
         None
     };
 
+    // Detect sub-output self-lag rings (ADXR): a defined series read BOTH at the
+    // plain cursor (the lagged value) AND at `cursor + <param-pure expr>` (the
+    // current, newest value). The offset expression is the lag depth / ring cap.
+    let mut has_plain: BTreeSet<String> = BTreeSet::new();
+    let mut lag_rings: BTreeMap<String, Expr> = BTreeMap::new();
+    for bst in body {
+        walk_stmt_exprs_deep(bst, &mut |e| {
+            if let Expr::ArrayAccess(name, idx) = e {
+                if defined.contains(name) {
+                    if matches!(offset_index_form(idx, &cursors), IndexForm::PlainCursor) {
+                        has_plain.insert(name.clone());
+                    } else if let Some(off) = cursor_plus_expr(idx, &cursors) {
+                        if expr_is_param_pure(&off, params) {
+                            lag_rings.insert(name.clone(), off);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    lag_rings.retain(|name, _| has_plain.contains(name));
+    for (series, lag) in &lag_rings {
+        sub_lag_rings.push(SubLagRing {
+            series: series.clone(),
+            lag: lag.clone(),
+        });
+    }
+
     let mut recognized_off: BTreeSet<String> = BTreeSet::new();
     let mut err: Option<StreamError> = None;
     for bst in body {
@@ -2137,52 +2248,70 @@ fn check_map_step(
                 return;
             }
             match e {
-                Expr::ArrayAccess(name, idx) => match offset_index_form(idx, &cursors) {
-                    IndexForm::PlainCursor => {
-                        if !defined.contains(name) {
+                Expr::ArrayAccess(name, idx) => {
+                    if let Some(lag) = lag_rings.get(name) {
+                        // Lag-ring series: only the current read (cursor + lag)
+                        // or the lagged read (plain cursor) are allowed.
+                        let ok = matches!(
+                            offset_index_form(idx, &cursors),
+                            IndexForm::PlainCursor
+                        ) || cursor_plus_expr(idx, &cursors)
+                            .is_some_and(|off| exprs_equal(&off, lag));
+                        if !ok {
                             err = Some(StreamError::Unsupported(format!(
-                                "composed map accesses `{name}` outside series[cursor] form"
+                                "composed map reads lag-ring series `{name}` at an offset other \
+                                 than the current bar or its fixed lag"
                             )));
                         }
-                    }
-                    IndexForm::CursorPlus(off) => {
-                        // Same-bar iff `off == nb(name) - nb(primary_out)` and
-                        // the two producers share an endIdx.
-                        let same_bar = defined.contains(name)
-                            && primary_out.is_some_and(|po| {
-                                let prov_ok = matches!(
-                                    (
-                                        diff_locals.get(&off),
-                                        series_nbelem.get(name),
-                                        series_nbelem.get(po),
-                                    ),
-                                    (Some((a, b)), Some(this), Some(prim))
-                                        if a == this && b == prim
-                                );
-                                let end_ok = matches!(
-                                    (series_endidx.get(name), series_endidx.get(po)),
-                                    (Some(e1), Some(e2)) if exprs_equal(e1, e2)
-                                );
-                                prov_ok && end_ok
-                            });
-                        if same_bar {
-                            recognized_off.insert(off);
-                        } else {
-                            err = Some(StreamError::Unsupported(format!(
-                                "composed map reads `{name}[cursor+{off}]` but `{off}` is not a \
-                                 proven same-bar shift — it must be the element-count difference \
-                                 of the two sub-outputs sharing an endIdx (as in APO's \
-                                 `fastNb - *outNBElement`); a genuine lag needs a ring, not a \
-                                 combine map"
-                            )));
+                    } else {
+                        match offset_index_form(idx, &cursors) {
+                            IndexForm::PlainCursor => {
+                                if !defined.contains(name) && !outputs.contains(name) {
+                                    err = Some(StreamError::Unsupported(format!(
+                                        "composed map accesses `{name}` outside series[cursor] form"
+                                    )));
+                                }
+                            }
+                            IndexForm::CursorPlus(off) => {
+                                // Same-bar iff `off == nb(name) - nb(primary_out)`
+                                // and the two producers share an endIdx.
+                                let same_bar = defined.contains(name)
+                                    && primary_out.is_some_and(|po| {
+                                        let prov_ok = matches!(
+                                            (
+                                                diff_locals.get(&off),
+                                                series_nbelem.get(name),
+                                                series_nbelem.get(po),
+                                            ),
+                                            (Some((a, b)), Some(this), Some(prim))
+                                                if a == this && b == prim
+                                        );
+                                        let end_ok = matches!(
+                                            (series_endidx.get(name), series_endidx.get(po)),
+                                            (Some(e1), Some(e2)) if exprs_equal(e1, e2)
+                                        );
+                                        prov_ok && end_ok
+                                    });
+                                if same_bar {
+                                    recognized_off.insert(off);
+                                } else {
+                                    err = Some(StreamError::Unsupported(format!(
+                                        "composed map reads `{name}[cursor+{off}]` but `{off}` is not a \
+                                         proven same-bar shift — it must be the element-count difference \
+                                         of the two sub-outputs sharing an endIdx (as in APO's \
+                                         `fastNb - *outNBElement`); a genuine lag needs a ring, not a \
+                                         combine map"
+                                    )));
+                                }
+                            }
+                            IndexForm::Other => {
+                                err = Some(StreamError::Unsupported(format!(
+                                    "composed map accesses `{name}` outside series[cursor] form"
+                                )));
+                            }
                         }
                     }
-                    IndexForm::Other => {
-                        err = Some(StreamError::Unsupported(format!(
-                            "composed map accesses `{name}` outside series[cursor] form"
-                        )));
-                    }
-                },
+                }
                 Expr::FuncCall(name, _) => {
                     if is_stateful_call(name) {
                         err = Some(StreamError::UnsupportedCall(name.clone()));

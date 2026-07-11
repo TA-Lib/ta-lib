@@ -48,14 +48,19 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  082303 MF     Fix #792298. Remove rounding. Bug reported by AM.
+ *  071126 MF,CC  Rewrite the ADX combine as a single cursor: outReal[k] =
+ *                (adx[k+(period-1)] + adx[k])/2 (current ADX + ADX lagged by
+ *                period-1). Bit-identical to the two-cursor form, and the
+ *                streamable-source form (a sub-output lag ring).
  */
 
 TA_LIB_API int TA_ADXR_Lookback( int optInTimePeriod )
@@ -85,8 +90,6 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
 {
    double *adx;
    int adxrLookback;
-   int i;
-   int j;
    int outIdx;
    int nbElement;
    TA_RetCode retCode;
@@ -142,23 +145,27 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
    {
       return TA_ALLOC_ERR;
    }
+   /* Compute ADX over a range that starts (period-1) bars earlier, so each
+    * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
+    */
    retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
       return retCode;
    }
-   i = optInTimePeriod - 1;
-   j = 0;
-   outIdx = 0;
-   nbElement = endIdx - startIdx + 2;
-   while( --nbElement != 0 )
+   /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
+    * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
+    * is adx[k]; the ADX range holds (period-1) more elements than the output.
+    */
+   nbElement = *outNBElement - (optInTimePeriod - 1);
+   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
    {
-      outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
    }
    free(adx);
    *outBegIdx= startIdx;
-   *outNBElement= outIdx;
+   *outNBElement= nbElement;
    return TA_SUCCESS;
 }
 
@@ -174,8 +181,6 @@ TA_LIB_API TA_RetCode TA_ADXR_Unguarded( int    startIdx,
 {
    double *adx;
    int adxrLookback;
-   int i;
-   int j;
    int outIdx;
    int nbElement;
    TA_RetCode retCode;
@@ -202,17 +207,14 @@ TA_LIB_API TA_RetCode TA_ADXR_Unguarded( int    startIdx,
       free(adx);
       return retCode;
    }
-   i = optInTimePeriod - 1;
-   j = 0;
-   outIdx = 0;
-   nbElement = endIdx - startIdx + 2;
-   while( --nbElement != 0 )
+   nbElement = *outNBElement - (optInTimePeriod - 1);
+   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
    {
-      outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
    }
    free(adx);
    *outBegIdx= startIdx;
-   *outNBElement= outIdx;
+   *outNBElement= nbElement;
    return TA_SUCCESS;
 }
 
@@ -228,8 +230,6 @@ TA_RetCode TA_S_ADXR( int    startIdx,
 {
    double *adx;
    int adxrLookback;
-   int i;
-   int j;
    int outIdx;
    int nbElement;
    TA_RetCode retCode;
@@ -274,17 +274,14 @@ TA_RetCode TA_S_ADXR( int    startIdx,
       free(adx);
       return retCode;
    }
-   i = optInTimePeriod - 1;
-   j = 0;
-   outIdx = 0;
-   nbElement = endIdx - startIdx + 2;
-   while( --nbElement != 0 )
+   nbElement = *outNBElement - (optInTimePeriod - 1);
+   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
    {
-      outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
    }
    free(adx);
    *outBegIdx= startIdx;
-   *outNBElement= outIdx;
+   *outNBElement= nbElement;
    return TA_SUCCESS;
 }
 
@@ -300,8 +297,6 @@ TA_RetCode TA_S_ADXR_Unguarded( int    startIdx,
 {
    double *adx;
    int adxrLookback;
-   int i;
-   int j;
    int outIdx;
    int nbElement;
    TA_RetCode retCode;
@@ -328,17 +323,217 @@ TA_RetCode TA_S_ADXR_Unguarded( int    startIdx,
       free(adx);
       return retCode;
    }
-   i = optInTimePeriod - 1;
-   j = 0;
-   outIdx = 0;
-   nbElement = endIdx - startIdx + 2;
-   while( --nbElement != 0 )
+   nbElement = *outNBElement - (optInTimePeriod - 1);
+   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
    {
-      outReal[outIdx++] = ((adx[i++] + adx[j++]) / 2.0);
+      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
    }
    free(adx);
    *outBegIdx= startIdx;
-   *outNBElement= outIdx;
+   *outNBElement= nbElement;
+   return TA_SUCCESS;
+}
+
+/**** Streaming API *****/
+
+struct TA_ADXR_Stream {
+   int optInTimePeriod;
+   /* Peek runs the SAME step body on a scratch copy; sub handles are
+    * heap pointers a struct copy cannot clone, so the copy carries this
+    * flag and the step calls sub-Peek instead of sub-Update. */
+   int peekMode;
+   TA_ADX_Stream *sub0;
+   int lagRingPos_adx;
+   int lagRingCap_adx;
+   double *lagRing_adx;
+   double *lagRingMirror_adx;
+};
+
+static void TA_ADXR_StreamStep( struct TA_ADXR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double cur_adx;
+   double cur_outReal;
+
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   if( sp->peekMode )
+      TA_ADX_Peek( (const TA_ADX_Stream *)sp->sub0, inHigh, inLow, inClose, &cur_adx );
+   else
+      TA_ADX_Update( sp->sub0, inHigh, inLow, inClose, &cur_adx );
+   /* Combine map (batch tail, per bar). */
+   cur_outReal = ((cur_adx + sp->lagRing_adx[sp->lagRingPos_adx]) / 2.0);
+   sp->lagRing_adx[sp->lagRingPos_adx] = cur_adx;
+   sp->lagRingPos_adx = (sp->lagRingPos_adx + 1) % sp->lagRingCap_adx;
+   *outReal = cur_outReal;
+}
+
+TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADXR_Stream **stream, double *outReal )
+{
+   struct TA_ADXR_Stream *sp;
+   int startIdx;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outReal;
+   TA_ADX_Stream *sub0;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   startIdx = 0;
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+
+   {
+      double *adx;
+      int adxrLookback;
+      int outIdx;
+      int nbElement;
+      TA_RetCode retCode;
+      /* Original implementation from Wilder's book was doing some integer
+       * rounding in its calculations.
+       *
+       * This was understandable in the context that at the time the book
+       * was written, most user were doing the calculation by hand.
+       *
+       * For a computer, rounding is unnecessary (and even problematic when inputs
+       * are close to 1).
+       *
+       * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+       * you can comment out the following #undef/#define and rebuild the library.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       * Always one price bar gets consumed.
+       */
+      adxrLookback = TA_ADXR_Lookback(optInTimePeriod);
+      if( startIdx < adxrLookback )
+      {
+         startIdx = adxrLookback;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         return TA_BAD_PARAM;
+      }
+      adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
+      if( !adx )
+      {
+         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         return TA_ALLOC_ERR;
+      }
+      if( !adx )
+      {
+         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         return TA_ALLOC_ERR;
+      }
+      /* Compute ADX over a range that starts (period-1) bars earlier, so each
+       * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
+       */
+      /* Sub-stream 0: adx over `inHigh, inLow, inClose` — the same series the
+       * batch call below consumes, anchored at its seeding point. */
+      {
+         int subOff;
+         subOff = (startIdx - (optInTimePeriod - 1)) - TA_ADX_Lookback( optInTimePeriod );
+         if( subOff < 0 ) subOff = 0;
+         subRc = TA_ADX_Open( optInTimePeriod, &inHigh[subOff], &inLow[subOff], &inClose[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(adx);
+            TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+            return subRc;
+         }
+      }
+      retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      if( retCode != TA_SUCCESS )
+      {
+         free(adx);
+         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         return retCode;
+      }
+      /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
+       * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
+       * is adx[k]; the ADX range holds (period-1) more elements than the output.
+       */
+      nbElement = dummyNBElement - (optInTimePeriod - 1);
+      for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
+      {
+         sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = nbElement;
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      sp = (struct TA_ADXR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lagRingCap_adx = optInTimePeriod - 1;
+      sp->lagRing_adx = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_adx );
+      if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      sp->lagRingMirror_adx = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_adx );
+      if( !sp->lagRingMirror_adx ) { TA_Free( sp->lagRing_adx ); TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      {
+         int lagI;
+         for( lagI = 0; lagI < sp->lagRingCap_adx; lagI++ )
+            sp->lagRing_adx[lagI] = adx[dummyNBElement + lagI];
+      }
+      sp->lagRingPos_adx = 0;
+      free( adx );
+      sp->sub0 = sub0;
+      *outReal = sc_outReal[dummyNBElement - 1];
+      TA_Free( sc_outReal );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_ADXR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_ADXR_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   memcpy( scratch.lagRingMirror_adx, stream->lagRing_adx, sizeof(double) * (size_t)stream->lagRingCap_adx );
+   scratch.lagRing_adx = scratch.lagRingMirror_adx;
+   scratch.peekMode = 1;
+   TA_ADXR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream )
+{
+   if( !stream ) return TA_SUCCESS;
+   TA_ADX_Close( stream->sub0 );
+   TA_Free( stream->lagRing_adx );
+   TA_Free( stream->lagRingMirror_adx );
+   TA_Free( stream );
    return TA_SUCCESS;
 }
 

@@ -6455,3 +6455,35 @@ fn test_c_stoch_composed_stream_section() {
     assert!(stream.contains("TA_MA_Close( stream->sub0 );"));
     assert!(stream.contains("TA_STOCH_StreamRelease( stream );"));
 }
+
+/// Pin the ADXR composed Open's allocation-failure cleanup. The intermediate
+/// `adx` buffer's free is WITHHELD from the transcribed tail (the lag ring
+/// seeds from its tail first), so it stays live through the capture epilogue —
+/// every allocation-failure return there MUST free it, or an OOM leaks the
+/// buffer. The adversarial review caught exactly this leak; this guards the
+/// fix (each malloc-failure path frees everything allocated so far — no goto,
+/// no fault-injection harness, just correct per-return cleanup).
+#[test]
+fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
+    let (mut func, enums) = load_indicator("adxr");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let open = &c[c.find("TA_RetCode TA_ADXR_Open").expect("ADXR Open")..];
+    for guard in [
+        "if( dummyNBElement < 1 ) { free( adx );",
+        "if( !sp ) { free( adx );",
+        "if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx );",
+        "if( !sp->lagRingMirror_adx ) { TA_Free( sp->lagRing_adx ); TA_Free( sp ); free( adx );",
+    ] {
+        assert!(
+            open.contains(guard),
+            "capture-epilogue OOM path must free the withheld adx buffer: `{guard}`"
+        );
+    }
+    // Close releases the ring buffers (the other half of leak-freedom).
+    let close = &c[c.find("TA_RetCode TA_ADXR_Close").expect("ADXR Close")..];
+    assert!(close.contains("TA_Free( stream->lagRing_adx );"));
+    assert!(close.contains("TA_Free( stream->lagRingMirror_adx );"));
+}
