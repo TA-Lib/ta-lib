@@ -1994,11 +1994,15 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
     for( v = 0; v < nvec; v++ ) vecIsEnum[v] = 0;
     for( v = 1; v < nvec; v++ ) vecIsMin[v] = 1;
 
-    /* One ABOVE-default "large window" vector (default+40, clamped to the
+    /* One ABOVE-default "large window" vector (default+41, clamped to the
      * range). It exercises the general/large-period regime — a big ring/window
      * so wraparound is hit over the fixed STREAM_N history — and for a
      * fast-path-skip function (MIDPRICE) a period ABOVE its perf threshold,
-     * where the batch runs the very else-arm the stream models. Without it,
+     * where the batch runs the very else-arm the stream models. The +41 (odd)
+     * offset also FLIPS PARITY vs the default, so a parity-branched dual-mode
+     * function (TRIMA odd/even) gets a non-degenerate ODD large period (its
+     * default 30 is even; min=1 is odd but degenerate), locking the odd arm's
+     * Open/Update/Peek continuation into CI. Without this vector,
      * stream_build_vectors hands every function only default/min small periods,
      * so a fast-path-skip stream is otherwise verified only in its
      * threshold-and-below regime. Deduped vs the default; not a min/enum vector. */
@@ -2014,7 +2018,7 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
                 if( oi->type == TA_OptInput_IntegerRange )
                 {
                     const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
-                    int def_i = (int)oi->defaultValue, big = def_i + 40;
+                    int def_i = (int)oi->defaultValue, big = def_i + 41;
                     if( r && big > (int)r->max ) big = (int)r->max;
                     if( big != def_i ) { vec[nvec][i] = (double)big; any = 1; }
                 }

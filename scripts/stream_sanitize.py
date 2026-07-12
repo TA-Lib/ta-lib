@@ -71,7 +71,9 @@ def opt_value(oi, which):
         except (TypeError, ValueError):
             return default
     if which == "large" and typ == "integer":
-        big = int(default) + 40
+        # +41 (odd): large ring/window AND a parity flip vs the (often even)
+        # default, so a parity-branched dual mode (TRIMA) sanitizes its odd arm.
+        big = int(default) + 41
         if rng:
             try:
                 big = min(big, int(rng[1]))
