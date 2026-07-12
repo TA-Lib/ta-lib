@@ -75,6 +75,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  RM       Robert Meier
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
@@ -82,6 +83,12 @@ class Core {
      *  -------------------------------------------------------------------
      *  120307 RM     Initial Version
      *  120907 MF     Handling of a few limit cases
+     *  071226 MF,CC  Fused single-loop rewrite: maintain the three band running
+     *                sums (close for the middle band; the pointwise High/Low map for
+     *                the upper/lower bands) over one shared trailing window, instead
+     *                of two scratch buffers + three sma() calls. Enables streaming
+     *                and is bit-identical to the prior three-SMA form (verified vs
+     *                v0.6.4).
      */
 
        public int accbandsLookback( int optInTimePeriod )
@@ -106,17 +113,17 @@ class Core {
                                 double outRealMiddleBand[],
                                 double outRealLowerBand[] )
        {
-          RetCode retCode;
-          double[] tempBuffer1;
-          double[] tempBuffer2;
-          MInteger outBegIdxDummy = new MInteger();
-          MInteger outNbElementDummy = new MInteger();
-          int i = 0;
-          int j = 0;
-          int outputSize = 0;
-          int bufferSize = 0;
-          int lookbackTotal = 0;
+          double periodTotalUpper = 0;
+          double periodTotalMiddle = 0;
+          double periodTotalLower = 0;
+          double tempUpper = 0;
+          double tempMiddle = 0;
+          double tempLower = 0;
           double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -147,51 +154,81 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          /* Buffer will contains also the lookback required for SMA
-           * to satisfy the caller requested startIdx/endIdx.
+          /* Each band is a simple moving average maintained as a running sum over a
+           * shared trailing window (all three share optInTimePeriod, so one trailing
+           * index walks all three windows in lockstep):
+           *    middle = SMA( close )
+           *    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+           *    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+           * When high+low is zero the upper/lower map degenerates to high/low.
+           * Fusing the three moving averages into one loop is bit-identical to the
+           * former "two scratch buffers + three sma() calls": each accumulator's
+           * add/record/subtract order is unchanged, and the High/Low map is a pure
+           * function recomputed from the raw trailing bar.
            */
-          outputSize = endIdx - startIdx + 1;
-          bufferSize = outputSize + lookbackTotal;
-          tempBuffer1 = new double[(int)(bufferSize * 1)];
-          tempBuffer2 = new double[(int)(bufferSize * 1)];
-          /* Calculate the upper/lower band at the same time (no SMA yet).
-           * Must start calculation back enough to cover the lookback
-           * required later for the SMA.
+          periodTotalUpper = 0.0;
+          periodTotalMiddle = 0.0;
+          periodTotalLower = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          /* Warm up the running sums with the initial period,
+           * except for the last value.
            */
-          for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
+          i = trailingIdx;
+          while( i < startIdx ) {
              tempReal = inHigh[i] + inLow[i];
              if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                 tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-                tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-                tempBuffer2[j] = inLow[i] * (1 - tempReal);
+                periodTotalUpper += inHigh[i] * (1 + tempReal);
+                periodTotalLower += inLow[i] * (1 - tempReal);
              } else {
-                tempBuffer1[j] = inHigh[i];
-                tempBuffer2[j] = inLow[i];
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
              }
+             periodTotalMiddle += inClose[i];
+             i = i + 1;
           }
-          /* Calculate the middle band, which is a moving average of the close. */
-          retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          /* Now let's take the SMA for the upper band. */
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer1, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealUpperBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          /* Now let's take the SMA for the lower band. */
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer2, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealLowerBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
+          /* Proceed with the calculation for the requested range.
+           * Note that this algorithm allows the input and output to be the
+           * same buffer: every trailing bar is read before any output is written.
+           */
+          outIdx = 0;
+          while( i <= endIdx ) {
+             /* Add the incoming bar to each running sum. */
+             tempReal = inHigh[i] + inLow[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1 + tempReal);
+                periodTotalLower += inLow[i] * (1 - tempReal);
+             } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+             }
+             periodTotalMiddle += inClose[i];
+             i = i + 1;
+             /* Record the current window sums. */
+             tempUpper = periodTotalUpper;
+             tempMiddle = periodTotalMiddle;
+             tempLower = periodTotalLower;
+             /* Remove the trailing bar from each running sum. */
+             tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
+             } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+             }
+             periodTotalMiddle -= inClose[trailingIdx];
+             trailingIdx = trailingIdx + 1;
+             /* Write the three bands. */
+             outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+             outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+             outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outputSize;
+          outNBElement.value = outIdx;
           return RetCode.Success ;
        }
        public RetCode accbandsUnguarded( int startIdx,
@@ -206,17 +243,17 @@ class Core {
                                          double outRealMiddleBand[],
                                          double outRealLowerBand[] )
        {
-          RetCode retCode;
-          double[] tempBuffer1;
-          double[] tempBuffer2;
-          MInteger outBegIdxDummy = new MInteger();
-          MInteger outNbElementDummy = new MInteger();
-          int i = 0;
-          int j = 0;
-          int outputSize = 0;
-          int bufferSize = 0;
-          int lookbackTotal = 0;
+          double periodTotalUpper = 0;
+          double periodTotalMiddle = 0;
+          double periodTotalLower = 0;
+          double tempUpper = 0;
+          double tempMiddle = 0;
+          double tempLower = 0;
           double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
           lookbackTotal = smaLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -226,41 +263,58 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - startIdx + 1;
-          bufferSize = outputSize + lookbackTotal;
-          tempBuffer1 = new double[(int)(bufferSize * 1)];
-          tempBuffer2 = new double[(int)(bufferSize * 1)];
-          for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
+          periodTotalUpper = 0.0;
+          periodTotalMiddle = 0.0;
+          periodTotalLower = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          while( i < startIdx ) {
              tempReal = inHigh[i] + inLow[i];
              if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                 tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-                tempBuffer1[j] = inHigh[i] * (1 + tempReal);
-                tempBuffer2[j] = inLow[i] * (1 - tempReal);
+                periodTotalUpper += inHigh[i] * (1 + tempReal);
+                periodTotalLower += inLow[i] * (1 - tempReal);
              } else {
-                tempBuffer1[j] = inHigh[i];
-                tempBuffer2[j] = inLow[i];
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
              }
+             periodTotalMiddle += inClose[i];
+             i = i + 1;
           }
-          retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer1, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealUpperBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer2, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealLowerBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = inHigh[i] + inLow[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1 + tempReal);
+                periodTotalLower += inLow[i] * (1 - tempReal);
+             } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+             }
+             periodTotalMiddle += inClose[i];
+             i = i + 1;
+             tempUpper = periodTotalUpper;
+             tempMiddle = periodTotalMiddle;
+             tempLower = periodTotalLower;
+             tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
+             } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+             }
+             periodTotalMiddle -= inClose[trailingIdx];
+             trailingIdx = trailingIdx + 1;
+             outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+             outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+             outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outputSize;
+          outNBElement.value = outIdx;
           return RetCode.Success ;
        }
        public RetCode accbands( int startIdx,
@@ -275,17 +329,17 @@ class Core {
                                 double outRealMiddleBand[],
                                 double outRealLowerBand[] )
        {
-          RetCode retCode;
-          double[] tempBuffer1;
-          double[] tempBuffer2;
-          MInteger outBegIdxDummy = new MInteger();
-          MInteger outNbElementDummy = new MInteger();
-          int i = 0;
-          int j = 0;
-          int outputSize = 0;
-          int bufferSize = 0;
-          int lookbackTotal = 0;
+          double periodTotalUpper = 0;
+          double periodTotalMiddle = 0;
+          double periodTotalLower = 0;
+          double tempUpper = 0;
+          double tempMiddle = 0;
+          double tempLower = 0;
           double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -309,41 +363,58 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - startIdx + 1;
-          bufferSize = outputSize + lookbackTotal;
-          tempBuffer1 = new double[(int)(bufferSize * 1)];
-          tempBuffer2 = new double[(int)(bufferSize * 1)];
-          for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
+          periodTotalUpper = 0.0;
+          periodTotalMiddle = 0.0;
+          periodTotalLower = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          while( i < startIdx ) {
              tempReal = (double)inHigh[i] + (double)inLow[i];
              if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                 tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-                tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
-                tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
+                periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
+                periodTotalLower += (double)inLow[i] * (1 - tempReal);
              } else {
-                tempBuffer1[j] = (double)inHigh[i];
-                tempBuffer2[j] = (double)inLow[i];
+                periodTotalUpper += (double)inHigh[i];
+                periodTotalLower += (double)inLow[i];
              }
+             periodTotalMiddle += (double)inClose[i];
+             i = i + 1;
           }
-          retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer1, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealUpperBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer2, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealLowerBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = (double)inHigh[i] + (double)inLow[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+                periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
+                periodTotalLower += (double)inLow[i] * (1 - tempReal);
+             } else {
+                periodTotalUpper += (double)inHigh[i];
+                periodTotalLower += (double)inLow[i];
+             }
+             periodTotalMiddle += (double)inClose[i];
+             i = i + 1;
+             tempUpper = periodTotalUpper;
+             tempMiddle = periodTotalMiddle;
+             tempLower = periodTotalLower;
+             tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
+                periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
+             } else {
+                periodTotalUpper -= (double)inHigh[trailingIdx];
+                periodTotalLower -= (double)inLow[trailingIdx];
+             }
+             periodTotalMiddle -= (double)inClose[trailingIdx];
+             trailingIdx = trailingIdx + 1;
+             outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+             outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+             outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outputSize;
+          outNBElement.value = outIdx;
           return RetCode.Success ;
        }
        public RetCode accbandsUnguarded( int startIdx,
@@ -358,17 +429,17 @@ class Core {
                                          double outRealMiddleBand[],
                                          double outRealLowerBand[] )
        {
-          RetCode retCode;
-          double[] tempBuffer1;
-          double[] tempBuffer2;
-          MInteger outBegIdxDummy = new MInteger();
-          MInteger outNbElementDummy = new MInteger();
-          int i = 0;
-          int j = 0;
-          int outputSize = 0;
-          int bufferSize = 0;
-          int lookbackTotal = 0;
+          double periodTotalUpper = 0;
+          double periodTotalMiddle = 0;
+          double periodTotalLower = 0;
+          double tempUpper = 0;
+          double tempMiddle = 0;
+          double tempLower = 0;
           double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
           lookbackTotal = smaLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -378,41 +449,58 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - startIdx + 1;
-          bufferSize = outputSize + lookbackTotal;
-          tempBuffer1 = new double[(int)(bufferSize * 1)];
-          tempBuffer2 = new double[(int)(bufferSize * 1)];
-          for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 ) {
+          periodTotalUpper = 0.0;
+          periodTotalMiddle = 0.0;
+          periodTotalLower = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          while( i < startIdx ) {
              tempReal = (double)inHigh[i] + (double)inLow[i];
              if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                 tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-                tempBuffer1[j] = (double)inHigh[i] * (1 + tempReal);
-                tempBuffer2[j] = (double)inLow[i] * (1 - tempReal);
+                periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
+                periodTotalLower += (double)inLow[i] * (1 - tempReal);
              } else {
-                tempBuffer1[j] = (double)inHigh[i];
-                tempBuffer2[j] = (double)inLow[i];
+                periodTotalUpper += (double)inHigh[i];
+                periodTotalLower += (double)inLow[i];
              }
+             periodTotalMiddle += (double)inClose[i];
+             i = i + 1;
           }
-          retCode = smaUnguarded(startIdx, endIdx, inClose, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealMiddleBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer1, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealUpperBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
-          }
-          retCode = smaUnguarded(0, bufferSize - 1, tempBuffer2, optInTimePeriod, outBegIdxDummy, outNbElementDummy, outRealLowerBand);
-          if( retCode != RetCode.Success || (int)outNbElementDummy.value != outputSize ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return retCode ;
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = (double)inHigh[i] + (double)inLow[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
+                periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
+                periodTotalLower += (double)inLow[i] * (1 - tempReal);
+             } else {
+                periodTotalUpper += (double)inHigh[i];
+                periodTotalLower += (double)inLow[i];
+             }
+             periodTotalMiddle += (double)inClose[i];
+             i = i + 1;
+             tempUpper = periodTotalUpper;
+             tempMiddle = periodTotalMiddle;
+             tempLower = periodTotalLower;
+             tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
+                periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
+             } else {
+                periodTotalUpper -= (double)inHigh[trailingIdx];
+                periodTotalLower -= (double)inLow[trailingIdx];
+             }
+             periodTotalMiddle -= (double)inClose[trailingIdx];
+             trailingIdx = trailingIdx + 1;
+             outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+             outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+             outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
           }
           outBegIdx.value = startIdx;
-          outNBElement.value = outputSize;
+          outNBElement.value = outIdx;
           return RetCode.Success ;
        }
     /* List of contributors:
@@ -15831,7 +15919,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
      *  MF       Mario Fortier
-     *  CC       AI assistant (see project attribution)
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
@@ -16171,7 +16259,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
      *  MF       Mario Fortier
-     *  CC       AI assistant (see project attribution)
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:

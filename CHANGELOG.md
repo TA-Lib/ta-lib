@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - ~8x faster: MACD and MACDFIX
   - ~8x faster: MACDEXT when all three MA types are EMA.
   - ~10% faster: ATR and NATR
+  - ~2.4x faster: ACCBANDS
 
 ### Fixed
 - (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !

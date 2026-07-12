@@ -93,6 +93,26 @@ TA_LIB_API TA_RetCode TA_S_ACCBANDS( int    startIdx,
 TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_ACCBANDS — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ACCBANDS_Stream TA_ACCBANDS_Stream;
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_Close( TA_ACCBANDS_Stream *stream );
+
 /*
  * TA_ACOS - Vector Trigonometric ACos
  * 

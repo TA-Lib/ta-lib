@@ -45,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  RM       Robert Meier
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -52,6 +53,12 @@
  *  -------------------------------------------------------------------
  *  120307 RM     Initial Version
  *  120907 MF     Handling of a few limit cases
+ *  071226 MF,CC  Fused single-loop rewrite: maintain the three band running
+ *                sums (close for the middle band; the pointwise High/Low map for
+ *                the upper/lower bands) over one shared trailing window, instead
+ *                of two scratch buffers + three sma() calls. Enables streaming
+ *                and is bit-identical to the prior three-SMA form (verified vs
+ *                v0.6.4).
  */
 
 // Import types from parent module
@@ -178,17 +185,17 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempBuffer1: Vec<f64> = Vec::new();
-        let mut tempBuffer2: Vec<f64> = Vec::new();
-        let mut outBegIdxDummy: usize = 0_usize;
-        let mut outNbElementDummy: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
-        let mut outputSize: usize = 0_usize;
-        let mut bufferSize: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
+        let mut periodTotalUpper: f64 = 0.0_f64;
+        let mut periodTotalMiddle: f64 = 0.0_f64;
+        let mut periodTotalLower: f64 = 0.0_f64;
+        let mut tempUpper: f64 = 0.0_f64;
+        let mut tempMiddle: f64 = 0.0_f64;
+        let mut tempLower: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.sma_lookback(optInTimePeriod);
@@ -203,54 +210,78 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        // Buffer will contains also the lookback required for SMA
-        // to satisfy the caller requested startIdx/endIdx.
-        outputSize = endIdx - startIdx + 1;
-        bufferSize = outputSize + lookbackTotal;
-        tempBuffer1 = vec![0.0_f64; (bufferSize * 1) as usize];
-        tempBuffer2 = vec![0.0_f64; (bufferSize * 1) as usize];
-        // Calculate the upper/lower band at the same time (no SMA yet).
-        // Must start calculation back enough to cover the lookback
-        // required later for the SMA.
-        // for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 )
-        j = 0;
-        i = startIdx - lookbackTotal;
-        while i <= endIdx {
+        // Each band is a simple moving average maintained as a running sum over a
+        // shared trailing window (all three share optInTimePeriod, so one trailing
+        // index walks all three windows in lockstep):
+        //    middle = SMA( close )
+        //    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+        //    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+        // When high+low is zero the upper/lower map degenerates to high/low.
+        // Fusing the three moving averages into one loop is bit-identical to the
+        // former "two scratch buffers + three sma() calls": each accumulator's
+        // add/record/subtract order is unchanged, and the High/Low map is a pure
+        // function recomputed from the raw trailing bar.
+        periodTotalUpper = 0.0;
+        periodTotalMiddle = 0.0;
+        periodTotalLower = 0.0;
+        trailingIdx = startIdx - lookbackTotal;
+        // Warm up the running sums with the initial period,
+        // except for the last value.
+        i = trailingIdx;
+        while i < startIdx {
             tempReal = inHigh[i] + inLow[i];
             if !((tempReal).abs() < 1e-14) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
-                tempBuffer1[j] = inHigh[i] * (1_f64 + tempReal);
-                tempBuffer2[j] = inLow[i] * (1_f64 - tempReal);
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
             } else {
-                tempBuffer1[j] = inHigh[i];
-                tempBuffer2[j] = inLow[i];
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
             }
-            i += 1;
-            j += 1;
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
         }
-        // Calculate the middle band, which is a moving average of the close.
-        retCode = self.sma_unguarded(startIdx, endIdx, inClose, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealMiddleBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // Now let's take the SMA for the upper band.
-        retCode = self.sma_unguarded(0, bufferSize - 1, &tempBuffer1, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealUpperBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        // Now let's take the SMA for the lower band.
-        retCode = self.sma_unguarded(0, bufferSize - 1, &tempBuffer2, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealLowerBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and output to be the
+        // same buffer: every trailing bar is read before any output is written.
+        outIdx = 0;
+        while i <= endIdx {
+            // Add the incoming bar to each running sum.
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+            // Record the current window sums.
+            tempUpper = periodTotalUpper;
+            tempMiddle = periodTotalMiddle;
+            tempLower = periodTotalLower;
+            // Remove the trailing bar from each running sum.
+            tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+            }
+            periodTotalMiddle -= inClose[trailingIdx];
+            trailingIdx = trailingIdx + 1;
+            // Write the three bands.
+            outRealUpperBand[outIdx] = tempUpper / (optInTimePeriod as f64);
+            outRealMiddleBand[outIdx] = tempMiddle / (optInTimePeriod as f64);
+            outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
+            outIdx = outIdx + 1;
         }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outputSize;
+        (*outNBElement) = outIdx;
         return RetCode::Success;
     }
     /// Unguarded variant of [`Core::accbands`], used for internal cross-indicator calls.
@@ -274,17 +305,17 @@ impl Core {
         outRealMiddleBand: &mut [f64],
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempBuffer1: Vec<f64> = Vec::new();
-        let mut tempBuffer2: Vec<f64> = Vec::new();
-        let mut outBegIdxDummy: usize = 0_usize;
-        let mut outNbElementDummy: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
-        let mut outputSize: usize = 0_usize;
-        let mut bufferSize: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
+        let mut periodTotalUpper: f64 = 0.0_f64;
+        let mut periodTotalMiddle: f64 = 0.0_f64;
+        let mut periodTotalLower: f64 = 0.0_f64;
+        let mut tempUpper: f64 = 0.0_f64;
+        let mut tempMiddle: f64 = 0.0_f64;
+        let mut tempLower: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -302,46 +333,58 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        outputSize = endIdx - startIdx + 1;
-        bufferSize = outputSize + lookbackTotal;
-        tempBuffer1 = vec![0.0_f64; (bufferSize * 1) as usize];
-        tempBuffer2 = vec![0.0_f64; (bufferSize * 1) as usize];
-        // for( j = 0, i = startIdx - lookbackTotal; i <= endIdx; i += 1, j += 1 )
-        j = 0;
-        i = startIdx - lookbackTotal;
+        periodTotalUpper = 0.0;
+        periodTotalMiddle = 0.0;
+        periodTotalLower = 0.0;
+        trailingIdx = startIdx - lookbackTotal;
+        i = trailingIdx;
+        while i < startIdx {
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+        }
+        outIdx = 0;
         while i <= endIdx {
             tempReal = inHigh[i] + inLow[i];
             if !((tempReal).abs() < 1e-14) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
-                tempBuffer1[j] = inHigh[i] * (1_f64 + tempReal);
-                tempBuffer2[j] = inLow[i] * (1_f64 - tempReal);
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
             } else {
-                tempBuffer1[j] = inHigh[i];
-                tempBuffer2[j] = inLow[i];
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
             }
-            i += 1;
-            j += 1;
-        }
-        retCode = self.sma_unguarded(startIdx, endIdx, inClose, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealMiddleBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        retCode = self.sma_unguarded(0, bufferSize - 1, &tempBuffer1, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealUpperBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        retCode = self.sma_unguarded(0, bufferSize - 1, &tempBuffer2, optInTimePeriod, &mut outBegIdxDummy, &mut outNbElementDummy, outRealLowerBand);
-        if retCode != RetCode::Success || ((outNbElementDummy as usize)) as usize != outputSize {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+            tempUpper = periodTotalUpper;
+            tempMiddle = periodTotalMiddle;
+            tempLower = periodTotalLower;
+            tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+            }
+            periodTotalMiddle -= inClose[trailingIdx];
+            trailingIdx = trailingIdx + 1;
+            outRealUpperBand[outIdx] = tempUpper / (optInTimePeriod as f64);
+            outRealMiddleBand[outIdx] = tempMiddle / (optInTimePeriod as f64);
+            outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
+            outIdx = outIdx + 1;
         }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = outputSize;
+        (*outNBElement) = outIdx;
         return RetCode::Success;
     }
 }

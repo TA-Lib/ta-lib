@@ -4,6 +4,7 @@
  *  -------------------------------------------------------------------
  *  RM       Robert Meier
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -11,6 +12,12 @@
  *  -------------------------------------------------------------------
  *  120307 RM     Initial Version
  *  120907 MF     Handling of a few limit cases
+ *  071226 MF,CC  Fused single-loop rewrite: maintain the three band running
+ *                sums (close for the middle band; the pointwise High/Low map for
+ *                the upper/lower bands) over one shared trailing window, instead
+ *                of two scratch buffers + three sma() calls. Enables streaming
+ *                and is bit-identical to the prior three-SMA form (verified vs
+ *                v0.6.4).
  */
 
 int accbands_lookback(int optInTimePeriod)
@@ -28,13 +35,17 @@ TA_RetCode accbands(int startIdx, int endIdx,
    double outRealMiddleBand[],
    double outRealLowerBand[])
 {
-   TA_RetCode retCode;
-   double *tempBuffer1;
-   double *tempBuffer2;
-   int outBegIdxDummy;
-   int outNbElementDummy;
-   int i, j, outputSize, bufferSize, lookbackTotal;
+   double periodTotalUpper;
+   double periodTotalMiddle;
+   double periodTotalLower;
+   double tempUpper;
+   double tempMiddle;
+   double tempLower;
    double tempReal;
+   int i;
+   int outIdx;
+   int trailingIdx;
+   int lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -55,95 +66,98 @@ TA_RetCode accbands(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   /* Buffer will contains also the lookback required for SMA
-    * to satisfy the caller requested startIdx/endIdx.
+   /* Each band is a simple moving average maintained as a running sum over a
+    * shared trailing window (all three share optInTimePeriod, so one trailing
+    * index walks all three windows in lockstep):
+    *    middle = SMA( close )
+    *    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+    *    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+    * When high+low is zero the upper/lower map degenerates to high/low.
+    * Fusing the three moving averages into one loop is bit-identical to the
+    * former "two scratch buffers + three sma() calls": each accumulator's
+    * add/record/subtract order is unchanged, and the High/Low map is a pure
+    * function recomputed from the raw trailing bar.
     */
-   outputSize = endIdx-startIdx+1;
-   bufferSize = outputSize+lookbackTotal;
-   double *tempBuffer1 = malloc((bufferSize) * sizeof(double));
-   if( !tempBuffer1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_ALLOC_ERR;
-   }
+   periodTotalUpper = 0.0;
+   periodTotalMiddle = 0.0;
+   periodTotalLower = 0.0;
+   trailingIdx = startIdx - lookbackTotal;
 
-   double *tempBuffer2 = malloc((bufferSize) * sizeof(double));
-   if( !tempBuffer2 )
-   {
-      free(tempBuffer1);
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_ALLOC_ERR;
-   }
-
-   /* Calculate the upper/lower band at the same time (no SMA yet).
-    * Must start calculation back enough to cover the lookback
-    * required later for the SMA.
+   /* Warm up the running sums with the initial period,
+    * except for the last value.
     */
-   for(j=0, i=startIdx-lookbackTotal; i<=endIdx; i++, j++)
+   i = trailingIdx;
+   while( i < startIdx )
    {
-      tempReal = inHigh[i]+inLow[i];
+      tempReal = inHigh[i] + inLow[i];
       if( !TA_IS_ZERO(tempReal) )
       {
          tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
-         tempBuffer1[j] = inHigh[i]*(1+tempReal);
-         tempBuffer2[j] = inLow[i]*(1-tempReal);
+         periodTotalUpper += inHigh[i]*(1+tempReal);
+         periodTotalLower += inLow[i]*(1-tempReal);
       }
       else
       {
-         tempBuffer1[j] = inHigh[i];
-         tempBuffer2[j] = inLow[i];
+         periodTotalUpper += inHigh[i];
+         periodTotalLower += inLow[i];
       }
+      periodTotalMiddle += inClose[i];
+      i = i + 1;
    }
 
-   /* Calculate the middle band, which is a moving average of the close. */
-   retCode = sma( startIdx, endIdx, inClose,
-      optInTimePeriod,
-      &outBegIdxDummy, &outNbElementDummy, outRealMiddleBand );
-
-   if( (retCode != TA_SUCCESS ) || ((int)outNbElementDummy != outputSize) )
+   /* Proceed with the calculation for the requested range.
+    * Note that this algorithm allows the input and output to be the
+    * same buffer: every trailing bar is read before any output is written.
+    */
+   outIdx = 0;
+   while( i <= endIdx )
    {
-      free(tempBuffer1);
-      free(tempBuffer2);
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
+      /* Add the incoming bar to each running sum. */
+      tempReal = inHigh[i] + inLow[i];
+      if( !TA_IS_ZERO(tempReal) )
+      {
+         tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
+         periodTotalUpper += inHigh[i]*(1+tempReal);
+         periodTotalLower += inLow[i]*(1-tempReal);
+      }
+      else
+      {
+         periodTotalUpper += inHigh[i];
+         periodTotalLower += inLow[i];
+      }
+      periodTotalMiddle += inClose[i];
+      i = i + 1;
+
+      /* Record the current window sums. */
+      tempUpper = periodTotalUpper;
+      tempMiddle = periodTotalMiddle;
+      tempLower = periodTotalLower;
+
+      /* Remove the trailing bar from each running sum. */
+      tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+      if( !TA_IS_ZERO(tempReal) )
+      {
+         tempReal = 4*(inHigh[trailingIdx]-inLow[trailingIdx])/tempReal;
+         periodTotalUpper -= inHigh[trailingIdx]*(1+tempReal);
+         periodTotalLower -= inLow[trailingIdx]*(1-tempReal);
+      }
+      else
+      {
+         periodTotalUpper -= inHigh[trailingIdx];
+         periodTotalLower -= inLow[trailingIdx];
+      }
+      periodTotalMiddle -= inClose[trailingIdx];
+      trailingIdx = trailingIdx + 1;
+
+      /* Write the three bands. */
+      outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+      outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+      outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+      outIdx = outIdx + 1;
    }
 
-   /* Now let's take the SMA for the upper band. */
-   retCode = sma( 0, bufferSize-1, tempBuffer1,
-      optInTimePeriod,
-      &outBegIdxDummy, &outNbElementDummy,
-      outRealUpperBand );
-
-   if( (retCode != TA_SUCCESS ) || ((int)outNbElementDummy != outputSize) )
-   {
-      free(tempBuffer1);
-      free(tempBuffer2);
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   /* Now let's take the SMA for the lower band. */
-   retCode = sma( 0, bufferSize-1, tempBuffer2,
-      optInTimePeriod,
-      &outBegIdxDummy, &outNbElementDummy,
-      outRealLowerBand );
-
-   free(tempBuffer1);
-   free(tempBuffer2);
-
-   if( (retCode != TA_SUCCESS ) || ((int)outNbElementDummy != outputSize) )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   *outBegIdx    = startIdx;
-   *outNBElement = outputSize;
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
 
    return TA_SUCCESS;
 }

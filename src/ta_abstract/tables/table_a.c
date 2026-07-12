@@ -71,7 +71,7 @@ DEF_FUNCTION( ACCBANDS,
               TA_GroupId_OverlapStudies,
               "Acceleration Bands",
               "Accbands",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* ACCBANDS END */
 

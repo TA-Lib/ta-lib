@@ -349,6 +349,7 @@ TA_LIB_API TA_RetCode TA_EMA_Private(int startIdx, int endIdx, const double inRe
 extern TA_RetCode TA_S_EMA_Private(int startIdx, int endIdx, const float inReal[], int optInTimePeriod, double optInK_1, int *outBegIdx, int *outNBElement, double outReal[]);
 
 /* Internal stream-open declarations (startIdx-aware; behind the public Open) */
+struct TA_ACCBANDS_Stream;
 struct TA_ACOS_Stream;
 struct TA_AD_Stream;
 struct TA_ADD_Stream;
@@ -501,6 +502,7 @@ struct TA_VAR_Stream;
 struct TA_WCLPRICE_Stream;
 struct TA_WILLR_Stream;
 struct TA_WMA_Stream;
+TA_RetCode TA_ACCBANDS_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 TA_RetCode TA_ACOS_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ACOS_Stream **stream, double *outReal );
 TA_RetCode TA_AD_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_AD_Stream **stream, double *outReal );
 TA_RetCode TA_ADD_OpenInternal( const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_ADD_Stream **stream, double *outReal );
