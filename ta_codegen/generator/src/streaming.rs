@@ -4681,26 +4681,88 @@ const PARITY_FIELD: &str = "streamParity";
 ///
 /// Keyed purely on the structural shape `cursor >= startIdx` with an empty
 /// `else`, so any non-matching steady body passes through byte-identically
-/// (regen-safe). Fires on every match to stay robust to multiple gates.
+/// (regen-safe). RECURSES into nested bodies and fires on every match: the gate
+/// can sit at the loop top level (HT_DCPERIOD) or inside another branch — e.g.
+/// HT_PHASOR writes its two outputs under a gate INSIDE each odd/even arm.
 fn strip_cursor_output_gate(stmts: Vec<Statement>, cursor: &str) -> Vec<Statement> {
     let mut out: Vec<Statement> = Vec::with_capacity(stmts.len());
     for st in stmts {
-        match st {
-            Statement::If {
-                condition: Expr::BinOp(ref l, BinOp::GreaterEq, ref r),
-                ref then_body,
-                ref else_body,
-                ..
-            } if else_body.is_empty()
+        // Descend first so a gate nested in this statement's own bodies is
+        // stripped before we test the statement itself.
+        let st = strip_gate_in_children(st, cursor);
+        if let Statement::If {
+            condition: Expr::BinOp(ref l, BinOp::GreaterEq, ref r),
+            ref then_body,
+            ref else_body,
+            ..
+        } = st
+        {
+            if else_body.is_empty()
                 && matches!(l.as_ref(), Expr::Var(v) if v == cursor)
-                && matches!(r.as_ref(), Expr::Var(v) if v == "startIdx") =>
+                && matches!(r.as_ref(), Expr::Var(v) if v == "startIdx")
             {
                 out.extend(then_body.iter().cloned());
+                continue;
             }
-            other => out.push(other),
         }
+        out.push(st);
     }
     out
+}
+
+/// Apply [`strip_cursor_output_gate`] to every nested statement body of `st`
+/// (branch arms, loop bodies, switch cases), leaving the statement's own shape
+/// intact. Statements without nested bodies pass through unchanged.
+fn strip_gate_in_children(st: Statement, cursor: &str) -> Statement {
+    let strip = |b: Vec<Statement>| strip_cursor_output_gate(b, cursor);
+    match st {
+        Statement::If {
+            condition,
+            then_body,
+            else_body,
+            cond_comments,
+        } => Statement::If {
+            condition,
+            then_body: strip(then_body),
+            else_body: strip(else_body),
+            cond_comments,
+        },
+        Statement::While { condition, body } => Statement::While {
+            condition,
+            body: strip(body),
+        },
+        Statement::DoWhile { condition, body } => Statement::DoWhile {
+            condition,
+            body: strip(body),
+        },
+        Statement::For { var, count, body } => Statement::For {
+            var,
+            count,
+            body: strip(body),
+        },
+        Statement::ForC {
+            init,
+            condition,
+            update,
+            body,
+        } => Statement::ForC {
+            init,
+            condition,
+            update,
+            body: strip(body),
+        },
+        Statement::Block { body } => Statement::Block { body: strip(body) },
+        Statement::Switch {
+            expr,
+            cases,
+            default,
+        } => Statement::Switch {
+            expr,
+            cases: cases.into_iter().map(|(l, b)| (l, strip(b))).collect(),
+            default: strip(default),
+        },
+        other => other,
+    }
 }
 
 /// STEADY-LOOP NORMALIZATION (general; see [`strip_cursor_output_gate`]): carry

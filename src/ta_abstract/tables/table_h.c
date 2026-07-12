@@ -113,7 +113,7 @@ DEF_FUNCTION( HT_PHASOR,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Phasor Components",
               "HtPhasor",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* HT_PHASOR END */
 

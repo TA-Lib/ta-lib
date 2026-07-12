@@ -2,7 +2,7 @@ name: HT_PHASOR
 camel_case: HtPhasor
 group: Cycle Indicators
 hint: Hilbert Transform - Phasor Components
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

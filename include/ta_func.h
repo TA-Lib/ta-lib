@@ -4813,6 +4813,26 @@ TA_LIB_API TA_RetCode TA_S_HT_PHASOR( int    startIdx,
 TA_LIB_API int TA_HT_PHASOR_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_HT_PHASOR — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_PHASOR_Stream TA_HT_PHASOR_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( const double inReal[], int historyLen, TA_HT_PHASOR_Stream **stream, double *outInPhase, double *outQuadrature );
+
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature );
+
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature );
+
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Close( TA_HT_PHASOR_Stream *stream );
+
 /*
  * TA_HT_SINE - Hilbert Transform - SineWave
  * 
