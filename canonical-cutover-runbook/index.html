@@ -1,0 +1,1328 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open-Source library for technical analysis of time series and trading data">
+      
+      
+        <meta name="author" content="Mario Fortier">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Canonical Cutover Runbook — making ta_codegen output the shipped library - TA-Lib - Technical Analysis Library</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#canonical-cutover-runbook-making-ta_codegen-output-the-shipped-library" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="TA-Lib - Technical Analysis Library" class="md-header__button md-logo" aria-label="TA-Lib - Technical Analysis Library" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.25 12c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.29.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.19.69l-.25 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.3L10 16.85c-.44-.18-.83-.41-1.19-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.35.35 0 0 1 .08-.45l1.48-1.16c-.03-.22-.05-.45-.05-.68s.02-.46.05-.68l-1.48-1.16a.35.35 0 0 1-.08-.45l1.4-2.42c.09-.16.27-.22.43-.16l1.74.71c.36-.28.75-.52 1.19-.69l.25-1.86c.03-.16.18-.29.35-.29h2.8c.17 0 .32.13.35.29L14 7.15c.43.17.83.41 1.19.69l1.74-.71c.16-.06.34 0 .43.16l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.22.05.45.05.68M19 3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 7c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TA-Lib - Technical Analysis Library
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Canonical Cutover Runbook — making ta_codegen output the shipped library
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TA-Lib/ta-lib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Github (Core C Library)
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../install/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../functions/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Docs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About Us
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="TA-Lib - Technical Analysis Library" class="md-nav__button md-logo" aria-label="TA-Lib - Technical Analysis Library" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.25 12c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.29.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.19.69l-.25 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.3L10 16.85c-.44-.18-.83-.41-1.19-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.35.35 0 0 1 .08-.45l1.48-1.16c-.03-.22-.05-.45-.05-.68s.02-.46.05-.68l-1.48-1.16a.35.35 0 0 1-.08-.45l1.4-2.42c.09-.16.27-.22.43-.16l1.74.71c.36-.28.75-.52 1.19-.69l.25-1.86c.03-.16.18-.29.35-.29h2.8c.17 0 .32.13.35.29L14 7.15c.43.17.83.41 1.19.69l1.74-.71c.16-.06.34 0 .43.16l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.22.05.45.05.68M19 3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 7c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg>
+
+    </a>
+    TA-Lib - Technical Analysis Library
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TA-Lib/ta-lib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Github (Core C Library)
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../functions/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docs
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Docs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C/C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wrappers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wrappers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About Us
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sandbox-proof-of-concept-results-2026-06-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sandbox proof-of-concept results (2026-06-27)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guiding-principles-read-first-this-is-why-its-safe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guiding principles (read first — this is why it's safe)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approach-changed-2026-06-29-generate-into-src-option-b-not-symlinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚠️ APPROACH CHANGED 2026-06-29 — generate-into-src (option B), NOT symlinks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#end-state-we-are-building-toward-option-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End state we are building toward (option B)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="End state we are building toward (option B)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generated-vs-hand-written-inventory-must-be-nailed-before-generate-into-src" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated-vs-hand-written inventory (must be nailed before generate-into-src)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisite-gates-must-be-green-before-the-c-generate-into-src-cutover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisite gates (must be green BEFORE the C generate-into-src cutover)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-reference-mechanism-phase-1-stand-this-up-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The reference mechanism (Phase 1 — stand this up first)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#staged-execution-plan-each-stage-checkpoint-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staged execution plan (each stage = checkpoint + rollback)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Staged execution plan (each stage = checkpoint + rollback)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-0-safety-net-zero-risk-done-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 0 — Safety net (zero risk) ✅ DONE 2026-06-28
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-reference-as-server-task-7-done-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1 — Reference-as-server (task #7) ✅ DONE 2026-06-28
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-abi-gate-task-2-done-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2 — ABI gate (task #2) ✅ DONE 2026-06-28
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-prove-the-srcta_func-symlink-superseded-by-option-b-2026-06-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3 — PROVE the src/ta_func symlink ❌ SUPERSEDED by option B (2026-06-29)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4-b-generate-the-c-library-into-srcta_func-in-place-done-2026-06-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4-B — Generate the C library into src/ta_func (in place) ✅ DONE 2026-06-29
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5-b-3-generate-ta_abstract-into-srcta_abstract-done-2026-06-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5-B / #3 — Generate ta_abstract into src/ta_abstract ✅ DONE 2026-06-29
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5-c-take-over-gen_codes-last-two-c-side-scalar-generators-done-2026-06-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5-C — Take over gen_code's last two C-side scalar generators ✅ DONE 2026-06-29
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-6-b-packaging-no-deref-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 6-B — Packaging (no deref needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-7-remove-gen_code-done-2026-06-30-commit-5a0d7a48-on-dev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 7 — Remove gen_code ✅ DONE 2026-06-30 (commit 5a0d7a48 on dev)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-8-retire-the-reference-much-later-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 8 — Retire the reference (much later, optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#master-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Master rollback
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-locked-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions locked in
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="canonical-cutover-runbook-making-ta_codegen-output-the-shipped-library">Canonical Cutover Runbook — making <code>ta_codegen</code> output the shipped library</h1>
+<p><strong>Status:</strong> ✅ <strong>CUTOVER COMPLETE (2026-06-30) — gen_code is removed; ta_codegen is the single
+generator; the C build (CMake + autotools) is C-only.</strong> #91 (Java) + #92 (packaging) merged to <code>dev</code>;
+<strong>Stage 7 done directly on <code>dev</code></strong> (commit <code>5a0d7a48</code>): deleted <code>src/tools/gen_code/</code> + templates +
+<code>ta_java_defs.h</code> + the dead .NET/MSVC IDE surface; removed gen_code from CMake/autotools (incl. the
+<code>-DTA_GEN_CODE</code> <code>libta_abstract_gc</code> variant + <code>gen_rust</code> dist); <strong>moved all Rust/ta_codegen building
+out of CMake into <code>scripts/build.py</code> (cargo-direct) — CMake never invokes cargo.</strong> Verified: C-only
+CMake build (0 cargo, gen_code absent) + autotools build; <code>regtest.py</code> exit 0 + <code>--codegen</code> 161/0 all
+4 langs + absolute oracle + bench; ABI gate green; cargo test 445 + clippy clean; regen deterministic.
+Remaining: only optional polish (drop the dead <code>gen_code_pass</code> digest field; Stage 8 retire the
+reference tag, much later). · <strong>History below.</strong></p>
+<p><strong>Status (historical):</strong> IN PROGRESS — <strong>generate-into-<code>src</code> (option B)</strong>. DONE: Stage 0 (tag), 1
+(reference-as-server #7), 2 (ABI gate #2), <strong>Stage 4-B</strong> (C indicators → <code>src/ta_func</code>),
+<strong>Stage 5-B / #3</strong> (the <code>ta_abstract</code> layer → <code>src/ta_abstract</code>), and <strong>Stage 5-C</strong> (the last two
+gen_code C-side scalar generators — <code>include/ta_defs.h</code> FuncUnstId enum + <code>src/ta_common/ta_retcode.c</code>
+— now ta_codegen-generated, <strong>byte-identical</strong>) (2026-06-29). <strong><code>output/c</code> holds ONLY codegen-specific
+artifacts.</strong> The whole shipped C library (indicators + abstract + ta_defs.h FuncUnstId + ta_retcode +
+hand-written ta_common) is ta_codegen-owned. <strong>gen_code's entire C side is now retired.</strong> Verified:
+CMake <strong>and</strong> autotools build the shipped lib from <code>src/</code>; <strong>gen_code still compiles</strong>; absolute
+oracle passes; <code>--codegen</code> 161/0 all 4 langs vs frozen <code>ta_ref_serve</code>; ABI gate green; regen
+deterministic; generator <code>cargo test</code> (445) + clippy clean. Nothing committed.
+<strong>#4 (Java backend) DONE 2026-06-29 (not committed)</strong> — <code>ta_codegen</code> now generates the shipped Java
+(<code>Core.java</code> GENCODE + <code>CoreAnnotated.java</code> + <code>FuncUnstId.java</code>); gen_code's last unique role is gone.
+Verified: cargo test 444 + clippy clean; regen oracle = only <code>java/src</code> + generator + <code>output/java</code>
+(C lib + <code>include/</code> ABI untouched); javac whole <code>java/src</code> + sanity call; <code>--codegen</code> <strong>161/0 all 4
+langs</strong>; gen_code still compiles. See the <strong>#4</strong> prerequisite-gate entry below for the full detail.
+<strong>Remaining: Stage 6-B (package.py) + Stage 7 (remove gen_code).</strong> · <strong>Branch:</strong> <code>dev</code></p>
+<blockquote>
+<p>This is a <em>careful, reversible, one-step-at-a-time</em> runbook for retiring the legacy
+<code>gen_code</code> generator and making <code>ta_codegen</code>'s generated C the canonical/shipped
+library. Every stage has a <strong>green/red checkpoint</strong> and an explicit <strong>rollback</strong>.
+Do not proceed past a red checkpoint. Coordinate each stage with the maintainer.</p>
+</blockquote>
+<hr />
+<h2 id="sandbox-proof-of-concept-results-2026-06-27">Sandbox proof-of-concept results (2026-06-27)</h2>
+<p>Ran Stage 3 in a throwaway detached <code>git worktree</code> (real tree untouched): symlinked
+<code>src/{ta_func,ta_common,ta_abstract}</code> → <code>ta_codegen/output/c/*</code>, built with CMake, ran <code>ta_regtest</code>.</p>
+<p><strong>✅ The build mechanism works.</strong> CMake compiled <code>libta-lib</code> entirely from the symlinked
+generated sources and linked <code>ta_regtest</code>, once three layout gaps were handled.</p>
+<p><strong>Three file-layout gaps — now RESOLVED &amp; VALIDATED in the Stage 3 throwaway (2026-06-28):</strong>
+1. <strong><code>ta_utility.c</code> relocation.</strong> Generated lives in <code>output/c/ta_common/</code> (and the generated
+   <code>ta_utility.h</code> <em>strips the <code>TA_INT_*</code> decls</em> the reference header had — correct, since the
+   generated lib uses <code>_Unguarded</code>/<code>_Private</code>). Fix that worked: CMake → repoint <code>LIB_SOURCES</code>
+   <code>ta_utility.c</code> to the generated <code>ta_common</code> path <strong>and</strong> add <code>ta_codegen/output/c/ta_common</code>
+   to <code>include_directories</code> (so the generated <code>ta_utility.h</code> is found); autotools → build
+   <code>ta_utility.c</code> from <code>ta_common</code>'s <code>Makefile.am</code>.
+2. <strong><code>ta_NVI.c</code> / <code>ta_PVI.c</code>.</strong> Stage 2 proved these are <strong>dead exported symbols</strong> (absent from
+   <code>include/</code>, unregistered in <code>ta_abstract</code>, not in the 161). Resolution used: <strong>dropped them</strong>
+   from <code>LIB_SOURCES</code> (ABI-safe). <em>(Maintainer decision for the real tree: drop — recommended —
+   vs port to <code>ta_codegen/input</code>. Default: drop.)</em>
+3. <strong>Autotools — the whole-dir symlink breaks per-dir recursion.</strong> Confirmed: emitting a
+   <code>Makefile.am</code> into the symlink target is <strong>NOT enough</strong> — <code>make</code> enters the symlink's
+   <em>physical</em> path so the Makefile's relative <code>../../libtool</code> resolves wrong (<code>Error 127</code>,
+   "../../libtool: No such file or directory"). <strong>The working fix is option 2: a top-level flat
+   list</strong> — drop <code>ta_func</code> from <code>SUBDIRS</code> and from <code>configure.ac</code>'s <code>AC_CONFIG_FILES</code>, and list
+   <code>ta_func/ta_*.c</code> directly in <code>src/Makefile.am</code>'s <code>libta_lib_la_SOURCES</code> (with <code>subdir-objects</code>
+   already enabled). Then <code>make</code> stays in <code>src/</code>, <code>../libtool</code> resolves correctly. (CMake is
+   unaffected — it references source paths directly, no per-dir recursion.) Also: the explicit
+   list correctly ignores the extra <code>ta_codegen_funcs.c</code>; a glob would wrongly include it.</p>
+<p><strong>✅ FIXED (task #8) — MFI/CCI fixed-array buffer overflow (flattened CIRCBUF).</strong>
+ROOT CAUSE was in the <strong>input sources</strong> (not the generator): <code>CIRCBUF</code> was fully removed during
+conversion and flattened to too-small fixed arrays. MFI (<code>[50]</code>) and CCI (<code>[30]</code>) used the
+reference's <em>dynamic</em> <code>CIRCBUF_INIT(…, optInTimePeriod)</code> (mallocs when period exceeds the static
+size); the flattening dropped the malloc → overflow for period &gt; 50 / &gt; 30, in C, Rust, and Java
+alike. A comprehensive audit (all 6 CIRCBUF users + all 24 fixed-array input files) found <strong>only
+MFI/CCI</strong> affected (HT_<em>/MAMA use <code>CIRCBUF_INIT_LOCAL_ONLY</code> = always-static, safe; cdl</em>/ultosc/sar
+are fixed by structure). Fixed <code>ta_codegen/input/{mfi,cci}/*.c</code> to allocate sized to
+<code>optInTimePeriod</code>. Verified: regen oracle clean (only MFI/CCI changed); the crash scenario now
+passes + full 161 in-process; <code>--codegen</code> MFI/CCI PASS in all 4 languages. Test-coverage
+follow-up tracked separately (large-period cases).</p>
+<p><strong>🟡 Pre-existing, NOT a blocker (task #9) — <code>test_abstract</code> XML over-read.</strong> ASAN flags a
+1-byte global over-read of <code>TA_FunctionDescriptionXMLArray</code> in <code>test_abstract.c:957</code>, but it is
+<strong>identical in the reference</strong> (same array, same size) — <code>ta_func_api.c</code>'s array isn't
+NUL-terminated in either gen_code or ta_codegen. Latent; fix opportunistically.</p>
+<p><strong>Verification lesson (refines task #7):</strong> the cutover oracle must run the in-process
+hand-written <code>ta_regtest</code> tests <strong>linked against the generated lib</strong> (ideally + ASAN), not just
+the JSON-RPC servers — the server value-comparison missed a memory-corrupting bug. The current
+suite also <strong>under-covers large optInTimePeriod values</strong> (&gt;static CIRCBUF size) — add cases.</p>
+<hr />
+<h2 id="guiding-principles-read-first-this-is-why-its-safe">Guiding principles (read first — this is why it's safe)</h2>
+<ol>
+<li><strong>Nothing is destructive.</strong> All work happens on a branch. The current <code>src/</code>
+   reference is preserved <em>twice</em>: in git history, and in an immutable <strong>pinned tag</strong>
+   (<code>reference-pre-cutover</code>). Any bad step is undone with one <code>git checkout</code> / <code>git reset</code>.</li>
+<li><strong>The reference stays usable throughout.</strong> It is built from the pinned tag (via a
+   <code>git worktree</code>) and exposed as <code>ta_ref_serve</code>, so at <em>every</em> checkpoint we can prove
+   the new build still matches the old one numerically (<code>ta_regtest</code>) and at the ABI
+   level (symbol/enum/struct diff).</li>
+<li><strong>The build stays green at every checkpoint.</strong> Both CMake and autotools must build,
+   and <code>ta_regtest</code> must report 161/0, before a stage is accepted.</li>
+<li><strong>One step at a time.</strong> Each stage is small, independently verifiable, and reversible.</li>
+</ol>
+<hr />
+<h2 id="approach-changed-2026-06-29-generate-into-src-option-b-not-symlinks">⚠️ APPROACH CHANGED 2026-06-29 — generate-into-<code>src</code> (option B), NOT symlinks</h2>
+<p><strong>Maintainer decision (2026-06-29):</strong> drop the symlink model. <code>ta_codegen</code> will generate the
+C library <strong>directly into <code>src/</code></strong> (in place, where <code>gen_code</code> always wrote), and
+<code>ta_codegen/output/c</code> keeps <strong>only codegen-specific artifacts</strong> (the JSON-RPC server, the
+<code>.so</code>/bench unity files). The Rust/Java/.NET backends are unaffected — they remain
+fully-generated under <code>ta_codegen/output/{rust,java,dotnet}</code> (generated <em>bindings</em> with no
+canonical home), which is exactly why C, the <em>product</em> (with <code>include/</code> + downstream
+<code>src/ta_func/*.c</code> globbing), is treated differently. Rationale: the symlink bought nothing and
+<em>cost</em> real complexity we hit in Stages 3–4 — autotools/libtool physical-path breakage, a
+packaging dereference step, and circular copy-from-<code>src</code> ownership transfers. The Stage-4
+symlink was implemented, verified, then <strong>reverted</strong> per this decision (2026-06-29); the C
+verification spine (tag, reference-as-server #7, ABI gate #2) was kept.</p>
+<h2 id="end-state-we-are-building-toward-option-b">End state we are building toward (option B)</h2>
+<ul>
+<li><code>include/</code> — <strong>stays exactly where it is</strong>, ABI-stable. Public contract for every downstream
+  wrapper (Python/Cython, Ruby FFI, Julia, Zig, Perl, PHP, …).</li>
+<li><code>src/ta_func</code>, <code>src/ta_common</code>, <code>src/ta_abstract</code> — <strong>real directories</strong> holding the
+  <code>ta_codegen</code>-generated C <strong>in place</strong>, co-located with the hand-written helpers that are
+  <em>not</em> generated (<code>ta_utility.{c,h}</code>, <code>ta_common/ta_global.c</code>, <code>ta_retcode.c</code>, <code>ta_version.c</code>,
+  the internal <code>.h</code> headers). Generated files carry a <code>DO NOT EDIT — generated by ta_codegen;
+  source: ta_codegen/input/&lt;name&gt;</code> banner. The build lists (<code>CMakeLists.txt</code> <code>LIB_SOURCES</code>,
+  <code>src/ta_func/Makefile.am</code>) keep their current shape — they already reference <code>src/...</code> paths,
+  now pointing at generated-in-place files. <strong>No symlinks; no autotools option-2; no packaging
+  deref; no <code>ta_utility</code>/<code>ta_common</code> move into <code>ta_codegen/input</code>.</strong></li>
+<li><code>ta_codegen/output/c</code> — <strong>only codegen-specific build artifacts</strong>: <code>ta_codegen_serve.c</code>
+  (server unity), <code>ta_codegen_funcs.c</code> (.so unity), <code>ta_bench_cg.c</code> (bench), <code>ta_abstract_all.c</code>,
+  <code>ta_lib_types.h</code>. These <code>#include</code> from <code>src/...</code> via <code>-I</code>.</li>
+<li><code>src/tools/</code> — <strong>stays</strong> (the <code>ta_regtest</code> / <code>ta_bench</code> harness).</li>
+<li>The old hand/gen_code reference C — preserved at the pinned tag <code>reference-pre-cutover</code> + in
+  history; reachable via <code>git worktree</code> (already stood up at <code>../ta-lib-ref</code>).</li>
+<li><code>gen_code</code> — removed last: <code>ta_codegen</code> <em>takes over</em> writing <code>src/ta_func</code> (etc.) from
+  gen_code's GENCODE sections, then gen_code is deleted.</li>
+<li>Release tarball — ships <code>src/</code> real files as today (no deref needed; the PHP <code>trader</code>
+  extension's <code>src/ta_func/*.c</code> glob just works).</li>
+</ul>
+<h3 id="generated-vs-hand-written-inventory-must-be-nailed-before-generate-into-src">Generated-vs-hand-written inventory (must be nailed before generate-into-src)</h3>
+<p>The generator must know exactly which files it owns per directory (the rest are hand-written
+and left untouched). Rough cut — <strong>confirm precisely during Stage 4</strong>:
+- <code>src/ta_func/</code>: generated = the 161 <code>ta_&lt;NAME&gt;.c</code> indicators (+ <code>ta_func_private.h</code>);
+  hand-written = <code>ta_utility.{c,h}</code>. (NVI/PVI: dead — delete; not generated, not in <code>include/</code>.)
+- <code>src/ta_common/</code>: hand-written = <code>ta_global.c</code>, <code>ta_retcode.c</code>, <code>ta_version.c</code>, <code>ta_memory.h</code>,
+  <code>ta_global.h</code>, <code>ta_magic_nb.h</code>, <code>ta_pragma.h</code>. (Mostly/entirely hand-written — likely
+  little/none generated; <code>ta_codegen</code> currently just <em>copies</em> these into output.)
+- <code>src/ta_abstract/</code>: generated = the introspection layer (<code>tables/×26</code>, <code>ta_func_api.c</code>,
+  <code>ta_group_idx.c</code>, <code>frames/ta_frame.c</code>, parts of <code>ta_def_ui.c</code>); hand-written = <code>ta_abstract.c</code>,
+  headers (<code>ta_def_ui.h</code>, <code>ta_frame_priv.h</code>), <code>ta_retcode.csv</code>, gen_code-only files to delete.</p>
+<hr />
+<h2 id="prerequisite-gates-must-be-green-before-the-c-generate-into-src-cutover">Prerequisite gates (must be green BEFORE the C generate-into-<code>src</code> cutover)</h2>
+<p>These are the tracked Phase-0 tasks. The symlink cutover is Phase 2; do not start it until:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>#1 Perf parity</strong> — confirmed (sample green; ACCBANDS +3.8%, the "1.5×" was noise).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>#3 Ownership transfer</strong> — DONE 2026-06-29. ta_codegen is the canonical writer of the
+      ta_abstract layer, generated from the IR directly into <code>src/ta_abstract</code> (Stage 5-B). The
+      shipped C library (indicators + abstract) is fully generated in <code>src/</code>; <code>output/c</code> holds
+      only codegen artifacts. (<code>ta_common</code>/<code>ta_retcode.c</code> confirmed hand-written, stay in <code>src/</code>.)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>#7 Reference-as-server</strong> — DONE 2026-06-28. <code>ta_regtest</code>'s codegen comparison no
+      longer computes its baseline in-process; it diffs every language server (incl. the
+      generated C server) against <code>ta_ref_serve</code> built from the pinned-tag worktree. Verified
+      161/0 all 4 languages. <em>(This is what makes the comparison non-circular post-cutover.)</em>
+      See "Stage 1" below for what changed and the scope decision (baseline only).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>#2 ABI gate</strong> — DONE 2026-06-28. Wired as <code>scripts/abi_gate.py</code> (reusable; exit 0/&frac12;).
+      Green: the generated lib exports a <strong>superset</strong> of the reference public ABI (all 522
+      public function symbols present, verified bidirectionally), <code>include/</code> unchanged (type ABI
+      frozen). See "Stage 2" below for the symbol deltas + the <code>_Unguarded</code> visibility decision.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>#4 Java backend</strong> — DONE 2026-06-29 (not yet committed). <code>ta_codegen</code> now generates the
+      shipped Java (<code>java/.../Core.java</code> GENCODE + <code>CoreAnnotated.java</code> + <code>FuncUnstId.java</code>), retiring
+      gen_code's last unique role. Four increments: (A) generator foundation — <code>to_java_method_name</code>
+      uses the YAML <code>camel_case</code> field (irregular/typo names), <code>Registry</code> threads a <code>java_names</code> map so
+      cross-calls match, <code>Logic</code>→<code>Unguarded</code> (matches C's public <code>_Unguarded</code>), <code>emit_java_unpacking</code>
+      → canonical <code>candleSettings[CandleSettingType.X.ordinal()].rangeType.ordinal()</code> (server candle
+      model switched to a <code>CandleSetting[]</code>+<code>RangeType</code> enum to match); (B) <code>FuncUnstId.java</code> from
+      <code>enums.yaml</code> (adds the missing <code>Imi</code>, sentinels <code>All</code>/<code>None</code>); (C) <code>Core.java</code> GENCODE assembly
+      (the verified per-indicator method text + the new public <code>xxxUnguarded</code> variants); (D)
+      <code>CoreAnnotated.java</code> — a faithful gen_code port, <strong>byte-identical except the <code>avgPrice</code>/<code>avgDev</code>
+      canonical reorder</strong> (matches <code>ta_func_list.txt</code>/<code>table_a.c</code>). Verified: cargo test 444 + forced
+      clippy clean; regen deterministic; full regen oracle = only <code>java/src</code> + generator + <code>output/java</code>
+      changed (<strong>nothing in <code>src/</code>/<code>include/</code>/<code>output/{c,rust,dotnet}</code></strong> — C lib + ABI untouched); javac
+      whole <code>java/src</code> (40 classes, 0 errors) + a sanity call; <code>--codegen</code> Java 161/0 (all-4-lang green
+      from increment A, servers unchanged by B–D); gen_code still compiles. Generator: new
+      <code>backends/java_enums.rs</code> + <code>backends/java_shipped.rs</code>, wired in <code>main.rs</code>'s <code>"java"</code> block (Core/
+      CoreAnnotated only on a full, unfiltered <code>generate</code>). <code>ta_java_defs.h</code> stays gen_code-owned and
+      dies WITH gen_code in Stage 7. Deferred to the PR (maintainer: "good enough, fix later"): JUnit
+      suite not run (compile + 1 sanity call only), no dedicated unit tests for the new modules.</li>
+</ul>
+<hr />
+<h2 id="the-reference-mechanism-phase-1-stand-this-up-first">The reference mechanism (Phase 1 — stand this up first)</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git tag reference-pre-cutover &lt;last gen_code-built commit&gt;     # immutable snapshot
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git worktree add ../ta-lib-ref reference-pre-cutover           # lightweight, shares .git
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  └─ build ta_ref_serve there  ── copy binary into bin/
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>main worktree:
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  └─ build ta_codegen_serve_c/_rust/java/dotnet + the ta_regtest runner
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>bin/ ends up holding BOTH ta_ref_serve and ta_codegen_serve_* ; ta_regtest spawns them
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  side by side over JSON-RPC and diffs outputs. The runner links NEITHER implementation,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  so which worktree built which binary is irrelevant.
+</code></pre></div>
+<p>The hardcoded <code>test_*.c</code> expected values remain the generator-independent <strong>absolute</strong> oracle.</p>
+<hr />
+<h2 id="staged-execution-plan-each-stage-checkpoint-rollback">Staged execution plan (each stage = checkpoint + rollback)</h2>
+<h3 id="stage-0-safety-net-zero-risk-done-2026-06-28">Stage 0 — Safety net (zero risk) ✅ DONE 2026-06-28</h3>
+<ul>
+<li><strong>Did:</strong> <code>git tag -a reference-pre-cutover</code> at HEAD <code>0d6b0e64</code> (the current, correct
+  gen_code-built reference — <code>src/ta_func</code> there never had the CIRCBUF-flattening bug,
+  which lived only in <code>ta_codegen/input</code> and is fixed). Stayed on branch <code>dev</code> (where the
+  cutover work lives). Working tree was clean apart from this runbook.</li>
+<li><strong>Checkpoint:</strong> ✅ tag <code>reference-pre-cutover</code> → <code>0d6b0e64</code>.</li>
+<li><strong>Rollback:</strong> <code>git tag -d reference-pre-cutover</code> (pure addition).</li>
+</ul>
+<h3 id="stage-1-reference-as-server-task-7-done-2026-06-28">Stage 1 — Reference-as-server (task #7) ✅ DONE 2026-06-28</h3>
+<ul>
+<li><strong>Scope decision (maintainer):</strong> <em>baseline only.</em> Only the cross-language comparison
+  <strong>baseline</strong> moved off the in-process call; <code>doRangeTest</code> self-coherency and the
+  hand-written <code>test_*.c</code> absolute-value tests still run in-process against the linked lib
+  (post-cutover = the generated lib — exactly the in-process/ASAN net the runbook asked for).
+  So "runner links nothing" means <em>the comparison baseline doesn't come from the linked lib</em>,
+  not that ta_regtest stops linking it.</li>
+<li><strong>Phase A — <code>test_codegen.c</code>:</strong> spawn <code>ta_ref_serve</code> once (<code>argv_cref</code>), thread a <code>refCp</code>
+  pipe through the context; replaced the in-process <code>TA_CallFunc</code> baseline (default + large-
+  period passes) with a <code>ta_ref_serve</code> JSON-RPC call parsed by a new <code>parse_ref_baseline()</code>
+  into the same <code>lastRetCode/lastBegIdx/lastNbElement</code> + <code>outRealBufs/outIntBufs</code> that
+  <code>compare_codegen_output_generic()</code> already diffs against — so the comparator, request
+  builder, and struct are <strong>unchanged</strong>. <code>c_ref</code> timing now comes from the server's
+  <code>timing_ns</code> (apples-to-apples). Removed the now-dead in-process <code>get_nanotime()</code>.
+  <code>--codegen</code> now <em>requires</em> <code>ta_ref_serve</code> in <code>bin/</code> and aborts with a clear message if
+  missing (it is no longer optional).</li>
+<li><strong>Phase B — <code>scripts/regtest.py</code>:</strong> new <code>ensure_reference_serve()</code> builds <code>bin/ta_ref_serve</code>
+  from the pinned-tag worktree: auto-creates <code>../ta-lib-ref</code> @ <code>reference-pre-cutover</code>,
+  builds the frozen <code>libta-lib.a</code> (<code>ta-lib-static</code>) there once, then strips the generated
+  indicator/ta_common <code>#include</code>s from that tree's <code>ta_codegen_serve.c</code> and links the frozen
+  lib (<code>-DTA_REF_SERVE</code>). Rebuilds only when missing/stale (the tag is immutable). Falls back
+  to the current tree with a <strong>loud warning</strong> if the tag/worktree is unavailable (valid only
+  pre-cutover). The protocol is byte-for-byte the existing server protocol (probed: emits
+  <code>retCode/outBegIdx/outNBElement/timing_ns/outReal[N]</code>; <code>list_functions</code> = 161).</li>
+<li><strong>Checkpoint:</strong> ✅ <code>ta_regtest --codegen</code> = <strong>161/0 for C, Rust, Java, .NET</strong> with
+  <code>ta_ref_serve</code> (worktree-built) as the oracle. In-process C absolute tests still pass;
+  <code>ta_codegen/output</code> untouched (regen oracle clean); both CMake <strong>and</strong> autotools compile
+  <code>test_codegen.c</code>. Confirmed the nightly/dist CI (<code>scripts/test-dist.py</code>) does <strong>not</strong> run
+  <code>--codegen</code>, so requiring <code>ta_ref_serve</code> does not affect CI.</li>
+<li><strong>Rollback:</strong> <code>git checkout -- src/tools/ta_regtest/test_codegen.c scripts/regtest.py</code>;
+  <code>git worktree remove ../ta-lib-ref</code> (+ <code>git tag -d reference-pre-cutover</code> to undo Stage 0).</li>
+<li><strong>Deferred (not needed for non-circularity):</strong> <code>server_verify.c</code> (the hand-written tests'
+  server bridge) still compares against the in-process C. Post-cutover that becomes
+  redundant (its absolute hardcoded values remain the real oracle), not circular — optional
+  cleanup later. <strong>CI/tag portability:</strong> the tag is local; CI that runs <code>--codegen</code> would need
+  the tag pushed (or <code>regtest.py</code>'s fallback) — revisit when/if CI gains a codegen step.</li>
+</ul>
+<h3 id="stage-2-abi-gate-task-2-done-2026-06-28">Stage 2 — ABI gate (task #2) ✅ DONE 2026-06-28</h3>
+<ul>
+<li><strong>Wired:</strong> <code>scripts/abi_gate.py</code> — compiles the generated lib sources (<code>ta_codegen/output/c</code>,
+  excluding the unity/server/bench root files), <code>nm</code>s the objects, and diffs the exported
+  symbol set against the frozen reference <code>libta-lib.a</code> (pinned-tag worktree). Because the
+  build uses <strong>no <code>-fvisibility=hidden</code> and no version script</strong>, every extern symbol is an
+  exported ABI symbol, so <code>nm</code> on the archives is a faithful, flag-independent ABI surface.
+  Pass rule: every reference <em>public</em> symbol (exported AND named in <code>include/</code>) must still be
+  exported by the generated lib; additions are allowed. Verified bidirectionally (symbol-side
+  and from <code>include/</code> function declarations).</li>
+<li><strong>Result (green):</strong></li>
+<li>reference exported = 1348; generated exported = 1653; <strong>public = 522, all present in
+    generated (0 removed)</strong> → no ABI break.</li>
+<li><code>include/</code> <strong>unchanged vs the tag</strong> → enums/structs/typedefs (the type ABI) are frozen by
+    construction; nothing to diff there.</li>
+<li><strong>Additions</strong> (ABI-compatible — adding symbols never breaks a consumer): 322 <code>*_Unguarded</code>
+    variants (declared in the generated <code>include/ta_func_unguarded.h</code>) + 40 per-function
+    <code>TA_DEF_UI_*</code> abstract descriptors (a naming restructure) + <code>TA_EMA_Private</code>/<code>TA_S_EMA_Private</code>.</li>
+<li><strong>Internal-only removals</strong> (59, none in <code>include/</code>, none ABI-relevant): 41 <em>shared</em>
+    <code>TA_DEF_UI_*</code> descriptors (replaced by the per-function ones above); 12 <code>TA_INT_*</code>/
+    <code>TA_S_INT_*</code> shared helpers (EMA/SMA/MACD/PO/VAR/stddev — replaced by <code>_Unguarded</code>/<code>_Private</code>);
+    6 NVI/PVI symbols.</li>
+<li><strong>NVI/PVI finding (refines gap #2):</strong> <code>TA_NVI</code>/<code>TA_PVI</code> are <strong>dead exported symbols</strong> in the
+    reference — present as <code>.c</code> files but <strong>absent from <code>include/</code> and unregistered in
+    <code>ta_abstract</code></strong> (not in the 161-func set). So their absence from the generated tree is <strong>not
+    an ABI break</strong>; porting them is needed only to satisfy the <code>LIB_SOURCES</code> <em>build</em> list when
+    <code>src/ta_func</code> is symlinked (a Stage &frac34; build gap), not for ABI.</li>
+<li><strong><code>_Unguarded</code> visibility decision (recommended, pending maintainer confirmation):</strong> <em>accept
+  the additions; do NOT add visibility hardening for the cutover.</em> Rationale: the reference
+  itself exported all its internals (no visibility control), so export-everything is the
+  status quo — matching it is the minimal, lowest-risk choice and additions can't break
+  existing consumers. Hardening (<code>-fvisibility=hidden</code> + <code>TA_LIB_API</code> export annotations or a
+  version script over 522 symbols) is a worthwhile <em>future</em> cleanup but is out of scope and
+  adds risk to the cutover.</li>
+<li><strong>Checkpoint:</strong> ✅ ABI diff = additions + internal churn only; 0 public breaks; type ABI frozen.</li>
+<li><strong>Rollback:</strong> the gate is a check; nothing to roll back. (<code>scripts/abi_gate.py</code> is a new file.)</li>
+</ul>
+<h3 id="stage-3-prove-the-srcta_func-symlink-superseded-by-option-b-2026-06-29">Stage 3 — <del>PROVE the <code>src/ta_func</code> symlink</del>  ❌ SUPERSEDED by option B (2026-06-29)</h3>
+<p>The symlink approach was dropped, so a symlink prove is moot. It WAS done in a throwaway on
+2026-06-28 and is kept here only for the <strong>lesson that justified option B</strong>: a whole-dir symlink
+<strong>breaks autotools' per-dir libtool recursion</strong> (<code>make</code> enters the symlink's <em>physical</em> path, so
+the Makefile's relative <code>../../libtool</code> → <code>Error 127</code>), forcing an awkward "flat top-level list"
+restructure; plus it needs a packaging dereference step and circular copy-from-<code>src</code> ownership
+transfers. Generate-into-<code>src</code> (B) has none of these. (Also learned, still relevant: a
+system-installed <code>/usr/local/lib/libta-lib.so.0</code> shadows <em>dynamically</em>-linked test binaries —
+prefer static-linked <code>ta_regtest</code>, which the build already does.)</p>
+<h3 id="stage-4-b-generate-the-c-library-into-srcta_func-in-place-done-2026-06-29">Stage 4-B — Generate the C library into <code>src/ta_func</code> (in place)  ✅ DONE 2026-06-29</h3>
+<p><code>ta_codegen</code> now writes the generated C <strong>into <code>src/ta_func</code></strong>, taking over gen_code's
+GENCODE-section role there. No symlink, no autotools restructure, no <code>ta_utility</code> move.
+- <strong>Done:</strong>
+  1. <strong>C backend repointed to <code>src/</code></strong> via a new <code>LanguageBackend::lib_output_dir</code> hook
+     (<code>backends/mod.rs</code>); <code>CBackend</code> returns <code>&lt;root&gt;/src/ta_func</code> and <code>clean_keep = ["ta_utility.c"]</code>
+     so the hand-written helper survives cleanup. <code>generate_backend</code> + <code>clean_generated_files</code> use
+     it. <code>ta_func_private.h</code> now written to <code>src/ta_func</code>; the <code>ta_common</code>/<code>ta_utility</code> copies into
+     <code>output/c</code> were removed (they stay hand-written in <code>src/</code>). Dead <code>strip_ta_int_declarations</code>
+     deleted (the generated <code>ta_utility.h</code> keeps its now-harmless <code>TA_INT_*</code> decls — nothing
+     references them).
+  2. <strong><code>output/c</code> trimmed:</strong> <code>git rm -r output/c/{ta_func,ta_common}</code> (171 files). <code>output/c</code> now
+     holds only <code>ta_abstract</code> (generated, pending #3) + the unity/server/bench artifacts.
+  3. <strong>Servers/bench/.so re-sourced from <code>src/</code>:</strong> the C server, bench, and <code>libta_codegen_funcs.so</code>
+     unity builds now <code>-I src src/ta_func src/ta_common</code> (+ <code>output/c</code> first, so <code>ta_abstract</code>
+     resolves to the generated copy); unity <code>#include "ta_func/ta_utility.c"</code> (was <code>ta_common/...</code>);
+     the <code>.so</code> unity scans <code>src/ta_func</code> and is written to <code>output/c/ta_codegen_funcs.c</code>.
+  4. <strong>Dead NVI/PVI deleted</strong> — the <code>clean</code> step removes them automatically (not regenerated); the
+     <code>extras</code> dir-scan in <code>sorted_source_stems</code> was removed.
+  5. <strong>Banner</strong> on every generated indicator (<code>gen_header</code> in <code>c.rs</code>): <code>AUTO-GENERATED by
+     ta_codegen — DO NOT EDIT</code>.
+  6. <strong>Build lists</strong> kept per-dir (generator-owned): <code>CMakeLists.txt</code> <code>LIB_SOURCES</code> +
+     <code>src/ta_func/Makefile.am</code> (161 + <code>ta_utility.c</code>, no NVI/PVI). No option-2/configure.ac change.
+  7. <strong><code>abi_gate.py</code></strong> now nm-diffs the CMake <code>cmake-build/libta-lib.a</code> (built from <code>src/</code>) vs the
+     frozen worktree archive — no source recompile.
+- <strong>Checkpoint:</strong> ✅ ALL PASSED — <code>generate</code> regen deterministic (stable change set; <code>src/ta_func</code>
+  diff is the generated content, reviewable via <code>git diff</code>); CMake <strong>and</strong> autotools both build the
+  shipped lib from <code>src/</code> (per-dir recursion works — real dir); plain <code>ta_regtest</code> absolute oracle
+  passes (static-linked); <code>--codegen</code> <strong>161/0 all 4 langs</strong> vs the frozen <code>ta_ref_serve</code> (servers
+  rebuilt from the cutover sources, 0 stderr errors); ABI gate green (0 public breaks, <code>include/</code>
+  frozen); generator <code>cargo test</code> (445) + clippy clean. Extractor tests read the frozen reference
+  (<code>../ta-lib-ref/src/ta_func</code>), skip if absent.
+- <strong>Rollback:</strong> <code>git checkout HEAD -- src/ta_func CMakeLists.txt</code> + restore <code>output/c/{ta_func,
+  ta_common}</code> + revert the generator edits (frozen reference preserved at the tag).</p>
+<h3 id="stage-5-b-3-generate-ta_abstract-into-srcta_abstract-done-2026-06-29">Stage 5-B / #3 — Generate <code>ta_abstract</code> into <code>src/ta_abstract</code>  ✅ DONE 2026-06-29</h3>
+<p>The abstract generator (<code>backends/ta_abstract_c.rs</code>) <strong>already builds everything from the IR</strong>
+(<code>gen_ta_func_api_c</code> reads the IR-generated <code>ta_func_api.xml</code>, not the reference) — so it was
+<em>not</em> circular, and the untangle was a clean repoint, not an ownership rewrite.
+- <strong>Done:</strong>
+  1. <code>ta_abstract_c::generate</code> now writes its <code>base</code> to <code>&lt;root&gt;/src/ta_abstract</code> (was
+     <code>output/c/ta_abstract</code>). It overwrites the generated-equivalent files (<code>ta_abstract.c</code>,
+     <code>ta_def_ui.{c,h}</code>, <code>ta_frame_priv.h</code>, <code>frames/ta_frame.{c,h}</code>, <code>tables/table_a-z.c</code>,
+     <code>ta_group_idx.c</code>, <code>ta_func_api.c</code>) in place and leaves the gen_code-only files
+     (<code>ta_java_defs.h</code>, <code>templates/</code>) untouched (they go with gen_code in Stage 7).
+  2. <code>output/c/ta_abstract</code> removed — <strong><code>output/c</code> is now purely codegen artifacts.</strong>
+  3. The C server build's <code>-I</code> points <code>ta_abstract</code>/<code>frames</code> at <code>src/ta_abstract</code>.
+  4. <strong>gen_code coexistence fix:</strong> the autotools <code>-DTA_GEN_CODE</code> "gc" abstract lib
+     (<code>libta_abstract_gc.la</code>, linked by gen_code) compiles the same sources with <code>-DTA_GEN_CODE</code>.
+     The generated <code>ta_abstract.c</code> was guarding the <code>TA_PerGroupFuncDef</code>/<code>TA_PerGroupSize</code> extern
+     <strong>decls</strong> under <code>#ifndef TA_GEN_CODE</code> while its <code>ta_group_idx.c</code> <em>defines</em> them
+     unconditionally (and the gc lib compiles <code>ta_group_idx.c</code>) → "undeclared" under
+     <code>-DTA_GEN_CODE</code>. Fixed <code>gen_ta_abstract_c</code> to declare them unconditionally.
+- <strong>Checkpoint:</strong> ✅ CMake + autotools both build the shipped lib (with the generated abstract);
+  <strong>gen_code still compiles</strong> (gc variant green); absolute oracle passes; <code>--codegen</code> 161/0 all 4
+  langs (servers use the generated abstract); ABI gate green (0 public breaks); regen deterministic;
+  <code>cargo test</code> (445) + clippy clean. <code>ta_common</code> confirmed all hand-written — stays in <code>src/</code>.
+- <strong>Rollback:</strong> <code>git checkout HEAD -- src/ta_abstract</code> + restore <code>output/c/ta_abstract</code> + revert
+  the generator edits.
+- <strong>Note:</strong> <code>ta_codegen</code> is now the canonical writer of the whole C library + the abstract layer
+  (<code>include/ta_func.h</code>, <code>ta_func_api.xml</code>, <code>ta_func_list.txt</code> were already its outputs) — i.e.
+  prerequisite <strong>#3 (ta_abstract ownership) is effectively complete.</strong> Remaining gen_code roles
+  after this stage: <code>ta_defs.h</code>/<code>ta_retcode.c</code> (→ Stage 5-C, since DONE) and the Java wrappers
+  (→ #4); gen_code itself goes in Stage 7.</p>
+<h3 id="stage-5-c-take-over-gen_codes-last-two-c-side-scalar-generators-done-2026-06-29">Stage 5-C — Take over gen_code's last two C-side scalar generators  ✅ DONE 2026-06-29</h3>
+<p>With the indicators (4-B) and <code>ta_abstract</code> (5-B) cut over, gen_code still uniquely generated two
+small committed C-side files. <code>ta_codegen</code> now generates both, reproduced <strong>byte-identical</strong> to the
+committed gen_code output (the cleanest possible oracle: regenerate → <code>git diff</code> is empty).
+- <strong><code>include/ta_defs.h</code> — the <code>FuncUnstId</code> enum (GENCODE SECTION 1).</strong> New <code>backends/ta_defs.rs</code>
+  marker-splices just SECTION 1 (the rest of the hand-written header is untouched). The
+  unstable-period ID list is a new <code>FuncUnstId:</code> entry in <code>ta_codegen/input/enums.yaml</code> (the YAML
+  enum parser was already generic — no parser change); the <code>TA_FUNC_UNST_ALL</code>/<code>_NONE</code> sentinels are
+  structural and appended by the generator.
+- <strong><code>src/ta_common/ta_retcode.c</code> — the <code>TA_SetRetCodeInfo</code> table.</strong> New <code>backends/retcode.rs</code> builds
+  <code>retCodeInfoTable[]</code> from the shipped source <code>src/ta_common/ta_retcode.csv</code> (the csv is INPUT, not
+  generated — only gen_code ever read it) + a static-scaffolding template
+  <code>ta_codegen/generator/templates/c/ta_retcode.c.template</code>; the <code>0xFFFF</code>/<code>TA_UNKNOWN_ERR</code> sentinel is appended
+  as the final comma-less entry. <strong>Corrects an earlier runbook claim:</strong> <code>ta_common</code> was NOT "all
+  hand-written" — <code>ta_retcode.c</code> was gen_code-generated (only <code>ta_retcode.csv</code> is the hand-source).
+- Both wired into <code>main.rs</code>'s <code>if backends_to_run.contains(&amp;"c")</code> block.
+- <strong>Checkpoint:</strong> ✅ regen → <code>ta_defs.h</code> + <code>ta_retcode.c</code> byte-identical (<code>write_if_changed</code> reports
+  "up to date"); generator <code>cargo test</code> (445) + clippy clean; full pipeline (build + <code>--codegen</code>
+  161/0 all 4 langs + ABI gate green) — trivially so, since the shipped artifacts are byte-for-byte
+  unchanged. Regen deterministic (the CMake-fix below survives regen; <code>ta_defs.h</code>/<code>ta_retcode.c</code> stay
+  byte-identical).
+- <strong>Also fixed — a pre-existing 5-B CMake-gen_code regression (NOT caused by 5-C).</strong> <code>build.py
+  gen_code</code> (the CMake path) had been failing since the abstract/indicator source lists moved into
+  the ta_codegen-generated <code>LIB_SOURCES</code> block: CMake's gen_code target recompiles sources with
+  <code>-DTA_GEN_CODE</code> from <code>COMMON_SOURCES + IDL_SOURCES</code>, which no longer included <code>ta_group_idx.c</code>,
+  <code>ta_func_api.c</code>, <code>frames/ta_frame.c</code>, or the indicators → undefined <code>TA_PerGroupSize</code> /
+  <code>TA_PerGroupFuncDef</code> / <code>TA_*</code>. (Autotools was unaffected — it links a separate <code>libta_abstract_gc</code>
+  + <code>libta_func</code>.) Fix: <code>GEN_CODE_SOURCES = gen_code.c + ${LIB_SOURCES}</code> (the whole lib, compiled
+  <code>-DTA_GEN_CODE</code> — safe: only <code>ta_abstract</code> carries <code>TA_GEN_CODE</code> guards) + link <code>m</code> (libm). gen_code
+  now builds via CMake <strong>and</strong> autotools. (The whole gen_code CMake block is removed in Stage 7.)
+- <strong>Rollback:</strong> <code>git checkout HEAD -- include/ta_defs.h src/ta_common/ta_retcode.c</code> + revert the
+  generator edits (<code>backends/{ta_defs,retcode}.rs</code>, <code>mod.rs</code>, <code>main.rs</code>, <code>enums.yaml</code>, the template).
+- <strong>Note:</strong> with this, <strong>gen_code's entire C side is retired</strong> — its only remaining unique role is
+  the Java wrappers (#4). The <code>.NET</code>/MSVC generation is dead surface (shipped .NET deleted
+  2026-03-19), deleted <em>with</em> gen_code in Stage 7, not a separate cutover.</p>
+<h3 id="stage-6-b-packaging-no-deref-needed">Stage 6-B — Packaging (no deref needed)</h3>
+<ul>
+<li><strong>Do:</strong> <code>src/</code> already ships real files, so <strong>no symlink dereference</strong>. Just ensure the
+  tarball includes the generated <code>src/</code> files + <code>ta_retcode.csv</code> + internal headers the PHP
+  <code>trader</code> glob needs, and disable the <code>gen_code_pass</code> zero-diff guard in <code>scripts/package.py</code>.
+  <strong>Also push the <code>reference-pre-cutover</code> tag</strong> if CI is to run <code>--codegen</code> (it needs the tag to
+  build <code>ta_ref_serve</code>); else the <code>regtest.py</code> fallback covers local dev.</li>
+<li><strong>Checkpoint:</strong> built tarball builds (CMake + autotools) and <code>trader</code>'s <code>src/ta_func/*.c</code> glob resolves.</li>
+<li><strong>Rollback:</strong> revert the <code>package.py</code> edits.</li>
+</ul>
+<h3 id="stage-7-remove-gen_code-done-2026-06-30-commit-5a0d7a48-on-dev">Stage 7 — Remove gen_code  ✅ DONE 2026-06-30 (commit <code>5a0d7a48</code> on <code>dev</code>)</h3>
+<p>Also made the C build C-only: removed the <code>ta_codegen_bin/generate/servers</code> cargo targets from CMake
+(CMake never invokes cargo); <code>scripts/build.py</code> now builds ta_codegen via cargo directly. See the
+status header at the top for the full summary + verification.</p>
+<ul>
+<li><strong>Do:</strong> with <code>ta_codegen</code> now writing <code>src/ta_func</code>/<code>src/ta_abstract</code> directly, delete
+  <code>src/tools/gen_code/</code>, <code>src/ta_abstract/templates/</code>, <code>ta_java_defs.h</code>, and the dead .NET/MSVC
+  surface. Update <code>CLAUDE.md</code> to the single-generator architecture.</li>
+<li><strong>Checkpoint:</strong> full build + <code>ta_regtest</code> 161/0; packaging works.</li>
+<li><strong>Rollback:</strong> <code>git revert</code> (gen_code remains in history + the pinned tag).</li>
+</ul>
+<h3 id="stage-8-retire-the-reference-much-later-optional">Stage 8 — Retire the reference (much later, optional)</h3>
+<ul>
+<li>Keep the pinned tag + worktree as the diff baseline for a few release cycles. The
+  reference can later be archived; the <strong>tag</strong> preserves it permanently, so this is never a
+  one-way door.</li>
+</ul>
+<hr />
+<h2 id="master-rollback">Master rollback</h2>
+<p>At any point before merge: the branch can be abandoned entirely (<code>git checkout dev</code>), and
+the <code>reference-pre-cutover</code> tag + history fully preserve the pre-cutover state. After merge:
+each stage was a separate commit, individually <code>git revert</code>-able.</p>
+<hr />
+<h2 id="decisions-locked-in">Decisions locked in</h2>
+<ul>
+<li><code>include/</code> stays in place (public ABI contract). — maintainer, 2026-06-27</li>
+<li><del><code>src/{ta_func,ta_common,ta_abstract}</code> become symlinks to <code>ta_codegen/output/c/*</code>.</del>
+  <strong>SUPERSEDED 2026-06-29:</strong> <code>ta_codegen</code> generates the C library <strong>directly into <code>src/</code></strong>
+  (option B); <code>ta_codegen/output/c</code> keeps only codegen-specific artifacts. No symlinks — they
+  cost real complexity (autotools libtool breakage, packaging deref, circular copy-from-<code>src</code>)
+  and bought nothing. The C lib is the <em>product</em> (lives in <code>src/</code>, like gen_code wrote it); the
+  Rust/Java/.NET <em>bindings</em> stay fully under <code>ta_codegen/output/&lt;lang&gt;</code>. — maintainer, 2026-06-29</li>
+<li>Reference lives at a <strong>pinned git tag</strong> (+ on-demand worktree), not a separate fork repo. — 2026-06-27</li>
+<li><code>ta_regtest</code> uses <strong>reference-as-server</strong> (no in-process reference) to stay non-circular. — 2026-06-27</li>
+<li>Java remains a shipped deliverable. — 2026-06-27</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "content.tooltips", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.footer", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
