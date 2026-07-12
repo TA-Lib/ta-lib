@@ -6552,6 +6552,51 @@ fn test_c_ht_dcperiod_parity_stream_section() {
     );
 }
 
+/// Pin the generated HT_PHASOR stream section: the SECOND consumer of the two
+/// general normalizations, and the one that stresses their nesting. Unlike
+/// HT_DCPERIOD, HT_PHASOR writes its TWO outputs under an output gate NESTED
+/// INSIDE each odd/even parity arm. This pins that (a) the gate strip reaches
+/// nested gates (both outputs land UNCONDITIONALLY inside `if(streamParity==0)`
+/// / else), (b) the carried-parity machinery is reused verbatim, and (c) both
+/// outputs are written per bar in the arm that runs.
+#[test]
+fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
+    let (mut func, enums) = load_indicator("ht_phasor");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
+
+    // Reused carried-parity machinery (same as HT_DCPERIOD).
+    assert!(stream.contains("int streamParity;"), "streamParity int state field");
+    assert!(stream.contains("sp->streamParity = historyLen % 2;"), "parity seeded in Open");
+    assert!(stream.contains("sp->streamParity = 1 - sp->streamParity;"), "parity flips each step");
+
+    let step = stream
+        .split("TA_HT_PHASOR_StreamStep")
+        .nth(1)
+        .expect("StreamStep emitted");
+    let step_body = &step[..step.find("TA_HT_PHASOR_OpenInternal").unwrap_or(step.len())];
+    // The step branches on the carried parity, and BOTH outputs are written
+    // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
+    assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
+    assert_eq!(
+        step_body.matches("*outQuadrature= sp->Q1;").count(),
+        2,
+        "outQuadrature written unconditionally in BOTH parity arms (nested gate stripped)"
+    );
+    assert!(
+        step_body.contains("*outInPhase= sp->I1ForEvenPrev3;")
+            && step_body.contains("*outInPhase= sp->I1ForOddPrev3;"),
+        "outInPhase written per-arm with the arm's own carried I1"
+    );
+    assert!(
+        !step_body.contains("startIdx") && !step_body.contains("% 2"),
+        "no gate (`startIdx`) or raw parity (`% 2`) leaks into the step"
+    );
+}
+
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
 /// ring set + one StreamStep branching on the stored parity; the ring buffers are
