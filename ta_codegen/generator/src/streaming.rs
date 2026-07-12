@@ -380,6 +380,34 @@ pub enum StreamPlan<'a> {
     Loop(StreamModel<'a>),
     Dispatch(DispatchPlan<'a>),
     Composed(ComposedPlan<'a>),
+    DualMode(DualModePlan<'a>),
+}
+
+/// A recognized param-selected dual-mode body: a shared prologue, then a
+/// leading `if (<param predicate>) { <mode-A steady loop>; return SUCCESS; }`
+/// arm followed by a fall-through `<mode-B steady loop>` general path
+/// (DI/DM: `optInTimePeriod <= 1` selects the raw single-period arm, which
+/// deliberately ignores the unstable period, over the Wilder-smoothed general
+/// path). Each mode is an independent [`StreamModel`]; the predicate is
+/// evaluated once at Open (params only, so fixed for a stream's lifetime) and
+/// the step re-selects the mode from the handle's stored param. The two arms'
+/// state sets are unioned into one handle; the input `.c` is UNTOUCHED (both
+/// arms are transcribed verbatim, so the mode-A quirks — DI's raw ratio, the
+/// unstable-period-independent lookback of 1 — are preserved by construction).
+#[derive(Debug)]
+pub struct DualModePlan<'a> {
+    pub func: &'a FuncDef,
+    /// The arm predicate, params only (e.g. `optInTimePeriod <= 1`). True
+    /// selects mode A; false falls through to mode B.
+    pub predicate: Expr,
+    /// The shared prologue (`body[..arm_idx]`): lookback computation, the
+    /// `startIdx` clamp, the no-data guard, output-index reset. Transcribed
+    /// ahead of the selected mode's body in Open (both arms need it).
+    pub prologue: &'a [Statement],
+    /// Mode A: the `if`-then arm (its `body` is the arm's then-body slice).
+    pub mode_a: StreamModel<'a>,
+    /// Mode B: the general path (its `body` is `body[arm_idx+1..]`).
+    pub mode_b: StreamModel<'a>,
 }
 
 /// Syntactic form of the steady-state loop (informational; open() transcribes
@@ -1187,10 +1215,28 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
 /// composed tier analyzes its PRODUCER region this way: the statements up to
 /// and including the steady loop, with the intermediate series local
 /// (STOCH's `tempBuffer`) standing in as the output the loop writes.
-#[allow(clippy::too_many_lines)]
 pub fn analyze_region<'a>(
     func: &'a FuncDef,
     body: &'a [Statement],
+    outputs: Vec<String>,
+) -> Result<StreamModel<'a>, StreamError> {
+    analyze_region_scoped(func, body, body, outputs)
+}
+
+/// [`analyze_region`] with the declaration scope decoupled from the scanned
+/// region. `body` is the region scanned for the steady loop, identity path,
+/// and return paths; `decl_scope` is where local declarations and CIRCBUF
+/// prologs are resolved (`classify_locals` / `discover_circs`). The dual-mode
+/// analyzer scans one arm at a time over a NESTED slice of the function body
+/// (the `if` then-body, or the general path after it) whose scalars are
+/// declared at the FUNCTION top, so it passes the full body as `decl_scope`.
+/// Every other caller passes `decl_scope == body` (a `body[..]` prefix already
+/// carries every decl), preserving byte-identical output.
+#[allow(clippy::too_many_lines)]
+pub fn analyze_region_scoped<'a>(
+    func: &'a FuncDef,
+    body: &'a [Statement],
+    decl_scope: &'a [Statement],
     outputs: Vec<String>,
 ) -> Result<StreamModel<'a>, StreamError> {
     if body.is_empty() {
@@ -1235,10 +1281,12 @@ pub fn analyze_region<'a>(
     check_no_output_read_back(&steady_stmts, &outputs)?;
 
     // --- locals ------------------------------------------------------------
-    let (circs, circ_extra) = discover_circs(body, &steady_stmts);
+    // Local decls / CIRCBUF prologs resolve in `decl_scope` (the full function
+    // body for a dual-mode arm; identical to `body` for every other caller).
+    let (circs, circ_extra) = discover_circs(decl_scope, &steady_stmts);
 
     let ctx = ClassifyCtx {
-        body,
+        body: decl_scope,
         steady_stmts: &steady_stmts,
         func,
         cursor: &cursor,
@@ -1334,6 +1382,85 @@ pub fn analyze_region<'a>(
         )
     );
     Ok(model)
+}
+
+/// Recognize a param-selected dual-mode body (DI/DM): a shared prologue, a
+/// leading `if (<param predicate>) { <steady loop>; return SUCCESS; }` arm, and
+/// a fall-through general path with its own steady loop. Each arm is analyzed
+/// as an independent [`StreamModel`] over its own body slice, with the FULL
+/// body as the declaration scope (both arms' scalars are declared at the
+/// function top). Returns [`StreamError::NoSteadyLoop`] when the body is not
+/// dual-mode-shaped (the gate then falls through to dispatch/composed); a shape
+/// match whose arm is genuinely unstreamable propagates that arm's error.
+///
+/// Tried only AFTER the single-loop [`analyze`] fails, so an ordinary function
+/// with a leading `period == 1` identity path (T3) — which analyzes cleanly as
+/// a Loop carrying an [`IdentityPath`] — is never misclassified here.
+pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError> {
+    let body: &[Statement] = if func.has_explicit_private {
+        &func.private_body
+    } else {
+        &func.body
+    };
+    let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+
+    // Find the FIRST top-level `if (<param predicate>) { ...; return SUCCESS; }`
+    // arm: params-only condition, no else, ends in a success return, and is
+    // followed by a general path (more statements). The no-data guard
+    // `if (startIdx > endIdx) return SUCCESS` is excluded by the params-only
+    // condition (it references startIdx/endIdx); the identity/lookback `if`s
+    // either carry an else or are not success-returning.
+    let mut found: Option<usize> = None;
+    for (i, s) in body.iter().enumerate() {
+        let Statement::If {
+            condition,
+            then_body,
+            else_body,
+            ..
+        } = s
+        else {
+            continue;
+        };
+        if !else_body.is_empty() || !expr_is_param_pure(condition, &params) {
+            continue;
+        }
+        let ends_in_success = matches!(
+            then_body.last(),
+            Some(Statement::Return { value: Some(Expr::Var(v)) })
+                if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS")
+        );
+        if ends_in_success && i + 1 < body.len() {
+            found = Some(i);
+            break;
+        }
+    }
+    let Some(arm_idx) = found else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+
+    // Real borrows of `body` (lifetime tied to `func`) — no synthetic Vecs, so
+    // each mode's StreamModel can borrow its region. The full body is the
+    // declaration scope for both arms.
+    let Statement::If {
+        condition,
+        then_body,
+        ..
+    } = &body[arm_idx]
+    else {
+        unreachable!("arm_idx indexes the recognized If")
+    };
+    let prologue = &body[..arm_idx];
+    let mode_a = analyze_region_scoped(func, then_body, body, outputs.clone())?;
+    let mode_b = analyze_region_scoped(func, &body[arm_idx + 1..], body, outputs)?;
+
+    Ok(DualModePlan {
+        func,
+        predicate: condition.clone(),
+        prologue,
+        mode_a,
+        mode_b,
+    })
 }
 
 /// Recognize a dispatch body: optional identity path, then a single switch
@@ -2690,6 +2817,7 @@ fn delegation_opt_args(
 /// failure is a generation-time error (the maintenance-coupling gate from
 /// the proposal): a batch rewrite that breaks stream analyzability fails
 /// HERE, not at release. The tier is derived, never declared.
+#[allow(clippy::too_many_lines)]
 pub fn validate_streamable<'a>(
     func: &'a FuncDef,
     lookup: &dyn CalleeLookup,
@@ -2754,6 +2882,35 @@ pub fn validate_streamable<'a>(
         }
         Err(e) => e,
     };
+    // Dual-mode (DI/DM): a param-selected pair of inline steady loops. Tried
+    // after the single-loop analysis fails (so a T3-style identity path stays a
+    // Loop), before dispatch/composed (DI/DM are neither). NoSteadyLoop = "not
+    // dual-mode-shaped": fall through. Any other error means the shape matched
+    // but an arm is unstreamable — surface it loudly (dispatch-strictness parity).
+    match analyze_dual_mode(func) {
+        Ok(plan) => {
+            build_transition(&plan.mode_a, &GateNames).map_err(|e| {
+                format!(
+                    "{}: dual-mode mode-A streamable by analysis but the transition cannot be built: {e}",
+                    func.name
+                )
+            })?;
+            build_transition(&plan.mode_b, &GateNames).map_err(|e| {
+                format!(
+                    "{}: dual-mode mode-B streamable by analysis but the transition cannot be built: {e}",
+                    func.name
+                )
+            })?;
+            return Ok(StreamPlan::DualMode(plan));
+        }
+        Err(StreamError::NoSteadyLoop) => {}
+        Err(dual_err) => {
+            return Err(format!(
+                "{}: YAML declares `streaming: true` but the dual-mode body is not streamable: {dual_err}",
+                func.name
+            ));
+        }
+    }
     match analyze_dispatch(func, lookup) {
         Ok(plan) => return Ok(StreamPlan::Dispatch(plan)),
         // NoSteadyLoop = "no switch found": the body is not a dispatch;

@@ -6106,6 +6106,26 @@ TA_LIB_API TA_RetCode TA_S_MINUS_DI( int    startIdx,
 TA_LIB_API int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_MINUS_DI — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MINUS_DI_Stream TA_MINUS_DI_Stream;
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_MINUS_DI_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Update( TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Peek( const TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Close( TA_MINUS_DI_Stream *stream );
+
 /*
  * TA_MINUS_DM - Minus Directional Movement
  * 
@@ -6139,6 +6159,26 @@ TA_LIB_API TA_RetCode TA_S_MINUS_DM( int    startIdx,
 
 TA_LIB_API int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_MINUS_DM — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MINUS_DM_Stream TA_MINUS_DM_Stream;
+
+TA_LIB_API TA_RetCode TA_MINUS_DM_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_MINUS_DM_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DM_Update( TA_MINUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MINUS_DM_Close( TA_MINUS_DM_Stream *stream );
 
 /*
  * TA_MOM - Momentum
@@ -6376,6 +6416,26 @@ TA_LIB_API TA_RetCode TA_S_PLUS_DI( int    startIdx,
 TA_LIB_API int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_PLUS_DI — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_PLUS_DI_Stream TA_PLUS_DI_Stream;
+
+TA_LIB_API TA_RetCode TA_PLUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_PLUS_DI_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DI_Update( TA_PLUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DI_Peek( const TA_PLUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DI_Close( TA_PLUS_DI_Stream *stream );
+
 /*
  * TA_PLUS_DM - Plus Directional Movement
  * 
@@ -6409,6 +6469,26 @@ TA_LIB_API TA_RetCode TA_S_PLUS_DM( int    startIdx,
 
 TA_LIB_API int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_PLUS_DM — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_PLUS_DM_Stream TA_PLUS_DM_Stream;
+
+TA_LIB_API TA_RetCode TA_PLUS_DM_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_PLUS_DM_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PLUS_DM_Close( TA_PLUS_DM_Stream *stream );
 
 /*
  * TA_PPO - Percentage Price Oscillator

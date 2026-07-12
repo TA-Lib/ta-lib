@@ -1104,3 +1104,658 @@ TA_RetCode TA_S_MINUS_DI_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MINUS_DI_Stream {
+   int optInTimePeriod;
+   double prevHigh;
+   double prevLow;
+   double prevClose;
+   double tempReal;
+   double diffP;
+   double diffM;
+   double prevMinusDM;
+   double prevTR;
+};
+
+static void TA_MINUS_DI_StreamStep( struct TA_MINUS_DI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( sp->optInTimePeriod <= 1 )
+   {
+      sp->tempReal = inHigh;
+      sp->diffP = sp->tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = sp->tempReal;
+      sp->tempReal = inLow;
+      sp->diffM = sp->prevLow - sp->tempReal;
+      /* Minus Delta */
+      sp->prevLow = sp->tempReal;
+      if( sp->diffM > 0 && sp->diffP < sp->diffM )
+      {
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         double _true_range_0;
+         double range_0 = sp->prevHigh - sp->prevLow;
+         double tmp_0 = fabs(sp->prevHigh - sp->prevClose);
+         if( tmp_0 > range_0 )
+         {
+            range_0 = tmp_0;
+         }
+         tmp_0 = fabs(sp->prevLow - sp->prevClose);
+         if( tmp_0 > range_0 )
+         {
+            range_0 = tmp_0;
+         }
+         _true_range_0 = range_0;
+         sp->tempReal = _true_range_0;
+         if( TA_IS_ZERO(sp->tempReal) )
+         {
+            *outReal= (double)0.0;
+         } else 
+         {
+            *outReal= sp->diffM / sp->tempReal;
+         }
+      } else 
+      {
+         *outReal= (double)0.0;
+      }
+      sp->prevClose = inClose;
+   }
+   else
+   {
+      /* Calculate the prevMinusDM */
+      sp->tempReal = inHigh;
+      sp->diffP = sp->tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = sp->tempReal;
+      sp->tempReal = inLow;
+      sp->diffM = sp->prevLow - sp->tempReal;
+      /* Minus Delta */
+      sp->prevLow = sp->tempReal;
+      if( sp->diffM > 0 && sp->diffP < sp->diffM )
+      {
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod + sp->diffM;
+      } else 
+      {
+         /* Case 1,3,5 and 7 */
+         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod;
+      }
+      /* Calculate the prevTR */
+      double _true_range_1;
+      double range_1 = sp->prevHigh - sp->prevLow;
+      double tmp_1 = fabs(sp->prevHigh - sp->prevClose);
+      if( tmp_1 > range_1 )
+      {
+         range_1 = tmp_1;
+      }
+      tmp_1 = fabs(sp->prevLow - sp->prevClose);
+      if( tmp_1 > range_1 )
+      {
+         range_1 = tmp_1;
+      }
+      _true_range_1 = range_1;
+      sp->tempReal = _true_range_1;
+      sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + sp->tempReal;
+      sp->prevClose = inClose;
+      /* Calculate the DI. The value is rounded (see Wilder book). */
+      if( !TA_IS_ZERO(sp->prevTR) )
+      {
+         *outReal= (100.0 * (sp->prevMinusDM / sp->prevTR));
+      } else 
+      {
+         *outReal= 0.0;
+      }
+   }
+}
+
+TA_RetCode TA_MINUS_DI_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_MINUS_DI_Stream **stream, double *outReal )
+{
+   struct TA_MINUS_DI_Stream *sp;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod <= 1 )
+   {
+
+   {
+      int today;
+      int lookbackTotal;
+      int outIdx;
+      double prevHigh = 0.0;
+      double prevLow = 0.0;
+      double prevClose = 0.0;
+      double tempReal = 0.0;
+      double diffP = 0.0;
+      double diffM = 0.0;
+      /*
+       * The DM1 (one period) is base on the largest part of
+       * today's range that is outside of yesterdays range.
+       *
+       * The following 7 cases explain how the +DM and -DM are
+       * calculated on one period:
+       *
+       * Case 1:                       Case 2:
+       *    C|                        A|
+       *     |                         | C|
+       *     | +DM1 = (C-A)           B|  | +DM1 = 0
+       *     | -DM1 = 0                   | -DM1 = (B-D)
+       * A|  |                           D|
+       *  | D|
+       * B|
+       *
+       * Case 3:                       Case 4:
+       *    C|                           C|
+       *     |                        A|  |
+       *     | +DM1 = (C-A)            |  | +DM1 = 0
+       *     | -DM1 = 0               B|  | -DM1 = (B-D)
+       * A|  |                            |
+       *  |  |                           D|
+       * B|  |
+       *    D|
+       *
+       * Case 5:                      Case 6:
+       * A|                           A| C|
+       *  | C| +DM1 = 0                |  |  +DM1 = 0
+       *  |  | -DM1 = 0                |  |  -DM1 = 0
+       *  | D|                         |  |
+       * B|                           B| D|
+       *
+       *
+       * Case 7:
+       *
+       *    C|
+       * A|  |
+       *  |  | +DM1=0
+       * B|  | -DM1=0
+       *    D|
+       *
+       * In case 3 and 4, the rule is that the smallest delta between
+       * (C-A) and (B-D) determine which of +DM or -DM is zero.
+       *
+       * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+       * zero.
+       *
+       * The rules remain the same when A=B and C=D (when the highs
+       * equal the lows).
+       *
+       * When calculating the DM over a period > 1, the one-period DM
+       * for the desired period are initialy sum. In other word,
+       * for a -DM14, sum the -DM1 for the first 14 days (that's
+       * 13 values because there is no DM for the first day!)
+       * Subsequent DM are calculated using the Wilder's
+       * smoothing approach:
+       *
+       *                                    Previous -DM14
+       *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+       *                                         14
+       *
+       * Calculation of a -DI14 is as follow:
+       *
+       *               -DM14
+       *     -DI14 =  --------
+       *                TR14
+       *
+       * Calculation of the TR14 is:
+       *
+       *                                   Previous TR14
+       *    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+       *                                         14
+       *
+       *    The first TR14 is the summation of the first 14 TR1. See the
+       *    TA_TRANGE function on how to calculate the true range.
+       *
+       * Reference:
+       *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+       */
+      /* Original implementation from Wilder's book was doing some integer
+       * rounding in its calculations.
+       *
+       * This was understandable in the context that at the time the book
+       * was written, most user were doing the calculation by hand.
+       *
+       * For a computer, rounding is unnecessary (and even problematic when inputs
+       * are close to 1).
+       *
+       * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+       * you can comment out the following #undef/#define and rebuild the library.
+       */
+      if( optInTimePeriod > 1 )
+      {
+         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
+      } else 
+      {
+         lookbackTotal = 1;
+      }
+      /* Adjust startIdx to account for the lookback period. */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Indicate where the next output should be put
+       * in the outReal.
+       */
+      outIdx = 0;
+      /* Trap the case where no smoothing is needed. */
+      /* No smoothing needed. Just do the following:
+       * for each price bar.
+       *          -DM1
+       *   -DI1 = ----
+       *           TR1
+       */
+      dummyBegIdx = startIdx;
+      today = startIdx - 1;
+      prevHigh = inHigh[today];
+      prevLow = inLow[today];
+      prevClose = inClose[today];
+      while( today < endIdx )
+      {
+         today += 1;
+         tempReal = inHigh[today];
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow[today];
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            double _true_range_2;
+            double range_2 = prevHigh - prevLow;
+            double tmp_2 = fabs(prevHigh - prevClose);
+            if( tmp_2 > range_2 )
+            {
+               range_2 = tmp_2;
+            }
+            tmp_2 = fabs(prevLow - prevClose);
+            if( tmp_2 > range_2 )
+            {
+               range_2 = tmp_2;
+            }
+            _true_range_2 = range_2;
+            tempReal = _true_range_2;
+            if( TA_IS_ZERO(tempReal) )
+            {
+               lastValue_outReal = (double)0.0;
+            } else 
+            {
+               lastValue_outReal = diffM / tempReal;
+            }
+         } else 
+         {
+            lastValue_outReal = (double)0.0;
+         }
+         prevClose = inClose[today];
+      }
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MINUS_DI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevHigh = prevHigh;
+      sp->prevLow = prevLow;
+      sp->prevClose = prevClose;
+      sp->tempReal = tempReal;
+      sp->diffP = diffP;
+      sp->diffM = diffM;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+   else
+   {
+
+   {
+      int today;
+      int lookbackTotal;
+      int outIdx;
+      double prevHigh = 0.0;
+      double prevLow = 0.0;
+      double prevClose = 0.0;
+      double prevMinusDM = 0.0;
+      double prevTR = 0.0;
+      double tempReal = 0.0;
+      double diffP = 0.0;
+      double diffM = 0.0;
+      int i;
+      /*
+       * The DM1 (one period) is base on the largest part of
+       * today's range that is outside of yesterdays range.
+       *
+       * The following 7 cases explain how the +DM and -DM are
+       * calculated on one period:
+       *
+       * Case 1:                       Case 2:
+       *    C|                        A|
+       *     |                         | C|
+       *     | +DM1 = (C-A)           B|  | +DM1 = 0
+       *     | -DM1 = 0                   | -DM1 = (B-D)
+       * A|  |                           D|
+       *  | D|
+       * B|
+       *
+       * Case 3:                       Case 4:
+       *    C|                           C|
+       *     |                        A|  |
+       *     | +DM1 = (C-A)            |  | +DM1 = 0
+       *     | -DM1 = 0               B|  | -DM1 = (B-D)
+       * A|  |                            |
+       *  |  |                           D|
+       * B|  |
+       *    D|
+       *
+       * Case 5:                      Case 6:
+       * A|                           A| C|
+       *  | C| +DM1 = 0                |  |  +DM1 = 0
+       *  |  | -DM1 = 0                |  |  -DM1 = 0
+       *  | D|                         |  |
+       * B|                           B| D|
+       *
+       *
+       * Case 7:
+       *
+       *    C|
+       * A|  |
+       *  |  | +DM1=0
+       * B|  | -DM1=0
+       *    D|
+       *
+       * In case 3 and 4, the rule is that the smallest delta between
+       * (C-A) and (B-D) determine which of +DM or -DM is zero.
+       *
+       * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+       * zero.
+       *
+       * The rules remain the same when A=B and C=D (when the highs
+       * equal the lows).
+       *
+       * When calculating the DM over a period > 1, the one-period DM
+       * for the desired period are initialy sum. In other word,
+       * for a -DM14, sum the -DM1 for the first 14 days (that's
+       * 13 values because there is no DM for the first day!)
+       * Subsequent DM are calculated using the Wilder's
+       * smoothing approach:
+       *
+       *                                    Previous -DM14
+       *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+       *                                         14
+       *
+       * Calculation of a -DI14 is as follow:
+       *
+       *               -DM14
+       *     -DI14 =  --------
+       *                TR14
+       *
+       * Calculation of the TR14 is:
+       *
+       *                                   Previous TR14
+       *    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+       *                                         14
+       *
+       *    The first TR14 is the summation of the first 14 TR1. See the
+       *    TA_TRANGE function on how to calculate the true range.
+       *
+       * Reference:
+       *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+       */
+      /* Original implementation from Wilder's book was doing some integer
+       * rounding in its calculations.
+       *
+       * This was understandable in the context that at the time the book
+       * was written, most user were doing the calculation by hand.
+       *
+       * For a computer, rounding is unnecessary (and even problematic when inputs
+       * are close to 1).
+       *
+       * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+       * you can comment out the following #undef/#define and rebuild the library.
+       */
+      if( optInTimePeriod > 1 )
+      {
+         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
+      } else 
+      {
+         lookbackTotal = 1;
+      }
+      /* Adjust startIdx to account for the lookback period. */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Indicate where the next output should be put
+       * in the outReal.
+       */
+      outIdx = 0;
+      /* Trap the case where no smoothing is needed. */
+      /* Process the initial DM and TR */
+      today = startIdx;
+      dummyBegIdx = today;
+      prevMinusDM = 0.0;
+      prevTR = 0.0;
+      today = startIdx - lookbackTotal;
+      prevHigh = inHigh[today];
+      prevLow = inLow[today];
+      prevClose = inClose[today];
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         today += 1;
+         tempReal = inHigh[today];
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow[today];
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            prevMinusDM += diffM;
+         }
+         double _true_range_3;
+         double range_3 = prevHigh - prevLow;
+         double tmp_3 = fabs(prevHigh - prevClose);
+         if( tmp_3 > range_3 )
+         {
+            range_3 = tmp_3;
+         }
+         tmp_3 = fabs(prevLow - prevClose);
+         if( tmp_3 > range_3 )
+         {
+            range_3 = tmp_3;
+         }
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
+         prevTR += tempReal;
+         prevClose = inClose[today];
+      }
+      /* Process subsequent DI */
+      /* Skip the unstable period. Note that this loop must be executed
+       * at least ONCE to calculate the first DI.
+       */
+      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di) + 1;
+      while( i-- != 0 )
+      {
+         /* Calculate the prevMinusDM */
+         today += 1;
+         tempReal = inHigh[today];
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow[today];
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
+         } else 
+         {
+            /* Case 1,3,5 and 7 */
+            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
+         }
+         /* Calculate the prevTR */
+         double _true_range_4;
+         double range_4 = prevHigh - prevLow;
+         double tmp_4 = fabs(prevHigh - prevClose);
+         if( tmp_4 > range_4 )
+         {
+            range_4 = tmp_4;
+         }
+         tmp_4 = fabs(prevLow - prevClose);
+         if( tmp_4 > range_4 )
+         {
+            range_4 = tmp_4;
+         }
+         _true_range_4 = range_4;
+         tempReal = _true_range_4;
+         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevClose = inClose[today];
+      }
+      /* Now start to write the output in
+       * the caller provided outReal.
+       */
+      if( !TA_IS_ZERO(prevTR) )
+      {
+         lastValue_outReal = (100.0 * (prevMinusDM / prevTR));
+      } else 
+      {
+         lastValue_outReal = 0.0;
+      }
+      outIdx = 1;
+      while( today < endIdx )
+      {
+         /* Calculate the prevMinusDM */
+         today += 1;
+         tempReal = inHigh[today];
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow[today];
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
+         } else 
+         {
+            /* Case 1,3,5 and 7 */
+            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
+         }
+         /* Calculate the prevTR */
+         double _true_range_5;
+         double range_5 = prevHigh - prevLow;
+         double tmp_5 = fabs(prevHigh - prevClose);
+         if( tmp_5 > range_5 )
+         {
+            range_5 = tmp_5;
+         }
+         tmp_5 = fabs(prevLow - prevClose);
+         if( tmp_5 > range_5 )
+         {
+            range_5 = tmp_5;
+         }
+         _true_range_5 = range_5;
+         tempReal = _true_range_5;
+         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevClose = inClose[today];
+         /* Calculate the DI. The value is rounded (see Wilder book). */
+         if( !TA_IS_ZERO(prevTR) )
+         {
+            lastValue_outReal = (100.0 * (prevMinusDM / prevTR));
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+      }
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MINUS_DI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevHigh = prevHigh;
+      sp->prevLow = prevLow;
+      sp->prevClose = prevClose;
+      sp->prevMinusDM = prevMinusDM;
+      sp->prevTR = prevTR;
+      sp->tempReal = tempReal;
+      sp->diffP = diffP;
+      sp->diffM = diffM;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+
+   return TA_INTERNAL_ERROR;
+}
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_MINUS_DI_Stream **stream, double *outReal )
+{
+   return TA_MINUS_DI_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Update( TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_MINUS_DI_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Peek( const TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_MINUS_DI_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_MINUS_DI_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINUS_DI_Close( TA_MINUS_DI_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+

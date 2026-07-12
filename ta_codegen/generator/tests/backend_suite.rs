@@ -6455,6 +6455,42 @@ fn test_c_ma_dispatch_stream_section() {
     );
 }
 
+/// Pin the generated MINUS_DM dual-mode stream section: ONE union state struct,
+/// ONE StreamStep that branches on the stored (immutable) period param — no
+/// separate mode tag — and an OpenInternal that selects the degenerate vs the
+/// Wilder arm by the same predicate. The input `.c` is untouched: both arms are
+/// transcribed verbatim, so the period<=1 raw-DM1 behavior (which ignores the
+/// unstable period) is preserved by construction, not re-derived.
+#[test]
+fn test_c_minus_dm_dual_mode_stream_section() {
+    let (mut func, enums) = load_indicator("minus_dm");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+
+    // Exactly one StreamStep (not one per mode), branching on the stored param.
+    assert_eq!(c.matches("TA_MINUS_DM_StreamStep( struct").count(), 1, "one StreamStep def");
+    assert!(
+        c.contains("if( sp->optInTimePeriod <= 1 )"),
+        "step selects the degenerate arm from the immutable stored param"
+    );
+    // Wilder smoothing lives in mode B only; the degenerate arm writes raw DM1.
+    assert!(
+        c.contains("sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod"),
+        "Wilder recurrence in mode B"
+    );
+    // OpenInternal selects the arm on the bare predicate (param is a local there).
+    assert!(c.contains("if( optInTimePeriod <= 1 )"), "open selects mode by bare predicate");
+    // The union struct carries mode B's accumulator (mode A never touches it).
+    let struct_sec = c
+        .split("struct TA_MINUS_DM_Stream {")
+        .nth(1)
+        .and_then(|s| s.split("};").next())
+        .expect("state struct");
+    assert!(struct_sec.contains("double prevMinusDM;"), "union carries prevMinusDM");
+}
+
 /// Pin the generated STOCH composed stream section: producer extrema state +
 /// peekMode + typed sub handles; Open opens each sub-stream on the
 /// materialized series BEFORE the batch call that consumes it (in-place

@@ -1946,10 +1946,12 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
 static int stream_build_vectors(const TA_FuncInfo *fi,
                                 double vec[STREAM_MAX_VEC][STREAM_MAX_OPT],
                                 int vecIsEnum[STREAM_MAX_VEC],
+                                int vecIsMin[STREAM_MAX_VEC],
                                 int *overflow)
 {
     unsigned int i, e;
     int hasMin = 0, hasMinPlus1 = 0, nvec, v;
+    for( v = 0; v < STREAM_MAX_VEC; v++ ) vecIsMin[v] = 0;
     for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
     {
         const TA_OptInputParameterInfo *oi;
@@ -1983,7 +1985,14 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
         nvec = 2;
     }
     else nvec = 1;
+    /* The below-default boundary vectors (v>=1: range.min and min+1) carry the
+     * smallest periods. For a dual-mode function (DI/DM) the min period selects
+     * the degenerate arm, which IGNORES the unstable period while the general
+     * arm honors it — so the K-leg (variant 1) must run on these vectors too,
+     * else period=1+K (the only place the two arms can diverge) goes untested.
+     * fuzz-064 floors periods at 2, so this is the sole gate covering it. */
     for( v = 0; v < nvec; v++ ) vecIsEnum[v] = 0;
+    for( v = 1; v < nvec; v++ ) vecIsMin[v] = 1;
 
     /* Enum (MAType) sweep vectors: each non-default list value crossed with
      * (a) the defaults vector AND (b) the boundary vector when one exists
@@ -2094,6 +2103,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ForEachFuncContext *ctx = (ForEachFuncContext *)opaqueData;
     double vec[STREAM_MAX_VEC][STREAM_MAX_OPT];
     int vecIsEnum[STREAM_MAX_VEC];
+    int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
     int isUnstable;
 
@@ -2105,7 +2115,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * their stream values depend on EMA's ambient K). */
     isUnstable = (funcInfo->flags & TA_FUNC_FLG_UNST_PER) != 0 ||
                  get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE;
-    nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, &vecOverflow);
+    nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, vecIsMin, &vecOverflow);
 
     /* Silent truncation would quietly stop testing params beyond the cap. */
     if( funcInfo->nbOptInput > STREAM_MAX_OPT )
@@ -2141,8 +2151,12 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 /* K-leg: defaults vector when the function is unstable, plus
                  * every enum-sweep vector — the selected sub-stream may be
                  * unstable (MA dispatching to EMA/KAMA/T3) even when the
-                 * dispatcher itself carries no unstable flag. */
-                if( !( (v == 0 && isUnstable) || vecIsEnum[v] ) ) continue;
+                 * dispatcher itself carries no unstable flag — plus the
+                 * below-default boundary vectors of an unstable function, so a
+                 * dual-mode degenerate arm (DI/DM at period=1, which ignores K)
+                 * is verified against batch under a warm unstable period. */
+                if( !( (v == 0 && isUnstable) || vecIsEnum[v]
+                       || (vecIsMin[v] && isUnstable) ) ) continue;
                 K = 3;
             }
             else if( variant == 2 )

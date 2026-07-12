@@ -329,6 +329,9 @@ pub fn generate(
         StreamPlan::Composed(cp) => {
             emit_composed(&mut o, func, cp, enums, registry, helpers, &counter);
         }
+        StreamPlan::DualMode(dmp) => {
+            emit_dual_mode(&mut o, func, dmp, enums, registry, helpers, &counter);
+        }
     }
 
     o
@@ -1426,6 +1429,200 @@ fn emit_dispatch(
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
+// ---------------------------------------------------------------------------
+// Dual-mode emission (DI/DM class): two param-selected inline steady loops
+// sharing one handle. See streaming::DualModePlan.
+// ---------------------------------------------------------------------------
+
+/// Render the arm predicate (`optInTimePeriod <= 1`) either bare (Open, where
+/// the param is a local) or handle-qualified (`sp->optInTimePeriod <= 1`, for
+/// the Step which re-selects the mode from the immutable stored param).
+fn render_dual_pred(
+    pred: &Expr,
+    on_handle: bool,
+    func: &FuncDef,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> String {
+    let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let e = if on_handle {
+        streaming::rewrite_expr(pred, &|x| match x {
+            Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp->{v}")),
+            other => other,
+        })
+    } else {
+        pred.clone()
+    };
+    render_expression(&e, registry, helpers, counter)
+}
+
+/// The dual-mode state struct: optional params (incl. the discriminator param),
+/// then the TYPE-CHECKED UNION of both modes' scalar state (a name shared by
+/// the two modes — DI/DM's `prevHigh`/`prevLow`/`prevClose` — is one field;
+/// mode-B-only fields sit zeroed under mode A). No `mode` tag is stored: the
+/// step re-derives it from the immutable `sp->optInTimePeriod` (the Dispatch
+/// precedent). M6a modes are pure scalar; a mode carrying rings/windows/circs/
+/// extrema/out-feedback/lags is rejected loudly (extend this when TRIMA lands).
+fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
+    for m in [ma, mb] {
+        assert!(
+            m.out_feedback.is_empty()
+                && m.lags.is_empty()
+                && m.rings().is_empty()
+                && m.windows().is_empty()
+                && m.circs().is_empty()
+                && m.extrema().is_none(),
+            "{}: dual-mode with non-scalar state (rings/windows/circs/extrema/feedback/lags) \
+             is not supported yet — extend emit_dual_mode",
+            func.name
+        );
+    }
+    let n = uname(func);
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
+    }
+    for (name, c_type) in &func.private_extra_params {
+        let _ = writeln!(o, "   {c_type} {name};");
+    }
+    // Union of the two modes' state, mode-A order first, dedup by name.
+    let mut seen: std::collections::BTreeMap<String, &crate::ir::VarType> =
+        std::collections::BTreeMap::new();
+    let mut order: Vec<(String, crate::ir::VarType)> = Vec::new();
+    for (name, ty) in ma.state.iter().chain(mb.state.iter()) {
+        if let Some(prev) = seen.get(name) {
+            assert!(
+                *prev == ty,
+                "{}: dual-mode state `{name}` has conflicting types across modes",
+                func.name
+            );
+        } else {
+            seen.insert(name.clone(), ty);
+            order.push((name.clone(), ty.clone()));
+        }
+    }
+    for (name, ty) in &order {
+        let _ = writeln!(o, "   {};", c_decl(ty, name));
+    }
+    let _ = writeln!(o, "}};\n");
+}
+
+/// Remove top-level `VarDecl`s whose variable is never referenced elsewhere in
+/// `body`. Used only for the dual-mode Open arms: each arm is `shared prologue
+/// ++ its own arm body`, and the prologue declares the UNION of both modes'
+/// function-top scalars, so the degenerate arm would otherwise carry (and
+/// -Wunused-warn on) the Wilder-path accumulators and warm-up counter it never
+/// touches. A decl's own name is not a "use" (only its initializer is walked),
+/// and a decl kept here is exactly one the arm reads or writes — so dropping
+/// the rest is behavior-preserving.
+fn drop_unused_decls(body: Vec<Statement>) -> Vec<Statement> {
+    let mut used: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for s in &body {
+        streaming::walk_stmt_exprs(s, &mut |e| {
+            streaming::walk_expr(e, &mut |x| {
+                if let Expr::Var(v) = x {
+                    used.insert(v.clone());
+                }
+            });
+        });
+    }
+    body.into_iter()
+        .filter(|s| !matches!(s, Statement::VarDecl { name, .. } if !used.contains(name)))
+        .collect()
+}
+
+/// Emit the full dual-mode stream section: one union struct, one predicate-
+/// branching StreamStep, one predicate-branching OpenInternal (+ public Open
+/// wrapper), and Update/Peek/Close reused from the loop tier (mode-independent
+/// for scalar modes — the stored param rides the struct copy through Peek).
+#[allow(clippy::too_many_arguments)]
+fn emit_dual_mode(
+    o: &mut String,
+    func: &FuncDef,
+    dmp: &streaming::DualModePlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let ma = &dmp.mode_a;
+    let mb = &dmp.mode_b;
+
+    // --- state struct -------------------------------------------------------
+    emit_dual_state_struct(o, func, ma, mb);
+
+    // --- Step: one function, mode selected from the stored param ------------
+    let bars = bar_params_sig(func);
+    let outs = out_params_sig(func);
+    let _ = writeln!(
+        o,
+        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+    );
+    let pred_h = render_dual_pred(&dmp.predicate, true, func, registry, helpers, counter);
+    let _ = writeln!(o, "   if( {pred_h} )\n   {{");
+    emit_step_inner(o, ma, enums, registry, helpers, counter, 6, false);
+    let _ = writeln!(o, "   }}\n   else\n   {{");
+    emit_step_inner(o, mb, enums, registry, helpers, counter, 6, false);
+    let _ = writeln!(o, "   }}\n}}\n");
+
+    // --- OpenInternal: shared head, then a predicate branch per mode --------
+    let inputs = streaming::input_array_names(func);
+    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
+    let _ = writeln!(o, "   int endIdx;");
+    let _ = writeln!(o, "   int dummyBegIdx;");
+    let _ = writeln!(o, "   int dummyNBElement;");
+    for out in &ma.outputs {
+        let _ = writeln!(o, "   {} lastValue_{out};", out_c_type(func, out));
+    }
+    for (name, c_type) in &func.private_extra_params {
+        let _ = writeln!(o, "   {c_type} {name};");
+    }
+    emit_open_validation(o, func, &ma.outputs, &inputs);
+    let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
+    let _ = writeln!(o, "   dummyBegIdx = 0;");
+    let _ = writeln!(o, "   dummyNBElement = 0;");
+    for out in &ma.outputs {
+        let init = if out_c_type(func, out) == "int" { "0" } else { "0.0" };
+        let _ = writeln!(o, "   lastValue_{out} = {init};");
+    }
+    let _ = writeln!(
+        o,
+        "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;"
+    );
+
+    // Each mode transcribes the SHARED PROLOGUE then its own arm body, seeding
+    // its own state and returning. The prologue computes the mode-appropriate
+    // lookback/clamp, so min-history is per-mode correct by construction. The
+    // shared prologue declares the UNION of both modes' function-top locals, so
+    // a per-arm dead-decl drop is applied: the degenerate arm never touches the
+    // Wilder accumulators or the warm-up counter, and shipping their decls would
+    // emit -Wunused-variable in the generated C.
+    let compose = |arm_body: &[Statement]| -> Vec<Statement> {
+        let mut v = dmp.prologue.to_vec();
+        v.extend_from_slice(arm_body);
+        drop_unused_decls(v)
+    };
+    let pred_bare = render_dual_pred(&dmp.predicate, false, func, registry, helpers, counter);
+    let body_a = compose(ma.body);
+    let body_b = compose(mb.body);
+    let _ = writeln!(o, "\n   if( {pred_bare} )\n   {{");
+    emit_open_arm(o, func, ma, &body_a, enums, registry, helpers, counter);
+    let _ = writeln!(o, "   }}\n   else\n   {{");
+    emit_open_arm(o, func, mb, &body_b, enums, registry, helpers, counter);
+    let _ = writeln!(o, "   }}");
+    // Both arms return; keep the compiler happy about the fall-through.
+    let _ = writeln!(o, "\n   return TA_INTERNAL_ERROR;\n}}\n");
+    emit_open_wrapper(o, func);
+
+    // --- Update / Peek / Close (mode-independent for scalar modes) ----------
+    emit_update(o, func);
+    emit_peek(o, func, ma);
+    emit_close(o, func, ma);
+}
+
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
     emit_state_struct_ex(o, func, model, "");
 }
@@ -1559,25 +1756,45 @@ fn emit_step(
         o,
         "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
+    let void_sp = model.state.is_empty()
+        && func.optional_inputs.is_empty()
+        && func.private_extra_params.is_empty()
+        && model.lags.is_empty();
+    emit_step_inner(o, model, enums, registry, helpers, counter, 3, void_sp);
+    let _ = writeln!(o, "}}\n");
+}
+
+/// The per-bar step body for ONE model at a given indent: temp decls, an
+/// optional `(void)sp`, the extrema rebase, the rendered transition, and
+/// candle-settings unpacking. Shared by the single-model [`emit_step`] and the
+/// dual-mode step (called once per arm inside the `if (sp->param ...)` branch,
+/// at a deeper indent, with `void_sp = false` since a mode always has state).
+fn emit_step_inner(
+    o: &mut String,
+    model: &StreamModel,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+    void_sp: bool,
+) {
+    let pad = " ".repeat(indent);
     for (name, ty) in &model.temps {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
+        let _ = writeln!(o, "{pad}{};", c_decl(ty, name));
     }
     if !model.temps.is_empty() {
         let _ = writeln!(o);
     }
-    if model.state.is_empty()
-        && func.optional_inputs.is_empty()
-        && func.private_extra_params.is_empty()
-        && model.lags.is_empty()
-    {
-        let _ = writeln!(o, "   (void)sp;");
+    if void_sp {
+        let _ = writeln!(o, "{pad}(void)sp;");
     }
     emit_extrema_rebase(o, model);
     let transition = streaming::build_transition(model, &CNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let mut body_c = String::new();
     for s in &transition {
-        body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
+        body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter));
     }
     // Candle settings are read where batch reads them (per step, from the
     // globals — the settings-stability rule). The TA_STREAM_CANDLE* macros
@@ -1585,10 +1802,9 @@ fn emit_step(
     // the rendered body actually references them (no dead decls/-Wunused).
     let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
     if !step_settings.is_empty() {
-        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, 3));
+        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, indent));
     }
     o.push_str(&body_c);
-    let _ = writeln!(o, "}}\n");
 }
 
 /// Extrema automatons carry batch-absolute int indices that grow by one
@@ -1700,14 +1916,37 @@ fn emit_open(
 
     emit_identity_fast_path(o, func, model, registry, helpers, counter);
 
+    emit_open_arm(o, func, model, model.body, enums, registry, helpers, counter);
+    let _ = writeln!(o, "}}\n");
+    emit_open_wrapper(o, func);
+}
+
+/// One Open arm: the transcribed batch body region + live state capture,
+/// wrapped in a `{ ... }` block ending in `emit_open_tail` (publish + return).
+/// The single-model [`emit_open`] calls it once on `model.body`; the dual-mode
+/// Open calls it once per arm on `prologue ++ selected-arm-body`, inside the
+/// predicate `if/else`. Does NOT close the enclosing `OpenInternal` (the caller
+/// owns that and the public wrapper).
+#[allow(clippy::too_many_arguments)]
+fn emit_open_arm(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    body: &[Statement],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
     // --- transcribed batch body ----------------------------------------------
     let _ = writeln!(o, "\n   {{");
-    let open_body = build_open_body(model);
+    let open_body = build_open_body_from(model, body);
     let mut open_body_c = String::new();
     for s in &open_body {
         open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
-    let open_settings = crate::candle_settings::detect_candle_settings(model.body);
+    let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
         o.push_str(&emit_used_candle_unpacking(&open_settings, &open_body_c, 6));
     }
@@ -1730,8 +1969,7 @@ fn emit_open(
     }
     emit_circ_capture(o, model, &n);
     emit_open_tail(o, func, model);
-    let _ = writeln!(o, "   }}\n}}\n");
-    emit_open_wrapper(o, func);
+    let _ = writeln!(o, "   }}");
 }
 
 /// Circ capture: allocate + copy the live batch buffers (contents AND
@@ -2136,11 +2374,14 @@ fn circ_static_size(func: &FuncDef, id: &str) -> i64 {
     find(body, id).expect("circbuf prolog present for referenced id")
 }
 
-/// The transcribed batch body for Open: out-param pointers redirected to the
-/// dummies, output-array writes redirected to `lastValue_*`, early returns
-/// mapped (no-data success -> TA_BAD_PARAM; error codes verbatim), final
-/// return dropped so control falls through to the state capture.
-fn build_open_body(model: &StreamModel) -> Vec<Statement> {
+/// Transcribe a batch body region for Open: out-param pointers → dummies,
+/// output-array writes → `lastValue_*`, early returns mapped (no-data success →
+/// TA_BAD_PARAM; error codes verbatim), final return dropped so control falls
+/// through to the state capture. The loop tier passes `model.body`; dual-mode
+/// passes `prologue ++ selected-arm-body` (not `model.body`), so the region is
+/// an explicit parameter. Output redirection / early-return mapping / state
+/// zero-init use `model`'s outputs, out-feedback, and state.
+fn build_open_body_from(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
     let outputs = model.outputs.clone();
     // Carried-state locals must never be captured uninitialized: a local
     // assigned only inside a data-dependent branch (ADX's minusDI/plusDI on
@@ -2224,7 +2465,7 @@ fn build_open_body(model: &StreamModel) -> Vec<Statement> {
     // early-return guards are kept verbatim: they are the batch's own
     // leak-free error paths (dropping them leaked MFI's heap buffers on the
     // insufficient-history return).
-    let mut body: Vec<Statement> = model.body.to_vec();
+    let mut body: Vec<Statement> = body.to_vec();
     if matches!(body.last(), Some(Statement::Return { .. })) {
         body.pop();
     }

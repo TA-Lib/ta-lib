@@ -334,6 +334,18 @@ fn stream_census(seed_yaml: bool) -> i32 {
                             cmp.intermediates.len()
                         );
                     }
+                    ta_codegen_lib::streaming::StreamPlan::DualMode(dm) => {
+                        derived_tc += 1;
+                        println!(
+                            "{:<10} {:<14} TC dualmode modeA={}/state={} modeB={}/state={}",
+                            status,
+                            func.name,
+                            dm.mode_a.tier.as_str(),
+                            dm.mode_a.state.len(),
+                            dm.mode_b.tier.as_str(),
+                            dm.mode_b.state.len()
+                        );
+                    }
                 }
                 if seed_yaml && !func.streaming {
                     let yaml_path = root

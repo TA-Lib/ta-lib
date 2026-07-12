@@ -2,7 +2,7 @@ name: PLUS_DI
 camel_case: PlusDI
 group: Momentum Indicators
 hint: Plus Directional Indicator
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inPriceHLC
     type: price

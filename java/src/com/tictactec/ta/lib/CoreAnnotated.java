@@ -6812,7 +6812,7 @@ public int minusDILookback(
 @FuncInfo(
         name  = "MINUS_DI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -6875,7 +6875,7 @@ public int minusDMLookback(
 @FuncInfo(
         name  = "MINUS_DM",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7154,7 +7154,7 @@ public int plusDILookback(
 @FuncInfo(
         name  = "PLUS_DI",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -7217,7 +7217,7 @@ public int plusDMLookback(
 @FuncInfo(
         name  = "PLUS_DM",
         group = "Momentum Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

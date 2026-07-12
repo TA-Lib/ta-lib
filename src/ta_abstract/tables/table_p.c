@@ -60,7 +60,7 @@ DEF_FUNCTION( PLUS_DI,
               TA_GroupId_MomentumIndicators,
               "Plus Directional Indicator",
               "PlusDI",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* PLUS_DI END */
 
@@ -86,7 +86,7 @@ DEF_FUNCTION( PLUS_DM,
               TA_GroupId_MomentumIndicators,
               "Plus Directional Movement",
               "PlusDM",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* PLUS_DM END */
 

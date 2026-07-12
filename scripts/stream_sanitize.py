@@ -94,6 +94,11 @@ def requests_for(func):
         reqs.append(build("min", 202, 0))   # minimum period = smallest ring
     if unstable:
         reqs.append(build("default", 303, 5))  # a warm unstable-period leg
+        if opts:
+            # Minimum period UNDER a warm unstable period: a dual-mode function
+            # (DI/DM) runs its degenerate arm here — which ignores K while the
+            # general arm honors it — so the sanitizers cover that arm at K>0.
+            reqs.append(build("min", 404, 5))
     return reqs
 
 

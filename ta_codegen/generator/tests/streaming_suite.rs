@@ -95,6 +95,46 @@ fn atr_streams_as_t2() {
 }
 
 #[test]
+fn minus_dm_derives_dual_mode_plan() {
+    // MINUS_DM keeps BOTH its `if (period <= 1) { raw DM1; return }` degenerate
+    // arm (which ignores the unstable period) AND its Wilder general path.
+    // Unlike ATR, the two arms differ under a nonzero K (the degenerate lookback
+    // is 1 regardless of K), so neither an ATR-style drop nor rejection preserves
+    // period=1 — it streams as a param-selected dual mode: two independent T2
+    // models sharing one handle, selected by the period<=1 guard fixed at Open.
+    let f = load("minus_dm");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("MINUS_DM derives a plan");
+    let streaming::StreamPlan::DualMode(dm) = plan else {
+        panic!("expected DualMode, got {plan:?}");
+    };
+    assert_eq!(dm.mode_a.tier, StreamTier::T2);
+    assert_eq!(dm.mode_b.tier, StreamTier::T2);
+    // The predicate is the batch's own period-degenerate guard.
+    assert!(matches!(
+        &dm.predicate,
+        ta_codegen_lib::ir::Expr::BinOp(_, ta_codegen_lib::ir::BinOp::LessEq, _)
+    ));
+    // Mode B (general) carries the Wilder accumulator; mode A (raw DM1) does not.
+    assert!(dm.mode_b.state.iter().any(|(n, _)| n == "prevMinusDM"));
+    assert!(!dm.mode_a.state.iter().any(|(n, _)| n == "prevMinusDM"));
+    assert!(dm.mode_a.state.len() < dm.mode_b.state.len());
+}
+
+#[test]
+fn minus_di_derives_dual_mode_plan_with_tr() {
+    // MINUS_DI is the DI variant: the general arm adds prevTR and divides (percent
+    // DI); the degenerate arm returns the raw DM1/TR ratio (no x100 — the
+    // documented period-1 quirk), preserved verbatim by transcribing the arm.
+    let f = load("minus_di");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("MINUS_DI derives a plan");
+    let streaming::StreamPlan::DualMode(dm) = plan else {
+        panic!("expected DualMode, got {plan:?}");
+    };
+    assert!(dm.mode_b.state.iter().any(|(n, _)| n == "prevTR"));
+    assert!(dm.func.streaming);
+}
+
+#[test]
 fn t3_identity_path_recognized() {
     let f = load("t3");
     let m = streaming::analyze(&f).expect("T3 analyzes with identity path");

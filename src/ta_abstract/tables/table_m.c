@@ -700,7 +700,7 @@ DEF_FUNCTION( MINUS_DI,
               TA_GroupId_MomentumIndicators,
               "Minus Directional Indicator",
               "MinusDI",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* MINUS_DI END */
 
@@ -726,7 +726,7 @@ DEF_FUNCTION( MINUS_DM,
               TA_GroupId_MomentumIndicators,
               "Minus Directional Movement",
               "MinusDM",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* MINUS_DM END */
 
