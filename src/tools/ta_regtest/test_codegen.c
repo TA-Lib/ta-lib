@@ -3446,6 +3446,106 @@ static ErrorNumber verify_fuzz_candle_nonvacuous(void)
     return TA_TEST_PASS;
 }
 
+/* Guard the FUZZ_ZEROSUM data shape (fuzz_data.h) that makes the ACCBANDS
+ * degenerate else branch (TA_IS_ZERO(high+low) -> upper=high, lower=low)
+ * non-vacuous vs v0.6.4 and in stream_verify. It must (a) actually produce bars
+ * with high+low == 0, and (b) keep ACCBANDS FINITE on them: if the else branch
+ * were skipped, 4*(high-low)/(high+low) divides by zero -> inf/nan propagates
+ * into every band whose window covers that bar, so the finiteness check BITES
+ * (proven by neutering the else branch). Without this guard a future edit to the
+ * generator could silently stop landing high+low in the 1e-14 band and the
+ * differential/stream coverage of that branch would go vacuous. */
+static ErrorNumber verify_fuzz_zerosum_nonvacuous(void)
+{
+    static double o[512], h[512], l[512], c[512], vv[512], oi[512];
+    static double up[512], mid[512], low[512];
+    int seed, zeroBars = 0, outBars = 0;
+    for( seed = 1; seed <= 6; seed++ )
+    {
+        int bi = 0, nb = 0, k;
+        fuzz_gen(FUZZ_ZEROSUM, seed, 512, o, h, l, c, vv, oi);
+        for( k = 0; k < 512; k++ )
+            if( h[k] + l[k] == 0.0 ) zeroBars++;
+        if( TA_ACCBANDS(0, 511, h, l, c, 20, &bi, &nb, up, mid, low) != TA_SUCCESS )
+        {
+            printf("FUZZ_ZEROSUM: ACCBANDS call failed\n");
+            return TA_TSTCDL_PREDICATE_VACUOUS;
+        }
+        for( k = 0; k < nb; k++ )
+        {
+            outBars++;
+            if( !isfinite(up[k]) || !isfinite(mid[k]) || !isfinite(low[k]) )
+            {
+                printf("FUZZ_ZEROSUM: ACCBANDS non-finite band at bar %d "
+                       "(the high+low==0 else branch is broken)\n", k);
+                return TA_TSTCDL_PREDICATE_VACUOUS;
+            }
+        }
+    }
+    if( zeroBars == 0 || outBars == 0 )
+    {
+        printf("FUZZ_ZEROSUM VACUOUS: high+low==0 bars=%d, output bars=%d "
+               "(the shape must land high+low in the TA_IS_ZERO band)\n",
+               zeroBars, outBars);
+        return TA_TSTCDL_PREDICATE_VACUOUS;
+    }
+    return TA_TEST_PASS;
+}
+
+/* ACCBANDS supports input==output aliasing: the fused single-loop rewrite reads
+ * every current and trailing bar BEFORE it writes any band for that output
+ * index, so an output buffer that aliases an input buffer is only overwritten
+ * after its last read. No generic gate exercises input==output, so verify it
+ * directly — each of the 3 outputs aliased onto each of the 3 inputs must
+ * reproduce the separate-buffer result BIT-FOR-BIT (all 3 bands, to catch an
+ * aliased write corrupting a still-needed read of another band's input). */
+static ErrorNumber verify_accbands_inplace_aliasing(void)
+{
+    enum { AN = 300, AP = 14 };
+    static double o[AN], h[AN], l[AN], c[AN], vv[AN], oi[AN];
+    static double refU[AN], refM[AN], refL[AN];
+    static double bh[AN], bl[AN], bc[AN], s1[AN], s2[AN];
+    int bi, nb, refNb, k, op, ip;
+    fuzz_gen(FUZZ_ZEROSUM, 2, AN, o, h, l, c, vv, oi);  /* mix of degenerate + normal bars */
+    if( TA_ACCBANDS(0, AN - 1, h, l, c, AP, &bi, &refNb, refU, refM, refL) != TA_SUCCESS )
+    {
+        printf("ACCBANDS aliasing: reference call failed\n");
+        return TA_TSTCDL_PREDICATE_VACUOUS;
+    }
+    for( op = 0; op < 3; op++ )       /* which output band aliases an input */
+    for( ip = 0; ip < 3; ip++ )       /* which input it aliases */
+    {
+        double *in[3], *bandbuf[3], *scratch[2];
+        double *ref[3];
+        int si = 0;
+        ref[0] = refU; ref[1] = refM; ref[2] = refL;
+        for( k = 0; k < AN; k++ ) { bh[k] = h[k]; bl[k] = l[k]; bc[k] = c[k]; }
+        in[0] = bh; in[1] = bl; in[2] = bc;
+        scratch[0] = s1; scratch[1] = s2;
+        for( k = 0; k < 3; k++ )
+            bandbuf[k] = (k == op) ? in[ip] : scratch[si++];
+        if( TA_ACCBANDS(0, AN - 1, in[0], in[1], in[2], AP,
+                        &bi, &nb, bandbuf[0], bandbuf[1], bandbuf[2]) != TA_SUCCESS )
+        {
+            printf("ACCBANDS aliasing[out=%d,in=%d]: call failed\n", op, ip);
+            return TA_TSTCDL_PREDICATE_VACUOUS;
+        }
+        for( k = 0; k < nb; k++ )
+        {
+            int band;
+            for( band = 0; band < 3; band++ )
+                if( memcmp(&bandbuf[band][k], &ref[band][k], sizeof(double)) != 0 )
+                {
+                    printf("ACCBANDS aliasing[out=%d,in=%d]: band %d bar %d "
+                           "differs from separate-buffer result (in-place unsafe)\n",
+                           op, ip, band, k);
+                    return TA_TSTCDL_PREDICATE_VACUOUS;
+                }
+        }
+    }
+    return TA_TEST_PASS;
+}
+
 ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter)
@@ -3460,6 +3560,15 @@ ErrorNumber test_codegen(const TA_History *history,
 
     /* Non-vacuity guard for the candlestick pattern data shape. */
     errNb = verify_fuzz_candle_nonvacuous();
+    if( errNb != TA_TEST_PASS )
+        return errNb;
+
+    /* Non-vacuity guard for the ACCBANDS high+low==0 degenerate branch, plus a
+     * direct input==output aliasing check for the fused single-loop rewrite. */
+    errNb = verify_fuzz_zerosum_nonvacuous();
+    if( errNb != TA_TEST_PASS )
+        return errNb;
+    errNb = verify_accbands_inplace_aliasing();
     if( errNb != TA_TEST_PASS )
         return errNb;
 

@@ -37,6 +37,10 @@ enum {
                         /* pattern-rich so CDLHIKKAKE(MOD) and the other inside */
                         /* -bar candlesticks actually FIRE (detection AND the   */
                         /* +/-200 confirmation), instead of all-zero (vacuous)  */
+    FUZZ_ZEROSUM,       /* symmetric high=-low bars: high+low == 0 EXACTLY, the */
+                        /* only shape landing high+low in the 1e-14 TA_IS_ZERO  */
+                        /* band -> exercises the ACCBANDS degenerate else branch */
+                        /* (no divide by high+low) in both fuzz-064 and stream   */
     FUZZ_NSHAPES
 };
 
@@ -134,6 +138,62 @@ static void fuzz_candle_gen(int seed, int n,
     while( p < n ) p=fuzz_cdl_flat(o,h,l,c,v,oi,p,n,1,100.0);
 }
 
+/* ---- FUZZ_ZEROSUM: bars whose high+low is exactly zero ------------------- */
+/* Drives the ACCBANDS degenerate branch, TA_IS_ZERO(high+low) -> upper=high,
+ * lower=low (skipping the 4*(high-low)/(high+low) divide). No other shape lands
+ * high+low inside the 1e-14 TA_IS_ZERO band (all perturb high/low with
+ * independent draws), so this is the sole oracle coverage — fuzz-064 vs v0.6.4
+ * AND stream_verify vs batch — of that else branch. A symmetric bar high=+a,
+ * low=-a gives high+low == +0.0 exactly for any finite a (IEEE x + (-x) == +0);
+ * all-zero bars cover a==0. Interleaved with ordinary positive bars so the
+ * degenerate bars both ENTER and LEAVE the moving-average window (the add-side
+ * and subtract-side of the else branch). Pure geometry, no TA calls, so it
+ * compiles byte-identically into both sides of the fuzz-064 oracle. */
+static void fuzz_zerosum_gen(int seed, int n,
+                             double *o, double *h, double *l, double *c,
+                             double *v, double *oi)
+{
+    unsigned long long s =
+        0x243F6A8885A308D3ULL
+        ^ ((unsigned long long)(unsigned int)seed * 0xD1B54A32D192ED03ULL)
+        ^ ((unsigned long long)FUZZ_ZEROSUM << 32);
+    int i;
+    for( i = 0; i < n; i++ )
+    {
+        double r = fuzz_sm_unit(&s);
+        double open, hi, lo, close, a, base, w, t;
+        if( r < 0.34 )
+        {
+            /* symmetric zero-sum bar: hi + lo == +0.0 exactly (else branch). */
+            a = 1.0 + fuzz_sm_unit(&s) * 50.0;
+            hi = a; lo = -a; open = 0.0; close = 0.0;
+        }
+        else if( r < 0.50 )
+        {
+            /* all-zero degenerate bar: hi + lo == 0 with hi == lo == 0. */
+            hi = 0.0; lo = 0.0; open = 0.0; close = 0.0;
+        }
+        else
+        {
+            /* ordinary positive bar around 100 (hi + lo != 0 -> then branch). */
+            base  = 90.0 + fuzz_sm_unit(&s) * 20.0;
+            w     = 0.5 + fuzz_sm_unit(&s) * 5.0;
+            close = base;
+            t     = fuzz_sm_unit(&s) - 0.5;
+            open  = base + t;
+            hi = (open > close) ? open : close;
+            hi = hi + w;
+            lo = (open < close) ? open : close;
+            lo = lo - w;
+        }
+        o[i] = open; h[i] = hi; l[i] = lo; c[i] = close;
+        t = fuzz_sm_unit(&s) * 1000.0;
+        v[i] = 1000.0 + t;
+        t = fuzz_sm_unit(&s) * 100.0;
+        oi[i] = 100.0 + t;
+    }
+}
+
 /* Fill OHLCV+OI arrays (length n) from (shape,seed). high>=max(o,c),
  * low<=min(o,c). Mul/add split into statements so nothing contracts. */
 static void fuzz_gen(int shape, int seed, int n,
@@ -141,6 +201,7 @@ static void fuzz_gen(int shape, int seed, int n,
                      double *v, double *oi)
 {
     if( shape == FUZZ_CANDLE ) { fuzz_candle_gen(seed, n, o, h, l, c, v, oi); return; }
+    if( shape == FUZZ_ZEROSUM ) { fuzz_zerosum_gen(seed, n, o, h, l, c, v, oi); return; }
     unsigned long long s =
         0x243F6A8885A308D3ULL
         ^ ((unsigned long long)(unsigned int)seed  * 0xD1B54A32D192ED03ULL)

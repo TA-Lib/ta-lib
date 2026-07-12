@@ -120,6 +120,11 @@ def requests_for(func):
         # candlestick stream's ring/state/confirmation paths run under ASan/UBSan/
         # LSan on FIRING patterns, not just the all-zero no-pattern path.
         reqs.append(build("default", 606, 0, shape=7))
+    if name == "ACCBANDS":
+        # FUZZ_ZEROSUM (shape 8): high+low==0 bars exercise the degenerate else
+        # branch of the fused 3-sum ring under ASan/UBSan/LSan (its ring read/
+        # recompute path on the divide-avoiding arm).
+        reqs.append(build("default", 707, 0, shape=8))
     return reqs
 
 
