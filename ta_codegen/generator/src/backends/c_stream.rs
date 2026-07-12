@@ -332,6 +332,9 @@ pub fn generate(
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, enums, registry, helpers, &counter);
         }
+        StreamPlan::FastPathSkip(gap) => {
+            emit_fastpath_skip(&mut o, func, gap, enums, registry, helpers, &counter);
+        }
     }
 
     o
@@ -1855,11 +1858,14 @@ fn emit_used_candle_unpacking(
     out
 }
 
-fn emit_open(
+/// The `OpenInternal` head shared by the loop tier and the fast-path-skip tier:
+/// signature, declarations, param validation, initialization, and the identity
+/// fast path. The caller then emits the transcribed body arm(s) and closes the
+/// function.
+fn emit_open_head(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
-    enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
@@ -1879,11 +1885,6 @@ fn emit_open(
     }
     for (name, c_type) in &func.private_extra_params {
         let _ = writeln!(o, "   {c_type} {name};");
-    }
-    // Optional params arrive by value; validation may rewrite them (defaults).
-    let mut opt_names: Vec<&str> = Vec::new();
-    for p in &func.optional_inputs {
-        opt_names.push(&p.name);
     }
 
     emit_open_validation(o, func, &model.outputs, &inputs);
@@ -1915,10 +1916,58 @@ fn emit_open(
     );
 
     emit_identity_fast_path(o, func, model, registry, helpers, counter);
+}
 
+fn emit_open(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    emit_open_head(o, func, model, registry, helpers, counter);
     emit_open_arm(o, func, model, model.body, enums, registry, helpers, counter);
     let _ = writeln!(o, "}}\n");
     emit_open_wrapper(o, func);
+}
+
+/// Emit the fast-path-skip stream section (MIDPRICE): the standard loop-tier
+/// lifecycle for the general (else) arm's model, except the OpenInternal
+/// transcribes `prologue ++ general-arm body ++ epilogue` — the fast-path
+/// `then` arm is skipped (a batch-only perf specialization). Struct / Step /
+/// Update / Peek / Close are the ordinary single-model emitters.
+#[allow(clippy::too_many_arguments)]
+fn emit_fastpath_skip(
+    o: &mut String,
+    func: &FuncDef,
+    plan: &streaming::FastPathSkipPlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let model = &plan.model;
+    emit_state_struct(o, func, model);
+    emit_release(o, func, model);
+    emit_step(o, func, model, enums, registry, helpers, counter);
+
+    emit_open_head(o, func, model, registry, helpers, counter);
+    // prologue ++ general arm ++ epilogue: the Open seeds the general path for
+    // every param (the skipped fast-path arm is bit-identical by construction).
+    // drop_unused_decls prunes any fast-path-only locals the skipped arm owned.
+    let mut body = plan.prologue.to_vec();
+    body.extend_from_slice(model.body);
+    body.extend_from_slice(plan.epilogue);
+    let body = drop_unused_decls(body);
+    emit_open_arm(o, func, model, &body, enums, registry, helpers, counter);
+    let _ = writeln!(o, "}}\n");
+    emit_open_wrapper(o, func);
+
+    emit_update(o, func);
+    emit_peek(o, func, model);
+    emit_close(o, func, model);
 }
 
 /// One Open arm: the transcribed batch body region + live state capture,

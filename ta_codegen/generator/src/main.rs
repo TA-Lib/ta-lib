@@ -346,6 +346,16 @@ fn stream_census(seed_yaml: bool) -> i32 {
                             dm.mode_b.state.len()
                         );
                     }
+                    ta_codegen_lib::streaming::StreamPlan::FastPathSkip(ga) => {
+                        derived_tc += 1;
+                        println!(
+                            "{:<10} {:<14} TC fastpath-skip {} state={}",
+                            status,
+                            func.name,
+                            ga.model.tier.as_str(),
+                            ga.model.state.len()
+                        );
+                    }
                 }
                 if seed_yaml && !func.streaming {
                     let yaml_path = root

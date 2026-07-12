@@ -556,7 +556,7 @@ DEF_FUNCTION( MIDPRICE,
               TA_GroupId_OverlapStudies,
               "Midpoint Price over period",
               "MidPrice",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIDPRICE END */
 

@@ -6491,6 +6491,40 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     assert!(struct_sec.contains("double prevMinusDM;"), "union carries prevMinusDM");
 }
 
+/// Pin the generated MIDPRICE fast-path-skip stream section: the `if(period<=20)`
+/// arms are bit-identical (batch perf split), so ONLY the general (else) T4
+/// extrema arm is streamed — one StreamStep, no mode branch, and the Open does
+/// not transcribe the fast-path `period<=20` window-rescan arm.
+#[test]
+fn test_c_midprice_fastpath_skip_stream_section() {
+    let (mut func, enums) = load_indicator("midprice");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+
+    assert!(c.contains("struct TA_MIDPRICE_Stream {"), "state struct");
+    assert!(
+        c.contains("double *x_inHigh;") && c.contains("double *x_inLow;"),
+        "T4 extrema rings for high/low"
+    );
+    assert_eq!(c.matches("TA_MIDPRICE_StreamStep( struct").count(), 1, "one StreamStep");
+    assert!(
+        c.contains("*outReal= (sp->highest + sp->lowest) / 2.0;"),
+        "midprice combine in the extrema step"
+    );
+    // The fast-path window-rescan then-arm is NOT transcribed into the Open: no
+    // `optInTimePeriod <= 20` branch survives (only the general else arm streams).
+    let open = c
+        .split("TA_MIDPRICE_OpenInternal")
+        .nth(1)
+        .expect("OpenInternal emitted");
+    assert!(
+        !open.contains("optInTimePeriod <= 20"),
+        "the perf fast-path arm must be skipped, not transcribed"
+    );
+}
+
 /// Pin the generated STOCH composed stream section: producer extrema state +
 /// peekMode + typed sub handles; Open opens each sub-stream on the
 /// materialized series BEFORE the batch call that consumes it (in-place

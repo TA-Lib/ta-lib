@@ -135,6 +135,24 @@ fn minus_di_derives_dual_mode_plan_with_tr() {
 }
 
 #[test]
+fn midprice_derives_fastpath_skip_plan() {
+    // MIDPRICE's `if (period <= 20) { window rescan } else { cached extremum }`
+    // arms are bit-identical (a pure batch perf split). Only the general (else)
+    // arm streams — as a T4 extrema automaton — and the fast-path then-arm is
+    // skipped. The `<= 20` threshold predicate is what marks it general-arm
+    // rather than dual-mode (whose arms genuinely differ).
+    let f = load("midprice");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("MIDPRICE derives a plan");
+    let streaming::StreamPlan::FastPathSkip(ga) = plan else {
+        panic!("expected FastPathSkip, got {plan:?}");
+    };
+    assert_eq!(ga.model.tier, StreamTier::T4);
+    assert!(ga.model.extrema().is_some(), "general arm is an extrema automaton");
+    assert!(!ga.prologue.is_empty(), "shared prologue");
+    assert!(!ga.epilogue.is_empty(), "shared epilogue (out-meta + return)");
+}
+
+#[test]
 fn t3_identity_path_recognized() {
     let f = load("t3");
     let m = streaming::analyze(&f).expect("T3 analyzes with identity path");

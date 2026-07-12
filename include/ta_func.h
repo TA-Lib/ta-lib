@@ -5858,6 +5858,26 @@ TA_LIB_API TA_RetCode TA_S_MIDPRICE( int    startIdx,
 TA_LIB_API int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_MIDPRICE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MIDPRICE_Stream TA_MIDPRICE_Stream;
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_MIDPRICE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream );
+
 /*
  * TA_MIN - Lowest value over a specified period
  * 

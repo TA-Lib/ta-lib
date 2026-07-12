@@ -6498,7 +6498,7 @@ public int midPriceLookback(
 @FuncInfo(
         name  = "MIDPRICE",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
