@@ -346,18 +346,107 @@ fn cdlhikkake_streams_via_countdown_refactor() {
 }
 
 #[test]
-fn ht_dcperiod_rejected_at_analyze_stage() {
-    // The HT family reads the ABSOLUTE cursor `today` (the `today % 2` odd/even
-    // parity branch and the in-loop `if (today >= startIdx)` output gate), so it
-    // is rejected at the ANALYZE stage ("steady loop references `startIdx`"),
-    // before build_transition is reached. Rejected until the M7c carried-parity
-    // recognizer + output-gate strip land. (For the build_transition index-leak
-    // guard specifically, see transition_build_rejects_saved_cursor_index below.)
+fn ht_dcperiod_streams_via_carried_parity_and_gate_strip() {
+    // M7c: the Hilbert-transform family reads the ABSOLUTE cursor `today` twice —
+    // the `today % 2` odd/even quadrature branch and the in-loop
+    // `if (today >= startIdx)` output gate. Two general steady-loop normalizations
+    // (strip_cursor_output_gate + carry_cursor_parity) let it fall into the
+    // ordinary Batch loop tier:
+    //   (1) the output gate is STRIPPED (so `startIdx` no longer leaks into the
+    //       steady loop — this used to reject at analyze with "steady loop
+    //       references `startIdx`"), and
+    //   (2) `today % 2` is CARRIED as an int `streamParity` field (so `today` no
+    //       longer leaks into the transition — this used to reject at
+    //       build_transition with "index variable `today` leaks").
+    // This is the positive pin AND the neuter-check for both recognizers:
+    //   * remove the parity carry  -> model.parity is None (fails the assert
+    //     below) and build_transition leaks `today` (panics the C render pin
+    //     test_c_ht_dcperiod_parity_stream_section);
+    //   * remove the gate strip    -> analyze() errors "steady loop references
+    //     `startIdx`" (fails the analyze-Ok assert below).
     let f = load("ht_dcperiod");
+    let m = streaming::analyze(&f).expect("HT_DCPERIOD analyzes once the HT gates are normalized");
+    assert_eq!(m.tier, StreamTier::T3, "WMA trailing ring => T3");
+    // (2) parity carried as an int state field, seeded/flipped by the emitter.
+    let parity = m.parity.as_ref().expect("carried-parity spec present");
+    assert_eq!(parity.field, "streamParity");
     assert!(
-        streaming::analyze(&f).is_err(),
-        "HT reads the absolute cursor -> analyze rejects until the parity machinery lands"
+        m.state.iter().any(|(n, t)| n == "streamParity"
+            && matches!(t, ta_codegen_lib::ir::VarType::Integer)),
+        "streamParity is an int state field"
     );
+    // The WMA price smoother is one trailing ring over inReal (like WMA/SMA).
+    assert_eq!(m.rings().len(), 1);
+    assert_eq!(m.rings()[0].arrays, ["inReal"]);
+    // The 8 Hilbert double[3] buffers ride as fixed-array carried state.
+    assert!(
+        m.state.iter().any(|(n, t)| n == "detrender_Even"
+            && matches!(t, ta_codegen_lib::ir::VarType::RealArray(_))),
+        "detrender_Even carried as a fixed double[3] array"
+    );
+    // (1) gate stripped: the steady loop no longer references `startIdx`.
+    let mut steady_vars = std::collections::BTreeSet::new();
+    for s in &m.steady_stmts {
+        streaming::stmt_var_names(s, &mut steady_vars);
+    }
+    assert!(
+        !steady_vars.contains("startIdx"),
+        "the output gate must be stripped from the steady loop"
+    );
+    // The whole plan validates as an ordinary Loop model.
+    assert!(matches!(
+        streaming::validate_streamable(&f, &lookup()),
+        Ok(streaming::StreamPlan::Loop(_))
+    ));
+}
+
+#[test]
+fn carried_parity_and_gate_strip_recognized_in_isolation() {
+    // A minimal synthetic body carrying BOTH HT traits (a `today % 2` branch and
+    // an `if (today >= startIdx)` output gate) over a plain scalar recurrence —
+    // isolates the two recognizers from HT_DCPERIOD's real source, so this
+    // coverage survives any future edit to ht_dcperiod.c. Borrows ht_dcperiod's
+    // YAML shape (one real input, one real output).
+    let src = r#"
+TA_RetCode ht_dcperiod( int startIdx, int endIdx,
+   const double inReal[],
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   int outIdx, today;
+   double acc;
+   if( startIdx < 1 )
+      startIdx = 1;
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   *outBegIdx = startIdx;
+   today = 0;
+   acc = 0.0;
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      if( (today%2) == 0 )
+         acc = (0.5*acc) + inReal[today];
+      else
+         acc = (0.2*acc) + inReal[today];
+      if( today >= startIdx )
+         outReal[outIdx++] = acc;
+      today++;
+   }
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("ht_dcperiod", src);
+    let m = streaming::analyze(&f).expect("synthetic HT body analyzes after normalization");
+    assert!(m.parity.is_some(), "carried parity recognized");
+    assert!(m.state.iter().any(|(n, _)| n == "acc"), "the recurrence carries `acc`");
+    // build_transition must succeed (no `today` leak): validate through the C
+    // emitter, which builds the transition and would panic on a leak.
+    assert!(streaming::validate_streamable(&f, &lookup()).is_ok());
 }
 
 #[test]

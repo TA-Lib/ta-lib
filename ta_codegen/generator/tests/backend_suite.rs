@@ -6489,6 +6489,69 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     assert!(struct_sec.contains("double prevMinusDM;"), "union carries prevMinusDM");
 }
 
+/// Pin the generated HT_DCPERIOD stream section (M7c): the Hilbert-transform
+/// family streams via two general steady-loop normalizations —
+///   (1) CARRIED PARITY: the `today % 2` quadrature branch reads an int
+///       `streamParity` field, seeded `historyLen % 2` in Open and flipped
+///       `1 - streamParity` each step; and
+///   (2) OUTPUT-GATE STRIP: the `if (today >= startIdx)` output gate is promoted
+///       to an UNCONDITIONAL write in the step (Open's batch replay still
+///       suppresses warm-up).
+/// This render pin also neuter-checks build_transition: dropping either
+/// recognizer makes `backends::c::generate` PANIC (the `today` cursor leaks into
+/// the transition), so a clean render proves both fired.
+#[test]
+fn test_c_ht_dcperiod_parity_stream_section() {
+    let (mut func, enums) = load_indicator("ht_dcperiod");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
+
+    // (2) carried parity: int field, seeded in Open, flipped in the step.
+    assert!(stream.contains("int streamParity;"), "streamParity int state field");
+    assert!(
+        stream.contains("sp->streamParity = historyLen % 2;"),
+        "parity seeded to the next bar's parity in Open"
+    );
+    assert!(
+        stream.contains("if( sp->streamParity == 0 )"),
+        "the step branches on the carried parity, not `today % 2`"
+    );
+    assert!(
+        stream.contains("sp->streamParity = 1 - sp->streamParity;"),
+        "parity flips each step"
+    );
+    // (1) output-gate strip: the step writes outReal UNCONDITIONALLY (no
+    // `today >= startIdx` gate survives in the per-bar transition).
+    let step = stream
+        .split("TA_HT_DCPERIOD_StreamStep")
+        .nth(1)
+        .expect("StreamStep emitted");
+    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenInternal").unwrap_or(step.len())];
+    assert!(
+        step_body.contains("*outReal= sp->smoothPeriod;"),
+        "unconditional smoothPeriod output in the step"
+    );
+    // No absolute-index leak: `startIdx` (the gate RHS) and the raw `% 2` parity
+    // test are both gone — the gate was stripped and `today % 2` was carried.
+    // (A `todayValue` temp legitimately survives; that is the bar input, not the
+    // cursor.)
+    assert!(
+        !step_body.contains("startIdx") && !step_body.contains("% 2"),
+        "no gate (`startIdx`) or raw parity (`% 2`) leaks into the step"
+    );
+    // WMA price smoother rides as a trailing ring; the 8 Hilbert double[3]
+    // buffers ride as fixed-array carried state (memcpy capture).
+    assert!(stream.contains("double *ring_trailingWMAIdx_inReal;"), "WMA trailing ring");
+    assert!(stream.contains("double detrender_Even[3];"), "fixed Hilbert array state");
+    assert!(
+        stream.contains("memcpy( sp->detrender_Even, detrender_Even, sizeof( sp->detrender_Even ) );"),
+        "fixed arrays captured by memcpy in Open"
+    );
+}
+
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
 /// ring set + one StreamStep branching on the stored parity; the ring buffers are
