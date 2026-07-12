@@ -59454,15 +59454,20 @@ class Core {
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *  CR       Chris (crokusek@hotmail.com)
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010503 MF   Initial Coding
-     *  031703 MF   Fix #701060. Correct logic when using a range with
-     *              startIdx/endIdx. Thanks to Chris for reporting this.
-     *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  010503 MF     Initial Coding
+     *  031703 MF     Fix #701060. Correct logic when using a range with
+     *                startIdx/endIdx. Thanks to Chris for reporting this.
+     *  052603 MF     Adapt code to compile with .NET Managed C++
+     *  071226 MF,CC  Widen the triangular-weight factor to double: (i+1)*(i+1)
+     *                and i*(i+1) overflowed a 32-bit int at extreme periods
+     *                (past ~92682), silently returning garbage. Bit-identical
+     *                for every period where the int product fits.
      */
 
        public int trimaLookback( int optInTimePeriod )
@@ -59633,11 +59638,14 @@ class Core {
               *    1+2+3+3+2+1 = n*(n+1)
               *                = 3 * 4 = 12
               */
-             /* Note: entirely done with int and becomes double only
-              *       on assignement to the factor variable.
+             /* Note: the (i+1) factors are widened to double so the product
+              *       cannot overflow a 32-bit int at extreme periods (i+1 reaches
+              *       ~50000 near the API maximum, and (i+1)*(i+1) exceeds INT_MAX
+              *       past period ~92682). For every period where the int product
+              *       fits, the widened value is identical.
               */
              i = optInTimePeriod >> 1;
-             factor = (i + 1) * (i + 1);
+             factor = (double)(i + 1) * (i + 1);
              factor = 1.0 / factor;
              /* Initialize all the variable before
               * starting to iterate for each output.
@@ -59697,7 +59705,8 @@ class Core {
               *  - Adjustment of numeratorAdd is different. See Step (2).
               */
              i = optInTimePeriod >> 1;
-             factor = i * (i + 1);
+             factor = (double)i * (i + 1);
+             /* widen: i*(i+1) overflows int past period ~92682 */
              factor = 1.0 / factor;
              /* Initialize all the variable before
               * starting to iterate for each output.
@@ -59783,7 +59792,7 @@ class Core {
           outIdx = 0;
           if( optInTimePeriod % 2 == 1 ) {
              i = optInTimePeriod >> 1;
-             factor = (i + 1) * (i + 1);
+             factor = (double)(i + 1) * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i;
@@ -59821,7 +59830,7 @@ class Core {
              }
           } else {
              i = optInTimePeriod >> 1;
-             factor = i * (i + 1);
+             factor = (double)i * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i - 1;
@@ -59904,7 +59913,7 @@ class Core {
           outIdx = 0;
           if( optInTimePeriod % 2 == 1 ) {
              i = optInTimePeriod >> 1;
-             factor = (i + 1) * (i + 1);
+             factor = (double)(i + 1) * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i;
@@ -59942,7 +59951,7 @@ class Core {
              }
           } else {
              i = optInTimePeriod >> 1;
-             factor = i * (i + 1);
+             factor = (double)i * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i - 1;
@@ -60014,7 +60023,7 @@ class Core {
           outIdx = 0;
           if( optInTimePeriod % 2 == 1 ) {
              i = optInTimePeriod >> 1;
-             factor = (i + 1) * (i + 1);
+             factor = (double)(i + 1) * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i;
@@ -60052,7 +60061,7 @@ class Core {
              }
           } else {
              i = optInTimePeriod >> 1;
-             factor = i * (i + 1);
+             factor = (double)i * (i + 1);
              factor = 1.0 / factor;
              trailingIdx = startIdx - lookbackTotal;
              middleIdx = trailingIdx + i - 1;

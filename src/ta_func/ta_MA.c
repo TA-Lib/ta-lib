@@ -496,6 +496,13 @@ TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const
          sp->sub = sub;
       }
       break;
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+      {
+         TA_TRIMA_Stream *sub = NULL;
+         retCode = TA_TRIMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         sp->sub = sub;
+      }
+      break;
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       {
          TA_KAMA_Stream *sub = NULL;
@@ -510,7 +517,6 @@ TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima): /* no trima stream */
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */
    default:
       retCode = TA_BAD_PARAM;
@@ -551,6 +557,8 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       return TA_DEMA_Update( (TA_DEMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       return TA_TEMA_Update( (TA_TEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+      return TA_TRIMA_Update( (TA_TRIMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       return TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
@@ -581,6 +589,8 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_DEMA_Peek( (const TA_DEMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       return TA_TEMA_Peek( (const TA_TEMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+      return TA_TRIMA_Peek( (const TA_TRIMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
@@ -610,6 +620,9 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break;
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       TA_TEMA_Close( (TA_TEMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+      TA_TRIMA_Close( (TA_TRIMA_Stream *)stream->sub );
       break;
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       TA_KAMA_Close( (TA_KAMA_Stream *)stream->sub );

@@ -428,8 +428,14 @@ pub struct DualModePlan<'a> {
     pub prologue: &'a [Statement],
     /// Mode A: the `if`-then arm (its `body` is the arm's then-body slice).
     pub mode_a: StreamModel<'a>,
-    /// Mode B: the general path (its `body` is `body[arm_idx+1..]`).
+    /// Mode B: the fall-through general path (early-return form) or the `else`
+    /// arm (if/else form). Its `body` is the corresponding slice.
     pub mode_b: StreamModel<'a>,
+    /// Shared epilogue transcribed after the selected arm. Empty for the
+    /// early-return form (DI/DM — mode A returns, mode B is the general tail).
+    /// For the if/else form (TRIMA `period % 2`) both arms fall through to this
+    /// out-meta + return tail (`body[arm_idx+1..]`).
+    pub epilogue: &'a [Statement],
 }
 
 /// Syntactic form of the steady-state loop (informational; open() transcribes
@@ -1427,13 +1433,32 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
 
-    // Find the FIRST top-level `if (<param predicate>) { ...; return SUCCESS; }`
-    // arm: params-only condition, no else, ends in a success return, and is
-    // followed by a general path (more statements). The no-data guard
-    // `if (startIdx > endIdx) return SUCCESS` is excluded by the params-only
-    // condition (it references startIdx/endIdx); the identity/lookback `if`s
-    // either carry an else or are not success-returning.
-    let mut found: Option<usize> = None;
+    let ends_in_success = |b: &[Statement]| {
+        matches!(
+            b.last(),
+            Some(Statement::Return { value: Some(Expr::Var(v)) })
+                if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS")
+        )
+    };
+    // A dual-mode arm is a steady loop (over the output range) — not a trivial
+    // scalar branch. This excludes the prologue's `if (period > 1) lookbackTotal
+    // = ... else lookbackTotal = 1` (both arms plain assignments) from the
+    // if/else form.
+    let has_loop = |b: &[Statement]| {
+        b.iter().any(|s| {
+            matches!(
+                s,
+                Statement::While { .. }
+                    | Statement::DoWhile { .. }
+                    | Statement::For { .. }
+                    | Statement::ForC { .. }
+            )
+        })
+    };
+    // Find the FIRST top-level param-guarded branch of either form. The no-data
+    // guard `if (startIdx > endIdx) return SUCCESS` is excluded by the params-only
+    // condition (it references startIdx/endIdx).
+    let mut found: Option<(usize, bool)> = None; // (index, is_if_else)
     for (i, s) in body.iter().enumerate() {
         let Statement::If {
             condition,
@@ -1444,20 +1469,35 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
         else {
             continue;
         };
-        if !else_body.is_empty() || !expr_is_param_pure(condition, &params) {
+        if !expr_is_param_pure(condition, &params) {
             continue;
         }
-        let ends_in_success = matches!(
-            then_body.last(),
-            Some(Statement::Return { value: Some(Expr::Var(v)) })
-                if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS")
-        );
-        if ends_in_success && i + 1 < body.len() {
-            found = Some(i);
+        // Early-return form (DI/DM): empty else, the then-arm is a steady loop
+        // ending in SUCCESS, and a general path follows.
+        if else_body.is_empty()
+            && ends_in_success(then_body)
+            && has_loop(then_body)
+            && i + 1 < body.len()
+        {
+            found = Some((i, false));
+            break;
+        }
+        // If/else form (TRIMA): a real else, each arm is a steady loop, NEITHER
+        // returns (both fall through to a shared epilogue), and NOT a `<= literal`
+        // threshold — that shape is fast-path-skip's (a bit-identical perf split
+        // streams one arm; here the two arms genuinely differ and both stream).
+        if !else_body.is_empty()
+            && has_loop(then_body)
+            && has_loop(else_body)
+            && !ends_in_success(then_body)
+            && !ends_in_success(else_body)
+            && !is_threshold_pred(condition, &params)
+        {
+            found = Some((i, true));
             break;
         }
     }
-    let Some(arm_idx) = found else {
+    let Some((arm_idx, is_if_else)) = found else {
         return Err(StreamError::NoSteadyLoop);
     };
 
@@ -1467,14 +1507,23 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     let Statement::If {
         condition,
         then_body,
+        else_body,
         ..
     } = &body[arm_idx]
     else {
         unreachable!("arm_idx indexes the recognized If")
     };
     let prologue = &body[..arm_idx];
-    let mode_a = analyze_region_scoped(func, then_body, body, outputs.clone())?;
-    let mode_b = analyze_region_scoped(func, &body[arm_idx + 1..], body, outputs)?;
+    // Mode A is always the `then` arm. Mode B is the `else` arm (if/else form) or
+    // the fall-through tail after the returning arm (early-return form).
+    let (then_region, alt_region, epilogue): (&[Statement], &[Statement], &[Statement]) =
+        if is_if_else {
+            (then_body, else_body, &body[arm_idx + 1..])
+        } else {
+            (then_body, &body[arm_idx + 1..], &[])
+        };
+    let mode_a = analyze_region_scoped(func, then_region, body, outputs.clone())?;
+    let mode_b = analyze_region_scoped(func, alt_region, body, outputs)?;
 
     Ok(DualModePlan {
         func,
@@ -1482,6 +1531,7 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
         prologue,
         mode_a,
         mode_b,
+        epilogue,
     })
 }
 
@@ -2328,6 +2378,19 @@ fn cursor_plus_expr(idx: &Expr, cursors: &BTreeSet<String>) -> Option<Expr> {
 /// True when `e` reads only parameters, literals and arithmetic of them — no
 /// series, pointers, cursors or calls. A sub-output lag depth must be such a
 /// constant-per-stream parameter expression (`optInTimePeriod - 1`).
+/// A `<param> <= <literal>` (or `<`) threshold predicate — the shape of a batch
+/// perf fast-path split ([`analyze_fastpath_skip`], MIDPRICE), as opposed to a
+/// genuine dual-mode branch (TRIMA's `period % 2 == 1`). Used to route the
+/// two if/else recognizers apart.
+fn is_threshold_pred(cond: &Expr, params: &BTreeSet<String>) -> bool {
+    matches!(
+        cond,
+        Expr::BinOp(l, BinOp::LessEq | BinOp::Less, r)
+            if matches!(l.as_ref(), Expr::Var(v) if params.contains(v))
+                && matches!(r.as_ref(), Expr::IntLiteral(_))
+    )
+}
+
 fn expr_is_param_pure(e: &Expr, params: &BTreeSet<String>) -> bool {
     let mut ok = true;
     walk_expr(e, &mut |x| match x {

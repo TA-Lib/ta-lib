@@ -5255,7 +5255,7 @@ TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 10000
  * concurrently — Update or Peek, despite the latter's const — is
  * undefined behavior. Distinct handles are fully independent.
  * Note: optInMAType values whose underlying function has no stream yet
- * (TA_MAType_TRIMA, TA_MAType_MAMA) are rejected at Open with TA_BAD_PARAM; they gain
+ * (TA_MAType_MAMA) are rejected at Open with TA_BAD_PARAM; they gain
  * streams automatically when the underlying function does.
  * The optInTimePeriod == 1 identity path streams for every optInMAType value.
  * See docs/streaming-api-proposal.md.
@@ -7827,6 +7827,26 @@ TA_LIB_API TA_RetCode TA_S_TRIMA( int    startIdx,
 
 TA_LIB_API int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_TRIMA — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_TRIMA_Stream TA_TRIMA_Stream;
+
+TA_LIB_API TA_RetCode TA_TRIMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TRIMA_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIMA_Update( TA_TRIMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_TRIMA_Close( TA_TRIMA_Stream *stream );
 
 /*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA

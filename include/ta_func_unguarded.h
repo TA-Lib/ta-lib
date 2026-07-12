@@ -490,6 +490,7 @@ struct TA_TAN_Stream;
 struct TA_TANH_Stream;
 struct TA_TEMA_Stream;
 struct TA_TRANGE_Stream;
+struct TA_TRIMA_Stream;
 struct TA_TRIX_Stream;
 struct TA_TSF_Stream;
 struct TA_TYPPRICE_Stream;
@@ -639,6 +640,7 @@ TA_RetCode TA_TAN_OpenInternal( const double inReal[], int startIdx, int history
 TA_RetCode TA_TANH_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_TANH_Stream **stream, double *outReal );
 TA_RetCode TA_TEMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TEMA_Stream **stream, double *outReal );
 TA_RetCode TA_TRANGE_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_TRANGE_Stream **stream, double *outReal );
+TA_RetCode TA_TRIMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TRIMA_Stream **stream, double *outReal );
 TA_RetCode TA_TRIX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TRIX_Stream **stream, double *outReal );
 TA_RetCode TA_TSF_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TSF_Stream **stream, double *outReal );
 TA_RetCode TA_TYPPRICE_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_TYPPRICE_Stream **stream, double *outReal );

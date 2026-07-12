@@ -6389,7 +6389,7 @@ fn java_array_access() {
 
 /// Pin the generated MA dispatch stream section: tagged handle over the
 /// callees' PUBLIC streams, batch-order ENUM_CASE arms, identity fast path,
-/// unsupported arms (TRIMA until its stream lands, MAMA) rejecting at Open.
+/// the one remaining unsupported arm (MAMA) rejecting at Open.
 #[test]
 fn test_c_ma_dispatch_stream_section() {
     let (mut func, enums) = load_indicator("ma");
@@ -6416,6 +6416,7 @@ fn test_c_ma_dispatch_stream_section() {
         ("Tema", "TA_TEMA"),
         ("Kama", "TA_KAMA"),
         ("T3", "TA_T3"),
+        ("Trima", "TA_TRIMA"), // dual-mode stream (M6c): auto-promoted from reject
     ] {
         assert!(
             c.contains(&format!("case ENUM_CASE(MAType, TA_MAType_{}, {label}):", label.to_uppercase())),
@@ -6432,16 +6433,13 @@ fn test_c_ma_dispatch_stream_section() {
         c.contains("TA_T3_OpenInternal( optInTimePeriod, 0.7, inReal, startIdx, historyLen"),
         "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
-    // Unsupported arms reject at Open and never open a sub-stream.
-    assert!(
-        c.contains("case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima): /* no trima stream */"),
-        "TRIMA reject arm"
-    );
+    // MAMA is the only remaining unsupported arm — it rejects at Open and never
+    // opens a sub-stream (TRIMA gained a dual-mode stream in M6c and is now a
+    // supported arm above).
     assert!(
         c.contains("case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */"),
         "MAMA reject arm"
     );
-    assert!(!c.contains("TA_TRIMA_Open"), "no TRIMA sub open");
     assert!(!c.contains("TA_MAMA_Open"), "no MAMA sub open");
     // Update/Peek identity short-circuit reads the handle's params.
     assert!(
@@ -6489,6 +6487,33 @@ fn test_c_minus_dm_dual_mode_stream_section() {
         .and_then(|s| s.split("};").next())
         .expect("state struct");
     assert!(struct_sec.contains("double prevMinusDM;"), "union carries prevMinusDM");
+}
+
+/// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
+/// are genuinely different but share identical rings, so the handle carries ONE
+/// ring set + one StreamStep branching on the stored parity; the ring buffers are
+/// freed by StreamRelease and mirrored in Peek.
+#[test]
+fn test_c_trima_dual_mode_rings_stream_section() {
+    let (mut func, enums) = load_indicator("trima");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+
+    // Union struct: shared triangular-sum scalars + the SHARED rings (one set).
+    assert!(
+        c.contains("double *ring_middleIdx_inReal;") && c.contains("double *ring_trailingIdx_inReal;"),
+        "shared middleIdx/trailingIdx rings (one set, both arms)"
+    );
+    assert!(c.contains("double numerator;"), "shared triangular-sum accumulator");
+    assert_eq!(c.matches("TA_TRIMA_StreamStep( struct").count(), 1, "one StreamStep");
+    assert!(
+        c.contains("if( sp->optInTimePeriod % 2 == 1 )"),
+        "step branches on the stored parity"
+    );
+    assert!(c.contains("TA_TRIMA_StreamRelease"), "StreamRelease frees the rings");
+    assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
 }
 
 /// Pin the generated MIDPRICE fast-path-skip stream section: the `if(period<=20)`

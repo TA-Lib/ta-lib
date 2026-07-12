@@ -135,6 +135,35 @@ fn minus_di_derives_dual_mode_plan_with_tr() {
 }
 
 #[test]
+fn trima_derives_dual_mode_if_else() {
+    // TRIMA's `if (period % 2 == 1) { odd } else { even }` arms are genuinely
+    // different triangular-sum recurrences (different factor and Step-2 order), so
+    // BOTH stream, as a dual mode selected by parity — NOT fast-path-skip (that
+    // needs a `<= literal` threshold). The two arms (both T3 tier) share rings
+    // (middleIdx, trailingIdx over inReal), so the handle carries one ring set,
+    // and both fall through to a shared epilogue (the if/else form).
+    let f = load("trima");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("TRIMA derives a plan");
+    let streaming::StreamPlan::DualMode(dm) = plan else {
+        panic!("expected DualMode, got {plan:?}");
+    };
+    assert_eq!(dm.mode_a.tier, StreamTier::T3);
+    assert_eq!(dm.mode_b.tier, StreamTier::T3);
+    assert_eq!(dm.mode_a.rings().len(), 2, "middleIdx + trailingIdx rings");
+    assert_eq!(
+        dm.mode_a.rings().iter().map(|r| r.var.clone()).collect::<Vec<_>>(),
+        dm.mode_b.rings().iter().map(|r| r.var.clone()).collect::<Vec<_>>(),
+        "both arms carry the SAME rings (union collapses to one set)"
+    );
+    assert!(!dm.epilogue.is_empty(), "shared epilogue (if/else form)");
+    // A modulo-equality branch, not a threshold (which would be fast-path-skip).
+    assert!(matches!(
+        &dm.predicate,
+        ta_codegen_lib::ir::Expr::BinOp(_, ta_codegen_lib::ir::BinOp::Eq, _)
+    ));
+}
+
+#[test]
 fn midprice_derives_fastpath_skip_plan() {
     // MIDPRICE's `if (period <= 20) { window rescan } else { cached extremum }`
     // arms are bit-identical (a pure batch perf split). Only the general (else)
@@ -318,6 +347,59 @@ fn cdlhikkake_rejected_at_transition_build() {
 
 /* ---- TC composed tier: dispatch plans ---- */
 
+/// FOREVER CONTRACT (user-mandated): every `MAType` must be streamable.
+///
+/// A function with a `MAType` parameter — TA_MA and everything that composes
+/// over it (BBANDS, STOCH, STOCHF, MACDEXT) — can only stream a given `MAType`
+/// bit-exact-vs-batch if the UNDERLYING MA function streams. A `MAType` whose
+/// function does not stream makes EVERY such function's stream reject (not
+/// bit-exact) for that type. So each `MAType`'s function must carry a stream,
+/// with a shrinking allowlist of known deep blockers.
+///
+/// This ratchets: the test fails if (a) a non-blocked `MAType`'s function LOSES
+/// its stream (a regression that would silently narrow every consumer), or (b)
+/// a blocked function GAINS a stream (the allowlist is stale — remove it so the
+/// contract tightens). When the allowlist empties, every `MAType` streams.
+#[test]
+fn every_matype_is_streamable_except_tracked_blockers() {
+    use ta_codegen_lib::streaming::CalleeLookup;
+    let lk = lookup();
+    // Each `TA_MAType_*` value and its input-level function name, in enum order.
+    let matypes = [
+        ("SMA", "sma"),
+        ("EMA", "ema"),
+        ("WMA", "wma"),
+        ("DEMA", "dema"),
+        ("TEMA", "tema"),
+        ("TRIMA", "trima"),
+        ("KAMA", "kama"),
+        ("MAMA", "mama"),
+        ("T3", "t3"),
+    ];
+    // Not-yet-streamable MAType functions (deep blockers). MUST ONLY SHRINK.
+    //   MAMA: writes a dummy FAMA output buffer and reads `startIdx` inside its
+    //   steady loop (the same startIdx-in-loop wall as HT_*) — no stream yet.
+    let blocked = ["mama"];
+    for (ty, func) in matypes {
+        let streams = lk.callee(func).is_some_and(|s| s.streaming);
+        let is_blocked = blocked.contains(&func);
+        assert_eq!(
+            streams, !is_blocked,
+            "MAType streaming contract: {ty} ({func}) streams={streams}, blocked={is_blocked}. \
+             Every MAType function must stream (so every MAType-consuming stream is bit-exact); \
+             a non-blocked one that stopped streaming is a regression, and a blocked one that now \
+             streams means the allowlist is stale — remove it."
+        );
+    }
+    // The allowlist is exactly the un-streamable MATypes — no stale entries.
+    for func in blocked {
+        assert!(
+            matypes.iter().any(|(_, f)| *f == func),
+            "blocklist entry `{func}` is not a MAType"
+        );
+    }
+}
+
 #[test]
 fn ma_derives_dispatch_plan() {
     // MA is the MAType-tagged dispatch over the per-MA streams. The
@@ -346,12 +428,14 @@ fn ma_derives_dispatch_plan() {
         .collect();
     assert_eq!(
         supported,
-        ["sma", "ema", "wma", "dema", "tema", "kama", "t3"],
-        "supported arms follow the callee stream flags, in batch order"
+        ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "t3"],
+        "supported arms follow the callee stream flags, in batch order (TRIMA \
+         joined automatically when its dual-mode stream landed in M6c)"
     );
     // Labels are TA-stripped in the IR (the C renderer restores the prefix).
+    // MAMA is now the ONLY reject arm (dummy FAMA buffer, discarded output).
     let rejected: Vec<&str> = dp.unsupported_labels();
-    assert_eq!(rejected, ["MAType_TRIMA", "MAType_MAMA"]);
+    assert_eq!(rejected, ["MAType_MAMA"]);
     // T3's arm forwards the fixed vfactor literal positionally.
     let t3 = dp.arms.iter().find(|a| a.callee == "t3").unwrap();
     assert_eq!(t3.opt_args.len(), 2, "period + literal 0.7 vfactor");
@@ -386,12 +470,26 @@ fn dispatch_hard_errors_when_flagged_callee_arm_loses_shape() {
 #[test]
 fn dispatch_hard_errors_when_flagged_delegation_hides_behind_unflagged_call() {
     // The review-confirmed silent-downgrade hole: an arm whose FIRST
-    // indicator call is unflagged (trima) but which then whole-range
+    // indicator call is unflagged (the wrapper) but which then whole-range
     // delegates to a stream-flagged callee (dema) must be a hard gate
     // error — never a reject arm the verify precheck would bless.
+    // TRIMA now really streams (M6c), so we override it back to unflagged in the
+    // lookup — the test pins the GATE BEHAVIOR (a hidden flagged delegation),
+    // not TRIMA's flag.
     use ta_codegen_lib::ir::{Expr, Statement};
+    struct TrimaUnflagged<'a>(&'a dyn streaming::CalleeLookup);
+    impl streaming::CalleeLookup for TrimaUnflagged<'_> {
+        fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
+            let mut sig = self.0.callee(name)?;
+            if name == "trima" {
+                sig.streaming = false;
+            }
+            Some(sig)
+        }
+    }
     let mut f = load("ma");
-    let lk = lookup();
+    let real = lookup();
+    let lk = TrimaUnflagged(&real);
     fn visit(stmts: &mut [Statement]) {
         for s in stmts {
             if let Statement::Switch { cases, .. } = s {

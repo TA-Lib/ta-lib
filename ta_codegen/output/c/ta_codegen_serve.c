@@ -792,7 +792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) ) )
         {
             TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
@@ -1367,7 +1367,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         double optInNbDevUp = json_find_double(json, "optInNbDevUp");
         double optInNbDevDn = json_find_double(json, "optInNbDevDn");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) ) )
         {
             TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
             int rejected;
@@ -7521,7 +7521,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) )
+        if( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) )
         {
             TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
@@ -7700,7 +7700,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_MAType optInSlowMAType = (TA_MAType)json_find_int(json, "optInSlowMAType");
         int optInSignalPeriod = json_find_int(json, "optInSignalPeriod");
         TA_MAType optInSignalMAType = (TA_MAType)json_find_int(json, "optInSignalMAType");
-        if( ( ( !(optInSlowPeriod == 1) && ( optInSlowMAType == TA_MAType_TRIMA || optInSlowMAType == TA_MAType_MAMA ) ) || ( !(optInFastPeriod == 1) && ( optInFastMAType == TA_MAType_TRIMA || optInFastMAType == TA_MAType_MAMA ) ) || ( !(optInSignalPeriod == 1) && ( optInSignalMAType == TA_MAType_TRIMA || optInSignalMAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInSlowPeriod == 1) && ( optInSlowMAType == TA_MAType_MAMA ) ) || ( !(optInFastPeriod == 1) && ( optInFastMAType == TA_MAType_MAMA ) ) || ( !(optInSignalPeriod == 1) && ( optInSignalMAType == TA_MAType_MAMA ) ) ) )
         {
             TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
             int rejected;
@@ -9130,7 +9130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) ) )
         {
             TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
@@ -10050,7 +10050,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_MAType optInSlowK_MAType = (TA_MAType)json_find_int(json, "optInSlowK_MAType");
         int optInSlowD_Period = json_find_int(json, "optInSlowD_Period");
         TA_MAType optInSlowD_MAType = (TA_MAType)json_find_int(json, "optInSlowD_MAType");
-        if( ( ( !(optInSlowK_Period == 1) && ( optInSlowK_MAType == TA_MAType_TRIMA || optInSlowK_MAType == TA_MAType_MAMA ) ) || ( !(optInSlowD_Period == 1) && ( optInSlowD_MAType == TA_MAType_TRIMA || optInSlowD_MAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInSlowK_Period == 1) && ( optInSlowK_MAType == TA_MAType_MAMA ) ) || ( !(optInSlowD_Period == 1) && ( optInSlowD_MAType == TA_MAType_MAMA ) ) ) )
         {
             TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
@@ -10148,7 +10148,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastK_Period = json_find_int(json, "optInFastK_Period");
         int optInFastD_Period = json_find_int(json, "optInFastD_Period");
         TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
-        if( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_TRIMA || optInFastD_MAType == TA_MAType_MAMA ) ) ) )
+        if( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_MAMA ) ) ) )
         {
             TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
@@ -10247,7 +10247,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastK_Period = json_find_int(json, "optInFastK_Period");
         int optInFastD_Period = json_find_int(json, "optInFastD_Period");
         TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
-        if( ( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_TRIMA || optInFastD_MAType == TA_MAType_MAMA ) ) ) ) )
+        if( ( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_MAMA ) ) ) ) )
         {
             TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
@@ -10817,6 +10817,74 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TRANGE_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
+        return;
+    }
+    else if( fnLen == 8 && strncmp(fn, "TA_TRIMA", 8) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        rc = TA_TRIMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_TRIMA_Lookback(optInTimePeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_TRIMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRIMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRIMA_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_TRIMA_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            rc = TA_TRIMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_TRIMA_Peek(st, sv_c[t], &pk0);
+                TA_TRIMA_Update(st, sv_c[t], &v0);
+                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            }
+            if( st ) TA_TRIMA_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_TRIMA(Sidx, svN - 1, sv_c, optInTimePeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_TRIMA_Stream *stA = NULL;
+                    TA_RetCode arc = TA_TRIMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( stA ) TA_TRIMA_Close(stA);
                     if( !ok ) allOk = 0;
                     (void)badBar; (void)badOut; (void)bv; (void)sv;
                 }

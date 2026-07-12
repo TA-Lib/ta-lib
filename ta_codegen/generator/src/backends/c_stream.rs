@@ -1461,26 +1461,26 @@ fn render_dual_pred(
 }
 
 /// The dual-mode state struct: optional params (incl. the discriminator param),
-/// then the TYPE-CHECKED UNION of both modes' scalar state (a name shared by
-/// the two modes — DI/DM's `prevHigh`/`prevLow`/`prevClose` — is one field;
-/// mode-B-only fields sit zeroed under mode A). No `mode` tag is stored: the
-/// step re-derives it from the immutable `sp->optInTimePeriod` (the Dispatch
-/// precedent). M6a modes are pure scalar; a mode carrying rings/windows/circs/
-/// extrema/out-feedback/lags is rejected loudly (extend this when TRIMA lands).
+/// the TYPE-CHECKED UNION of both modes' SCALAR state (a name shared by the two
+/// modes — DI/DM's `prevHigh`/`prevLow`, TRIMA's `numerator` — is one field;
+/// mode-B-only fields sit zeroed under mode A), then the shared NON-SCALAR state
+/// (rings/windows/circs/extrema/feedback/lags). No `mode` tag is stored: the step
+/// re-derives it from the immutable discriminator param (the Dispatch precedent).
+/// The two modes must carry IDENTICAL non-scalar state — TRIMA's odd/even arms
+/// share the very same rings; DI/DM have none. Differing per-arm buffers would
+/// need a real per-arm union (extend then).
 fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
-    for m in [ma, mb] {
-        assert!(
-            m.out_feedback.is_empty()
-                && m.lags.is_empty()
-                && m.rings().is_empty()
-                && m.windows().is_empty()
-                && m.circs().is_empty()
-                && m.extrema().is_none(),
-            "{}: dual-mode with non-scalar state (rings/windows/circs/extrema/feedback/lags) \
-             is not supported yet — extend emit_dual_mode",
-            func.name
-        );
-    }
+    let mut a_nonscalar = String::new();
+    emit_nonscalar_struct_fields(&mut a_nonscalar, func, ma);
+    let mut b_nonscalar = String::new();
+    emit_nonscalar_struct_fields(&mut b_nonscalar, func, mb);
+    assert!(
+        a_nonscalar == b_nonscalar,
+        "{}: dual-mode modes carry differing non-scalar state (rings/windows/circs/\
+         extrema/feedback/lags); a real per-arm buffer union is not supported yet",
+        func.name
+    );
+
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     for p in &func.optional_inputs {
@@ -1489,7 +1489,7 @@ fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: 
     for (name, c_type) in &func.private_extra_params {
         let _ = writeln!(o, "   {c_type} {name};");
     }
-    // Union of the two modes' state, mode-A order first, dedup by name.
+    // Union of the two modes' SCALAR state, mode-A order first, dedup by name.
     let mut seen: std::collections::BTreeMap<String, &crate::ir::VarType> =
         std::collections::BTreeMap::new();
     let mut order: Vec<(String, crate::ir::VarType)> = Vec::new();
@@ -1508,6 +1508,7 @@ fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: 
     for (name, ty) in &order {
         let _ = writeln!(o, "   {};", c_decl(ty, name));
     }
+    o.push_str(&a_nonscalar); // shared across modes (== b_nonscalar)
     let _ = writeln!(o, "}};\n");
 }
 
@@ -1555,6 +1556,10 @@ fn emit_dual_mode(
 
     // --- state struct -------------------------------------------------------
     emit_dual_state_struct(o, func, ma, mb);
+    // StreamRelease (frees the shared ring buffers) for a ring-carrying dual mode
+    // (TRIMA); inert for a scalar mode (DI/DM). Emitted before Open, whose
+    // malloc-failure paths call it.
+    emit_release(o, func, ma);
 
     // --- Step: one function, mode selected from the stored param ------------
     let bars = bar_params_sig(func);
@@ -1596,16 +1601,17 @@ fn emit_dual_mode(
         "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;"
     );
 
-    // Each mode transcribes the SHARED PROLOGUE then its own arm body, seeding
-    // its own state and returning. The prologue computes the mode-appropriate
-    // lookback/clamp, so min-history is per-mode correct by construction. The
-    // shared prologue declares the UNION of both modes' function-top locals, so
-    // a per-arm dead-decl drop is applied: the degenerate arm never touches the
-    // Wilder accumulators or the warm-up counter, and shipping their decls would
-    // emit -Wunused-variable in the generated C.
+    // Each mode transcribes the SHARED PROLOGUE, then its own arm body, then the
+    // SHARED EPILOGUE (empty for the early-return form; the out-meta + return tail
+    // for the if/else form). The prologue computes the mode-appropriate lookback/
+    // clamp, so min-history is per-mode correct by construction. The shared
+    // prologue declares the UNION of both modes' function-top locals, so a per-arm
+    // dead-decl drop is applied: a mode that never touches the other mode's
+    // accumulators or warm-up counter would otherwise emit -Wunused-variable.
     let compose = |arm_body: &[Statement]| -> Vec<Statement> {
         let mut v = dmp.prologue.to_vec();
         v.extend_from_slice(arm_body);
+        v.extend_from_slice(dmp.epilogue);
         drop_unused_decls(v)
     };
     let pred_bare = render_dual_pred(&dmp.predicate, false, func, registry, helpers, counter);
@@ -1632,18 +1638,12 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
 
 /// State struct with extra trailing fields (composed tier: peekMode + typed
 /// sub handles appended after the producer's own fields).
-fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: &str) {
-    let n = uname(func);
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    for (name, c_type) in &func.private_extra_params {
-        let _ = writeln!(o, "   {c_type} {name};");
-    }
-    for (name, ty) in &model.state {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
-    }
+/// The non-scalar handle fields (out-feedback, lag slots, ring/window/circ/
+/// extrema buffers + their Peek mirrors) for one model. Shared by the loop-tier
+/// struct and the dual-mode union struct (whose two modes carry identical
+/// non-scalar state — TRIMA's odd/even arms share the same rings — so the union
+/// emits one model's set).
+fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamModel) {
     for name in &model.out_feedback {
         let _ = writeln!(o, "   {} lastOut_{name};", out_c_type(func, name));
     }
@@ -1690,6 +1690,21 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
             let _ = writeln!(o, "   double *xMirror_{arr};");
         }
     }
+}
+
+fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: &str) {
+    let n = uname(func);
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
+    }
+    for (name, c_type) in &func.private_extra_params {
+        let _ = writeln!(o, "   {c_type} {name};");
+    }
+    for (name, ty) in &model.state {
+        let _ = writeln!(o, "   {};", c_decl(ty, name));
+    }
+    emit_nonscalar_struct_fields(o, func, model);
     o.push_str(extra);
     // A struct must have at least one member (T1 maps carry none).
     if extra.is_empty()

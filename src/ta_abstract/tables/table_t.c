@@ -209,7 +209,7 @@ DEF_FUNCTION( TRIMA,
               TA_GroupId_OverlapStudies,
               "Triangular Moving Average",
               "Trima",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TRIMA END */
 
