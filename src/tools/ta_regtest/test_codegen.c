@@ -1994,6 +1994,35 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
     for( v = 0; v < nvec; v++ ) vecIsEnum[v] = 0;
     for( v = 1; v < nvec; v++ ) vecIsMin[v] = 1;
 
+    /* One ABOVE-default "large window" vector (default+40, clamped to the
+     * range). It exercises the general/large-period regime — a big ring/window
+     * so wraparound is hit over the fixed STREAM_N history — and for a
+     * fast-path-skip function (MIDPRICE) a period ABOVE its perf threshold,
+     * where the batch runs the very else-arm the stream models. Without it,
+     * stream_build_vectors hands every function only default/min small periods,
+     * so a fast-path-skip stream is otherwise verified only in its
+     * threshold-and-below regime. Deduped vs the default; not a min/enum vector. */
+    {
+        int any = 0;
+        if( nvec < STREAM_MAX_VEC )
+        {
+            for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+            {
+                const TA_OptInputParameterInfo *oi;
+                TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+                vec[nvec][i] = oi->defaultValue;
+                if( oi->type == TA_OptInput_IntegerRange )
+                {
+                    const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+                    int def_i = (int)oi->defaultValue, big = def_i + 40;
+                    if( r && big > (int)r->max ) big = (int)r->max;
+                    if( big != def_i ) { vec[nvec][i] = (double)big; any = 1; }
+                }
+            }
+            if( any ) { vecIsEnum[nvec] = 0; vecIsMin[nvec] = 0; nvec++; }
+        }
+    }
+
     /* Enum (MAType) sweep vectors: each non-default list value crossed with
      * (a) the defaults vector AND (b) the boundary vector when one exists
      * (period==1 x MAType covers the identity-beats-unsupported-arm ordering
@@ -2834,7 +2863,11 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
 
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
 #define FUZZ_MAX_OPT  8
-#define FUZZ_MAX_VEC  16    /* parameter vectors per function */
+#define FUZZ_MAX_VEC  48    /* parameter vectors per function. Sized for the
+                             * widest sweep (MACDEXT: 3 period ranges x up to 6
+                             * candidates + 3 MAType lists x 8 = ~42, + defaults).
+                             * fuzz_build_vectors reports any overflow and the
+                             * caller fails the run loudly (no silent drop). */
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
 typedef char fuzz_maxn_fits_output_bufs[FUZZ_MAXN <= MAX_NB_TEST_ELEMENT ? 1 : -1];
 
@@ -2938,8 +2971,10 @@ static unsigned long long fuzz_parse_hash(const char *resp)
 
 /* Parameter vectors: defaults + one-param-varied boundary/list sweeps. */
 static int fuzz_build_vectors(const TA_FuncInfo *fi,
-                              double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT])
+                              double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
+                              int *overflow)
 {
+    *overflow = 0;
     double def[FUZZ_MAX_OPT];
     unsigned int i;
     for( i = 0; i < fi->nbOptInput && i < FUZZ_MAX_OPT; i++ )
@@ -2966,8 +3001,13 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
             int def_i = (int)oi->defaultValue;
             int lo = r ? (int)r->min : FUZZ_MIN_PERIOD;
             if( lo < FUZZ_MIN_PERIOD ) lo = FUZZ_MIN_PERIOD;  /* period 1 tested by non-0.6.4 comparisons */
-            int base[5]; base[0]=lo; base[1]=lo+1; base[2]=lo+7; base[3]=def_i-1; base[4]=def_i+3;
-            for( int b = 0; b < 5; b++ )
+            /* min / min+1 / min+7 boundary, plus the tight neighbourhood around
+             * the default (default-1, default+1) and one a bit further out
+             * (default+3). vec[0] already carries the default itself, so the
+             * full {default-1, default, default+1} triple is covered. */
+            int base[6]; base[0]=lo; base[1]=lo+1; base[2]=lo+7;
+            base[3]=def_i-1; base[4]=def_i+1; base[5]=def_i+3;
+            for( int b = 0; b < 6; b++ )
             {
                 int v = base[b];
                 if( v < lo ) v = lo;
@@ -2998,8 +3038,11 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
             }
         }
 
-        for( c = 0; c < nc && nvec < FUZZ_MAX_VEC; c++ )
+        for( c = 0; c < nc; c++ )
         {
+            /* Silent truncation would quietly stop comparing parameter values
+             * vs 0.6.4 — count drops so the caller fails the run loudly. */
+            if( nvec >= FUZZ_MAX_VEC ) { (*overflow)++; continue; }
             for( unsigned int j = 0; j < fi->nbOptInput && j < FUZZ_MAX_OPT; j++ )
                 vec[nvec][j] = def[j];
             vec[nvec][i] = cand[c];
@@ -3149,7 +3192,17 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     setup_outputs(&p);
 
     double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
-    int nvec = fuzz_build_vectors(funcInfo, vec);
+    int vecOverflow = 0;
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow);
+    if( vecOverflow > 0 )
+    {
+        printf("FUZZ VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped by "
+               "FUZZ_MAX_VEC — they would go uncompared vs 0.6.4\n",
+               funcInfo->name, vecOverflow);
+        ctx->failures++;   /* run fails: failures != 0 (see the 064 exit check) */
+        TA_ParamHolderFree(paramHolder);
+        return;
+    }
 
     static const int sizes[]  = {40, 120, 240};
     static const int seeds[]  = {1, 2, 3};
