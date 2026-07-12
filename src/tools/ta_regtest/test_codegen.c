@@ -2173,9 +2173,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         /* Variants: ambient defaults; plus (defaults vector only) one
          * unstable-period leg, one Metastock-compatibility leg, and the
-         * remaining data shapes so all 7 fuzz shapes (incl. CONSTANT and
-         * TIE_HEAVY) are exercised every run. */
-        for( variant = 0; variant < 7; variant++ )
+         * remaining data shapes so ALL fuzz shapes (incl. CONSTANT, TIE_HEAVY,
+         * and FUZZ_CANDLE — the pattern-rich inside-bar shape that makes the
+         * candlestick streams non-vacuous) are exercised every run. */
+        for( variant = 0; variant < FUZZ_NSHAPES; variant++ )
         {
             int K = 0, compat = 0, shape;
             ErrorNumber pipeErr;
@@ -3408,6 +3409,43 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }
 
+/* Guard the FUZZ_CANDLE data shape (fuzz_data.h) that makes the candlestick
+ * streams and the v0.6.4 differential non-vacuous: it must actually FIRE the
+ * inside-bar patterns (detection AND confirmation, both directions). If a future
+ * edit to that generator stops producing patterns, fuzz-064 and stream_verify
+ * would silently go vacuous (all-zero == all-zero) for CDLHIKKAKE(MOD). The
+ * deterministic MC/DC gate (test_candlestick.c) is the independent backstop for
+ * the refactor itself; this only guards the differential/stream coverage. */
+static ErrorNumber verify_fuzz_candle_nonvacuous(void)
+{
+    static double o[512], h[512], l[512], c[512], vv[512], oi[512];
+    static int out[512];
+    struct { const char *nm;
+             TA_RetCode (*fn)(int,int,const double*,const double*,const double*,const double*,int*,int*,int*); }
+        F[2] = { { "CDLHIKKAKE", TA_CDLHIKKAKE }, { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD } };
+    int fi;
+    for( fi = 0; fi < 2; fi++ )
+    {
+        int p100=0, n100=0, p200=0, n200=0, seed;
+        for( seed = 1; seed <= 6; seed++ )
+        {
+            int bi=0, nb=0, k;
+            fuzz_gen(FUZZ_CANDLE, seed, 512, o, h, l, c, vv, oi);
+            if( F[fi].fn(0, 511, o, h, l, c, &bi, &nb, out) != TA_SUCCESS ) continue;
+            for( k = 0; k < nb; k++ ) { int val=out[k];
+                if(val==100)p100++; else if(val==-100)n100++; else if(val==200)p200++; else if(val==-200)n200++; }
+        }
+        if( !(p100 && n100 && p200 && n200) )
+        {
+            printf("FUZZ_CANDLE VACUOUS for %s: +100=%d -100=%d +200=%d -200=%d "
+                   "(the pattern shape must fire detection AND confirmation)\n",
+                   F[fi].nm, p100, n100, p200, n200);
+            return TA_TSTCDL_PREDICATE_VACUOUS;
+        }
+    }
+    return TA_TEST_PASS;
+}
+
 ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter)
@@ -3419,6 +3457,11 @@ ErrorNumber test_codegen(const TA_History *history,
     printf("=============================================\n");
     printf("Codegen Multi-Language Verification\n");
     printf("=============================================\n");
+
+    /* Non-vacuity guard for the candlestick pattern data shape. */
+    errNb = verify_fuzz_candle_nonvacuous();
+    if( errNb != TA_TEST_PASS )
+        return errNb;
 
     /* Spawn the reference oracle once; it is the shared baseline for every
      * language server, including the generated C server (reference-as-server,

@@ -254,10 +254,176 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
+/* ------------------------------------------------------------------------ *
+ * Predicate-coverage (MC/DC) tests for the Hikkake candlesticks.
+ *
+ * A candlestick test can pass VACUOUSLY when the data never triggers the
+ * pattern: the output is all-zero, and all-zero == all-zero regardless of the
+ * implementation. That hides bugs in the pattern logic — exactly the risk when
+ * a pattern is rewritten (e.g. for the streaming API). These deterministic
+ * scenarios drive the ACTUAL TA function through detection (bull AND bear),
+ * confirmation (in-window, out-of-window, predicate-false) and one variant per
+ * structural predicate flipped false, asserting the exact integer output each
+ * time, so every decision boundary is exercised in both directions. A run also
+ * fails if any of the four output classes (+/-100, +/-200) is absent (vacuous).
+ * The complementary differential coverage — current batch vs frozen v0.6.4, and
+ * stream vs batch — runs on the same pattern geometry via fuzz_data.h's
+ * FUZZ_CANDLE shape (fuzz-064 and stream_verify).
+ * ------------------------------------------------------------------------ */
+#define PB_N 512
+static double pbO[PB_N], pbH[PB_N], pbL[PB_N], pbC[PB_N];
+static int    pbCur;
+static int    pbEi[80], pbEv[80], pbNe;
+static const char *pbEl[80];
+
+static int pb_bar4( double o, double h, double l, double c )
+{
+   pbO[pbCur]=o; pbH[pbCur]=h; pbL[pbCur]=l; pbC[pbCur]=c; return pbCur++;
+}
+/* body-as-a-point bar: O=C=mid, caller controls the high/low geometry */
+static int pb_barm( double hi, double lo ) { double m=(hi+lo)/2.0; return pb_bar4(m,hi,lo,m); }
+/* bar with an exact close v (O=C=v, valid candle) — for tight confirmation margins */
+static int pb_close( double v ) { return pb_bar4(v, v+1.0, v-1.0, v); }
+/* flat filler: constant high/low so it forms no inside-bar pattern and the
+ * confirmation countdown expires between scenarios */
+static void pb_flat( int k ) { while(k-->0) pb_bar4(100.0,101.0,99.0,100.0); }
+static void pb_expect( int i, int v, const char *s ) { pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbNe++; }
+static void pb_reset( void ) { pbCur=0; pbNe=0; }
+
+/* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
+ * flips one detection predicate false. Returns the detection (3rd) bar index. */
+static int pb_hk_win( int dir, int p1, int p2, int p34, int p56 )
+{
+   double h2,l2,h3,l3;
+   pb_barm(120.0, 80.0);                              /* 1st (widest) */
+   h2 = p1 ? 121.0 : 115.0;                           /* P1: H[i-1] < H[i-2] */
+   l2 = p2 ? 79.0  : 85.0;                            /* P2: L[i-1] > L[i-2] */
+   pb_barm(h2, l2);                                   /* 2nd (inside 1st) */
+   if( dir>0 ) { h3 = p34 ? h2+2.0 : h2-3.0; l3 = l2-5.0; }  /* bull breakout */
+   else        { h3 = p56 ? h2-2.0 : h2+3.0; l3 = l2+5.0; }  /* bear breakout */
+   if( h3 < l3 ) { double t=h3; h3=l3+1.0; l3=t; }
+   return pb_barm(h3, l3);                            /* 3rd (detection) */
+}
+
+/* HIKKAKEMOD detection window (4 bars). dir +1/-1; brk 0=intact, 1=break the
+ * 2nd-inside-1st nest, 3=break the 3rd-inside-2nd nest, 5=break the breakout.
+ * The 2nd candle closes on its low (bull) / high (bear) => "close near" holds
+ * for any candle setting. Returns the detection (4th) bar index. */
+static int pb_mod_win( int dir, int brk )
+{
+   double h2,l2,c2,h3,l3,h4,l4;
+   pb_bar4(100.0,130.0,70.0,100.0);                          /* 1st */
+   h2 = (brk==1)? 131.0 : 120.0;  l2 = (brk==1)? 69.0 : 80.0;
+   c2 = dir>0 ? l2 : h2;                                     /* close near low/high */
+   pb_bar4(100.0,h2,l2,c2);                                  /* 2nd (inside 1st) */
+   h3 = (brk==3)? h2+2.0 : 115.0;  l3 = 85.0;
+   pb_bar4(100.0,h3,l3,100.0);                               /* 3rd (inside 2nd) */
+   if( dir>0 ) { h4=(brk==5)? h3+2.0 : 112.0; l4=75.0; }     /* bull breakout */
+   else        { h4=(brk==5)? h3-2.0 : 118.0; l4=95.0; }     /* bear breakout */
+   return pb_barm(h4,l4);                                    /* 4th (detection) */
+}
+
+typedef TA_RetCode (*PbCdlFn)(int,int,const double*,const double*,const double*,const double*,int*,int*,int*);
+
+static ErrorNumber pb_check( const char *name, PbCdlFn fn )
+{
+   int out[PB_N], begIdx=0, nb=0, k, fails=0;
+   int s1=0, sn1=0, s2=0, sn2=0;
+   TA_RetCode rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
+   if( rc != TA_SUCCESS ) { printf("  %s predicate test: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
+   for( k=0; k<nb; k++ ) { int v=out[k]; if(v==100)s1=1; else if(v==-100)sn1=1; else if(v==200)s2=1; else if(v==-200)sn2=1; }
+   for( k=0; k<pbNe; k++ )
+   {
+      int oi = pbEi[k]-begIdx;
+      int got = (oi>=0 && oi<nb) ? out[oi] : -99999;
+      if( got != pbEv[k] )
+      {
+         printf("  %s PREDICATE FAIL bar=%d expected=%d got=%d  (%s)\n", name, pbEi[k], pbEv[k], got, pbEl[k]);
+         fails++;
+      }
+   }
+   if( fails ) return TA_TSTCDL_PREDICATE_MISMATCH;
+   if( !(s1 && sn1 && s2 && sn2) )
+   {
+      printf("  %s PREDICATE VACUOUS: missing an output class (+100=%d -100=%d +200=%d -200=%d)\n", name, s1,sn1,s2,sn2);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_hikkake_predicate_coverage( void )
+{
+   ErrorNumber e;
+   int d, c;
+
+   /* ---------- CDLHIKKAKE ---------- */
+   pb_reset();
+   pb_flat(6);                                                   /* warm-up >= lookback(5) */
+   d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect");
+   c = pb_close(117.0);       pb_expect(c,200,"bull confirm @117 (pins savedHigh vs i-2=120)"); pb_flat(6);
+   d = pb_hk_win(-1,0,0,0,0); pb_expect(d,-100,"bear detect");
+   c = pb_close(82.0);        pb_expect(c,-200,"bear confirm @82 (pins savedLow vs i-2=80)");   pb_flat(6);
+   d = pb_hk_win(-1,0,0,0,0); pb_expect(d,-100,"bear detect");
+   c = pb_close(87.0);        pb_expect(c,0,"bear no-confirm @87 (pins savedLow vs i=90)");     pb_flat(6);
+   d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect (i+3 confirm)");
+   pb_barm(112.0,108.0); pb_barm(113.0,107.0);
+   c = pb_barm(130.0,118.0);  pb_expect(c,200,"confirm at i+3 (edge in-window)"); pb_flat(6);
+   d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect (i+4 late)");
+   pb_flat(3);
+   c = pb_barm(130.0,118.0);  pb_expect(c,0,"confirm at i+4 (out of window -> 0)"); pb_flat(6);
+   d = pb_hk_win(+1,1,0,0,0);  pb_expect(d,0,"break P1 (2nd lower high)");   pb_flat(6);
+   d = pb_hk_win(+1,0,1,0,0);  pb_expect(d,0,"break P2 (2nd higher low)");   pb_flat(6);
+   d = pb_hk_win(+1,0,0,1,0);  pb_expect(d,0,"break bull breakout");         pb_flat(6);
+   d = pb_hk_win(-1,0,0,0,1);  pb_expect(d,0,"break bear breakout");         pb_flat(6);
+   d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect");
+   c = pb_barm(114.0,112.0);  pb_expect(c,0,"confirm predicate false -> 0"); pb_flat(6);
+   e = pb_check("CDLHIKKAKE", TA_CDLHIKKAKE);
+   if( e != TA_TEST_PASS ) return e;
+
+   /* ---------- CDLHIKKAKEMOD ----------
+    * The confirmation reads the cached patternHigh/patternLow = inHigh/inLow[i-1]
+    * (the 3rd candle: H=115 / L=85). Mis-cache candidates are inHigh/inLow[i]
+    * (4th: H=112 / L=95) and [i-2] (2nd: H=120 / L=80). Tight-margin confirm
+    * closes discriminate them, and a D+3-edge confirm pins the countdown SEED. */
+   pb_reset();
+   pb_flat(20);                                                  /* warm-up >= lookback + Near ring */
+   d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect");
+   c = pb_close(117.0);  pb_expect(c,200,"mod bull confirm @117 (pins patternHigh vs i-2=120)");   pb_flat(8);
+   d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect");
+   c = pb_close(114.0);  pb_expect(c,0,"mod no-confirm @114 (pins patternHigh vs i=112)");         pb_flat(8);
+   d = pb_mod_win(-1,0); pb_expect(d,-100,"mod bear detect");
+   c = pb_close(82.0);   pb_expect(c,-200,"mod bear confirm @82 (pins patternLow vs i-2=80)");     pb_flat(8);
+   d = pb_mod_win(-1,0); pb_expect(d,-100,"mod bear detect");
+   c = pb_close(90.0);   pb_expect(c,0,"mod no-confirm @90 (pins patternLow vs i=95)");            pb_flat(8);
+   d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect (i+3 edge)");
+   pb_flat(2);
+   c = pb_close(125.0);  pb_expect(c,200,"mod confirm at i+3 edge (pins patternCount=4)");         pb_flat(8);
+   d = pb_mod_win(+1,1); pb_expect(d,0,"mod break 2nd-inside-1st");         pb_flat(8);
+   d = pb_mod_win(+1,3); pb_expect(d,0,"mod break 3rd-inside-2nd");         pb_flat(8);
+   d = pb_mod_win(+1,5); pb_expect(d,0,"mod break breakout");               pb_flat(8);
+   d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect (i+4 late)");
+   pb_flat(3);
+   c = pb_close(125.0);  pb_expect(c,0,"mod confirm at i+4 (out of window -> 0)"); pb_flat(8);
+   e = pb_check("CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD);
+   if( e != TA_TEST_PASS ) return e;
+
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_candlestick( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
+
+   /* Predicate-coverage (MC/DC) gate: prove the pattern logic is exercised
+    * (non-vacuously) and each decision boundary is correct, before the
+    * data-driven table tests below. */
+   retValue = test_hikkake_predicate_coverage();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed: Hikkake predicate-coverage test (retValue=%d)\n", retValue );
+      return retValue;
+   }
 
    /* Initialize all the unstable period with a large number that would
     * break the logic if a candlestick unexpectably use a function affected

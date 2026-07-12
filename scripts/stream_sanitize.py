@@ -90,9 +90,9 @@ def requests_for(func):
     unstable = "unstable_period" in (func.get("flags") or [])
     reqs = []
 
-    def build(which, seed, unst):
+    def build(which, seed, unst, shape=0):
         params = {
-            "funcName": f"TA_{name}", "gen_shape": 0, "gen_seed": seed,
+            "funcName": f"TA_{name}", "gen_shape": shape, "gen_seed": seed,
             "gen_n": 320, "unstablePeriod": unst, "compatibility": 0,
         }
         for oi in opts:
@@ -115,6 +115,11 @@ def requests_for(func):
             # (DI/DM) runs its degenerate arm here — which ignores K while the
             # general arm honors it — so the sanitizers cover that arm at K>0.
             reqs.append(build("min", 404, 5))
+    if "candlestick" in (func.get("flags") or []):
+        # FUZZ_CANDLE (shape 7 in fuzz_data.h): pattern-rich inside-bar data so a
+        # candlestick stream's ring/state/confirmation paths run under ASan/UBSan/
+        # LSan on FIRING patterns, not just the all-zero no-pattern path.
+        reqs.append(build("default", 606, 0, shape=7))
     return reqs
 
 
