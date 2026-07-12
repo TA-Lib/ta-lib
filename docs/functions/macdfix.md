@@ -1,13 +1,13 @@
 ---
 title: MACDFIX
-description: "MACD with the fast/slow EMAs fixed to the classic 12/26 periods, exposing only the signal period. Thin wrapper that delegates to MACD with fast=slow=0. Signal-line crossovers and histogram sign flag momentum shifts."
+description: "MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers and histogram sign flag momentum shifts."
 ---
 
 # MACDFIX
 
 ## Summary
 
-MACD with the fast/slow EMAs fixed to the classic 12/26 periods, exposing only the signal period. Thin wrapper that delegates to MACD with fast=slow=0. Signal-line crossovers and histogram sign flag momentum shifts.
+MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers and histogram sign flag momentum shifts.
 
 ## Formula
 
