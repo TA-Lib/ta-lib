@@ -360,10 +360,9 @@ static void TA_TRANGE_StreamStep( struct TA_TRANGE_Stream *sp, double inHigh, do
    sp->lag1_inClose = inClose;
 }
 
-TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TRANGE_Stream **stream, double *outReal )
+TA_RetCode TA_TRANGE_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_TRANGE_Stream **stream, double *outReal )
 {
    struct TA_TRANGE_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -374,7 +373,6 @@ TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -453,6 +451,11 @@ TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TRANGE_Stream **stream, double *outReal )
+{
+   return TA_TRANGE_OpenInternal( inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

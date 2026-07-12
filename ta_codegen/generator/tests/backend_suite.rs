@@ -6421,15 +6421,16 @@ fn test_c_ma_dispatch_stream_section() {
             c.contains(&format!("case ENUM_CASE(MAType, TA_MAType_{}, {label}):", label.to_uppercase())),
             "supported arm case label for {label}"
         );
-        assert!(c.contains(&format!("{callee}_Open(")), "sub open for {callee}");
+        assert!(c.contains(&format!("{callee}_OpenInternal(")), "sub open for {callee}");
         assert!(c.contains(&format!("{callee}_Update(")), "sub update for {callee}");
         assert!(c.contains(&format!("{callee}_Peek(")), "sub peek for {callee}");
         assert!(c.contains(&format!("{callee}_Close(")), "sub close for {callee}");
     }
-    // T3's fixed vfactor literal forwards positionally.
+    // T3's fixed vfactor literal forwards positionally; the dispatch threads
+    // its own startIdx into the arm's internal open.
     assert!(
-        c.contains("TA_T3_Open( optInTimePeriod, 0.7, inReal, historyLen"),
-        "T3 arm forwards the 0.7 vfactor literal"
+        c.contains("TA_T3_OpenInternal( optInTimePeriod, 0.7, inReal, startIdx, historyLen"),
+        "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
     // Unsupported arms reject at Open and never open a sub-stream.
     assert!(
@@ -6475,9 +6476,9 @@ fn test_c_stoch_composed_stream_section() {
 
     // Open: sub0 opens on the RAW series strictly BEFORE the in-place
     // smoothing call; sub1 after it, before the %D call.
-    let sub0 = stream.find("subRc = TA_MA_Open( optInSlowK_Period, optInSlowK_MAType, &tempBuffer[subOff]").expect("sub0 open");
+    let sub0 = stream.find("subRc = TA_MA_OpenInternal( optInSlowK_Period, optInSlowK_MAType, tempBuffer").expect("sub0 open");
     let ma1 = stream.find("retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
-    let sub1 = stream.find("subRc = TA_MA_Open( optInSlowD_Period, optInSlowD_MAType, &tempBuffer[subOff]").expect("sub1 open");
+    let sub1 = stream.find("subRc = TA_MA_OpenInternal( optInSlowD_Period, optInSlowD_MAType, tempBuffer").expect("sub1 open");
     let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
     assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
 

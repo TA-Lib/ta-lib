@@ -147,6 +147,57 @@ pub fn open_signature(func: &FuncDef) -> String {
     )
 }
 
+/// Internal `OpenInternal` prototype (no trailing `;`). This is the real
+/// worker: it takes an extra `startIdx` — the bar within the history buffer at
+/// which warm-up begins (0 = warm from the very first bar). The public `Open`
+/// is a thin wrapper that calls this with 0; only generated code (composed
+/// functions opening a sub-stream) passes a non-zero startIdx, handing the sub
+/// the FULL buffer from bar 0 so it seeds itself exactly as its batch would —
+/// including MA types that seed from the absolute origin (`inReal[0]`) under
+/// Metastock/Tradestation. The seeding stays inside each callee's own body; the
+/// composer never reasons about MA types. Kept out of the public header so the
+/// public API stays simple and this entry point can grow new knobs internally.
+pub fn open_internal_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    let mut history = String::new();
+    for a in streaming::input_array_names(func) {
+        let _ = write!(history, "const double {a}[], ");
+    }
+    // Uses `struct TA_<n>_Stream` (not the typedef) so the internal header does
+    // not depend on ta_func.h being included first. The tag is forward-declared
+    // at file scope in the internal header, so this refers to the same struct as
+    // the definition (a bare `struct X` first seen in a prototype would otherwise
+    // get prototype scope and collide).
+    format!(
+        "TA_RetCode TA_{n}_OpenInternal( {}{}int startIdx, int historyLen, struct TA_{n}_Stream **stream, {} )",
+        opt_params_sig(func),
+        history,
+        out_params_sig(func)
+    )
+}
+
+/// Emit the public `Open` as a thin wrapper delegating to `OpenInternal` with
+/// startIdx = 0 (the standalone/public default).
+fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
+    let n = uname(func);
+    let mut fwd = String::new();
+    for p in &func.optional_inputs {
+        let _ = write!(fwd, "{}, ", p.name);
+    }
+    for a in streaming::input_array_names(func) {
+        let _ = write!(fwd, "{a}, ");
+    }
+    let outs: String = func
+        .outputs
+        .iter()
+        .map(|out| out.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "   return TA_{n}_OpenInternal( {fwd}0, historyLen, stream, {outs} );");
+    let _ = writeln!(o, "}}\n");
+}
+
 /// Public `Update` prototype (no trailing `;`).
 pub fn update_signature(func: &FuncDef) -> String {
     let n = uname(func);
@@ -760,12 +811,6 @@ fn emit_composed_sub_open(
         let _ = write!(s, "{}, ", render_expression(a, registry, helpers, counter));
         s
     });
-    let lb_args: String = sub
-        .opt_args
-        .iter()
-        .map(|a| render_expression(a, registry, helpers, counter))
-        .collect::<Vec<_>>()
-        .join(", ");
     let s_arg = render_expression(
         &streaming::rewrite_expr(&sub.s_arg, open_map),
         registry,
@@ -778,18 +823,21 @@ fn emit_composed_sub_open(
         helpers,
         counter,
     );
-    // One `&src[subOff]` per callee input (caller outputs live in the scratch
-    // arrays; materialized intermediates and bar inputs keep their name).
+    // One source pointer per callee input, from bar 0 (caller outputs live in
+    // the scratch arrays; materialized intermediates and bar inputs keep their
+    // name). The sub sees the FULL history from the origin and warms up at the
+    // sub-call's own startIdx, so it seeds exactly as its batch would — the
+    // seeding (incl. absolute-origin MA types under Metastock) stays inside the
+    // callee's own Open, no anchor arithmetic here.
     let src_ptrs: String = sub
         .srcs
         .iter()
         .map(|src| {
-            let base = if outputs.contains(src) {
+            if outputs.contains(src) {
                 format!("sc_{src}")
             } else {
                 src.clone()
-            };
-            format!("&{base}[subOff]")
+            }
         })
         .collect::<Vec<_>>()
         .join(", ");
@@ -799,18 +847,15 @@ fn emit_composed_sub_open(
         .join(", ");
     let _ = writeln!(
         o,
-        "      /* Sub-stream {si}: {} over `{}` — the same series the",
+        "      /* Sub-stream {si}: {} over `{}`, warmed from bar 0 up to the",
         sub.callee,
         sub.srcs.join(", ")
     );
-    let _ = writeln!(o, "       * batch call below consumes, anchored at its seeding point. */");
+    let _ = writeln!(o, "       * sub-call's own startIdx (the seeding point). */");
     let _ = writeln!(o, "      {{");
-    let _ = writeln!(o, "         int subOff;");
-    let _ = writeln!(o, "         subOff = ({s_arg}) - {cpfx}_Lookback( {lb_args} );");
-    let _ = writeln!(o, "         if( subOff < 0 ) subOff = 0;");
     let _ = writeln!(
         o,
-        "         subRc = {cpfx}_Open( {opt_str}{src_ptrs}, ({e_arg}) - subOff + 1, &sub{si}, {out_dummies} );"
+        "         subRc = {cpfx}_OpenInternal( {opt_str}{src_ptrs}, ({s_arg}), ({e_arg}) + 1, &sub{si}, {out_dummies} );"
     );
     let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
     let _ = writeln!(o, "         {{");
@@ -853,9 +898,8 @@ fn emit_composed_open(
     counter: &Cell<usize>,
 ) {
     let n = uname(func);
-    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
-    let _ = writeln!(o, "   int startIdx;");
     let _ = writeln!(o, "   int endIdx;");
     let _ = writeln!(o, "   int dummyBegIdx;");
     let _ = writeln!(o, "   int dummyNBElement;");
@@ -870,8 +914,8 @@ fn emit_composed_open(
 
     emit_open_validation(o, func, outputs, inputs);
 
-    let _ = writeln!(o, "\n   startIdx = 0;");
-    let _ = writeln!(o, "   endIdx = historyLen - 1;");
+    // startIdx arrives as a parameter (0 for standalone opens).
+    let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
     let _ = writeln!(o, "   dummyBegIdx = 0;");
     let _ = writeln!(o, "   dummyNBElement = 0;");
     let _ = writeln!(o, "   subRc = TA_SUCCESS;");
@@ -1020,6 +1064,7 @@ fn emit_composed_open(
     let _ = writeln!(o, "      *stream = sp;");
     let _ = writeln!(o, "      return TA_SUCCESS;");
     let _ = writeln!(o, "   }}\n}}\n");
+    emit_open_wrapper(o, func);
 }
 
 /// The composed-Open expression mapping: out-meta pointers to the dummies —
@@ -1227,7 +1272,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "}};\n");
 
     // --- Open ----------------------------------------------------------------
-    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -1239,6 +1284,7 @@ fn emit_dispatch(
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   (void)startIdx;");
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
     let _ = writeln!(
         o,
@@ -1290,7 +1336,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
         let _ = writeln!(
             o,
-            "         retCode = {cp}_Open( {opt_str}{bar_args}, historyLen, &sub, {out_args} );",
+            "         retCode = {cp}_OpenInternal( {opt_str}{bar_args}, startIdx, historyLen, &sub, {out_args} );",
         );
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
@@ -1318,6 +1364,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    emit_open_wrapper(o, func);
 
     // --- Update / Peek ---------------------------------------------------------
     let identity_handle_cond =
@@ -1603,12 +1650,11 @@ fn emit_open(
 ) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
-    let _ = writeln!(o, "{}\n{{", open_signature(func));
+    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
 
     // --- declarations -------------------------------------------------------
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     emit_circ_hoist(o, func, model);
-    let _ = writeln!(o, "   int startIdx;");
     let _ = writeln!(o, "   int endIdx;");
     let _ = writeln!(o, "   int dummyBegIdx;");
     let _ = writeln!(o, "   int dummyNBElement;");
@@ -1627,8 +1673,9 @@ fn emit_open(
     emit_open_validation(o, func, &model.outputs, &inputs);
 
     // --- initialization (after defaults are substituted) ---------------------
-    let _ = writeln!(o, "\n   startIdx = 0;");
-    let _ = writeln!(o, "   endIdx = historyLen - 1;");
+    // startIdx arrives as a parameter (0 for standalone opens; the sub-call's
+    // own startIdx when a composed function opens this as a sub-stream).
+    let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
     let _ = writeln!(o, "   dummyBegIdx = 0;");
     let _ = writeln!(o, "   dummyNBElement = 0;");
     for out in &model.outputs {
@@ -1684,6 +1731,7 @@ fn emit_open(
     emit_circ_capture(o, model, &n);
     emit_open_tail(o, func, model);
     let _ = writeln!(o, "   }}\n}}\n");
+    emit_open_wrapper(o, func);
 }
 
 /// Circ capture: allocate + copy the live batch buffers (contents AND

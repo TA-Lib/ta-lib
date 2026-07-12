@@ -427,7 +427,7 @@ struct TA_MA_Stream {
    void *sub;
 };
 
-TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_MA_Stream **stream, double *outReal )
+TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_MA_Stream **stream, double *outReal )
 {
    struct TA_MA_Stream *sp;
    TA_RetCode retCode;
@@ -436,6 +436,7 @@ TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, co
    *stream = NULL;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
+   (void)startIdx;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 30;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
@@ -463,49 +464,49 @@ TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, co
    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
       {
          TA_SMA_Stream *sub = NULL;
-         retCode = TA_SMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_SMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
       {
          TA_EMA_Stream *sub = NULL;
-         retCode = TA_EMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_EMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
       {
          TA_WMA_Stream *sub = NULL;
-         retCode = TA_WMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_WMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
       {
          TA_DEMA_Stream *sub = NULL;
-         retCode = TA_DEMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_DEMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       {
          TA_TEMA_Stream *sub = NULL;
-         retCode = TA_TEMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_TEMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       {
          TA_KAMA_Stream *sub = NULL;
-         retCode = TA_KAMA_Open( optInTimePeriod, inReal, historyLen, &sub, outReal );
+         retCode = TA_KAMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       {
          TA_T3_Stream *sub = NULL;
-         retCode = TA_T3_Open( optInTimePeriod, 0.7, inReal, historyLen, &sub, outReal );
+         retCode = TA_T3_OpenInternal( optInTimePeriod, 0.7, inReal, startIdx, historyLen, &sub, outReal );
          sp->sub = sub;
       }
       break;
@@ -523,6 +524,11 @@ TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, co
    }
    *stream = sp;
    return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_MA_Stream **stream, double *outReal )
+{
+   return TA_MA_OpenInternal( optInTimePeriod, optInMAType, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )

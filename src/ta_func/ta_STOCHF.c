@@ -928,10 +928,9 @@ static void TA_STOCHF_StreamStep( struct TA_STOCHF_Stream *sp, double inHigh, do
    *outFastD = cur_outFastD;
 }
 
-TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCHF_Stream **stream, double *outFastK, double *outFastD )
+TA_RetCode TA_STOCHF_OpenInternal( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_STOCHF_Stream **stream, double *outFastK, double *outFastD )
 {
    struct TA_STOCHF_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -956,7 +955,6 @@ TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Peri
    if( (int)optInFastD_MAType == (int)0x80000000 )
       optInFastD_MAType = 0;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1150,13 +1148,10 @@ TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Peri
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      /* Sub-stream 0: ma over `tempBuffer` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (0) - TA_MA_Lookback( optInFastD_Period, optInFastD_MAType );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_MA_Open( optInFastD_Period, optInFastD_MAType, &tempBuffer[subOff], (outIdx - 1) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( optInFastD_Period, optInFastD_MAType, tempBuffer, (0), (outIdx - 1) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             if( bufferIsAllocated )
@@ -1253,6 +1248,11 @@ TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Peri
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCHF_Stream **stream, double *outFastK, double *outFastD )
+{
+   return TA_STOCHF_OpenInternal( optInFastK_Period, optInFastD_Period, optInFastD_MAType, inHigh, inLow, inClose, 0, historyLen, stream, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )

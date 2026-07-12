@@ -87,11 +87,10 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Trap the case where no smoothing is needed. */
-      if( optInTimePeriod <= 1 ) {
-         /* No smoothing needed. Just do a TRANGE. */
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
+       * so the single general path handles every period >= 1.
+       */
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
@@ -231,9 +230,6 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -343,9 +339,6 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -443,9 +436,6 @@
       }
       if( startIdx > endIdx ) {
          return RetCode.Success ;
-      }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;

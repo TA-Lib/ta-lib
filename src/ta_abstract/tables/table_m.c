@@ -212,7 +212,7 @@ DEF_FUNCTION( MACDEXT,
               TA_GroupId_MomentumIndicators,
               "MACD with controllable MA type",
               "MacdExt",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MACDEXT END */
 
@@ -263,7 +263,7 @@ DEF_FUNCTION( MACDFIX,
               TA_GroupId_MomentumIndicators,
               "Moving Average Convergence/Divergence Fix 12/26",
               "MacdFix",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* MACDFIX END */
 

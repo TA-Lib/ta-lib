@@ -239,10 +239,9 @@ static void TA_BOP_StreamStep( struct TA_BOP_Stream *sp, double inOpen, double i
    }
 }
 
-TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal )
+TA_RetCode TA_BOP_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_BOP_Stream **stream, double *outReal )
 {
    struct TA_BOP_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -253,7 +252,6 @@ TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[],
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -288,6 +286,11 @@ TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[],
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal )
+{
+   return TA_BOP_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )

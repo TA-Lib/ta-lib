@@ -510,10 +510,9 @@ static void TA_DEMA_StreamStep( struct TA_DEMA_Stream *sp, double inReal, double
    *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
 }
 
-TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_DEMA_Stream **stream, double *outReal )
+TA_RetCode TA_DEMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_DEMA_Stream **stream, double *outReal )
 {
    struct TA_DEMA_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -528,7 +527,6 @@ TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], 
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -686,6 +684,11 @@ TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_DEMA_Stream **stream, double *outReal )
+{
+   return TA_DEMA_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, double *outReal )

@@ -176,10 +176,9 @@ static void TA_DIV_StreamStep( struct TA_DIV_Stream *sp, double inReal0, double 
    *outReal= inReal0 / inReal1;
 }
 
-TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[], int historyLen, TA_DIV_Stream **stream, double *outReal )
+TA_RetCode TA_DIV_OpenInternal( const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_DIV_Stream **stream, double *outReal )
 {
    struct TA_DIV_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -190,7 +189,6 @@ TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[
    if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -215,6 +213,11 @@ TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[], int historyLen, TA_DIV_Stream **stream, double *outReal )
+{
+   return TA_DIV_OpenInternal( inReal0, inReal1, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_DIV_Update( TA_DIV_Stream *stream, double inReal0, double inReal1, double *outReal )

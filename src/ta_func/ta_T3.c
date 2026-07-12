@@ -727,10 +727,9 @@ static void TA_T3_StreamStep( struct TA_T3_Stream *sp, double inReal, double *ou
    *outReal= sp->c1 * sp->e6 + sp->c2 * sp->e5 + sp->c3 * sp->e4 + sp->c4 * sp->e3;
 }
 
-TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, const double inReal[], int historyLen, TA_T3_Stream **stream, double *outReal )
+TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const double inReal[], int startIdx, int historyLen, struct TA_T3_Stream **stream, double *outReal )
 {
    struct TA_T3_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -749,7 +748,6 @@ TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, cons
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -951,6 +949,11 @@ TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, cons
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, const double inReal[], int historyLen, TA_T3_Stream **stream, double *outReal )
+{
+   return TA_T3_OpenInternal( optInTimePeriod, optInVFactor, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )

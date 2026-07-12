@@ -367,10 +367,9 @@ static void TA_ADXR_StreamStep( struct TA_ADXR_Stream *sp, double inHigh, double
    *outReal = cur_outReal;
 }
 
-TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADXR_Stream **stream, double *outReal )
+TA_RetCode TA_ADXR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ADXR_Stream **stream, double *outReal )
 {
    struct TA_ADXR_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -388,7 +387,6 @@ TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], 
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -448,13 +446,10 @@ TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], 
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      /* Sub-stream 0: adx over `inHigh, inLow, inClose` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx - (optInTimePeriod - 1)) - TA_ADX_Lookback( optInTimePeriod );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_ADX_Open( optInTimePeriod, &inHigh[subOff], &inLow[subOff], &inClose[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_ADX_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(adx);
@@ -505,6 +500,11 @@ TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADXR_Stream **stream, double *outReal )
+{
+   return TA_ADXR_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

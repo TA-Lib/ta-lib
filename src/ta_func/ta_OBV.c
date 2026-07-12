@@ -252,10 +252,9 @@ static void TA_OBV_StreamStep( struct TA_OBV_Stream *sp, double inReal, double i
    sp->prevReal = tempReal;
 }
 
-TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[], int historyLen, TA_OBV_Stream **stream, double *outReal )
+TA_RetCode TA_OBV_OpenInternal( const double inReal[], const double inVolume[], int startIdx, int historyLen, struct TA_OBV_Stream **stream, double *outReal )
 {
    struct TA_OBV_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -266,7 +265,6 @@ TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[
    if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -308,6 +306,11 @@ TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[], int historyLen, TA_OBV_Stream **stream, double *outReal )
+{
+   return TA_OBV_OpenInternal( inReal, inVolume, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )

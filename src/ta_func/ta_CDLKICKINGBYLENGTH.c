@@ -591,10 +591,9 @@ static void TA_CDLKICKINGBYLENGTH_StreamStep( struct TA_CDLKICKINGBYLENGTH_Strea
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLKICKINGBYLENGTH_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLKICKINGBYLENGTH_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLKICKINGBYLENGTH_Stream **stream, int *outInteger )
 {
    struct TA_CDLKICKINGBYLENGTH_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -605,7 +604,6 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( const double inOpen[], const d
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -820,6 +818,11 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( const double inOpen[], const d
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLKICKINGBYLENGTH_Stream **stream, int *outInteger )
+{
+   return TA_CDLKICKINGBYLENGTH_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Update( TA_CDLKICKINGBYLENGTH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

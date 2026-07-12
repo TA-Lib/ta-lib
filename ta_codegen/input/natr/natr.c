@@ -82,14 +82,12 @@ TA_RetCode natr(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* Trap the case where no smoothing is needed. */
-   if( optInTimePeriod <= 1 )
-   {
-      /* No smoothing needed. Just do a TRANGE. */
-      return trange( startIdx, endIdx,
-         inHigh, inLow, inClose,
-         outBegIdx, outNBElement, outReal );
-   }
+   /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+    * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+    * At period 1 the output is left as that raw True Range (unnormalized),
+    * matching the historical TRANGE-delegation behavior; every period > 1 is
+    * normalized by the close. The single general path handles all period >= 1.
+    */
 
    /* The True Range of each bar is computed inline in a single
     * pass. No temporary buffer is needed.
@@ -180,11 +178,19 @@ TA_RetCode natr(int startIdx, int endIdx,
     * provided outReal.
     */
    outIdx = 1;
-   tempValue = inClose[startIdx];
-   if( !TA_IS_ZERO(tempValue) )
-      outReal[0] = (prevATR/tempValue)*100.0;
+   if( optInTimePeriod <= 1 )
+   {
+      /* No smoothing: emit the raw True Range (unnormalized). */
+      outReal[0] = prevATR;
+   }
    else
-      outReal[0] = 0.0;
+   {
+      tempValue = inClose[startIdx];
+      if( !TA_IS_ZERO(tempValue) )
+         outReal[0] = (prevATR/tempValue)*100.0;
+      else
+         outReal[0] = 0.0;
+   }
 
    /* Now do the number of requested NATR. */
    nbATR = (endIdx - startIdx)+1;
@@ -208,11 +214,19 @@ TA_RetCode natr(int startIdx, int endIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
-      if( !TA_IS_ZERO(tempValue) )
-         outReal[outIdx] = (prevATR/tempValue)*100.0;
+      if( optInTimePeriod <= 1 )
+      {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         outReal[outIdx] = prevATR;
+      }
       else
-         outReal[outIdx] = 0.0;
+      {
+         tempValue = inClose[today];
+         if( !TA_IS_ZERO(tempValue) )
+            outReal[outIdx] = (prevATR/tempValue)*100.0;
+         else
+            outReal[outIdx] = 0.0;
+      }
       outIdx++;
       today++;
    }

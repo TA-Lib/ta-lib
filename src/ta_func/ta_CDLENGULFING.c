@@ -342,10 +342,9 @@ static void TA_CDLENGULFING_StreamStep( struct TA_CDLENGULFING_Stream *sp, doubl
    sp->lag1_inClose = inClose;
 }
 
-TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLENGULFING_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLENGULFING_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLENGULFING_Stream **stream, int *outInteger )
 {
    struct TA_CDLENGULFING_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -356,7 +355,6 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double 
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -433,6 +431,11 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLENGULFING_Stream **stream, int *outInteger )
+{
+   return TA_CDLENGULFING_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

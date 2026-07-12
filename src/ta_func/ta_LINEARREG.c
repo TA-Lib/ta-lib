@@ -388,10 +388,9 @@ static void TA_LINEARREG_StreamStep( struct TA_LINEARREG_Stream *sp, double inRe
    }
 }
 
-TA_LIB_API TA_RetCode TA_LINEARREG_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_Stream **stream, double *outReal )
+TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_LINEARREG_Stream **stream, double *outReal )
 {
    struct TA_LINEARREG_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -406,7 +405,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Open( int optInTimePeriod, const double inRea
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -502,6 +500,11 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Open( int optInTimePeriod, const double inRea
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_LINEARREG_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_Stream **stream, double *outReal )
+{
+   return TA_LINEARREG_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_Update( TA_LINEARREG_Stream *stream, double inReal, double *outReal )

@@ -505,10 +505,9 @@ static void TA_CDLSHORTLINE_StreamStep( struct TA_CDLSHORTLINE_Stream *sp, doubl
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSHORTLINE_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLSHORTLINE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLSHORTLINE_Stream **stream, int *outInteger )
 {
    struct TA_CDLSHORTLINE_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -519,7 +518,6 @@ TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( const double inOpen[], const double 
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -663,6 +661,11 @@ TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( const double inOpen[], const double 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSHORTLINE_Stream **stream, int *outInteger )
+{
+   return TA_CDLSHORTLINE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Update( TA_CDLSHORTLINE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

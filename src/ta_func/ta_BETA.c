@@ -804,10 +804,9 @@ static void TA_BETA_StreamStep( struct TA_BETA_Stream *sp, double inReal0, doubl
    }
 }
 
-TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_BETA_Stream **stream, double *outReal )
+TA_RetCode TA_BETA_OpenInternal( int optInTimePeriod, const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_BETA_Stream **stream, double *outReal )
 {
    struct TA_BETA_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -822,7 +821,6 @@ TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[],
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1022,6 +1020,11 @@ TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[],
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_BETA_Stream **stream, double *outReal )
+{
+   return TA_BETA_OpenInternal( optInTimePeriod, inReal0, inReal1, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal )

@@ -552,6 +552,7 @@
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4474,6 +4475,9 @@
 		<CamelCaseName>MacdExt</CamelCaseName>
 		<ShortDescription>MACD with controllable MA type</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4571,6 +4575,9 @@
 		<CamelCaseName>MacdFix</CamelCaseName>
 		<ShortDescription>Moving Average Convergence/Divergence Fix 12/26</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -5369,6 +5376,7 @@
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

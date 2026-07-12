@@ -230,11 +230,11 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        // Trap the case where no smoothing is needed.
-        if optInTimePeriod <= 1 {
-            // No smoothing needed. Just do a TRANGE.
-            return self.trange_unguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-        }
+        // Period 1 needs no smoothing: the Wilder recursion below degenerates
+        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+        // At period 1 the output is left as that raw True Range (unnormalized),
+        // matching the historical TRANGE-delegation behavior; every period > 1 is
+        // normalized by the close. The single general path handles all period >= 1.
         // The True Range of each bar is computed inline in a single
         // pass. No temporary buffer is needed.
         //
@@ -312,11 +312,16 @@ impl Core {
         // Now start to write the final NATR in the caller
         // provided outReal.
         outIdx = 1;
-        tempValue = inClose[startIdx];
-        if !((tempValue).abs() < 1e-14) {
-            outReal[0] = prevATR / tempValue * 100.0;
+        if optInTimePeriod <= 1 {
+            // No smoothing: emit the raw True Range (unnormalized).
+            outReal[0] = prevATR;
         } else {
-            outReal[0] = 0.0;
+            tempValue = inClose[startIdx];
+            if !((tempValue).abs() < 1e-14) {
+                outReal[0] = prevATR / tempValue * 100.0;
+            } else {
+                outReal[0] = 0.0;
+            }
         }
         // Now do the number of requested NATR.
         nbATR = endIdx - startIdx + 1;
@@ -338,11 +343,16 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            tempValue = inClose[today];
-            if !((tempValue).abs() < 1e-14) {
-                outReal[outIdx] = prevATR / tempValue * 100.0;
+            if optInTimePeriod <= 1 {
+                // No smoothing: emit the raw True Range (unnormalized).
+                outReal[outIdx] = prevATR;
             } else {
-                outReal[outIdx] = 0.0;
+                tempValue = inClose[today];
+                if !((tempValue).abs() < 1e-14) {
+                    outReal[outIdx] = prevATR / tempValue * 100.0;
+                } else {
+                    outReal[outIdx] = 0.0;
+                }
             }
             outIdx += 1;
             today += 1;
@@ -399,9 +409,6 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        if optInTimePeriod <= 1 {
-            return self.trange_unguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-        }
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
@@ -443,11 +450,15 @@ impl Core {
             i -= 1;
         }
         outIdx = 1;
-        tempValue = inClose[startIdx];
-        if !((tempValue).abs() < 1e-14) {
-            outReal[0] = prevATR / tempValue * 100.0;
+        if optInTimePeriod <= 1 {
+            outReal[0] = prevATR;
         } else {
-            outReal[0] = 0.0;
+            tempValue = inClose[startIdx];
+            if !((tempValue).abs() < 1e-14) {
+                outReal[0] = prevATR / tempValue * 100.0;
+            } else {
+                outReal[0] = 0.0;
+            }
         }
         nbATR = endIdx - startIdx + 1;
         while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
@@ -466,11 +477,15 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            tempValue = inClose[today];
-            if !((tempValue).abs() < 1e-14) {
-                outReal[outIdx] = prevATR / tempValue * 100.0;
+            if optInTimePeriod <= 1 {
+                outReal[outIdx] = prevATR;
             } else {
-                outReal[outIdx] = 0.0;
+                tempValue = inClose[today];
+                if !((tempValue).abs() < 1e-14) {
+                    outReal[outIdx] = prevATR / tempValue * 100.0;
+                } else {
+                    outReal[outIdx] = 0.0;
+                }
             }
             outIdx += 1;
             today += 1;

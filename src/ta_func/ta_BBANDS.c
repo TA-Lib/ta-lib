@@ -910,10 +910,9 @@ static void TA_BBANDS_StreamStep( struct TA_BBANDS_Stream *sp, double inReal, do
    *outRealLowerBand = cur_outRealLowerBand;
 }
 
-TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int historyLen, TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_BBANDS_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -940,7 +939,6 @@ TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, 
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -994,13 +992,10 @@ TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, 
          return TA_ALLOC_ERR;
       }
       /* Calculate the middle band moving average. */
-      /* Sub-stream 0: ma over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx) - TA_MA_Lookback( optInTimePeriod, optInMAType );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_MA_Open( optInTimePeriod, optInMAType, &inReal[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( optInTimePeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer1);
@@ -1021,13 +1016,10 @@ TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, 
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)dummyBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      /* Sub-stream 1: stddev over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = ((int)dummyBegIdx) - TA_STDDEV_Lookback( optInTimePeriod, 1.0 );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_STDDEV_Open( optInTimePeriod, 1.0, &inReal[subOff], (endIdx) - subOff + 1, &sub1, &subOpenDummy );
+         subRc = TA_STDDEV_OpenInternal( optInTimePeriod, 1.0, inReal, ((int)dummyBegIdx), (endIdx) + 1, &sub1, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer1);
@@ -1104,6 +1096,11 @@ TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int historyLen, TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   return TA_BBANDS_OpenInternal( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, inReal, 0, historyLen, stream, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )

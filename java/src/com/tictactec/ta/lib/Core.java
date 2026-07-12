@@ -3930,11 +3930,10 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Trap the case where no smoothing is needed. */
-      if( optInTimePeriod <= 1 ) {
-         /* No smoothing needed. Just do a TRANGE. */
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
+       * so the single general path handles every period >= 1.
+       */
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
@@ -4074,9 +4073,6 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -4186,9 +4182,6 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -4286,9 +4279,6 @@ public class Core {
       }
       if( startIdx > endIdx ) {
          return RetCode.Success ;
-      }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
@@ -41915,14 +41905,16 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071126 MF,CC  Inline the fixed-26/12 MACD lockstep pass (was a
+ *                delegation to macd(...,0,0,...)); bit-exact, streamable.
  */
 
    public int macdFixLookback( int optInSignalPeriod )
@@ -41950,6 +41942,21 @@ public class Core {
                            double outMACDSignal[],
                            double outMACDHist[] )
    {
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
+      double slowK = 0;
+      double fastK = 0;
+      double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int lookbackSignal = 0;
+      int optInFastPeriod = 0;
+      int optInSlowPeriod = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -41964,9 +41971,150 @@ public class Core {
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
       }
-      return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
-      /* 0 indicate fix 12 == 0.15  for optInFastPeriod */
-      /* 0 indicate fix 26 == 0.075 for optInSlowPeriod */
+      optInFastPeriod = 12;
+      optInSlowPeriod = 26;
+      /* MACDFIX is the fixed 26/12 MACD: the fast/slow periods and their
+       * smoothing factors are hardcoded (the general MACD selects these
+       * exact values when its fast/slow period arguments are 0). Only the
+       * signal period is caller-provided.
+       *    Fix 12 -> fastK = 0.15
+       *    Fix 26 -> slowK = 0.075
+       */
+      fastK = 0.15;
+      slowK = 0.075;
+      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      lookbackSignal = emaLookback(optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      lookbackTotal = lookbackSignal;
+      lookbackTotal += emaLookback(26);
+      /* fixed slow period */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* Everything is computed in a single lockstep pass: each bar
+       * advances the fast and slow EMA (two independent recursions),
+       * their difference is the MACD line, and each MACD-line value
+       * is immediately fed into the signal EMA. No temporary buffers.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum of
+       *    its first 'period' inputs, accumulated from 0.0 in input
+       *    order, divided by the period. The fast and slow seed
+       *    windows end on the same bar. The signal EMA is seeded the
+       *    same way from the first 'signal period' MACD-line values.
+       *  - Metastock compatibility: the fast and slow EMA are seeded
+       *    from inReal[0], the signal EMA from the first MACD-line
+       *    value.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (an output == inReal) is supported: outputs at
+       * [outIdx] are written only after inReal[startIdx+outIdx] was
+       * read.
+       */
+      if( this.compatibility == Compatibility.Default ) {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars. The fast window is the tail of the
+          * slow window: consume the leading slow-only bars first,
+          * then accumulate both over the shared bars.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
+      } else {
+         /* Metastock/Tradestation: seed the fast and slow EMA with
+          * inReal[0], advance them in lockstep up to the first
+          * MACD-line bar, then seed the signal EMA with the first
+          * MACD-line value.
+          */
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      }
+      /* Advance everything in lockstep through the unstable period
+       * of the signal EMA, up to the first output bar.
+       */
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      }
+      /* Stable zone: keep advancing in lockstep and write the three
+       * outputs.
+       */
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
+      }
+      /* All done! Indicate the output limits and return success. */
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
    }
    public RetCode macdFixUnguarded( int startIdx,
                                     int endIdx,
@@ -41978,7 +42126,106 @@ public class Core {
                                     double outMACDSignal[],
                                     double outMACDHist[] )
    {
-      return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
+      double slowK = 0;
+      double fastK = 0;
+      double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int lookbackSignal = 0;
+      int optInFastPeriod = 0;
+      int optInSlowPeriod = 0;
+      optInFastPeriod = 12;
+      optInSlowPeriod = 26;
+      fastK = 0.15;
+      slowK = 0.075;
+      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackTotal = lookbackSignal;
+      lookbackTotal += emaLookback(26);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
+      } else {
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      }
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      }
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
    }
    public RetCode macdFix( int startIdx,
                            int endIdx,
@@ -41990,6 +42237,21 @@ public class Core {
                            double outMACDSignal[],
                            double outMACDHist[] )
    {
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
+      double slowK = 0;
+      double fastK = 0;
+      double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int lookbackSignal = 0;
+      int optInFastPeriod = 0;
+      int optInSlowPeriod = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -42004,7 +42266,91 @@ public class Core {
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
       }
-      return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+      optInFastPeriod = 12;
+      optInSlowPeriod = 26;
+      fastK = 0.15;
+      slowK = 0.075;
+      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackTotal = lookbackSignal;
+      lookbackTotal += emaLookback(26);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[today];
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
+      } else {
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      }
+      while( today <= startIdx ) {
+         tempReal = (double)inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      }
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = (double)inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
    }
    public RetCode macdFixUnguarded( int startIdx,
                                     int endIdx,
@@ -42016,7 +42362,106 @@ public class Core {
                                     double outMACDSignal[],
                                     double outMACDHist[] )
    {
-      return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
+      double slowK = 0;
+      double fastK = 0;
+      double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int lookbackSignal = 0;
+      int optInFastPeriod = 0;
+      int optInSlowPeriod = 0;
+      optInFastPeriod = 12;
+      optInSlowPeriod = 26;
+      fastK = 0.15;
+      slowK = 0.075;
+      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackTotal = lookbackSignal;
+      lookbackTotal += emaLookback(26);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( this.compatibility == Compatibility.Default ) {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[today];
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
+         prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
+      } else {
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = (tempReal - prevFast) * fastK + prevFast;
+            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      }
+      while( today <= startIdx ) {
+         tempReal = (double)inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      }
+      outMACD[0] = macdValue;
+      outMACDSignal[0] = prevSignal;
+      outMACDHist[0] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = (double)inReal[today++];
+         prevFast = (tempReal - prevFast) * fastK + prevFast;
+         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         outMACD[outIdx] = macdValue;
+         outMACDSignal[outIdx] = prevSignal;
+         outMACDHist[outIdx] = macdValue - prevSignal;
+         outIdx += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
    }
 /* List of contributors:
  *
@@ -49117,11 +49562,12 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Trap the case where no smoothing is needed. */
-      if( optInTimePeriod <= 1 ) {
-         /* No smoothing needed. Just do a TRANGE. */
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+       * At period 1 the output is left as that raw True Range (unnormalized),
+       * matching the historical TRANGE-delegation behavior; every period > 1 is
+       * normalized by the close. The single general path handles all period >= 1.
+       */
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
@@ -49204,11 +49650,16 @@ public class Core {
        * provided outReal.
        */
       outIdx = 1;
-      tempValue = inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       /* Now do the number of requested NATR. */
       nbATR = endIdx - startIdx + 1;
@@ -49230,11 +49681,16 @@ public class Core {
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            /* No smoothing: emit the raw True Range (unnormalized). */
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -49275,9 +49731,6 @@ public class Core {
       }
       if( startIdx > endIdx ) {
          return RetCode.Success ;
-      }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
@@ -49320,11 +49773,15 @@ public class Core {
          i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -49343,11 +49800,15 @@ public class Core {
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -49400,9 +49861,6 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -49444,11 +49902,15 @@ public class Core {
          i -= 1;
       }
       outIdx = 1;
-      tempValue = (double)inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = (double)inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -49467,11 +49929,15 @@ public class Core {
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = (double)inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = (double)inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -49513,9 +49979,6 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -49557,11 +50020,15 @@ public class Core {
          i -= 1;
       }
       outIdx = 1;
-      tempValue = (double)inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = (double)inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -49580,11 +50047,15 @@ public class Core {
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = (double)inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = (double)inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;

@@ -201,10 +201,9 @@ static void TA_AVGPRICE_StreamStep( struct TA_AVGPRICE_Stream *sp, double inOpen
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
 }
 
-TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal )
+TA_RetCode TA_AVGPRICE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_AVGPRICE_Stream **stream, double *outReal )
 {
    struct TA_AVGPRICE_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -215,7 +214,6 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHi
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -242,6 +240,11 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHi
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal )
+{
+   return TA_AVGPRICE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )

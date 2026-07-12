@@ -706,6 +706,26 @@ TA_LIB_API TA_RetCode TA_S_ATR( int    startIdx,
 TA_LIB_API int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
+
+/*
+ * Streaming API for TA_ATR — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_ATR_Stream TA_ATR_Stream;
+
+TA_LIB_API TA_RetCode TA_ATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ATR_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream );
+
 /*
  * TA_AVGDEV - Average Deviation
  * 
@@ -5383,6 +5403,26 @@ TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 
                                              int           optInSignalPeriod, /* From 1 to 100000 */
                                              TA_MAType     optInSignalMAType );
 
+
+/*
+ * Streaming API for TA_MACDEXT — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MACDEXT_Stream TA_MACDEXT_Stream;
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Open( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, const double inReal[], int historyLen, TA_MACDEXT_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream );
+
 /*
  * TA_MACDFIX - Moving Average Convergence/Divergence Fix 12/26
  * 
@@ -5418,6 +5458,26 @@ TA_LIB_API TA_RetCode TA_S_MACDFIX( int    startIdx,
 
 TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_MACDFIX — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MACDFIX_Stream TA_MACDFIX_Stream;
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Open( int optInSignalPeriod, const double inReal[], int historyLen, TA_MACDFIX_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Peek( const TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Close( TA_MACDFIX_Stream *stream );
 
 /*
  * TA_MAMA - MESA Adaptive Moving Average
@@ -6213,6 +6273,26 @@ TA_LIB_API TA_RetCode TA_S_NATR( int    startIdx,
 
 TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_NATR — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_NATR_Stream TA_NATR_Stream;
+
+TA_LIB_API TA_RetCode TA_NATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_NATR_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NATR_Close( TA_NATR_Stream *stream );
 
 /*
  * TA_OBV - On Balance Volume

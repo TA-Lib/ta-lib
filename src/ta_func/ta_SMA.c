@@ -358,10 +358,9 @@ static void TA_SMA_StreamStep( struct TA_SMA_Stream *sp, double inReal, double *
    }
 }
 
-TA_LIB_API TA_RetCode TA_SMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_SMA_Stream **stream, double *outReal )
+TA_RetCode TA_SMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_SMA_Stream **stream, double *outReal )
 {
    struct TA_SMA_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -376,7 +375,6 @@ TA_LIB_API TA_RetCode TA_SMA_Open( int optInTimePeriod, const double inReal[], i
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -461,6 +459,11 @@ TA_LIB_API TA_RetCode TA_SMA_Open( int optInTimePeriod, const double inReal[], i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_SMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_SMA_Stream **stream, double *outReal )
+{
+   return TA_SMA_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, double *outReal )

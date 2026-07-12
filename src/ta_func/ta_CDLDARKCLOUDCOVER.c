@@ -446,10 +446,9 @@ static void TA_CDLDARKCLOUDCOVER_StreamStep( struct TA_CDLDARKCLOUDCOVER_Stream 
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDARKCLOUDCOVER_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLDARKCLOUDCOVER_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLDARKCLOUDCOVER_Stream **stream, int *outInteger )
 {
    struct TA_CDLDARKCLOUDCOVER_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -464,7 +463,6 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( double optInPenetration, const 
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -596,6 +594,11 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( double optInPenetration, const 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDARKCLOUDCOVER_Stream **stream, int *outInteger )
+{
+   return TA_CDLDARKCLOUDCOVER_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Update( TA_CDLDARKCLOUDCOVER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

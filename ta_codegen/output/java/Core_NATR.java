@@ -104,11 +104,12 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Trap the case where no smoothing is needed. */
-      if( optInTimePeriod <= 1 ) {
-         /* No smoothing needed. Just do a TRANGE. */
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+       * At period 1 the output is left as that raw True Range (unnormalized),
+       * matching the historical TRANGE-delegation behavior; every period > 1 is
+       * normalized by the close. The single general path handles all period >= 1.
+       */
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
@@ -191,11 +192,16 @@
        * provided outReal.
        */
       outIdx = 1;
-      tempValue = inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       /* Now do the number of requested NATR. */
       nbATR = endIdx - startIdx + 1;
@@ -217,11 +223,16 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            /* No smoothing: emit the raw True Range (unnormalized). */
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -262,9 +273,6 @@
       }
       if( startIdx > endIdx ) {
          return RetCode.Success ;
-      }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
@@ -307,11 +315,15 @@
          i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -330,11 +342,15 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -387,9 +403,6 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -431,11 +444,15 @@
          i -= 1;
       }
       outIdx = 1;
-      tempValue = (double)inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = (double)inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -454,11 +471,15 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = (double)inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = (double)inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;
@@ -500,9 +521,6 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod <= 1 ) {
-         return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
-      }
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -544,11 +562,15 @@
          i -= 1;
       }
       outIdx = 1;
-      tempValue = (double)inClose[startIdx];
-      if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR / tempValue * 100.0;
+      if( optInTimePeriod <= 1 ) {
+         outReal[0] = prevATR;
       } else {
-         outReal[0] = 0.0;
+         tempValue = (double)inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0] = 0.0;
+         }
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -567,11 +589,15 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         tempValue = (double)inClose[today];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR / tempValue * 100.0;
+         if( optInTimePeriod <= 1 ) {
+            outReal[outIdx] = prevATR;
          } else {
-            outReal[outIdx] = 0.0;
+            tempValue = (double)inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx] = 0.0;
+            }
          }
          outIdx += 1;
          today += 1;

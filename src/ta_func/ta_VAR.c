@@ -434,10 +434,9 @@ static void TA_VAR_StreamStep( struct TA_VAR_Stream *sp, double inReal, double *
    }
 }
 
-TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_VAR_Stream **stream, double *outReal )
+TA_RetCode TA_VAR_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_VAR_Stream **stream, double *outReal )
 {
    struct TA_VAR_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -454,7 +453,6 @@ TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -559,6 +557,11 @@ TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_VAR_Stream **stream, double *outReal )
+{
+   return TA_VAR_OpenInternal( optInTimePeriod, optInNbDev, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )

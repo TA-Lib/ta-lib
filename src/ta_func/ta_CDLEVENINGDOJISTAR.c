@@ -658,10 +658,9 @@ static void TA_CDLEVENINGDOJISTAR_StreamStep( struct TA_CDLEVENINGDOJISTAR_Strea
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLEVENINGDOJISTAR_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger )
 {
    struct TA_CDLEVENINGDOJISTAR_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -676,7 +675,6 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -880,6 +878,11 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger )
+{
+   return TA_CDLEVENINGDOJISTAR_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Update( TA_CDLEVENINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

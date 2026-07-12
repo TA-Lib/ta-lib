@@ -592,10 +592,9 @@ static void TA_AROON_StreamStep( struct TA_AROON_Stream *sp, double inHigh, doub
    sp->today += 1;
 }
 
-TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROON_Stream **stream, double *outAroonDown, double *outAroonUp )
+TA_RetCode TA_AROON_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_AROON_Stream **stream, double *outAroonDown, double *outAroonUp )
 {
    struct TA_AROON_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -611,7 +610,6 @@ TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[],
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -756,6 +754,11 @@ TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[],
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROON_Stream **stream, double *outAroonDown, double *outAroonUp )
+{
+   return TA_AROON_OpenInternal( optInTimePeriod, inHigh, inLow, 0, historyLen, stream, outAroonDown, outAroonUp );
 }
 
 TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )

@@ -654,10 +654,9 @@ static void TA_CDLABANDONEDBABY_StreamStep( struct TA_CDLABANDONEDBABY_Stream *s
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLABANDONEDBABY_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLABANDONEDBABY_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLABANDONEDBABY_Stream **stream, int *outInteger )
 {
    struct TA_CDLABANDONEDBABY_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -672,7 +671,6 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const d
    else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -875,6 +873,11 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const d
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLABANDONEDBABY_Stream **stream, int *outInteger )
+{
+   return TA_CDLABANDONEDBABY_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Update( TA_CDLABANDONEDBABY_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

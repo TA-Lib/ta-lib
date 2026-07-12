@@ -1370,10 +1370,9 @@ static void TA_ULTOSC_StreamStep( struct TA_ULTOSC_Stream *sp, double inHigh, do
    }
 }
 
-TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ULTOSC_Stream **stream, double *outReal )
+TA_RetCode TA_ULTOSC_OpenInternal( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ULTOSC_Stream **stream, double *outReal )
 {
    struct TA_ULTOSC_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -1396,7 +1395,6 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2
    else if( (int)optInTimePeriod3 < 1 || (int)optInTimePeriod3 > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1768,6 +1766,11 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ULTOSC_Stream **stream, double *outReal )
+{
+   return TA_ULTOSC_OpenInternal( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

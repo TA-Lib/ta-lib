@@ -1263,10 +1263,9 @@ static void TA_ADX_StreamStep( struct TA_ADX_Stream *sp, double inHigh, double i
    *outReal= sp->prevADX;
 }
 
-TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADX_Stream **stream, double *outReal )
+TA_RetCode TA_ADX_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ADX_Stream **stream, double *outReal )
 {
    struct TA_ADX_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -1281,7 +1280,6 @@ TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], c
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1683,6 +1681,11 @@ TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], c
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADX_Stream **stream, double *outReal )
+{
+   return TA_ADX_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADX_Update( TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

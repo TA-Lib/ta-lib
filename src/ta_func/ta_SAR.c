@@ -1067,10 +1067,9 @@ static void TA_SAR_StreamStep( struct TA_SAR_Stream *sp, double inHigh, double i
    }
 }
 
-TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int historyLen, TA_SAR_Stream **stream, double *outReal )
+TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_SAR_Stream **stream, double *outReal )
 {
    struct TA_SAR_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -1089,7 +1088,6 @@ TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum
    else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1371,6 +1369,11 @@ TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int historyLen, TA_SAR_Stream **stream, double *outReal )
+{
+   return TA_SAR_OpenInternal( optInAcceleration, optInMaximum, inHigh, inLow, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal )

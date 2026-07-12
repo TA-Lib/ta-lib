@@ -805,10 +805,9 @@ static void TA_CDL3STARSINSOUTH_StreamStep( struct TA_CDL3STARSINSOUTH_Stream *s
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3STARSINSOUTH_Stream **stream, int *outInteger )
+TA_RetCode TA_CDL3STARSINSOUTH_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDL3STARSINSOUTH_Stream **stream, int *outInteger )
 {
    struct TA_CDL3STARSINSOUTH_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -819,7 +818,6 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( const double inOpen[], const dou
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1137,6 +1135,11 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( const double inOpen[], const dou
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3STARSINSOUTH_Stream **stream, int *outInteger )
+{
+   return TA_CDL3STARSINSOUTH_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Update( TA_CDL3STARSINSOUTH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

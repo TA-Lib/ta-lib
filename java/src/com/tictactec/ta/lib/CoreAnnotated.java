@@ -799,7 +799,7 @@ public int atrLookback(
 @FuncInfo(
         name  = "ATR",
         group = "Volatility Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -5794,7 +5794,7 @@ public int macdExtLookback(
 @FuncInfo(
         name  = "MACDEXT",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 6,
         nbOutput   = 3
@@ -5948,7 +5948,7 @@ public int macdFixLookback(
 @FuncInfo(
         name  = "MACDFIX",
         group = "Momentum Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 3
@@ -7043,7 +7043,7 @@ public int natrLookback(
 @FuncInfo(
         name  = "NATR",
         group = "Volatility Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1

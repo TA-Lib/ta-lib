@@ -169,10 +169,9 @@ static void TA_ATAN_StreamStep( struct TA_ATAN_Stream *sp, double inReal, double
    *outReal= atan(inReal);
 }
 
-TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_ATAN_Stream **stream, double *outReal )
+TA_RetCode TA_ATAN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ATAN_Stream **stream, double *outReal )
 {
    struct TA_ATAN_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -183,7 +182,6 @@ TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_AT
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -209,6 +207,11 @@ TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_AT
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_ATAN_Stream **stream, double *outReal )
+{
+   return TA_ATAN_OpenInternal( inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ATAN_Update( TA_ATAN_Stream *stream, double inReal, double *outReal )

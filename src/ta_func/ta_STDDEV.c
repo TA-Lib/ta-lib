@@ -349,10 +349,9 @@ static void TA_STDDEV_StreamStep( struct TA_STDDEV_Stream *sp, double inReal, do
    *outReal = cur_outReal;
 }
 
-TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal )
+TA_RetCode TA_STDDEV_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_STDDEV_Stream **stream, double *outReal )
 {
    struct TA_STDDEV_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -372,7 +371,6 @@ TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, co
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -388,13 +386,10 @@ TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, co
       TA_RetCode retCode;
       double tempReal;
       /* Calculate the variance. */
-      /* Sub-stream 0: var over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx) - TA_VAR_Lookback( optInTimePeriod, 1.0 );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_VAR_Open( optInTimePeriod, 1.0, &inReal[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_VAR_OpenInternal( optInTimePeriod, 1.0, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
@@ -453,6 +448,11 @@ TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, co
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal )
+{
+   return TA_STDDEV_OpenInternal( optInTimePeriod, optInNbDev, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )

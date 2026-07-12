@@ -567,10 +567,9 @@ static void TA_MINMAX_StreamStep( struct TA_MINMAX_Stream *sp, double inReal, do
    sp->today += 1;
 }
 
-TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAX_Stream **stream, double *outMin, double *outMax )
+TA_RetCode TA_MINMAX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MINMAX_Stream **stream, double *outMin, double *outMax )
 {
    struct TA_MINMAX_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -586,7 +585,6 @@ TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[]
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -721,6 +719,11 @@ TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[]
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAX_Stream **stream, double *outMin, double *outMax )
+{
+   return TA_MINMAX_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outMin, outMax );
 }
 
 TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )

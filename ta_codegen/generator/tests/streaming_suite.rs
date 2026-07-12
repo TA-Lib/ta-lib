@@ -83,11 +83,15 @@ fn sma_is_t3_ring() {
 }
 
 #[test]
-fn atr_period1_delegation_rejected() {
-    assert!(matches!(
-        streaming::analyze(&load("atr")),
-        Err(StreamError::Unsupported(m)) if m.contains("return path")
-    ));
+fn atr_streams_as_t2() {
+    // ATR dropped its `if (period <= 1) return trange(...)` delegation: the
+    // general Wilder recursion degenerates to the raw True Range at period 1
+    // (prevATR = (prevATR*0 + TR)/1 = TR), so the single path streams as a plain
+    // T2 (carried prevATR + a lag-1 close read) for every period.
+    let f = load("atr");
+    let m = streaming::analyze(&f).expect("ATR analyzes as T2");
+    assert_eq!(m.tier, StreamTier::T2);
+    assert!(m.lags.iter().any(|l| l.array == "inClose"), "lag-1 close read");
 }
 
 #[test]

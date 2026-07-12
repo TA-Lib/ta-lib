@@ -168,10 +168,9 @@ static void TA_SIN_StreamStep( struct TA_SIN_Stream *sp, double inReal, double *
    *outReal= sin(inReal);
 }
 
-TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN_Stream **stream, double *outReal )
+TA_RetCode TA_SIN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_SIN_Stream **stream, double *outReal )
 {
    struct TA_SIN_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -182,7 +181,6 @@ TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -207,6 +205,11 @@ TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN_Stream **stream, double *outReal )
+{
+   return TA_SIN_OpenInternal( inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SIN_Update( TA_SIN_Stream *stream, double inReal, double *outReal )

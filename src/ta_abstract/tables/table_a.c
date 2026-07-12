@@ -412,7 +412,7 @@ DEF_FUNCTION( ATR,
               TA_GroupId_VolatilityIndicators,
               "Average True Range",
               "Atr",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* ATR END */
 

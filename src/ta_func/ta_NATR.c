@@ -157,12 +157,12 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   /* Trap the case where no smoothing is needed. */
-   if( optInTimePeriod <= 1 )
-   {
-      /* No smoothing needed. Just do a TRANGE. */
-      return TA_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
-   }
+   /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+    * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+    * At period 1 the output is left as that raw True Range (unnormalized),
+    * matching the historical TRANGE-delegation behavior; every period > 1 is
+    * normalized by the close. The single general path handles all period >= 1.
+    */
    /* The True Range of each bar is computed inline in a single
     * pass. No temporary buffer is needed.
     *
@@ -251,13 +251,20 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
     * provided outReal.
     */
    outIdx = 1;
-   tempValue = inClose[startIdx];
-   if( !TA_IS_ZERO(tempValue) )
+   if( optInTimePeriod <= 1 )
    {
-      outReal[0] = prevATR / tempValue * 100.0;
+      /* No smoothing: emit the raw True Range (unnormalized). */
+      outReal[0] = prevATR;
    } else 
    {
-      outReal[0] = 0.0;
+      tempValue = inClose[startIdx];
+      if( !TA_IS_ZERO(tempValue) )
+      {
+         outReal[0] = prevATR / tempValue * 100.0;
+      } else 
+      {
+         outReal[0] = 0.0;
+      }
    }
    /* Now do the number of requested NATR. */
    nbATR = endIdx - startIdx + 1;
@@ -282,13 +289,20 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
-      if( !TA_IS_ZERO(tempValue) )
+      if( optInTimePeriod <= 1 )
       {
-         outReal[outIdx] = prevATR / tempValue * 100.0;
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         outReal[outIdx] = prevATR;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         tempValue = inClose[today];
+         if( !TA_IS_ZERO(tempValue) )
+         {
+            outReal[outIdx] = prevATR / tempValue * 100.0;
+         } else 
+         {
+            outReal[outIdx] = 0.0;
+         }
       }
       outIdx += 1;
       today += 1;
@@ -333,10 +347,6 @@ TA_LIB_API TA_RetCode TA_NATR_Unguarded( int    startIdx,
    if( startIdx > endIdx )
    {
       return TA_SUCCESS;
-   }
-   if( optInTimePeriod <= 1 )
-   {
-      return TA_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
    }
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
@@ -385,13 +395,19 @@ TA_LIB_API TA_RetCode TA_NATR_Unguarded( int    startIdx,
       i -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[startIdx];
-   if( !TA_IS_ZERO(tempValue) )
+   if( optInTimePeriod <= 1 )
    {
-      outReal[0] = prevATR / tempValue * 100.0;
+      outReal[0] = prevATR;
    } else 
    {
-      outReal[0] = 0.0;
+      tempValue = inClose[startIdx];
+      if( !TA_IS_ZERO(tempValue) )
+      {
+         outReal[0] = prevATR / tempValue * 100.0;
+      } else 
+      {
+         outReal[0] = 0.0;
+      }
    }
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
@@ -413,13 +429,19 @@ TA_LIB_API TA_RetCode TA_NATR_Unguarded( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
-      if( !TA_IS_ZERO(tempValue) )
+      if( optInTimePeriod <= 1 )
       {
-         outReal[outIdx] = prevATR / tempValue * 100.0;
+         outReal[outIdx] = prevATR;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         tempValue = inClose[today];
+         if( !TA_IS_ZERO(tempValue) )
+         {
+            outReal[outIdx] = prevATR / tempValue * 100.0;
+         } else 
+         {
+            outReal[outIdx] = 0.0;
+         }
       }
       outIdx += 1;
       today += 1;
@@ -483,10 +505,6 @@ TA_RetCode TA_S_NATR( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod <= 1 )
-   {
-      return TA_S_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
-   }
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -534,13 +552,19 @@ TA_RetCode TA_S_NATR( int    startIdx,
       i -= 1;
    }
    outIdx = 1;
-   tempValue = (double)inClose[startIdx];
-   if( !TA_IS_ZERO(tempValue) )
+   if( optInTimePeriod <= 1 )
    {
-      outReal[0] = prevATR / tempValue * 100.0;
+      outReal[0] = prevATR;
    } else 
    {
-      outReal[0] = 0.0;
+      tempValue = (double)inClose[startIdx];
+      if( !TA_IS_ZERO(tempValue) )
+      {
+         outReal[0] = prevATR / tempValue * 100.0;
+      } else 
+      {
+         outReal[0] = 0.0;
+      }
    }
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
@@ -562,13 +586,19 @@ TA_RetCode TA_S_NATR( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = (double)inClose[today];
-      if( !TA_IS_ZERO(tempValue) )
+      if( optInTimePeriod <= 1 )
       {
-         outReal[outIdx] = prevATR / tempValue * 100.0;
+         outReal[outIdx] = prevATR;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         tempValue = (double)inClose[today];
+         if( !TA_IS_ZERO(tempValue) )
+         {
+            outReal[outIdx] = prevATR / tempValue * 100.0;
+         } else 
+         {
+            outReal[outIdx] = 0.0;
+         }
       }
       outIdx += 1;
       today += 1;
@@ -614,10 +644,6 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod <= 1 )
-   {
-      return TA_S_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
-   }
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -665,13 +691,19 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       i -= 1;
    }
    outIdx = 1;
-   tempValue = (double)inClose[startIdx];
-   if( !TA_IS_ZERO(tempValue) )
+   if( optInTimePeriod <= 1 )
    {
-      outReal[0] = prevATR / tempValue * 100.0;
+      outReal[0] = prevATR;
    } else 
    {
-      outReal[0] = 0.0;
+      tempValue = (double)inClose[startIdx];
+      if( !TA_IS_ZERO(tempValue) )
+      {
+         outReal[0] = prevATR / tempValue * 100.0;
+      } else 
+      {
+         outReal[0] = 0.0;
+      }
    }
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
@@ -693,19 +725,352 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += greatest;
       prevATR /= optInTimePeriod;
-      tempValue = (double)inClose[today];
-      if( !TA_IS_ZERO(tempValue) )
+      if( optInTimePeriod <= 1 )
       {
-         outReal[outIdx] = prevATR / tempValue * 100.0;
+         outReal[outIdx] = prevATR;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         tempValue = (double)inClose[today];
+         if( !TA_IS_ZERO(tempValue) )
+         {
+            outReal[outIdx] = prevATR / tempValue * 100.0;
+         } else 
+         {
+            outReal[outIdx] = 0.0;
+         }
       }
       outIdx += 1;
       today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
+   return TA_SUCCESS;
+}
+
+/**** Streaming API *****/
+
+struct TA_NATR_Stream {
+   int optInTimePeriod;
+   double prevATR;
+   double tempValue;
+   double val3;
+   double lag1_inClose;
+};
+
+static void TA_NATR_StreamStep( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+{
+   double val2;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
+
+   /* Find the greatest of the 3 values. */
+   tempLT = inLow;
+   tempHT = inHigh;
+   tempCY = sp->lag1_inClose;
+   greatest = tempHT - tempLT;
+   /* val1 */
+   val2 = fabs(tempCY - tempHT);
+   if( val2 > greatest )
+   {
+      greatest = val2;
+   }
+   sp->val3 = fabs(tempCY - tempLT);
+   if( sp->val3 > greatest )
+   {
+      greatest = sp->val3;
+   }
+   sp->prevATR *= sp->optInTimePeriod - 1;
+   sp->prevATR += greatest;
+   sp->prevATR /= sp->optInTimePeriod;
+   if( sp->optInTimePeriod <= 1 )
+   {
+      /* No smoothing: emit the raw True Range (unnormalized). */
+      *outReal= sp->prevATR;
+   } else 
+   {
+      sp->tempValue = inClose;
+      if( !TA_IS_ZERO(sp->tempValue) )
+      {
+         *outReal= sp->prevATR / sp->tempValue * 100.0;
+      } else 
+      {
+         *outReal= 0.0;
+      }
+   }
+   sp->lag1_inClose = inClose;
+}
+
+TA_RetCode TA_NATR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_NATR_Stream **stream, double *outReal )
+{
+   struct TA_NATR_Stream *sp;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      int today;
+      int lookbackTotal;
+      int nbATR;
+      double prevATR = 0.0;
+      double periodTotal;
+      double tempValue = 0.0;
+      double val2;
+      double val3 = 0.0;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      /* This function is very similar as ATR, except
+       * it is being normalized as follow:
+       *
+       *    NATR = (ATR(period) / Close) * 100
+       *
+       *
+       * Normalization make the ATR function more relevant
+       * in the folllowing scenario:
+       *    - Long term analysis where the price changes drastically.
+       *    - Cross-market or cross-security ATR comparison.
+       *
+       * More Info:
+       *      Technical Analysis of Stock & Commodities (TASC)
+       *      May 2006 by John Forman
+       */
+      /* Average True Range is the greatest of the following:
+       *
+       *  val1 = distance from today's high to today's low.
+       *  val2 = distance from yesterday's close to today's high.
+       *  val3 = distance from yesterday's close to today's low.
+       *
+       * These value are averaged for the specified period using
+       * Wilder method. This method have an unstable period comparable
+       * to an Exponential Moving Average (EMA).
+       */
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = TA_NATR_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_BAD_PARAM;
+      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+       * At period 1 the output is left as that raw True Range (unnormalized),
+       * matching the historical TRANGE-delegation behavior; every period > 1 is
+       * normalized by the close. The single general path handles all period >= 1.
+       */
+      /* The True Range of each bar is computed inline in a single
+       * pass. No temporary buffer is needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - True Range: start from high-low, then compare/replace
+       *    with the two previous-close distances, in that order.
+       *  - Seed: the first 'period' True Range values are summed,
+       *    accumulated from 0.0 in input order, then divided by
+       *    the period.
+       *  - Wilder smoothing: multiply by period-1, add the True
+       *    Range, divide by period, as three separate statements.
+       *
+       * Each output is normalized by the close of its own bar; a
+       * close of zero yields 0.0.
+       *
+       * In-place (outReal being one of the input arrays) is
+       * supported: each output is written only after every input
+       * read at or before its bar, and the output index is always
+       * smaller than the bar index of any remaining read.
+       */
+      /* The first True Range needs the two price bars at
+       * startIdx-lookbackTotal+1 (a previous close is consumed).
+       */
+      today = startIdx - lookbackTotal + 1;
+      /* Seed the ATR with a simple average of the True Range
+       * for the first 'period' bars.
+       */
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
+      }
+      prevATR = periodTotal / optInTimePeriod;
+      /* Subsequent value are smoothed using the
+       * previous ATR value (Wilder's approach).
+       *  1) Multiply the previous ATR by 'period-1'.
+       *  2) Add today TR value.
+       *  3) Divide by 'period'.
+       */
+      /* Skip the unstable period. */
+      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
+      while( i != 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
+      }
+      /* Now start to write the final NATR in the caller
+       * provided outReal.
+       */
+      outIdx = 1;
+      if( optInTimePeriod <= 1 )
+      {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         lastValue_outReal = prevATR;
+      } else 
+      {
+         tempValue = inClose[startIdx];
+         if( !TA_IS_ZERO(tempValue) )
+         {
+            lastValue_outReal = prevATR / tempValue * 100.0;
+         } else 
+         {
+            lastValue_outReal = 0.0;
+         }
+      }
+      /* Now do the number of requested NATR. */
+      nbATR = endIdx - startIdx + 1;
+      while( --nbATR != 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         if( optInTimePeriod <= 1 )
+         {
+            /* No smoothing: emit the raw True Range (unnormalized). */
+            lastValue_outReal = prevATR;
+         } else 
+         {
+            tempValue = inClose[today];
+            if( !TA_IS_ZERO(tempValue) )
+            {
+               lastValue_outReal = prevATR / tempValue * 100.0;
+            } else 
+            {
+               lastValue_outReal = 0.0;
+            }
+         }
+         outIdx += 1;
+         today += 1;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_NATR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevATR = prevATR;
+      sp->tempValue = tempValue;
+      sp->val3 = val3;
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_NATR_Stream **stream, double *outReal )
+{
+   return TA_NATR_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_NATR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
+{
+   struct TA_NATR_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_NATR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Close( TA_NATR_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
    return TA_SUCCESS;
 }
 

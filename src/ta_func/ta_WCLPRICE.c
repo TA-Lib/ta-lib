@@ -193,10 +193,9 @@ static void TA_WCLPRICE_StreamStep( struct TA_WCLPRICE_Stream *sp, double inHigh
    *outReal= (inHigh + inLow + inClose * 2.0) / 4.0;
 }
 
-TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WCLPRICE_Stream **stream, double *outReal )
+TA_RetCode TA_WCLPRICE_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_WCLPRICE_Stream **stream, double *outReal )
 {
    struct TA_WCLPRICE_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -207,7 +206,6 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLo
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -234,6 +232,11 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLo
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WCLPRICE_Stream **stream, double *outReal )
+{
+   return TA_WCLPRICE_OpenInternal( inHigh, inLow, inClose, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

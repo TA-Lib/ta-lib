@@ -2,7 +2,7 @@ name: MACDEXT
 camel_case: MacdExt
 group: Momentum Indicators
 hint: MACD with controllable MA type
-flags: []
+flags: [stream]
 inputs:
   - name: inReal
     type: real

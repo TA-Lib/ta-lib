@@ -404,10 +404,9 @@ static void TA_PPO_StreamStep( struct TA_PPO_Stream *sp, double inReal, double *
    *outReal = cur_outReal;
 }
 
-TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_PPO_Stream **stream, double *outReal )
+TA_RetCode TA_PPO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_PPO_Stream **stream, double *outReal )
 {
    struct TA_PPO_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -432,7 +431,6 @@ TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -476,13 +474,10 @@ TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      /* Sub-stream 0: ma over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx) - TA_MA_Lookback( optInFastPeriod, optInMAType );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_MA_Open( optInFastPeriod, optInMAType, &inReal[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( optInFastPeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -498,13 +493,10 @@ TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_
          return retCode;
       }
       /* Calculate the slow MA into the output. */
-      /* Sub-stream 1: ma over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx) - TA_MA_Lookback( optInSlowPeriod, optInMAType );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_MA_Open( optInSlowPeriod, optInMAType, &inReal[subOff], (endIdx) - subOff + 1, &sub1, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( optInSlowPeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub1, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -553,6 +545,11 @@ TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_PPO_Stream **stream, double *outReal )
+{
+   return TA_PPO_OpenInternal( optInFastPeriod, optInSlowPeriod, optInMAType, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, double *outReal )

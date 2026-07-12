@@ -1373,10 +1373,9 @@ static void TA_SAREXT_StreamStep( struct TA_SAREXT_Stream *sp, double inHigh, do
    }
 }
 
-TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int historyLen, TA_SAREXT_Stream **stream, double *outReal )
+TA_RetCode TA_SAREXT_OpenInternal( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_SAREXT_Stream **stream, double *outReal )
 {
    struct TA_SAREXT_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -1417,7 +1416,6 @@ TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffset
    else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 1.7976931348623157e308 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1775,6 +1773,11 @@ TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffset
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int historyLen, TA_SAREXT_Stream **stream, double *outReal )
+{
+   return TA_SAREXT_OpenInternal( optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, inHigh, inLow, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal )

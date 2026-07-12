@@ -60,7 +60,7 @@ DEF_FUNCTION( NATR,
               TA_GroupId_VolatilityIndicators,
               "Normalized Average True Range",
               "Natr",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* NATR END */
 

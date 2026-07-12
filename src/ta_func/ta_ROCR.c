@@ -345,10 +345,9 @@ static void TA_ROCR_StreamStep( struct TA_ROCR_Stream *sp, double inReal, double
    }
 }
 
-TA_LIB_API TA_RetCode TA_ROCR_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROCR_Stream **stream, double *outReal )
+TA_RetCode TA_ROCR_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_ROCR_Stream **stream, double *outReal )
 {
    struct TA_ROCR_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -363,7 +362,6 @@ TA_LIB_API TA_RetCode TA_ROCR_Open( int optInTimePeriod, const double inReal[], 
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -459,6 +457,11 @@ TA_LIB_API TA_RetCode TA_ROCR_Open( int optInTimePeriod, const double inReal[], 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_ROCR_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROCR_Stream **stream, double *outReal )
+{
+   return TA_ROCR_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ROCR_Update( TA_ROCR_Stream *stream, double inReal, double *outReal )

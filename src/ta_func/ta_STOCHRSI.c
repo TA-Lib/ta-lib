@@ -426,10 +426,9 @@ static void TA_STOCHRSI_StreamStep( struct TA_STOCHRSI_Stream *sp, double inReal
    *outFastD = cur_outFastD;
 }
 
-TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int historyLen, TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
+TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int startIdx, int historyLen, struct TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
 {
    struct TA_STOCHRSI_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -459,7 +458,6 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Peri
    if( (int)optInFastD_MAType == (int)0x80000000 )
       optInFastD_MAType = 0;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -531,13 +529,10 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Peri
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return TA_ALLOC_ERR;
       }
-      /* Sub-stream 0: rsi over `inReal` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (startIdx - lookbackSTOCHF) - TA_RSI_Lookback( optInTimePeriod );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_RSI_Open( optInTimePeriod, &inReal[subOff], (endIdx) - subOff + 1, &sub0, &subOpenDummy );
+         subRc = TA_RSI_OpenInternal( optInTimePeriod, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, &sub0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -554,13 +549,10 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Peri
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return retCode;
       }
-      /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer` — the same series the
-       * batch call below consumes, anchored at its seeding point. */
+      /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
       {
-         int subOff;
-         subOff = (0) - TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-         if( subOff < 0 ) subOff = 0;
-         subRc = TA_STOCHF_Open( optInFastK_Period, optInFastD_Period, optInFastD_MAType, &tempRSIBuffer[subOff], &tempRSIBuffer[subOff], &tempRSIBuffer[subOff], (tempArraySize - 1) - subOff + 1, &sub1, &subOpenDummy, &subOpenDummy );
+         subRc = TA_STOCHF_OpenInternal( optInFastK_Period, optInFastD_Period, optInFastD_MAType, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, &sub1, &subOpenDummy, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -596,6 +588,11 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Peri
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int historyLen, TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
+{
+   return TA_STOCHRSI_OpenInternal( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, inReal, 0, historyLen, stream, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )

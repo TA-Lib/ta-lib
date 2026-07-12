@@ -380,10 +380,9 @@ static void TA_LINEARREG_ANGLE_StreamStep( struct TA_LINEARREG_ANGLE_Stream *sp,
    }
 }
 
-TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_ANGLE_Stream **stream, double *outReal )
+TA_RetCode TA_LINEARREG_ANGLE_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_LINEARREG_ANGLE_Stream **stream, double *outReal )
 {
    struct TA_LINEARREG_ANGLE_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -398,7 +397,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( int optInTimePeriod, const double
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -491,6 +489,11 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( int optInTimePeriod, const double
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_ANGLE_Stream **stream, double *outReal )
+{
+   return TA_LINEARREG_ANGLE_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Update( TA_LINEARREG_ANGLE_Stream *stream, double inReal, double *outReal )

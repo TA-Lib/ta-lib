@@ -423,10 +423,9 @@ static void TA_MAXINDEX_StreamStep( struct TA_MAXINDEX_Stream *sp, double inReal
    sp->today += 1;
 }
 
-TA_LIB_API TA_RetCode TA_MAXINDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MAXINDEX_Stream **stream, int *outInteger )
+TA_RetCode TA_MAXINDEX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MAXINDEX_Stream **stream, int *outInteger )
 {
    struct TA_MAXINDEX_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -441,7 +440,6 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Open( int optInTimePeriod, const double inReal
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -543,6 +541,11 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Open( int optInTimePeriod, const double inReal
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_MAXINDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MAXINDEX_Stream **stream, int *outInteger )
+{
+   return TA_MAXINDEX_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_MAXINDEX_Update( TA_MAXINDEX_Stream *stream, double inReal, int *outInteger )

@@ -812,10 +812,9 @@ static void TA_MACD_StreamStep( struct TA_MACD_Stream *sp, double inReal, double
    *outMACDHist= macdValue - sp->prevSignal;
 }
 
-TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int historyLen, TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int startIdx, int historyLen, struct TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACD_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -840,7 +839,6 @@ TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, in
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1057,6 +1055,11 @@ TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, in
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int historyLen, TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   return TA_MACD_OpenInternal( optInFastPeriod, optInSlowPeriod, optInSignalPeriod, inReal, 0, historyLen, stream, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

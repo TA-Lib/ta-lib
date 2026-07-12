@@ -168,10 +168,9 @@ static void TA_EXP_StreamStep( struct TA_EXP_Stream *sp, double inReal, double *
    *outReal= exp(inReal);
 }
 
-TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP_Stream **stream, double *outReal )
+TA_RetCode TA_EXP_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_EXP_Stream **stream, double *outReal )
 {
    struct TA_EXP_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -182,7 +181,6 @@ TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -207,6 +205,11 @@ TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP_Stream **stream, double *outReal )
+{
+   return TA_EXP_OpenInternal( inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, double *outReal )

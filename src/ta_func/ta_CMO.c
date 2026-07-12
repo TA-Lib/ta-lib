@@ -858,10 +858,9 @@ static void TA_CMO_StreamStep( struct TA_CMO_Stream *sp, double inReal, double *
    }
 }
 
-TA_LIB_API TA_RetCode TA_CMO_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_CMO_Stream **stream, double *outReal )
+TA_RetCode TA_CMO_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_CMO_Stream **stream, double *outReal )
 {
    struct TA_CMO_Stream *sp;
-   int startIdx;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -876,7 +875,6 @@ TA_LIB_API TA_RetCode TA_CMO_Open( int optInTimePeriod, const double inReal[], i
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
-   startIdx = 0;
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
@@ -1126,6 +1124,11 @@ TA_LIB_API TA_RetCode TA_CMO_Open( int optInTimePeriod, const double inReal[], i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+TA_LIB_API TA_RetCode TA_CMO_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_CMO_Stream **stream, double *outReal )
+{
+   return TA_CMO_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_CMO_Update( TA_CMO_Stream *stream, double inReal, double *outReal )
