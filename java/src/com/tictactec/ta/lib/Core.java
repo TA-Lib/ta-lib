@@ -15950,6 +15950,8 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -15957,6 +15959,10 @@ public class Core {
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120305 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 2nd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
    public int cdlHikkakeLookback( )
@@ -15977,14 +15983,19 @@ public class Core {
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+       * state carried without an absolute bar index.
+       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -16003,7 +16014,7 @@ public class Core {
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
@@ -16013,11 +16024,16 @@ public class Core {
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
          {
-            patternIdx = 0;
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -16040,15 +16056,20 @@ public class Core {
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
          {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -16070,8 +16091,10 @@ public class Core {
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       lookbackTotal = cdlHikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -16081,15 +16104,20 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -16098,13 +16126,18 @@ public class Core {
       do {
          if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -16125,8 +16158,10 @@ public class Core {
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -16142,15 +16177,20 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -16159,13 +16199,18 @@ public class Core {
       do {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -16186,8 +16231,10 @@ public class Core {
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       lookbackTotal = cdlHikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -16197,15 +16244,20 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -16214,13 +16266,18 @@ public class Core {
       do {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -16233,6 +16290,8 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -16240,6 +16299,10 @@ public class Core {
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  122605 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 3rd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
    public int cdlHikkakeModLookback( )
@@ -16265,8 +16328,10 @@ public class Core {
       int outIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int patternCount = 0;
+      double patternHigh = 0;
+      double patternLow = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
       double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -16276,6 +16341,10 @@ public class Core {
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* Confirmation window countdown (replaces the absolute patternIdx guard)
+       * and a cache of the 3rd candle's high/low (replaces inHigh/inLow
+       * [patternIdx-1]) so nothing in the per-bar logic references the cursor.
+       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -16301,8 +16370,10 @@ public class Core {
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
          i += 1;
       }
-      patternIdx = 0;
+      patternCount = 0;
       patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
       i = startIdx - 3;
       while( i < startIdx ) {
          /* copy here the pattern recognition code below */
@@ -16313,14 +16384,19 @@ public class Core {
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd */
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 &&
+             (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) ) /* search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd */
          {
-            patternIdx = 0;
+            patternCount = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) - Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       }
       i = startIdx;
@@ -16349,18 +16425,23 @@ public class Core {
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd */
+         } else if( patternCount > 0 &&
+             (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) ) /* search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd */
          {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            patternCount = 0;
          } else {
             outInteger[outIdx++] = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) - Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
@@ -16383,8 +16464,10 @@ public class Core {
       int outIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int patternCount = 0;
+      double patternHigh = 0;
+      double patternLow = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
       double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -16404,18 +16487,25 @@ public class Core {
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
          i += 1;
       }
-      patternIdx = 0;
+      patternCount = 0;
       patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) ) {
+            patternCount = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) - Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       }
       i = startIdx;
@@ -16423,16 +16513,21 @@ public class Core {
       do {
          if( inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            patternCount = 0;
          } else {
             outInteger[outIdx++] = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) - Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
@@ -16454,8 +16549,10 @@ public class Core {
       int outIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int patternCount = 0;
+      double patternHigh = 0;
+      double patternLow = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
       double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -16481,18 +16578,25 @@ public class Core {
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)));
          i += 1;
       }
-      patternIdx = 0;
+      patternCount = 0;
       patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            patternHigh = (double)inHigh[i - 1];
+            patternLow = (double)inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+            patternCount = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) - Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       }
       i = startIdx;
@@ -16500,16 +16604,21 @@ public class Core {
       do {
          if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            patternHigh = (double)inHigh[i - 1];
+            patternLow = (double)inLow[i - 1];
+            patternCount = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            patternCount = 0;
          } else {
             outInteger[outIdx++] = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) - Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
@@ -16531,8 +16640,10 @@ public class Core {
       int outIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int patternCount = 0;
+      double patternHigh = 0;
+      double patternLow = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
       double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -16552,18 +16663,25 @@ public class Core {
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)));
          i += 1;
       }
-      patternIdx = 0;
+      patternCount = 0;
       patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            patternHigh = (double)inHigh[i - 1];
+            patternLow = (double)inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+            patternCount = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) - Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       }
       i = startIdx;
@@ -16571,16 +16689,21 @@ public class Core {
       do {
          if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            patternHigh = (double)inHigh[i - 1];
+            patternLow = (double)inLow[i - 1];
+            patternCount = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            patternCount = 0;
          } else {
             outInteger[outIdx++] = 0;
          }
          NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) - Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : 0.0)));
          NearTrailingIdx += 1;
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
          i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;

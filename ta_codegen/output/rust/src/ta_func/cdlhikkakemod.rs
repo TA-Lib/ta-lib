@@ -44,6 +44,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -51,6 +53,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  122605 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 3rd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
 // Import types from parent module
@@ -159,14 +165,19 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut NearTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut patternIdx: usize = 0_usize;
         let mut patternResult: i32 = 0_i32;
+        let mut patternCount: usize = 0_usize;
+        let mut patternHigh: f64 = 0.0_f64;
+        let mut patternLow: f64 = 0.0_f64;
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
+        // Confirmation window countdown (replaces the absolute patternIdx guard)
+        // and a cache of the 3rd candle's high/low (replaces inHigh/inLow
+        // [patternIdx-1]) so nothing in the per-bar logic references the cursor.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.cdlhikkakemod_lookback();
@@ -205,8 +216,10 @@ impl Core {
             NearPeriodTotal += _candlerange_0;
             i += 1;
         }
-        patternIdx = 0;
+        patternCount = 0;
         patternResult = 0;
+        patternHigh = 0.0;
+        patternLow = 0.0;
         i = startIdx - 3;
         while i < startIdx {
             // copy here the pattern recognition code below
@@ -217,11 +230,13 @@ impl Core {
                (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
-            } else if i <= patternIdx + 3 &&
-               (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
+                patternHigh = inHigh[i - 1];
+                patternLow = inLow[i - 1];
+                patternCount = 4;
+            } else if patternCount > 0 &&
+               (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
-                patternIdx = 0;
+                patternCount = 0;
             }
             let mut _candlerange_1: f64;
             match Near_rangeType {
@@ -255,6 +270,9 @@ impl Core {
             }
             NearPeriodTotal += _candlerange_1 - _candlerange_2;
             NearTrailingIdx += 1;
+            if patternCount > 0 {
+                patternCount -= 1;
+            }
             i += 1;
         }
         i = startIdx;
@@ -282,15 +300,17 @@ impl Core {
                (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
+                patternHigh = inHigh[i - 1];
+                patternLow = inLow[i - 1];
+                patternCount = 4;
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
-            } else if i <= patternIdx + 3 &&
-               (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
+            } else if patternCount > 0 &&
+               (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
                 outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
                 outIdx += 1;
-                patternIdx = 0;
+                patternCount = 0;
             } else {
                 outInteger[outIdx] = 0;
                 outIdx += 1;
@@ -327,6 +347,9 @@ impl Core {
             }
             NearPeriodTotal += _candlerange_3 - _candlerange_4;
             NearTrailingIdx += 1;
+            if patternCount > 0 {
+                patternCount -= 1;
+            }
             i += 1;
             if !(i <= endIdx) { break; }
         }
@@ -359,8 +382,10 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut NearTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut patternIdx: usize = 0_usize;
         let mut patternResult: i32 = 0_i32;
+        let mut patternCount: usize = 0_usize;
+        let mut patternHigh: f64 = 0.0_f64;
+        let mut patternLow: f64 = 0.0_f64;
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -405,15 +430,19 @@ impl Core {
             NearPeriodTotal += _candlerange_0;
             i += 1;
         }
-        patternIdx = 0;
+        patternCount = 0;
         patternResult = 0;
+        patternHigh = 0.0;
+        patternLow = 0.0;
         i = startIdx - 3;
         while i < startIdx {
             if inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
-            } else if i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) {
-                patternIdx = 0;
+                patternHigh = inHigh[i - 1];
+                patternLow = inLow[i - 1];
+                patternCount = 4;
+            } else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
+                patternCount = 0;
             }
             let mut _candlerange_1: f64;
             match Near_rangeType {
@@ -447,6 +476,9 @@ impl Core {
             }
             NearPeriodTotal += _candlerange_1 - _candlerange_2;
             NearTrailingIdx += 1;
+            if patternCount > 0 {
+                patternCount -= 1;
+            }
             i += 1;
         }
         i = startIdx;
@@ -454,13 +486,15 @@ impl Core {
         loop {
             if inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
+                patternHigh = inHigh[i - 1];
+                patternLow = inLow[i - 1];
+                patternCount = 4;
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
-            } else if i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) {
+            } else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
                 outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
                 outIdx += 1;
-                patternIdx = 0;
+                patternCount = 0;
             } else {
                 outInteger[outIdx] = 0;
                 outIdx += 1;
@@ -497,6 +531,9 @@ impl Core {
             }
             NearPeriodTotal += _candlerange_3 - _candlerange_4;
             NearTrailingIdx += 1;
+            if patternCount > 0 {
+                patternCount -= 1;
+            }
             i += 1;
             if !(i <= endIdx) { break; }
         }

@@ -44,6 +44,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -51,6 +53,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120305 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 2nd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
 // Import types from parent module
@@ -145,8 +151,12 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut patternIdx: usize = 0_usize;
         let mut patternResult: i32 = 0_i32;
+        let mut cd: usize = 0_usize;
+        let mut savedHigh: f64 = 0.0_f64;
+        let mut savedLow: f64 = 0.0_f64;
+        // Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+        // state carried without an absolute bar index.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.cdlhikkake_lookback();
@@ -163,7 +173,7 @@ impl Core {
         }
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
-        patternIdx = 0;
+        cd = 0;
         patternResult = 0;
         i = startIdx - 3;
         while i < startIdx {
@@ -173,11 +183,16 @@ impl Core {
                (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
-            } else if i <= patternIdx + 3 &&
-               (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
             {
-                patternIdx = 0;
+                cd = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
             }
             i += 1;
         }
@@ -199,18 +214,23 @@ impl Core {
                (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
-            } else if i <= patternIdx + 3 &&
-               (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
             {
                 outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
                 outIdx += 1;
-                patternIdx = 0;
+                cd = 0;
             } else {
                 outInteger[outIdx] = 0;
                 outIdx += 1;
+            }
+            if cd > 0 {
+                cd -= 1;
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -242,8 +262,10 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut patternIdx: usize = 0_usize;
         let mut patternResult: i32 = 0_i32;
+        let mut cd: usize = 0_usize;
+        let mut savedHigh: f64 = 0.0_f64;
+        let mut savedLow: f64 = 0.0_f64;
         assert!(endIdx < inOpen.len());
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -260,15 +282,20 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        patternIdx = 0;
+        cd = 0;
         patternResult = 0;
         i = startIdx - 3;
         while i < startIdx {
             if inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
-            } else if i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) {
-                patternIdx = 0;
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+            } else if cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) {
+                cd = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
             }
             i += 1;
         }
@@ -277,16 +304,21 @@ impl Core {
         loop {
             if inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternIdx = i;
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
-            } else if i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) {
+            } else if cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) {
                 outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
                 outIdx += 1;
-                patternIdx = 0;
+                cd = 0;
             } else {
                 outInteger[outIdx] = 0;
                 outIdx += 1;
+            }
+            if cd > 0 {
+                cd -= 1;
             }
             i += 1;
             if !(i <= endIdx) { break; }

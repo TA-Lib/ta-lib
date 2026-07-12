@@ -3,6 +3,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -10,7 +12,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  122605 AC   Creation
- *
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 3rd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
 int cdlhikkakemod_lookback(void)
@@ -27,7 +32,14 @@ TA_RetCode cdlhikkakemod(int startIdx, int endIdx,
    int outInteger[])
 {
    double NearPeriodTotal;
-   int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, patternResult;
+   int i, outIdx, NearTrailingIdx, lookbackTotal, patternResult;
+
+   /* Confirmation window countdown (replaces the absolute patternIdx guard)
+    * and a cache of the 3rd candle's high/low (replaces inHigh/inLow
+    * [patternIdx-1]) so nothing in the per-bar logic references the cursor.
+    */
+   int patternCount;
+   double patternHigh, patternLow;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -60,8 +72,10 @@ TA_RetCode cdlhikkakemod(int startIdx, int endIdx,
       i++;
    }
 
-   patternIdx = 0;
+   patternCount = 0;
    patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
 
    i = startIdx - 3;
    while( i < startIdx ) {
@@ -80,19 +94,22 @@ TA_RetCode cdlhikkakemod(int startIdx, int endIdx,
       )
       ) {
          patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
-         patternIdx = i;
+         patternHigh = inHigh[i-1];
+         patternLow = inLow[i-1];
+         patternCount = 4;
       } else
       /* search for confirmation if modified hikkake was no more than 3 bars ago */
-      if( i <= patternIdx+3 &&
-         ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+      if( patternCount > 0 &&
+         ( ( patternResult > 0 && inClose[i] > patternHigh )    // close higher than the high of 3rd
          ||
-         ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+         ( patternResult < 0 && inClose[i] < patternLow )     // close lower than the low of 3rd
       )
       ) {
-         patternIdx = 0;
+         patternCount = 0;
       }
       NearPeriodTotal += ta_candlerange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) - ta_candlerange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2]);
       NearTrailingIdx++;
+      if( patternCount > 0 ) patternCount--;
       i++;
    }
 
@@ -131,23 +148,26 @@ TA_RetCode cdlhikkakemod(int startIdx, int endIdx,
       )
       ) {
          patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
-         patternIdx = i;
+         patternHigh = inHigh[i-1];
+         patternLow = inLow[i-1];
+         patternCount = 4;
          outInteger[outIdx++] = patternResult;
       } else
       /* search for confirmation if modified hikkake was no more than 3 bars ago */
-      if( i <= patternIdx+3 &&
-         ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+      if( patternCount > 0 &&
+         ( ( patternResult > 0 && inClose[i] > patternHigh )    // close higher than the high of 3rd
          ||
-         ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+         ( patternResult < 0 && inClose[i] < patternLow )     // close lower than the low of 3rd
       )
       ) {
          outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
-         patternIdx = 0;
+         patternCount = 0;
       } else {
          outInteger[outIdx++] = 0;
       }
       NearPeriodTotal += ta_candlerange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) - ta_candlerange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2]);
       NearTrailingIdx++;
+      if( patternCount > 0 ) patternCount--;
       i++;
    } while( i <= endIdx );
 

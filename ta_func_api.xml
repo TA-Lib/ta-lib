@@ -2096,6 +2096,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -2135,6 +2136,7 @@
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
 			<Flag>Candlestick</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

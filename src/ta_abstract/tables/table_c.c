@@ -764,7 +764,7 @@ DEF_FUNCTION( CDLHIKKAKE,
               TA_GroupId_PatternRecognition,
               "Hikkake Pattern",
               "CdlHikkake",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHIKKAKE END */
 
@@ -788,7 +788,7 @@ DEF_FUNCTION( CDLHIKKAKEMOD,
               TA_GroupId_PatternRecognition,
               "Modified Hikkake Pattern",
               "CdlHikkakeMod",
-              TA_FUNC_FLG_CANDLESTICK
+              TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_STREAM
              );
 /* CDLHIKKAKEMOD END */
 

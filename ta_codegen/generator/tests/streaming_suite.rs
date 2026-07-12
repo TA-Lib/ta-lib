@@ -334,14 +334,72 @@ fn ultosc_analyzes_t3() {
 }
 
 #[test]
-fn cdlhikkake_rejected_at_transition_build() {
-    // Saves bar indices (patternIdx = i): analysis passes but the transition
-    // cannot be built — the wall the census gate must keep unseeded.
+fn cdlhikkake_streams_via_countdown_refactor() {
+    // The absolute `patternIdx = i` (a cursor leak) was refactored to a carried
+    // confirmation countdown + cached 2nd-candle high/low, so the transition reads
+    // no bare cursor and it now streams (bit-identical batch, verified vs v0.6.4).
     let f = load("cdlhikkake");
-    assert!(streaming::analyze(&f).is_ok(), "analysis alone passes");
+    assert!(
+        streaming::validate_streamable(&f, &lookup()).is_ok(),
+        "CDLHIKKAKE streams after the countdown refactor"
+    );
+}
+
+#[test]
+fn ht_dcperiod_rejected_at_analyze_stage() {
+    // The HT family reads the ABSOLUTE cursor `today` (the `today % 2` odd/even
+    // parity branch and the in-loop `if (today >= startIdx)` output gate), so it
+    // is rejected at the ANALYZE stage ("steady loop references `startIdx`"),
+    // before build_transition is reached. Rejected until the M7c carried-parity
+    // recognizer + output-gate strip land. (For the build_transition index-leak
+    // guard specifically, see transition_build_rejects_saved_cursor_index below.)
+    let f = load("ht_dcperiod");
+    assert!(
+        streaming::analyze(&f).is_err(),
+        "HT reads the absolute cursor -> analyze rejects until the parity machinery lands"
+    );
+}
+
+#[test]
+fn transition_build_rejects_saved_cursor_index() {
+    // Pins the STAGE-2 build_transition guard "index variable `i` leaks into the
+    // transition body": a function whose steady loop SAVES the absolute cursor
+    // into a carried scalar and then reads that absolute index passes analysis
+    // but cannot have a transition built (a stream cannot reconstruct an absolute
+    // bar number). This is the exact wall the pre-refactor CDLHIKKAKE tripped;
+    // keeping a fixture here means the guard stays covered now that CDLHIKKAKE streams.
+    let src = r#"
+TA_RetCode cdlhikkake( int startIdx, int endIdx,
+   const double inOpen[], const double inHigh[], const double inLow[], const double inClose[],
+   int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   int i, outIdx, savedIdx;
+   if( startIdx < 5 )
+      startIdx = 5;
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   savedIdx = 0;
+   outIdx = 0;
+   for( i = startIdx; i <= endIdx; i++ )
+   {
+      if( inHigh[i] > inHigh[i-1] )
+         savedIdx = i;
+      outInteger[outIdx++] = i - savedIdx;
+   }
+   *outNBElement = outIdx;
+   *outBegIdx = startIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("cdlhikkake", src);
+    assert!(streaming::analyze(&f).is_ok(), "analysis alone passes (a plain endIdx loop)");
     assert!(
         streaming::validate_streamable(&f, &lookup()).is_err(),
-        "transition build must reject the cursor leak"
+        "the saved absolute cursor must reject at transition build"
     );
 }
 

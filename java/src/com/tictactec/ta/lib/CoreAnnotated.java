@@ -2696,7 +2696,7 @@ public int cdlHikkakeLookback(
 @FuncInfo(
         name  = "CDLHIKKAKE",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -2744,7 +2744,7 @@ public int cdlHikkakeModLookback(
 @FuncInfo(
         name  = "CDLHIKKAKEMOD",
         group = "Pattern Recognition",
-        flags = 268435456,
+        flags = 301989888,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1

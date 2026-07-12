@@ -395,6 +395,8 @@ struct TA_CDLHANGINGMAN_Stream;
 struct TA_CDLHARAMI_Stream;
 struct TA_CDLHARAMICROSS_Stream;
 struct TA_CDLHIGHWAVE_Stream;
+struct TA_CDLHIKKAKE_Stream;
+struct TA_CDLHIKKAKEMOD_Stream;
 struct TA_CDLHOMINGPIGEON_Stream;
 struct TA_CDLIDENTICAL3CROWS_Stream;
 struct TA_CDLINNECK_Stream;
@@ -545,6 +547,8 @@ TA_RetCode TA_CDLHANGINGMAN_OpenInternal( const double inOpen[], const double in
 TA_RetCode TA_CDLHARAMI_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHARAMI_Stream **stream, int *outInteger );
 TA_RetCode TA_CDLHARAMICROSS_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHARAMICROSS_Stream **stream, int *outInteger );
 TA_RetCode TA_CDLHIGHWAVE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIGHWAVE_Stream **stream, int *outInteger );
+TA_RetCode TA_CDLHIKKAKE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIKKAKE_Stream **stream, int *outInteger );
+TA_RetCode TA_CDLHIKKAKEMOD_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIKKAKEMOD_Stream **stream, int *outInteger );
 TA_RetCode TA_CDLHOMINGPIGEON_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHOMINGPIGEON_Stream **stream, int *outInteger );
 TA_RetCode TA_CDLIDENTICAL3CROWS_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLIDENTICAL3CROWS_Stream **stream, int *outInteger );
 TA_RetCode TA_CDLINNECK_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLINNECK_Stream **stream, int *outInteger );

@@ -3,6 +3,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -10,7 +12,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120305 AC   Creation
- *
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 2nd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
 int cdlhikkake_lookback(void)
@@ -26,7 +31,12 @@ TA_RetCode cdlhikkake(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    int outInteger[])
 {
-   int i, outIdx, lookbackTotal, patternIdx, patternResult;
+   int i, outIdx, lookbackTotal, patternResult;
+
+   /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+    * state carried without an absolute bar index. */
+   int cd;
+   double savedHigh, savedLow;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -51,7 +61,7 @@ TA_RetCode cdlhikkake(int startIdx, int endIdx,
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
-   patternIdx = 0;
+   cd = 0;
    patternResult = 0;
 
    i = startIdx - 3;
@@ -64,17 +74,20 @@ TA_RetCode cdlhikkake(int startIdx, int endIdx,
       )
       ) {
          patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
-         patternIdx = i;
+         savedHigh = inHigh[i-1];
+         savedLow = inLow[i-1];
+         cd = 4;
       } else
       /* search for confirmation if hikkake was no more than 3 bars ago */
-      if( i <= patternIdx+3 &&
-         ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+      if( cd > 0 &&
+         ( ( patternResult > 0 && inClose[i] > savedHigh )    // close higher than the high of 2nd
          ||
-         ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+         ( patternResult < 0 && inClose[i] < savedLow )     // close lower than the low of 2nd
       )
       ) {
-         patternIdx = 0;
+         cd = 0;
       }
+      if( cd > 0 ) cd--;
       i++;
    }
 
@@ -101,21 +114,24 @@ TA_RetCode cdlhikkake(int startIdx, int endIdx,
       )
       ) {
          patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
-         patternIdx = i;
+         savedHigh = inHigh[i-1];
+         savedLow = inLow[i-1];
+         cd = 4;
          outInteger[outIdx++] = patternResult;
       } else
       /* search for confirmation if hikkake was no more than 3 bars ago */
-      if( i <= patternIdx+3 &&
-         ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+      if( cd > 0 &&
+         ( ( patternResult > 0 && inClose[i] > savedHigh )    // close higher than the high of 2nd
          ||
-         ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+         ( patternResult < 0 && inClose[i] < savedLow )     // close lower than the low of 2nd
       )
       ) {
          outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
-         patternIdx = 0;
+         cd = 0;
       } else {
          outInteger[outIdx++] = 0;
       }
+      if( cd > 0 ) cd--;
       i++;
    } while( i <= endIdx );
 

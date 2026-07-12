@@ -47,6 +47,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -54,6 +56,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120305 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 2nd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
 TA_LIB_API int TA_CDLHIKKAKE_Lookback( void )
@@ -74,8 +80,10 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
    int i;
    int outIdx;
    int lookbackTotal;
-   int patternIdx;
    int patternResult;
+   int cd;
+   double savedHigh;
+   double savedLow;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -93,6 +101,9 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
    if( !outInteger )
       return TA_BAD_PARAM;
 
+   /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+    * state carried without an absolute bar index.
+    */
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -113,7 +124,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
    }
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
-   patternIdx = 0;
+   cd = 0;
    patternResult = 0;
    i = startIdx - 3;
    while( i < startIdx )
@@ -124,11 +135,17 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
           (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
       {
          patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
-      } else if( i <= patternIdx + 3 &&
-          (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         savedHigh = inHigh[i - 1];
+         savedLow = inLow[i - 1];
+         cd = 4;
+      } else if( cd > 0 &&
+          (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
       {
-         patternIdx = 0;
+         cd = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    }
@@ -152,16 +169,22 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
           (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
       {
          patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
+         savedHigh = inHigh[i - 1];
+         savedLow = inLow[i - 1];
+         cd = 4;
          outInteger[outIdx++] = patternResult;
-      } else if( i <= patternIdx + 3 &&
-          (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+      } else if( cd > 0 &&
+          (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
       {
          outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         patternIdx = 0;
+         cd = 0;
       } else 
       {
          outInteger[outIdx++] = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    } while( i <= endIdx );
@@ -184,8 +207,10 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Unguarded( int    startIdx,
    int i;
    int outIdx;
    int lookbackTotal;
-   int patternIdx;
    int patternResult;
+   int cd;
+   double savedHigh;
+   double savedLow;
 
    lookbackTotal = TA_CDLHIKKAKE_Lookback();
    if( startIdx < lookbackTotal )
@@ -198,7 +223,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   patternIdx = 0;
+   cd = 0;
    patternResult = 0;
    i = startIdx - 3;
    while( i < startIdx )
@@ -206,10 +231,16 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Unguarded( int    startIdx,
       if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) )
       {
          patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) )
+         savedHigh = inHigh[i - 1];
+         savedLow = inLow[i - 1];
+         cd = 4;
+      } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) )
       {
-         patternIdx = 0;
+         cd = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    }
@@ -220,15 +251,21 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Unguarded( int    startIdx,
       if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) )
       {
          patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
+         savedHigh = inHigh[i - 1];
+         savedLow = inLow[i - 1];
+         cd = 4;
          outInteger[outIdx++] = patternResult;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) )
+      } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) )
       {
          outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         patternIdx = 0;
+         cd = 0;
       } else 
       {
          outInteger[outIdx++] = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    } while( i <= endIdx );
@@ -250,8 +287,10 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
    int i;
    int outIdx;
    int lookbackTotal;
-   int patternIdx;
    int patternResult;
+   int cd;
+   double savedHigh;
+   double savedLow;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -280,7 +319,7 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   patternIdx = 0;
+   cd = 0;
    patternResult = 0;
    i = startIdx - 3;
    while( i < startIdx )
@@ -288,10 +327,16 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
       {
          patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) )
+         savedHigh = (double)inHigh[i - 1];
+         savedLow = (double)inLow[i - 1];
+         cd = 4;
+      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
       {
-         patternIdx = 0;
+         cd = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    }
@@ -302,15 +347,21 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
       {
          patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
+         savedHigh = (double)inHigh[i - 1];
+         savedLow = (double)inLow[i - 1];
+         cd = 4;
          outInteger[outIdx++] = patternResult;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) )
+      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
       {
          outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         patternIdx = 0;
+         cd = 0;
       } else 
       {
          outInteger[outIdx++] = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    } while( i <= endIdx );
@@ -332,8 +383,10 @@ TA_RetCode TA_S_CDLHIKKAKE_Unguarded( int    startIdx,
    int i;
    int outIdx;
    int lookbackTotal;
-   int patternIdx;
    int patternResult;
+   int cd;
+   double savedHigh;
+   double savedLow;
 
    lookbackTotal = TA_CDLHIKKAKE_Lookback();
    if( startIdx < lookbackTotal )
@@ -346,7 +399,7 @@ TA_RetCode TA_S_CDLHIKKAKE_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   patternIdx = 0;
+   cd = 0;
    patternResult = 0;
    i = startIdx - 3;
    while( i < startIdx )
@@ -354,10 +407,16 @@ TA_RetCode TA_S_CDLHIKKAKE_Unguarded( int    startIdx,
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
       {
          patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) )
+         savedHigh = (double)inHigh[i - 1];
+         savedLow = (double)inLow[i - 1];
+         cd = 4;
+      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
       {
-         patternIdx = 0;
+         cd = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    }
@@ -368,20 +427,233 @@ TA_RetCode TA_S_CDLHIKKAKE_Unguarded( int    startIdx,
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
       {
          patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         patternIdx = i;
+         savedHigh = (double)inHigh[i - 1];
+         savedLow = (double)inLow[i - 1];
+         cd = 4;
          outInteger[outIdx++] = patternResult;
-      } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) )
+      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
       {
          outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         patternIdx = 0;
+         cd = 0;
       } else 
       {
          outInteger[outIdx++] = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
       }
       i += 1;
    } while( i <= endIdx );
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
+   return TA_SUCCESS;
+}
+
+/**** Streaming API *****/
+
+struct TA_CDLHIKKAKE_Stream {
+   int patternResult;
+   int cd;
+   double savedHigh;
+   double savedLow;
+   double lag1_inHigh;
+   double lag2_inHigh;
+   double lag1_inLow;
+   double lag2_inLow;
+};
+
+static void TA_CDLHIKKAKE_StreamStep( struct TA_CDLHIKKAKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( sp->lag1_inHigh < sp->lag2_inHigh &&
+       sp->lag1_inLow > sp->lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+       (inHigh < sp->lag1_inHigh && inLow < sp->lag1_inLow || inHigh > sp->lag1_inHigh && inLow > sp->lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+   {
+      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      sp->savedHigh = sp->lag1_inHigh;
+      sp->savedLow = sp->lag1_inLow;
+      sp->cd = 4;
+      *outInteger= sp->patternResult;
+   } else if( sp->cd > 0 &&
+       (sp->patternResult > 0 && inClose > sp->savedHigh || sp->patternResult < 0 && inClose < sp->savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+   {
+      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : 0 - 1);
+      sp->cd = 0;
+   } else 
+   {
+      *outInteger= 0;
+   }
+   if( sp->cd > 0 )
+   {
+      sp->cd -= 1;
+   }
+   sp->lag2_inHigh = sp->lag1_inHigh;
+   sp->lag1_inHigh = inHigh;
+   sp->lag2_inLow = sp->lag1_inLow;
+   sp->lag1_inLow = inLow;
+}
+
+TA_RetCode TA_CDLHIKKAKE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIKKAKE_Stream **stream, int *outInteger )
+{
+   struct TA_CDLHIKKAKE_Stream *sp;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   int lastValue_outInteger;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outInteger = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      int lookbackTotal;
+      int patternResult = 0;
+      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+       * state carried without an absolute bar index.
+       */
+      int cd = 0;
+      double savedHigh = 0.0;
+      double savedLow = 0.0;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLHIKKAKE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      cd = 0;
+      patternResult = 0;
+      i = startIdx - 3;
+      while( i < startIdx )
+      {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cd = 0;
+         }
+         if( cd > 0 )
+         {
+            cd -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
+       * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
+       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 2nd candle
+       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
+       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
+       * overwrites the confirmation of the old hikkake)
+       */
+      outIdx = 0;
+      do
+      {
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+            lastValue_outInteger = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            lastValue_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else 
+         {
+            lastValue_outInteger = 0;
+         }
+         if( cd > 0 )
+         {
+            cd -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      dummyNBElement = outIdx;
+      dummyBegIdx = startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHIKKAKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->patternResult = patternResult;
+      sp->cd = cd;
+      sp->savedHigh = savedHigh;
+      sp->savedLow = savedLow;
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      *outInteger = lastValue_outInteger;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKE_Stream **stream, int *outInteger )
+{
+   return TA_CDLHIKKAKE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLHIKKAKE_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+{
+   struct TA_CDLHIKKAKE_Stream scratch;
+
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   scratch = *stream;
+   TA_CDLHIKKAKE_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Close( TA_CDLHIKKAKE_Stream *stream )
+{
+   if( stream ) TA_Free( stream );
    return TA_SUCCESS;
 }
 

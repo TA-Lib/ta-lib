@@ -2,7 +2,7 @@ name: CDLHIKKAKE
 camel_case: CdlHikkake
 group: Pattern Recognition
 hint: Hikkake Pattern
-flags: [candlestick]
+flags: [candlestick, stream]
 inputs:
   - name: inPriceOHLC
     type: price

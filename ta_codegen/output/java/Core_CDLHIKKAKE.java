@@ -3,6 +3,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -10,6 +12,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120305 AC   Creation
+ *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
+ *               (countdown + cached 2nd-candle high/low) instead of the absolute
+ *               bar index, so the per-bar logic reads no cursor. Bit-identical
+ *               batch results (verified vs v0.6.4).
  */
 
    public int cdlHikkakeLookback( )
@@ -30,14 +36,19 @@
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+       * state carried without an absolute bar index.
+       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -56,7 +67,7 @@
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
@@ -66,11 +77,16 @@
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
          {
-            patternIdx = 0;
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -93,15 +109,20 @@
              (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 &&
-             (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
          {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -123,8 +144,10 @@
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       lookbackTotal = cdlHikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -134,15 +157,20 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -151,13 +179,18 @@
       do {
          if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && inClose[i] > inHigh[patternIdx - 1] || patternResult < 0 && inClose[i] < inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -178,8 +211,10 @@
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -195,15 +230,20 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -212,13 +252,18 @@
       do {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );
@@ -239,8 +284,10 @@
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int patternIdx = 0;
       int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
       lookbackTotal = cdlHikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -250,15 +297,20 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      patternIdx = 0;
+      cd = 0;
       patternResult = 0;
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
-            patternIdx = 0;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       }
@@ -267,13 +319,18 @@
       do {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
             patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            patternIdx = i;
+            savedHigh = (double)inHigh[i - 1];
+            savedLow = (double)inLow[i - 1];
+            cd = 4;
             outInteger[outIdx++] = patternResult;
-         } else if( i <= patternIdx + 3 && (patternResult > 0 && (double)inClose[i] > (double)inHigh[patternIdx - 1] || patternResult < 0 && (double)inClose[i] < (double)inLow[patternIdx - 1]) ) {
+         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            patternIdx = 0;
+            cd = 0;
          } else {
             outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
          }
          i += 1;
       } while( i <= endIdx );

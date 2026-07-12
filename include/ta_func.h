@@ -2523,6 +2523,26 @@ TA_LIB_API TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
 TA_LIB_API int TA_CDLHIKKAKE_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_CDLHIKKAKE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_CDLHIKKAKE_Stream TA_CDLHIKKAKE_Stream;
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKE_Stream **stream, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Close( TA_CDLHIKKAKE_Stream *stream );
+
 /*
  * TA_CDLHIKKAKEMOD - Modified Hikkake Pattern
  * 
@@ -2552,6 +2572,26 @@ TA_LIB_API TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
 
 TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_CDLHIKKAKEMOD — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_CDLHIKKAKEMOD_Stream TA_CDLHIKKAKEMOD_Stream;
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKEMOD_Stream **stream, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Update( TA_CDLHIKKAKEMOD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Peek( const TA_CDLHIKKAKEMOD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Close( TA_CDLHIKKAKEMOD_Stream *stream );
 
 /*
  * TA_CDLHOMINGPIGEON - Homing Pigeon

@@ -3829,6 +3829,160 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, allOk, peekAll);
         return;
     }
+    else if( fnLen == 13 && strncmp(fn, "TA_CDLHIKKAKE", 13) == 0 ) {
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        for( rd = 0; rd < rounds; rd++ ) {
+        if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+        if( rd > 0 ) sv_candle_avg(rd - 1);
+        rc = TA_CDLHIKKAKE(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_ib0);
+        lb = TA_CDLHIKKAKE_Lookback();
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_CDLHIKKAKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIKKAKE_Close(st); }
+            if( !openRejects ) allOk = 0;
+            if( rd + 1 < rounds ) continue;
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_CDLHIKKAKE_Stream *st = NULL;
+            int v0 = 0, pk0 = 0;
+            rc = TA_CDLHIKKAKE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_CDLHIKKAKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHIKKAKE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
+                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
+            }
+            if( st ) TA_CDLHIKKAKE_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            if( !pkOk ) peekAll = 0;
+            lgi++;
+        }
+        }
+        if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_CDLHIKKAKE(Sidx, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBegS, &svNbS, sv_ib0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    int v0 = 0;
+                    TA_CDLHIKKAKE_Stream *stA = NULL;
+                    TA_RetCode arc = TA_CDLHIKKAKE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
+                    if( stA ) TA_CDLHIKKAKE_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, allOk, peekAll);
+        return;
+    }
+    else if( fnLen == 16 && strncmp(fn, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        for( rd = 0; rd < rounds; rd++ ) {
+        if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+        if( rd > 0 ) sv_candle_avg(rd - 1);
+        rc = TA_CDLHIKKAKEMOD(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_ib0);
+        lb = TA_CDLHIKKAKEMOD_Lookback();
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_CDLHIKKAKEMOD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKEMOD_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIKKAKEMOD_Close(st); }
+            if( !openRejects ) allOk = 0;
+            if( rd + 1 < rounds ) continue;
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_CDLHIKKAKEMOD_Stream *st = NULL;
+            int v0 = 0, pk0 = 0;
+            rc = TA_CDLHIKKAKEMOD_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_CDLHIKKAKEMOD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHIKKAKEMOD_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
+                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
+            }
+            if( st ) TA_CDLHIKKAKEMOD_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            if( !pkOk ) peekAll = 0;
+            lgi++;
+        }
+        }
+        if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_CDLHIKKAKEMOD(Sidx, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBegS, &svNbS, sv_ib0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    int v0 = 0;
+                    TA_CDLHIKKAKEMOD_Stream *stA = NULL;
+                    TA_RetCode arc = TA_CDLHIKKAKEMOD_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
+                    if( stA ) TA_CDLHIKKAKEMOD_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, allOk, peekAll);
+        return;
+    }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
