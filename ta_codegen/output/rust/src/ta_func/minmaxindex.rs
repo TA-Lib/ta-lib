@@ -166,6 +166,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;

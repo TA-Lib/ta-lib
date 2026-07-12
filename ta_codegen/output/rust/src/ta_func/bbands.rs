@@ -204,6 +204,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;

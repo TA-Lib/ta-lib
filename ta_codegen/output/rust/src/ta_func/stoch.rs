@@ -229,6 +229,9 @@ impl Core {
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if outSlowK.as_ptr() == outSlowD.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut lowest: f64 = 0.0_f64;

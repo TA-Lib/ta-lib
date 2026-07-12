@@ -127,6 +127,8 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outFastD )
       return TA_BAD_PARAM;
+   if( outFastK == outFastD )
+      return TA_BAD_PARAM;
 
    /* Stochastic RSI
     *
@@ -292,6 +294,8 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
    if( !outFastK )
       return TA_BAD_PARAM;
    if( !outFastD )
+      return TA_BAD_PARAM;
+   if( outFastK == outFastD )
       return TA_BAD_PARAM;
 
    *outBegIdx= 0;

@@ -111,6 +111,8 @@ TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
+   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
+      return TA_BAD_PARAM;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -345,6 +347,8 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
    if( !outRealMiddleBand )
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
+      return TA_BAD_PARAM;
+   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
 
    lookbackTotal = TA_SMA_Lookback(optInTimePeriod);

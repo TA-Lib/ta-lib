@@ -758,6 +758,22 @@ fn gen_func_inner(
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
         out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam"));
+        // Output-distinctness (issue #108): aliasing two different output arrays
+        // has no correct result, so reject it. Input == output stays allowed.
+        if func.outputs.len() >= 2 {
+            let mut pairs: Vec<String> = Vec::new();
+            for i in 0..func.outputs.len() {
+                for j in (i + 1)..func.outputs.len() {
+                    pairs.push(format!(
+                        "{} == {}",
+                        func.outputs[i].name, func.outputs[j].name
+                    ));
+                }
+            }
+            out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
+            out.push_str("         return RetCode.BadParam ;\n");
+            out.push_str("      }\n");
+        }
     }
 
     let inline_counter = Cell::new(0);

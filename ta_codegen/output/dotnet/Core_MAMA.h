@@ -30,7 +30,9 @@
                                          [Out]int%    outNBElement,
                                          cli::array<double>^  outMAMA,
                                          cli::array<double>^  outFAMA )
-         { return Mama( startIdx, endIdx,
+         {
+            if( outMAMA == outFAMA ) return RetCode::BadParam;
+            return Mama( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInFastLimit,
                          optInSlowLimit,
@@ -48,7 +50,9 @@
                                          [Out]int%    outNBElement,
                                          cli::array<double>^  outMAMA,
                                          cli::array<double>^  outFAMA )
-         { return Mama( startIdx, endIdx,
+         {
+            if( outMAMA == outFAMA ) return RetCode::BadParam;
+            return Mama( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInFastLimit,
                          optInSlowLimit,
@@ -108,7 +112,9 @@
                                               [Out]int%    outNBElement,
                                               cli::array<double>^  outMAMA,
                                               cli::array<double>^  outFAMA )
-         { return MamaLogic( startIdx, endIdx,
+         {
+            if( outMAMA == outFAMA ) return RetCode::BadParam;
+            return MamaLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInFastLimit,
                          optInSlowLimit,
@@ -126,7 +132,9 @@
                                               [Out]int%    outNBElement,
                                               cli::array<double>^  outMAMA,
                                               cli::array<double>^  outFAMA )
-         { return MamaLogic( startIdx, endIdx,
+         {
+            if( outMAMA == outFAMA ) return RetCode::BadParam;
+            return MamaLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInFastLimit,
                          optInSlowLimit,

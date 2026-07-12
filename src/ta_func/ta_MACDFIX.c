@@ -99,6 +99,8 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMACDHist )
       return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
+      return TA_BAD_PARAM;
 
    return TA_MACD_Unguarded(startIdx,endIdx,inReal,0,0,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
    /* 0 indicate fix 12 == 0.15  for optInFastPeriod */
@@ -146,6 +148,8 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    if( !outMACDSignal )
       return TA_BAD_PARAM;
    if( !outMACDHist )
+      return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
       return TA_BAD_PARAM;
 
    return TA_S_MACD_Unguarded(startIdx,endIdx,inReal,0,0,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);

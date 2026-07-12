@@ -134,6 +134,8 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
+   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
+      return TA_BAD_PARAM;
 
    if( optInMAType == TA_MAType_SMA )
    {
@@ -534,6 +536,8 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
    if( !outRealMiddleBand )
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
+      return TA_BAD_PARAM;
+   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
 
    if( optInMAType == TA_MAType_SMA )

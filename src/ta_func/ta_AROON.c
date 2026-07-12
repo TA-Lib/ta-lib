@@ -105,6 +105,8 @@ TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
       return TA_BAD_PARAM;
    if( !outAroonUp )
       return TA_BAD_PARAM;
+   if( outAroonDown == outAroonUp )
+      return TA_BAD_PARAM;
 
    /* This function is using a speed optimized algorithm
     * for the min/max logic.
@@ -328,6 +330,8 @@ TA_RetCode TA_S_AROON( int    startIdx,
    if( !outAroonDown )
       return TA_BAD_PARAM;
    if( !outAroonUp )
+      return TA_BAD_PARAM;
+   if( outAroonDown == outAroonUp )
       return TA_BAD_PARAM;
 
    if( startIdx < optInTimePeriod )

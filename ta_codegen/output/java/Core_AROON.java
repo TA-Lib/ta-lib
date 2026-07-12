@@ -55,6 +55,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outAroonDown == outAroonUp ) {
+         return RetCode.BadParam ;
+      }
       /* This function is using a speed optimized algorithm
        * for the min/max logic.
        *
@@ -245,6 +248,9 @@
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outAroonDown == outAroonUp ) {
+         return RetCode.BadParam ;
       }
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;

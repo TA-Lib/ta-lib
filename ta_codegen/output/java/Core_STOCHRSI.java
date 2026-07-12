@@ -79,6 +79,9 @@
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
+      }
       /* Stochastic RSI
        *
        * Reference: "Stochastic RSI and Dynamic Momentum Index"
@@ -223,6 +226,9 @@
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;

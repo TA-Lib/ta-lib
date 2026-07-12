@@ -100,6 +100,8 @@ TA_LIB_API TA_RetCode TA_MINMAX( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMax )
       return TA_BAD_PARAM;
+   if( outMin == outMax )
+      return TA_BAD_PARAM;
 
    /* Identify the minimum number of price bar needed
     * to identify at least one output over the specified
@@ -314,6 +316,8 @@ TA_RetCode TA_S_MINMAX( int    startIdx,
    if( !outMin )
       return TA_BAD_PARAM;
    if( !outMax )
+      return TA_BAD_PARAM;
+   if( outMin == outMax )
       return TA_BAD_PARAM;
 
    nbInitialElementNeeded = optInTimePeriod - 1;

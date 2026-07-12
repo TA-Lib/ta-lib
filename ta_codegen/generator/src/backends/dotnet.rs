@@ -218,8 +218,31 @@ fn gen_cli_array_dispatch(
 
     let mut out = format_decl_inline(pascal, &params);
 
-    // Build dispatch call body
-    out.push_str(&format!("         {{ return {pascal}( startIdx, endIdx,\n"));
+    // Build dispatch call body. Output-distinctness (issue #108): aliasing two
+    // different output arrays has no correct result, so reject it here at the
+    // managed-array boundary (each array is wrapped into a distinct SubArray
+    // below, so this is the level that still sees the shared handle). Input ==
+    // output aliasing stays allowed. Only multi-output functions gain the guard;
+    // single-output functions keep their original one-line body.
+    if func.outputs.len() >= 2 {
+        out.push_str("         {\n");
+        let mut pairs: Vec<String> = Vec::new();
+        for i in 0..func.outputs.len() {
+            for j in (i + 1)..func.outputs.len() {
+                pairs.push(format!(
+                    "{} == {}",
+                    func.outputs[i].name, func.outputs[j].name
+                ));
+            }
+        }
+        out.push_str(&format!(
+            "            if( {} ) return RetCode::BadParam;\n",
+            pairs.join(" || ")
+        ));
+        out.push_str(&format!("            return {pascal}( startIdx, endIdx,\n"));
+    } else {
+        out.push_str(&format!("         {{ return {pascal}( startIdx, endIdx,\n"));
+    }
 
     // Wrap inputs
     for input in &func.inputs {

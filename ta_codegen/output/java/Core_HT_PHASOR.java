@@ -90,6 +90,9 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      if( outInPhase == outQuadrature ) {
+         return RetCode.BadParam ;
+      }
       a = 0.0962;
       b = 0.5769;
       /* Variable used for the price smoother (a weighted moving average). */
@@ -718,6 +721,9 @@
       }
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
+      }
+      if( outInPhase == outQuadrature ) {
+         return RetCode.BadParam ;
       }
       a = 0.0962;
       b = 0.5769;

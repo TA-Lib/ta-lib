@@ -223,6 +223,9 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut prevFast: f64 = 0.0_f64;
         let mut prevSlow: f64 = 0.0_f64;

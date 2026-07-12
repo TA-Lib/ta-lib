@@ -100,6 +100,9 @@
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -430,6 +433,9 @@
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;

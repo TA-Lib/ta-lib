@@ -96,6 +96,9 @@
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outSlowK == outSlowD ) {
+         return RetCode.BadParam ;
+      }
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -456,6 +459,9 @@
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outSlowK == outSlowD ) {
+         return RetCode.BadParam ;
       }
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = movingAverageLookback(optInSlowK_Period, optInSlowK_MAType);

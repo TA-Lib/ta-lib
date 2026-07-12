@@ -27,7 +27,9 @@
                                            [Out]int%    outNBElement,
                                            cli::array<double>^  outMin,
                                            cli::array<double>^  outMax )
-         { return Minmax( startIdx, endIdx,
+         {
+            if( outMin == outMax ) return RetCode::BadParam;
+            return Minmax( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -43,7 +45,9 @@
                                            [Out]int%    outNBElement,
                                            cli::array<double>^  outMin,
                                            cli::array<double>^  outMax )
-         { return Minmax( startIdx, endIdx,
+         {
+            if( outMin == outMax ) return RetCode::BadParam;
+            return Minmax( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -97,7 +101,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<double>^  outMin,
                                                 cli::array<double>^  outMax )
-         { return MinmaxLogic( startIdx, endIdx,
+         {
+            if( outMin == outMax ) return RetCode::BadParam;
+            return MinmaxLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -113,7 +119,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<double>^  outMin,
                                                 cli::array<double>^  outMax )
-         { return MinmaxLogic( startIdx, endIdx,
+         {
+            if( outMin == outMax ) return RetCode::BadParam;
+            return MinmaxLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
              outBegIdx,

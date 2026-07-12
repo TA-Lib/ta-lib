@@ -181,6 +181,8 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outFAMA )
       return TA_BAD_PARAM;
+   if( outMAMA == outFAMA )
+      return TA_BAD_PARAM;
 
    a = 0.0962;
    b = 0.5769;
@@ -934,6 +936,8 @@ TA_RetCode TA_S_MAMA( int    startIdx,
    if( !outMAMA )
       return TA_BAD_PARAM;
    if( !outFAMA )
+      return TA_BAD_PARAM;
+   if( outMAMA == outFAMA )
       return TA_BAD_PARAM;
 
    a = 0.0962;

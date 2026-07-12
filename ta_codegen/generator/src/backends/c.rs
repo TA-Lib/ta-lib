@@ -506,6 +506,22 @@ fn gen_func_inner(
             out.push_str(&format!("   if( !{} )\n", output.name));
             out.push_str("      return TA_BAD_PARAM;\n");
         }
+        // Output-distinctness check: aliasing two different output buffers has no
+        // correct result (each would clobber the other), so reject it. Input ==
+        // output in-place aliasing is deliberately left allowed. See issue #108.
+        if func.outputs.len() >= 2 {
+            let mut pairs: Vec<String> = Vec::new();
+            for i in 0..func.outputs.len() {
+                for j in (i + 1)..func.outputs.len() {
+                    pairs.push(format!(
+                        "{} == {}",
+                        func.outputs[i].name, func.outputs[j].name
+                    ));
+                }
+            }
+            out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
+            out.push_str("      return TA_BAD_PARAM;\n");
+        }
         out.push('\n');
     }
 

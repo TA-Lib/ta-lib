@@ -57,6 +57,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -222,6 +225,9 @@
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
       }
       lookbackTotal = smaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {

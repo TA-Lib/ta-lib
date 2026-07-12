@@ -39,7 +39,9 @@
                                            [Out]int%    outNBElement,
                                            cli::array<double>^  outFastK,
                                            cli::array<double>^  outFastD )
-         { return Stochf( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return Stochf( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -63,7 +65,9 @@
                                            [Out]int%    outNBElement,
                                            cli::array<double>^  outFastK,
                                            cli::array<double>^  outFastD )
-         { return Stochf( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return Stochf( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),
@@ -141,7 +145,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<double>^  outFastK,
                                                 cli::array<double>^  outFastD )
-         { return StochfLogic( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return StochfLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -165,7 +171,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<double>^  outFastK,
                                                 cli::array<double>^  outFastD )
-         { return StochfLogic( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return StochfLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),

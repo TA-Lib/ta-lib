@@ -1466,6 +1466,101 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    return TA_TEST_PASS;
 }
 
+/* Passing the same buffer for two different output arguments has no correct
+ * result (each output clobbers the other), so every function with two or more
+ * outputs must reject it with TA_BAD_PARAM. For a given function this aliases
+ * each pair of same-typed outputs to a single buffer (leaving the others
+ * distinct) and verifies the rejection. Driven generically over every function
+ * ta_abstract reports, so current and future multi-output functions are covered.
+ * (Issue #108.) */
+static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
+{
+   TA_ParamHolder *paramHolder;
+   const TA_FuncHandle *handle = funcInfo->handle;
+   const TA_InputParameterInfo *inputInfo;
+   const TA_OutputParameterInfo *outInfoA, *outInfoB, *outInfo;
+   TA_RetCode retCode;
+   unsigned int i, oa, ob;
+   int outBegIdx, outNbElement;
+   const int size = 252;
+
+   if( funcInfo->nbOutput < 2 )
+      return TA_TEST_PASS;
+
+   for( oa = 0; oa < funcInfo->nbOutput; oa++ )
+   {
+      for( ob = oa + 1; ob < funcInfo->nbOutput; ob++ )
+      {
+         /* Two outputs can only share one buffer if they are the same type. */
+         TA_GetOutputParameterInfo( handle, oa, &outInfoA );
+         TA_GetOutputParameterInfo( handle, ob, &outInfoB );
+         if( outInfoA->type != outInfoB->type )
+            continue;
+
+         retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+         if( retCode != TA_SUCCESS )
+            return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+
+         /* Inputs: every slot uses the same random array (mirrors callWithDefaults). */
+         for( i = 0; i < funcInfo->nbInput; i++ )
+         {
+            TA_GetInputParameterInfo( handle, i, &inputInfo );
+            switch( inputInfo->type )
+            {
+            case TA_Input_Price:
+               TA_SetInputParamPricePtr( paramHolder, i,
+                  inputInfo->flags&TA_IN_PRICE_OPEN?inputRandomData:NULL,
+                  inputInfo->flags&TA_IN_PRICE_HIGH?inputRandomData:NULL,
+                  inputInfo->flags&TA_IN_PRICE_LOW?inputRandomData:NULL,
+                  inputInfo->flags&TA_IN_PRICE_CLOSE?inputRandomData:NULL,
+                  inputInfo->flags&TA_IN_PRICE_VOLUME?inputRandomData:NULL, NULL );
+               break;
+            case TA_Input_Real:
+               TA_SetInputParamRealPtr( paramHolder, i, inputRandomData );
+               break;
+            case TA_Input_Integer:
+               TA_SetInputParamIntegerPtr( paramHolder, i, inputRandomData_int );
+               break;
+            }
+         }
+
+         /* Outputs: distinct buffers, except output ob is aliased onto output oa. */
+         for( i = 0; i < funcInfo->nbOutput; i++ )
+         {
+            unsigned int slot = (i == ob) ? oa : i;
+            TA_GetOutputParameterInfo( handle, i, &outInfo );
+            if( outInfo->type == TA_Output_Integer )
+               TA_SetOutputParamIntegerPtr( paramHolder, i, &output_int[slot][0] );
+            else
+               TA_SetOutputParamRealPtr( paramHolder, i, &output[slot][0] );
+         }
+
+         retCode = TA_CallFunc( paramHolder, 0, size - 1, &outBegIdx, &outNbElement );
+         TA_ParamHolderFree( paramHolder );
+
+         if( retCode != TA_BAD_PARAM )
+         {
+            printf( "  OUTPUT ALIAS [%s]: outputs %u and %u aliased to one buffer but "
+                    "not rejected (rc=%d, expected TA_BAD_PARAM)\n",
+                    funcInfo->name, oa, ob, retCode );
+            return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+static void testOutputAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   ErrorNumber *errorNumber = (ErrorNumber *)opaqueData;
+   ErrorNumber err;
+   if( *errorNumber != TA_TEST_PASS )
+      return;
+   err = checkOutputAliasRejected( funcInfo );
+   if( err != TA_TEST_PASS )
+      *errorNumber = err;
+}
+
 static ErrorNumber test_default_calls(void)
 {
    ErrorNumber errNumber;
@@ -1525,6 +1620,9 @@ static ErrorNumber test_default_calls(void)
 		   printf( "[PROFILING END]\n" );
    }
 
+   /* Every multi-output function must reject output-buffer aliasing (issue #108). */
+   if( errNumber == TA_TEST_PASS )
+      TA_ForEachFunc( testOutputAlias, &errNumber );
 
    return errNumber;
 }

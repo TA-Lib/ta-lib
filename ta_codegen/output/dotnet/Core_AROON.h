@@ -30,7 +30,9 @@
                                           [Out]int%    outNBElement,
                                           cli::array<double>^  outAroonDown,
                                           cli::array<double>^  outAroonUp )
-         { return Aroon( startIdx, endIdx,
+         {
+            if( outAroonDown == outAroonUp ) return RetCode::BadParam;
+            return Aroon( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          optInTimePeriod,
@@ -48,7 +50,9 @@
                                           [Out]int%    outNBElement,
                                           cli::array<double>^  outAroonDown,
                                           cli::array<double>^  outAroonUp )
-         { return Aroon( startIdx, endIdx,
+         {
+            if( outAroonDown == outAroonUp ) return RetCode::BadParam;
+            return Aroon( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          optInTimePeriod,
@@ -108,7 +112,9 @@
                                                [Out]int%    outNBElement,
                                                cli::array<double>^  outAroonDown,
                                                cli::array<double>^  outAroonUp )
-         { return AroonLogic( startIdx, endIdx,
+         {
+            if( outAroonDown == outAroonUp ) return RetCode::BadParam;
+            return AroonLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          optInTimePeriod,
@@ -126,7 +132,9 @@
                                                [Out]int%    outNBElement,
                                                cli::array<double>^  outAroonDown,
                                                cli::array<double>^  outAroonUp )
-         { return AroonLogic( startIdx, endIdx,
+         {
+            if( outAroonDown == outAroonUp ) return RetCode::BadParam;
+            return AroonLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          optInTimePeriod,

@@ -24,7 +24,9 @@
                                             [Out]int%    outNBElement,
                                             cli::array<double>^  outSine,
                                             cli::array<double>^  outLeadSine )
-         { return Ht_sine( startIdx, endIdx,
+         {
+            if( outSine == outLeadSine ) return RetCode::BadParam;
+            return Ht_sine( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -38,7 +40,9 @@
                                             [Out]int%    outNBElement,
                                             cli::array<double>^  outSine,
                                             cli::array<double>^  outLeadSine )
-         { return Ht_sine( startIdx, endIdx,
+         {
+            if( outSine == outLeadSine ) return RetCode::BadParam;
+            return Ht_sine( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -86,7 +90,9 @@
                                                  [Out]int%    outNBElement,
                                                  cli::array<double>^  outSine,
                                                  cli::array<double>^  outLeadSine )
-         { return Ht_sineLogic( startIdx, endIdx,
+         {
+            if( outSine == outLeadSine ) return RetCode::BadParam;
+            return Ht_sineLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -100,7 +106,9 @@
                                                  [Out]int%    outNBElement,
                                                  cli::array<double>^  outSine,
                                                  cli::array<double>^  outLeadSine )
-         { return Ht_sineLogic( startIdx, endIdx,
+         {
+            if( outSine == outLeadSine ) return RetCode::BadParam;
+            return Ht_sineLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
              outBegIdx,
              outNBElement,

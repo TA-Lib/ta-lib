@@ -36,7 +36,9 @@
                                              cli::array<double>^  outRealUpperBand,
                                              cli::array<double>^  outRealMiddleBand,
                                              cli::array<double>^  outRealLowerBand )
-         { return Accbands( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return Accbands( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -58,7 +60,9 @@
                                              cli::array<double>^  outRealUpperBand,
                                              cli::array<double>^  outRealMiddleBand,
                                              cli::array<double>^  outRealLowerBand )
-         { return Accbands( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return Accbands( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),
@@ -130,7 +134,9 @@
                                                   cli::array<double>^  outRealUpperBand,
                                                   cli::array<double>^  outRealMiddleBand,
                                                   cli::array<double>^  outRealLowerBand )
-         { return AccbandsLogic( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return AccbandsLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -152,7 +158,9 @@
                                                   cli::array<double>^  outRealUpperBand,
                                                   cli::array<double>^  outRealMiddleBand,
                                                   cli::array<double>^  outRealLowerBand )
-         { return AccbandsLogic( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return AccbandsLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),

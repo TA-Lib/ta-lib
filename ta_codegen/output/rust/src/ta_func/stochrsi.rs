@@ -213,6 +213,9 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if outFastK.as_ptr() == outFastD.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut tempRSIBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;

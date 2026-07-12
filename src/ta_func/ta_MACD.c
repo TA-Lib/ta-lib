@@ -147,6 +147,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMACDHist )
       return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
+      return TA_BAD_PARAM;
 
    /* Make sure slow is really slower than
     * the fast period! if not, swap...
@@ -518,6 +520,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
    if( !outMACDSignal )
       return TA_BAD_PARAM;
    if( !outMACDHist )
+      return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
       return TA_BAD_PARAM;
 
    if( optInSlowPeriod < optInFastPeriod )

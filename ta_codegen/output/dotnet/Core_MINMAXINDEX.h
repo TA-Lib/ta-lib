@@ -27,7 +27,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<int>^  outMinIdx,
                                                 cli::array<int>^  outMaxIdx )
-         { return Minmaxindex( startIdx, endIdx,
+         {
+            if( outMinIdx == outMaxIdx ) return RetCode::BadParam;
+            return Minmaxindex( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -43,7 +45,9 @@
                                                 [Out]int%    outNBElement,
                                                 cli::array<int>^  outMinIdx,
                                                 cli::array<int>^  outMaxIdx )
-         { return Minmaxindex( startIdx, endIdx,
+         {
+            if( outMinIdx == outMaxIdx ) return RetCode::BadParam;
+            return Minmaxindex( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -97,7 +101,9 @@
                                                      [Out]int%    outNBElement,
                                                      cli::array<int>^  outMinIdx,
                                                      cli::array<int>^  outMaxIdx )
-         { return MinmaxindexLogic( startIdx, endIdx,
+         {
+            if( outMinIdx == outMaxIdx ) return RetCode::BadParam;
+            return MinmaxindexLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
              outBegIdx,
@@ -113,7 +119,9 @@
                                                      [Out]int%    outNBElement,
                                                      cli::array<int>^  outMinIdx,
                                                      cli::array<int>^  outMaxIdx )
-         { return MinmaxindexLogic( startIdx, endIdx,
+         {
+            if( outMinIdx == outMaxIdx ) return RetCode::BadParam;
+            return MinmaxindexLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
              outBegIdx,

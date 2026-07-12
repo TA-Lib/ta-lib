@@ -160,6 +160,8 @@ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outLeadSine )
       return TA_BAD_PARAM;
+   if( outSine == outLeadSine )
+      return TA_BAD_PARAM;
 
    a = 0.0962;
    b = 0.5769;
@@ -973,6 +975,8 @@ TA_RetCode TA_S_HT_SINE( int    startIdx,
    if( !outSine )
       return TA_BAD_PARAM;
    if( !outLeadSine )
+      return TA_BAD_PARAM;
+   if( outSine == outLeadSine )
       return TA_BAD_PARAM;
 
    a = 0.0962;

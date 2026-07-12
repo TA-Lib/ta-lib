@@ -52,6 +52,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMin == outMax ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
        * period.
@@ -235,6 +238,9 @@
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outMin == outMax ) {
+         return RetCode.BadParam ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {

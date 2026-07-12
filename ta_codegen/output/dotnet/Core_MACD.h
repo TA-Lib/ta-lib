@@ -36,7 +36,9 @@
                                          cli::array<double>^  outMACD,
                                          cli::array<double>^  outMACDSignal,
                                          cli::array<double>^  outMACDHist )
-         { return Macd( startIdx, endIdx,
+         {
+            if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) return RetCode::BadParam;
+            return Macd( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInFastPeriod,
                          optInSlowPeriod,
@@ -58,7 +60,9 @@
                                          cli::array<double>^  outMACD,
                                          cli::array<double>^  outMACDSignal,
                                          cli::array<double>^  outMACDHist )
-         { return Macd( startIdx, endIdx,
+         {
+            if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) return RetCode::BadParam;
+            return Macd( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInFastPeriod,
                          optInSlowPeriod,
@@ -130,7 +134,9 @@
                                               cli::array<double>^  outMACD,
                                               cli::array<double>^  outMACDSignal,
                                               cli::array<double>^  outMACDHist )
-         { return MacdLogic( startIdx, endIdx,
+         {
+            if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) return RetCode::BadParam;
+            return MacdLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInFastPeriod,
                          optInSlowPeriod,
@@ -152,7 +158,9 @@
                                               cli::array<double>^  outMACD,
                                               cli::array<double>^  outMACDSignal,
                                               cli::array<double>^  outMACDHist )
-         { return MacdLogic( startIdx, endIdx,
+         {
+            if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) return RetCode::BadParam;
+            return MacdLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInFastPeriod,
                          optInSlowPeriod,

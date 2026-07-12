@@ -152,6 +152,8 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMACDHist )
       return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
+      return TA_BAD_PARAM;
 
    /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
     * to its single-pass implementation. Period 1 stays on the generic
@@ -469,6 +471,8 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
    if( !outMACDSignal )
       return TA_BAD_PARAM;
    if( !outMACDHist )
+      return TA_BAD_PARAM;
+   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
       return TA_BAD_PARAM;
 
    if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )

@@ -24,7 +24,9 @@
                                               [Out]int%    outNBElement,
                                               cli::array<double>^  outInPhase,
                                               cli::array<double>^  outQuadrature )
-         { return Ht_phasor( startIdx, endIdx,
+         {
+            if( outInPhase == outQuadrature ) return RetCode::BadParam;
+            return Ht_phasor( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -38,7 +40,9 @@
                                               [Out]int%    outNBElement,
                                               cli::array<double>^  outInPhase,
                                               cli::array<double>^  outQuadrature )
-         { return Ht_phasor( startIdx, endIdx,
+         {
+            if( outInPhase == outQuadrature ) return RetCode::BadParam;
+            return Ht_phasor( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -86,7 +90,9 @@
                                                    [Out]int%    outNBElement,
                                                    cli::array<double>^  outInPhase,
                                                    cli::array<double>^  outQuadrature )
-         { return Ht_phasorLogic( startIdx, endIdx,
+         {
+            if( outInPhase == outQuadrature ) return RetCode::BadParam;
+            return Ht_phasorLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
              outBegIdx,
              outNBElement,
@@ -100,7 +106,9 @@
                                                    [Out]int%    outNBElement,
                                                    cli::array<double>^  outInPhase,
                                                    cli::array<double>^  outQuadrature )
-         { return Ht_phasorLogic( startIdx, endIdx,
+         {
+            if( outInPhase == outQuadrature ) return RetCode::BadParam;
+            return Ht_phasorLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
              outBegIdx,
              outNBElement,

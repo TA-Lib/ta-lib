@@ -45,7 +45,9 @@
                                           [Out]int%    outNBElement,
                                           cli::array<double>^  outSlowK,
                                           cli::array<double>^  outSlowD )
-         { return Stoch( startIdx, endIdx,
+         {
+            if( outSlowK == outSlowD ) return RetCode::BadParam;
+            return Stoch( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -73,7 +75,9 @@
                                           [Out]int%    outNBElement,
                                           cli::array<double>^  outSlowK,
                                           cli::array<double>^  outSlowD )
-         { return Stoch( startIdx, endIdx,
+         {
+            if( outSlowK == outSlowD ) return RetCode::BadParam;
+            return Stoch( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),
@@ -163,7 +167,9 @@
                                                [Out]int%    outNBElement,
                                                cli::array<double>^  outSlowK,
                                                cli::array<double>^  outSlowD )
-         { return StochLogic( startIdx, endIdx,
+         {
+            if( outSlowK == outSlowD ) return RetCode::BadParam;
+            return StochLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inHigh,0),
                          gcnew SubArrayFrom1D<double>(inLow,0),
                          gcnew SubArrayFrom1D<double>(inClose,0),
@@ -191,7 +197,9 @@
                                                [Out]int%    outNBElement,
                                                cli::array<double>^  outSlowK,
                                                cli::array<double>^  outSlowD )
-         { return StochLogic( startIdx, endIdx,
+         {
+            if( outSlowK == outSlowD ) return RetCode::BadParam;
+            return StochLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inHigh,0),
                          gcnew SubArrayFrom1D<float>(inLow,0),
                          gcnew SubArrayFrom1D<float>(inClose,0),

@@ -36,7 +36,9 @@
                                              [Out]int%    outNBElement,
                                              cli::array<double>^  outFastK,
                                              cli::array<double>^  outFastD )
-         { return Stochrsi( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return Stochrsi( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
                          optInFastK_Period,
@@ -58,7 +60,9 @@
                                              [Out]int%    outNBElement,
                                              cli::array<double>^  outFastK,
                                              cli::array<double>^  outFastD )
-         { return Stochrsi( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return Stochrsi( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
                          optInFastK_Period,
@@ -130,7 +134,9 @@
                                                   [Out]int%    outNBElement,
                                                   cli::array<double>^  outFastK,
                                                   cli::array<double>^  outFastD )
-         { return StochrsiLogic( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return StochrsiLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
                          optInFastK_Period,
@@ -152,7 +158,9 @@
                                                   [Out]int%    outNBElement,
                                                   cli::array<double>^  outFastK,
                                                   cli::array<double>^  outFastD )
-         { return StochrsiLogic( startIdx, endIdx,
+         {
+            if( outFastK == outFastD ) return RetCode::BadParam;
+            return StochrsiLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
                          optInFastK_Period,

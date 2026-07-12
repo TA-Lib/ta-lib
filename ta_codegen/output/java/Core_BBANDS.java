@@ -84,6 +84,9 @@
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
       }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
+      }
       if( optInMAType == MAType.Sma ) {
          /* SMA fast path: the middle band is a simple moving average, which is
           * also the mean the standard deviation is measured against - so the SMA
@@ -395,6 +398,9 @@
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
       }
       if( optInMAType == MAType.Sma ) {
          if( false ) {

@@ -39,7 +39,9 @@
                                            cli::array<double>^  outRealUpperBand,
                                            cli::array<double>^  outRealMiddleBand,
                                            cli::array<double>^  outRealLowerBand )
-         { return Bbands( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return Bbands( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
                          optInNbDevUp,
@@ -63,7 +65,9 @@
                                            cli::array<double>^  outRealUpperBand,
                                            cli::array<double>^  outRealMiddleBand,
                                            cli::array<double>^  outRealLowerBand )
-         { return Bbands( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return Bbands( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
                          optInNbDevUp,
@@ -141,7 +145,9 @@
                                                 cli::array<double>^  outRealUpperBand,
                                                 cli::array<double>^  outRealMiddleBand,
                                                 cli::array<double>^  outRealLowerBand )
-         { return BbandsLogic( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return BbandsLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<double>(inReal,0),
                          optInTimePeriod,
                          optInNbDevUp,
@@ -165,7 +171,9 @@
                                                 cli::array<double>^  outRealUpperBand,
                                                 cli::array<double>^  outRealMiddleBand,
                                                 cli::array<double>^  outRealLowerBand )
-         { return BbandsLogic( startIdx, endIdx,
+         {
+            if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) return RetCode::BadParam;
+            return BbandsLogic( startIdx, endIdx,
                          gcnew SubArrayFrom1D<float>(inReal,0),
                          optInTimePeriod,
                          optInNbDevUp,

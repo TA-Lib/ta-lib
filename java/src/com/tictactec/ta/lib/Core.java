@@ -248,6 +248,9 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -413,6 +416,9 @@ public class Core {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
       }
       lookbackTotal = smaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -2910,6 +2916,9 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outAroonDown == outAroonUp ) {
+         return RetCode.BadParam ;
+      }
       /* This function is using a speed optimized algorithm
        * for the min/max logic.
        *
@@ -3100,6 +3109,9 @@ public class Core {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outAroonDown == outAroonUp ) {
+         return RetCode.BadParam ;
       }
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;
@@ -4760,6 +4772,9 @@ public class Core {
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
       }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
+      }
       if( optInMAType == MAType.Sma ) {
          /* SMA fast path: the middle band is a simple moving average, which is
           * also the mean the standard deviation is measured against - so the SMA
@@ -5071,6 +5086,9 @@ public class Core {
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      }
+      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+         return RetCode.BadParam ;
       }
       if( optInMAType == MAType.Sma ) {
          if( false ) {
@@ -32744,6 +32762,9 @@ public class Core {
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      if( outInPhase == outQuadrature ) {
+         return RetCode.BadParam ;
+      }
       a = 0.0962;
       b = 0.5769;
       /* Variable used for the price smoother (a weighted moving average). */
@@ -33373,6 +33394,9 @@ public class Core {
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      if( outInPhase == outQuadrature ) {
+         return RetCode.BadParam ;
+      }
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
@@ -33988,6 +34012,9 @@ public class Core {
       }
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
+      }
+      if( outSine == outLeadSine ) {
+         return RetCode.BadParam ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -34740,6 +34767,9 @@ public class Core {
       }
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
+      }
+      if( outSine == outLeadSine ) {
+         return RetCode.BadParam ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -40823,6 +40853,9 @@ public class Core {
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -41154,6 +41187,9 @@ public class Core {
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
@@ -41473,6 +41509,9 @@ public class Core {
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
        * to its single-pass implementation. Period 1 stays on the generic
        * path: ma() copies the input for it instead of running an EMA
@@ -41712,6 +41751,9 @@ public class Core {
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
          return macdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
@@ -41919,6 +41961,9 @@ public class Core {
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
+      }
       return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       /* 0 indicate fix 12 == 0.15  for optInFastPeriod */
       /* 0 indicate fix 26 == 0.075 for optInSlowPeriod */
@@ -41955,6 +42000,9 @@ public class Core {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+         return RetCode.BadParam ;
       }
       return macdUnguarded(startIdx, endIdx, inReal, 0, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
    }
@@ -42106,6 +42154,9 @@ public class Core {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
+      }
+      if( outMAMA == outFAMA ) {
+         return RetCode.BadParam ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -42810,6 +42861,9 @@ public class Core {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
+      }
+      if( outMAMA == outFAMA ) {
+         return RetCode.BadParam ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -46434,6 +46488,9 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMin == outMax ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
        * period.
@@ -46617,6 +46674,9 @@ public class Core {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outMin == outMax ) {
+         return RetCode.BadParam ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -46810,6 +46870,9 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outMinIdx == outMaxIdx ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
        * period.
@@ -46993,6 +47056,9 @@ public class Core {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outMinIdx == outMaxIdx ) {
+         return RetCode.BadParam ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -55607,6 +55673,9 @@ public class Core {
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outSlowK == outSlowD ) {
+         return RetCode.BadParam ;
+      }
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -55968,6 +56037,9 @@ public class Core {
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outSlowK == outSlowD ) {
+         return RetCode.BadParam ;
+      }
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = movingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
       lookbackDSlow = movingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
@@ -56272,6 +56344,9 @@ public class Core {
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
       }
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -56614,6 +56689,9 @@ public class Core {
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
+      }
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = movingAverageLookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
@@ -56908,6 +56986,9 @@ public class Core {
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
+      }
       /* Stochastic RSI
        *
        * Reference: "Stochastic RSI and Dynamic Momentum Index"
@@ -57052,6 +57133,9 @@ public class Core {
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( outFastK == outFastD ) {
+         return RetCode.BadParam ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;

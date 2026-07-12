@@ -335,6 +335,26 @@ fn gen_guarded_func(
         out.push_str(&gen_opt_param_validation(opt, "        ", false));
     }
 
+    // Output-distinctness (issue #108): aliasing two different output buffers has
+    // no correct result. The borrow checker already forbids a safe caller from
+    // passing the same `&mut` slice twice, so this only guards the unsafe/FFI
+    // boundary; it is kept for parity with the C/Java/.NET backends. Input ==
+    // output aliasing stays allowed.
+    if func.outputs.len() >= 2 {
+        let mut pairs: Vec<String> = Vec::new();
+        for i in 0..func.outputs.len() {
+            for j in (i + 1)..func.outputs.len() {
+                pairs.push(format!(
+                    "{}.as_ptr() == {}.as_ptr()",
+                    func.outputs[i].name, func.outputs[j].name
+                ));
+            }
+        }
+        out.push_str(&format!("        if {} {{\n", pairs.join(" || ")));
+        out.push_str("            return RetCode::BadParam;\n");
+        out.push_str("        }\n");
+    }
+
     if func.has_explicit_private {
         // The guarded body already contains delegation to _unguarded with extra params.
         // Render it directly (it includes pre-computation + delegation call).

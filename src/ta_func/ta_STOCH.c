@@ -152,6 +152,8 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
       return TA_BAD_PARAM;
    if( !outSlowD )
       return TA_BAD_PARAM;
+   if( outSlowK == outSlowD )
+      return TA_BAD_PARAM;
 
    /* With stochastic, there is a total of 4 different lines that
     * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -571,6 +573,8 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    if( !outSlowK )
       return TA_BAD_PARAM;
    if( !outSlowD )
+      return TA_BAD_PARAM;
+   if( outSlowK == outSlowD )
       return TA_BAD_PARAM;
 
    lookbackK = optInFastK_Period - 1;
