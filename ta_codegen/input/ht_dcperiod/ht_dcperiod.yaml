@@ -2,7 +2,7 @@ name: HT_DCPERIOD
 camel_case: HtDcPeriod
 group: Cycle Indicators
 hint: Hilbert Transform - Dominant Cycle Period
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

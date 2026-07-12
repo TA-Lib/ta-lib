@@ -2144,7 +2144,13 @@ fn alloc_and_capture(
             let _ = writeln!(s, "{pad}sp->lastOut_{name} = lastValue_{name};");
         }
         for (name, ty) in &model.state {
-            if matches!(
+            if model.parity.as_ref().is_some_and(|p| &p.field == name) {
+                // Synthetic parity field: SEEDED (not captured from a batch
+                // local) to the next bar's parity — the batch replay processed
+                // bars 0..historyLen-1, so the next update handles bar
+                // historyLen. Flipped each update (see build_transition).
+                let _ = writeln!(s, "{pad}sp->{name} = historyLen % 2;");
+            } else if matches!(
                 ty,
                 crate::ir::VarType::RealArray(_) | crate::ir::VarType::IntArray(_)
             ) {

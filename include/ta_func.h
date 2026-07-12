@@ -4743,6 +4743,26 @@ TA_LIB_API TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
 TA_LIB_API int TA_HT_DCPERIOD_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_HT_DCPERIOD — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_DCPERIOD_Stream TA_HT_DCPERIOD_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( const double inReal[], int historyLen, TA_HT_DCPERIOD_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Close( TA_HT_DCPERIOD_Stream *stream );
+
 /*
  * TA_HT_DCPHASE - Hilbert Transform - Dominant Cycle Phase
  * 

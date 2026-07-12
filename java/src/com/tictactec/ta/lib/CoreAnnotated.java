@@ -4896,7 +4896,7 @@ public int htDcPeriodLookback(
 @FuncInfo(
         name  = "HT_DCPERIOD",
         group = "Cycle Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1

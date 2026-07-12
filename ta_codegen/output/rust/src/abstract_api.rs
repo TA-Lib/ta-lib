@@ -1470,7 +1470,7 @@ pub static FUNCS: [FuncInfo; 161] = [
         camel_case_name: "HtDcPeriod",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Period",
-        flags: FuncFlags(0x08000000),
+        flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],

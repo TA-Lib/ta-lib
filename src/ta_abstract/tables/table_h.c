@@ -58,7 +58,7 @@ DEF_FUNCTION( HT_DCPERIOD,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Dominant Cycle Period",
               "HtDcPeriod",
-              TA_FUNC_FLG_UNST_PER
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* HT_DCPERIOD END */
 

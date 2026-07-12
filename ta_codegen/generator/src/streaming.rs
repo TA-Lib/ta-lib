@@ -138,6 +138,25 @@ pub struct CircState {
     pub layout: CircBufLayout,
 }
 
+/// A cursor-parity branch carried as stream state — the general handle for a
+/// steady loop that selects an arm on the ABSOLUTE bar index (`cursor % 2`).
+/// A stream cannot reconstruct the absolute index, so [`carry_cursor_parity`]
+/// rewrites the `cursor % 2` sub-expression to read a carried `int` field
+/// (registered as ordinary [`StreamModel::state`]); the emitter SEEDS it in
+/// open (`historyLen % 2` — the parity of the next bar, established by open's
+/// real-batch replay) and FLIPS it each update (`1 - parity`). The branch arms
+/// are transcribed verbatim, so a correct seed reproduces the batch's
+/// interleaving bit-for-bit; a 1-bar seed offset would swap the arms.
+///
+/// First consumer: the Hilbert-transform family (HT_DCPERIOD + riders), whose
+/// odd/even quadrature arms carry an even-only `hilbertIdx` advance — exactly
+/// the interleaving a wrong seed would invert.
+#[derive(Debug, Clone)]
+pub struct ParitySpec {
+    /// State field name carrying `cursor % 2` (an `int` appended to `state`).
+    pub field: String,
+}
+
 /// Absolute-index automaton (T4 extrema class: MIN/MAX/WILLR/MININDEX/
 /// AROON...). The batch keeps a cached extremum INDEX and rescans the
 /// window when it expires — tie-breaking differs between the rescan and
@@ -528,6 +547,9 @@ pub struct StreamModel<'a> {
     pub steady: Steady,
     /// Recognized param==1 identity path, if the batch body has one.
     pub identity: Option<IdentityPath>,
+    /// Cursor-parity carry (`cursor % 2` odd/even branch), if the batch body
+    /// has one. Seeded in open, flipped each update; see [`ParitySpec`].
+    pub parity: Option<ParitySpec>,
 }
 
 impl StreamModel<'_> {
@@ -749,7 +771,7 @@ fn expr_var_names(e: &Expr, out: &mut BTreeSet<String>) {
     });
 }
 
-fn stmt_var_names(s: &Statement, out: &mut BTreeSet<String>) {
+pub fn stmt_var_names(s: &Statement, out: &mut BTreeSet<String>) {
     walk_stmt_exprs(s, &mut |e| expr_var_names(e, out));
 }
 
@@ -1288,6 +1310,12 @@ pub fn analyze_region_scoped<'a>(
     // form `for (w = E; w >= 0; w--)` with `i` := `cursor - w` (IMI) — the
     // reads become in[cursor - w], the standard rescan-window shape.
     let steady_stmts = reindex_cursor_windows(&steady_stmts, &cursor);
+    // Two more general steady-loop normalizations that decouple the transition
+    // from the absolute cursor index (bit-preserving; each a no-op unless its
+    // shape is present). First drop a warm-up output gate, then carry any
+    // `cursor % 2` branch as state. (HT_DCPERIOD is the first consumer of both.)
+    let steady_stmts = strip_cursor_output_gate(steady_stmts, &cursor);
+    let (steady_stmts, parity) = carry_cursor_parity(steady_stmts, &cursor);
 
     // --- array accesses ----------------------------------------------------
 
@@ -1323,10 +1351,17 @@ pub fn analyze_region_scoped<'a>(
         bar_inputs: &bar_inputs,
         outputs: &outputs,
         circ_extra: &circ_extra,
+        parity_field: parity.as_ref().map(|p| p.field.as_str()),
     };
     let (extrema, (mut state, temps)) =
         classify_or_extrema(&ctx, &ring_vars, &trailing, &windows, &circs)?;
     force_circ_index_state(&circs, &mut state, &temps);
+    // The carried parity field is synthetic (no VarDecl): classify_locals skips
+    // it, so append it as an ordinary int state field here (emitter seeds/flips
+    // it — see ParitySpec). Appended last: deterministic, after real locals.
+    if let Some(ps) = &parity {
+        state.push((ps.field.clone(), VarType::Integer));
+    }
 
     // Lags in input signature order.
     let lag_slots: Vec<LagSlot> = bar_inputs
@@ -1393,6 +1428,7 @@ pub fn analyze_region_scoped<'a>(
         lags: lag_slots,
         steady,
         identity,
+        parity,
     };
     // Drift-proof the cached tier: re-derive it from the FINAL model (through
     // the accessors) and confirm it matches. Catches any construction bug that
@@ -3457,6 +3493,9 @@ struct ClassifyCtx<'a> {
     bar_inputs: &'a [String],
     outputs: &'a [String],
     circ_extra: &'a [(String, VarType)],
+    /// Synthetic carried parity field, if any: skipped by the candidate scan
+    /// (it has no VarDecl; `analyze_region_scoped` injects it into state).
+    parity_field: Option<&'a str>,
 }
 
 type Classified = (Vec<ScalarField>, Vec<ScalarField>);
@@ -3484,6 +3523,7 @@ fn classify_or_extrema(
             ctx.bar_inputs,
             ctx.outputs,
             ctx.circ_extra,
+            ctx.parity_field,
         )
     };
     match run(ring_vars) {
@@ -3809,6 +3849,7 @@ fn classify_locals(
     bar_inputs: &[String],
     outputs: &[String],
     circ_extra: &[(String, VarType)],
+    parity_field: Option<&str>,
 ) -> Result<(Vec<ScalarField>, Vec<ScalarField>), StreamError> {
     let mut decls = BTreeMap::new();
     collect_var_decls(body, &mut decls);
@@ -3871,6 +3912,7 @@ fn classify_locals(
             || bar_inputs.contains(v)
             || outputs.contains(v)
             || candle_locals.contains(v)
+            || Some(v.as_str()) == parity_field
             || v == "endIdx"
             || v == "startIdx"
         {
@@ -4374,6 +4416,7 @@ pub trait NameMap {
 ///
 /// Returns an error if a dropped variable survives the rewrite (a bookkeeping
 /// statement the deleter did not recognize).
+#[allow(clippy::too_many_lines)]
 pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<Statement>, String> {
     let dropped = model.dropped_vars();
     let state_names: BTreeSet<String> = model
@@ -4492,7 +4535,27 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     for win in model.windows() {
         push_window_advance(&mut out, win, names);
     }
+    // Cursor-parity flip: this bar's `cursor % 2` was consumed by the branch
+    // predicate; advance to the next bar's parity.
+    if let Some(ps) = &model.parity {
+        push_parity_flip(&mut out, ps, names);
+    }
     Ok(out)
+}
+
+/// `parity = 1 - parity;` — advance the carried parity to the next bar (toggles
+/// {0,1}) after the branch predicate has consumed this bar's value.
+fn push_parity_flip(out: &mut Vec<Statement>, parity: &ParitySpec, names: &dyn NameMap) {
+    let field = names.state(&parity.field);
+    out.push(Statement::Assign {
+        target: Expr::Var(field.clone()),
+        value: Expr::BinOp(
+            Box::new(Expr::IntLiteral(1)),
+            BinOp::Sub,
+            Box::new(Expr::Var(field)),
+        ),
+        compound: false,
+    });
 }
 
 /// `win[pos] = bar;` — the current bar enters the window before the body.
@@ -4595,6 +4658,107 @@ fn insert_transition_prologue(
     if let Some(b) = identity_branch {
         out.insert(0, b);
     }
+}
+
+/// The state field name synthesized by [`carry_cursor_parity`] to hold
+/// `cursor % 2`. Reserved: the parity carry only fires when a steady loop
+/// branches on `cursor % 2`, so this name never coexists with a same-named
+/// local (no library source declares one).
+const PARITY_FIELD: &str = "streamParity";
+
+/// STEADY-LOOP NORMALIZATION (general; sits beside [`hoist_ternary_indices`]
+/// and [`reindex_cursor_windows`], applied to every steady body): strip a
+/// warm-up OUTPUT GATE `if (cursor >= startIdx) { <output writes> }` by splicing
+/// its then-body to the loop top level.
+///
+/// A batch loop that walks from before `startIdx` guards its output write so
+/// warm-up bars emit nothing. A stream never sees warm-up in the transition:
+/// open's full-batch replay consumes it (open transcribes the ORIGINAL body
+/// over [`StreamModel::body`], gate intact), and every update processes exactly
+/// one bar at index `>= startIdx`. So the transition writes UNCONDITIONALLY;
+/// promoting the guarded block removes `startIdx` from the steady loop (which
+/// `classify_locals` otherwise rejects) and the cursor reference in the gate.
+///
+/// Keyed purely on the structural shape `cursor >= startIdx` with an empty
+/// `else`, so any non-matching steady body passes through byte-identically
+/// (regen-safe). Fires on every match to stay robust to multiple gates.
+fn strip_cursor_output_gate(stmts: Vec<Statement>, cursor: &str) -> Vec<Statement> {
+    let mut out: Vec<Statement> = Vec::with_capacity(stmts.len());
+    for st in stmts {
+        match st {
+            Statement::If {
+                condition: Expr::BinOp(ref l, BinOp::GreaterEq, ref r),
+                ref then_body,
+                ref else_body,
+                ..
+            } if else_body.is_empty()
+                && matches!(l.as_ref(), Expr::Var(v) if v == cursor)
+                && matches!(r.as_ref(), Expr::Var(v) if v == "startIdx") =>
+            {
+                out.extend(then_body.iter().cloned());
+            }
+            other => out.push(other),
+        }
+    }
+    out
+}
+
+/// STEADY-LOOP NORMALIZATION (general; see [`strip_cursor_output_gate`]): carry
+/// a `cursor % 2` (odd/even absolute-bar-index) branch as state.
+///
+/// A stream cannot reconstruct the absolute bar index, so a steady loop that
+/// branches on `cursor % 2` cannot be transcribed verbatim. This rewrites the
+/// `cursor % 2` sub-expression to read a carried `int` field ([`PARITY_FIELD`])
+/// and returns a [`ParitySpec`] telling the emitter to SEED it in open
+/// (`historyLen % 2`, the next bar's parity, established by open's real-batch
+/// replay) and FLIP it (`1 - parity`) each update. Returns `None` when the body
+/// has no `cursor % 2` — a byte-identical no-op for every other function.
+///
+/// Keyed on shape via [`is_cursor_parity`] (the modulus's LEFT operand must be
+/// the cursor), which distinguishes `cursor % 2` from a param modulus like
+/// TRIMA's `optInTimePeriod % 2` — the latter is never rewritten.
+fn carry_cursor_parity(
+    stmts: Vec<Statement>,
+    cursor: &str,
+) -> (Vec<Statement>, Option<ParitySpec>) {
+    let mut found = false;
+    for s in &stmts {
+        walk_stmt_exprs(s, &mut |e| {
+            walk_expr(e, &mut |x| {
+                if is_cursor_parity(x, cursor) {
+                    found = true;
+                }
+            });
+        });
+    }
+    if !found {
+        return (stmts, None);
+    }
+    let fe = |e: Expr| -> Expr {
+        if is_cursor_parity(&e, cursor) {
+            Expr::Var(PARITY_FIELD.to_string())
+        } else {
+            e
+        }
+    };
+    let rewritten = rewrite_stmts(&stmts, &fe, &Some);
+    (
+        rewritten,
+        Some(ParitySpec {
+            field: PARITY_FIELD.to_string(),
+        }),
+    )
+}
+
+/// `cursor % 2` — a steady loop's odd/even absolute-bar-index parity test. The
+/// LEFT operand must be the cursor (excludes a param modulus like `period % 2`).
+fn is_cursor_parity(e: &Expr, cursor: &str) -> bool {
+    matches!(
+        e,
+        Expr::BinOp(l, BinOp::Mod, r)
+            if matches!(l.as_ref(), Expr::Var(v) if v == cursor)
+                && matches!(r.as_ref(), Expr::IntLiteral(2))
+    )
 }
 
 /// Rewrite `arr[cond ? a : b]` to `cond ? arr[a] : arr[b]` bottom-up,
