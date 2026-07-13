@@ -1,0 +1,25 @@
+{
+  "name": "ta-lib.org",
+  "version": "0.0.1",
+  "description": "TA-Lib - Technical Analysis Library",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "scripts": {
+    "start": "vuepress-vite dev src",
+    "docs:build": "vuepress-vite build src",
+    "docs:clean-dev": "vuepress-vite dev src --clean-cache",
+    "docs:dev": "vuepress-vite dev src",
+    "docs:update-package": "pnpm dlx vp-update"
+  },
+  "devDependencies": {
+    "@vuepress/bundler-vite": "2.0.0-rc.30",
+    "@vuepress/plugin-slimsearch": "2.0.0-rc.130",
+    "sass-embedded": "1.100.0",
+    "vue": "^3.5.39",
+    "vuepress": "2.0.0-rc.30",
+    "vuepress-theme-hope": "2.0.0-rc.107"
+  },
+  "dependencies": {
+    "katex": "^0.16.47"
+  }
+}
