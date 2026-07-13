@@ -2,7 +2,7 @@ name: HT_TRENDMODE
 camel_case: HtTrendMode
 group: Cycle Indicators
 hint: Hilbert Transform - Trend vs Cycle Mode
-flags: [unstable_period]
+flags: [unstable_period, stream]
 inputs:
   - name: inReal
     type: real

@@ -3886,6 +3886,7 @@
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3948,6 +3949,7 @@
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3983,6 +3985,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4010,6 +4013,7 @@
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

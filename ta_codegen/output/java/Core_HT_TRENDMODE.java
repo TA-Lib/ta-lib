@@ -3,14 +3,22 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  120802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071226 MF,CC  Stream: rewrite the raw-price trendline backward sum
+ *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+ *                constant-cap padded loop for(j<50) if(j<DCPeriodInt) sum +=
+ *                inReal[today-j]. Bit-identical (same terms, same order); the
+ *                literal cap lets the streaming rescan-window machinery bound it,
+ *                and a separate counter j keeps it distinct from the DC-phase
+ *                circular-buffer loop (which still uses i).
  */
 
    public int htTrendModeLookback( )
@@ -35,6 +43,7 @@
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -462,10 +471,18 @@
           * exactly as published (Ehlers, "Rocket Science for Traders":
           * ITrend sums Price, not SmoothPrice). See issue #88.
           */
-         idx = today;
+         /* Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+          * loop with an inner guard is a streaming-friendly rewrite of the
+          * data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+          * (idx starting at today): identical terms in identical order, so
+          * bit-for-bit unchanged, but the constant cap lets the rescan-window
+          * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
+          */
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -513,6 +530,7 @@
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -860,10 +878,11 @@
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -908,6 +927,7 @@
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -1261,10 +1281,11 @@
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += (double)inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -1309,6 +1330,7 @@
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -1656,10 +1678,11 @@
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += (double)inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;

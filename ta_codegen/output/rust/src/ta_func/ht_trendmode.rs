@@ -44,14 +44,22 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  120802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071226 MF,CC  Stream: rewrite the raw-price trendline backward sum
+ *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+ *                constant-cap padded loop for(j<50) if(j<DCPeriodInt) sum +=
+ *                inReal[today-j]. Bit-identical (same terms, same order); the
+ *                literal cap lets the streaming rescan-window machinery bound it,
+ *                and a separate counter j keeps it distinct from the DC-phase
+ *                circular-buffer loop (which still uses i).
  */
 
 // Import types from parent module
@@ -145,6 +153,7 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -561,13 +570,20 @@ impl Core {
             // circular buffer), the iTrend average reads the raw price,
             // exactly as published (Ehlers, "Rocket Science for Traders":
             // ITrend sums Price, not SmoothPrice). See issue #88.
-            idx = today;
+            // Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+            // loop with an inner guard is a streaming-friendly rewrite of the
+            // data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+            // (idx starting at today): identical terms in identical order, so
+            // bit-for-bit unchanged, but the constant cap lets the rescan-window
+            // machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
             tempReal = 0.0;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
-            i = 0;
-            while i < DCPeriodInt {
-                tempReal += inReal[{ let _v = idx; idx = idx.wrapping_sub(1); _v }];
-                i += 1;
+            // for( j = 0; j < 50; j += 1 )
+            j = 0;
+            while j < 50 {
+                if j < DCPeriodInt {
+                    tempReal += inReal[today - j];
+                }
+                j += 1;
             }
             if DCPeriodInt > 0 {
                 tempReal = tempReal / (DCPeriodInt as f64);
@@ -625,6 +641,7 @@ impl Core {
     ) -> RetCode {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -984,13 +1001,14 @@ impl Core {
             leadSine = ((DCPhase + 45_f64) * deg2Rad).sin();
             DCPeriod = smoothPeriod + 0.5;
             DCPeriodInt = (DCPeriod as usize) as usize;
-            idx = today;
             tempReal = 0.0;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
-            i = 0;
-            while i < DCPeriodInt {
-                tempReal += inReal[{ let _v = idx; idx = idx.wrapping_sub(1); _v }];
-                i += 1;
+            // for( j = 0; j < 50; j += 1 )
+            j = 0;
+            while j < 50 {
+                if j < DCPeriodInt {
+                    tempReal += inReal[today - j];
+                }
+                j += 1;
             }
             if DCPeriodInt > 0 {
                 tempReal = tempReal / (DCPeriodInt as f64);

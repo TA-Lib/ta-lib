@@ -44,6 +44,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -57,6 +58,11 @@
  *                The trendline averages RAW price over the dominant cycle
  *                period, exactly as published (Ehlers, "Rocket Science
  *                for Traders": ITrend sums Price, not SmoothPrice).
+ *  071226 MF,CC  Stream: rewrite the raw-price backward sum
+ *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+ *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
+ *                inReal[today-i]. Bit-identical (same terms, same order); the
+ *                literal cap lets the streaming rescan-window machinery bound it.
  */
 
 // Import types from parent module
@@ -208,7 +214,6 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut idx: usize = 0_usize;
         let mut DCPeriodInt: usize = 0_usize;
         let mut DCPeriod: f64 = 0.0_f64;
         a = 0.0962;
@@ -477,12 +482,19 @@ impl Core {
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
             // the Hilbert detrender above). See issue #88.
-            idx = today;
+            // Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+            // loop with an inner guard is a streaming-friendly rewrite of the
+            // data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+            // (idx starting at today): identical terms in identical order, so
+            // bit-for-bit unchanged, but the constant cap lets the rescan-window
+            // machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
             tempReal = 0.0;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; i < 50; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
-                tempReal += inReal[{ let _v = idx; idx = idx.wrapping_sub(1); _v }];
+            while i < 50 {
+                if i < DCPeriodInt {
+                    tempReal += inReal[today - i];
+                }
                 i += 1;
             }
             if DCPeriodInt > 0 {
@@ -579,7 +591,6 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut idx: usize = 0_usize;
         let mut DCPeriodInt: usize = 0_usize;
         let mut DCPeriod: f64 = 0.0_f64;
         assert!(endIdx < inReal.len());
@@ -802,12 +813,13 @@ impl Core {
             smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
             DCPeriod = smoothPeriod + 0.5;
             DCPeriodInt = (DCPeriod as usize) as usize;
-            idx = today;
             tempReal = 0.0;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; i < 50; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
-                tempReal += inReal[{ let _v = idx; idx = idx.wrapping_sub(1); _v }];
+            while i < 50 {
+                if i < DCPeriodInt {
+                    tempReal += inReal[today - i];
+                }
                 i += 1;
             }
             if DCPeriodInt > 0 {

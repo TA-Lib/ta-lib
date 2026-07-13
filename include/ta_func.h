@@ -4787,6 +4787,26 @@ TA_LIB_API TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
 TA_LIB_API int TA_HT_DCPHASE_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_HT_DCPHASE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_DCPHASE_Stream TA_HT_DCPHASE_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( const double inReal[], int historyLen, TA_HT_DCPHASE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Update( TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Close( TA_HT_DCPHASE_Stream *stream );
+
 /*
  * TA_HT_PHASOR - Hilbert Transform - Phasor Components
  * 
@@ -4859,6 +4879,26 @@ TA_LIB_API TA_RetCode TA_S_HT_SINE( int    startIdx,
 TA_LIB_API int TA_HT_SINE_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_HT_SINE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_SINE_Stream TA_HT_SINE_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_SINE_Open( const double inReal[], int historyLen, TA_HT_SINE_Stream **stream, double *outSine, double *outLeadSine );
+
+TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine );
+
+TA_LIB_API TA_RetCode TA_HT_SINE_Peek( const TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine );
+
+TA_LIB_API TA_RetCode TA_HT_SINE_Close( TA_HT_SINE_Stream *stream );
+
 /*
  * TA_HT_TRENDLINE - Hilbert Transform - Instantaneous Trendline
  * 
@@ -4883,6 +4923,26 @@ TA_LIB_API TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
 TA_LIB_API int TA_HT_TRENDLINE_Lookback( void );
 
 
+
+/*
+ * Streaming API for TA_HT_TRENDLINE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_TRENDLINE_Stream TA_HT_TRENDLINE_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Open( const double inReal[], int historyLen, TA_HT_TRENDLINE_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Close( TA_HT_TRENDLINE_Stream *stream );
+
 /*
  * TA_HT_TRENDMODE - Hilbert Transform - Trend vs Cycle Mode
  * 
@@ -4906,6 +4966,26 @@ TA_LIB_API TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
 
 TA_LIB_API int TA_HT_TRENDMODE_Lookback( void );
 
+
+
+/*
+ * Streaming API for TA_HT_TRENDMODE — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_HT_TRENDMODE_Stream TA_HT_TRENDMODE_Stream;
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( const double inReal[], int historyLen, TA_HT_TRENDMODE_Stream **stream, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger );
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream );
 
 /*
  * TA_IMI - Intraday Momentum Index

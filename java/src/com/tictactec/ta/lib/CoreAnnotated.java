@@ -4937,7 +4937,7 @@ public int htDcPhaseLookback(
 @FuncInfo(
         name  = "HT_DCPHASE",
         group = "Cycle Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -5026,7 +5026,7 @@ public int htSineLookback(
 @FuncInfo(
         name  = "HT_SINE",
         group = "Cycle Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 2
@@ -5074,7 +5074,7 @@ public int htTrendlineLookback(
 @FuncInfo(
         name  = "HT_TRENDLINE",
         group = "Overlap Studies",
-        flags = 150994944,
+        flags = 184549376,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -5115,7 +5115,7 @@ public int htTrendModeLookback(
 @FuncInfo(
         name  = "HT_TRENDMODE",
         group = "Cycle Indicators",
-        flags = 134217728,
+        flags = 167772160,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1

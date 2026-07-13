@@ -35580,6 +35580,7 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
@@ -35593,6 +35594,11 @@ public class Core {
  *                The trendline averages RAW price over the dominant cycle
  *                period, exactly as published (Ehlers, "Rocket Science
  *                for Traders": ITrend sums Price, not SmoothPrice).
+ *  071226 MF,CC  Stream: rewrite the raw-price backward sum
+ *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+ *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
+ *                inReal[today-i]. Bit-identical (same terms, same order); the
+ *                literal cap lets the streaming rescan-window machinery bound it.
  */
 
    public int htTrendlineLookback( )
@@ -35676,7 +35682,6 @@ public class Core {
       double rad2Deg = 0;
       double todayValue = 0;
       double smoothPeriod = 0;
-      int idx = 0;
       int DCPeriodInt = 0;
       double DCPeriod = 0;
       if( startIdx < 0 ) {
@@ -35960,10 +35965,18 @@ public class Core {
           * Trendline sums Price — not SmoothPrice, which only feeds
           * the Hilbert detrender above). See issue #88.
           */
-         idx = today;
+         /* Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+          * loop with an inner guard is a streaming-friendly rewrite of the
+          * data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+          * (idx starting at today): identical terms in identical order, so
+          * bit-for-bit unchanged, but the constant cap lets the rescan-window
+          * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
+          */
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( i = 0; i < 50; i += 1 ) {
+            if( i < DCPeriodInt ) {
+               tempReal += inReal[today - i];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -36049,7 +36062,6 @@ public class Core {
       double rad2Deg = 0;
       double todayValue = 0;
       double smoothPeriod = 0;
-      int idx = 0;
       int DCPeriodInt = 0;
       double DCPeriod = 0;
       a = 0.0962;
@@ -36267,10 +36279,11 @@ public class Core {
          smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( i = 0; i < 50; i += 1 ) {
+            if( i < DCPeriodInt ) {
+               tempReal += inReal[today - i];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -36355,7 +36368,6 @@ public class Core {
       double rad2Deg = 0;
       double todayValue = 0;
       double smoothPeriod = 0;
-      int idx = 0;
       int DCPeriodInt = 0;
       double DCPeriod = 0;
       if( startIdx < 0 ) {
@@ -36579,10 +36591,11 @@ public class Core {
          smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( i = 0; i < 50; i += 1 ) {
+            if( i < DCPeriodInt ) {
+               tempReal += (double)inReal[today - i];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -36667,7 +36680,6 @@ public class Core {
       double rad2Deg = 0;
       double todayValue = 0;
       double smoothPeriod = 0;
-      int idx = 0;
       int DCPeriodInt = 0;
       double DCPeriod = 0;
       a = 0.0962;
@@ -36885,10 +36897,11 @@ public class Core {
          smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( i = 0; i < 50; i += 1 ) {
+            if( i < DCPeriodInt ) {
+               tempReal += (double)inReal[today - i];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -36910,14 +36923,22 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  120802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071226 MF,CC  Stream: rewrite the raw-price trendline backward sum
+ *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+ *                constant-cap padded loop for(j<50) if(j<DCPeriodInt) sum +=
+ *                inReal[today-j]. Bit-identical (same terms, same order); the
+ *                literal cap lets the streaming rescan-window machinery bound it,
+ *                and a separate counter j keeps it distinct from the DC-phase
+ *                circular-buffer loop (which still uses i).
  */
 
    public int htTrendModeLookback( )
@@ -36942,6 +36963,7 @@ public class Core {
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -37369,10 +37391,18 @@ public class Core {
           * exactly as published (Ehlers, "Rocket Science for Traders":
           * ITrend sums Price, not SmoothPrice). See issue #88.
           */
-         idx = today;
+         /* Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+          * loop with an inner guard is a streaming-friendly rewrite of the
+          * data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+          * (idx starting at today): identical terms in identical order, so
+          * bit-for-bit unchanged, but the constant cap lets the rescan-window
+          * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
+          */
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -37420,6 +37450,7 @@ public class Core {
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -37767,10 +37798,11 @@ public class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -37815,6 +37847,7 @@ public class Core {
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -38168,10 +38201,11 @@ public class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += (double)inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
@@ -38216,6 +38250,7 @@ public class Core {
    {
       int outIdx = 0;
       int i = 0;
+      int j = 0;
       int lookbackTotal = 0;
       int today = 0;
       double tempReal = 0;
@@ -38563,10 +38598,11 @@ public class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
-         idx = today;
          tempReal = 0.0;
-         for( i = 0; i < DCPeriodInt; i += 1 ) {
-            tempReal += (double)inReal[idx--];
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += (double)inReal[today - j];
+            }
          }
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
