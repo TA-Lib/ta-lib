@@ -1,0 +1,18 @@
+// Home hero image: the source graphic (candlestick art + black "TA-Lib"
+// text) has an opaque white background baked into the pixels. Rather than
+// chroma-keying the white out everywhere (that introduced moire on the fine
+// wavy line art), only the far corners are faded to transparent via a
+// radial vignette, leaving the middle band (including the black text)
+// untouched — see build script in project memory for the exact curve.
+.home-hero {
+  img {
+    max-width: 560px;
+    width: 100%;
+  }
+}
+
+// Hide hope-theme's auto "TA-Lib" page-title bar (from frontmatter `title:`)
+// on the homepage only — the hero image already carries the branding.
+body:has(.home-hero) .vp-page-title {
+  display: none;
+}

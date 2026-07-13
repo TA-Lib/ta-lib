@@ -1,0 +1,10 @@
+node_modules/
+src/.vuepress/.cache/
+src/.vuepress/.temp/
+src/.vuepress/dist/
+*.log
+.DS_Store
+
+# The repo-root .gitignore has a C-project `config.*` rule that would otherwise
+# swallow the VuePress config. Force it tracked.
+!src/.vuepress/config.ts
