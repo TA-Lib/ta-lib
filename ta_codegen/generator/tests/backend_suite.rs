@@ -6684,6 +6684,38 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 
+/// Pin MAVP — the last function and the campaign's one genuinely-new tier: a
+/// moving average whose period varies per bar, streamed as a BANK of sub-MA
+/// streams. Open builds `maxPeriod - minPeriod + 1` sub-streams (each via the
+/// callee's OpenInternal) with all-freed-so-far OOM; Update advances the whole
+/// bank in lockstep and indexes by the clamped period; Peek previews only the
+/// selected slot; Close frees the bank.
+#[test]
+fn test_c_mavp_period_bank() {
+    let s = ht_stream_section("mavp");
+    // Bank of sub-MA streams + scratch, sized at Open.
+    assert!(s.contains("struct TA_MA_Stream **bank;"), "bank of sub-MA handles");
+    assert!(s.contains("double *scratch;"), "per-slot lockstep output scratch");
+    assert!(s.contains("sp->nBank = optInMaxPeriod - optInMinPeriod + 1;"), "one slot per possible period");
+    assert!(s.contains("if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;"), "inverted window rejected");
+    // Open: bank loop opening each period's sub-stream, all-freed-so-far on OOM.
+    assert!(s.contains("TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal,"), "sub-open per period, MAType forwarded");
+    assert!(s.contains("for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );"), "frees sub-streams opened so far on failure");
+    // Update: lockstep advance + clamp-indexed output.
+    let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
+    let upd = &upd[..upd.find("TA_MAVP_Peek").unwrap_or(upd.len())];
+    assert!(upd.contains("for( k = 0; k < stream->nBank; k++ )") && upd.contains("TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );"), "advances the whole bank in lockstep");
+    assert!(upd.contains("if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;"), "clamps the per-bar period");
+    assert!(upd.contains("*outReal = stream->scratch[cp - stream->optInMinPeriod];"), "outputs the selected slot");
+    // Peek: only the selected slot (non-committing).
+    let peek = s.split("TA_MAVP_Peek").nth(1).unwrap();
+    let peek = &peek[..peek.find("TA_MAVP_Close").unwrap_or(peek.len())];
+    assert!(peek.contains("TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );"), "peeks only the selected slot");
+    assert!(!peek.contains("TA_MA_Update"), "peek never advances the bank");
+    // Close frees every sub-stream + the arrays.
+    assert!(s.contains("if( stream->bank[k] ) TA_MA_Close( stream->bank[k] );"), "close frees each sub-stream");
+}
+
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
 /// ring set + one StreamStep branching on the stored parity; the ring buffers are
