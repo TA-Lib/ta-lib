@@ -82,7 +82,7 @@ the surface includes:
 bit-identical, guaranteed by construction: it is the same generated code as
 `update`, run without committing.
 
-Its overhead is a throw away deep-copy of the handle (on every update).
+Its overhead is a throw away deep-copy of the handle (on every peek).
 
 ### Semantic definition (the contract tests enforce)
 

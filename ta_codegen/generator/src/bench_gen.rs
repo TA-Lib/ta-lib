@@ -183,13 +183,19 @@ pub fn write_c_bench(funcs: &[FuncDef], output_dir: &Path) {
 //
 //   NAME  batch_last_ns  update_ns  peek_ns  lookback  handle_bytes
 //
-// - batch_last_ns : the `talib.stream` reach-back — the batch guarded entry
-//   called with startIdx==endIdx==<a last bar>, i.e. one output via an
-//   O(lookback) reach-back, no retained state. The last bar is walked
-//   (`(n-1) - (it & MASK)`) so the compiler cannot CSE the call across iters.
+// All three costs are THROUGHPUT: many calls timed together and divided by the
+// count, so per-call clock noise (a single call can be ~2ns, below timer
+// resolution) averages out. Every measured call writes one bar AND computes, so
+// batch@last and update are charged the same way.
+//
+// - batch_last_ns : the batch guarded entry for a single bar. Each call appends
+//   the incoming bar to a GROWING buffer (`g_rt_*`) and computes one output over
+//   the last `lookback` bars (startIdx==endIdx==t) — the append is the per-bar
+//   write the update also pays, on real cache behaviour.
 // - update_ns     : one `TA_XXX_Update` on an already-open steady-state stream
 //   (opened over the full history once, outside timing). Input scalars rotate
-//   over the first MASK+1 bars, so it is CSE-proof and mutates state honestly.
+//   over the first MASK+1 bars — CSE-proof; write-plus-compute per call, an
+//   apples-to-apples throughput comparison with batch@last.
 // - peek_ns       : one `TA_XXX_Peek` (deep-copy of the handle + one transition,
 //   never commits) — the same rotating feed and index cost as update, so the
 //   peek-minus-update delta is exactly the throwaway-copy overhead.
@@ -296,6 +302,12 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
             }
         }
 
+        // batch@last computes over a *growing* buffer the caller appends into
+        // (g_rt_*): same inputs as the update feed, distinct storage written one
+        // bar per call so the per-bar cost includes the write.
+        let rt_arrays: Vec<String> =
+            in_arrays.iter().map(|a| a.replace("g_", "g_rt_")).collect();
+
         let opt_csv = if opt_args.is_empty() {
             String::new()
         } else {
@@ -308,14 +320,21 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("        int begIdx = 0, nb = 0;\n");
         s.push_str("        size_t handle_bytes = 0;\n");
         s.push_str("        double acc = 0.0;\n");
-        // batch@last: startIdx==endIdx==<walked last bar> — the talib.stream reach-back.
+        // Lookback contextualises batch@last and sizes its compute window.
+        s.push_str(&format!("        int lb = {ta}_Lookback({opt_only});\n"));
+        s.push_str("        if( lb < 0 ) lb = 0;\n");
+        // batch@last: append the incoming bar at `t` in the growing buffer, then
+        // compute one output over the last `lb` bars (startIdx==endIdx==t).
         s.push_str("        for( int pass = 0; pass < 3; pass++ ) {\n");
+        s.push_str("            int t = lb;\n");
         s.push_str("            long long t0 = get_nanotime();\n");
         s.push_str("            for( int it = 0; it < iters; it++ ) {\n");
-        s.push_str("                int e = (g_nPoints - 1) - (it & BENCH_MASK);\n");
+        for (k, rt) in rt_arrays.iter().enumerate() {
+            s.push_str(&format!("                {rt}[t] = {}[it & BENCH_MASK];\n", in_arrays[k]));
+        }
         {
-            let mut a = vec!["e".to_string(), "e".to_string()];
-            a.extend(in_arrays.iter().cloned());
+            let mut a = vec!["t".to_string(), "t".to_string()];
+            a.extend(rt_arrays.iter().cloned());
             a.extend(opt_args.iter().cloned());
             a.push("&begIdx".to_string());
             a.push("&nb".to_string());
@@ -335,13 +354,11 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
                 }
             }
         }
+        s.push_str("                t++;\n");
         s.push_str("            }\n");
         s.push_str("            long long el = get_nanotime() - t0;\n");
         s.push_str("            if( !best_b || el < best_b ) best_b = el;\n");
         s.push_str("        }\n");
-
-        // Lookback (contextualises batch@last).
-        s.push_str(&format!("        int lb = {ta}_Lookback({opt_only});\n"));
 
         // Open once over the full history; measure retained handle bytes.
         s.push_str(&format!("        {ta}_Stream *st = NULL;\n"));
@@ -366,6 +383,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         // update: pure committing-transition loop on the steady-state handle
         // (input rotates over the first BENCH_MASK+1 bars; state evolves, so the
         // amortised cost of any data-dependent branch — extrema rescans — shows).
+        // Throughput, like batch@last: both write one bar and compute per call.
         s.push_str("            for( int pass = 0; pass < 3; pass++ ) {\n");
         s.push_str("                long long t0 = get_nanotime();\n");
         s.push_str("                for( int it = 0; it < iters; it++ ) {\n");
@@ -417,14 +435,14 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str(&format!("            {ta}_Close(st);\n"));
         s.push_str(&format!(
-            "            printf(\"{name} %lld %lld %lld %d %zu\\n\", best_b/iters, best_u/iters, best_p/npk, lb, handle_bytes);\n"
+            "            printf(\"{name} %.3f %.3f %.3f %d %zu\\n\", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
         ));
         s.push_str("        } else {\n");
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str("            if( st ) { g_ta_track = 0; ");
         s.push_str(&format!("{ta}_Close(st); }}\n"));
         s.push_str(&format!(
-            "            printf(\"{name} %lld -1 -1 %d 0\\n\", best_b/iters, lb);\n"
+            "            printf(\"{name} %.3f -1 -1 %d 0\\n\", best_b/(double)iters, lb);\n"
         ));
         s.push_str("        }\n");
         s.push_str("        fflush(stdout);\n");
@@ -476,6 +494,11 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str("static double g_outBuf2[MAX_POINTS];\n");
     s.push_str("static int g_outIntBuf0[MAX_POINTS];\n");
     s.push_str("static int g_outIntBuf1[MAX_POINTS];\n\n");
+
+    // Growing history batch@last appends into (distinct from the static price
+    // arrays the update feed rotates over).
+    s.push_str("static double *g_rt_open, *g_rt_high, *g_rt_low, *g_rt_close, *g_rt_volume, *g_rt_oi;\n");
+    s.push_str("static int g_rtCap;\n\n");
 
     s.push_str(FUNC_MATCHES);
     generate_stream_bench_func(&mut s, funcs);
@@ -541,8 +564,29 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
+    if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
+    if( n_iters < 1 ) n_iters = 1;
     generate_price_data(n_points);
+    /* Growing history for batch@last: one buffer sized to hold the whole run
+       (n_iters appended bars + lookback headroom) so it never recycles within a pass. */
+    g_rtCap = n_iters + 8192;
+    g_rt_open   = malloc(sizeof(double) * (size_t)g_rtCap);
+    g_rt_high   = malloc(sizeof(double) * (size_t)g_rtCap);
+    g_rt_low    = malloc(sizeof(double) * (size_t)g_rtCap);
+    g_rt_close  = malloc(sizeof(double) * (size_t)g_rtCap);
+    g_rt_volume = malloc(sizeof(double) * (size_t)g_rtCap);
+    g_rt_oi     = malloc(sizeof(double) * (size_t)g_rtCap);
+    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi ) {
+        fprintf( stderr, "ta_bench_stream: allocation failed (try a smaller --iters)\n" );
+        return 1;
+    }
+    for( int i = 0; i < g_rtCap; i++ ) {
+        int j = i % g_nPoints;
+        g_rt_open[i]=g_open[j]; g_rt_high[i]=g_high[j]; g_rt_low[i]=g_low[j];
+        g_rt_close[i]=g_close[j]; g_rt_volume[i]=g_volume[j]; g_rt_oi[i]=g_oi[j];
+    }
     bench_stream_all(func_filter, n_iters);
+    free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
     return 0;
 }
