@@ -6645,7 +6645,7 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StreamStep").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDLINE_OpenInternal").unwrap_or(step.len())];
-    assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i) % sp->winCap_i]"), "window read of bar today-i");
+    assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
     assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
 }
@@ -6662,7 +6662,7 @@ fn test_c_ht_trendmode_full_union() {
     let step = &step[..step.find("TA_HT_TRENDMODE_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
-    assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j) % sp->winCap_j]"), "window trendline read");
+    assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 
