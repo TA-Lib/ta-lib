@@ -39311,13 +39311,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  JP       John Price <jp_talib@gcfl.net>
-     *
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  070203 JP   Initial.
+     *  070203 JP     Initial.
+     *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+     *                (numerics-changing). See issue #103.
      */
 
        public int linearRegLookback( int optInTimePeriod )
@@ -39633,6 +39635,7 @@ class Core {
      *  JP       John Price <jp_talib@gcfl.net>
      *  MF       Mario Fortier
      *  AM       Adrian Michel <http://amichel.com>
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
@@ -39640,6 +39643,8 @@ class Core {
      *  -------------------------------------------------------------------
      *  070203 JP      Initial.
      *  072106 MF,AM   Fix #1526632. Add missing atan().
+     *  071326 MF,CC   O(period) per-bar rescan -> O(1) sliding-sum recurrence
+     *                 (numerics-changing). See issue #103.
      */
 
        public int linearRegAngleLookback( int optInTimePeriod )
@@ -39941,13 +39946,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  JP       John Price <jp_talib@gcfl.net>
-     *
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  070203 JP   Initial.
+     *  070203 JP     Initial.
+     *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+     *                (numerics-changing). See issue #103.
      */
 
        public int linearRegInterceptLookback( int optInTimePeriod )
@@ -40249,13 +40256,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  JP       John Price <jp_talib@gcfl.net>
-     *
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  070203 JP   Initial.
+     *  070203 JP     Initial.
+     *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+     *                (numerics-changing). See issue #103.
      */
 
        public int linearRegSlopeLookback( int optInTimePeriod )
@@ -61014,13 +61023,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
-     *
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  090103 MF   Initial coding re-using the existing TA_LinearReg
+     *  090103 MF     Initial coding re-using the existing TA_LinearReg
+     *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+     *                (numerics-changing). See issue #103.
      */
 
        public int tsfLookback( int optInTimePeriod )
