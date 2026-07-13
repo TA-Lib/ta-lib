@@ -39341,6 +39341,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39350,6 +39351,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -39391,17 +39393,36 @@ class Core {
           outIdx = 0;
           /* Index into the output. */
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          /* Prime the two data-dependent window sums for the first output with a
+           * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+           * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+           * 0..period-1 position).
+           */
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+          today += 1;
+          /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+           * the window raises every retained value's weight by 1 (adds SumY) and drops
+           * the departing value at full weight (subtracts period*trailingValue). Same
+           * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+           * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           */
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -39422,6 +39443,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39431,6 +39453,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -39442,17 +39465,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -39473,6 +39504,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39482,6 +39514,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -39504,17 +39537,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -39535,6 +39576,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39544,6 +39586,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -39555,17 +39598,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -39612,6 +39663,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39620,6 +39672,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -39661,17 +39714,35 @@ class Core {
           outIdx = 0;
           /* Index into the output. */
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          /* Prime the two data-dependent window sums for the first output with a
+           * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+           * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+           * 0..period-1 position).
+           */
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
+          today += 1;
+          /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+           * the window raises every retained value's weight by 1 (adds SumY) and drops
+           * the departing value at full weight (subtracts period*trailingValue). Same
+           * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+           * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           */
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
@@ -39691,6 +39762,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39699,6 +39771,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegAngleLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -39710,17 +39783,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
@@ -39740,6 +39820,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39748,6 +39829,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -39770,17 +39852,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
@@ -39800,6 +39889,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39808,6 +39898,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegAngleLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -39819,17 +39910,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
@@ -39873,6 +39971,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39881,6 +39980,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -39922,17 +40022,35 @@ class Core {
           outIdx = 0;
           /* Index into the output. */
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          /* Prime the two data-dependent window sums for the first output with a
+           * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+           * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+           * 0..period-1 position).
+           */
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
+          today += 1;
+          /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+           * the window raises every retained value's weight by 1 (adds SumY) and drops
+           * the departing value at full weight (subtracts period*trailingValue). Same
+           * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+           * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           */
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
@@ -39952,6 +40070,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -39960,6 +40079,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -39971,17 +40091,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
@@ -40001,6 +40128,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40009,6 +40137,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -40031,17 +40160,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
@@ -40061,6 +40197,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40069,6 +40206,7 @@ class Core {
           double m = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -40080,17 +40218,24 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
@@ -40134,6 +40279,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40141,6 +40287,7 @@ class Core {
           double Divisor = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -40182,17 +40329,34 @@ class Core {
           outIdx = 0;
           /* Index into the output. */
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          /* Prime the two data-dependent window sums for the first output with a
+           * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+           * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+           * 0..period-1 position).
+           */
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          today += 1;
+          /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+           * the window raises every retained value's weight by 1 (adds SumY) and drops
+           * the departing value at full weight (subtracts period*trailingValue). Same
+           * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+           * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           */
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -40211,6 +40375,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40218,6 +40383,7 @@ class Core {
           double Divisor = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegSlopeLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -40229,17 +40395,23 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -40258,6 +40430,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40265,6 +40438,7 @@ class Core {
           double Divisor = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -40287,17 +40461,23 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -40316,6 +40496,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -40323,6 +40504,7 @@ class Core {
           double Divisor = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = linearRegSlopeLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -40334,17 +40516,23 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -60856,6 +61044,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -60865,6 +61054,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -60906,17 +61096,36 @@ class Core {
           outIdx = 0;
           /* Index into the output. */
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          /* Prime the two data-dependent window sums for the first output with a
+           * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+           * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+           * 0..period-1 position).
+           */
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)optInTimePeriod;
+          today += 1;
+          /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+           * the window raises every retained value's weight by 1 (adds SumY) and drops
+           * the departing value at full weight (subtracts period*trailingValue). Same
+           * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+           * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           */
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)optInTimePeriod;
@@ -60937,6 +61146,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -60946,6 +61156,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = tsfLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -60957,17 +61168,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)optInTimePeriod;
@@ -60988,6 +61207,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -60997,6 +61217,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           if( startIdx < 0 ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -61019,17 +61240,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)optInTimePeriod;
@@ -61050,6 +61279,7 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
+          int trailingIdx = 0;
           double SumX = 0;
           double SumXY = 0;
           double SumY = 0;
@@ -61059,6 +61289,7 @@ class Core {
           double b = 0;
           int i = 0;
           double tempValue1 = 0;
+          double trailingValue = 0;
           lookbackTotal = tsfLookback(optInTimePeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -61070,17 +61301,25 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
           SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
           SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
           Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+          SumXY = 0;
+          SumY = 0;
+          for( i = optInTimePeriod; i-- != 0;  ) {
+             tempValue1 = (double)inReal[today - i];
+             SumY += tempValue1;
+             SumXY += (double)i * tempValue1;
+          }
+          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          b = (SumY - m * SumX) / (double)optInTimePeriod;
+          outReal[outIdx++] = b + m * (double)optInTimePeriod;
+          today += 1;
           while( today <= endIdx ) {
-             SumXY = 0;
-             SumY = 0;
-             for( i = optInTimePeriod; i-- != 0;  ) {
-                tempValue1 = (double)inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (double)i * tempValue1;
-             }
+             trailingValue = (double)inReal[trailingIdx++];
+             SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+             SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
              outReal[outIdx++] = b + m * (double)optInTimePeriod;

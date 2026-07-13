@@ -44,13 +44,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  JP       John Price <jp_talib@gcfl.net>
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  070203 JP   Initial.
+ *  070203 JP     Initial.
+ *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+ *                (numerics-changing). See issue #103.
  */
 
 // Import types from parent module
@@ -157,6 +159,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
         let mut SumX: f64 = 0.0_f64;
         let mut SumXY: f64 = 0.0_f64;
         let mut SumY: f64 = 0.0_f64;
@@ -166,6 +169,7 @@ impl Core {
         let mut b: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut tempValue1: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
         // Linear Regression is a concept also known as the
         // "least squares method" or "best fit." Linear
         // Regression attempts to fit a straight line between
@@ -195,19 +199,37 @@ impl Core {
         outIdx = 0;
         // Index into the output.
         today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
         SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
         SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        // Prime the two data-dependent window sums for the first output with a
+        // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+        // SumY = sum of the window, SumXY = sum of i*value (i the reversed
+        // 0..period-1 position).
+        SumXY = 0.0;
+        SumY = 0.0;
+        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+            tempValue1 = inReal[today - i];
+            SumY += tempValue1;
+            SumXY += (i as f64) * tempValue1;
+        }
+        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        b = (SumY - m * SumX) / (optInTimePeriod as f64);
+        outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);
+        outIdx += 1;
+        today += 1;
+        // Slide the window one bar at a time, keeping both sums in O(1): advancing
+        // the window raises every retained value's weight by 1 (adds SumY) and drops
+        // the departing value at full weight (subtracts period*trailingValue). Same
+        // incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+        // (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
         while today <= endIdx {
-            SumXY = 0.0;
-            SumY = 0.0;
-            // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-            i = (optInTimePeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (i as f64) * tempValue1;
-            }
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
+            SumY = SumY - trailingValue + inReal[today];
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);
@@ -238,6 +260,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
         let mut SumX: f64 = 0.0_f64;
         let mut SumXY: f64 = 0.0_f64;
         let mut SumY: f64 = 0.0_f64;
@@ -247,6 +270,7 @@ impl Core {
         let mut b: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut tempValue1: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
         assert!(endIdx < inReal.len());
         let _assertLb = self.linearreg_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -262,19 +286,28 @@ impl Core {
         }
         outIdx = 0;
         today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
         SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
         SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        SumXY = 0.0;
+        SumY = 0.0;
+        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+            tempValue1 = inReal[today - i];
+            SumY += tempValue1;
+            SumXY += (i as f64) * tempValue1;
+        }
+        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        b = (SumY - m * SumX) / (optInTimePeriod as f64);
+        outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);
+        outIdx += 1;
+        today += 1;
         while today <= endIdx {
-            SumXY = 0.0;
-            SumY = 0.0;
-            // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-            i = (optInTimePeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-                tempValue1 = inReal[today - i];
-                SumY += tempValue1;
-                SumXY += (i as f64) * tempValue1;
-            }
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
+            SumY = SumY - trailingValue + inReal[today];
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);

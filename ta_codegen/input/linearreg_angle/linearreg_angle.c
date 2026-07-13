@@ -5,6 +5,7 @@
  *  JP       John Price <jp_talib@gcfl.net>
  *  MF       Mario Fortier
  *  AM       Adrian Michel <http://amichel.com>
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -12,6 +13,8 @@
  *  -------------------------------------------------------------------
  *  070203 JP      Initial.
  *  072106 MF,AM   Fix #1526632. Add missing atan().
+ *  071326 MF,CC   O(period) per-bar rescan -> O(1) sliding-sum recurrence
+ *                 (numerics-changing). See issue #103.
  */
 
 int linearreg_angle_lookback(int optInTimePeriod)
@@ -27,14 +30,14 @@ TA_RetCode linearreg_angle(int startIdx, int endIdx,
 {
    int outIdx;
 
-   int today, lookbackTotal;
+   int today, lookbackTotal, trailingIdx;
    double SumX, SumXY, SumY, SumXSqr, Divisor;
 
    double m;
 
    int i;
 
-   double tempValue1;
+   double tempValue1, trailingValue;
 
    /* Linear Regression is a concept also known as the
     * "least squares method" or "best fit." Linear
@@ -69,20 +72,37 @@ TA_RetCode linearreg_angle(int startIdx, int endIdx,
 
    outIdx = 0; /* Index into the output. */
    today = startIdx;
+   trailingIdx = startIdx - lookbackTotal;
 
    SumX = optInTimePeriod * ( optInTimePeriod - 1 ) * 0.5;
    SumXSqr = optInTimePeriod * ( optInTimePeriod - 1 ) * ( 2 * optInTimePeriod - 1 ) / 6;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
 
+   /* Prime the two data-dependent window sums for the first output with a
+    * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+    * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+    * 0..period-1 position). */
+   SumXY = 0;
+   SumY = 0;
+   for( i = optInTimePeriod; i-- != 0; )
+   {
+      SumY += tempValue1 = inReal[today - i];
+      SumXY += (double)i * tempValue1;
+   }
+   m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   outReal[outIdx++] = atan(m) * ( 180.0 / 3.14159265358979323846 );
+   today++;
+
+   /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+    * the window raises every retained value's weight by 1 (adds SumY) and drops
+    * the departing value at full weight (subtracts period*trailingValue). Same
+    * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+    * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.) */
    while( today <= endIdx )
    {
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0; )
-      {
-         SumY += tempValue1 = inReal[today - i];
-         SumXY += (double)i * tempValue1;
-      }
+      trailingValue = inReal[trailingIdx++];
+      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+      SumY = SumY - trailingValue + inReal[today];
       m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       outReal[outIdx++] = atan(m) * ( 180.0 / 3.14159265358979323846 );
       today++;

@@ -47,13 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  JP       John Price <jp_talib@gcfl.net>
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  070203 JP   Initial.
+ *  070203 JP     Initial.
+ *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
+ *                (numerics-changing). See issue #103.
  */
 
 TA_LIB_API int TA_LINEARREG_Lookback( int optInTimePeriod )
@@ -76,6 +78,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
+   int trailingIdx;
    double SumX;
    double SumXY;
    double SumY;
@@ -85,6 +88,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
    double b;
    int i;
    double tempValue1;
+   double trailingValue;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -132,19 +136,38 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
    outIdx = 0;
    /* Index into the output. */
    today = startIdx;
+   trailingIdx = startIdx - lookbackTotal;
    SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
    SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+   /* Prime the two data-dependent window sums for the first output with a
+    * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+    * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+    * 0..period-1 position).
+    */
+   SumXY = 0;
+   SumY = 0;
+   for( i = optInTimePeriod; i-- != 0;  )
+   {
+      tempValue1 = inReal[today - i];
+      SumY += tempValue1;
+      SumXY += (double)i * tempValue1;
+   }
+   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   b = (SumY - m * SumX) / (double)optInTimePeriod;
+   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   today += 1;
+   /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+    * the window raises every retained value's weight by 1 (adds SumY) and drops
+    * the departing value at full weight (subtracts period*trailingValue). Same
+    * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+    * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+    */
    while( today <= endIdx )
    {
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  )
-      {
-         tempValue1 = inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
+      trailingValue = inReal[trailingIdx++];
+      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+      SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
       outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -166,6 +189,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
+   int trailingIdx;
    double SumX;
    double SumXY;
    double SumY;
@@ -175,6 +199,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
    double b;
    int i;
    double tempValue1;
+   double trailingValue;
 
    lookbackTotal = TA_LINEARREG_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
@@ -189,19 +214,27 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
    }
    outIdx = 0;
    today = startIdx;
+   trailingIdx = startIdx - lookbackTotal;
    SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
    SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+   SumXY = 0;
+   SumY = 0;
+   for( i = optInTimePeriod; i-- != 0;  )
+   {
+      tempValue1 = inReal[today - i];
+      SumY += tempValue1;
+      SumXY += (double)i * tempValue1;
+   }
+   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   b = (SumY - m * SumX) / (double)optInTimePeriod;
+   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   today += 1;
    while( today <= endIdx )
    {
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  )
-      {
-         tempValue1 = inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
+      trailingValue = inReal[trailingIdx++];
+      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+      SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
       outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -223,6 +256,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
+   int trailingIdx;
    double SumX;
    double SumXY;
    double SumY;
@@ -232,6 +266,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
    double b;
    int i;
    double tempValue1;
+   double trailingValue;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -260,19 +295,27 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
    }
    outIdx = 0;
    today = startIdx;
+   trailingIdx = startIdx - lookbackTotal;
    SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
    SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+   SumXY = 0;
+   SumY = 0;
+   for( i = optInTimePeriod; i-- != 0;  )
+   {
+      tempValue1 = (double)inReal[today - i];
+      SumY += tempValue1;
+      SumXY += (double)i * tempValue1;
+   }
+   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   b = (SumY - m * SumX) / (double)optInTimePeriod;
+   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   today += 1;
    while( today <= endIdx )
    {
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  )
-      {
-         tempValue1 = (double)inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
+      trailingValue = (double)inReal[trailingIdx++];
+      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+      SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
       outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -294,6 +337,7 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
+   int trailingIdx;
    double SumX;
    double SumXY;
    double SumY;
@@ -303,6 +347,7 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
    double b;
    int i;
    double tempValue1;
+   double trailingValue;
 
    lookbackTotal = TA_LINEARREG_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
@@ -317,19 +362,27 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
    }
    outIdx = 0;
    today = startIdx;
+   trailingIdx = startIdx - lookbackTotal;
    SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
    SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+   SumXY = 0;
+   SumY = 0;
+   for( i = optInTimePeriod; i-- != 0;  )
+   {
+      tempValue1 = (double)inReal[today - i];
+      SumY += tempValue1;
+      SumXY += (double)i * tempValue1;
+   }
+   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   b = (SumY - m * SumX) / (double)optInTimePeriod;
+   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   today += 1;
    while( today <= endIdx )
    {
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  )
-      {
-         tempValue1 = (double)inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
+      trailingValue = (double)inReal[trailingIdx++];
+      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+      SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
       outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
@@ -345,46 +398,44 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
 struct TA_LINEARREG_Stream {
    int optInTimePeriod;
    double SumX;
+   double SumXY;
+   double SumY;
    double Divisor;
-   double m;
-   double b;
-   int i;
-   double tempValue1;
-   int winPos_i;
-   int winCap_i;
-   double *win_i_inReal;
-   double *winMirror_i_inReal;
+   int ringPos_trailingIdx;
+   int ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal;
+   double *ringMirror_trailingIdx_inReal;
 };
 
 static void TA_LINEARREG_StreamRelease( struct TA_LINEARREG_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->win_i_inReal ) TA_Free( sp->win_i_inReal );
-   if( sp->winMirror_i_inReal ) TA_Free( sp->winMirror_i_inReal );
+   if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
+   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
    TA_Free( sp );
 }
 
 static void TA_LINEARREG_StreamStep( struct TA_LINEARREG_Stream *sp, double inReal, double *outReal )
 {
-   double SumXY;
-   double SumY;
+   double m;
+   double b;
+   double trailingValue;
 
-   sp->win_i_inReal[sp->winPos_i] = inReal;
-   SumXY = 0;
-   SumY = 0;
-   for( sp->i = sp->optInTimePeriod; sp->i-- != 0;  )
+   if( sp->ringCap_trailingIdx == 0 )
    {
-      sp->tempValue1 = sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i) % sp->winCap_i];
-      SumY += sp->tempValue1;
-      SumXY += (double)sp->i * sp->tempValue1;
+      sp->ring_trailingIdx_inReal[0] = inReal;
    }
-   sp->m = (sp->optInTimePeriod * SumXY - sp->SumX * SumY) / sp->Divisor;
-   sp->b = (SumY - sp->m * sp->SumX) / (double)sp->optInTimePeriod;
-   *outReal= sp->b + sp->m * (double)(sp->optInTimePeriod - 1);
-   sp->winPos_i = sp->winPos_i + 1;
-   if( sp->winPos_i >= sp->winCap_i )
+   trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
+   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * trailingValue;
+   sp->SumY = sp->SumY - trailingValue + inReal;
+   m = (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
+   b = (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
+   *outReal= b + m * (double)(sp->optInTimePeriod - 1);
+   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
    {
-      sp->winPos_i = 0;
+      sp->ringPos_trailingIdx = 0;
    }
 }
 
@@ -415,15 +466,17 @@ TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[]
       int outIdx;
       int today;
       int lookbackTotal;
+      int trailingIdx;
       double SumX = 0.0;
-      double SumXY;
-      double SumY;
+      double SumXY = 0.0;
+      double SumY = 0.0;
       double SumXSqr;
       double Divisor = 0.0;
-      double m = 0.0;
-      double b = 0.0;
-      int i = 0;
-      double tempValue1 = 0.0;
+      double m;
+      double b;
+      int i;
+      double tempValue1;
+      double trailingValue;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -456,19 +509,38 @@ TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[]
       outIdx = 0;
       /* Index into the output. */
       today = startIdx;
+      trailingIdx = startIdx - lookbackTotal;
       SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
       SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+      /* Prime the two data-dependent window sums for the first output with a
+       * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+       * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+       * 0..period-1 position).
+       */
+      SumXY = 0;
+      SumY = 0;
+      for( i = optInTimePeriod; i-- != 0;  )
+      {
+         tempValue1 = inReal[today - i];
+         SumY += tempValue1;
+         SumXY += (double)i * tempValue1;
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      lastValue_outReal = b + m * (double)(optInTimePeriod - 1);
+      today += 1;
+      /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+       * the window raises every retained value's weight by 1 (adds SumY) and drops
+       * the departing value at full weight (subtracts period*trailingValue). Same
+       * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+       * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       */
       while( today <= endIdx )
       {
-         SumXY = 0;
-         SumY = 0;
-         for( i = optInTimePeriod; i-- != 0;  )
-         {
-            tempValue1 = inReal[today - i];
-            SumY += tempValue1;
-            SumXY += (double)i * tempValue1;
-         }
+         trailingValue = inReal[trailingIdx++];
+         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
          lastValue_outReal = b + m * (double)(optInTimePeriod - 1);
@@ -483,19 +555,19 @@ TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[]
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->SumX = SumX;
+      sp->SumXY = SumXY;
+      sp->SumY = SumY;
       sp->Divisor = Divisor;
-      sp->m = m;
-      sp->b = b;
-      sp->i = i;
-      sp->tempValue1 = tempValue1;
-      sp->winCap_i = (int)(optInTimePeriod);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_LINEARREG_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
-      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inReal ) { TA_LINEARREG_StreamRelease( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inReal ) { TA_LINEARREG_StreamRelease( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
-      sp->winPos_i = 0;
+      sp->ringCap_trailingIdx = (int)(today - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_LINEARREG_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_LINEARREG_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
       *outReal = lastValue_outReal;
       *stream = sp;
       return TA_SUCCESS;
@@ -520,8 +592,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Peek( const TA_LINEARREG_Stream *stream, doub
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.win_i_inReal = stream->winMirror_i_inReal;
-   memcpy( scratch.win_i_inReal, stream->win_i_inReal, sizeof(double) * (size_t)stream->winCap_i );
+   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
+   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
    TA_LINEARREG_StreamStep( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }

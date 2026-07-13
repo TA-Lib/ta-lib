@@ -1046,10 +1046,14 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         /* comparison-selected window extrema (cached min/max, no FP accumulation) */
         "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
         /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
-        "AVGDEV", "LINEARREG", "LINEARREG_ANGLE", "LINEARREG_INTERCEPT",
-        "LINEARREG_SLOPE", "TSF",
+        "AVGDEV",
         /* fresh sliding window, no accumulator */
         "IMI",
+        /* NOTE: LINEARREG / LINEARREG_ANGLE / LINEARREG_INTERCEPT / LINEARREG_SLOPE
+         * / TSF moved OUT of EXACT to the EPSILON default (perf #103): they now
+         * carry SumY/SumXY in an O(1) sliding recurrence instead of re-summing the
+         * window each bar, so their output picks up ~1e-9 running-accumulator drift
+         * across ranges -- the same class as SMA/CORREL/STDDEV. */
     };
 
     /* Finite window carried in a RUNNING ACCUMULATOR (running sum/total updated
@@ -3063,13 +3067,52 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
  * sub-epsilon residue into a near-zero value (observed ~5e-14). This tolerance
  * absorbs exactly that — orders of magnitude below any real CCI value, so a
  * genuine divergence still fails. Applied ONLY to CCI. */
-#define FUZZ_CCI_064_TOL 1e-9
+/* latest -> 0.6.4 tolerance manifest: the authorized, bounded numeric
+ * divergences from the frozen reference. Everything not listed here must be
+ * bit-exact (hash-equal). Each entry cites the issue that authorized it.
+ *
+ *   TOL_ABS    : |current - v0.6.4| <= tol                (a fixed absolute bound)
+ *   TOL_REL_IN : |current - v0.6.4| <= min(tol * inScale, cap), where inScale is
+ *                the max |primary input| over the case. Used for algebraic
+ *                re-orderings whose rounding is proportional to the DATA
+ *                magnitude, which a fixed absolute bound cannot express because
+ *                the fuzz shapes span 1e-7 .. 1e9 (FUZZ_EXTREME) and cross slope
+ *                zero (the running-sum LINEARREG family, #103). Certified max
+ *                ratio 2.9e-11 (ANGLE) -> tol 1e-9 keeps ~35x margin while staying
+ *                tight on real prices.
+ *                `cap` (0 = none) bounds the data-scaled tolerance for outputs
+ *                that DON'T grow with input magnitude: ANGLE is atan-compressed
+ *                degrees in [-90,90], so on FUZZ_EXTREME (inScale ~2e9) an
+ *                uncapped bound would balloon to ~2 deg; the cap holds it near
+ *                ANGLE's true worst-case drift (measured 0.065 deg) so a real
+ *                future ANGLE regression can't hide, while realistic-scale cases
+ *                (bound ~1e-7 deg) are unaffected (cap never binds there). */
+enum { TOL_ABS = 0, TOL_REL_IN = 1 };
+static const struct { const char *name; int mode; double tol; double cap; } FUZZ_064_TOL[] = {
+    { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
+    { "LINEARREG",           TOL_REL_IN, 1e-9, 0.0 },  /* #103 O(1) sliding-sum recurrence   */
+    { "LINEARREG_SLOPE",     TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
+    { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
+    { "LINEARREG_ANGLE",     TOL_REL_IN, 1e-9, 0.5 },  /* #103 bounded degrees -> capped 0.5 */
+    { "TSF",                 TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
+};
 
-/* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if a CCI
- * near-zero case tolerated vs 0.6.4 (issue #7). Prints detail, capped per func. */
+/* Look up a function's authorized tolerance; returns NULL if it must be exact. */
+static const void *fuzz_064_tol_lookup(const char *name, int *mode, double *tol, double *cap)
+{
+    for( unsigned int i = 0; i < sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0]); i++ )
+        if( strcmp(name, FUZZ_064_TOL[i].name) == 0 )
+        { *mode = FUZZ_064_TOL[i].mode; *tol = FUZZ_064_TOL[i].tol; *cap = FUZZ_064_TOL[i].cap;
+          return &FUZZ_064_TOL[i]; }
+    return NULL;
+}
+
+/* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if tolerated
+ * within the latest->0.6.4 manifest bound. Prints detail, capped per func.
+ * inScale = max |primary input| over the case (for TOL_REL_IN entries). */
 static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                                     CodegenRangeTestParam *p, int shape, int seed, int n,
-                                    int s, int e, const double *optVals,
+                                    int s, int e, const double *optVals, double inScale,
                                     int curRc, int curBeg, int curNb,
                                     int refRc, int refBeg, int refNb)
 {
@@ -3091,8 +3134,20 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
     if( !fuzz_call(ctx) )
         return 0;   /* treat as real; the pipe failure is also counted */
 
-    int realDiff = 0, benignDiff = 0, cciTolDiff = 0;
-    int isCCI = (strcmp(fi->name, "CCI") == 0);
+    int realDiff = 0, benignDiff = 0, tolDiff = 0;
+    int tolMode = 0; double tolVal = 0.0, tolCap = 0.0;
+    const void *tolEntry = fuzz_064_tol_lookup(fi->name, &tolMode, &tolVal, &tolCap);
+    /* TOL_REL_IN bound is data-scaled (optionally capped); TOL_ABS is fixed. */
+    double tolBound = 0.0;
+    if( tolEntry )
+    {
+        if( tolMode == TOL_REL_IN )
+        {
+            tolBound = tolVal * inScale;
+            if( tolCap > 0.0 && tolBound > tolCap ) tolBound = tolCap;
+        }
+        else tolBound = tolVal;
+    }
     int firstO = -1, firstJ = -1;
     for( unsigned int o = 0; o < fi->nbOutput && o < MAX_OUTPUTS; o++ )
     {
@@ -3115,14 +3170,14 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                 if( memcmp(&a, &b, sizeof(double)) == 0 ) continue;
                 double d = a - b; if( d < 0 ) d = -d;
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
-                else if( isCCI && d <= FUZZ_CCI_064_TOL ) cciTolDiff = 1; /* issue #7 zero fix */
+                else if( tolEntry && d <= tolBound ) tolDiff = 1; /* within manifest bound */
                 else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
             }
         }
     }
 
-    if( !realDiff && (benignDiff || cciTolDiff) )
-        return cciTolDiff ? 2 : 1;   /* 2 = CCI issue-#7 tolerance, 1 = signed-zero */
+    if( !realDiff && (benignDiff || tolDiff) )
+        return tolDiff ? 2 : 1;   /* 2 = manifest-tolerated, 1 = signed-zero only */
 
     if( report )
     {
@@ -3225,6 +3280,11 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
         hist.nbBars = (unsigned int)n;
         p.nbBars = n;
+        /* Data scale for the manifest's TOL_REL_IN bound (max |close|; close is
+         * the single real input the LINEARREG family reads). Floored at 1. */
+        double inScale = 1.0;
+        for( int z = 0; z < n; z++ )
+            if( fabs(g_fzBuf[3][z]) > inScale ) inScale = fabs(g_fzBuf[3][z]);
 
         for( int k = 0; k < nvec; k++ )
         {
@@ -3311,7 +3371,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( !mismatch ) { ctx->matches++; continue; }
 
                 int cls = fuzz_classify_and_report(ctx, funcInfo, &p, shape, seeds[si], n, s, e,
-                                             vec[k], (int)curRc, curBeg, curNb,
+                                             vec[k], inScale, (int)curRc, curBeg, curNb,
                                              refRc, refBeg, refNb);
                 if( cls == 0 )      ctx->failures++;
                 else if( cls == 2 ) ctx->cciTol++;   /* CCI issue-#7 near-zero (not a failure) */
@@ -3322,8 +3382,14 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( ctx->failures > failBefore ) ctx->funcsWithFailures++;
     else if( ctx->cciTol > cciTolBefore )
-        printf("  TOLERATED TA_%s: %lld near-zero case(s) within %g vs 0.6.4 (issue #7 zero-value fix)\n",
-               funcInfo->name, ctx->cciTol - cciTolBefore, (double)FUZZ_CCI_064_TOL);
+    {
+        int tm = 0; double tv = 0.0, tc = 0.0;
+        fuzz_064_tol_lookup(funcInfo->name, &tm, &tv, &tc);
+        printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound)\n",
+               funcInfo->name, ctx->cciTol - cciTolBefore, tv,
+               tm == TOL_REL_IN ? " * max|input|" : "",
+               (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "");
+    }
     else if( ctx->benign > benignBefore )
     {
         ctx->funcsBenign++;
@@ -3386,8 +3452,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
         printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.7.2, issue #98\n",
                ctx.skipped98);
     if( ctx.cciTol > 0 )
-        printf("cci-tolerated: %lld CCI near-zero case(s) within %g vs 0.6.4 (issue #7 zero-value fix)\n",
-               ctx.cciTol, (double)FUZZ_CCI_064_TOL);
+        printf("manifest-tolerated: %lld case(s) within an authorized latest->0.6.4 bound "
+               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum)\n", ctx.cciTol);
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
