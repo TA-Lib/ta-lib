@@ -345,7 +345,7 @@ DEF_FUNCTION( MAMA,
               TA_GroupId_OverlapStudies,
               "MESA Adaptive Moving Average",
               "Mama",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAMA END */
 

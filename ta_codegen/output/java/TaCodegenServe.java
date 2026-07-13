@@ -35460,6 +35460,7 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
@@ -35473,6 +35474,11 @@ class Core {
      *                The trendline averages RAW price over the dominant cycle
      *                period, exactly as published (Ehlers, "Rocket Science
      *                for Traders": ITrend sums Price, not SmoothPrice).
+     *  071226 MF,CC  Stream: rewrite the raw-price backward sum
+     *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+     *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
+     *                inReal[today-i]. Bit-identical (same terms, same order); the
+     *                literal cap lets the streaming rescan-window machinery bound it.
      */
 
        public int htTrendlineLookback( )
@@ -36797,14 +36803,22 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120802 MF   Template creation.
-     *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  120802 MF     Template creation.
+     *  052603 MF     Adapt code to compile with .NET Managed C++
+     *  071226 MF,CC  Stream: rewrite the raw-price trendline backward sum
+     *                for(i<DCPeriodInt) sum += inReal[idx--] (idx = today) as a
+     *                constant-cap padded loop for(j<50) if(j<DCPeriodInt) sum +=
+     *                inReal[today-j]. Bit-identical (same terms, same order); the
+     *                literal cap lets the streaming rescan-window machinery bound it,
+     *                and a separate counter j keeps it distinct from the DC-phase
+     *                circular-buffer loop (which still uses i).
      */
 
        public int htTrendModeLookback( )

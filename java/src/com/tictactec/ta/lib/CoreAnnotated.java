@@ -6023,7 +6023,7 @@ public int mamaLookback(
 @FuncInfo(
         name  = "MAMA",
         group = "Overlap Studies",
-        flags = 150994944,
+        flags = 184549376,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 2

@@ -4643,6 +4643,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

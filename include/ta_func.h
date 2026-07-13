@@ -5699,6 +5699,26 @@ TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0
                                           double        optInSlowLimit );  /* From 0.01 to 0.99 */
 
 
+
+/*
+ * Streaming API for TA_MAMA — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MAMA_Stream TA_MAMA_Stream;
+
+TA_LIB_API TA_RetCode TA_MAMA_Open( double optInFastLimit, double optInSlowLimit, const double inReal[], int historyLen, TA_MAMA_Stream **stream, double *outMAMA, double *outFAMA );
+
+TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA );
+
+TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA );
+
+TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream );
+
 /*
  * TA_MAVP - Moving average with variable period
  * 

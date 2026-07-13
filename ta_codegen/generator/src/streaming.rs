@@ -2925,21 +2925,35 @@ fn parse_dispatch_arm(
             supported: true,
         });
     }
-    // Not a supported delegation. If ANY indicator called in the arm is
-    // stream-flagged — not just the first one seen — this is a hard gate
-    // error: an arm like `trima(...); dema(...)` must never silently become
-    // a reject arm the verify precheck then blesses (the strictness
-    // contract above).
-    if let Some(flagged) = callees
+    // Not a supported delegation.
+    let flagged: Vec<&str> = callees
         .iter()
-        .find(|c| lookup.callee(c).is_some_and(|s| s.streaming))
-    {
+        .filter(|c| lookup.callee(c).is_some_and(|s| s.streaming))
+        .map(String::as_str)
+        .collect();
+    // A single flagged callee whose OUTPUT arity differs from this dispatch
+    // func's can never be a 1:1 whole-range delegation: MA's MAMA arm feeds
+    // mama's second (FAMA) output into a discarded scratch buffer, so it emits
+    // one output from a two-output callee. That is an honest reject arm (MA
+    // asks for batch on MAType_MAMA) even though `mama` itself streams —
+    // structurally distinct from the hidden-delegation bug below.
+    if let [only] = flagged.as_slice() {
+        let osig = lookup.callee(only).expect("flagged callee resolves");
+        if osig.n_outputs != outputs.len() {
+            return Ok(reject(only));
+        }
+    }
+    // If ANY indicator called in the arm is stream-flagged — not just the first
+    // one seen — this is a hard gate error: an arm like `trima(...); dema(...)`
+    // must never silently become a reject arm the verify precheck then blesses
+    // (the strictness contract above).
+    if let Some(f) = flagged.first() {
         return Err(StreamError::Unsupported(format!(
-            "dispatch arm `{label}` calls stream-flagged `{flagged}` but is not a \
+            "dispatch arm `{label}` calls stream-flagged `{f}` but is not a \
              whole-range delegation"
         )));
     }
-    // Only unflagged callees: honest reject arm (MAMA; TRIMA until it streams).
+    // Only unflagged callees: honest reject arm (TRIMA until it streamed).
     Ok(reject(&callee))
 }
 
