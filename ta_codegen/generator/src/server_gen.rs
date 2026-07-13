@@ -961,6 +961,39 @@ fn sv_reject_condition(
                 Some(format!("( {} )", parts.join(" || ")))
             }
         }
+        Ok(crate::streaming::StreamPlan::PeriodBank(pb)) => {
+            // The bank opens the callee (`ma`) at every period in [min,max], so
+            // MAVP rejects when the callee rejects for the forwarded MAType at
+            // ANY of those periods. The callee's period guard (its `period == 1`
+            // identity path exempts MAType=MAMA) is resolved against the LARGEST
+            // period in the bank: `ma(maxPeriod, MAMA)` rejects whenever
+            // maxPeriod > 1, which is exactly when a non-identity slot exists.
+            let callee = funcs
+                .iter()
+                .find(|f| f.name.eq_ignore_ascii_case(&pb.callee))?;
+            let resolve = |name: &str| -> Expr {
+                match subst {
+                    Some(outer) => outer
+                        .get(name)
+                        .cloned()
+                        .unwrap_or_else(|| Expr::Var(name.to_string())),
+                    None => Expr::Var(name.to_string()),
+                }
+            };
+            let mut m = std::collections::BTreeMap::new();
+            for p in &callee.optional_inputs {
+                match &p.param_type {
+                    crate::ir::ParamType::Enum(e) if e == "MAType" => {
+                        m.insert(p.name.clone(), resolve(&pb.matype_param));
+                    }
+                    crate::ir::ParamType::Integer => {
+                        m.insert(p.name.clone(), resolve(&pb.max_param));
+                    }
+                    _ => {}
+                }
+            }
+            sv_reject_condition(callee, funcs, Some(&m))
+        }
         _ => None,
     }
 }

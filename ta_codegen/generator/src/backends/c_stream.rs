@@ -335,6 +335,9 @@ pub fn generate(
         StreamPlan::FastPathSkip(gap) => {
             emit_fastpath_skip(&mut o, func, gap, enums, registry, helpers, &counter);
         }
+        StreamPlan::PeriodBank(pbp) => {
+            emit_period_bank(&mut o, func, pbp, registry, helpers, &counter);
+        }
     }
 
     o
@@ -1983,6 +1986,171 @@ fn emit_fastpath_skip(
     emit_update(o, func);
     emit_peek(o, func, model);
     emit_close(o, func, model);
+}
+
+/// Emit the period-bank stream section (MAVP): a moving average whose period
+/// varies per bar. Open builds a bank of `maxPeriod - minPeriod + 1` sub-MA
+/// streams (one per possible period, each seeded from history via the callee's
+/// `OpenInternal`); Update advances the whole bank in lockstep and outputs the
+/// slot the current bar's clamped period selects; Peek previews only the
+/// selected slot; Close frees the bank. The bank inherits the callee's
+/// per-MAType streamability (MAType_MAMA rejects at the first sub-open).
+#[allow(clippy::too_many_lines)]
+fn emit_period_bank(
+    o: &mut String,
+    func: &FuncDef,
+    plan: &streaming::PeriodBankPlan,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let pre = callee_prefix(&plan.callee); // e.g. TA_MA
+    let subty = format!("struct {pre}_Stream");
+    let min = &plan.min_param;
+    let max = &plan.max_param;
+    let price = &plan.price_input;
+    let period = &plan.period_input;
+    let out = &plan.output;
+    let inputs = streaming::input_array_names(func);
+
+    // Sub-open opt args in the callee's signature order.
+    let open_opts: String = plan
+        .callee_opts
+        .iter()
+        .map(|a| match a {
+            streaming::PeriodBankArg::Period => format!("{min} + k"),
+            streaming::PeriodBankArg::MAType => plan.matype_param.clone(),
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    // --- state struct -------------------------------------------------------
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
+    }
+    let _ = writeln!(o, "   int nBank;");
+    let _ = writeln!(o, "   {subty} **bank;");
+    let _ = writeln!(o, "   double *scratch;");
+    let _ = writeln!(o, "}};\n");
+
+    // --- OpenInternal -------------------------------------------------------
+    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
+    let _ = writeln!(o, "   int k, cp;");
+    let _ = writeln!(o, "   TA_RetCode retCode;");
+    let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   *stream = NULL;");
+    let null_checks: Vec<String> = inputs
+        .iter()
+        .cloned()
+        .chain(std::iter::once(out.clone()))
+        .map(|x| format!("!{x}"))
+        .collect();
+    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
+    let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   (void)startIdx;");
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    // MAVP's own guard: an inverted [min,max] window is invalid (batch rejects).
+    let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
+
+    let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
+    let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
+    let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
+    for p in &func.optional_inputs {
+        let _ = writeln!(o, "   sp->{0} = {0};", p.name);
+    }
+    let _ = writeln!(o, "   sp->nBank = {max} - {min} + 1;");
+    let _ = writeln!(
+        o,
+        "   sp->bank = ({subty} **)TA_Malloc( sizeof({subty} *) * (size_t)sp->nBank );"
+    );
+    let _ = writeln!(o, "   if( !sp->bank ) {{ TA_Free( sp ); return TA_ALLOC_ERR; }}");
+    let _ = writeln!(
+        o,
+        "   memset( sp->bank, 0, sizeof({subty} *) * (size_t)sp->nBank );"
+    );
+    let _ = writeln!(
+        o,
+        "   sp->scratch = (double *)TA_Malloc( sizeof(double) * (size_t)sp->nBank );"
+    );
+    let _ = writeln!(
+        o,
+        "   if( !sp->scratch ) {{ TA_Free( sp->bank ); TA_Free( sp ); return TA_ALLOC_ERR; }}"
+    );
+    // Open one sub-MA per possible period, seeded from the full history.
+    let _ = writeln!(o, "\n   for( k = 0; k < sp->nBank; k++ )");
+    let _ = writeln!(o, "   {{");
+    let _ = writeln!(
+        o,
+        "      retCode = {pre}_OpenInternal( {open_opts}, {price}, startIdx, historyLen, &sp->bank[k], &sp->scratch[k] );"
+    );
+    let _ = writeln!(o, "      if( retCode != TA_SUCCESS )");
+    let _ = writeln!(o, "      {{");
+    let _ = writeln!(o, "         int j;");
+    let _ = writeln!(o, "         for( j = 0; j < k; j++ ) {pre}_Close( sp->bank[j] );");
+    let _ = writeln!(
+        o,
+        "         TA_Free( sp->scratch ); TA_Free( sp->bank ); TA_Free( sp );"
+    );
+    let _ = writeln!(o, "         return retCode;");
+    let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "   }}");
+    // Current output: the last history bar's clamped period selects the slot.
+    let _ = writeln!(o, "\n   cp = (int)({period}[historyLen - 1]);");
+    let _ = writeln!(o, "   if( cp < {min} ) cp = {min};");
+    let _ = writeln!(o, "   else if( cp > {max} ) cp = {max};");
+    let _ = writeln!(o, "   *{out} = sp->scratch[cp - {min}];");
+    let _ = writeln!(o, "\n   *stream = sp;");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    let _ = registry;
+    let _ = helpers;
+    let _ = counter;
+    emit_open_wrapper(o, func);
+
+    // --- Update -------------------------------------------------------------
+    let _ = writeln!(o, "{}\n{{", update_signature(func));
+    let _ = writeln!(o, "   int k, cp;");
+    let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   for( k = 0; k < stream->nBank; k++ )");
+    let _ = writeln!(o, "      {pre}_Update( stream->bank[k], {price}, &stream->scratch[k] );");
+    let _ = writeln!(o, "   cp = (int){period};");
+    let _ = writeln!(o, "   if( cp < stream->{min} ) cp = stream->{min};");
+    let _ = writeln!(o, "   else if( cp > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(o, "   *{out} = stream->scratch[cp - stream->{min}];");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+
+    // --- Peek ---------------------------------------------------------------
+    // Only the SELECTED slot is peeked: the other slots' next values are not the
+    // output for this bar, and peeking is non-committing per sub-handle.
+    let _ = writeln!(o, "{}\n{{", peek_signature(func));
+    let _ = writeln!(o, "   int cp;");
+    let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   cp = (int){period};");
+    let _ = writeln!(o, "   if( cp < stream->{min} ) cp = stream->{min};");
+    let _ = writeln!(o, "   else if( cp > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(
+        o,
+        "   {pre}_Peek( stream->bank[cp - stream->{min}], {price}, {out} );"
+    );
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+
+    // --- Close --------------------------------------------------------------
+    let _ = writeln!(o, "{}\n{{", close_signature(func));
+    let _ = writeln!(o, "   int k;");
+    let _ = writeln!(o, "   if( stream )");
+    let _ = writeln!(o, "   {{");
+    let _ = writeln!(o, "      if( stream->bank )");
+    let _ = writeln!(o, "      {{");
+    let _ = writeln!(o, "         for( k = 0; k < stream->nBank; k++ )");
+    let _ = writeln!(o, "            if( stream->bank[k] ) {pre}_Close( stream->bank[k] );");
+    let _ = writeln!(o, "         TA_Free( stream->bank );");
+    let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      if( stream->scratch ) TA_Free( stream->scratch );");
+    let _ = writeln!(o, "      TA_Free( stream );");
+    let _ = writeln!(o, "   }}");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
 /// One Open arm: the transcribed batch body region + live state capture,

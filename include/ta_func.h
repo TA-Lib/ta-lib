@@ -5764,6 +5764,26 @@ TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 1000
                                           int           optInMaxPeriod, /* From 1 to 100000 */
                                           TA_MAType     optInMAType );
 
+
+/*
+ * Streaming API for TA_MAVP — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_MAVP_Stream TA_MAVP_Stream;
+
+TA_LIB_API TA_RetCode TA_MAVP_Open( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int historyLen, TA_MAVP_Stream **stream, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream );
+
 /*
  * TA_MAX - Highest value over a specified period
  * 

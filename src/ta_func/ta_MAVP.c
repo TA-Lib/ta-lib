@@ -547,3 +547,117 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_MAVP_Stream {
+   int optInMinPeriod;
+   int optInMaxPeriod;
+   TA_MAType optInMAType;
+   int nBank;
+   struct TA_MA_Stream **bank;
+   double *scratch;
+};
+
+TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int startIdx, int historyLen, struct TA_MAVP_Stream **stream, double *outReal )
+{
+   struct TA_MAVP_Stream *sp;
+   int k, cp;
+   TA_RetCode retCode;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   (void)startIdx;
+   if( (int)optInMinPeriod == (int)0x80000000 )
+      optInMinPeriod = 2;
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMaxPeriod == (int)0x80000000 )
+      optInMaxPeriod = 30;
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == (int)0x80000000 )
+      optInMAType = 0;
+   if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
+
+   sp = (struct TA_MAVP_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   memset( sp, 0, sizeof(*sp) );
+   sp->optInMinPeriod = optInMinPeriod;
+   sp->optInMaxPeriod = optInMaxPeriod;
+   sp->optInMAType = optInMAType;
+   sp->nBank = optInMaxPeriod - optInMinPeriod + 1;
+   sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
+   if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
+   memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
+   sp->scratch = (double *)TA_Malloc( sizeof(double) * (size_t)sp->nBank );
+   if( !sp->scratch ) { TA_Free( sp->bank ); TA_Free( sp ); return TA_ALLOC_ERR; }
+
+   for( k = 0; k < sp->nBank; k++ )
+   {
+      retCode = TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, startIdx, historyLen, &sp->bank[k], &sp->scratch[k] );
+      if( retCode != TA_SUCCESS )
+      {
+         int j;
+         for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );
+         TA_Free( sp->scratch ); TA_Free( sp->bank ); TA_Free( sp );
+         return retCode;
+      }
+   }
+
+   cp = (int)(inPeriods[historyLen - 1]);
+   if( cp < optInMinPeriod ) cp = optInMinPeriod;
+   else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+   *outReal = sp->scratch[cp - optInMinPeriod];
+
+   *stream = sp;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAVP_Open( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int historyLen, TA_MAVP_Stream **stream, double *outReal )
+{
+   return TA_MAVP_OpenInternal( optInMinPeriod, optInMaxPeriod, optInMAType, inReal, inPeriods, 0, historyLen, stream, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
+{
+   int k, cp;
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   for( k = 0; k < stream->nBank; k++ )
+      TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
+   cp = (int)inPeriods;
+   if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;
+   else if( cp > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   *outReal = stream->scratch[cp - stream->optInMinPeriod];
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
+{
+   int cp;
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   cp = (int)inPeriods;
+   if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;
+   else if( cp > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream )
+{
+   int k;
+   if( stream )
+   {
+      if( stream->bank )
+      {
+         for( k = 0; k < stream->nBank; k++ )
+            if( stream->bank[k] ) TA_MA_Close( stream->bank[k] );
+         TA_Free( stream->bank );
+      }
+      if( stream->scratch ) TA_Free( stream->scratch );
+      TA_Free( stream );
+   }
+   return TA_SUCCESS;
+}
+

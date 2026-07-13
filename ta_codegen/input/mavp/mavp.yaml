@@ -2,7 +2,7 @@ name: MAVP
 camel_case: MovingAverageVariablePeriod
 group: Overlap Studies
 hint: Moving average with variable period
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

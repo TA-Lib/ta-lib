@@ -6113,7 +6113,7 @@ public int movingAverageVariablePeriodLookback(
 @FuncInfo(
         name  = "MAVP",
         group = "Overlap Studies",
-        flags = 16777216,
+        flags = 50331648,
         nbInput    = 2,
         nbOptInput = 3,
         nbOutput   = 1

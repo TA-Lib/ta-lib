@@ -402,7 +402,7 @@ DEF_FUNCTION( MAVP,
               TA_GroupId_OverlapStudies,
               "Moving average with variable period",
               "MovingAverageVariablePeriod",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAVP END */
 

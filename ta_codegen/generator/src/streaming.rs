@@ -401,6 +401,48 @@ pub enum StreamPlan<'a> {
     Composed(ComposedPlan<'a>),
     DualMode(DualModePlan<'a>),
     FastPathSkip(FastPathSkipPlan<'a>),
+    PeriodBank(PeriodBankPlan<'a>),
+}
+
+/// One optional argument of a period-bank sub-open, in the callee's signature
+/// order: either the per-bar variable period (fixed to a distinct value in each
+/// bank slot) or the caller's forwarded MAType.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PeriodBankArg {
+    /// The variable period — bank slot `k` opens the callee at `minPeriod + k`.
+    Period,
+    /// The caller's MAType param, forwarded to every slot.
+    MAType,
+}
+
+/// A recognized variable-period moving average (MAVP): a moving average whose
+/// period varies PER BAR, read from a second input and clamped to
+/// `[minPeriod, maxPeriod]`. The batch computes each distinct period's full MA
+/// once and scatters; a stream cannot know future periods, so it maintains a
+/// BANK of `maxPeriod - minPeriod + 1` streaming sub-MAs (one per possible
+/// period), advances them all in lockstep every bar, and outputs the one the
+/// current bar's clamped period selects. Reuses the callee's (`ma`) public
+/// stream — so it streams exactly the MATypes the callee streams (MAType_MAMA
+/// rejects at Open, as it does through MA's dispatch).
+#[derive(Debug)]
+pub struct PeriodBankPlan<'a> {
+    pub func: &'a FuncDef,
+    /// The per-period moving-average callee (input-level name, e.g. `ma`).
+    pub callee: String,
+    /// The callee's optional arguments, in signature order (period slot + the
+    /// forwarded MAType).
+    pub callee_opts: Vec<PeriodBankArg>,
+    /// Input fed to every sub-MA (the price series).
+    pub price_input: String,
+    /// Input read per bar as the (clamped) period selector.
+    pub period_input: String,
+    /// Optional-param names: the inclusive period-bank bounds.
+    pub min_param: String,
+    pub max_param: String,
+    /// The MAType optional-param name forwarded to every slot.
+    pub matype_param: String,
+    /// The single real output.
+    pub output: String,
 }
 
 /// A recognized param fast-path split whose two arms are bit-identical (a pure
@@ -3010,6 +3052,113 @@ fn delegation_opt_args(
     Some(opt_args)
 }
 
+/// The full argument list of the first `callee` invocation in `stmts` matching
+/// its TA signature arity, or `None` if absent.
+fn find_call_args(stmts: &[Statement], callee: &str, sig: &CalleeSig) -> Option<Vec<Expr>> {
+    let arity = 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs;
+    let mut result: Option<Vec<Expr>> = None;
+    for s in stmts {
+        walk_stmt_exprs(s, &mut |e| {
+            walk_expr(e, &mut |x| {
+                if result.is_none() {
+                    if let Expr::FuncCall(name, args) = x {
+                        if name == callee && args.len() == arity {
+                            result = Some(args.clone());
+                        }
+                    }
+                }
+            });
+        });
+    }
+    result
+}
+
+/// Recognize a variable-period moving average (MAVP): two real inputs (a price
+/// series and a per-bar period selector), a `MAType` enum param, exactly two
+/// integer bound params (min/max period), one real output, and a whole-range
+/// delegation to a single streaming 1-input/1-output MAType-dispatch callee
+/// (`ma`) whose period argument varies per bar. Returns [`StreamError::NoSteadyLoop`]
+/// when the body is not this shape (the gate then falls through to composed).
+/// See [`PeriodBankPlan`] for the streaming model.
+pub fn analyze_period_bank<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<PeriodBankPlan<'a>, StreamError> {
+    let inputs = input_array_names(func);
+    if inputs.len() != 2 || func.outputs.len() != 1 {
+        return Err(StreamError::NoSteadyLoop);
+    }
+    // Exactly one MAType enum param + exactly two integer (period bound) params.
+    let Some(matype) = func
+        .optional_inputs
+        .iter()
+        .find(|p| matches!(&p.param_type, ParamType::Enum(e) if e == "MAType"))
+    else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+    let ints: Vec<&str> = func
+        .optional_inputs
+        .iter()
+        .filter(|p| matches!(p.param_type, ParamType::Integer))
+        .map(|p| p.name.as_str())
+        .collect();
+    if ints.len() != 2 {
+        return Err(StreamError::NoSteadyLoop);
+    }
+    // A single streaming callee, itself a 1-input / 1-output / 2-opt MAType
+    // dispatch (so a per-period sub-MA can be opened from its public stream).
+    let streaming_names: Vec<String> = find_indicator_calls(&func.body, lookup)
+        .into_iter()
+        .filter(|c| lookup.callee(c).is_some_and(|s| s.streaming))
+        .collect();
+    let [callee] = streaming_names.as_slice() else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+    let sig = lookup.callee(callee).expect("streaming callee resolves");
+    if sig.n_inputs != 1 || sig.n_outputs != 1 || sig.n_opts != 2 {
+        return Err(StreamError::NoSteadyLoop);
+    }
+    // Extract the callee's actual args to learn its price input and opt roles.
+    let args = find_call_args(&func.body, callee, &sig).ok_or(StreamError::NoSteadyLoop)?;
+    let Expr::Var(price_input) = &args[2] else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+    if !inputs.iter().any(|i| i == price_input) {
+        return Err(StreamError::NoSteadyLoop);
+    }
+    let Some(period_input) = inputs.iter().find(|i| *i != price_input) else {
+        return Err(StreamError::NoSteadyLoop);
+    };
+    let opt_base = 2 + sig.n_inputs;
+    let callee_opts: Vec<PeriodBankArg> = args[opt_base..opt_base + sig.n_opts]
+        .iter()
+        .map(|e| {
+            if matches!(e, Expr::Var(v) if *v == matype.name) {
+                PeriodBankArg::MAType
+            } else {
+                PeriodBankArg::Period
+            }
+        })
+        .collect();
+    // Exactly one period slot and one MAType slot.
+    if callee_opts.iter().filter(|a| **a == PeriodBankArg::MAType).count() != 1
+        || callee_opts.iter().filter(|a| **a == PeriodBankArg::Period).count() != 1
+    {
+        return Err(StreamError::NoSteadyLoop);
+    }
+    Ok(PeriodBankPlan {
+        func,
+        callee: callee.clone(),
+        callee_opts,
+        price_input: price_input.clone(),
+        period_input: period_input.clone(),
+        min_param: ints[0].to_string(),
+        max_param: ints[1].to_string(),
+        matype_param: matype.name.clone(),
+        output: func.outputs[0].name.clone(),
+    })
+}
+
 /// Validate that a `streaming: true` function is still analyzable. Any
 /// failure is a generation-time error (the maintenance-coupling gate from
 /// the proposal): a batch rewrite that breaks stream analyzability fails
@@ -3140,6 +3289,20 @@ pub fn validate_streamable<'a>(
         Err(dispatch_err) => {
             return Err(format!(
                 "{}: YAML declares `streaming: true` but the dispatch body is not streamable: {dispatch_err}",
+                func.name
+            ));
+        }
+    }
+    // Period-bank (MAVP): a variable-per-bar-period moving average, streamed as a
+    // bank of the callee's per-period sub-streams. Tried after dispatch (it has no
+    // switch) and before composed (its `ma` call inside a loop is not the composed
+    // producer-plus-tail shape). NoSteadyLoop = "not period-bank-shaped".
+    match analyze_period_bank(func, lookup) {
+        Ok(plan) => return Ok(StreamPlan::PeriodBank(plan)),
+        Err(StreamError::NoSteadyLoop) => {}
+        Err(bank_err) => {
+            return Err(format!(
+                "{}: YAML declares `streaming: true` but the period-bank body is not streamable: {bank_err}",
                 func.name
             ));
         }

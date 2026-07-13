@@ -356,6 +356,13 @@ fn stream_census(seed_yaml: bool) -> i32 {
                             ga.model.state.len()
                         );
                     }
+                    ta_codegen_lib::streaming::StreamPlan::PeriodBank(pb) => {
+                        derived_tc += 1;
+                        println!(
+                            "{:<10} {:<14} TC period-bank callee={} min={} max={}",
+                            status, func.name, pb.callee, pb.min_param, pb.max_param
+                        );
+                    }
                 }
                 if seed_yaml && !func.streaming {
                     let yaml_path = root
