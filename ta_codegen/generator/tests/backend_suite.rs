@@ -6698,8 +6698,14 @@ fn test_c_mavp_period_bank() {
     assert!(s.contains("double *scratch;"), "per-slot lockstep output scratch");
     assert!(s.contains("sp->nBank = optInMaxPeriod - optInMinPeriod + 1;"), "one slot per possible period");
     assert!(s.contains("if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;"), "inverted window rejected");
-    // Open: bank loop opening each period's sub-stream, all-freed-so-far on OOM.
-    assert!(s.contains("TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal,"), "sub-open per period, MAType forwarded");
+    // Every sub-MA is seeded at the SHARED max-period lookback (matching batch),
+    // NOT at its own lookback — else period < maxPeriod diverges. This bug fooled
+    // every objective gate (the fuzz period-selector always clamped to maxPeriod);
+    // pin the anchor so it can never regress.
+    assert!(s.contains("lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );"), "shared max-period lookback anchor");
+    assert!(s.contains("subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;"), "clamp start to the shared anchor");
+    // Open: bank loop opening each period's sub-stream at subStart, all-freed-so-far on OOM.
+    assert!(s.contains("TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, subStart, historyLen,"), "sub-open per period at the shared anchor, MAType forwarded");
     assert!(s.contains("for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );"), "frees sub-streams opened so far on failure");
     // Update: lockstep advance + clamp-indexed output.
     let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
