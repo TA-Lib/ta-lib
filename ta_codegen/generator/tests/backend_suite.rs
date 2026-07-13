@@ -6597,6 +6597,75 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
     );
 }
 
+/// Small helper: the streaming section of a generated HT function.
+fn ht_stream_section(name: &str) -> String {
+    let (mut func, enums) = load_indicator(name);
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let start = c.find("/**** Streaming API *****/").expect("stream section");
+    c[start..].to_string()
+}
+
+/// Pin HT_DCPHASE: the first coexistence of a smoothPrice CIRCBUF, a WMA trailing
+/// ring, and the eight fixed Hilbert arrays in ONE handle. The DCPhase backward
+/// rescan reads the circbuf; DCPhase is carried across bars.
+#[test]
+fn test_c_ht_dcphase_circ_ring_fixed_coexist() {
+    let s = ht_stream_section("ht_dcphase");
+    assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
+    assert!(s.contains("double *ring_trailingWMAIdx_inReal;"), "WMA trailing ring");
+    assert!(s.contains("double detrender_Even[3];"), "fixed Hilbert array");
+    assert!(s.contains("double DCPhase;"), "DCPhase carried across bars");
+    assert!(s.contains("sp->cb_smoothPrice[sp->smoothPrice_Idx] = sp->smoothedValue;"), "circbuf write");
+    assert!(s.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf backward rescan read");
+    assert!(s.contains("memcpy( sp->cb_smoothPrice, smoothPrice"), "circbuf captured (contents+phase) in Open");
+    assert!(s.contains("*outReal= sp->DCPhase;"), "unconditional DCPhase output (gate stripped)");
+}
+
+/// Pin HT_SINE: DCPHASE's circbuf/ring body with TWO sin() outputs.
+#[test]
+fn test_c_ht_sine_two_sin_outputs() {
+    let s = ht_stream_section("ht_sine");
+    assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
+    let step = s.split("TA_HT_SINE_StreamStep").nth(1).unwrap();
+    let step = &step[..step.find("TA_HT_SINE_OpenInternal").unwrap_or(step.len())];
+    assert!(step.contains("*outSine="), "outSine written unconditionally");
+    assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
+    assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
+}
+
+/// Pin HT_TRENDLINE: a rescan window over the RAW input (the padded-loop source
+/// rewrite of `inReal[idx--]`), no circbuf, single output.
+#[test]
+fn test_c_ht_trendline_raw_price_window() {
+    let s = ht_stream_section("ht_trendline");
+    assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
+    assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
+    let step = s.split("TA_HT_TRENDLINE_StreamStep").nth(1).unwrap();
+    let step = &step[..step.find("TA_HT_TRENDLINE_OpenInternal").unwrap_or(step.len())];
+    assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i) % sp->winCap_i]"), "window read of bar today-i");
+    assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
+    assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
+}
+
+/// Pin HT_TRENDMODE: the full HT union — WMA ring + smoothPrice circbuf + a
+/// raw-price rescan window (separate counter j) + an INTEGER output.
+#[test]
+fn test_c_ht_trendmode_full_union() {
+    let s = ht_stream_section("ht_trendmode");
+    assert!(s.contains("double *ring_trailingWMAIdx_inReal;"), "WMA ring");
+    assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
+    assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
+    let step = s.split("TA_HT_TRENDMODE_StreamStep").nth(1).unwrap();
+    let step = &step[..step.find("TA_HT_TRENDMODE_OpenInternal").unwrap_or(step.len())];
+    assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
+    assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
+    assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j) % sp->winCap_j]"), "window trendline read");
+    assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
+}
+
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
 /// ring set + one StreamStep branching on the stored parity; the ring buffers are
