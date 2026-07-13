@@ -318,12 +318,12 @@ static void TA_AVGDEV_StreamStep( struct TA_AVGDEV_Stream *sp, double inReal, do
    todaySum = 0.0;
    for( i = 0; i < sp->optInTimePeriod; i += 1 )
    {
-      todaySum += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
+      todaySum += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
    }
    todayDev = 0.0;
    for( i = 0; i < sp->optInTimePeriod; i += 1 )
    {
-      todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i] - todaySum / sp->optInTimePeriod);
+      todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - todaySum / sp->optInTimePeriod);
    }
    *outReal= todayDev / sp->optInTimePeriod;
    sp->winPos_i = sp->winPos_i + 1;

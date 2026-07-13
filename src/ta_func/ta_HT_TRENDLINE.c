@@ -1716,7 +1716,7 @@ static void TA_HT_TRENDLINE_StreamStep( struct TA_HT_TRENDLINE_Stream *sp, doubl
    {
       if( sp->i < sp->DCPeriodInt )
       {
-         sp->tempReal += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i) % sp->winCap_i];
+         sp->tempReal += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - sp->i - sp->winCap_i : sp->winPos_i + sp->winCap_i - sp->i];
       }
    }
    if( sp->DCPeriodInt > 0 )

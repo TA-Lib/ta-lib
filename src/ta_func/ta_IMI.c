@@ -340,8 +340,8 @@ static void TA_IMI_StreamStep( struct TA_IMI_Stream *sp, double inOpen, double i
    downsum = 0.0;
    for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
    {
-      close = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
-      open = sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i) % sp->winCap_i];
+      close = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
+      open = sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
       if( close > open )
       {
          upsum += close - open;

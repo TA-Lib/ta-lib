@@ -5351,23 +5351,37 @@ fn rewrite_expr_for_transition(
                     });
                     match win {
                         Some(win) => {
-                            // win[(pos + cap - w) % cap]: bar `w` back from
-                            // the current one (slot `pos` holds the current
-                            // bar — written before the transition body).
+                            // Bar `w` back from the current one (slot `pos` holds
+                            // the current bar, written before the transition body).
+                            // The logical index is (pos + cap - w) % cap; but `w`
+                            // is a window offset in [0, cap-1], so that operand is
+                            // in [1, 2*cap) and the modulo is a single conditional
+                            // subtract. Emit `X >= cap ? X - cap : X` instead of a
+                            // per-element runtime integer division -- brings the
+                            // stream window-rescan to batch@last's cost (#110).
                             let pos = Expr::Var(names.win_pos(&win.var));
                             let cap = Expr::Var(names.win_cap(&win.var));
-                            let idx_expr = Expr::BinOp(
+                            let x = Expr::BinOp(
                                 Box::new(Expr::BinOp(
-                                    Box::new(Expr::BinOp(
-                                        Box::new(pos),
-                                        BinOp::Add,
-                                        Box::new(cap.clone()),
-                                    )),
-                                    BinOp::Sub,
-                                    Box::new(Expr::Var(w0)),
+                                    Box::new(pos),
+                                    BinOp::Add,
+                                    Box::new(cap.clone()),
                                 )),
-                                BinOp::Mod,
-                                Box::new(cap),
+                                BinOp::Sub,
+                                Box::new(Expr::Var(w0)),
+                            );
+                            let idx_expr = Expr::Ternary(
+                                Box::new(Expr::BinOp(
+                                    Box::new(x.clone()),
+                                    BinOp::GreaterEq,
+                                    Box::new(cap.clone()),
+                                )),
+                                Box::new(Expr::BinOp(
+                                    Box::new(x.clone()),
+                                    BinOp::Sub,
+                                    Box::new(cap),
+                                )),
+                                Box::new(x),
                             );
                             Expr::ArrayAccess(
                                 names.win_buf(&win.var, &n),

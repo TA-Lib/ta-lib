@@ -2241,7 +2241,7 @@ static void TA_HT_TRENDMODE_StreamStep( struct TA_HT_TRENDMODE_Stream *sp, doubl
    {
       if( sp->j < sp->DCPeriodInt )
       {
-         sp->tempReal += sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j) % sp->winCap_j];
+         sp->tempReal += sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - sp->j - sp->winCap_j : sp->winPos_j + sp->winCap_j - sp->j];
       }
    }
    if( sp->DCPeriodInt > 0 )
