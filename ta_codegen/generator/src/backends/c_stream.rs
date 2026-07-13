@@ -2038,7 +2038,7 @@ fn emit_period_bank(
     // --- OpenInternal -------------------------------------------------------
     let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
-    let _ = writeln!(o, "   int k, cp;");
+    let _ = writeln!(o, "   int k, cp, lookbackTotal, subStart;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
@@ -2050,10 +2050,24 @@ fn emit_period_bank(
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
-    let _ = writeln!(o, "   (void)startIdx;");
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
     // MAVP's own guard: an inverted [min,max] window is invalid (batch rejects).
     let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
+    // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the batch
+    // does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
+    // with that same start for every period. Seeding each sub at its OWN (smaller)
+    // lookback would seed the recurrence from a different bar and diverge for
+    // every period < maxPeriod (order-1 for recursive MAs, running-sum residue
+    // for stable ones). This is the OpenInternal start-anchor seam (MACDEXT).
+    let _ = writeln!(
+        o,
+        "   lookbackTotal = {pre}_Lookback( {max}, {matype} );",
+        matype = plan.matype_param
+    );
+    let _ = writeln!(
+        o,
+        "   subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;"
+    );
 
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
     let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
@@ -2084,7 +2098,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   {{");
     let _ = writeln!(
         o,
-        "      retCode = {pre}_OpenInternal( {open_opts}, {price}, startIdx, historyLen, &sp->bank[k], &sp->scratch[k] );"
+        "      retCode = {pre}_OpenInternal( {open_opts}, {price}, subStart, historyLen, &sp->bank[k], &sp->scratch[k] );"
     );
     let _ = writeln!(o, "      if( retCode != TA_SUCCESS )");
     let _ = writeln!(o, "      {{");

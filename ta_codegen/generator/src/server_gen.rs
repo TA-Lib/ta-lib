@@ -749,6 +749,37 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
     s.push_str("        }\n");
 }
 
+/// Period-bank functions (MAVP): the fuzz period-selector input (mapped to a
+/// generic real series ~volume, always >= 1000) would clamp to `maxPeriod` at
+/// every bar, so the stream_verify would only ever exercise ONE bank slot and
+/// pass vacuously for all others. Overwrite the selector with a ramp spanning
+/// `[minPeriod-1, maxPeriod+1]` (fed identically to the batch and the stream),
+/// so every bank slot AND both clamp directions are exercised. Regenerated per
+/// request (fuzz_gen runs first), so this override does not leak to other funcs.
+fn emit_sv_period_bank_input(
+    s: &mut String,
+    func: &FuncDef,
+    funcs: &[FuncDef],
+    input_arrays: &[&str],
+) {
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    let Ok(crate::streaming::StreamPlan::PeriodBank(pb)) =
+        crate::streaming::validate_streamable(func, &lookup)
+    else {
+        return;
+    };
+    let inputs = crate::streaming::input_array_names(func);
+    let Some(idx) = inputs.iter().position(|i| *i == pb.period_input) else {
+        return;
+    };
+    let arr = input_arrays[idx];
+    s.push_str(&format!(
+        "        {{ int _pi; for( _pi = 0; _pi < svN; _pi++ ) {arr}[_pi] = (double)({min} + (_pi % ({max} - {min} + 3)) - 1); }}\n",
+        min = pb.min_param,
+        max = pb.max_param
+    ));
+}
+
 /// Dispatch functions (MA): enum values whose arm has no sub-stream reject
 /// at Open — a DOCUMENTED capability limitation, verified loudly here
 /// (never a silent vacuous pass). The identity path (period==1) is exempt:
@@ -1125,6 +1156,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             }
         }
 
+        emit_sv_period_bank_input(&mut s, func, funcs, &input_arrays);
         emit_sv_dispatch_precheck(&mut s, func, funcs, &input_arrays, n_outs, name);
 
         let candle = func.flags.iter().any(|f| f == "candlestick");

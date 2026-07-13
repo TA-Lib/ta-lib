@@ -561,14 +561,13 @@ struct TA_MAVP_Stream {
 TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int startIdx, int historyLen, struct TA_MAVP_Stream **stream, double *outReal )
 {
    struct TA_MAVP_Stream *sp;
-   int k, cp;
+   int k, cp, lookbackTotal, subStart;
    TA_RetCode retCode;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
-   (void)startIdx;
    if( (int)optInMinPeriod == (int)0x80000000 )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
@@ -580,6 +579,8 @@ TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MATy
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
+   lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
+   subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;
 
    sp = (struct TA_MAVP_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;
@@ -596,7 +597,7 @@ TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MATy
 
    for( k = 0; k < sp->nBank; k++ )
    {
-      retCode = TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, startIdx, historyLen, &sp->bank[k], &sp->scratch[k] );
+      retCode = TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, subStart, historyLen, &sp->bank[k], &sp->scratch[k] );
       if( retCode != TA_SUCCESS )
       {
          int j;

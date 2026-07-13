@@ -8623,6 +8623,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInMinPeriod = json_find_int(json, "optInMinPeriod");
         int optInMaxPeriod = json_find_int(json, "optInMaxPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
+        { int _pi; for( _pi = 0; _pi < svN; _pi++ ) sv_v[_pi] = (double)(optInMinPeriod + (_pi % (optInMaxPeriod - optInMinPeriod + 3)) - 1); }
         if( ( !(optInMaxPeriod == 1) && ( optInMAType == TA_MAType_MAMA ) ) )
         {
             TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
