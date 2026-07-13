@@ -254,6 +254,7 @@ fn stream_opt_args(func: &FuncDef) -> Vec<String> {
     args
 }
 
+#[allow(clippy::too_many_lines)]
 fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
     s.push_str("static volatile int g_sink = 0;\n\n");
     s.push_str("#define BENCH_MASK 4095\n\n");
@@ -515,7 +516,7 @@ pub fn write_c_stream_bench(funcs: &[FuncDef], output_dir: &Path) {
     eprintln!("  C stream bench -> {}", path.display());
 }
 
-const HANDLE_TRACKER: &str = r#"
+const HANDLE_TRACKER: &str = r"
 /* --- retained-handle allocation tracking (indicator TUs only) --- */
 #define TRK_MAX 65536
 static void  *g_trk_ptr[TRK_MAX];
@@ -550,7 +551,7 @@ static void bench_tracked_free(void *p) {
 #define TA_Malloc(a) bench_tracked_malloc(a)
 #define TA_Free(a)   bench_tracked_free(a)
 
-"#;
+";
 
 const STREAM_MAIN_FUNC: &str = r#"
 int main(int argc, char *argv[]) {
