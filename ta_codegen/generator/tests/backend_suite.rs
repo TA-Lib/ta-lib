@@ -6666,6 +6666,24 @@ fn test_c_ht_trendmode_full_union() {
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 
+/// Pin MAMA — the last MAType function to stream (empties the every-MAType ratchet
+/// blocklist). It is an ordinary HT function (WMA ring + parity) with two real
+/// optional params and two coupled outputs (mama/fama) written in a top-level gate.
+/// (MA's *dispatch* still rejects MAType_MAMA at Open — a two-output callee cannot
+/// be a 1:1 delegation into MA's single output; pinned by ma_derives_dispatch_plan.)
+#[test]
+fn test_c_mama_two_outputs_and_params() {
+    let s = ht_stream_section("mama");
+    assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
+    assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
+    let step = s.split("TA_MAMA_StreamStep").nth(1).unwrap();
+    let step = &step[..step.find("TA_MAMA_OpenInternal").unwrap_or(step.len())];
+    assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
+    assert!(step.contains("*outMAMA= sp->mama;") && step.contains("*outFAMA= sp->fama;"), "both outputs written unconditionally (gate stripped)");
+    assert!(step.contains("sp->optInFastLimit") && step.contains("sp->optInSlowLimit"), "params drive the adaptive alpha");
+    assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
+}
+
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
 /// ring set + one StreamStep branching on the stored parity; the ring buffers are

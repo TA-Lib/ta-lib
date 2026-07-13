@@ -524,18 +524,25 @@ fn every_matype_is_streamable_except_tracked_blockers() {
         ("T3", "t3"),
     ];
     // Not-yet-streamable MAType functions (deep blockers). MUST ONLY SHRINK.
-    //   MAMA: writes a dummy FAMA output buffer and reads `startIdx` inside its
-    //   steady loop (the same startIdx-in-loop wall as HT_*) — no stream yet.
-    let blocked = ["mama"];
+    // NOW EMPTY: MAMA streamed in M7c (it is an ordinary HT function — WMA ring +
+    // Hilbert arrays + `today % 2` parity + the two outputs mama/fama in an output
+    // gate — covered by the same strip_cursor_output_gate + carry_cursor_parity
+    // normalizations, no circbuf/window, no `startIdx` read in its steady loop).
+    // Every MAType function now streams. (MA's *dispatch* still rejects MAType_MAMA
+    // at Open — mama has two outputs and MA routes one, feeding the FAMA output to a
+    // discarded scratch buffer, so that arm is not a 1:1 whole-range delegation; that
+    // dispatch-shape reject is separate from mama's own streamability and is pinned
+    // by ma_derives_dispatch_plan.)
+    let blocked: [&str; 0] = [];
     for (ty, func) in matypes {
         let streams = lk.callee(func).is_some_and(|s| s.streaming);
         let is_blocked = blocked.contains(&func);
         assert_eq!(
             streams, !is_blocked,
             "MAType streaming contract: {ty} ({func}) streams={streams}, blocked={is_blocked}. \
-             Every MAType function must stream (so every MAType-consuming stream is bit-exact); \
-             a non-blocked one that stopped streaming is a regression, and a blocked one that now \
-             streams means the allowlist is stale — remove it."
+             Every MAType function must stream; a non-blocked one that stopped streaming is a \
+             regression, and a blocked one that now streams means the allowlist is stale — \
+             remove it."
         );
     }
     // The allowlist is exactly the un-streamable MATypes — no stale entries.
