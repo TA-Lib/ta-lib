@@ -351,6 +351,57 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
    return TA_TEST_PASS;
 }
 
+/* ---- MC/DC gate helpers for the marquee multi-candle patterns (issue #109) ---
+ * Same idea as the Hikkake gate above, for single-sign patterns: a detection
+ * scenario that fires the exact value, then one near-miss per structural
+ * predicate (that predicate flipped false, the rest held) asserting 0 — so every
+ * decision boundary is exercised in both directions. Each scenario self-primes
+ * and is separated by flat filler so the candle-setting averages reset between
+ * them. Every scenario was validated against the shipped library. */
+
+/* Valid-candle bar: clamps high>=max(o,c), low<=min(o,c). Returns its index. */
+static int pb_bar( double o, double h, double l, double c )
+{
+   double hi=h, lo=l;
+   if(hi<o)hi=o; if(hi<c)hi=c;
+   if(lo>o)lo=o; if(lo>c)lo=c;
+   return pb_bar4(o,hi,lo,c);
+}
+/* k alternating small-body bars (real body ~bd, half-range ~hr) around base:
+ * seeds the BodyLong/Short/Doji/shadow averages small, matching fuzz_cdl_primer. */
+static void pb_primer( int k, double base, double bd, double hr )
+{
+   int i;
+   for(i=0;i<k;i++){ double o=(i&1)?base:base+bd, c=(i&1)?base+bd:base;
+      pb_bar(o, base+bd+hr, base-hr, c); }
+}
+/* Single-sign check: every pb_expect must match, AND at least one expected
+ * NON-zero must actually fire (else the gate is vacuous). */
+static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn )
+{
+   int out[PB_N], begIdx=0, nb=0, k, fails=0, sawNonzero=0;
+   TA_RetCode rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
+   if( rc != TA_SUCCESS ) { printf("  %s MC/DC: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
+   for( k=0; k<pbNe; k++ )
+   {
+      int oi = pbEi[k]-begIdx;
+      int got = (oi>=0 && oi<nb) ? out[oi] : -99999;
+      if( got != pbEv[k] )
+      {
+         printf("  %s MC/DC FAIL bar=%d expected=%d got=%d  (%s)\n", name, pbEi[k], pbEv[k], got, pbEl[k]);
+         fails++;
+      }
+      if( pbEv[k] != 0 && got == pbEv[k] ) sawNonzero = 1;
+   }
+   if( fails ) return TA_TSTCDL_PREDICATE_MISMATCH;
+   if( !sawNonzero )
+   {
+      printf("  %s MC/DC VACUOUS: no expected non-zero output fired\n", name);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber test_hikkake_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -410,6 +461,94 @@ static ErrorNumber test_hikkake_predicate_coverage( void )
    return TA_TEST_PASS;
 }
 
+/* CDL2CROWS MC/DC: detection (-100) + one flip per structural predicate. */
+static void build_2crows( void )
+{
+  pb_flat(6);
+  /* DETECTION: 1st long white, 2nd black gap-up, 3rd black opening in 2nd rb & closing in 1st rb */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);                 /* 1st: long white  body[100,105] rb=5>avg2 */
+  pb_bar(110,111,106,107);                /* 2nd: black gap-up body[107,110] min107>105 */
+  int d=pb_bar(109,110,102,103);          /* 3rd: black open109 in(107,110), close103 in(100,105) */
+  pb_expect(d,-100,"detect");
+  pb_flat(8);
+  /* FLIP 1: break 1st-white==1  (make 1st BLACK)  [also breaks close3<close1 - coupled] */
+  pb_primer(12,100,2,1);
+  pb_bar(102,103,98,99);                  /* 1st BLACK body[99,102] rb=3>2 */
+  pb_bar(110,111,106,107);
+  int f1=pb_bar(109,110,102,103);
+  pb_expect(f1,0,"break 1st-white");
+  pb_flat(8);
+  /* FLIP 2: break 1st-long  (rb==avg, not > ) */
+  pb_primer(12,100,2,1);
+  pb_bar(102,106,99,104);                 /* 1st white SHORT body[102,104] rb=2, 2>2 false */
+  pb_bar(110,111,106,107);
+  int f2=pb_bar(109,110,102,103);
+  pb_expect(f2,0,"break 1st-long");
+  pb_flat(8);
+  /* FLIP 3: break 2nd-black==-1  (make 2nd WHITE)  [also breaks open3>close2 - coupled] */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,112,106,111);                /* 2nd WHITE body[110,111] */
+  int f3=pb_bar(109,110,102,103);
+  pb_expect(f3,0,"break 2nd-black");
+  pb_flat(8);
+  /* FLIP 4: break gap-up  (2nd body overlaps 1st: min104 <= max105) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,103,104);                /* 2nd black body[104,110] min104 !> 105 */
+  int f4=pb_bar(109,110,102,103);
+  pb_expect(f4,0,"break gapup");
+  pb_flat(8);
+  /* FLIP 5: break 3rd-black==-1  (make 3rd WHITE)  [also breaks close3<close1 - coupled] */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f5=pb_bar(109,111,108,110);         /* 3rd WHITE body[109,110] */
+  pb_expect(f5,0,"break 3rd-black");
+  pb_flat(8);
+  /* FLIP 6: break open3<open2  (open3=111 >= open2=110) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f6=pb_bar(111,112,102,103);
+  pb_expect(f6,0,"break open3<open2");
+  pb_flat(8);
+  /* FLIP 7: break open3>close2  (open3=106 <= close2=107) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f7=pb_bar(106,107,102,103);
+  pb_expect(f7,0,"break open3>close2");
+  pb_flat(8);
+  /* FLIP 8: break close3>open1  (close3=99 <= open1=100) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f8=pb_bar(109,110,98,99);
+  pb_expect(f8,0,"break close3>open1");
+  pb_flat(8);
+  /* FLIP 9: break close3<close1  (close3=106 >= close1=105) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f9=pb_bar(109,110,104,106);
+  pb_expect(f9,0,"break close3<close1");
+  pb_flat(8);
+}
+
+/* Predicate-coverage (MC/DC) gate for the marquee multi-candle patterns. Runs
+ * the actual TA function over detection + per-predicate near-miss scenarios and
+ * asserts the exact integer output at each (the rarer multi-candle patterns that
+ * random fuzz data never triggers). Complements the FUZZ_CANDLE differential/
+ * stream coverage; extended one pattern at a time (issue #109). */
+static ErrorNumber test_marquee_predicate_coverage( void )
+{
+   ErrorNumber e;
+   pb_reset(); build_2crows();      e = pb_check_mcdc("CDL2CROWS",      TA_CDL2CROWS);      if( e != TA_TEST_PASS ) return e;
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_candlestick( TA_History *history )
 {
    unsigned int i;
@@ -422,6 +561,14 @@ ErrorNumber test_candlestick( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed: Hikkake predicate-coverage test (retValue=%d)\n", retValue );
+      return retValue;
+   }
+
+   /* MC/DC gate for the marquee multi-candle patterns (issue #109). */
+   retValue = test_marquee_predicate_coverage();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed: marquee predicate-coverage test (retValue=%d)\n", retValue );
       return retValue;
    }
 
