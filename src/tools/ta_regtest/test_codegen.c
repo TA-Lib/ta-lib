@@ -3511,7 +3511,6 @@ static const int CDL_STREAM_SHAPES[] =
 /* Patterns not yet covered by a deterministic FUZZ_CANDLE window (issue #109).
  * Exempt from the assertion until their family's window lands. */
 static const char * const cdl_pending[] = {
-    "CDL3LINESTRIKE",
     "CDLADVANCEBLOCK", "CDLCONCEALBABYSWALL", "CDLINNECK",
     "CDLMATHOLD", "CDLRISEFALL3METHODS", "CDLUNIQUE3RIVER"
 };

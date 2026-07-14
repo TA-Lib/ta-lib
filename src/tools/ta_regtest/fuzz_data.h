@@ -186,6 +186,20 @@ static int fuzz_cdl_3starsinsouth(double *o,double *h,double *l,double *c,double
     return p;
 }
 
+/* CDL3LINESTRIKE (three-white branch, +100 on the strike): three white candles
+ * with climbing closes each opening inside the prior body, then a black candle
+ * opening above the 3rd close and closing below the 1st open. */
+static int fuzz_cdl_3linestrike(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+5.0,  base-1.0, base+4.0);  /* i-3: 1st white soldier */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+2.0,  base+7.0,  base+1.0, base+6.0);  /* i-2: 2nd white         */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+4.0,  base+9.0,  base+3.0, base+8.0);  /* i-1: 3rd white         */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0, base+11.0, base-3.0, base-2.0);  /* i:   4th black strike  */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -195,6 +209,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_3blackcrows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3whitesoldiers(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3starsinsouth(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_3linestrike(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
