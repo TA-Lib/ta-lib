@@ -16,7 +16,7 @@ The classic C library is as reliable as ever, and the project is once again movi
 
 Various ways:
 
-- Have a friendly conversation with Mario Fortier (a.k.a Mhax) on [discord](https://discord.com/invite/Erb6SwsVbH)
+- Open a discussion on [Discord](https://discord.com/invite/Erb6SwsVbH)
 - Open a [Github Issue](https://github.com/TA-Lib/ta-lib/issues)
 - Check these communities:
     - [https://github.com/ta-lib/ta-lib-python](https://github.com/ta-lib/ta-lib-python)
