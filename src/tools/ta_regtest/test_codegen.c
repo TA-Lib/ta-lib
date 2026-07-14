@@ -3539,7 +3539,8 @@ static const char * const cdl_catalog[] = {
     "CDLADVANCEBLOCK", "CDLINNECK", "CDLUNIQUE3RIVER",
     "CDLKICKING",
     "CDLKICKINGBYLENGTH",
-    "CDLDARKCLOUDCOVER"
+    "CDLDARKCLOUDCOVER",
+    "CDLPIERCING"
 };
 #define CDL_NCATALOG ((int)(sizeof(cdl_catalog)/sizeof(cdl_catalog[0])))
 

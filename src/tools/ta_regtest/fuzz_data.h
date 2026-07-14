@@ -314,6 +314,16 @@ static int fuzz_cdl_darkcloudcover(double *o,double *h,double *l,double *c,doubl
     return p;
 }
 
+/* CDLPIERCING: 2nd pattern candle (buffer index 13) fires +100 (piercing is bullish-only, fixed +100); the two primer-adjacent evaluated bars 11,12 output 0 */
+static int fuzz_cdl_piercing(double *o,double *h,double *l,double *c,double *v,double *oi,
+                             int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+20, base+21, base-1, base); /* 1st candle: black LONG body (open=120, close=100, body=20 > avg~2); low=99 */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-10, base+16, base-11, base+15); /* 2nd candle: white LONG body (open=90, close=115, body=25 > avg~3.8); opens 90<low1(99); closes 115<open1(120) and >midpoint(110) */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -333,6 +343,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_kicking(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_kickingbylength(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_darkcloudcover(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_piercing(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
