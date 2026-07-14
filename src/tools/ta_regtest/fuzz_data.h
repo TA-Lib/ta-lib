@@ -106,6 +106,55 @@ static int fuzz_cdl_hikkakemod(double *o,double *h,double *l,double *c,double *v
     if(conf){ cc = dir>0 ? H3+w : L3-w; p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n,cc,cc+0.5,cc-0.5,cc); }
     return p;
 }
+/* ---- FUZZ_CANDLE deterministic pattern catalog (issue #109) --------------- */
+/* Beyond the seed-driven hikkake windows below, lay one hand-built firing
+ * instance of each otherwise-vacuous multi-candle pattern so the fuzz-064 and
+ * stream_verify gates exercise its real decision logic instead of comparing
+ * all-zero output to all-zero. Each window self-primes with a short neutral run
+ * so its candle-setting averages (BodyLong/Short/Doji, shadows, Near/Far, ...)
+ * don't depend on the neighbouring windows. Pure geometry (no TA calls), so it
+ * stays byte-identical across the v0.6.4 oracle boundary. The windows are a
+ * fixed, seed-independent prefix, so every seed fires every pattern.
+ * Each window was validated against the shipped library to produce the exact
+ * expected output at the expected bar. */
+
+/* Neutral primer: k alternating small-body bars (real body ~bd, extra half-range
+ * ~hr beyond the body) around base. Sets the BodyLong/BodyShort averages to ~bd,
+ * so a following long body (>> bd) or short body (<< bd) qualifies with margin. */
+static int fuzz_cdl_primer(double *o,double *h,double *l,double *c,double *v,double *oi,
+                           int p,int n,int k,double base,double bd,double hr)
+{
+    int i;
+    for(i=0;i<k;i++){
+        double O = (i&1)? base : base+bd;
+        double C = (i&1)? base+bd : base;
+        p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n,O,base+bd+hr,base-hr,C);
+    }
+    return p;
+}
+
+/* CDL2CROWS (bearish, -100 on the 3rd candle): a long white body; a black candle
+ * gapping up entirely above it; then a black candle opening inside the 2nd body
+ * and closing inside the 1st body. */
+static int fuzz_cdl_2crows(double *o,double *h,double *l,double *c,double *v,double *oi,
+                           int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+12.5, base-0.5,  base+12.0); /* 1st white long   */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+18.0, base+18.5, base+13.5, base+14.0); /* 2nd black gap up */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+16.0, base+16.5, base+5.5,  base+6.0);  /* 3rd black inside */
+    return p;
+}
+
+/* Lay the deterministic per-family catalog. Appended to as each family's window
+ * lands (issue #109); one entry per otherwise-vacuous pattern. */
+static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
+                            int p,int n)
+{
+    p=fuzz_cdl_2crows(o,h,l,c,v,oi,p,n,100.0);
+    return p;
+}
+
 static void fuzz_candle_gen(int seed, int n,
                             double *o, double *h, double *l, double *c,
                             double *v, double *oi)
@@ -114,6 +163,7 @@ static void fuzz_candle_gen(int seed, int n,
         0x243F6A8885A308D3ULL
         ^ ((unsigned long long)(unsigned int)seed * 0xD1B54A32D192ED03ULL);
     int p = fuzz_cdl_flat(o,h,l,c,v,oi,0,n,6,100.0);
+    p = fuzz_cdl_catalog(o,h,l,c,v,oi,p,n);   /* deterministic per-family windows (#109) */
     while( p < n-16 )
     {
         double base = 100.0 + (fuzz_sm_unit(&s)-0.5)*40.0;
