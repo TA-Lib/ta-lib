@@ -55,7 +55,7 @@ export default hopeTheme({
       footer:
         '<a href="https://github.com/TA-Lib/ta-lib">TA-Lib on Github</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://discord.com/invite/Erb6SwsVbH">TA-Lib on Discord</a>',
 
-      copyright: "BSD-3-Clause Open-Source License",
+      copyright: false,
 
       displayFooter: true,
 

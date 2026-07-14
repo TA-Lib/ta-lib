@@ -7,7 +7,7 @@ toc: false
 
 <img src="/assets/images/home.png" alt="TA-Lib">
 
-### Technical analysis, battle-tested since 2001.
+### Technical analysis, battle-tested since 2001
 
 </div>
 

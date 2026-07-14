@@ -29,3 +29,10 @@ body:has(.home-hero) .vp-page-title {
 .credits table thead {
   display: none;
 }
+
+// The Administrators table (the first table in .credits) has only two rows;
+// the theme's zebra striping (odd rows shaded) would single out the first name.
+// Disable striping there only — the multi-row tables below keep their stripes.
+.credits table:first-of-type tbody tr {
+  background: transparent;
+}
