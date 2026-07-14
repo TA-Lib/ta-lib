@@ -797,6 +797,148 @@ static void build_3whitesoldiers( void )
   pb_flat(8);
 }
 
+/* CDL3STARSINSOUTH MC/DC: detection (100) + one flip per structural predicate. */
+static void build_3starsinsouth( void )
+{
+  int d,f;
+  pb_flat(6);
+
+  /* DETECTION: valid Three Stars in the South -> 100 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);            /* C1: long black, long lower shadow */
+  pb_bar(118,118,100,112);           /* C2: smaller black, opens higher within range, lower shadow */
+  d=pb_bar(106,106.3,104.7,105);     /* C3: small black marubozu engulfed */
+  pb_expect(d,100,"detect");
+  pb_flat(8);
+
+  /* P1: break color(1st)==-1 -> make C1 white (close>=open) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,121,85,110);            /* white body [100,110] */
+  pb_bar(118,118,100,112);
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p1 color1st");
+  pb_flat(8);
+
+  /* P2: break color(2nd)==-1 -> make C2 white */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(113,116,100,116);           /* white body [113,116] */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p2 color2nd");
+  pb_flat(8);
+
+  /* P3: break color(3rd)==-1 -> make C3 white */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  f=pb_bar(105,106.3,104.7,106);     /* white body [105,106] */
+  pb_expect(f,0,"break p3 color3rd");
+  pb_flat(8);
+
+  /* P4: break realbody(1st) > BodyLong avg -> C1 short body (2nd shrunk to keep p6) */
+  pb_primer(12,100,2,1);
+  pb_bar(111.9,121,95,110);          /* body 1.9 <= 2 */
+  pb_bar(113,113,100,112);           /* body 1 (< 1.9 keeps p6) */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p4 bodyLong1st");
+  pb_flat(8);
+
+  /* P5: break lowershadow(1st) > ShadowLong avg -> lower shadow == threshold */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,100,110);           /* lowsh=10 == realbody=10 */
+  pb_bar(118,118,100,112);
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p5 lowerShadow1st");
+  pb_flat(8);
+
+  /* P6: break realbody(2nd) < realbody(1st) -> C2 body bigger than C1 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(120,120,100,108);           /* body 12 >= 10 */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p6 smaller2nd");
+  pb_flat(8);
+
+  /* P7: break open(2nd) > close(1st) -> open2 == close1 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(110,110,100,105);           /* open2=110=close1 */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p7 open2GTclose1");
+  pb_flat(8);
+
+  /* P8: break open(2nd) <= high(1st) -> open2 above high1 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(122,122,100,118);           /* open2=122 > high1=121 */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p8 open2LEhigh1");
+  pb_flat(8);
+
+  /* P9: break low(2nd) < close(1st) -> lower close1 to == low2 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,75,100);            /* close1=100 == low2 */
+  pb_bar(118,118,100,112);
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p9 low2LTclose1");
+  pb_flat(8);
+
+  /* P10: break low(2nd) >= low(1st) -> low2 below low1 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,90,112);            /* low2=90 < low1=95 */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p10 low2GElow1");
+  pb_flat(8);
+
+  /* P11: break lowershadow(2nd) > ShadowVeryShort avg -> C2 tiny lower shadow (C3 raised) */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(112,112,105.7,106);         /* lowsh2=0.3 < ~0.62 */
+  f=pb_bar(109,109.3,107.7,108);     /* engulfed above low2=105.7 */
+  pb_expect(f,0,"break p11 lowerShadow2nd");
+  pb_flat(8);
+
+  /* P12: break realbody(3rd) < BodyShort avg -> C3 big body */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  f=pb_bar(108,108.3,102.7,103);     /* body 5 > ~3.2 */
+  pb_expect(f,0,"break p12 bodyShort3rd");
+  pb_flat(8);
+
+  /* P13: break lowershadow(3rd) < ShadowVeryShort avg -> C3 big lower shadow */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  f=pb_bar(106,106.3,103,105);       /* lowsh3=2 > ~0.76 */
+  pb_expect(f,0,"break p13 lowerShadow3rd");
+  pb_flat(8);
+
+  /* P14: break uppershadow(3rd) < ShadowVeryShort avg -> C3 big upper shadow */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  f=pb_bar(106,108,104.7,105);       /* uppsh3=2 > ~0.76 */
+  pb_expect(f,0,"break p14 upperShadow3rd");
+  pb_flat(8);
+
+  /* P15: break low(3rd) > low(2nd) -> raise low2 above low3 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,106,112);           /* low2=106 > low3=104.7 */
+  f=pb_bar(106,106.3,104.7,105);
+  pb_expect(f,0,"break p15 low3GTlow2");
+  pb_flat(8);
+
+  /* P16: break high(3rd) < high(2nd) -> raise C3 above high2 */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  f=pb_bar(118,118.3,116.7,117);     /* high3=118.3 > high2=118 */
+  pb_expect(f,0,"break p16 high3LThigh2");
+}
+
 /* Predicate-coverage (MC/DC) gate for the marquee multi-candle patterns. Runs
  * the actual TA function over detection + per-predicate near-miss scenarios and
  * asserts the exact integer output at each (the rarer multi-candle patterns that
@@ -808,6 +950,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_2crows();      e = pb_check_mcdc("CDL2CROWS",      TA_CDL2CROWS);      if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3blackcrows(); e = pb_check_mcdc("CDL3BLACKCROWS", TA_CDL3BLACKCROWS); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3whitesoldiers(); e = pb_check_mcdc("CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3starsinsouth(); e = pb_check_mcdc("CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH); if( e != TA_TEST_PASS ) return e;
    return TA_TEST_PASS;
 }
 
