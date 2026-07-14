@@ -401,6 +401,19 @@ static int fuzz_cdl_breakaway(double *o,double *h,double *l,double *c,double *v,
     return p;
 }
 
+/* CDLLADDERBOTTOM: 5th pattern bar (index 16) = +100 (CDLLADDERBOTTOM is always bullish, fixed +100) */
+static int fuzz_cdl_ladderbottom(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                 int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+20, base+21, base+14, base+15); /* i-4: black (115<120), highest open & close */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+15, base+16, base+9, base+10); /* i-3: black (110<115), lower open (115<120) & close (110<115) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10, base+11, base+4, base+5); /* i-2: black (105<110), lower open (110<115) & close (105<110) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5, base+12, base-2, base); /* i-1: black (100<105), upper shadow = 112-105 = 7 >> 0.49 threshold */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+6, base+15, base+6, base+15); /* i:   white (115>=106), open 106>105 (prior open), close 115>112 (prior high) */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -428,6 +441,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_stalledpattern(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_upsidegap2crows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_breakaway(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_ladderbottom(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
