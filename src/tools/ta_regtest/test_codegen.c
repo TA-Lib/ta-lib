@@ -3509,9 +3509,13 @@ static const int CDL_STREAM_SHAPES[] =
 #define CDL_NSTREAM_SHAPES ((int)(sizeof(CDL_STREAM_SHAPES)/sizeof(int)))
 
 /* Patterns not yet covered by a deterministic FUZZ_CANDLE window (issue #109).
- * Exempt from the assertion until their family's window lands. */
+ * Exempt from the assertion until their family's window lands. The allowlist is
+ * now EMPTY — every candlestick fires on a stream-run shape (the whole catalog
+ * of once-vacuous families has landed). The lone NULL keeps the table valid ISO
+ * C; re-add a name here (with a #109-tracked reason) only if a pattern is ever
+ * found that deterministic geometry genuinely cannot trigger. */
 static const char * const cdl_pending[] = {
-    "CDLUNIQUE3RIVER"
+    NULL
 };
 #define CDL_NPENDING ((int)(sizeof(cdl_pending)/sizeof(cdl_pending[0])))
 
@@ -3519,7 +3523,7 @@ static int cdl_is_pending(const char *name)
 {
     int i;
     for( i = 0; i < CDL_NPENDING; i++ )
-        if( strcmp(name, cdl_pending[i]) == 0 ) return 1;
+        if( cdl_pending[i] && strcmp(name, cdl_pending[i]) == 0 ) return 1;
     return 0;
 }
 

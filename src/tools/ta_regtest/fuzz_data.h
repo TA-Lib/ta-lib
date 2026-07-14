@@ -271,6 +271,19 @@ static int fuzz_cdl_inneck(double *o,double *h,double *l,double *c,double *v,dou
     return p;
 }
 
+/* CDLUNIQUE3RIVER (bullish, +100 on the 3rd candle): a long black candle; a black
+ * harami closing higher but making a new lower low; then a small white candle
+ * opening above the 2nd low. */
+static int fuzz_cdl_unique3river(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                 int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0, base+11.0, base-12.0, base-10.0); /* 1st black long body   */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5.0,  base+6.0,  base-15.0, base-5.0);  /* 2nd black harami+low  */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-4.0,  base-2.0,  base-5.0,  base-3.0);  /* 3rd white short body  */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -286,6 +299,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_risefall3methods(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_advanceblock(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_inneck(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_unique3river(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
