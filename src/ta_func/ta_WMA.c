@@ -429,7 +429,8 @@ struct TA_WMA_Stream {
    double *ringMirror_trailingIdx_inReal;
 };
 
-static void TA_WMA_StreamRelease( struct TA_WMA_Stream *sp )
+/* Private function, not in public API. */
+static void TA_WMA_ReleaseInternal( struct TA_WMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
@@ -437,7 +438,8 @@ static void TA_WMA_StreamRelease( struct TA_WMA_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_WMA_StreamStep( struct TA_WMA_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_WMA_StepInternal( struct TA_WMA_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
 
@@ -475,6 +477,7 @@ static void TA_WMA_StreamStep( struct TA_WMA_Stream *sp, double inReal, double *
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_WMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_WMA_Stream **stream, double *outReal )
 {
    struct TA_WMA_Stream *sp;
@@ -508,9 +511,9 @@ TA_RetCode TA_WMA_OpenInternal( int optInTimePeriod, const double inReal[], int 
       sp->ringCap_trailingIdx = 0;
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_WMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
       }
       sp->ringPos_trailingIdx = 0;
@@ -639,12 +642,12 @@ TA_RetCode TA_WMA_OpenInternal( int optInTimePeriod, const double inReal[], int 
       sp->periodSub = periodSub;
       sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_WMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -662,7 +665,7 @@ TA_LIB_API TA_RetCode TA_WMA_Open( int optInTimePeriod, const double inReal[], i
 TA_LIB_API TA_RetCode TA_WMA_Update( TA_WMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_WMA_StreamStep( stream, inReal, outReal );
+   TA_WMA_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -674,13 +677,13 @@ TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, d
    scratch = *stream;
    scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
    memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_WMA_StreamStep( &scratch, inReal, outReal );
+   TA_WMA_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_WMA_Close( TA_WMA_Stream *stream )
 {
-   TA_WMA_StreamRelease( stream );
+   TA_WMA_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

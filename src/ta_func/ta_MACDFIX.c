@@ -680,7 +680,8 @@ struct TA_MACDFIX_Stream {
    double signalK;
 };
 
-static void TA_MACDFIX_StreamStep( struct TA_MACDFIX_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
+/* Private function, not in public API. */
+static void TA_MACDFIX_StepInternal( struct TA_MACDFIX_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    double macdValue;
    double tempReal;
@@ -695,6 +696,7 @@ static void TA_MACDFIX_StreamStep( struct TA_MACDFIX_Stream *sp, double inReal, 
    *outMACDHist= macdValue - sp->prevSignal;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MACDFIX_OpenInternal( int optInSignalPeriod, const double inReal[], int startIdx, int historyLen, struct TA_MACDFIX_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACDFIX_Stream *sp;
@@ -918,7 +920,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Open( int optInSignalPeriod, const double inRea
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   TA_MACDFIX_StreamStep( stream, inReal, outMACD, outMACDSignal, outMACDHist );
+   TA_MACDFIX_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
    return TA_SUCCESS;
 }
 
@@ -928,7 +930,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Peek( const TA_MACDFIX_Stream *stream, double i
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MACDFIX_StreamStep( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
+   TA_MACDFIX_StepInternal( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
    return TA_SUCCESS;
 }
 

@@ -236,7 +236,8 @@ struct TA_OBV_Stream {
    double prevOBV;
 };
 
-static void TA_OBV_StreamStep( struct TA_OBV_Stream *sp, double inReal, double inVolume, double *outReal )
+/* Private function, not in public API. */
+static void TA_OBV_StepInternal( struct TA_OBV_Stream *sp, double inReal, double inVolume, double *outReal )
 {
    double tempReal;
 
@@ -252,6 +253,7 @@ static void TA_OBV_StreamStep( struct TA_OBV_Stream *sp, double inReal, double i
    sp->prevReal = tempReal;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_OBV_OpenInternal( const double inReal[], const double inVolume[], int startIdx, int historyLen, struct TA_OBV_Stream **stream, double *outReal )
 {
    struct TA_OBV_Stream *sp;
@@ -316,7 +318,7 @@ TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[
 TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_OBV_StreamStep( stream, inReal, inVolume, outReal );
+   TA_OBV_StepInternal( stream, inReal, inVolume, outReal );
    return TA_SUCCESS;
 }
 
@@ -326,7 +328,7 @@ TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_OBV_StreamStep( &scratch, inReal, inVolume, outReal );
+   TA_OBV_StepInternal( &scratch, inReal, inVolume, outReal );
    return TA_SUCCESS;
 }
 

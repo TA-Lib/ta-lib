@@ -852,7 +852,8 @@ struct TA_RSI_Stream {
    double prevValue;
 };
 
-static void TA_RSI_StreamStep( struct TA_RSI_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_RSI_StepInternal( struct TA_RSI_Stream *sp, double inReal, double *outReal )
 {
    double tempValue1;
    double tempValue2;
@@ -886,6 +887,7 @@ static void TA_RSI_StreamStep( struct TA_RSI_Stream *sp, double inReal, double *
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_RSI_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_RSI_Stream **stream, double *outReal )
 {
    struct TA_RSI_Stream *sp;
@@ -1171,7 +1173,7 @@ TA_LIB_API TA_RetCode TA_RSI_Open( int optInTimePeriod, const double inReal[], i
 TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_RSI_StreamStep( stream, inReal, outReal );
+   TA_RSI_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -1181,7 +1183,7 @@ TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_RSI_StreamStep( &scratch, inReal, outReal );
+   TA_RSI_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

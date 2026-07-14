@@ -563,7 +563,8 @@ struct TA_ACCBANDS_Stream {
    double *ringMirror_trailingIdx_inClose;
 };
 
-static void TA_ACCBANDS_StreamRelease( struct TA_ACCBANDS_Stream *sp )
+/* Private function, not in public API. */
+static void TA_ACCBANDS_ReleaseInternal( struct TA_ACCBANDS_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inHigh ) TA_Free( sp->ring_trailingIdx_inHigh );
@@ -575,7 +576,8 @@ static void TA_ACCBANDS_StreamRelease( struct TA_ACCBANDS_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_ACCBANDS_StreamStep( struct TA_ACCBANDS_Stream *sp, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+/* Private function, not in public API. */
+static void TA_ACCBANDS_StepInternal( struct TA_ACCBANDS_Stream *sp, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    double tempReal;
 
@@ -629,6 +631,7 @@ static void TA_ACCBANDS_StreamStep( struct TA_ACCBANDS_Stream *sp, double inHigh
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ACCBANDS_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_ACCBANDS_Stream *sp;
@@ -782,22 +785,22 @@ TA_RetCode TA_ACCBANDS_OpenInternal( int optInTimePeriod, const double inHigh[],
       sp->tempMiddle = tempMiddle;
       sp->tempLower = tempLower;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inHigh ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
         sp->ring_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inLow ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inLow ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inLow, inLow + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
         sp->ring_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inClose ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inClose ) { TA_ACCBANDS_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inClose, inClose + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -817,7 +820,7 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Open( int optInTimePeriod, const double inHigh
 TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   TA_ACCBANDS_StreamStep( stream, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   TA_ACCBANDS_StepInternal( stream, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    return TA_SUCCESS;
 }
 
@@ -833,13 +836,13 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double
    memcpy( scratch.ring_trailingIdx_inLow, stream->ring_trailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
    scratch.ring_trailingIdx_inClose = stream->ringMirror_trailingIdx_inClose;
    memcpy( scratch.ring_trailingIdx_inClose, stream->ring_trailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_ACCBANDS_StreamStep( &scratch, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   TA_ACCBANDS_StepInternal( &scratch, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_ACCBANDS_Close( TA_ACCBANDS_Stream *stream )
 {
-   TA_ACCBANDS_StreamRelease( stream );
+   TA_ACCBANDS_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

@@ -621,7 +621,8 @@ struct TA_ATR_Stream {
    double lag1_inClose;
 };
 
-static void TA_ATR_StreamStep( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_ATR_StepInternal( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
    double greatest;
@@ -652,6 +653,7 @@ static void TA_ATR_StreamStep( struct TA_ATR_Stream *sp, double inHigh, double i
    sp->lag1_inClose = inClose;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ATR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ATR_Stream **stream, double *outReal )
 {
    struct TA_ATR_Stream *sp;
@@ -853,7 +855,7 @@ TA_LIB_API TA_RetCode TA_ATR_Open( int optInTimePeriod, const double inHigh[], c
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ATR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_ATR_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -863,7 +865,7 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ATR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_ATR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

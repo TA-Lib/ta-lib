@@ -538,7 +538,8 @@ struct TA_CDLMATHOLD_Stream {
    double *winMirror_totIdx_inClose;
 };
 
-static void TA_CDLMATHOLD_StreamRelease( struct TA_CDLMATHOLD_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLMATHOLD_ReleaseInternal( struct TA_CDLMATHOLD_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyLongTrailingIdx_inOpen ) TA_Free( sp->ring_BodyLongTrailingIdx_inOpen );
@@ -568,7 +569,8 @@ static void TA_CDLMATHOLD_StreamRelease( struct TA_CDLMATHOLD_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_CDLMATHOLD_StreamStep( struct TA_CDLMATHOLD_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLMATHOLD_StepInternal( struct TA_CDLMATHOLD_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_BodyLongTrailingIdx_inOpen[sp->ringPos_BodyLongTrailingIdx] = inOpen;
    sp->ring_BodyLongTrailingIdx_inHigh[sp->ringPos_BodyLongTrailingIdx] = inHigh;
@@ -653,6 +655,7 @@ static void TA_CDLMATHOLD_StreamStep( struct TA_CDLMATHOLD_Stream *sp, double in
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLMATHOLD_Stream **stream, int *outInteger )
 {
    struct TA_CDLMATHOLD_Stream *sp;
@@ -793,36 +796,36 @@ TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inO
       sp->totIdx = totIdx;
       sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
       sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 5;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inOpen[fillJ % sp->ringCap_BodyLongTrailingIdx] = inOpen[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inHigh[fillJ % sp->ringCap_BodyLongTrailingIdx] = inHigh[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inLow[fillJ % sp->ringCap_BodyLongTrailingIdx] = inLow[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inClose[fillJ % sp->ringCap_BodyLongTrailingIdx] = inClose[fillJ];
@@ -831,36 +834,36 @@ TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inO
       sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
       sp->ringLag_BodyShortTrailingIdx = (int)(i - BodyShortTrailingIdx);
       sp->ringCap_BodyShortTrailingIdx = sp->ringLag_BodyShortTrailingIdx + 4;
-      if( sp->ringLag_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
         sp->ring_BodyShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyShortTrailingIdx_inOpen[fillJ % sp->ringCap_BodyShortTrailingIdx] = inOpen[fillJ];
         }
         sp->ring_BodyShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyShortTrailingIdx_inHigh[fillJ % sp->ringCap_BodyShortTrailingIdx] = inHigh[fillJ];
         }
         sp->ring_BodyShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyShortTrailingIdx_inLow[fillJ % sp->ringCap_BodyShortTrailingIdx] = inLow[fillJ];
         }
         sp->ring_BodyShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyShortTrailingIdx_inClose[fillJ % sp->ringCap_BodyShortTrailingIdx] = inClose[fillJ];
@@ -868,26 +871,26 @@ TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inO
       }
       sp->ringPos_BodyShortTrailingIdx = historyLen % sp->ringCap_BodyShortTrailingIdx;
       sp->winCap_totIdx = (int)(4);
-      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->win_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inOpen, inOpen + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inHigh, inHigh + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inLow ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inLow ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inLow, inLow + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inClose ) { TA_CDLMATHOLD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inClose ) { TA_CDLMATHOLD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inClose, inClose + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->winPos_totIdx = 0;
       sp->lag1_inOpen = inOpen[historyLen - 1];
@@ -920,7 +923,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Open( double optInPenetration, const double 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Update( TA_CDLMATHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLMATHOLD_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMATHOLD_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -954,13 +957,13 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Peek( const TA_CDLMATHOLD_Stream *stream, do
    memcpy( scratch.win_totIdx_inLow, stream->win_totIdx_inLow, sizeof(double) * (size_t)stream->winCap_totIdx );
    scratch.win_totIdx_inClose = stream->winMirror_totIdx_inClose;
    memcpy( scratch.win_totIdx_inClose, stream->win_totIdx_inClose, sizeof(double) * (size_t)stream->winCap_totIdx );
-   TA_CDLMATHOLD_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMATHOLD_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Close( TA_CDLMATHOLD_Stream *stream )
 {
-   TA_CDLMATHOLD_StreamRelease( stream );
+   TA_CDLMATHOLD_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

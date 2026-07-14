@@ -601,7 +601,8 @@ struct TA_TRIX_Stream {
    double optInK_1;
 };
 
-static void TA_TRIX_StreamStep( struct TA_TRIX_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_TRIX_StepInternal( struct TA_TRIX_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
 
@@ -618,6 +619,7 @@ static void TA_TRIX_StreamStep( struct TA_TRIX_Stream *sp, double inReal, double
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_TRIX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TRIX_Stream **stream, double *outReal )
 {
    struct TA_TRIX_Stream *sp;
@@ -808,7 +810,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Open( int optInTimePeriod, const double inReal[], 
 TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_TRIX_StreamStep( stream, inReal, outReal );
+   TA_TRIX_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -818,7 +820,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TRIX_StreamStep( &scratch, inReal, outReal );
+   TA_TRIX_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

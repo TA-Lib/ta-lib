@@ -303,7 +303,8 @@ struct TA_CDLXSIDEGAP3METHODS_Stream {
    double lag2_inClose;
 };
 
-static void TA_CDLXSIDEGAP3METHODS_StreamStep( struct TA_CDLXSIDEGAP3METHODS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLXSIDEGAP3METHODS_StepInternal( struct TA_CDLXSIDEGAP3METHODS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -327,6 +328,7 @@ static void TA_CDLXSIDEGAP3METHODS_StreamStep( struct TA_CDLXSIDEGAP3METHODS_Str
    sp->lag1_inClose = inClose;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLXSIDEGAP3METHODS_Stream **stream, int *outInteger )
 {
    struct TA_CDLXSIDEGAP3METHODS_Stream *sp;
@@ -428,7 +430,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Open( const double inOpen[], const 
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Update( TA_CDLXSIDEGAP3METHODS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLXSIDEGAP3METHODS_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLXSIDEGAP3METHODS_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -438,7 +440,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Peek( const TA_CDLXSIDEGAP3METHODS_
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLXSIDEGAP3METHODS_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLXSIDEGAP3METHODS_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

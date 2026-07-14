@@ -620,7 +620,8 @@ struct TA_MIDPRICE_Stream {
    double *xMirror_inLow;
 };
 
-static void TA_MIDPRICE_StreamRelease( struct TA_MIDPRICE_Stream *sp )
+/* Private function, not in public API. */
+static void TA_MIDPRICE_ReleaseInternal( struct TA_MIDPRICE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
@@ -630,7 +631,8 @@ static void TA_MIDPRICE_StreamRelease( struct TA_MIDPRICE_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_MIDPRICE_StreamStep( struct TA_MIDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_MIDPRICE_StepInternal( struct TA_MIDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double tmpLow;
    double tmpHigh;
@@ -691,6 +693,7 @@ static void TA_MIDPRICE_StreamStep( struct TA_MIDPRICE_Stream *sp, double inHigh
    sp->today += 1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MIDPRICE_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_MIDPRICE_Stream **stream, double *outReal )
 {
    struct TA_MIDPRICE_Stream *sp;
@@ -840,15 +843,15 @@ TA_RetCode TA_MIDPRICE_OpenInternal( int optInTimePeriod, const double inHigh[],
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MIDPRICE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MIDPRICE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inHigh ) { TA_MIDPRICE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_MIDPRICE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inHigh ) { TA_MIDPRICE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_MIDPRICE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inLow ) { TA_MIDPRICE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_MIDPRICE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inLow ) { TA_MIDPRICE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_MIDPRICE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -870,7 +873,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Open( int optInTimePeriod, const double inHigh
 TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MIDPRICE_StreamStep( stream, inHigh, inLow, outReal );
+   TA_MIDPRICE_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -884,13 +887,13 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
    memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
    scratch.x_inLow = stream->xMirror_inLow;
    memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
-   TA_MIDPRICE_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_MIDPRICE_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream )
 {
-   TA_MIDPRICE_StreamRelease( stream );
+   TA_MIDPRICE_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

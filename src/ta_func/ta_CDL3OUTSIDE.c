@@ -297,7 +297,8 @@ struct TA_CDL3OUTSIDE_Stream {
    double lag2_inClose;
 };
 
-static void TA_CDL3OUTSIDE_StreamStep( struct TA_CDL3OUTSIDE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDL3OUTSIDE_StepInternal( struct TA_CDL3OUTSIDE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp->lag1_inClose > sp->lag2_inOpen && sp->lag1_inOpen < sp->lag2_inClose && inClose > sp->lag1_inClose || ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && sp->lag1_inOpen > sp->lag2_inClose && sp->lag1_inClose < sp->lag2_inOpen && inClose < sp->lag1_inClose )
    {
@@ -316,6 +317,7 @@ static void TA_CDL3OUTSIDE_StreamStep( struct TA_CDL3OUTSIDE_Stream *sp, double 
    sp->lag1_inClose = inClose;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDL3OUTSIDE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDL3OUTSIDE_Stream **stream, int *outInteger )
 {
    struct TA_CDL3OUTSIDE_Stream *sp;
@@ -411,7 +413,7 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( const double inOpen[], const double i
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDL3OUTSIDE_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3OUTSIDE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -421,7 +423,7 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Peek( const TA_CDL3OUTSIDE_Stream *stream, 
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDL3OUTSIDE_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3OUTSIDE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

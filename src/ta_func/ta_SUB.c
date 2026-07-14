@@ -171,12 +171,14 @@ struct TA_SUB_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_SUB_StreamStep( struct TA_SUB_Stream *sp, double inReal0, double inReal1, double *outReal )
+/* Private function, not in public API. */
+static void TA_SUB_StepInternal( struct TA_SUB_Stream *sp, double inReal0, double inReal1, double *outReal )
 {
    (void)sp;
    *outReal= inReal0 - inReal1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_SUB_OpenInternal( const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_SUB_Stream **stream, double *outReal )
 {
    struct TA_SUB_Stream *sp;
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_SUB_Open( const double inReal0[], const double inReal1[
 TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_SUB_StreamStep( stream, inReal0, inReal1, outReal );
+   TA_SUB_StepInternal( stream, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 
@@ -235,7 +237,7 @@ TA_LIB_API TA_RetCode TA_SUB_Peek( const TA_SUB_Stream *stream, double inReal0, 
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SUB_StreamStep( &scratch, inReal0, inReal1, outReal );
+   TA_SUB_StepInternal( &scratch, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 

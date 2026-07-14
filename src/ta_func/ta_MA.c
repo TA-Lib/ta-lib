@@ -427,6 +427,7 @@ struct TA_MA_Stream {
    void *sub;
 };
 
+/* Private function, not in public API. */
 TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_MA_Stream **stream, double *outReal )
 {
    struct TA_MA_Stream *sp;

@@ -285,7 +285,8 @@ struct TA_AD_Stream {
    double ad;
 };
 
-static void TA_AD_StreamStep( struct TA_AD_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+/* Private function, not in public API. */
+static void TA_AD_StepInternal( struct TA_AD_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    double high;
    double low;
@@ -303,6 +304,7 @@ static void TA_AD_StreamStep( struct TA_AD_Stream *sp, double inHigh, double inL
    *outReal= sp->ad;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_AD_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_AD_Stream **stream, double *outReal )
 {
    struct TA_AD_Stream *sp;
@@ -386,7 +388,7 @@ TA_LIB_API TA_RetCode TA_AD_Open( const double inHigh[], const double inLow[], c
 TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_AD_StreamStep( stream, inHigh, inLow, inClose, inVolume, outReal );
+   TA_AD_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 
@@ -396,7 +398,7 @@ TA_LIB_API TA_RetCode TA_AD_Peek( const TA_AD_Stream *stream, double inHigh, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_AD_StreamStep( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   TA_AD_StepInternal( &scratch, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 

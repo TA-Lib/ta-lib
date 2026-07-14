@@ -162,12 +162,14 @@ struct TA_LN_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_LN_StreamStep( struct TA_LN_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_LN_StepInternal( struct TA_LN_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= log(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_LN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_LN_Stream **stream, double *outReal )
 {
    struct TA_LN_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_LN_Open( const double inReal[], int historyLen, TA_LN_S
 TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_LN_StreamStep( stream, inReal, outReal );
+   TA_LN_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_LN_StreamStep( &scratch, inReal, outReal );
+   TA_LN_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

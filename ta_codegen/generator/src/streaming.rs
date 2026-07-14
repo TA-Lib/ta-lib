@@ -643,7 +643,7 @@ impl StreamModel<'_> {
     }
 
     /// True iff the model owns any heap buffer and therefore needs a
-    /// `TA_<N>_StreamRelease` (per-buffer `TA_Free`) instead of a plain free.
+    /// `TA_<N>_ReleaseInternal` (per-buffer `TA_Free`) instead of a plain free.
     /// Replaces the OR-chains previously duplicated across the emitter.
     #[must_use]
     pub fn needs_release(&self) -> bool {
@@ -4056,7 +4056,7 @@ fn classify_locals(
 
     // Candle-setting locals (BodyDoji_rangeType, ...) are hoisted per-call
     // constants in batch; the stream emitters unpack them at the top of both
-    // Open and StreamStep (settings-stability rule), so they are neither
+    // Open and StepInternal (settings-stability rule), so they are neither
     // state nor temps here.
     let candle_locals: BTreeSet<String> = {
         let mut set = BTreeSet::new();

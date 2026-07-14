@@ -549,7 +549,8 @@ struct TA_CDLMORNINGDOJISTAR_Stream {
    double *ringMirror_BodyShortTrailingIdx_inClose;
 };
 
-static void TA_CDLMORNINGDOJISTAR_StreamRelease( struct TA_CDLMORNINGDOJISTAR_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLMORNINGDOJISTAR_ReleaseInternal( struct TA_CDLMORNINGDOJISTAR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyDojiTrailingIdx_inOpen ) TA_Free( sp->ring_BodyDojiTrailingIdx_inOpen );
@@ -579,7 +580,8 @@ static void TA_CDLMORNINGDOJISTAR_StreamRelease( struct TA_CDLMORNINGDOJISTAR_St
    TA_Free( sp );
 }
 
-static void TA_CDLMORNINGDOJISTAR_StreamStep( struct TA_CDLMORNINGDOJISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLMORNINGDOJISTAR_StepInternal( struct TA_CDLMORNINGDOJISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
@@ -658,6 +660,7 @@ static void TA_CDLMORNINGDOJISTAR_StreamStep( struct TA_CDLMORNINGDOJISTAR_Strea
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLMORNINGDOJISTAR_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLMORNINGDOJISTAR_Stream **stream, int *outInteger )
 {
    struct TA_CDLMORNINGDOJISTAR_Stream *sp;
@@ -792,77 +795,77 @@ TA_RetCode TA_CDLMORNINGDOJISTAR_OpenInternal( double optInPenetration, const do
       sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
       sp->BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
       }
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyLongTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
         sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyLongTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
         sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyLongTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
         sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyLongTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
       }
       sp->ringPos_BodyLongTrailingIdx = 0;
       sp->ringCap_BodyShortTrailingIdx = (int)(i - BodyShortTrailingIdx);
-      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
         sp->ring_BodyShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inOpen ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyShortTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyShortTrailingIdx );
         sp->ring_BodyShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inHigh ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyShortTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyShortTrailingIdx );
         sp->ring_BodyShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inLow ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyShortTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyShortTrailingIdx );
         sp->ring_BodyShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_inClose ) { TA_CDLMORNINGDOJISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyShortTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyShortTrailingIdx );
       }
       sp->ringPos_BodyShortTrailingIdx = 0;
@@ -888,7 +891,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Open( double optInPenetration, const
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Update( TA_CDLMORNINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLMORNINGDOJISTAR_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMORNINGDOJISTAR_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -922,13 +925,13 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Peek( const TA_CDLMORNINGDOJISTAR_St
    memcpy( scratch.ring_BodyShortTrailingIdx_inLow, stream->ring_BodyShortTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_BodyShortTrailingIdx > 0 ? stream->ringCap_BodyShortTrailingIdx : 1) );
    scratch.ring_BodyShortTrailingIdx_inClose = stream->ringMirror_BodyShortTrailingIdx_inClose;
    memcpy( scratch.ring_BodyShortTrailingIdx_inClose, stream->ring_BodyShortTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_BodyShortTrailingIdx > 0 ? stream->ringCap_BodyShortTrailingIdx : 1) );
-   TA_CDLMORNINGDOJISTAR_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMORNINGDOJISTAR_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Close( TA_CDLMORNINGDOJISTAR_Stream *stream )
 {
-   TA_CDLMORNINGDOJISTAR_StreamRelease( stream );
+   TA_CDLMORNINGDOJISTAR_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

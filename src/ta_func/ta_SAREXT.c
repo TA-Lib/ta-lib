@@ -1224,7 +1224,8 @@ struct TA_SAREXT_Stream {
    double sar;
 };
 
-static void TA_SAREXT_StreamStep( struct TA_SAREXT_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_SAREXT_StepInternal( struct TA_SAREXT_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double prevHigh;
    double prevLow;
@@ -1373,6 +1374,7 @@ static void TA_SAREXT_StreamStep( struct TA_SAREXT_Stream *sp, double inHigh, do
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_SAREXT_OpenInternal( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_SAREXT_Stream **stream, double *outReal )
 {
    struct TA_SAREXT_Stream *sp;
@@ -1783,7 +1785,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffset
 TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_SAREXT_StreamStep( stream, inHigh, inLow, outReal );
+   TA_SAREXT_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -1793,7 +1795,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SAREXT_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_SAREXT_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

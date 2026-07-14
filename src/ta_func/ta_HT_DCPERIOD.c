@@ -1384,7 +1384,8 @@ struct TA_HT_DCPERIOD_Stream {
    double *ringMirror_trailingWMAIdx_inReal;
 };
 
-static void TA_HT_DCPERIOD_StreamRelease( struct TA_HT_DCPERIOD_Stream *sp )
+/* Private function, not in public API. */
+static void TA_HT_DCPERIOD_ReleaseInternal( struct TA_HT_DCPERIOD_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -1392,7 +1393,8 @@ static void TA_HT_DCPERIOD_StreamRelease( struct TA_HT_DCPERIOD_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_HT_DCPERIOD_StreamStep( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_HT_DCPERIOD_StepInternal( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -1552,6 +1554,7 @@ static void TA_HT_DCPERIOD_StreamStep( struct TA_HT_DCPERIOD_Stream *sp, double 
    sp->streamParity = 1 - sp->streamParity;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_HT_DCPERIOD_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_DCPERIOD_Stream **stream, double *outReal )
 {
    struct TA_HT_DCPERIOD_Stream *sp;
@@ -1966,12 +1969,12 @@ TA_RetCode TA_HT_DCPERIOD_OpenInternal( const double inReal[], int startIdx, int
       sp->smoothPeriod = smoothPeriod;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPERIOD_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
@@ -1989,7 +1992,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( const double inReal[], int historyLen
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_HT_DCPERIOD_StreamStep( stream, inReal, outReal );
+   TA_HT_DCPERIOD_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -2001,13 +2004,13 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );
-   TA_HT_DCPERIOD_StreamStep( &scratch, inReal, outReal );
+   TA_HT_DCPERIOD_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Close( TA_HT_DCPERIOD_Stream *stream )
 {
-   TA_HT_DCPERIOD_StreamRelease( stream );
+   TA_HT_DCPERIOD_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

@@ -665,7 +665,8 @@ struct TA_TEMA_Stream {
    double optInK_1;
 };
 
-static void TA_TEMA_StreamStep( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_TEMA_StepInternal( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -678,6 +679,7 @@ static void TA_TEMA_StreamStep( struct TA_TEMA_Stream *sp, double inReal, double
    *outReal= sp->prevEMA3 + (3.0 * sp->prevEMA1 - 3.0 * sp->prevEMA2);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_TEMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_TEMA_Stream **stream, double *outReal )
 {
    struct TA_TEMA_Stream *sp;
@@ -926,7 +928,7 @@ TA_LIB_API TA_RetCode TA_TEMA_Open( int optInTimePeriod, const double inReal[], 
 TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_TEMA_StreamStep( stream, inReal, outReal );
+   TA_TEMA_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -936,7 +938,7 @@ TA_LIB_API TA_RetCode TA_TEMA_Peek( const TA_TEMA_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TEMA_StreamStep( &scratch, inReal, outReal );
+   TA_TEMA_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

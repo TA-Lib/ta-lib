@@ -1200,7 +1200,8 @@ struct TA_ULTOSC_Stream {
    double *ringMirror_trailingIdx3_inClose;
 };
 
-static void TA_ULTOSC_StreamRelease( struct TA_ULTOSC_Stream *sp )
+/* Private function, not in public API. */
+static void TA_ULTOSC_ReleaseInternal( struct TA_ULTOSC_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx1_inHigh ) TA_Free( sp->ring_trailingIdx1_inHigh );
@@ -1224,7 +1225,8 @@ static void TA_ULTOSC_StreamRelease( struct TA_ULTOSC_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_ULTOSC_StreamStep( struct TA_ULTOSC_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_ULTOSC_StepInternal( struct TA_ULTOSC_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double trueLow;
    double trueRange;
@@ -1370,6 +1372,7 @@ static void TA_ULTOSC_StreamStep( struct TA_ULTOSC_Stream *sp, double inHigh, do
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ULTOSC_OpenInternal( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ULTOSC_Stream **stream, double *outReal )
 {
    struct TA_ULTOSC_Stream *sp;
@@ -1673,28 +1676,28 @@ TA_RetCode TA_ULTOSC_OpenInternal( int optInTimePeriod1, int optInTimePeriod2, i
       sp->output = output;
       sp->ringLag_trailingIdx1 = (int)(today - trailingIdx1);
       sp->ringCap_trailingIdx1 = sp->ringLag_trailingIdx1 + 2;
-      if( sp->ringLag_trailingIdx1 < 0 || sp->ringCap_trailingIdx1 > historyLen ) { TA_ULTOSC_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_trailingIdx1 < 0 || sp->ringCap_trailingIdx1 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx1 > 0 ? sp->ringCap_trailingIdx1 : 1);
         sp->ring_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx1_inHigh[fillJ % sp->ringCap_trailingIdx1] = inHigh[fillJ];
         }
         sp->ring_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx1_inLow[fillJ % sp->ringCap_trailingIdx1] = inLow[fillJ];
         }
         sp->ring_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx1_inClose[fillJ % sp->ringCap_trailingIdx1] = inClose[fillJ];
@@ -1703,28 +1706,28 @@ TA_RetCode TA_ULTOSC_OpenInternal( int optInTimePeriod1, int optInTimePeriod2, i
       sp->ringPos_trailingIdx1 = historyLen % sp->ringCap_trailingIdx1;
       sp->ringLag_trailingIdx2 = (int)(today - trailingIdx2);
       sp->ringCap_trailingIdx2 = sp->ringLag_trailingIdx2 + 2;
-      if( sp->ringLag_trailingIdx2 < 0 || sp->ringCap_trailingIdx2 > historyLen ) { TA_ULTOSC_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_trailingIdx2 < 0 || sp->ringCap_trailingIdx2 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx2 > 0 ? sp->ringCap_trailingIdx2 : 1);
         sp->ring_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx2_inHigh[fillJ % sp->ringCap_trailingIdx2] = inHigh[fillJ];
         }
         sp->ring_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx2_inLow[fillJ % sp->ringCap_trailingIdx2] = inLow[fillJ];
         }
         sp->ring_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx2_inClose[fillJ % sp->ringCap_trailingIdx2] = inClose[fillJ];
@@ -1733,28 +1736,28 @@ TA_RetCode TA_ULTOSC_OpenInternal( int optInTimePeriod1, int optInTimePeriod2, i
       sp->ringPos_trailingIdx2 = historyLen % sp->ringCap_trailingIdx2;
       sp->ringLag_trailingIdx3 = (int)(today - trailingIdx3);
       sp->ringCap_trailingIdx3 = sp->ringLag_trailingIdx3 + 2;
-      if( sp->ringLag_trailingIdx3 < 0 || sp->ringCap_trailingIdx3 > historyLen ) { TA_ULTOSC_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_trailingIdx3 < 0 || sp->ringCap_trailingIdx3 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx3 > 0 ? sp->ringCap_trailingIdx3 : 1);
         sp->ring_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inHigh ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx3_inHigh[fillJ % sp->ringCap_trailingIdx3] = inHigh[fillJ];
         }
         sp->ring_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inLow ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx3_inLow[fillJ % sp->ringCap_trailingIdx3] = inLow[fillJ];
         }
         sp->ring_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inClose ) { TA_ULTOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx3_inClose[fillJ % sp->ringCap_trailingIdx3] = inClose[fillJ];
@@ -1776,7 +1779,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2
 TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ULTOSC_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_ULTOSC_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -1804,13 +1807,13 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
    memcpy( scratch.ring_trailingIdx3_inLow, stream->ring_trailingIdx3_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx3 > 0 ? stream->ringCap_trailingIdx3 : 1) );
    scratch.ring_trailingIdx3_inClose = stream->ringMirror_trailingIdx3_inClose;
    memcpy( scratch.ring_trailingIdx3_inClose, stream->ring_trailingIdx3_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx3 > 0 ? stream->ringCap_trailingIdx3 : 1) );
-   TA_ULTOSC_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_ULTOSC_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_ULTOSC_Close( TA_ULTOSC_Stream *stream )
 {
-   TA_ULTOSC_StreamRelease( stream );
+   TA_ULTOSC_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

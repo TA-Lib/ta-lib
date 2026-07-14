@@ -926,7 +926,8 @@ struct TA_SAR_Stream {
    double sar;
 };
 
-static void TA_SAR_StreamStep( struct TA_SAR_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double prevHigh;
    double prevLow;
@@ -1067,6 +1068,7 @@ static void TA_SAR_StreamStep( struct TA_SAR_Stream *sp, double inHigh, double i
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_SAR_Stream **stream, double *outReal )
 {
    struct TA_SAR_Stream *sp;
@@ -1379,7 +1381,7 @@ TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_SAR_StreamStep( stream, inHigh, inLow, outReal );
+   TA_SAR_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -1389,7 +1391,7 @@ TA_LIB_API TA_RetCode TA_SAR_Peek( const TA_SAR_Stream *stream, double inHigh, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SAR_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_SAR_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

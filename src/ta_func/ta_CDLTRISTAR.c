@@ -414,7 +414,8 @@ struct TA_CDLTRISTAR_Stream {
    double *ringMirror_BodyTrailingIdx_inClose;
 };
 
-static void TA_CDLTRISTAR_StreamRelease( struct TA_CDLTRISTAR_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLTRISTAR_ReleaseInternal( struct TA_CDLTRISTAR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyTrailingIdx_inOpen ) TA_Free( sp->ring_BodyTrailingIdx_inOpen );
@@ -428,7 +429,8 @@ static void TA_CDLTRISTAR_StreamRelease( struct TA_CDLTRISTAR_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_CDLTRISTAR_StreamStep( struct TA_CDLTRISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLTRISTAR_StepInternal( struct TA_CDLTRISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyTrailingIdx == 0 )
    {
@@ -480,6 +482,7 @@ static void TA_CDLTRISTAR_StreamStep( struct TA_CDLTRISTAR_Stream *sp, double in
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLTRISTAR_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLTRISTAR_Stream **stream, int *outInteger )
 {
    struct TA_CDLTRISTAR_Stream *sp;
@@ -583,27 +586,27 @@ TA_RetCode TA_CDLTRISTAR_OpenInternal( const double inOpen[], const double inHig
       memset( sp, 0, sizeof(*sp) );
       sp->BodyPeriodTotal = BodyPeriodTotal;
       sp->ringCap_BodyTrailingIdx = (int)(i - BodyTrailingIdx);
-      if( sp->ringCap_BodyTrailingIdx < 0 || sp->ringCap_BodyTrailingIdx > historyLen ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyTrailingIdx < 0 || sp->ringCap_BodyTrailingIdx > historyLen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
         sp->ring_BodyTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
         sp->ring_BodyTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
         sp->ring_BodyTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
         sp->ring_BodyTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
       }
       sp->ringPos_BodyTrailingIdx = 0;
@@ -629,7 +632,7 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Open( const double inOpen[], const double in
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Update( TA_CDLTRISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLTRISTAR_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLTRISTAR_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -647,13 +650,13 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Peek( const TA_CDLTRISTAR_Stream *stream, do
    memcpy( scratch.ring_BodyTrailingIdx_inLow, stream->ring_BodyTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_BodyTrailingIdx > 0 ? stream->ringCap_BodyTrailingIdx : 1) );
    scratch.ring_BodyTrailingIdx_inClose = stream->ringMirror_BodyTrailingIdx_inClose;
    memcpy( scratch.ring_BodyTrailingIdx_inClose, stream->ring_BodyTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_BodyTrailingIdx > 0 ? stream->ringCap_BodyTrailingIdx : 1) );
-   TA_CDLTRISTAR_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLTRISTAR_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Close( TA_CDLTRISTAR_Stream *stream )
 {
-   TA_CDLTRISTAR_StreamRelease( stream );
+   TA_CDLTRISTAR_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

@@ -553,7 +553,8 @@ struct TA_WILLR_Stream {
    double *xMirror_inClose;
 };
 
-static void TA_WILLR_StreamRelease( struct TA_WILLR_Stream *sp )
+/* Private function, not in public API. */
+static void TA_WILLR_ReleaseInternal( struct TA_WILLR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
@@ -565,7 +566,8 @@ static void TA_WILLR_StreamRelease( struct TA_WILLR_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_WILLR_StreamStep( struct TA_WILLR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_WILLR_StepInternal( struct TA_WILLR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double tmp;
 
@@ -638,6 +640,7 @@ static void TA_WILLR_StreamStep( struct TA_WILLR_Stream *sp, double inHigh, doub
    sp->today += 1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_WILLR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_WILLR_Stream **stream, double *outReal )
 {
    struct TA_WILLR_Stream *sp;
@@ -784,19 +787,19 @@ TA_RetCode TA_WILLR_OpenInternal( int optInTimePeriod, const double inHigh[], co
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_WILLR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_WILLR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inHigh ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inHigh ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inLow ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inLow ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inClose ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inClose ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inClose ) { TA_WILLR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inClose ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -819,7 +822,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Open( int optInTimePeriod, const double inHigh[],
 TA_LIB_API TA_RetCode TA_WILLR_Update( TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_WILLR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_WILLR_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -835,13 +838,13 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
    memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
    scratch.x_inClose = stream->xMirror_inClose;
    memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xCap );
-   TA_WILLR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_WILLR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream )
 {
-   TA_WILLR_StreamRelease( stream );
+   TA_WILLR_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

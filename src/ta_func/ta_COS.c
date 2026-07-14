@@ -162,12 +162,14 @@ struct TA_COS_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_COS_StreamStep( struct TA_COS_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_COS_StepInternal( struct TA_COS_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= cos(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_COS_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_COS_Stream **stream, double *outReal )
 {
    struct TA_COS_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_COS_Open( const double inReal[], int historyLen, TA_COS
 TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_COS_StreamStep( stream, inReal, outReal );
+   TA_COS_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_COS_Peek( const TA_COS_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_COS_StreamStep( &scratch, inReal, outReal );
+   TA_COS_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

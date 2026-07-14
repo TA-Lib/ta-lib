@@ -162,12 +162,14 @@ struct TA_SQRT_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_SQRT_StreamStep( struct TA_SQRT_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_SQRT_StepInternal( struct TA_SQRT_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= sqrt(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_SQRT_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_SQRT_Stream **stream, double *outReal )
 {
    struct TA_SQRT_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_SQRT_Open( const double inReal[], int historyLen, TA_SQ
 TA_LIB_API TA_RetCode TA_SQRT_Update( TA_SQRT_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_SQRT_StreamStep( stream, inReal, outReal );
+   TA_SQRT_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_SQRT_Peek( const TA_SQRT_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SQRT_StreamStep( &scratch, inReal, outReal );
+   TA_SQRT_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

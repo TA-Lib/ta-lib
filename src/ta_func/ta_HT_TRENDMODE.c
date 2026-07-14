@@ -2001,7 +2001,8 @@ struct TA_HT_TRENDMODE_Stream {
    double *cbMirror_smoothPrice;
 };
 
-static void TA_HT_TRENDMODE_StreamRelease( struct TA_HT_TRENDMODE_Stream *sp )
+/* Private function, not in public API. */
+static void TA_HT_TRENDMODE_ReleaseInternal( struct TA_HT_TRENDMODE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -2013,7 +2014,8 @@ static void TA_HT_TRENDMODE_StreamRelease( struct TA_HT_TRENDMODE_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_HT_TRENDMODE_StreamStep( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
+/* Private function, not in public API. */
+static void TA_HT_TRENDMODE_StepInternal( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -2296,6 +2298,7 @@ static void TA_HT_TRENDMODE_StreamStep( struct TA_HT_TRENDMODE_Stream *sp, doubl
    sp->streamParity = 1 - sp->streamParity;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_HT_TRENDMODE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_TRENDMODE_Stream **stream, int *outInteger )
 {
    struct TA_HT_TRENDMODE_Stream *sp;
@@ -2900,29 +2903,29 @@ TA_RetCode TA_HT_TRENDMODE_OpenInternal( const double inReal[], int startIdx, in
       sp->maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
       sp->winCap_j = (int)(50);
-      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->winMirror_j_inReal ) { TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_j_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_j_inReal, inReal + (historyLen - sp->winCap_j), sizeof(double) * (size_t)sp->winCap_j );
       sp->winPos_j = 0;
       sp->cbSize_smoothPrice = maxIdx_smoothPrice + 1;
-      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
       *outInteger = lastValue_outInteger;
@@ -2939,7 +2942,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( const double inReal[], int historyLe
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_HT_TRENDMODE_StreamStep( stream, inReal, outInteger );
+   TA_HT_TRENDMODE_StepInternal( stream, inReal, outInteger );
    return TA_SUCCESS;
 }
 
@@ -2955,13 +2958,13 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    memcpy( scratch.win_j_inReal, stream->win_j_inReal, sizeof(double) * (size_t)stream->winCap_j );
    scratch.cb_smoothPrice = stream->cbMirror_smoothPrice;
    memcpy( scratch.cb_smoothPrice, stream->cb_smoothPrice, sizeof(double) * (size_t)stream->cbSize_smoothPrice );
-   TA_HT_TRENDMODE_StreamStep( &scratch, inReal, outInteger );
+   TA_HT_TRENDMODE_StepInternal( &scratch, inReal, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream )
 {
-   TA_HT_TRENDMODE_StreamRelease( stream );
+   TA_HT_TRENDMODE_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

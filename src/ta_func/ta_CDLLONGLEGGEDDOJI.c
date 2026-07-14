@@ -435,7 +435,8 @@ struct TA_CDLLONGLEGGEDDOJI_Stream {
    double *ringMirror_ShadowLongTrailingIdx_inClose;
 };
 
-static void TA_CDLLONGLEGGEDDOJI_StreamRelease( struct TA_CDLLONGLEGGEDDOJI_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLLONGLEGGEDDOJI_ReleaseInternal( struct TA_CDLLONGLEGGEDDOJI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyDojiTrailingIdx_inOpen ) TA_Free( sp->ring_BodyDojiTrailingIdx_inOpen );
@@ -457,7 +458,8 @@ static void TA_CDLLONGLEGGEDDOJI_StreamRelease( struct TA_CDLLONGLEGGEDDOJI_Stre
    TA_Free( sp );
 }
 
-static void TA_CDLLONGLEGGEDDOJI_StreamStep( struct TA_CDLLONGLEGGEDDOJI_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLLONGLEGGEDDOJI_StepInternal( struct TA_CDLLONGLEGGEDDOJI_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
@@ -505,6 +507,7 @@ static void TA_CDLLONGLEGGEDDOJI_StreamStep( struct TA_CDLLONGLEGGEDDOJI_Stream 
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLLONGLEGGEDDOJI_Stream **stream, int *outInteger )
 {
    struct TA_CDLLONGLEGGEDDOJI_Stream *sp;
@@ -608,52 +611,52 @@ TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenInternal( const double inOpen[], const doubl
       sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp->ShadowLongPeriodTotal = ShadowLongPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
         sp->ring_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_BodyDojiTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyDojiTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyDojiTrailingIdx );
       }
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->ringCap_ShadowLongTrailingIdx = (int)(i - ShadowLongTrailingIdx);
-      if( sp->ringCap_ShadowLongTrailingIdx < 0 || sp->ringCap_ShadowLongTrailingIdx > historyLen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_ShadowLongTrailingIdx < 0 || sp->ringCap_ShadowLongTrailingIdx > historyLen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_ShadowLongTrailingIdx > 0 ? sp->ringCap_ShadowLongTrailingIdx : 1);
         sp->ring_ShadowLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowLongTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowLongTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowLongTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowLongTrailingIdx_inOpen ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_ShadowLongTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_ShadowLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowLongTrailingIdx );
         sp->ring_ShadowLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowLongTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowLongTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowLongTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowLongTrailingIdx_inHigh ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_ShadowLongTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_ShadowLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowLongTrailingIdx );
         sp->ring_ShadowLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowLongTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowLongTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowLongTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowLongTrailingIdx_inLow ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_ShadowLongTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_ShadowLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowLongTrailingIdx );
         sp->ring_ShadowLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowLongTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowLongTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowLongTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowLongTrailingIdx_inClose ) { TA_CDLLONGLEGGEDDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_ShadowLongTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_ShadowLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowLongTrailingIdx );
       }
       sp->ringPos_ShadowLongTrailingIdx = 0;
@@ -671,7 +674,7 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Open( const double inOpen[], const do
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Update( TA_CDLLONGLEGGEDDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLLONGLEGGEDDOJI_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLLONGLEGGEDDOJI_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -697,13 +700,13 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Peek( const TA_CDLLONGLEGGEDDOJI_Stre
    memcpy( scratch.ring_ShadowLongTrailingIdx_inLow, stream->ring_ShadowLongTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_ShadowLongTrailingIdx > 0 ? stream->ringCap_ShadowLongTrailingIdx : 1) );
    scratch.ring_ShadowLongTrailingIdx_inClose = stream->ringMirror_ShadowLongTrailingIdx_inClose;
    memcpy( scratch.ring_ShadowLongTrailingIdx_inClose, stream->ring_ShadowLongTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_ShadowLongTrailingIdx > 0 ? stream->ringCap_ShadowLongTrailingIdx : 1) );
-   TA_CDLLONGLEGGEDDOJI_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLLONGLEGGEDDOJI_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Close( TA_CDLLONGLEGGEDDOJI_Stream *stream )
 {
-   TA_CDLLONGLEGGEDDOJI_StreamRelease( stream );
+   TA_CDLLONGLEGGEDDOJI_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

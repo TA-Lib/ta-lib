@@ -163,12 +163,14 @@ struct TA_ATAN_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_ATAN_StreamStep( struct TA_ATAN_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_ATAN_StepInternal( struct TA_ATAN_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= atan(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ATAN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ATAN_Stream **stream, double *outReal )
 {
    struct TA_ATAN_Stream *sp;
@@ -217,7 +219,7 @@ TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_AT
 TA_LIB_API TA_RetCode TA_ATAN_Update( TA_ATAN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ATAN_StreamStep( stream, inReal, outReal );
+   TA_ATAN_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -227,7 +229,7 @@ TA_LIB_API TA_RetCode TA_ATAN_Peek( const TA_ATAN_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ATAN_StreamStep( &scratch, inReal, outReal );
+   TA_ATAN_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

@@ -224,7 +224,8 @@ struct TA_BOP_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_BOP_StreamStep( struct TA_BOP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_BOP_StepInternal( struct TA_BOP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    double tempReal;
 
@@ -239,6 +240,7 @@ static void TA_BOP_StreamStep( struct TA_BOP_Stream *sp, double inOpen, double i
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_BOP_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_BOP_Stream **stream, double *outReal )
 {
    struct TA_BOP_Stream *sp;
@@ -296,7 +298,7 @@ TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[],
 TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_BOP_StreamStep( stream, inOpen, inHigh, inLow, inClose, outReal );
+   TA_BOP_StepInternal( stream, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -306,7 +308,7 @@ TA_LIB_API TA_RetCode TA_BOP_Peek( const TA_BOP_Stream *stream, double inOpen, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_BOP_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outReal );
+   TA_BOP_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

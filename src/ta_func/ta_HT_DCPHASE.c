@@ -1686,7 +1686,8 @@ struct TA_HT_DCPHASE_Stream {
    double *cbMirror_smoothPrice;
 };
 
-static void TA_HT_DCPHASE_StreamRelease( struct TA_HT_DCPHASE_Stream *sp )
+/* Private function, not in public API. */
+static void TA_HT_DCPHASE_ReleaseInternal( struct TA_HT_DCPHASE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -1696,7 +1697,8 @@ static void TA_HT_DCPHASE_StreamRelease( struct TA_HT_DCPHASE_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_HT_DCPHASE_StreamStep( struct TA_HT_DCPHASE_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_HT_DCPHASE_StepInternal( struct TA_HT_DCPHASE_Stream *sp, double inReal, double *outReal )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -1913,6 +1915,7 @@ static void TA_HT_DCPHASE_StreamStep( struct TA_HT_DCPHASE_Stream *sp, double in
    sp->streamParity = 1 - sp->streamParity;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_HT_DCPHASE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_DCPHASE_Stream **stream, double *outReal )
 {
    struct TA_HT_DCPHASE_Stream *sp;
@@ -2418,21 +2421,21 @@ TA_RetCode TA_HT_DCPHASE_OpenInternal( const double inReal[], int startIdx, int 
       sp->maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPHASE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
       sp->cbSize_smoothPrice = maxIdx_smoothPrice + 1;
-      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_DCPHASE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
       *outReal = lastValue_outReal;
@@ -2449,7 +2452,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( const double inReal[], int historyLen,
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Update( TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_HT_DCPHASE_StreamStep( stream, inReal, outReal );
+   TA_HT_DCPHASE_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -2463,13 +2466,13 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );
    scratch.cb_smoothPrice = stream->cbMirror_smoothPrice;
    memcpy( scratch.cb_smoothPrice, stream->cb_smoothPrice, sizeof(double) * (size_t)stream->cbSize_smoothPrice );
-   TA_HT_DCPHASE_StreamStep( &scratch, inReal, outReal );
+   TA_HT_DCPHASE_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Close( TA_HT_DCPHASE_Stream *stream )
 {
-   TA_HT_DCPHASE_StreamRelease( stream );
+   TA_HT_DCPHASE_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

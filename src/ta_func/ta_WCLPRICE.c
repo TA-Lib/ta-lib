@@ -187,12 +187,14 @@ struct TA_WCLPRICE_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_WCLPRICE_StreamStep( struct TA_WCLPRICE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_WCLPRICE_StepInternal( struct TA_WCLPRICE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    (void)sp;
    *outReal= (inHigh + inLow + inClose * 2.0) / 4.0;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_WCLPRICE_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_WCLPRICE_Stream **stream, double *outReal )
 {
    struct TA_WCLPRICE_Stream *sp;
@@ -242,7 +244,7 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLo
 TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_WCLPRICE_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_WCLPRICE_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -252,7 +254,7 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_WCLPRICE_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_WCLPRICE_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

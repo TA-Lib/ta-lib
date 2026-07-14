@@ -377,7 +377,8 @@ struct TA_MININDEX_Stream {
    double *xMirror_inReal;
 };
 
-static void TA_MININDEX_StreamRelease( struct TA_MININDEX_Stream *sp )
+/* Private function, not in public API. */
+static void TA_MININDEX_ReleaseInternal( struct TA_MININDEX_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal ) TA_Free( sp->x_inReal );
@@ -385,7 +386,8 @@ static void TA_MININDEX_StreamRelease( struct TA_MININDEX_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_MININDEX_StreamStep( struct TA_MININDEX_Stream *sp, double inReal, int *outInteger )
+/* Private function, not in public API. */
+static void TA_MININDEX_StepInternal( struct TA_MININDEX_Stream *sp, double inReal, int *outInteger )
 {
    double tmp;
 
@@ -423,6 +425,7 @@ static void TA_MININDEX_StreamStep( struct TA_MININDEX_Stream *sp, double inReal
    sp->today += 1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MININDEX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MININDEX_Stream **stream, int *outInteger )
 {
    struct TA_MININDEX_Stream *sp;
@@ -526,11 +529,11 @@ TA_RetCode TA_MININDEX_OpenInternal( int optInTimePeriod, const double inReal[],
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MININDEX_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MININDEX_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inReal ) { TA_MININDEX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal ) { TA_MININDEX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inReal ) { TA_MININDEX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal ) { TA_MININDEX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -551,7 +554,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_Open( int optInTimePeriod, const double inReal
 TA_LIB_API TA_RetCode TA_MININDEX_Update( TA_MININDEX_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_MININDEX_StreamStep( stream, inReal, outInteger );
+   TA_MININDEX_StepInternal( stream, inReal, outInteger );
    return TA_SUCCESS;
 }
 
@@ -563,13 +566,13 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
    memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
-   TA_MININDEX_StreamStep( &scratch, inReal, outInteger );
+   TA_MININDEX_StepInternal( &scratch, inReal, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream )
 {
-   TA_MININDEX_StreamRelease( stream );
+   TA_MININDEX_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

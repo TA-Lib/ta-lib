@@ -162,12 +162,14 @@ struct TA_EXP_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_EXP_StreamStep( struct TA_EXP_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_EXP_StepInternal( struct TA_EXP_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= exp(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_EXP_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_EXP_Stream **stream, double *outReal )
 {
    struct TA_EXP_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP
 TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_EXP_StreamStep( stream, inReal, outReal );
+   TA_EXP_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_EXP_Peek( const TA_EXP_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EXP_StreamStep( &scratch, inReal, outReal );
+   TA_EXP_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

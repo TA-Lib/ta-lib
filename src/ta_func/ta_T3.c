@@ -711,7 +711,8 @@ struct TA_T3_Stream {
    double c4;
 };
 
-static void TA_T3_StreamStep( struct TA_T3_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_T3_StepInternal( struct TA_T3_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -727,6 +728,7 @@ static void TA_T3_StreamStep( struct TA_T3_Stream *sp, double inReal, double *ou
    *outReal= sp->c1 * sp->e6 + sp->c2 * sp->e5 + sp->c3 * sp->e4 + sp->c4 * sp->e3;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const double inReal[], int startIdx, int historyLen, struct TA_T3_Stream **stream, double *outReal )
 {
    struct TA_T3_Stream *sp;
@@ -959,7 +961,7 @@ TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, cons
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_T3_StreamStep( stream, inReal, outReal );
+   TA_T3_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -969,7 +971,7 @@ TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_T3_StreamStep( &scratch, inReal, outReal );
+   TA_T3_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

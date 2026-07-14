@@ -6398,10 +6398,10 @@ fn test_c_ma_dispatch_stream_section() {
     let helpers = HelperRegistry::empty();
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
 
-    // Handle: params + a single tagged sub pointer, no StreamStep.
+    // Handle: params + a single tagged sub pointer, no StepInternal.
     assert!(c.contains("struct TA_MA_Stream {"), "state struct");
     assert!(c.contains("void *sub;"), "tagged sub-stream pointer");
-    assert!(!c.contains("TA_MA_StreamStep"), "dispatch has no transition fn");
+    assert!(!c.contains("TA_MA_StepInternal"), "dispatch has no transition fn");
 
     // Open: identity path first (mirrors batch order), then the dispatch.
     assert!(
@@ -6454,7 +6454,7 @@ fn test_c_ma_dispatch_stream_section() {
 }
 
 /// Pin the generated MINUS_DM dual-mode stream section: ONE union state struct,
-/// ONE StreamStep that branches on the stored (immutable) period param — no
+/// ONE StepInternal that branches on the stored (immutable) period param — no
 /// separate mode tag — and an OpenInternal that selects the degenerate vs the
 /// Wilder arm by the same predicate. The input `.c` is untouched: both arms are
 /// transcribed verbatim, so the period<=1 raw-DM1 behavior (which ignores the
@@ -6467,8 +6467,8 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     let helpers = HelperRegistry::empty();
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
 
-    // Exactly one StreamStep (not one per mode), branching on the stored param.
-    assert_eq!(c.matches("TA_MINUS_DM_StreamStep( struct").count(), 1, "one StreamStep def");
+    // Exactly one StepInternal (not one per mode), branching on the stored param.
+    assert_eq!(c.matches("TA_MINUS_DM_StepInternal( struct").count(), 1, "one StepInternal def");
     assert!(
         c.contains("if( sp->optInTimePeriod <= 1 )"),
         "step selects the degenerate arm from the immutable stored param"
@@ -6526,9 +6526,9 @@ fn test_c_ht_dcperiod_parity_stream_section() {
     // (1) output-gate strip: the step writes outReal UNCONDITIONALLY (no
     // `today >= startIdx` gate survives in the per-bar transition).
     let step = stream
-        .split("TA_HT_DCPERIOD_StreamStep")
+        .split("TA_HT_DCPERIOD_StepInternal")
         .nth(1)
-        .expect("StreamStep emitted");
+        .expect("StepInternal emitted");
     let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenInternal").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
@@ -6574,9 +6574,9 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
     assert!(stream.contains("sp->streamParity = 1 - sp->streamParity;"), "parity flips each step");
 
     let step = stream
-        .split("TA_HT_PHASOR_StreamStep")
+        .split("TA_HT_PHASOR_StepInternal")
         .nth(1)
-        .expect("StreamStep emitted");
+        .expect("StepInternal emitted");
     let step_body = &step[..step.find("TA_HT_PHASOR_OpenInternal").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
@@ -6629,7 +6629,7 @@ fn test_c_ht_dcphase_circ_ring_fixed_coexist() {
 fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
-    let step = s.split("TA_HT_SINE_StreamStep").nth(1).unwrap();
+    let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_SINE_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
@@ -6643,7 +6643,7 @@ fn test_c_ht_trendline_raw_price_window() {
     let s = ht_stream_section("ht_trendline");
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
-    let step = s.split("TA_HT_TRENDLINE_StreamStep").nth(1).unwrap();
+    let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDLINE_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
@@ -6658,7 +6658,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *ring_trailingWMAIdx_inReal;"), "WMA ring");
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
-    let step = s.split("TA_HT_TRENDMODE_StreamStep").nth(1).unwrap();
+    let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDMODE_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
@@ -6676,7 +6676,7 @@ fn test_c_mama_two_outputs_and_params() {
     let s = ht_stream_section("mama");
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
-    let step = s.split("TA_MAMA_StreamStep").nth(1).unwrap();
+    let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
     let step = &step[..step.find("TA_MAMA_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     assert!(step.contains("*outMAMA= sp->mama;") && step.contains("*outFAMA= sp->fama;"), "both outputs written unconditionally (gate stripped)");
@@ -6724,8 +6724,8 @@ fn test_c_mavp_period_bank() {
 
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
-/// ring set + one StreamStep branching on the stored parity; the ring buffers are
-/// freed by StreamRelease and mirrored in Peek.
+/// ring set + one StepInternal branching on the stored parity; the ring buffers are
+/// freed by ReleaseInternal and mirrored in Peek.
 #[test]
 fn test_c_trima_dual_mode_rings_stream_section() {
     let (mut func, enums) = load_indicator("trima");
@@ -6740,18 +6740,18 @@ fn test_c_trima_dual_mode_rings_stream_section() {
         "shared middleIdx/trailingIdx rings (one set, both arms)"
     );
     assert!(c.contains("double numerator;"), "shared triangular-sum accumulator");
-    assert_eq!(c.matches("TA_TRIMA_StreamStep( struct").count(), 1, "one StreamStep");
+    assert_eq!(c.matches("TA_TRIMA_StepInternal( struct").count(), 1, "one StepInternal");
     assert!(
         c.contains("if( sp->optInTimePeriod % 2 == 1 )"),
         "step branches on the stored parity"
     );
-    assert!(c.contains("TA_TRIMA_StreamRelease"), "StreamRelease frees the rings");
+    assert!(c.contains("TA_TRIMA_ReleaseInternal"), "ReleaseInternal frees the rings");
     assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
 }
 
 /// Pin the generated MIDPRICE fast-path-skip stream section: the `if(period<=20)`
 /// arms are bit-identical (batch perf split), so ONLY the general (else) T4
-/// extrema arm is streamed — one StreamStep, no mode branch, and the Open does
+/// extrema arm is streamed — one StepInternal, no mode branch, and the Open does
 /// not transcribe the fast-path `period<=20` window-rescan arm.
 #[test]
 fn test_c_midprice_fastpath_skip_stream_section() {
@@ -6766,7 +6766,7 @@ fn test_c_midprice_fastpath_skip_stream_section() {
         c.contains("double *x_inHigh;") && c.contains("double *x_inLow;"),
         "T4 extrema rings for high/low"
     );
-    assert_eq!(c.matches("TA_MIDPRICE_StreamStep( struct").count(), 1, "one StreamStep");
+    assert_eq!(c.matches("TA_MIDPRICE_StepInternal( struct").count(), 1, "one StepInternal");
     assert!(
         c.contains("*outReal= (sp->highest + sp->lowest) / 2.0;"),
         "midprice combine in the extrema step"
@@ -6826,7 +6826,7 @@ fn test_c_stoch_composed_stream_section() {
     // Peek sets the flag on the scratch copy; Close closes subs then frees.
     assert!(stream.contains("scratch.peekMode = 1;"));
     assert!(stream.contains("TA_MA_Close( stream->sub0 );"));
-    assert!(stream.contains("TA_STOCH_StreamRelease( stream );"));
+    assert!(stream.contains("TA_STOCH_ReleaseInternal( stream );"));
 }
 
 /// Pin the ADXR composed Open's allocation-failure cleanup. The intermediate

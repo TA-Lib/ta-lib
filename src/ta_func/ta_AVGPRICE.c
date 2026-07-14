@@ -195,12 +195,14 @@ struct TA_AVGPRICE_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_AVGPRICE_StreamStep( struct TA_AVGPRICE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_AVGPRICE_StepInternal( struct TA_AVGPRICE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    (void)sp;
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_AVGPRICE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_AVGPRICE_Stream **stream, double *outReal )
 {
    struct TA_AVGPRICE_Stream *sp;
@@ -250,7 +252,7 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHi
 TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_AVGPRICE_StreamStep( stream, inOpen, inHigh, inLow, inClose, outReal );
+   TA_AVGPRICE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -260,7 +262,7 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_AVGPRICE_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outReal );
+   TA_AVGPRICE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

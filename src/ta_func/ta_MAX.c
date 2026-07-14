@@ -381,7 +381,8 @@ struct TA_MAX_Stream {
    double *xMirror_inReal;
 };
 
-static void TA_MAX_StreamRelease( struct TA_MAX_Stream *sp )
+/* Private function, not in public API. */
+static void TA_MAX_ReleaseInternal( struct TA_MAX_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal ) TA_Free( sp->x_inReal );
@@ -389,7 +390,8 @@ static void TA_MAX_StreamRelease( struct TA_MAX_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_MAX_StreamStep( struct TA_MAX_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_MAX_StepInternal( struct TA_MAX_Stream *sp, double inReal, double *outReal )
 {
    double tmp;
 
@@ -427,6 +429,7 @@ static void TA_MAX_StreamStep( struct TA_MAX_Stream *sp, double inReal, double *
    sp->today += 1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MAX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MAX_Stream **stream, double *outReal )
 {
    struct TA_MAX_Stream *sp;
@@ -530,11 +533,11 @@ TA_RetCode TA_MAX_OpenInternal( int optInTimePeriod, const double inReal[], int 
       sp->highestIdx = highestIdx;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MAX_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MAX_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inReal ) { TA_MAX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal ) { TA_MAX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inReal ) { TA_MAX_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal ) { TA_MAX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -555,7 +558,7 @@ TA_LIB_API TA_RetCode TA_MAX_Open( int optInTimePeriod, const double inReal[], i
 TA_LIB_API TA_RetCode TA_MAX_Update( TA_MAX_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MAX_StreamStep( stream, inReal, outReal );
+   TA_MAX_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -567,13 +570,13 @@ TA_LIB_API TA_RetCode TA_MAX_Peek( const TA_MAX_Stream *stream, double inReal, d
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
    memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
-   TA_MAX_StreamStep( &scratch, inReal, outReal );
+   TA_MAX_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MAX_Close( TA_MAX_Stream *stream )
 {
-   TA_MAX_StreamRelease( stream );
+   TA_MAX_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

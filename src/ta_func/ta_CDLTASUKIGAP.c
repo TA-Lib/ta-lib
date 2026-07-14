@@ -390,7 +390,8 @@ struct TA_CDLTASUKIGAP_Stream {
    double *ringMirror_NearTrailingIdx_inClose;
 };
 
-static void TA_CDLTASUKIGAP_StreamRelease( struct TA_CDLTASUKIGAP_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLTASUKIGAP_ReleaseInternal( struct TA_CDLTASUKIGAP_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_NearTrailingIdx_inOpen ) TA_Free( sp->ring_NearTrailingIdx_inOpen );
@@ -404,7 +405,8 @@ static void TA_CDLTASUKIGAP_StreamRelease( struct TA_CDLTASUKIGAP_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_CDLTASUKIGAP_StreamStep( struct TA_CDLTASUKIGAP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLTASUKIGAP_StepInternal( struct TA_CDLTASUKIGAP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_NearTrailingIdx_inOpen[sp->ringPos_NearTrailingIdx] = inOpen;
    sp->ring_NearTrailingIdx_inHigh[sp->ringPos_NearTrailingIdx] = inHigh;
@@ -452,6 +454,7 @@ static void TA_CDLTASUKIGAP_StreamStep( struct TA_CDLTASUKIGAP_Stream *sp, doubl
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLTASUKIGAP_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLTASUKIGAP_Stream **stream, int *outInteger )
 {
    struct TA_CDLTASUKIGAP_Stream *sp;
@@ -561,36 +564,36 @@ TA_RetCode TA_CDLTASUKIGAP_OpenInternal( const double inOpen[], const double inH
       sp->NearPeriodTotal = NearPeriodTotal;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_inOpen[fillJ % sp->ringCap_NearTrailingIdx] = inOpen[fillJ];
         }
         sp->ring_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_inHigh[fillJ % sp->ringCap_NearTrailingIdx] = inHigh[fillJ];
         }
         sp->ring_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_inLow[fillJ % sp->ringCap_NearTrailingIdx] = inLow[fillJ];
         }
         sp->ring_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_inClose[fillJ % sp->ringCap_NearTrailingIdx] = inClose[fillJ];
@@ -617,7 +620,7 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( const double inOpen[], const double 
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Update( TA_CDLTASUKIGAP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLTASUKIGAP_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLTASUKIGAP_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -635,13 +638,13 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Peek( const TA_CDLTASUKIGAP_Stream *stream
    memcpy( scratch.ring_NearTrailingIdx_inLow, stream->ring_NearTrailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );
    scratch.ring_NearTrailingIdx_inClose = stream->ringMirror_NearTrailingIdx_inClose;
    memcpy( scratch.ring_NearTrailingIdx_inClose, stream->ring_NearTrailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );
-   TA_CDLTASUKIGAP_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLTASUKIGAP_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Close( TA_CDLTASUKIGAP_Stream *stream )
 {
-   TA_CDLTASUKIGAP_StreamRelease( stream );
+   TA_CDLTASUKIGAP_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

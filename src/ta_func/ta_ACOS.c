@@ -162,12 +162,14 @@ struct TA_ACOS_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_ACOS_StreamStep( struct TA_ACOS_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_ACOS_StepInternal( struct TA_ACOS_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= acos(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ACOS_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ACOS_Stream **stream, double *outReal )
 {
    struct TA_ACOS_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_ACOS_Open( const double inReal[], int historyLen, TA_AC
 TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ACOS_StreamStep( stream, inReal, outReal );
+   TA_ACOS_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_ACOS_Peek( const TA_ACOS_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ACOS_StreamStep( &scratch, inReal, outReal );
+   TA_ACOS_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

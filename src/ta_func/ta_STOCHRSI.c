@@ -406,7 +406,8 @@ struct TA_STOCHRSI_Stream {
    TA_STOCHF_Stream *sub1;
 };
 
-static void TA_STOCHRSI_StreamStep( struct TA_STOCHRSI_Stream *sp, double inReal, double *outFastK, double *outFastD )
+/* Private function, not in public API. */
+static void TA_STOCHRSI_StepInternal( struct TA_STOCHRSI_Stream *sp, double inReal, double *outFastK, double *outFastD )
 {
    double cur_tempRSIBuffer;
    double cur_outFastK;
@@ -426,6 +427,7 @@ static void TA_STOCHRSI_StreamStep( struct TA_STOCHRSI_Stream *sp, double inReal
    *outFastD = cur_outFastD;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int startIdx, int historyLen, struct TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
 {
    struct TA_STOCHRSI_Stream *sp;
@@ -598,7 +600,7 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Peri
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )
 {
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   TA_STOCHRSI_StreamStep( stream, inReal, outFastK, outFastD );
+   TA_STOCHRSI_StepInternal( stream, inReal, outFastK, outFastD );
    return TA_SUCCESS;
 }
 
@@ -609,7 +611,7 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_STOCHRSI_StreamStep( &scratch, inReal, outFastK, outFastD );
+   TA_STOCHRSI_StepInternal( &scratch, inReal, outFastK, outFastD );
    return TA_SUCCESS;
 }
 

@@ -186,12 +186,14 @@ struct TA_MULT_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_MULT_StreamStep( struct TA_MULT_Stream *sp, double inReal0, double inReal1, double *outReal )
+/* Private function, not in public API. */
+static void TA_MULT_StepInternal( struct TA_MULT_Stream *sp, double inReal0, double inReal1, double *outReal )
 {
    (void)sp;
    *outReal= inReal0 * inReal1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MULT_OpenInternal( const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_MULT_Stream **stream, double *outReal )
 {
    struct TA_MULT_Stream *sp;
@@ -243,7 +245,7 @@ TA_LIB_API TA_RetCode TA_MULT_Open( const double inReal0[], const double inReal1
 TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MULT_StreamStep( stream, inReal0, inReal1, outReal );
+   TA_MULT_StepInternal( stream, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 
@@ -253,7 +255,7 @@ TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MULT_StreamStep( &scratch, inReal0, inReal1, outReal );
+   TA_MULT_StepInternal( &scratch, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 

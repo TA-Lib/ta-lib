@@ -714,7 +714,8 @@ struct TA_MINUS_DM_Stream {
    double prevMinusDM;
 };
 
-static void TA_MINUS_DM_StreamStep( struct TA_MINUS_DM_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_MINUS_DM_StepInternal( struct TA_MINUS_DM_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    if( sp->optInTimePeriod <= 1 )
    {
@@ -758,6 +759,7 @@ static void TA_MINUS_DM_StreamStep( struct TA_MINUS_DM_Stream *sp, double inHigh
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MINUS_DM_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_MINUS_DM_Stream **stream, double *outReal )
 {
    struct TA_MINUS_DM_Stream *sp;
@@ -1134,7 +1136,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Open( int optInTimePeriod, const double inHigh
 TA_LIB_API TA_RetCode TA_MINUS_DM_Update( TA_MINUS_DM_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MINUS_DM_StreamStep( stream, inHigh, inLow, outReal );
+   TA_MINUS_DM_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -1144,7 +1146,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MINUS_DM_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_MINUS_DM_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

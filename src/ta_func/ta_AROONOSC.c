@@ -524,7 +524,8 @@ struct TA_AROONOSC_Stream {
    double *xMirror_inLow;
 };
 
-static void TA_AROONOSC_StreamRelease( struct TA_AROONOSC_Stream *sp )
+/* Private function, not in public API. */
+static void TA_AROONOSC_ReleaseInternal( struct TA_AROONOSC_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
@@ -534,7 +535,8 @@ static void TA_AROONOSC_StreamRelease( struct TA_AROONOSC_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_AROONOSC_StreamStep( struct TA_AROONOSC_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_AROONOSC_StepInternal( struct TA_AROONOSC_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double tmp;
 
@@ -608,6 +610,7 @@ static void TA_AROONOSC_StreamStep( struct TA_AROONOSC_Stream *sp, double inHigh
    sp->today += 1;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_AROONOSC_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_AROONOSC_Stream **stream, double *outReal )
 {
    struct TA_AROONOSC_Stream *sp;
@@ -763,15 +766,15 @@ TA_RetCode TA_AROONOSC_OpenInternal( int optInTimePeriod, const double inHigh[],
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_AROONOSC_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_AROONOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inHigh ) { TA_AROONOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_AROONOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inHigh ) { TA_AROONOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_AROONOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inLow ) { TA_AROONOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_AROONOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inLow ) { TA_AROONOSC_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_AROONOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -793,7 +796,7 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Open( int optInTimePeriod, const double inHigh
 TA_LIB_API TA_RetCode TA_AROONOSC_Update( TA_AROONOSC_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_AROONOSC_StreamStep( stream, inHigh, inLow, outReal );
+   TA_AROONOSC_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -807,13 +810,13 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Peek( const TA_AROONOSC_Stream *stream, double
    memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
    scratch.x_inLow = stream->xMirror_inLow;
    memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
-   TA_AROONOSC_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_AROONOSC_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_AROONOSC_Close( TA_AROONOSC_Stream *stream )
 {
-   TA_AROONOSC_StreamRelease( stream );
+   TA_AROONOSC_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

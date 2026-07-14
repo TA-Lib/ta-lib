@@ -463,7 +463,8 @@ struct TA_CDLHIKKAKE_Stream {
    double lag2_inLow;
 };
 
-static void TA_CDLHIKKAKE_StreamStep( struct TA_CDLHIKKAKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLHIKKAKE_StepInternal( struct TA_CDLHIKKAKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->lag1_inHigh < sp->lag2_inHigh &&
        sp->lag1_inLow > sp->lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -493,6 +494,7 @@ static void TA_CDLHIKKAKE_StreamStep( struct TA_CDLHIKKAKE_Stream *sp, double in
    sp->lag1_inLow = inLow;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLHIKKAKE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIKKAKE_Stream **stream, int *outInteger )
 {
    struct TA_CDLHIKKAKE_Stream *sp;
@@ -637,7 +639,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( const double inOpen[], const double in
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLHIKKAKE_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLHIKKAKE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -647,7 +649,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLHIKKAKE_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLHIKKAKE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

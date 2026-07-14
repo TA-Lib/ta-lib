@@ -349,7 +349,8 @@ struct TA_ADXR_Stream {
    double *lagRingMirror_adx;
 };
 
-static void TA_ADXR_StreamStep( struct TA_ADXR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_ADXR_StepInternal( struct TA_ADXR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double cur_adx;
    double cur_outReal;
@@ -367,6 +368,7 @@ static void TA_ADXR_StreamStep( struct TA_ADXR_Stream *sp, double inHigh, double
    *outReal = cur_outReal;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ADXR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ADXR_Stream **stream, double *outReal )
 {
    struct TA_ADXR_Stream *sp;
@@ -510,7 +512,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ADXR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_ADXR_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -523,7 +525,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh,
    memcpy( scratch.lagRingMirror_adx, stream->lagRing_adx, sizeof(double) * (size_t)stream->lagRingCap_adx );
    scratch.lagRing_adx = scratch.lagRingMirror_adx;
    scratch.peekMode = 1;
-   TA_ADXR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_ADXR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

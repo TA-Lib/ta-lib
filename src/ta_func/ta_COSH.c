@@ -162,12 +162,14 @@ struct TA_COSH_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_COSH_StreamStep( struct TA_COSH_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_COSH_StepInternal( struct TA_COSH_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= cosh(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_COSH_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_COSH_Stream **stream, double *outReal )
 {
    struct TA_COSH_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_COSH_Open( const double inReal[], int historyLen, TA_CO
 TA_LIB_API TA_RetCode TA_COSH_Update( TA_COSH_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_COSH_StreamStep( stream, inReal, outReal );
+   TA_COSH_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_COSH_Peek( const TA_COSH_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_COSH_StreamStep( &scratch, inReal, outReal );
+   TA_COSH_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

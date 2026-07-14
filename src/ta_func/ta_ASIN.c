@@ -162,12 +162,14 @@ struct TA_ASIN_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_ASIN_StreamStep( struct TA_ASIN_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_ASIN_StepInternal( struct TA_ASIN_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= asin(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ASIN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ASIN_Stream **stream, double *outReal )
 {
    struct TA_ASIN_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_ASIN_Open( const double inReal[], int historyLen, TA_AS
 TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ASIN_StreamStep( stream, inReal, outReal );
+   TA_ASIN_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_ASIN_Peek( const TA_ASIN_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ASIN_StreamStep( &scratch, inReal, outReal );
+   TA_ASIN_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

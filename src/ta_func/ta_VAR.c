@@ -393,7 +393,8 @@ struct TA_VAR_Stream {
    double *ringMirror_trailingIdx_inReal;
 };
 
-static void TA_VAR_StreamRelease( struct TA_VAR_Stream *sp )
+/* Private function, not in public API. */
+static void TA_VAR_ReleaseInternal( struct TA_VAR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
@@ -401,7 +402,8 @@ static void TA_VAR_StreamRelease( struct TA_VAR_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_VAR_StreamStep( struct TA_VAR_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
 
@@ -434,6 +436,7 @@ static void TA_VAR_StreamStep( struct TA_VAR_Stream *sp, double inReal, double *
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_VAR_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_VAR_Stream **stream, double *outReal )
 {
    struct TA_VAR_Stream *sp;
@@ -544,12 +547,12 @@ TA_RetCode TA_VAR_OpenInternal( int optInTimePeriod, double optInNbDev, const do
       sp->meanValue1 = meanValue1;
       sp->meanValue2 = meanValue2;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VAR_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_VAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VAR_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -567,7 +570,7 @@ TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_VAR_StreamStep( stream, inReal, outReal );
+   TA_VAR_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -579,13 +582,13 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
    scratch = *stream;
    scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
    memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_VAR_StreamStep( &scratch, inReal, outReal );
+   TA_VAR_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream )
 {
-   TA_VAR_StreamRelease( stream );
+   TA_VAR_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

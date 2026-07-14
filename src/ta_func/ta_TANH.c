@@ -162,12 +162,14 @@ struct TA_TANH_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_TANH_StreamStep( struct TA_TANH_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_TANH_StepInternal( struct TA_TANH_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= tanh(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_TANH_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_TANH_Stream **stream, double *outReal )
 {
    struct TA_TANH_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_TANH_Open( const double inReal[], int historyLen, TA_TA
 TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_TANH_StreamStep( stream, inReal, outReal );
+   TA_TANH_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_TANH_Peek( const TA_TANH_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TANH_StreamStep( &scratch, inReal, outReal );
+   TA_TANH_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

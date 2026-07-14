@@ -4,7 +4,7 @@
 //! `src/ta_func/ta_<NAME>.c` gains a stream section after the batch variants:
 //!
 //! - `struct TA_<NAME>_Stream` — params, carried scalars, lag slots;
-//! - `static void TA_<NAME>_StreamStep(...)` — the ONE transition function
+//! - `static void TA_<NAME>_StepInternal(...)` — the ONE transition function
 //!   (the batch steady-loop body on rewritten IR); `Update` runs it on the
 //!   live state and `Peek` on a stack copy, so peek == update bit-for-bit by
 //!   construction;
@@ -539,7 +539,7 @@ fn transform_map_step(
     rewritten.iter().flat_map(drop_forc_shells).collect()
 }
 
-/// The composed StreamStep: the producer transition (when present) writes the
+/// The composed StepInternal: the producer transition (when present) writes the
 /// intermediate series' scalar, which pipelines through the sub handles;
 /// combine maps run per-bar. `peekMode` selects sub-Peek over sub-Update so
 /// the single step body serves both.
@@ -560,7 +560,7 @@ fn emit_composed_step(
     let outs = out_params_sig(func);
     let _ = writeln!(
         o,
-        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+        "/* Private function, not in public API. */\nstatic void TA_{n}_StepInternal( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
     if let Some(model) = &cp.producer {
         for (name, ty) in &model.temps {
@@ -682,7 +682,7 @@ fn emit_composed_close(o: &mut String, func: &FuncDef, cp: &streaming::ComposedP
     }
     let has_buffers = cp.producer.as_ref().is_some_and(StreamModel::needs_release);
     if has_buffers {
-        let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+        let _ = writeln!(o, "   TA_{n}_ReleaseInternal( stream );");
     } else {
         let _ = writeln!(o, "   TA_Free( stream );");
     }
@@ -730,7 +730,7 @@ fn emit_composed(
         None => emit_composed_struct_noproducer(o, func, &extra),
     }
 
-    // --- StreamStep -----------------------------------------------------------
+    // --- StepInternal -----------------------------------------------------------
     emit_composed_step(o, func, cp, &inputs, &outputs, enums, registry, helpers, counter);
 
     // --- Open ------------------------------------------------------------------
@@ -768,7 +768,7 @@ fn emit_composed(
             .cloned()
             .chain(outputs.iter().cloned())
             .collect();
-        let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
+        let _ = writeln!(o, "   TA_{n}_StepInternal( &scratch, {} );", args.join(", "));
         let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     }
     emit_composed_close(o, func, cp);
@@ -777,7 +777,7 @@ fn emit_composed(
 /// State struct for a loopless composed pipeline (no producer loop): the
 /// optional params (referenced by combine maps as `sp-><param>`), plus the
 /// peek flag and typed sub handles. Dispatch-style — no ring/window/circ/
-/// extrema fields, so no `StreamRelease`.
+/// extrema fields, so no `ReleaseInternal`.
 fn emit_composed_struct_noproducer(o: &mut String, func: &FuncDef, extra: &str) {
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
@@ -907,7 +907,7 @@ fn emit_composed_open(
     counter: &Cell<usize>,
 ) {
     let n = uname(func);
-    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int endIdx;");
     let _ = writeln!(o, "   int dummyBegIdx;");
@@ -1281,7 +1281,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "}};\n");
 
     // --- Open ----------------------------------------------------------------
-    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -1540,7 +1540,7 @@ fn drop_unused_decls(body: Vec<Statement>) -> Vec<Statement> {
 }
 
 /// Emit the full dual-mode stream section: one union struct, one predicate-
-/// branching StreamStep, one predicate-branching OpenInternal (+ public Open
+/// branching StepInternal, one predicate-branching OpenInternal (+ public Open
 /// wrapper), and Update/Peek/Close reused from the loop tier (mode-independent
 /// for scalar modes — the stored param rides the struct copy through Peek).
 #[allow(clippy::too_many_arguments)]
@@ -1559,7 +1559,7 @@ fn emit_dual_mode(
 
     // --- state struct -------------------------------------------------------
     emit_dual_state_struct(o, func, ma, mb);
-    // StreamRelease (frees the shared ring buffers) for a ring-carrying dual mode
+    // ReleaseInternal (frees the shared ring buffers) for a ring-carrying dual mode
     // (TRIMA); inert for a scalar mode (DI/DM). Emitted before Open, whose
     // malloc-failure paths call it.
     emit_release(o, func, ma);
@@ -1569,7 +1569,7 @@ fn emit_dual_mode(
     let outs = out_params_sig(func);
     let _ = writeln!(
         o,
-        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+        "/* Private function, not in public API. */\nstatic void TA_{n}_StepInternal( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
     let pred_h = render_dual_pred(&dmp.predicate, true, func, registry, helpers, counter);
     let _ = writeln!(o, "   if( {pred_h} )\n   {{");
@@ -1580,7 +1580,7 @@ fn emit_dual_mode(
 
     // --- OpenInternal: shared head, then a predicate branch per mode --------
     let inputs = streaming::input_array_names(func);
-    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int endIdx;");
     let _ = writeln!(o, "   int dummyBegIdx;");
@@ -1721,7 +1721,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
     let _ = writeln!(o, "}};\n");
 }
 
-/// `static void TA_<N>_StreamRelease(...)`: frees every ring buffer and the
+/// `static void TA_<N>_ReleaseInternal(...)`: frees every ring buffer and the
 /// handle itself. Emitted only for ring models; safe on partially-allocated
 /// handles (open memsets the struct, so unallocated buffers are NULL).
 fn emit_release(o: &mut String, func: &FuncDef, model: &StreamModel) {
@@ -1729,7 +1729,8 @@ fn emit_release(o: &mut String, func: &FuncDef, model: &StreamModel) {
         return;
     }
     let n = uname(func);
-    let _ = writeln!(o, "static void TA_{n}_StreamRelease( struct TA_{n}_Stream *sp )
+    let _ = writeln!(o, "/* Private function, not in public API. */
+static void TA_{n}_ReleaseInternal( struct TA_{n}_Stream *sp )
 {{");
     let _ = writeln!(o, "   if( !sp ) return;");
     for ring in model.rings() {
@@ -1775,7 +1776,7 @@ fn emit_step(
     let outs = out_params_sig(func);
     let _ = writeln!(
         o,
-        "static void TA_{n}_StreamStep( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+        "/* Private function, not in public API. */\nstatic void TA_{n}_StepInternal( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
     let void_sp = model.state.is_empty()
         && func.optional_inputs.is_empty()
@@ -1890,7 +1891,7 @@ fn emit_open_head(
 ) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
-    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
 
     // --- declarations -------------------------------------------------------
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
@@ -2036,7 +2037,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "}};\n");
 
     // --- OpenInternal -------------------------------------------------------
-    let _ = writeln!(o, "{}\n{{", open_internal_signature(func));
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int k, cp, lookbackTotal, subStart;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
@@ -2229,7 +2230,7 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
         let _ = writeln!(o, "      sp->cbSize_{id} = maxIdx_{id} + 1;");
         let _ = writeln!(
             o,
-            "      if( sp->cbSize_{id} < 1 || sp->cbSize_{id} > historyLen + 1 ) {{ {free_batch}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+            "      if( sp->cbSize_{id} < 1 || sp->cbSize_{id} > historyLen + 1 ) {{ {free_batch}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}"
         );
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
@@ -2237,12 +2238,12 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
                 o,
                 "      sp->cb_{storage} = ({et} *)TA_Malloc( sizeof({et}) * (size_t)sp->cbSize_{id} );"
             );
-            let _ = writeln!(o, "      if( !sp->cb_{storage} ) {{ {free_batch}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(o, "      if( !sp->cb_{storage} ) {{ {free_batch}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 o,
                 "      sp->cbMirror_{storage} = ({et} *)TA_Malloc( sizeof({et}) * (size_t)sp->cbSize_{id} );"
             );
-            let _ = writeln!(o, "      if( !sp->cbMirror_{storage} ) {{ {free_batch}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(o, "      if( !sp->cbMirror_{storage} ) {{ {free_batch}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             // Live copy: contents AND rotation phase, straight from the
             // batch's own buffer (ring-ORDER constraint by construction).
             let _ = writeln!(
@@ -2279,7 +2280,7 @@ fn pre_fail_stmt(pre_fail: &str) -> String {
 
 /// `sp = TA_Malloc(...); memset; param/extra capture[; state capture]` at the
 /// given indent. memset keeps unused fields (identity path) deterministic
-/// and NULLs the ring pointers so `StreamRelease` is safe mid-allocation.
+/// and NULLs the ring pointers so `ReleaseInternal` is safe mid-allocation.
 ///
 /// Rings: `with_state == true` is the normal path — capacity is captured
 /// NUMERICALLY from the still-live batch locals (`cursor - var`,
@@ -2348,7 +2349,7 @@ fn alloc_and_capture(
     let fail = if model.rings().is_empty() {
         String::new()
     } else {
-        format!("{{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}")
+        format!("{{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}")
     };
     for ring in model.rings() {
         let v = &ring.var;
@@ -2363,14 +2364,14 @@ fn alloc_and_capture(
                 );
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}",
+                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}",
                     fwd = ring.fwd
                 );
             } else {
                 let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}"
                 );
             }
         } else if back > 0 {
@@ -2440,19 +2441,19 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}"
         );
         for arr in &win.arrays {
             let _ = writeln!(
                 s,
                 "{pad}sp->win_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->win_{v}_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->win_{v}_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 s,
                 "{pad}sp->winMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->winMirror_{v}_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->winMirror_{v}_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             // Fill with the history tail: slot cap-1 = last bar, so the next
             // update writes the new bar at pos 0 and (pos+cap-w)%cap walks
             // back w bars.
@@ -2479,19 +2480,19 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}"
         );
         for arr in &ex.arrays {
             let _ = writeln!(
                 s,
                 "{pad}sp->x_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 s,
                 "{pad}sp->xMirror_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
             );
-            let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ {pre}TA_{n}_StreamRelease( sp ); return TA_ALLOC_ERR; }}");
+            let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
         }
         if with_state {
             // Absolute slots: bar j lives at j % cap (matches the automaton's
@@ -2739,7 +2740,7 @@ fn emit_update(o: &mut String, func: &FuncDef) {
         .cloned()
         .chain(outs.iter().cloned())
         .collect();
-    let _ = writeln!(o, "   TA_{n}_StreamStep( stream, {} );", args.join(", "));
+    let _ = writeln!(o, "   TA_{n}_StepInternal( stream, {} );", args.join(", "));
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
@@ -2760,7 +2761,7 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
         .cloned()
         .chain(outs.iter().cloned())
         .collect();
-    let _ = writeln!(o, "   TA_{n}_StreamStep( &scratch, {} );", args.join(", "));
+    let _ = writeln!(o, "   TA_{n}_StepInternal( &scratch, {} );", args.join(", "));
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
@@ -2815,7 +2816,7 @@ fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {
     let n = uname(func);
     let _ = writeln!(o, "{}\n{{", close_signature(func));
     if model.needs_release() {
-        let _ = writeln!(o, "   TA_{n}_StreamRelease( stream );");
+        let _ = writeln!(o, "   TA_{n}_ReleaseInternal( stream );");
     } else {
         let _ = writeln!(o, "   if( stream ) TA_Free( stream );");
     }

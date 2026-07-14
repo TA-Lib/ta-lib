@@ -162,12 +162,14 @@ struct TA_TAN_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_TAN_StreamStep( struct TA_TAN_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_TAN_StepInternal( struct TA_TAN_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= tan(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_TAN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_TAN_Stream **stream, double *outReal )
 {
    struct TA_TAN_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_TAN_Open( const double inReal[], int historyLen, TA_TAN
 TA_LIB_API TA_RetCode TA_TAN_Update( TA_TAN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_TAN_StreamStep( stream, inReal, outReal );
+   TA_TAN_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_TAN_Peek( const TA_TAN_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TAN_StreamStep( &scratch, inReal, outReal );
+   TA_TAN_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

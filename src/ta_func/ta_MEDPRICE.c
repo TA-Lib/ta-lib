@@ -184,12 +184,14 @@ struct TA_MEDPRICE_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_MEDPRICE_StreamStep( struct TA_MEDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
+/* Private function, not in public API. */
+static void TA_MEDPRICE_StepInternal( struct TA_MEDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    (void)sp;
    *outReal= (inHigh + inLow) / 2.0;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MEDPRICE_OpenInternal( const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_MEDPRICE_Stream **stream, double *outReal )
 {
    struct TA_MEDPRICE_Stream *sp;
@@ -244,7 +246,7 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Open( const double inHigh[], const double inLo
 TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MEDPRICE_StreamStep( stream, inHigh, inLow, outReal );
+   TA_MEDPRICE_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 
@@ -254,7 +256,7 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MEDPRICE_StreamStep( &scratch, inHigh, inLow, outReal );
+   TA_MEDPRICE_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

@@ -503,13 +503,15 @@ struct TA_DEMA_Stream {
    double optInK_1;
 };
 
-static void TA_DEMA_StreamStep( struct TA_DEMA_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_DEMA_StepInternal( struct TA_DEMA_Stream *sp, double inReal, double *outReal )
 {
    sp->prevEMA1 = (inReal - sp->prevEMA1) * sp->optInK_1 + sp->prevEMA1;
    sp->prevEMA2 = (sp->prevEMA1 - sp->prevEMA2) * sp->optInK_1 + sp->prevEMA2;
    *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_DEMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_DEMA_Stream **stream, double *outReal )
 {
    struct TA_DEMA_Stream *sp;
@@ -694,7 +696,7 @@ TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], 
 TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_DEMA_StreamStep( stream, inReal, outReal );
+   TA_DEMA_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -704,7 +706,7 @@ TA_LIB_API TA_RetCode TA_DEMA_Peek( const TA_DEMA_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_DEMA_StreamStep( &scratch, inReal, outReal );
+   TA_DEMA_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

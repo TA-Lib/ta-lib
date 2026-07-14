@@ -1118,7 +1118,8 @@ struct TA_MINUS_DI_Stream {
    double prevTR;
 };
 
-static void TA_MINUS_DI_StreamStep( struct TA_MINUS_DI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_MINUS_DI_StepInternal( struct TA_MINUS_DI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( sp->optInTimePeriod <= 1 )
    {
@@ -1208,6 +1209,7 @@ static void TA_MINUS_DI_StreamStep( struct TA_MINUS_DI_Stream *sp, double inHigh
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MINUS_DI_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_MINUS_DI_Stream **stream, double *outReal )
 {
    struct TA_MINUS_DI_Stream *sp;
@@ -1739,7 +1741,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Open( int optInTimePeriod, const double inHigh
 TA_LIB_API TA_RetCode TA_MINUS_DI_Update( TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MINUS_DI_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_MINUS_DI_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -1749,7 +1751,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Peek( const TA_MINUS_DI_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MINUS_DI_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_MINUS_DI_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

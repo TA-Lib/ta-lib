@@ -558,6 +558,7 @@ struct TA_MAVP_Stream {
    double *scratch;
 };
 
+/* Private function, not in public API. */
 TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int startIdx, int historyLen, struct TA_MAVP_Stream **stream, double *outReal )
 {
    struct TA_MAVP_Stream *sp;

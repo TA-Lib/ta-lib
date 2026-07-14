@@ -873,7 +873,8 @@ struct TA_BBANDS_Stream {
    TA_STDDEV_Stream *sub1;
 };
 
-static void TA_BBANDS_StreamStep( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+/* Private function, not in public API. */
+static void TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    double tempReal;
    double tempReal2;
@@ -910,6 +911,7 @@ static void TA_BBANDS_StreamStep( struct TA_BBANDS_Stream *sp, double inReal, do
    *outRealLowerBand = cur_outRealLowerBand;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_BBANDS_Stream *sp;
@@ -1106,7 +1108,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, 
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   TA_BBANDS_StreamStep( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    return TA_SUCCESS;
 }
 
@@ -1117,7 +1119,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inR
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_BBANDS_StreamStep( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   TA_BBANDS_StepInternal( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    return TA_SUCCESS;
 }
 

@@ -734,7 +734,8 @@ struct TA_MFI_Stream {
    double *cbMirror_mflow_negative;
 };
 
-static void TA_MFI_StreamRelease( struct TA_MFI_Stream *sp )
+/* Private function, not in public API. */
+static void TA_MFI_ReleaseInternal( struct TA_MFI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->cb_mflow_positive ) TA_Free( sp->cb_mflow_positive );
@@ -744,7 +745,8 @@ static void TA_MFI_StreamRelease( struct TA_MFI_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_MFI_StreamStep( struct TA_MFI_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+/* Private function, not in public API. */
+static void TA_MFI_StepInternal( struct TA_MFI_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    sp->posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
    sp->negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
@@ -786,6 +788,7 @@ static void TA_MFI_StreamStep( struct TA_MFI_Stream *sp, double inHigh, double i
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MFI_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_MFI_Stream **stream, double *outReal )
 {
    struct TA_MFI_Stream *sp;
@@ -974,16 +977,16 @@ TA_RetCode TA_MFI_OpenInternal( int optInTimePeriod, const double inHigh[], cons
       sp->mflow_Idx = mflow_Idx;
       sp->maxIdx_mflow = maxIdx_mflow;
       sp->cbSize_mflow = maxIdx_mflow + 1;
-      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cbMirror_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mflow_positive, mflow_positive, sizeof(double) * (size_t)sp->cbSize_mflow );
       sp->cb_mflow_negative = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cb_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_mflow_negative = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cbMirror_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mflow_negative, mflow_negative, sizeof(double) * (size_t)sp->cbSize_mflow );
       if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); 
       *outReal = lastValue_outReal;
@@ -1000,7 +1003,7 @@ TA_LIB_API TA_RetCode TA_MFI_Open( int optInTimePeriod, const double inHigh[], c
 TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_MFI_StreamStep( stream, inHigh, inLow, inClose, inVolume, outReal );
+   TA_MFI_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 
@@ -1014,13 +1017,13 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    memcpy( scratch.cb_mflow_positive, stream->cb_mflow_positive, sizeof(double) * (size_t)stream->cbSize_mflow );
    scratch.cb_mflow_negative = stream->cbMirror_mflow_negative;
    memcpy( scratch.cb_mflow_negative, stream->cb_mflow_negative, sizeof(double) * (size_t)stream->cbSize_mflow );
-   TA_MFI_StreamStep( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   TA_MFI_StepInternal( &scratch, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream )
 {
-   TA_MFI_StreamRelease( stream );
+   TA_MFI_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

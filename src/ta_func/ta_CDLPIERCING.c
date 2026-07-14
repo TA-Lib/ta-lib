@@ -413,7 +413,8 @@ struct TA_CDLPIERCING_Stream {
    double *winMirror_totIdx_inClose;
 };
 
-static void TA_CDLPIERCING_StreamRelease( struct TA_CDLPIERCING_Stream *sp )
+/* Private function, not in public API. */
+static void TA_CDLPIERCING_ReleaseInternal( struct TA_CDLPIERCING_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyLongTrailingIdx_inOpen ) TA_Free( sp->ring_BodyLongTrailingIdx_inOpen );
@@ -435,7 +436,8 @@ static void TA_CDLPIERCING_StreamRelease( struct TA_CDLPIERCING_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_CDLPIERCING_StreamStep( struct TA_CDLPIERCING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLPIERCING_StepInternal( struct TA_CDLPIERCING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_BodyLongTrailingIdx_inOpen[sp->ringPos_BodyLongTrailingIdx] = inOpen;
    sp->ring_BodyLongTrailingIdx_inHigh[sp->ringPos_BodyLongTrailingIdx] = inHigh;
@@ -485,6 +487,7 @@ static void TA_CDLPIERCING_StreamStep( struct TA_CDLPIERCING_Stream *sp, double 
    }
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLPIERCING_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLPIERCING_Stream **stream, int *outInteger )
 {
    struct TA_CDLPIERCING_Stream *sp;
@@ -591,36 +594,36 @@ TA_RetCode TA_CDLPIERCING_OpenInternal( const double inOpen[], const double inHi
       sp->totIdx = totIdx;
       sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
       sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inOpen[fillJ % sp->ringCap_BodyLongTrailingIdx] = inOpen[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inHigh[fillJ % sp->ringCap_BodyLongTrailingIdx] = inHigh[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inLow[fillJ % sp->ringCap_BodyLongTrailingIdx] = inLow[fillJ];
         }
         sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_inClose[fillJ % sp->ringCap_BodyLongTrailingIdx] = inClose[fillJ];
@@ -628,26 +631,26 @@ TA_RetCode TA_CDLPIERCING_OpenInternal( const double inOpen[], const double inHi
       }
       sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
       sp->winCap_totIdx = (int)(2);
-      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->win_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inOpen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inOpen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inOpen, inOpen + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inHigh ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inHigh ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inHigh, inHigh + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inLow ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inLow ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inLow ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inLow ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inLow, inLow + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->win_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inClose ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_totIdx_inClose ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inClose ) { TA_CDLPIERCING_StreamRelease( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_totIdx_inClose ) { TA_CDLPIERCING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_totIdx_inClose, inClose + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
       sp->winPos_totIdx = 0;
       sp->lag1_inOpen = inOpen[historyLen - 1];
@@ -668,7 +671,7 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Open( const double inOpen[], const double i
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Update( TA_CDLPIERCING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLPIERCING_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLPIERCING_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -694,13 +697,13 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Peek( const TA_CDLPIERCING_Stream *stream, 
    memcpy( scratch.win_totIdx_inLow, stream->win_totIdx_inLow, sizeof(double) * (size_t)stream->winCap_totIdx );
    scratch.win_totIdx_inClose = stream->winMirror_totIdx_inClose;
    memcpy( scratch.win_totIdx_inClose, stream->win_totIdx_inClose, sizeof(double) * (size_t)stream->winCap_totIdx );
-   TA_CDLPIERCING_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLPIERCING_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Close( TA_CDLPIERCING_Stream *stream )
 {
-   TA_CDLPIERCING_StreamRelease( stream );
+   TA_CDLPIERCING_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

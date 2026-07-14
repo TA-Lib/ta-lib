@@ -313,7 +313,8 @@ struct TA_STDDEV_Stream {
    TA_VAR_Stream *sub0;
 };
 
-static void TA_STDDEV_StreamStep( struct TA_STDDEV_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_STDDEV_StepInternal( struct TA_STDDEV_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
    double cur_outReal;
@@ -349,6 +350,7 @@ static void TA_STDDEV_StreamStep( struct TA_STDDEV_Stream *sp, double inReal, do
    *outReal = cur_outReal;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_STDDEV_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_STDDEV_Stream **stream, double *outReal )
 {
    struct TA_STDDEV_Stream *sp;
@@ -458,7 +460,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, co
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_STDDEV_StreamStep( stream, inReal, outReal );
+   TA_STDDEV_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -469,7 +471,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inR
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_STDDEV_StreamStep( &scratch, inReal, outReal );
+   TA_STDDEV_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

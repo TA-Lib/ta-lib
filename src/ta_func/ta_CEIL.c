@@ -162,12 +162,14 @@ struct TA_CEIL_Stream {
    int unused; /* T1: stateless map */
 };
 
-static void TA_CEIL_StreamStep( struct TA_CEIL_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_CEIL_StepInternal( struct TA_CEIL_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= ceil(inReal);
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CEIL_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_CEIL_Stream **stream, double *outReal )
 {
    struct TA_CEIL_Stream *sp;
@@ -215,7 +217,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Open( const double inReal[], int historyLen, TA_CE
 TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_CEIL_StreamStep( stream, inReal, outReal );
+   TA_CEIL_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -225,7 +227,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CEIL_StreamStep( &scratch, inReal, outReal );
+   TA_CEIL_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

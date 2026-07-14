@@ -575,7 +575,8 @@ struct TA_ADOSC_Stream {
    double ad;
 };
 
-static void TA_ADOSC_StreamStep( struct TA_ADOSC_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+/* Private function, not in public API. */
+static void TA_ADOSC_StepInternal( struct TA_ADOSC_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    double high;
    double low;
@@ -595,6 +596,7 @@ static void TA_ADOSC_StreamStep( struct TA_ADOSC_Stream *sp, double inHigh, doub
    *outReal= sp->fastEMA - sp->slowEMA;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_ADOSC_OpenInternal( int optInFastPeriod, int optInSlowPeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_ADOSC_Stream **stream, double *outReal )
 {
    struct TA_ADOSC_Stream *sp;
@@ -774,7 +776,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Open( int optInFastPeriod, int optInSlowPeriod, c
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ADOSC_StreamStep( stream, inHigh, inLow, inClose, inVolume, outReal );
+   TA_ADOSC_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 
@@ -784,7 +786,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Peek( const TA_ADOSC_Stream *stream, double inHig
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ADOSC_StreamStep( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   TA_ADOSC_StepInternal( &scratch, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 

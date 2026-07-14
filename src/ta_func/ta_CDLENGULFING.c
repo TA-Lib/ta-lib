@@ -321,7 +321,8 @@ struct TA_CDLENGULFING_Stream {
    double lag1_inClose;
 };
 
-static void TA_CDLENGULFING_StreamStep( struct TA_CDLENGULFING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+/* Private function, not in public API. */
+static void TA_CDLENGULFING_StepInternal( struct TA_CDLENGULFING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp->lag1_inOpen && inOpen < sp->lag1_inClose || inClose > sp->lag1_inOpen && inOpen <= sp->lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp->lag1_inClose && inClose < sp->lag1_inOpen || inOpen > sp->lag1_inClose && inClose <= sp->lag1_inOpen) )
    {
@@ -342,6 +343,7 @@ static void TA_CDLENGULFING_StreamStep( struct TA_CDLENGULFING_Stream *sp, doubl
    sp->lag1_inClose = inClose;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_CDLENGULFING_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLENGULFING_Stream **stream, int *outInteger )
 {
    struct TA_CDLENGULFING_Stream *sp;
@@ -441,7 +443,7 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double 
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   TA_CDLENGULFING_StreamStep( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLENGULFING_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
@@ -451,7 +453,7 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLENGULFING_StreamStep( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLENGULFING_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

@@ -403,12 +403,14 @@ struct TA_EMA_Stream {
    double prevMA;
 };
 
-static void TA_EMA_StreamStep( struct TA_EMA_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_EMA_StepInternal( struct TA_EMA_Stream *sp, double inReal, double *outReal )
 {
    sp->prevMA = (inReal - sp->prevMA) * sp->optInK_1 + sp->prevMA;
    *outReal= sp->prevMA;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_EMA_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_EMA_Stream **stream, double *outReal )
 {
    struct TA_EMA_Stream *sp;
@@ -542,7 +544,7 @@ TA_LIB_API TA_RetCode TA_EMA_Open( int optInTimePeriod, const double inReal[], i
 TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_EMA_StreamStep( stream, inReal, outReal );
+   TA_EMA_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -552,7 +554,7 @@ TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EMA_StreamStep( &scratch, inReal, outReal );
+   TA_EMA_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

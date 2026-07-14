@@ -1610,7 +1610,8 @@ struct TA_MAMA_Stream {
    double *ringMirror_trailingWMAIdx_inReal;
 };
 
-static void TA_MAMA_StreamRelease( struct TA_MAMA_Stream *sp )
+/* Private function, not in public API. */
+static void TA_MAMA_ReleaseInternal( struct TA_MAMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -1618,7 +1619,8 @@ static void TA_MAMA_StreamRelease( struct TA_MAMA_Stream *sp )
    TA_Free( sp );
 }
 
-static void TA_MAMA_StreamStep( struct TA_MAMA_Stream *sp, double inReal, double *outMAMA, double *outFAMA )
+/* Private function, not in public API. */
+static void TA_MAMA_StepInternal( struct TA_MAMA_Stream *sp, double inReal, double *outMAMA, double *outFAMA )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -1817,6 +1819,7 @@ static void TA_MAMA_StreamStep( struct TA_MAMA_Stream *sp, double inReal, double
    sp->streamParity = 1 - sp->streamParity;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_MAMA_OpenInternal( double optInFastLimit, double optInSlowLimit, const double inReal[], int startIdx, int historyLen, struct TA_MAMA_Stream **stream, double *outMAMA, double *outFAMA )
 {
    struct TA_MAMA_Stream *sp;
@@ -2289,12 +2292,12 @@ TA_RetCode TA_MAMA_OpenInternal( double optInFastLimit, double optInSlowLimit, c
       sp->prevPhase = prevPhase;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_StreamRelease( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_MAMA_StreamRelease( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_MAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
@@ -2313,7 +2316,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Open( double optInFastLimit, double optInSlowLimit
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )
 {
    if( !stream || !outMAMA || !outFAMA ) return TA_BAD_PARAM;
-   TA_MAMA_StreamStep( stream, inReal, outMAMA, outFAMA );
+   TA_MAMA_StepInternal( stream, inReal, outMAMA, outFAMA );
    return TA_SUCCESS;
 }
 
@@ -2325,13 +2328,13 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );
-   TA_MAMA_StreamStep( &scratch, inReal, outMAMA, outFAMA );
+   TA_MAMA_StepInternal( &scratch, inReal, outMAMA, outFAMA );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream )
 {
-   TA_MAMA_StreamRelease( stream );
+   TA_MAMA_ReleaseInternal( stream );
    return TA_SUCCESS;
 }
 

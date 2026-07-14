@@ -345,7 +345,8 @@ struct TA_APO_Stream {
    TA_MA_Stream *sub1;
 };
 
-static void TA_APO_StreamStep( struct TA_APO_Stream *sp, double inReal, double *outReal )
+/* Private function, not in public API. */
+static void TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, double *outReal )
 {
    double cur_tempBuffer;
    double cur_outReal;
@@ -365,6 +366,7 @@ static void TA_APO_StreamStep( struct TA_APO_Stream *sp, double inReal, double *
    *outReal = cur_outReal;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_APO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_APO_Stream **stream, double *outReal )
 {
    struct TA_APO_Stream *sp;
@@ -508,7 +510,7 @@ TA_LIB_API TA_RetCode TA_APO_Open( int optInFastPeriod, int optInSlowPeriod, TA_
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_APO_StreamStep( stream, inReal, outReal );
+   TA_APO_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -519,7 +521,7 @@ TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_APO_StreamStep( &scratch, inReal, outReal );
+   TA_APO_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

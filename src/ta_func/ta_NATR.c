@@ -757,7 +757,8 @@ struct TA_NATR_Stream {
    double lag1_inClose;
 };
 
-static void TA_NATR_StreamStep( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+/* Private function, not in public API. */
+static void TA_NATR_StepInternal( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
    double greatest;
@@ -802,6 +803,7 @@ static void TA_NATR_StreamStep( struct TA_NATR_Stream *sp, double inHigh, double
    sp->lag1_inClose = inClose;
 }
 
+/* Private function, not in public API. */
 TA_RetCode TA_NATR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_NATR_Stream **stream, double *outReal )
 {
    struct TA_NATR_Stream *sp;
@@ -1054,7 +1056,7 @@ TA_LIB_API TA_RetCode TA_NATR_Open( int optInTimePeriod, const double inHigh[], 
 TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_NATR_StreamStep( stream, inHigh, inLow, inClose, outReal );
+   TA_NATR_StepInternal( stream, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
@@ -1064,7 +1066,7 @@ TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_NATR_StreamStep( &scratch, inHigh, inLow, inClose, outReal );
+   TA_NATR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
