@@ -3536,7 +3536,8 @@ static int cdl_is_pending(const char *name)
 static const char * const cdl_catalog[] = {
     "CDL2CROWS", "CDL3BLACKCROWS", "CDL3WHITESOLDIERS", "CDL3STARSINSOUTH",
     "CDL3LINESTRIKE", "CDLCONCEALBABYSWALL", "CDLMATHOLD", "CDLRISEFALL3METHODS",
-    "CDLADVANCEBLOCK", "CDLINNECK", "CDLUNIQUE3RIVER"
+    "CDLADVANCEBLOCK", "CDLINNECK", "CDLUNIQUE3RIVER",
+    "CDLKICKING"
 };
 #define CDL_NCATALOG ((int)(sizeof(cdl_catalog)/sizeof(cdl_catalog[0])))
 
