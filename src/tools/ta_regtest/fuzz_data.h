@@ -139,7 +139,7 @@ static int fuzz_cdl_primer(double *o,double *h,double *l,double *c,double *v,dou
 static int fuzz_cdl_2crows(double *o,double *h,double *l,double *c,double *v,double *oi,
                            int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+12.5, base-0.5,  base+12.0); /* 1st white long   */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+18.0, base+18.5, base+13.5, base+14.0); /* 2nd black gap up */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+16.0, base+16.5, base+5.5,  base+6.0);  /* 3rd black inside */
@@ -152,7 +152,7 @@ static int fuzz_cdl_2crows(double *o,double *h,double *l,double *c,double *v,dou
 static int fuzz_cdl_3blackcrows(double *o,double *h,double *l,double *c,double *v,double *oi,
                                 int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,13,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,    base+11, base-1, base+10); /* i-3: white long body   */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8,  base+8,  base,   base);    /* i-2: 1st black          */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5,  base+5,  base-5, base-5);  /* i-1: 2nd black inside   */
@@ -166,7 +166,7 @@ static int fuzz_cdl_3blackcrows(double *o,double *h,double *l,double *c,double *
 static int fuzz_cdl_3whitesoldiers(double *o,double *h,double *l,double *c,double *v,double *oi,
                                    int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,     base+10.2, base-0.2, base+10.0); /* 1st white long */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5.0, base+15.2, base+4.8, base+15.0); /* 2nd white       */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0,base+20.2, base+9.8, base+20.0); /* 3rd white       */
@@ -179,7 +179,7 @@ static int fuzz_cdl_3whitesoldiers(double *o,double *h,double *l,double *c,doubl
 static int fuzz_cdl_3starsinsouth(double *o,double *h,double *l,double *c,double *v,double *oi,
                                   int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8.0, base+8.0, base-12.0, base);      /* 1st black long + long lower shadow */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+6.0, base+6.0, base-4.0,  base+2.0);  /* 2nd black smaller body            */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+1.0, base+1.0, base,      base);      /* 3rd black tiny marubozu           */
@@ -192,7 +192,7 @@ static int fuzz_cdl_3starsinsouth(double *o,double *h,double *l,double *c,double
 static int fuzz_cdl_3linestrike(double *o,double *h,double *l,double *c,double *v,double *oi,
                                 int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+5.0,  base-1.0, base+4.0);  /* i-3: 1st white soldier */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+2.0,  base+7.0,  base+1.0, base+6.0);  /* i-2: 2nd white         */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+4.0,  base+9.0,  base+3.0, base+8.0);  /* i-1: 3rd white         */
@@ -206,7 +206,7 @@ static int fuzz_cdl_3linestrike(double *o,double *h,double *l,double *c,double *
 static int fuzz_cdl_concealbabyswall(double *o,double *h,double *l,double *c,double *v,double *oi,
                                      int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,     base,     base-3.0,  base-3.0);  /* 1st black marubozu       */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-4.0, base-4.0, base-7.0,  base-7.0);  /* 2nd black marubozu       */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-9.0, base-6.0, base-12.0, base-11.0); /* 3rd black gapdown+shadow */
@@ -221,7 +221,7 @@ static int fuzz_cdl_concealbabyswall(double *o,double *h,double *l,double *c,dou
 static int fuzz_cdl_mathold(double *o,double *h,double *l,double *c,double *v,double *oi,
                             int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,14,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+21.0, base-1.0,  base+20.0); /* c1 white long        */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+31.0, base+32.0, base+29.0, base+30.0); /* c2 short black gap up */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+16.0, base+17.0, base+14.0, base+15.0); /* c3 short, in 1st range*/
@@ -236,7 +236,7 @@ static int fuzz_cdl_mathold(double *o,double *h,double *l,double *c,double *v,do
 static int fuzz_cdl_risefall3methods(double *o,double *h,double *l,double *c,double *v,double *oi,
                                      int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,     base+12.5, base-0.5,  base+12.0); /* 1st long white          */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0,base+10.5, base+8.5,  base+9.0);  /* 2nd small black         */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8.0, base+8.5,  base+6.5,  base+7.0);  /* 3rd small black falling */
@@ -251,7 +251,7 @@ static int fuzz_cdl_risefall3methods(double *o,double *h,double *l,double *c,dou
 static int fuzz_cdl_advanceblock(double *o,double *h,double *l,double *c,double *v,double *oi,
                                  int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,     base+6.0, base,     base+6.0); /* 1st white long body */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5.0, base+7.0, base+5.0, base+7.0); /* 2nd white, shorter  */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+7.0, base+8.0, base+7.0, base+8.0); /* 3rd white, shortest */
@@ -265,7 +265,7 @@ static int fuzz_cdl_advanceblock(double *o,double *h,double *l,double *c,double 
 static int fuzz_cdl_inneck(double *o,double *h,double *l,double *c,double *v,double *oi,
                            int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,6.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,6.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0, base+12.0, base-1.0, base);       /* 1st long black         */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-5.0,  base+1.0,  base-6.0, base+0.35);  /* 2nd white into neck    */
     return p;
@@ -277,7 +277,7 @@ static int fuzz_cdl_inneck(double *o,double *h,double *l,double *c,double *v,dou
 static int fuzz_cdl_unique3river(double *o,double *h,double *l,double *c,double *v,double *oi,
                                  int p,int n,double base)
 {
-    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0, base+11.0, base-12.0, base-10.0); /* 1st black long body   */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5.0,  base+6.0,  base-15.0, base-5.0);  /* 2nd black harami+low  */
     p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-4.0,  base-2.0,  base-5.0,  base-3.0);  /* 3rd white short body  */
