@@ -1,5 +1,6 @@
 //! ta-lib.org website generator — the one `ta_codegen` output that lives under `docs/`
-//! (the mkdocs site tree) instead of `ta_codegen/output/`.
+//! instead of `ta_codegen/output/`. The VuePress site (`website/`) consumes these pages
+//! via the `website/src/functions` -> `../../docs/functions` symlink.
 //!
 //! For each function it reads the canonical documentation source
 //! `ta_codegen/input/<dir>/<dir>.md` and emits a website page at
