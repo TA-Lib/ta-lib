@@ -344,6 +344,17 @@ static int fuzz_cdl_homingpigeon(double *o,double *h,double *l,double *c,double 
     return p;
 }
 
+/* CDL3INSIDE: 3rd pattern bar (index 14) = -100 (bearish three-inside-down; output = -candlecolor(1st white)*100) */
+static int fuzz_cdl_3inside(double *o,double *h,double *l,double *c,double *v,double *oi,
+                            int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base, base+12.5, base-0.5, base+12); /* 1st: long WHITE body (body=12 > BodyLong avg ~2.0) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+6, base+7.5, base+5.5, base+7); /* 2nd: SHORT body (body=1 <= BodyShort avg ~3.0), fully engulfed (106..107 inside 1st body 100..112) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8, base+8.5, base-2.5, base-2); /* 3rd: BLACK (close 98 < open 108), closes below 1st's open (98 < 100) */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -366,6 +377,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_piercing(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_thrusting(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_homingpigeon(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_3inside(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
