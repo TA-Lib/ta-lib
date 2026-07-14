@@ -44,7 +44,7 @@ Normalized Average True Range
 
 ## See Also
 
-[ATR](atr.md) · [TRANGE](trange.md) · [SMA](sma.md)
+[ATR](/functions/atr.md) · [TRANGE](/functions/trange.md) · [SMA](/functions/sma.md)
 
 ## References
 

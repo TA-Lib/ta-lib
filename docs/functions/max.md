@@ -43,4 +43,4 @@ Highest, Highest High, Rolling Maximum
 
 ## See Also
 
-[MIN](min.md) · [MAXINDEX](maxindex.md) · [MINMAX](minmax.md)
+[MIN](/functions/min.md) · [MAXINDEX](/functions/maxindex.md) · [MINMAX](/functions/minmax.md)

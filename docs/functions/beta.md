@@ -44,4 +44,4 @@ Beta coefficient
 
 ## See Also
 
-[CORREL](correl.md) · [LINEARREG_SLOPE](linearreg_slope.md) · [VAR](var.md) · [STDDEV](stddev.md)
+[CORREL](/functions/correl.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [VAR](/functions/var.md) · [STDDEV](/functions/stddev.md)

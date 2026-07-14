@@ -43,4 +43,4 @@ Gravestone Doji
 
 ## See Also
 
-[CDLDOJI](cdldoji.md) · [CDLDRAGONFLYDOJI](cdldragonflydoji.md) · [CDLLONGLEGGEDDOJI](cdllongleggeddoji.md) · [CDLDOJISTAR](cdldojistar.md)
+[CDLDOJI](/functions/cdldoji.md) · [CDLDRAGONFLYDOJI](/functions/cdldragonflydoji.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLDOJISTAR](/functions/cdldojistar.md)

@@ -39,4 +39,4 @@ Cosine, Vector Trigonometric Cos
 
 ## See Also
 
-[ACOS](acos.md) · [SIN](sin.md) · [TAN](tan.md) · [COSH](cosh.md)
+[ACOS](/functions/acos.md) · [SIN](/functions/sin.md) · [TAN](/functions/tan.md) · [COSH](/functions/cosh.md)

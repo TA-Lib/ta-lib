@@ -47,7 +47,7 @@ Triple Exponential Average
 
 ## See Also
 
-[EMA](ema.md) · [ROC](roc.md) · [ROCR](rocr.md) · [TEMA](tema.md)
+[EMA](/functions/ema.md) · [ROC](/functions/roc.md) · [ROCR](/functions/rocr.md) · [TEMA](/functions/tema.md)
 
 ## References
 

@@ -39,4 +39,4 @@ Three Inside Up/Down, Three Inside, Three Inside Up, Three Inside Down
 
 ## See Also
 
-[CDLHARAMI](cdlharami.md) · [CDL3OUTSIDE](cdl3outside.md) · [CDLENGULFING](cdlengulfing.md)
+[CDLHARAMI](/functions/cdlharami.md) · [CDL3OUTSIDE](/functions/cdl3outside.md) · [CDLENGULFING](/functions/cdlengulfing.md)

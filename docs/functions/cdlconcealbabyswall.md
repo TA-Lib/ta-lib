@@ -39,4 +39,4 @@ Concealing Baby Swallow
 
 ## See Also
 
-[CDLMARUBOZU](cdlmarubozu.md) · [CDLENGULFING](cdlengulfing.md)
+[CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLENGULFING](/functions/cdlengulfing.md)

@@ -35,7 +35,7 @@ Hilbert Transform Trend vs Cycle Mode, Trend Mode
 
 ## See Also
 
-[HT_TRENDLINE](ht_trendline.md) · [HT_SINE](ht_sine.md) · [HT_DCPHASE](ht_dcphase.md) · [HT_DCPERIOD](ht_dcperiod.md) · [MAMA](mama.md)
+[HT_TRENDLINE](/functions/ht_trendline.md) · [HT_SINE](/functions/ht_sine.md) · [HT_DCPHASE](/functions/ht_dcphase.md) · [HT_DCPERIOD](/functions/ht_dcperiod.md) · [MAMA](/functions/mama.md)
 
 ## References
 

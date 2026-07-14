@@ -48,7 +48,7 @@ Pearson Correlation, Correlation Coefficient, r
 
 ## See Also
 
-[BETA](beta.md) · [STDDEV](stddev.md) · [VAR](var.md)
+[BETA](/functions/beta.md) · [STDDEV](/functions/stddev.md) · [VAR](/functions/var.md)
 
 ## References
 

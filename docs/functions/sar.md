@@ -46,7 +46,7 @@ Parabolic SAR, PSAR, Stop and Reverse
 
 ## See Also
 
-[SAREXT](sarext.md) · [MINUS_DM](minus_dm.md) · [PLUS_DM](plus_dm.md)
+[SAREXT](/functions/sarext.md) · [MINUS_DM](/functions/minus_dm.md) · [PLUS_DM](/functions/plus_dm.md)
 
 ## References
 

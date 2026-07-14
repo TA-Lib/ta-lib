@@ -43,4 +43,4 @@ Dark Cloud Cover
 
 ## See Also
 
-[CDLPIERCING](cdlpiercing.md) · [CDLENGULFING](cdlengulfing.md) · [CDLONNECK](cdlonneck.md)
+[CDLPIERCING](/functions/cdlpiercing.md) · [CDLENGULFING](/functions/cdlengulfing.md) · [CDLONNECK](/functions/cdlonneck.md)

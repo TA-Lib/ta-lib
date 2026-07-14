@@ -39,4 +39,4 @@ Three-Line Strike, 3-Line Strike
 
 ## See Also
 
-[CDL3WHITESOLDIERS](cdl3whitesoldiers.md) · [CDL3BLACKCROWS](cdl3blackcrows.md)
+[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md) · [CDL3BLACKCROWS](/functions/cdl3blackcrows.md)

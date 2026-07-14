@@ -39,4 +39,4 @@ Median Price
 
 ## See Also
 
-[MIDPRICE](midprice.md) · [AVGPRICE](avgprice.md) · [TYPPRICE](typprice.md) · [WCLPRICE](wclprice.md)
+[MIDPRICE](/functions/midprice.md) · [AVGPRICE](/functions/avgprice.md) · [TYPPRICE](/functions/typprice.md) · [WCLPRICE](/functions/wclprice.md)

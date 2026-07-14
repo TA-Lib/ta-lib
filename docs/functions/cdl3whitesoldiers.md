@@ -39,4 +39,4 @@ Three Advancing White Soldiers, Three White Soldiers
 
 ## See Also
 
-[CDL3BLACKCROWS](cdl3blackcrows.md) · [CDLADVANCEBLOCK](cdladvanceblock.md) · [CDLIDENTICAL3CROWS](cdlidentical3crows.md)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDLADVANCEBLOCK](/functions/cdladvanceblock.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md)

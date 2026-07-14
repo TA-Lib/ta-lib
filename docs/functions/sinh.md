@@ -39,4 +39,4 @@ Hyperbolic Sine
 
 ## See Also
 
-[COSH](cosh.md) · [TANH](tanh.md)
+[COSH](/functions/cosh.md) · [TANH](/functions/tanh.md)

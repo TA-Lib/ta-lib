@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# Synchronize the website (docs/install.md) so it advertises the latest
-# *published* GitHub release.
+# Synchronize the website install page (website/src/install/README.md) so it
+# advertises the latest *published* GitHub release.
 #
 # The source of truth is the GitHub "latest release" API, so the website can
 # only ever reflect a real, published release -- never an in-development VERSION
@@ -12,15 +12,16 @@
 # Idempotent and safe to call from various points:
 #
 #   scripts/sync-website.py
-#       Rewrite docs/install.md to match the latest release. No-op if already in
-#       sync (or if the release cannot be determined). Intended to run where CI
-#       already commits back to the repo (see dev-nightly-tests.yml) so the
-#       committed files and the deployed website always match -- we never rewrite
-#       at "gh-deploy" time.
+#       Rewrite website/src/install/README.md to match the latest release. No-op
+#       if already in sync (or if the release cannot be determined). Intended to
+#       run where CI already commits back to the repo (see dev-nightly-tests.yml)
+#       so the committed files and the deployed website always match -- we never
+#       rewrite at deploy time.
 #
 #   scripts/sync-website.py --check
-#       Do not modify anything. Exit non-zero if docs/install.md does not match
-#       the latest release. Intended for a manual, post-release-bump verification.
+#       Do not modify anything. Exit non-zero if website/src/install/README.md
+#       does not match the latest release. Intended for a manual, post-release-bump
+#       verification.
 #
 #   scripts/sync-website.py --check --warn-only
 #       Like --check but never fails: on a mismatch it emits a GitHub Actions
@@ -35,7 +36,7 @@ import sys
 from utilities.files import path_join
 from utilities.common import verify_git_repo_original
 
-# Version tokens in docs/install.md are always bounded by one of these delimiters
+# Version tokens in the install page are always bounded by one of these delimiters
 # (a leading 'v', bracket, quote, dash, underscore, slash or whitespace, and a
 # similar trailing char). Matching only delimited "x.y.z" avoids rewriting
 # unrelated numbers while still covering every release-version occurrence
@@ -67,14 +68,14 @@ def get_latest_release_version(token: str):
 
 
 def install_md_versions(file_path: str) -> set:
-    # The set of "x.y.z" versions currently advertised in docs/install.md.
+    # The set of "x.y.z" versions currently advertised in the install page.
     with open(file_path, 'r') as f:
         content = f.read()
     return set(re.findall(VERSION_PATTERN, content))
 
 
 def replace_version(file_path: str, version: str) -> bool:
-    # Rewrite every install.md version token to `version`. Returns True if the
+    # Rewrite every install-page version token to `version`. Returns True if the
     # file changed. Idempotent: a second call with the same version is a no-op.
     with open(file_path, 'r') as f:
         content = f.read()
@@ -88,7 +89,7 @@ def replace_version(file_path: str, version: str) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Synchronize docs/install.md with the latest GitHub release.")
+        description="Synchronize the website install page with the latest GitHub release.")
     parser.add_argument('--token', help="GitHub token (defaults to $GITHUB_TOKEN).")
     parser.add_argument('--check', action='store_true',
                         help="Do not modify; exit non-zero if the website is out of date.")
@@ -102,7 +103,7 @@ def main() -> int:
 
     # Exits 0 (with a message) when run from a fork -> inherently a no-op there.
     root_dir = verify_git_repo_original()
-    install_md = path_join(root_dir, 'docs', 'install.md')
+    install_md = path_join(root_dir, 'website', 'src', 'install', 'README.md')
 
     latest = get_latest_release_version(token)
     if latest is None:
@@ -114,9 +115,9 @@ def main() -> int:
         if not stale:
             print(f"Website is in sync with the latest release ({latest}).")
             return 0
-        message = (f"docs/install.md still advertises {stale} but the latest "
-                   f"release is {latest}; it will sync on the next dev-nightly + "
-                   f"dev->main merge.")
+        message = (f"website/src/install/README.md still advertises {stale} but the "
+                   f"latest release is {latest}; it will sync on the next dev-nightly "
+                   f"+ dev->main merge.")
         if args.warn_only:
             print(f"::warning title=Website out of date::{message}")
             return 0
@@ -124,9 +125,9 @@ def main() -> int:
         return 1
 
     if replace_version(install_md, latest):
-        print(f"Updated docs/install.md to {latest}.")
+        print(f"Updated website/src/install/README.md to {latest}.")
     else:
-        print(f"docs/install.md already at {latest} (no change).")
+        print(f"website/src/install/README.md already at {latest} (no change).")
     return 0
 
 

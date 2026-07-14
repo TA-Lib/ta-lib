@@ -39,4 +39,4 @@ High-Wave Candle, High Wave
 
 ## See Also
 
-[CDLLONGLEGGEDDOJI](cdllongleggeddoji.md) · [CDLSPINNINGTOP](cdlspinningtop.md) · [CDLRICKSHAWMAN](cdlrickshawman.md) · [CDLDOJI](cdldoji.md)
+[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLSPINNINGTOP](/functions/cdlspinningtop.md) · [CDLRICKSHAWMAN](/functions/cdlrickshawman.md) · [CDLDOJI](/functions/cdldoji.md)

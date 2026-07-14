@@ -35,7 +35,7 @@ Hilbert Transform Dominant Cycle Phase
 
 ## See Also
 
-[HT_DCPERIOD](ht_dcperiod.md) · [HT_PHASOR](ht_phasor.md) · [HT_SINE](ht_sine.md) · [HT_TRENDLINE](ht_trendline.md) · [HT_TRENDMODE](ht_trendmode.md) · [MAMA](mama.md) · [WMA](wma.md)
+[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [HT_SINE](/functions/ht_sine.md) · [HT_TRENDLINE](/functions/ht_trendline.md) · [HT_TRENDMODE](/functions/ht_trendmode.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
 
 ## References
 

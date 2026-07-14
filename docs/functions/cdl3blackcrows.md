@@ -39,4 +39,4 @@ Three Black Crows, 3 Black Crows
 
 ## See Also
 
-[CDL3WHITESOLDIERS](cdl3whitesoldiers.md) · [CDLIDENTICAL3CROWS](cdlidentical3crows.md) · [CDLADVANCEBLOCK](cdladvanceblock.md)
+[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md) · [CDLADVANCEBLOCK](/functions/cdladvanceblock.md)

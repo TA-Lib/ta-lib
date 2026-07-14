@@ -39,4 +39,4 @@ Hammer
 
 ## See Also
 
-[CDLINVERTEDHAMMER](cdlinvertedhammer.md) · [CDLHANGINGMAN](cdlhangingman.md) · [CDLTAKURI](cdltakuri.md)
+[CDLINVERTEDHAMMER](/functions/cdlinvertedhammer.md) · [CDLHANGINGMAN](/functions/cdlhangingman.md) · [CDLTAKURI](/functions/cdltakuri.md)

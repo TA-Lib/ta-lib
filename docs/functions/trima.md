@@ -48,4 +48,4 @@ Triangular Moving Average
 
 ## See Also
 
-[SMA](sma.md) · [WMA](wma.md) · [MA](ma.md)
+[SMA](/functions/sma.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md)

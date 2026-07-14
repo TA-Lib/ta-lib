@@ -39,4 +39,4 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[MIDPRICE](midprice.md) · [MAX](max.md) · [MIN](min.md)
+[MIDPRICE](/functions/midprice.md) · [MAX](/functions/max.md) · [MIN](/functions/min.md)

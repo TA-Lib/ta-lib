@@ -54,7 +54,7 @@ Stochastic RSI
 
 ## See Also
 
-[RSI](rsi.md) · [STOCHF](stochf.md) · [STOCH](stoch.md) · [MA](ma.md)
+[RSI](/functions/rsi.md) · [STOCHF](/functions/stochf.md) · [STOCH](/functions/stoch.md) · [MA](/functions/ma.md)
 
 ## References
 

@@ -39,4 +39,4 @@ Linear Regression, Least Squares, Best Fit Line
 
 ## See Also
 
-[LINEARREG_SLOPE](linearreg_slope.md) · [LINEARREG_ANGLE](linearreg_angle.md) · [LINEARREG_INTERCEPT](linearreg_intercept.md) · [TSF](tsf.md)
+[LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [TSF](/functions/tsf.md)

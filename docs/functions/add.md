@@ -40,4 +40,4 @@ Vector Add, Vector Arithmetic Add
 
 ## See Also
 
-[SUB](sub.md) · [MULT](mult.md) · [DIV](div.md)
+[SUB](/functions/sub.md) · [MULT](/functions/mult.md) · [DIV](/functions/div.md)

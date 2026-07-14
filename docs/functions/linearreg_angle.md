@@ -43,4 +43,4 @@ Linear Regression Angle, Least Squares Angle
 
 ## See Also
 
-[LINEARREG](linearreg.md) · [LINEARREG_SLOPE](linearreg_slope.md) · [LINEARREG_INTERCEPT](linearreg_intercept.md) · [TSF](tsf.md)
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [TSF](/functions/tsf.md)

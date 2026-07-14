@@ -48,7 +48,7 @@ MESA Adaptive Moving Average, Ehlers MAMA
 
 ## See Also
 
-[MA](ma.md) · [WMA](wma.md) · [HT_DCPERIOD](ht_dcperiod.md)
+[MA](/functions/ma.md) · [WMA](/functions/wma.md) · [HT_DCPERIOD](/functions/ht_dcperiod.md)
 
 ## References
 

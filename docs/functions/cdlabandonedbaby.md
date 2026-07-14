@@ -43,4 +43,4 @@ Abandoned Baby
 
 ## See Also
 
-[CDLEVENINGDOJISTAR](cdleveningdojistar.md) · [CDLMORNINGDOJISTAR](cdlmorningdojistar.md) · [CDLEVENINGSTAR](cdleveningstar.md) · [CDLMORNINGSTAR](cdlmorningstar.md)
+[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md)

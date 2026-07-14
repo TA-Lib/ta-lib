@@ -46,7 +46,7 @@ Commodity Channel Index
 
 ## See Also
 
-[TYPPRICE](typprice.md) · [SMA](sma.md)
+[TYPPRICE](/functions/typprice.md) · [SMA](/functions/sma.md)
 
 ## References
 

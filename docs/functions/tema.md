@@ -47,7 +47,7 @@ Triple Exponential Moving Average
 
 ## See Also
 
-[EMA](ema.md) · [DEMA](dema.md) · [T3](t3.md)
+[EMA](/functions/ema.md) · [DEMA](/functions/dema.md) · [T3](/functions/t3.md)
 
 ## References
 

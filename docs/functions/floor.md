@@ -35,4 +35,4 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[CEIL](ceil.md)
+[CEIL](/functions/ceil.md)

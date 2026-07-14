@@ -47,4 +47,4 @@ simple moving average
 
 ## See Also
 
-[EMA](ema.md) · [WMA](wma.md) · [MA](ma.md) · [DEMA](dema.md) · [TEMA](tema.md)
+[EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md)

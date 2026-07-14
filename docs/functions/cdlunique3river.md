@@ -35,4 +35,4 @@ Unique 3 River, Unique Three River Bottom
 
 ## See Also
 
-[CDLHARAMI](cdlharami.md) · [CDLHOMINGPIGEON](cdlhomingpigeon.md) · [CDL3INSIDE](cdl3inside.md)
+[CDLHARAMI](/functions/cdlharami.md) · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md) · [CDL3INSIDE](/functions/cdl3inside.md)

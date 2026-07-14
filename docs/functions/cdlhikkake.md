@@ -35,4 +35,4 @@ Hikkake Pattern, Hikkake
 
 ## See Also
 
-[CDLHIKKAKEMOD](cdlhikkakemod.md) · [CDLHARAMI](cdlharami.md)
+[CDLHIKKAKEMOD](/functions/cdlhikkakemod.md) · [CDLHARAMI](/functions/cdlharami.md)

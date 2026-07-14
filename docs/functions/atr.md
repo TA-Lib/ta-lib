@@ -45,7 +45,7 @@ Average True Range
 
 ## See Also
 
-[TRANGE](trange.md) · [NATR](natr.md) · [SMA](sma.md) · [EMA](ema.md)
+[TRANGE](/functions/trange.md) · [NATR](/functions/natr.md) · [SMA](/functions/sma.md) · [EMA](/functions/ema.md)
 
 ## References
 

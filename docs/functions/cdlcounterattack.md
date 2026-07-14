@@ -39,4 +39,4 @@ Counterattack, Counterattack Lines, Meeting Lines
 
 ## See Also
 
-[CDLPIERCING](cdlpiercing.md) · [CDLDARKCLOUDCOVER](cdldarkcloudcover.md) · [CDLGAPSIDESIDEWHITE](cdlgapsidesidewhite.md)
+[CDLPIERCING](/functions/cdlpiercing.md) · [CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

@@ -39,4 +39,4 @@ Closing Marubozu
 
 ## See Also
 
-[CDLMARUBOZU](cdlmarubozu.md) · [CDLLONGLINE](cdllongline.md) · [CDLBELTHOLD](cdlbelthold.md)
+[CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLLONGLINE](/functions/cdllongline.md) · [CDLBELTHOLD](/functions/cdlbelthold.md)

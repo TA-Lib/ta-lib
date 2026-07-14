@@ -40,4 +40,4 @@ Highest Lowest
 
 ## See Also
 
-[MIN](min.md) · [MAX](max.md) · [MINMAXINDEX](minmaxindex.md) · [MININDEX](minindex.md) · [MAXINDEX](maxindex.md)
+[MIN](/functions/min.md) · [MAX](/functions/max.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MININDEX](/functions/minindex.md) · [MAXINDEX](/functions/maxindex.md)

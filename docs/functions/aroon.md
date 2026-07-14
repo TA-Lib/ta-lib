@@ -40,7 +40,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[AROONOSC](aroonosc.md) · [MINMAXINDEX](minmaxindex.md) · [MIN](min.md) · [MAX](max.md)
+[AROONOSC](/functions/aroonosc.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MIN](/functions/min.md) · [MAX](/functions/max.md)
 
 ## References
 

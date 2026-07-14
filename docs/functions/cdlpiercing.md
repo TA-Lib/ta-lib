@@ -39,4 +39,4 @@ Piercing Pattern, Piercing Line
 
 ## See Also
 
-[CDLDARKCLOUDCOVER](cdldarkcloudcover.md) · [CDLENGULFING](cdlengulfing.md) · [CDLMORNINGSTAR](cdlmorningstar.md)
+[CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover.md) · [CDLENGULFING](/functions/cdlengulfing.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md)

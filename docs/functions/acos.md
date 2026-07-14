@@ -39,4 +39,4 @@ Arc Cosine, Inverse Cosine, arccos
 
 ## See Also
 
-[COS](cos.md) · [ASIN](asin.md) · [ATAN](atan.md)
+[COS](/functions/cos.md) · [ASIN](/functions/asin.md) · [ATAN](/functions/atan.md)

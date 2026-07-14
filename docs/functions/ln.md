@@ -39,4 +39,4 @@ Natural Log, Vector Log Natural, Log
 
 ## See Also
 
-[LOG10](log10.md) · [EXP](exp.md) · [SQRT](sqrt.md)
+[LOG10](/functions/log10.md) · [EXP](/functions/exp.md) · [SQRT](/functions/sqrt.md)

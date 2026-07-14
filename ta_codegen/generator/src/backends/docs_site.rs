@@ -85,8 +85,10 @@ fn extract_summary(body: &str) -> String {
     rest[..end].split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// Turn `## See Also` entries (`ADX · DX · …`) into relative links to sibling pages,
-/// leaving any non-function token untouched.
+/// Turn `## See Also` entries (`ADX · DX · …`) into source-root-absolute links
+/// (`/functions/<name>.md`) to sibling pages, leaving any non-function token untouched.
+/// Absolute (not bare-relative) so VuePress resolves them even though the pages are
+/// served from a symlink that lives outside the site source root.
 fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
     let mut lines: Vec<String> = body.lines().map(String::from).collect();
     for i in 0..lines.len() {
@@ -101,7 +103,7 @@ fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
                     .map(|tok| {
                         let n = tok.trim();
                         if known.contains(n) {
-                            format!("[{n}]({}.md)", n.to_lowercase())
+                            format!("[{n}](/functions/{}.md)", n.to_lowercase())
                         } else {
                             n.to_string()
                         }
@@ -136,7 +138,7 @@ fn build_index(funcs: &[&FuncDef]) -> String {
         for f in fns {
             let dir = f.name.to_lowercase();
             let hint = f.hint.as_deref().unwrap_or("");
-            s.push_str(&format!("- [{}]({dir}.md) — {hint}\n", f.name));
+            s.push_str(&format!("- [{}](/functions/{dir}.md) — {hint}\n", f.name));
         }
     }
     s

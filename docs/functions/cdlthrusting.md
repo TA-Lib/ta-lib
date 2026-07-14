@@ -40,4 +40,4 @@ Thrusting Pattern, Thrusting Line
 
 ## See Also
 
-[CDLINNECK](cdlinneck.md) · [CDLONNECK](cdlonneck.md) · [CDLPIERCING](cdlpiercing.md) · CDLMEETINGLINES
+[CDLINNECK](/functions/cdlinneck.md) · [CDLONNECK](/functions/cdlonneck.md) · [CDLPIERCING](/functions/cdlpiercing.md) · CDLMEETINGLINES

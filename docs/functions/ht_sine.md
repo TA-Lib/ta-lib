@@ -36,7 +36,7 @@ Hilbert Transform SineWave, Ehlers SineWave, SineWave Indicator
 
 ## See Also
 
-[HT_DCPHASE](ht_dcphase.md) · [HT_DCPERIOD](ht_dcperiod.md) · [HT_PHASOR](ht_phasor.md) · [HT_TRENDMODE](ht_trendmode.md) · [MAMA](mama.md)
+[HT_DCPHASE](/functions/ht_dcphase.md) · [HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [HT_TRENDMODE](/functions/ht_trendmode.md) · [MAMA](/functions/mama.md)
 
 ## References
 

@@ -39,4 +39,4 @@ Upside Gap Two Crows
 
 ## See Also
 
-[CDL2CROWS](cdl2crows.md) · [CDLGAPSIDESIDEWHITE](cdlgapsidesidewhite.md)
+[CDL2CROWS](/functions/cdl2crows.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

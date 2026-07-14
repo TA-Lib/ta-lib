@@ -43,4 +43,4 @@ On-Neck Pattern, On-Neck Line
 
 ## See Also
 
-[CDLINNECK](cdlinneck.md) · [CDLTHRUSTING](cdlthrusting.md) · CDLMEETINGLINES
+[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · CDLMEETINGLINES

@@ -45,4 +45,4 @@ Linear Regression Slope, LSMA slope, least squares slope
 
 ## See Also
 
-[LINEARREG](linearreg.md) · [LINEARREG_INTERCEPT](linearreg_intercept.md) · [LINEARREG_ANGLE](linearreg_angle.md) · [TSF](tsf.md)
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md) · [TSF](/functions/tsf.md)

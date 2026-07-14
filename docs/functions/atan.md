@@ -39,4 +39,4 @@ arctangent, arctan, inverse tangent
 
 ## See Also
 
-[TAN](tan.md) · [ACOS](acos.md) · [ASIN](asin.md)
+[TAN](/functions/tan.md) · [ACOS](/functions/acos.md) · [ASIN](/functions/asin.md)

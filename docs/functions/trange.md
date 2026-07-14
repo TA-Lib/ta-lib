@@ -43,7 +43,7 @@ True Range, TR
 
 ## See Also
 
-[ATR](atr.md) · [NATR](natr.md)
+[ATR](/functions/atr.md) · [NATR](/functions/natr.md)
 
 ## References
 

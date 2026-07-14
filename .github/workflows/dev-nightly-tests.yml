@@ -118,17 +118,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # Keep the website install page (docs/install.md) pointed at the latest
-          # published GitHub release, committing it alongside the dist assets so
-          # the repo and the deployed website always match. Linux-only so it is
-          # committed once; idempotent and a no-op if the GitHub API is
+          # Keep the website install page (website/src/install/README.md) pointed
+          # at the latest published GitHub release, committing it alongside the dist
+          # assets so the repo and the deployed website always match. Linux-only so
+          # it is committed once; idempotent and a no-op if the GitHub API is
           # unavailable (the update is eventual -- it retries next run).
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             $PYTHON $GITHUB_WORKSPACE/scripts/sync-website.py || true
           fi
           dist_changes=$(git status --porcelain dist/)
           ta_common_changes=$(git status --porcelain include/ta_common.h)
-          website_changes=$(git status --porcelain docs/install.md)
+          website_changes=$(git status --porcelain website/src/install/README.md)
           if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ] || [ -n "$website_changes" ]; then
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -143,7 +143,7 @@ jobs:
             fi
             if [ -n "$website_changes" ]; then
               echo "$website_changes"
-              git add docs/install.md
+              git add website/src/install/README.md
             fi
 
             git commit -m "Update dist package (from ${{ matrix.os }})"

@@ -39,4 +39,4 @@ Up/Down-gap side-by-side white lines, Gapping side-by-side white lines
 
 ## See Also
 
-[CDLTASUKIGAP](cdltasukigap.md) · [CDLXSIDEGAP3METHODS](cdlxsidegap3methods.md)
+[CDLTASUKIGAP](/functions/cdltasukigap.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)

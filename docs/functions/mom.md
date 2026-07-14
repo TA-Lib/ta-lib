@@ -43,4 +43,4 @@ Momentum
 
 ## See Also
 
-[ROC](roc.md) · [ROCP](rocp.md) · [ROCR](rocr.md) · [ROCR100](rocr100.md)
+[ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [ROCR](/functions/rocr.md) · [ROCR100](/functions/rocr100.md)

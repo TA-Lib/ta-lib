@@ -45,4 +45,4 @@ Absolute Price Oscillator
 
 ## See Also
 
-[PPO](ppo.md) · [MACD](macd.md) · [MA](ma.md) · [EMA](ema.md) · [SMA](sma.md)
+[PPO](/functions/ppo.md) · [MACD](/functions/macd.md) · [MA](/functions/ma.md) · [EMA](/functions/ema.md) · [SMA](/functions/sma.md)

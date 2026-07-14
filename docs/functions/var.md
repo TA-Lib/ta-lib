@@ -49,4 +49,4 @@ Variance
 
 ## See Also
 
-[STDDEV](stddev.md)
+[STDDEV](/functions/stddev.md)

@@ -35,4 +35,4 @@ Rickshaw Man
 
 ## See Also
 
-[CDLLONGLEGGEDDOJI](cdllongleggeddoji.md) · [CDLDOJI](cdldoji.md) · [CDLHIGHWAVE](cdlhighwave.md)
+[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLDOJI](/functions/cdldoji.md) · [CDLHIGHWAVE](/functions/cdlhighwave.md)

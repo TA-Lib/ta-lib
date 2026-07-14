@@ -39,4 +39,4 @@ Stalled Pattern, Deliberation Pattern
 
 ## See Also
 
-[CDLADVANCEBLOCK](cdladvanceblock.md) · [CDL3WHITESOLDIERS](cdl3whitesoldiers.md) · [CDLXSIDEGAP3METHODS](cdlxsidegap3methods.md)
+[CDLADVANCEBLOCK](/functions/cdladvanceblock.md) · [CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)

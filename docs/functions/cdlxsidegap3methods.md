@@ -39,4 +39,4 @@ Upside/Downside Gap Three Methods, Upside Gap Three Methods, Downside Gap Three 
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](cdlgapsidesidewhite.md) · [CDLTASUKIGAP](cdltasukigap.md) · [CDLRISEFALL3METHODS](cdlrisefall3methods.md)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLTASUKIGAP](/functions/cdltasukigap.md) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md)

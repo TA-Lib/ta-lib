@@ -47,7 +47,7 @@ Chaikin A/D Oscillator, Chaikin Oscillator
 
 ## See Also
 
-[AD](ad.md) · [EMA](ema.md)
+[AD](/functions/ad.md) · [EMA](/functions/ema.md)
 
 ## References
 

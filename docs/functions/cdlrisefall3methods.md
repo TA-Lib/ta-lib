@@ -41,4 +41,4 @@ Rising/Falling Three Methods, Rising Three Methods, Falling Three Methods
 
 ## See Also
 
-[CDLXSIDEGAP3METHODS](cdlxsidegap3methods.md) · [CDL3INSIDE](cdl3inside.md) · [CDL3OUTSIDE](cdl3outside.md)
+[CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md) · [CDL3INSIDE](/functions/cdl3inside.md) · [CDL3OUTSIDE](/functions/cdl3outside.md)

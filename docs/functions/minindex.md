@@ -47,4 +47,4 @@ Index of Lowest Value, Lowest Value Index, Rolling Argmin
 
 ## See Also
 
-[MIN](min.md) · [MAXINDEX](maxindex.md) · [MINMAXINDEX](minmaxindex.md) · [MINMAX](minmax.md)
+[MIN](/functions/min.md) · [MAXINDEX](/functions/maxindex.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MINMAX](/functions/minmax.md)

@@ -43,4 +43,4 @@ Rate of Change, Price Rate of Change
 
 ## See Also
 
-[MOM](mom.md) · [ROCP](rocp.md) · [ROCR](rocr.md) · [ROCR100](rocr100.md)
+[MOM](/functions/mom.md) · [ROCP](/functions/rocp.md) · [ROCR](/functions/rocr.md) · [ROCR100](/functions/rocr100.md)

@@ -39,4 +39,4 @@ Spinning Top
 
 ## See Also
 
-[CDLDOJI](cdldoji.md) · [CDLHIGHWAVE](cdlhighwave.md) · [CDLLONGLEGGEDDOJI](cdllongleggeddoji.md)
+[CDLDOJI](/functions/cdldoji.md) · [CDLHIGHWAVE](/functions/cdlhighwave.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md)

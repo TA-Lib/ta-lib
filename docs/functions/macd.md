@@ -53,7 +53,7 @@ moving average convergence divergence, moving average convergence/divergence
 
 ## See Also
 
-[MACDEXT](macdext.md) · [MACDFIX](macdfix.md) · [EMA](ema.md) · [APO](apo.md)
+[MACDEXT](/functions/macdext.md) · [MACDFIX](/functions/macdfix.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md)
 
 ## References
 

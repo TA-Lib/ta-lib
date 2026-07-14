@@ -48,4 +48,4 @@ Exponential Moving Average, Exponentially Weighted Moving Average, EWMA
 
 ## See Also
 
-[SMA](sma.md) · [DEMA](dema.md) · [TEMA](tema.md) · [MA](ma.md) · [MACD](macd.md) · [T3](t3.md)
+[SMA](/functions/sma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md) · [MA](/functions/ma.md) · [MACD](/functions/macd.md) · [T3](/functions/t3.md)

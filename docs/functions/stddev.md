@@ -48,4 +48,4 @@ Standard Deviation, SD, sigma
 
 ## See Also
 
-[VAR](var.md) · [BBANDS](bbands.md) · [SMA](sma.md)
+[VAR](/functions/var.md) · [BBANDS](/functions/bbands.md) · [SMA](/functions/sma.md)

@@ -43,4 +43,4 @@ Short Line Candle, Short Line
 
 ## See Also
 
-[CDLLONGLINE](cdllongline.md) · [CDLSPINNINGTOP](cdlspinningtop.md) · [CDLDOJI](cdldoji.md)
+[CDLLONGLINE](/functions/cdllongline.md) · [CDLSPINNINGTOP](/functions/cdlspinningtop.md) · [CDLDOJI](/functions/cdldoji.md)

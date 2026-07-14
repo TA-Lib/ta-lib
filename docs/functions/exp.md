@@ -39,4 +39,4 @@ exponential, e^x
 
 ## See Also
 
-[LN](ln.md) · [SQRT](sqrt.md)
+[LN](/functions/ln.md) · [SQRT](/functions/sqrt.md)

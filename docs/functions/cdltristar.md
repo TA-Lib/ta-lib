@@ -39,4 +39,4 @@ Tristar Pattern, Tri-Star
 
 ## See Also
 
-[CDLDOJI](cdldoji.md) · [CDLDOJISTAR](cdldojistar.md) · [CDLMORNINGDOJISTAR](cdlmorningdojistar.md) · [CDLEVENINGDOJISTAR](cdleveningdojistar.md)
+[CDLDOJI](/functions/cdldoji.md) · [CDLDOJISTAR](/functions/cdldojistar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md)

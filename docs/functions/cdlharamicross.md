@@ -39,4 +39,4 @@ Harami Cross
 
 ## See Also
 
-[CDLHARAMI](cdlharami.md) · [CDLDOJI](cdldoji.md)
+[CDLHARAMI](/functions/cdlharami.md) · [CDLDOJI](/functions/cdldoji.md)

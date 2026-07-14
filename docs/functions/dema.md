@@ -47,7 +47,7 @@ Double Exponential Moving Average
 
 ## See Also
 
-[EMA](ema.md) · [TEMA](tema.md) · [MA](ma.md)
+[EMA](/functions/ema.md) · [TEMA](/functions/tema.md) · [MA](/functions/ma.md)
 
 ## References
 

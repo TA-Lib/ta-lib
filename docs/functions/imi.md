@@ -43,4 +43,4 @@ Intraday Momentum Index
 
 ## See Also
 
-[RSI](rsi.md)
+[RSI](/functions/rsi.md)

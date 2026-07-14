@@ -51,4 +51,4 @@ Moving Average Variable Period, Variable Period Moving Average
 
 ## See Also
 
-[MA](ma.md) · [SMA](sma.md) · [MAMA](mama.md) · [T3](t3.md)
+[MA](/functions/ma.md) · [SMA](/functions/sma.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md)

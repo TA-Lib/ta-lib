@@ -114,7 +114,7 @@ jobs:
             exit 1
           fi
 
-      # Soft check only: the website (docs/install.md) is expected to lag briefly
+      # Soft check only: the website (website/src/install/README.md) is expected to lag briefly
       # after a release until dev-nightly syncs it and it merges to main. Surface
       # a warning if it is behind, but never fail -- keep the main badge green.
       - name: Warn if website is out of date (soft)
