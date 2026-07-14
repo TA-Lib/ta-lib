@@ -1,9 +1,5 @@
 # ta-lib.org deployment — VuePress (vuepress-theme-hope) build → gh-pages.
 #
-# This REPLACES the previous MkDocs `.github/workflows/docs.yml` at cutover:
-# copy this file to `.github/workflows/docs.yml` (overwriting the mkdocs one)
-# so only one workflow deploys to gh-pages.
-#
 # Mirrors the proven sui-cookbook / suibase VuePress deploy: pinned pnpm
 # (an explicit version avoids pnpm/action-setup's self-update crash that hit
 # "latest"), frozen-lockfile install, build, then JamesIves gh-pages deploy.
@@ -12,6 +8,11 @@ name: Documentation
 on:
   push:
     branches: [main]
+    # Only redeploy when the site actually changes. The generated function
+    # pages live under website/src/functions/, so they are covered too.
+    # `workflow_dispatch` still forces a manual deploy regardless.
+    paths:
+      - 'website/**'
   workflow_dispatch:
 
 permissions:
