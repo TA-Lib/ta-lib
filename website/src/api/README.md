@@ -13,23 +13,23 @@ to build and link to TA-Lib</a></p>
 
 <blockquote>
 <p><a href="#direct_call">3.1 Direct call to a TA Function</a><br>
-<a href="#Output output_size">3.2 Output Size</a><br></p>
+<a href="#output_size">3.2 Output Size</a><br></p>
 </blockquote>
 
-<p><a href="#Advanced">4.0 Advanced Features</a></p>
+<p><a href="#advanced">4.0 Advanced Features</a></p>
 <blockquote>
-<p><a href="#Abstraction">4.1 Abstraction layer</a><br>
-<a href="#Unstable Period">4.2 Unstable Period</a><br>
-<a href="#Input Type">4.3 Input Type: float vs. double</a><br>
-<a href="#Multithreading">4.4 High-performance Multi-threading</a></p>
+<p><a href="#abstract">4.1 Abstraction layer</a><br>
+<a href="#unstable_period">4.2 Unstable Period</a><br>
+<a href="#input_type">4.3 Input Type: float vs. double</a><br>
+<a href="#multithreading">4.4 High-performance Multi-threading</a></p>
 </blockquote>
 
-<h2><a name="intro">1.0 Introduction</a></h2>
+<h2 id="intro">1.0 Introduction</h2>
 
 <p>All public functions of the libraries are documented here.</p>
 <p>You must first <a href="/install/">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile with your program.</p>
 
-<h2><a name="build">2.0 How to build and link to TA-Lib</a></h2>
+<h2 id="build">2.0 How to build and link to TA-Lib</h2>
 
 In your source code, add <b>#include &quot;ta_libc.h&quot;</b> and link to the library named "ta-lib".
 
@@ -59,7 +59,7 @@ For [homebrew](https://formulae.brew.sh/formula/ta-lib), use <b>brew --prefix ta
 For windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bits and <b>C:\Program Files (x86)\TA-Lib</b> for 32-bits.
 
 
-<h2><a name="ta_func">3.0 Technical Analysis Functions</a></h2>
+<h2 id="ta_func">3.0 Technical Analysis Functions</h2>
 
 Make sure TA_Initialize was called once (and only once) prior to any other API functions.
 
@@ -67,7 +67,7 @@ All TA functions can be <a href="#direct_call">directly called</a>.
 
 Alternatively, an app can call all TA functions using the <a href="#abstract">abstraction layer</a>. This is useful to make dynamic call without knowing at priori the function name or parameters. Example of use is to automatically integrate new functions after upgrading TA-Lib, or for "mutating" calls while strategy searching (e.g. genetic/neural network algo).
 
-<h3><a name="direct_call">3.1 Direct call to a TA Function</a></h3>
+<h3 id="direct_call">3.1 Direct call to a TA Function</h3>
 Direct calls could be done through the API defined in
 <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_func.h">include/ta_func.h</a><br/>
 <br/>
@@ -163,7 +163,7 @@ retCode = TA_MA( <span style="background-color: #00FFFF; color: #000" lang="en-u
                  <span style="background-color: #FFFF00; color: #000">&amp;outBeg</span>, <span style="background-color: #FFFF00; color: #000">&amp;outNbElement</span>, <span style="background-color: #FFFF00; color: #000">&amp;buffer[0]</span> );</pre>
 </div>
 <p>Of course, the input is overwritten, but this capability diminish needs for temporary memory buffers. This capability is true for all TA functions.</p>
-<h3 align="justify"><a name="output_size">3.2 Output Size</a></h3>
+<h3 id="output_size" align="justify">3.2 Output Size</h3>
 <p>
 It is important that the output array is large enough. Depending of your needs, you might find one of the following method useful to determine the output allocation size. All these methods works consistently for all TA functions:</p>
 
@@ -178,9 +178,9 @@ It is important that the output array is large enough. Depending of your needs, 
 there is a TA_SMA_Lookback.</p>
 <p>The lookback indicates how many inputs are consume before the first output can be calculated. Example: A simple moving average (SMA) of period 10 will have a lookback of 9.</p>
 
-<h2><a name="Advanced">4.0 Advanced Features</a></h2>
+<h2 id="advanced">4.0 Advanced Features</h2>
 
-<h3><a name="abstract">4.1 Abstraction Layer</a></h3>
+<h3 id="abstract">4.1 Abstraction Layer</h3>
 <p>All the TA Function can be called using the interface defined in
 <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a></p>
 <p>The abstraction layer is particularly useful for an application who wishes to support the complete list of TA functions without having to maintain new code each time a new function is added to TA-Lib. If you wish to simply integrate in your application a small number of specific functions, then you may be better to do simpler direct call (see previous section).</p>
@@ -197,13 +197,13 @@ Your app is searching for "best strategies" using your own backtesting platform.
 <p><b>Use Case 3:</b><br/>
 You can generate any "glue code" or "wrapper" for a high-level language (e.g. Python, R, Java, C#) or for simply interfacing with your app. A lot of derived work are now "maintained" automatically using the abstract layer.</p>
 
-<h3><a name="Unstable Period">4.2 Unstable Period</a></h3>
+<h3 id="unstable_period">4.2 Unstable Period</h3>
 <p>Some TA functions provides different results depending of the &quot;starting point&quot; of the data being
 involve. This is often referred as a function having memories. An example of such function is the Exponential Moving Average. It is
 possible to control the unstable period (the amount of data to strip off) with
 TA_SetUnstablePeriod and
 TA_GetUnstablePeriod.</p>
-<h3><a name="Input Type">4.3 Input Type: float vs. double</a></h3>
+<h3 id="input_type">4.3 Input Type: float vs. double</h3>
 <p>Each TA function have two implementation. One accepts input arrays of float and the other accepts double. The float version has a &quot;TA_S_&quot; suffix e.g. for TA_MA there is an equivalent TA_S_MA function.</p>
 <pre>TA_RetCode TA_MA( int     startIdx,
                   int          endIdx,
@@ -228,7 +228,7 @@ TA_GetUnstablePeriod.</p>
 <p>Some apps have their price bar data already loaded as float. The TA_S_XXXX functions allows to digest these directly (no copy needed) while still maintaining all intermediate calculation as double.
 </p>
 
-<h3><a name="Multithreading">4.4 High-performance multi-threading</a></h3>
+<h3 id="multithreading">4.4 High-performance multi-threading</h3>
 
 <p>TA-Lib is multi-thread safe where it matters the most for performance: When calling any TA functions (e.g. TA_SMA, TA_RSI etc... )</p>
 
