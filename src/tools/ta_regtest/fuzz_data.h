@@ -173,6 +173,19 @@ static int fuzz_cdl_3whitesoldiers(double *o,double *h,double *l,double *c,doubl
     return p;
 }
 
+/* CDL3STARSINSOUTH (bullish, +100 on the 3rd candle): a long black candle with a
+ * long lower shadow; a smaller black candle opening higher but making a lower low
+ * within the 1st range; a tiny black marubozu engulfed by the 2nd. */
+static int fuzz_cdl_3starsinsouth(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                  int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8.0, base+8.0, base-12.0, base);      /* 1st black long + long lower shadow */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+6.0, base+6.0, base-4.0,  base+2.0);  /* 2nd black smaller body            */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+1.0, base+1.0, base,      base);      /* 3rd black tiny marubozu           */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -181,6 +194,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_2crows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3blackcrows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3whitesoldiers(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_3starsinsouth(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
