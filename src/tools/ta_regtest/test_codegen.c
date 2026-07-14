@@ -3545,7 +3545,8 @@ static const char * const cdl_catalog[] = {
     "CDLHOMINGPIGEON",
     "CDL3INSIDE",
     "CDLIDENTICAL3CROWS",
-    "CDLSTALLEDPATTERN"
+    "CDLSTALLEDPATTERN",
+    "CDLUPSIDEGAP2CROWS"
 };
 #define CDL_NCATALOG ((int)(sizeof(cdl_catalog)/sizeof(cdl_catalog[0])))
 
