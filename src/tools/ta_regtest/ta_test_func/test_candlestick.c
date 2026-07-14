@@ -537,6 +537,148 @@ static void build_2crows( void )
   pb_flat(8);
 }
 
+/* CDL3BLACKCROWS MC/DC: detection (-100) + one flip per structural predicate. */
+static void build_3blackcrows( void )
+{
+  pb_flat(6);
+  /* ===== DETECTION =====
+     A white, B/C/D three declining black crows, each opens within prior body,
+     each near-zero lower shadow, A.high > B.close. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);        /* A  white */
+  pb_bar(103,103.5,101,101);      /* B  1st black */
+  pb_bar(102,102.5,99,99);        /* C  2nd black */
+  int d=pb_bar(101,101.5,97,97);  /* D  3rd black */
+  pb_expect(d,-100,"detect");
+  pb_flat(8);
+
+  /* FLIP 1 : break p1  colorA==white -> make A black (only p1) */
+  pb_primer(12,100,2,1);
+  pb_bar(104,105,100,100);        /* A  black */
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f1=pb_bar(101,101.5,97,97);
+  pb_expect(f1,0,"break p1 colorA-white");
+  pb_flat(8);
+
+  /* FLIP 2 : break p2  colorB==black -> B doji/white (p6 co-flips: coupled) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,103,103);      /* B  doji -> white */
+  pb_bar(102,102.5,99,99);
+  int f2=pb_bar(101,101.5,97,97);
+  pb_expect(f2,0,"break p2 colorB-black");
+  pb_flat(8);
+
+  /* FLIP 3 : break p3  colorC==black -> C doji/white (p8,p10 co-flip: coupled) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,102,102);      /* C  doji -> white */
+  int f3=pb_bar(101,101.5,97,97);
+  pb_expect(f3,0,"break p3 colorC-black");
+  pb_flat(8);
+
+  /* FLIP 4 : break p4  colorD==black -> D doji/white (p11 co-flips: coupled) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f4=pb_bar(101,101.5,101,101); /* D  doji -> white */
+  pb_expect(f4,0,"break p4 colorD-black");
+  pb_flat(8);
+
+  /* FLIP 5 : break p5  openC<openB -> openC above openB (only p5) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(103.5,104,99,99);        /* C  opens above B.open=103 */
+  int f5=pb_bar(101,101.5,97,97);
+  pb_expect(f5,0,"break p5 openC<openB");
+  pb_flat(8);
+
+  /* FLIP 6 : break p6  openC>closeB -> openC below closeB (only p6) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(100,100.5,99,99);        /* C  opens below B.close=101 */
+  int f6=pb_bar(99.5,100,97,97);  /* D  re-fit inside C body (99,100) */
+  pb_expect(f6,0,"break p6 openC>closeB");
+  pb_flat(8);
+
+  /* FLIP 7 : break p7  openD<openC -> openD above openC (only p7) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f7=pb_bar(102.5,103,97,97); /* D  opens above C.open=102 */
+  pb_expect(f7,0,"break p7 openD<openC");
+  pb_flat(8);
+
+  /* FLIP 8 : break p8  openD>closeC -> openD below closeC (only p8) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f8=pb_bar(98,98.5,97,97);   /* D  opens below C.close=99 */
+  pb_expect(f8,0,"break p8 openD>closeC");
+  pb_flat(8);
+
+  /* FLIP 9 : break p9  highA>closeB -> A.high below B.close (only p9) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,100.9,100,100.8);    /* A  white, high 100.9 < B.close 101 */
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f9=pb_bar(101,101.5,97,97);
+  pb_expect(f9,0,"break p9 highA>closeB");
+  pb_flat(8);
+
+  /* FLIP 10: break p10 closeB>closeC -> B.close below C.close (only p10) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,98.5,98.5);    /* B  close 98.5 <= C.close 99 */
+  pb_bar(102,102.5,99,99);
+  int f10=pb_bar(101,101.5,97,97);
+  pb_expect(f10,0,"break p10 closeB>closeC");
+  pb_flat(8);
+
+  /* FLIP 11: break p11 closeC>closeD -> D.close above C.close (only p11) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f11=pb_bar(101,101.5,99.5,99.5); /* D  close 99.5 >= C.close 99 */
+  pb_expect(f11,0,"break p11 closeC>closeD");
+  pb_flat(8);
+
+  /* FLIP 12: break p12 B lower shadow short -> long lower shadow (only p12) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,100,101);      /* B  lowershadow = 101-100 = 1 > ~0.4 */
+  pb_bar(102,102.5,99,99);
+  int f12=pb_bar(101,101.5,97,97);
+  pb_expect(f12,0,"break p12 shadowB-short");
+  pb_flat(8);
+
+  /* FLIP 13: break p13 C lower shadow short -> long lower shadow (only p13) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,97,99);        /* C  lowershadow = 99-97 = 2 > ~0.4 */
+  int f13=pb_bar(101,101.5,97,97);
+  pb_expect(f13,0,"break p13 shadowC-short");
+  pb_flat(8);
+
+  /* FLIP 14: break p14 D lower shadow short -> long lower shadow (only p14) */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f14=pb_bar(101,101.5,95,97); /* D  lowershadow = 97-95 = 2 > ~0.4 */
+  pb_expect(f14,0,"break p14 shadowD-short");
+  pb_flat(8);
+}
+
 /* Predicate-coverage (MC/DC) gate for the marquee multi-candle patterns. Runs
  * the actual TA function over detection + per-predicate near-miss scenarios and
  * asserts the exact integer output at each (the rarer multi-candle patterns that
@@ -546,6 +688,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
    pb_reset(); build_2crows();      e = pb_check_mcdc("CDL2CROWS",      TA_CDL2CROWS);      if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3blackcrows(); e = pb_check_mcdc("CDL3BLACKCROWS", TA_CDL3BLACKCROWS); if( e != TA_TEST_PASS ) return e;
    return TA_TEST_PASS;
 }
 
