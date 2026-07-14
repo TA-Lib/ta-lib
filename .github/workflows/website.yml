@@ -3,7 +3,7 @@
 # Mirrors the proven sui-cookbook / suibase VuePress deploy: pinned pnpm
 # (an explicit version avoids pnpm/action-setup's self-update crash that hit
 # "latest"), frozen-lockfile install, build, then JamesIves gh-pages deploy.
-name: Documentation
+name: Website
 
 on:
   push:
