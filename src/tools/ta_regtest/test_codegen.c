@@ -3475,38 +3475,149 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }
 
-/* Guard the FUZZ_CANDLE data shape (fuzz_data.h) that makes the candlestick
- * streams and the v0.6.4 differential non-vacuous: it must actually FIRE the
- * inside-bar patterns (detection AND confirmation, both directions). If a future
- * edit to that generator stops producing patterns, fuzz-064 and stream_verify
- * would silently go vacuous (all-zero == all-zero) for CDLHIKKAKE(MOD). The
- * deterministic MC/DC gate (test_candlestick.c) is the independent backstop for
- * the refactor itself; this only guards the differential/stream coverage. */
-static ErrorNumber verify_fuzz_candle_nonvacuous(void)
+/* ------------------------------------------------------------------------ *
+ * Non-vacuity guard for candlestick pattern coverage (issue #109).
+ *
+ * A candlestick differential/stream test passes VACUOUSLY when the input data
+ * never triggers the pattern: every output is 0, and all-zero == all-zero holds
+ * regardless of the implementation. Both the fuzz-064 (current vs frozen v0.6.4)
+ * and stream_verify (stream vs batch) gates draw their inputs from fuzz_gen()
+ * shapes, so a pattern that fires on NO shape has its bit-exactness asserted
+ * against all-zero output — its real decision logic goes unverified.
+ *
+ * This guard asserts that EVERY candlestick fires at least one non-zero output
+ * on the shapes the candlestick sweeps actually run — the "stream shape set"
+ * {RANDWALK, CONSTANT, TIE_HEAVY, EXTREME, WITH_ZEROS, CANDLE, ZEROSUM} — at
+ * BOTH the stream size (240) and the guard's larger size (512). MONO_UP /
+ * MONO_DOWN are excluded because the candlestick stream legs skip them, so a
+ * pattern firing only there would still be stream-vacuous. The pattern-rich
+ * FUZZ_CANDLE shape (fuzz_data.h) is grown with deterministic per-family windows
+ * so the rarer multi-candle patterns fire; this guard fails loudly if any
+ * non-exempt pattern's coverage is (or becomes) vacuous.
+ *
+ * cdl_pending[] lists patterns not yet covered by a deterministic window
+ * (tracked in issue #109); they are exempt from the assertion and the list
+ * shrinks to empty as each family's window lands. The Hikkake pair additionally
+ * keeps the stronger 4-output-class check (detection AND +/-200 confirmation,
+ * both directions); the MC/DC gate in test_candlestick.c is the independent
+ * backstop for the pattern logic itself. */
+
+/* Shapes the candlestick stream/fuzz sweeps actually run for a pattern. */
+static const int CDL_STREAM_SHAPES[] =
+    { FUZZ_RANDWALK, FUZZ_CONSTANT, FUZZ_TIE_HEAVY, FUZZ_EXTREME,
+      FUZZ_WITH_ZEROS, FUZZ_CANDLE, FUZZ_ZEROSUM };
+#define CDL_NSTREAM_SHAPES ((int)(sizeof(CDL_STREAM_SHAPES)/sizeof(int)))
+
+/* Patterns not yet covered by a deterministic FUZZ_CANDLE window (issue #109).
+ * Exempt from the assertion until their family's window lands. */
+static const char * const cdl_pending[] = {
+    "CDL2CROWS", "CDL3BLACKCROWS", "CDL3LINESTRIKE", "CDL3STARSINSOUTH",
+    "CDL3WHITESOLDIERS", "CDLADVANCEBLOCK", "CDLCONCEALBABYSWALL", "CDLINNECK",
+    "CDLMATHOLD", "CDLRISEFALL3METHODS", "CDLUNIQUE3RIVER"
+};
+#define CDL_NPENDING ((int)(sizeof(cdl_pending)/sizeof(cdl_pending[0])))
+
+static int cdl_is_pending(const char *name)
+{
+    int i;
+    for( i = 0; i < CDL_NPENDING; i++ )
+        if( strcmp(name, cdl_pending[i]) == 0 ) return 1;
+    return 0;
+}
+
+/* Count non-zero outputs of a candlestick on one (shape,seed,n) fuzz case. */
+static int cdl_fire_on(const TA_FuncHandle *handle, int shape, int seed, int n)
 {
     static double o[512], h[512], l[512], c[512], vv[512], oi[512];
     static int out[512];
-    struct { const char *nm;
-             TA_RetCode (*fn)(int,int,const double*,const double*,const double*,const double*,int*,int*,int*); }
-        F[2] = { { "CDLHIKKAKE", TA_CDLHIKKAKE }, { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD } };
-    int fi;
-    for( fi = 0; fi < 2; fi++ )
-    {
-        int p100=0, n100=0, p200=0, n200=0, seed;
+    TA_ParamHolder *ph; int beg = 0, nb = 0, k, cnt = 0;
+    if( n > 512 ) n = 512;
+    fuzz_gen(shape, seed, n, o, h, l, c, vv, oi);
+    if( TA_ParamHolderAlloc(handle, &ph) != TA_SUCCESS ) return -1;
+    TA_SetInputParamPricePtr(ph, 0, o, h, l, c, vv, oi);
+    TA_SetOutputParamIntegerPtr(ph, 0, out);
+    if( TA_CallFunc(ph, 0, n - 1, &beg, &nb) == TA_SUCCESS )
+        for( k = 0; k < nb; k++ ) if( out[k] ) cnt++;
+    TA_ParamHolderFree(ph);
+    return cnt;
+}
+
+/* Fires on at least one stream-run shape at size n (seeds 1..6)? */
+static int cdl_fires_at_size(const TA_FuncHandle *handle, int n)
+{
+    int si, seed;
+    for( si = 0; si < CDL_NSTREAM_SHAPES; si++ )
         for( seed = 1; seed <= 6; seed++ )
+            if( cdl_fire_on(handle, CDL_STREAM_SHAPES[si], seed, n) > 0 ) return 1;
+    return 0;
+}
+
+/* Collector for TA_ForEachFunc: gather candlestick handles + names. */
+typedef struct { const TA_FuncHandle *h[128]; const char *nm[128]; int n; } CdlList;
+static void cdl_collect(const TA_FuncInfo *fi, void *opaque)
+{
+    CdlList *L = (CdlList *)opaque;
+    if( (fi->flags & TA_FUNC_FLG_CANDLESTICK) && L->n < 128 )
+    { L->h[L->n] = fi->handle; L->nm[L->n] = fi->name; L->n++; }
+}
+
+static ErrorNumber verify_fuzz_candle_nonvacuous(void)
+{
+    CdlList L; int i, failed = 0;
+    L.n = 0;
+    TA_ForEachFunc(cdl_collect, &L);
+    for( i = 0; i < L.n; i++ )
+    {
+        int f240 = cdl_fires_at_size(L.h[i], 240);
+        int f512 = cdl_fires_at_size(L.h[i], 512);
+        if( cdl_is_pending(L.nm[i]) )
         {
-            int bi=0, nb=0, k;
-            fuzz_gen(FUZZ_CANDLE, seed, 512, o, h, l, c, vv, oi);
-            if( F[fi].fn(0, 511, o, h, l, c, &bi, &nb, out) != TA_SUCCESS ) continue;
-            for( k = 0; k < nb; k++ ) { int val=out[k];
-                if(val==100)p100++; else if(val==-100)n100++; else if(val==200)p200++; else if(val==-200)n200++; }
+            if( f240 && f512 )
+                printf("NOTE: pending candlestick %s now fires on the stream "
+                       "shapes — promote it out of cdl_pending[] (issue #109).\n",
+                       L.nm[i]);
+            continue;
         }
-        if( !(p100 && n100 && p200 && n200) )
+        if( !(f240 && f512) )
         {
-            printf("FUZZ_CANDLE VACUOUS for %s: +100=%d -100=%d +200=%d -200=%d "
-                   "(the pattern shape must fire detection AND confirmation)\n",
-                   F[fi].nm, p100, n100, p200, n200);
-            return TA_TSTCDL_PREDICATE_VACUOUS;
+            printf("CANDLE VACUOUS: %s fires on no stream-run shape "
+                   "(N=240:%d N=512:%d) — its fuzz-064/stream coverage is "
+                   "all-zero==all-zero. Add a deterministic FUZZ_CANDLE window "
+                   "(issue #109) or list it in cdl_pending[].\n",
+                   L.nm[i], f240, f512);
+            failed++;
+        }
+    }
+    if( failed )
+        return TA_TSTCDL_PREDICATE_VACUOUS;
+
+    /* Stronger check for the Hikkake pair: the pattern shape must fire ALL FOUR
+     * output classes (detection AND +/-200 confirmation, both directions). */
+    {
+        static double o[512], h[512], l[512], c[512], vv[512], oi[512];
+        static int out[512];
+        struct { const char *nm;
+                 TA_RetCode (*fn)(int,int,const double*,const double*,const double*,const double*,int*,int*,int*); }
+            F[2] = { { "CDLHIKKAKE", TA_CDLHIKKAKE }, { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD } };
+        int fi;
+        for( fi = 0; fi < 2; fi++ )
+        {
+            int p100=0, n100=0, p200=0, n200=0, seed;
+            for( seed = 1; seed <= 6; seed++ )
+            {
+                int bi=0, nb=0, k;
+                fuzz_gen(FUZZ_CANDLE, seed, 512, o, h, l, c, vv, oi);
+                if( F[fi].fn(0, 511, o, h, l, c, &bi, &nb, out) != TA_SUCCESS ) continue;
+                for( k = 0; k < nb; k++ ) { int val=out[k];
+                    if(val==100)p100++; else if(val==-100)n100++; else if(val==200)p200++; else if(val==-200)n200++; }
+            }
+            if( !(p100 && n100 && p200 && n200) )
+            {
+                printf("FUZZ_CANDLE VACUOUS for %s: +100=%d -100=%d +200=%d -200=%d "
+                       "(the pattern shape must fire detection AND confirmation)\n",
+                       F[fi].nm, p100, n100, p200, n200);
+                return TA_TSTCDL_PREDICATE_VACUOUS;
+            }
         }
     }
     return TA_TEST_PASS;
