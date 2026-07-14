@@ -294,6 +294,16 @@ static int fuzz_cdl_kicking(double *o,double *h,double *l,double *c,double *v,do
     return p;
 }
 
+/* CDLKICKINGBYLENGTH: 2nd pattern bar (index 13) = +100 (bullish; bigger white body determines sign) */
+static int fuzz_cdl_kickingbylength(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                    int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+40, base+40, base+20, base+20); /* bar12: 1st marubozu = BLACK (o140>c120), long body=20, upper/lower shadow=0 */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+45, base+70, base+45, base+70); /* bar13: 2nd marubozu = WHITE (c170>o145), long body=25, shadows=0, low145 gaps up over bar12 high140 */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -311,6 +321,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_inneck(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_unique3river(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_kicking(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_kickingbylength(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
