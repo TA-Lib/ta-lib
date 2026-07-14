@@ -39,4 +39,4 @@ Harami, Harami Pattern
 
 ## See Also
 
-[CDLHARAMICROSS](/functions/cdlharamicross.md) · [CDLENGULFING](/functions/cdlengulfing.md)
+[CDLHARAMICROSS](/functions/cdlharamicross) · [CDLENGULFING](/functions/cdlengulfing)

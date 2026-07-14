@@ -49,7 +49,7 @@ Kaufman Adaptive Moving Average, Kaufman's Adaptive Moving Average
 
 ## See Also
 
-[MAMA](/functions/mama.md) · [EMA](/functions/ema.md) · [MA](/functions/ma.md)
+[MAMA](/functions/mama) · [EMA](/functions/ema) · [MA](/functions/ma)
 
 ## References
 

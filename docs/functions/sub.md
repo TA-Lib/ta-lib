@@ -40,4 +40,4 @@ Subtract, Vector Subtraction
 
 ## See Also
 
-[ADD](/functions/add.md) · [MULT](/functions/mult.md) · [DIV](/functions/div.md)
+[ADD](/functions/add) · [MULT](/functions/mult) · [DIV](/functions/div)

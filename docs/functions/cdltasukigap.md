@@ -39,4 +39,4 @@ Tasuki Gap, Upside/Downside Tasuki Gap
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods)

@@ -39,4 +39,4 @@ Hyperbolic Cosine
 
 ## See Also
 
-[SINH](/functions/sinh.md) · [TANH](/functions/tanh.md) · [COS](/functions/cos.md)
+[SINH](/functions/sinh) · [TANH](/functions/tanh) · [COS](/functions/cos)

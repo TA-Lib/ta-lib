@@ -39,4 +39,4 @@ Hyperbolic Tangent
 
 ## See Also
 
-[SINH](/functions/sinh.md) · [COSH](/functions/cosh.md) · [TAN](/functions/tan.md)
+[SINH](/functions/sinh) · [COSH](/functions/cosh) · [TAN](/functions/tan)

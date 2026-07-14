@@ -39,4 +39,4 @@ Weighted Close Price, Weighted Close
 
 ## See Also
 
-[TYPPRICE](/functions/typprice.md) · [MEDPRICE](/functions/medprice.md) · [AVGPRICE](/functions/avgprice.md)
+[TYPPRICE](/functions/typprice) · [MEDPRICE](/functions/medprice) · [AVGPRICE](/functions/avgprice)

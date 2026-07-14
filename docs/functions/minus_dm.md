@@ -47,7 +47,7 @@ Minus Directional Movement, -DM
 
 ## See Also
 
-[PLUS_DM](/functions/plus_dm.md) · [MINUS_DI](/functions/minus_di.md) · [PLUS_DI](/functions/plus_di.md) · [DX](/functions/dx.md) · [ADX](/functions/adx.md) · [ADXR](/functions/adxr.md)
+[PLUS_DM](/functions/plus_dm) · [MINUS_DI](/functions/minus_di) · [PLUS_DI](/functions/plus_di) · [DX](/functions/dx) · [ADX](/functions/adx) · [ADXR](/functions/adxr)
 
 ## References
 

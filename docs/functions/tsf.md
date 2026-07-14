@@ -43,4 +43,4 @@ Time Series Forecast
 
 ## See Also
 
-[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md)
+[LINEARREG](/functions/linearreg) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept) · [LINEARREG_ANGLE](/functions/linearreg_angle)

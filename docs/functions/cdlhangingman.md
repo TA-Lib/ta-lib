@@ -39,4 +39,4 @@ Hanging Man
 
 ## See Also
 
-[CDLHAMMER](/functions/cdlhammer.md) · [CDLINVERTEDHAMMER](/functions/cdlinvertedhammer.md) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar.md) · [CDLTAKURI](/functions/cdltakuri.md)
+[CDLHAMMER](/functions/cdlhammer) · [CDLINVERTEDHAMMER](/functions/cdlinvertedhammer) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar) · [CDLTAKURI](/functions/cdltakuri)

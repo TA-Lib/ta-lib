@@ -39,4 +39,4 @@ Modified Hikkake, Modified Hikkake Pattern
 
 ## See Also
 
-[CDLHIKKAKE](/functions/cdlhikkake.md)
+[CDLHIKKAKE](/functions/cdlhikkake)

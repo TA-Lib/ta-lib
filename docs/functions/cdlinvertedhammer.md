@@ -39,4 +39,4 @@ Inverted Hammer
 
 ## See Also
 
-[CDLHAMMER](/functions/cdlhammer.md) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar.md) · [CDLHANGINGMAN](/functions/cdlhangingman.md)
+[CDLHAMMER](/functions/cdlhammer) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar) · [CDLHANGINGMAN](/functions/cdlhangingman)

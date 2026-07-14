@@ -43,4 +43,4 @@ Matching Low
 
 ## See Also
 
-CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)
+CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon)

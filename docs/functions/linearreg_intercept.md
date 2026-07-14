@@ -45,4 +45,4 @@ Linear Regression Intercept
 
 ## See Also
 
-[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md) · [TSF](/functions/tsf.md)
+[LINEARREG](/functions/linearreg) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [LINEARREG_ANGLE](/functions/linearreg_angle) · [TSF](/functions/tsf)

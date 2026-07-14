@@ -47,7 +47,7 @@ Aroon Oscillator
 
 ## See Also
 
-[AROON](/functions/aroon.md) · [MINMAX](/functions/minmax.md)
+[AROON](/functions/aroon) · [MINMAX](/functions/minmax)
 
 ## References
 

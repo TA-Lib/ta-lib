@@ -35,7 +35,7 @@ Hilbert Transform Instantaneous Trendline, Instantaneous Trendline
 
 ## See Also
 
-[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
+[HT_DCPERIOD](/functions/ht_dcperiod) · [HT_PHASOR](/functions/ht_phasor) · [MAMA](/functions/mama) · [WMA](/functions/wma)
 
 ## References
 

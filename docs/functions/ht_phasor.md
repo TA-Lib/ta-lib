@@ -40,7 +40,7 @@ Hilbert Transform Phasor, InPhase Quadrature
 
 ## See Also
 
-[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_DCPHASE](/functions/ht_dcphase.md) · [HT_SINE](/functions/ht_sine.md) · [HT_TRENDMODE](/functions/ht_trendmode.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
+[HT_DCPERIOD](/functions/ht_dcperiod) · [HT_DCPHASE](/functions/ht_dcphase) · [HT_SINE](/functions/ht_sine) · [HT_TRENDMODE](/functions/ht_trendmode) · [MAMA](/functions/mama) · [WMA](/functions/wma)
 
 ## References
 

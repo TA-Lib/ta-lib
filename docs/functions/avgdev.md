@@ -43,4 +43,4 @@ Average Deviation, Mean Absolute Deviation, MAD
 
 ## See Also
 
-[STDDEV](/functions/stddev.md) · [VAR](/functions/var.md) · [SMA](/functions/sma.md)
+[STDDEV](/functions/stddev) · [VAR](/functions/var) · [SMA](/functions/sma)

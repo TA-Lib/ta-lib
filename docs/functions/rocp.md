@@ -43,4 +43,4 @@ Rate of Change Percentage, Percent Change
 
 ## See Also
 
-[ROC](/functions/roc.md) · [ROCR](/functions/rocr.md) · [ROCR100](/functions/rocr100.md) · [MOM](/functions/mom.md)
+[ROC](/functions/roc) · [ROCR](/functions/rocr) · [ROCR100](/functions/rocr100) · [MOM](/functions/mom)

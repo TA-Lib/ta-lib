@@ -47,7 +47,7 @@ Money Flow Index
 
 ## See Also
 
-[RSI](/functions/rsi.md) · [AD](/functions/ad.md) · [ADOSC](/functions/adosc.md)
+[RSI](/functions/rsi) · [AD](/functions/ad) · [ADOSC](/functions/adosc)
 
 ## References
 

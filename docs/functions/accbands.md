@@ -47,4 +47,4 @@ Acceleration Bands
 
 ## See Also
 
-[SMA](/functions/sma.md) · [BBANDS](/functions/bbands.md)
+[SMA](/functions/sma) · [BBANDS](/functions/bbands)

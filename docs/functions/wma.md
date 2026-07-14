@@ -47,4 +47,4 @@ Weighted Moving Average, Linearly Weighted Moving Average, LWMA
 
 ## See Also
 
-[SMA](/functions/sma.md) · [EMA](/functions/ema.md) · [MA](/functions/ma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md)
+[SMA](/functions/sma) · [EMA](/functions/ema) · [MA](/functions/ma) · [DEMA](/functions/dema) · [TEMA](/functions/tema)

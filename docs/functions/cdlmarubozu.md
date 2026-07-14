@@ -39,4 +39,4 @@ Marubozu, Shaven Head/Bottom
 
 ## See Also
 
-[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu.md) · [CDLLONGLINE](/functions/cdllongline.md) · [CDLBELTHOLD](/functions/cdlbelthold.md)
+[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu) · [CDLLONGLINE](/functions/cdllongline) · [CDLBELTHOLD](/functions/cdlbelthold)

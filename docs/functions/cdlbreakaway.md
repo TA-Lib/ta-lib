@@ -39,4 +39,4 @@ Breakaway
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md) · [CDL3LINESTRIKE](/functions/cdl3linestrike.md)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods) · [CDL3LINESTRIKE](/functions/cdl3linestrike)

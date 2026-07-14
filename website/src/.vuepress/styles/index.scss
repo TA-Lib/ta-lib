@@ -16,3 +16,16 @@
 body:has(.home-hero) .vp-page-title {
   display: none;
 }
+
+// About Us credits tables: hide the column-header row and frame each table
+// with a stronger rule at the top and bottom — restores the look from the
+// previous MkDocs site. Scoped to `.credits` (the wrapper in about/README.md)
+// so ordinary tables elsewhere (function docs, install, ...) are untouched.
+.credits table {
+  border-top: 2px solid var(--vp-c-text);
+  border-bottom: 2px solid var(--vp-c-text);
+}
+
+.credits table thead {
+  display: none;
+}

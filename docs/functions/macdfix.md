@@ -51,4 +51,4 @@ Moving Average Convergence/Divergence Fix
 
 ## See Also
 
-[MACD](/functions/macd.md) · [MACDEXT](/functions/macdext.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md)
+[MACD](/functions/macd) · [MACDEXT](/functions/macdext) · [EMA](/functions/ema) · [APO](/functions/apo)

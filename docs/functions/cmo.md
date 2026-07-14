@@ -48,7 +48,7 @@ Chande Momentum Oscillator
 
 ## See Also
 
-[RSI](/functions/rsi.md)
+[RSI](/functions/rsi)
 
 ## References
 

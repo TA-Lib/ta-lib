@@ -51,4 +51,4 @@ Stochastic Fast, Fast Stochastic Oscillator
 
 ## See Also
 
-[STOCH](/functions/stoch.md) · [STOCHRSI](/functions/stochrsi.md) · [MA](/functions/ma.md)
+[STOCH](/functions/stoch) · [STOCHRSI](/functions/stochrsi) · [MA](/functions/ma)

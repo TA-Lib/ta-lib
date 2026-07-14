@@ -52,7 +52,7 @@ Ultimate Oscillator, UO
 
 ## See Also
 
-[ATR](/functions/atr.md) · [TRANGE](/functions/trange.md) · [RSI](/functions/rsi.md)
+[ATR](/functions/atr) · [TRANGE](/functions/trange) · [RSI](/functions/rsi)
 
 ## References
 

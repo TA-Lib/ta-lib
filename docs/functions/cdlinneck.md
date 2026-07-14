@@ -43,4 +43,4 @@ In-Neck Pattern, In-Neck Line
 
 ## See Also
 
-[CDLONNECK](/functions/cdlonneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md)
+[CDLONNECK](/functions/cdlonneck) · [CDLTHRUSTING](/functions/cdlthrusting) · [CDLMATCHINGLOW](/functions/cdlmatchinglow)

@@ -40,4 +40,4 @@ Identical Three Crows
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDL2CROWS](/functions/cdl2crows.md)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDL2CROWS](/functions/cdl2crows)

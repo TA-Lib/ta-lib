@@ -43,4 +43,4 @@ Rate of Change Ratio 100 Scale, MO
 
 ## See Also
 
-[ROCR](/functions/rocr.md) · [ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [MOM](/functions/mom.md)
+[ROCR](/functions/rocr) · [ROC](/functions/roc) · [ROCP](/functions/rocp) · [MOM](/functions/mom)

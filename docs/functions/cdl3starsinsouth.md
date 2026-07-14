@@ -39,4 +39,4 @@ Three Stars In The South
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md) · [CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows) · [CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers)

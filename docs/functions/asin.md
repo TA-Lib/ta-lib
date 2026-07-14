@@ -39,4 +39,4 @@ arcsine, inverse sine
 
 ## See Also
 
-[ACOS](/functions/acos.md) · [ATAN](/functions/atan.md) · [SIN](/functions/sin.md) · [COS](/functions/cos.md)
+[ACOS](/functions/acos) · [ATAN](/functions/atan) · [SIN](/functions/sin) · [COS](/functions/cos)

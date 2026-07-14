@@ -35,4 +35,4 @@ Takuri, Takuri line
 
 ## See Also
 
-[CDLDRAGONFLYDOJI](/functions/cdldragonflydoji.md) · [CDLDOJI](/functions/cdldoji.md) · [CDLHAMMER](/functions/cdlhammer.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md)
+[CDLDRAGONFLYDOJI](/functions/cdldragonflydoji) · [CDLDOJI](/functions/cdldoji) · [CDLHAMMER](/functions/cdlhammer) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji)

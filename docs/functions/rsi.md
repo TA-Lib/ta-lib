@@ -47,7 +47,7 @@ relative strength index
 
 ## See Also
 
-[CMO](/functions/cmo.md) · [STOCHRSI](/functions/stochrsi.md)
+[CMO](/functions/cmo) · [STOCHRSI](/functions/stochrsi)
 
 ## References
 

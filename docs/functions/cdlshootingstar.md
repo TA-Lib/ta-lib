@@ -39,4 +39,4 @@ Shooting Star
 
 ## See Also
 
-[CDLINVERTEDHAMMER](/functions/cdlinvertedhammer.md) · [CDLHANGINGMAN](/functions/cdlhangingman.md) · [CDLHAMMER](/functions/cdlhammer.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md)
+[CDLINVERTEDHAMMER](/functions/cdlinvertedhammer) · [CDLHANGINGMAN](/functions/cdlhangingman) · [CDLHAMMER](/functions/cdlhammer) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji)

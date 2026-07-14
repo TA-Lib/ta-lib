@@ -47,7 +47,7 @@ Average Directional Movement Index Rating
 
 ## See Also
 
-[ADX](/functions/adx.md) · [DX](/functions/dx.md) · [PLUS_DI](/functions/plus_di.md) · [MINUS_DI](/functions/minus_di.md)
+[ADX](/functions/adx) · [DX](/functions/dx) · [PLUS_DI](/functions/plus_di) · [MINUS_DI](/functions/minus_di)
 
 ## References
 

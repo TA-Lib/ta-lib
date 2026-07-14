@@ -43,4 +43,4 @@ Lowest, Rolling Min, Min Value
 
 ## See Also
 
-[MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MINMAX](/functions/minmax.md)
+[MAX](/functions/max) · [MININDEX](/functions/minindex) · [MINMAX](/functions/minmax)

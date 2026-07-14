@@ -44,4 +44,4 @@ Morning Star
 
 ## See Also
 
-[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby.md) · [CDLDOJISTAR](/functions/cdldojistar.md)
+[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLEVENINGSTAR](/functions/cdleveningstar) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby) · [CDLDOJISTAR](/functions/cdldojistar)

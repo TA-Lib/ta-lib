@@ -43,4 +43,4 @@ Belt-hold, Belt Hold Line
 
 ## See Also
 
-[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLLONGLINE](/functions/cdllongline.md)
+[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLLONGLINE](/functions/cdllongline)

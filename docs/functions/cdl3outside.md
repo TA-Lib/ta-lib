@@ -39,4 +39,4 @@ Three Outside Up/Down, Three Outside
 
 ## See Also
 
-[CDL3INSIDE](/functions/cdl3inside.md) · [CDLENGULFING](/functions/cdlengulfing.md) · [CDL3LINESTRIKE](/functions/cdl3linestrike.md)
+[CDL3INSIDE](/functions/cdl3inside) · [CDLENGULFING](/functions/cdlengulfing) · [CDL3LINESTRIKE](/functions/cdl3linestrike)

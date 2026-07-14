@@ -54,4 +54,4 @@ Stochastic, Stochastic Oscillator, Slow Stochastic
 
 ## See Also
 
-[STOCHF](/functions/stochf.md) · [STOCHRSI](/functions/stochrsi.md) · [MA](/functions/ma.md)
+[STOCHF](/functions/stochf) · [STOCHRSI](/functions/stochrsi) · [MA](/functions/ma)

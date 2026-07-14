@@ -43,4 +43,4 @@ Dragonfly Doji
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLTAKURI](/functions/cdltakuri.md)
+[CDLDOJI](/functions/cdldoji) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji) · [CDLTAKURI](/functions/cdltakuri)

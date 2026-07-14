@@ -43,4 +43,4 @@ Williams %R, Williams Percent R, %R
 
 ## See Also
 
-[STOCH](/functions/stoch.md) · [STOCHF](/functions/stochf.md) · [MINMAX](/functions/minmax.md)
+[STOCH](/functions/stoch) · [STOCHF](/functions/stochf) · [MINMAX](/functions/minmax)

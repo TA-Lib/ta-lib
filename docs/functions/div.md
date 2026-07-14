@@ -40,4 +40,4 @@ Vector Arithmetic Divide, Divide
 
 ## See Also
 
-[MULT](/functions/mult.md) · [ADD](/functions/add.md) · [SUB](/functions/sub.md)
+[MULT](/functions/mult) · [ADD](/functions/add) · [SUB](/functions/sub)

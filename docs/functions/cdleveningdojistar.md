@@ -43,4 +43,4 @@ Evening Doji Star
 
 ## See Also
 
-[CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLDOJISTAR](/functions/cdldojistar.md) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby.md)
+[CDLEVENINGSTAR](/functions/cdleveningstar) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLDOJISTAR](/functions/cdldojistar) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby)

@@ -47,4 +47,4 @@ Index of Highest Value, Highest Value Index, argmax
 
 ## See Also
 
-[MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MIN](/functions/min.md) · [MINMAXINDEX](/functions/minmaxindex.md)
+[MAX](/functions/max) · [MININDEX](/functions/minindex) · [MIN](/functions/min) · [MINMAXINDEX](/functions/minmaxindex)

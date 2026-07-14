@@ -48,7 +48,7 @@ Directional Movement Index, DMI
 
 ## See Also
 
-[ADX](/functions/adx.md) · [ADXR](/functions/adxr.md) · [PLUS_DI](/functions/plus_di.md) · [MINUS_DI](/functions/minus_di.md) · [PLUS_DM](/functions/plus_dm.md) · [MINUS_DM](/functions/minus_dm.md) · [TRANGE](/functions/trange.md)
+[ADX](/functions/adx) · [ADXR](/functions/adxr) · [PLUS_DI](/functions/plus_di) · [MINUS_DI](/functions/minus_di) · [PLUS_DM](/functions/plus_dm) · [MINUS_DM](/functions/minus_dm) · [TRANGE](/functions/trange)
 
 ## References
 

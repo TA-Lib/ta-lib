@@ -39,4 +39,4 @@ Typical Price
 
 ## See Also
 
-[MEDPRICE](/functions/medprice.md) · [WCLPRICE](/functions/wclprice.md) · [AVGPRICE](/functions/avgprice.md)
+[MEDPRICE](/functions/medprice) · [WCLPRICE](/functions/wclprice) · [AVGPRICE](/functions/avgprice)

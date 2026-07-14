@@ -35,4 +35,4 @@ Stick Sandwich
 
 ## See Also
 
-[CDLMATCHINGLOW](/functions/cdlmatchinglow.md) · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)
+[CDLMATCHINGLOW](/functions/cdlmatchinglow) · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon)

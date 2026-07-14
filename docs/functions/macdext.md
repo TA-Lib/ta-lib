@@ -58,4 +58,4 @@ MACD Extended, MACD with controllable MA type
 
 ## See Also
 
-[MACD](/functions/macd.md) · [MACDFIX](/functions/macdfix.md) · [MA](/functions/ma.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md) · [PPO](/functions/ppo.md)
+[MACD](/functions/macd) · [MACDFIX](/functions/macdfix) · [MA](/functions/ma) · [EMA](/functions/ema) · [APO](/functions/apo) · [PPO](/functions/ppo)

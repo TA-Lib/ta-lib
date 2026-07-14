@@ -48,4 +48,4 @@ Moving Average, MovingAverage
 
 ## See Also
 
-[SMA](/functions/sma.md) · [EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md) · [TRIMA](/functions/trima.md) · [KAMA](/functions/kama.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md)
+[SMA](/functions/sma) · [EMA](/functions/ema) · [WMA](/functions/wma) · [DEMA](/functions/dema) · [TEMA](/functions/tema) · [TRIMA](/functions/trima) · [KAMA](/functions/kama) · [MAMA](/functions/mama) · [T3](/functions/t3)

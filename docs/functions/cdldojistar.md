@@ -43,4 +43,4 @@ Doji Star
 
 ## See Also
 
-[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLDOJI](/functions/cdldoji.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md)
+[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar) · [CDLDOJI](/functions/cdldoji) · [CDLMORNINGSTAR](/functions/cdlmorningstar) · [CDLEVENINGSTAR](/functions/cdleveningstar)

@@ -43,4 +43,4 @@ Separating Lines
 
 ## See Also
 
-[CDLBELTHOLD](/functions/cdlbelthold.md) · CDLMEETINGLINES
+[CDLBELTHOLD](/functions/cdlbelthold) · CDLMEETINGLINES

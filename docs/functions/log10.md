@@ -39,4 +39,4 @@ Log Base 10, Common Logarithm
 
 ## See Also
 
-[LN](/functions/ln.md) · [EXP](/functions/exp.md)
+[LN](/functions/ln) · [EXP](/functions/exp)

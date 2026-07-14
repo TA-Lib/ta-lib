@@ -39,4 +39,4 @@ Advance Block
 
 ## See Also
 
-[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md) · CDLDELIBERATION · [CDLSTALLEDPATTERN](/functions/cdlstalledpattern.md)
+[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers) · CDLDELIBERATION · [CDLSTALLEDPATTERN](/functions/cdlstalledpattern)

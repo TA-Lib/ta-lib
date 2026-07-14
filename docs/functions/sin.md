@@ -39,4 +39,4 @@ sine
 
 ## See Also
 
-[COS](/functions/cos.md) · [TAN](/functions/tan.md) · [ASIN](/functions/asin.md)
+[COS](/functions/cos) · [TAN](/functions/tan) · [ASIN](/functions/asin)

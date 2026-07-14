@@ -40,4 +40,4 @@ Vector Multiply, Vector Arithmetic Mult, Element-wise Product
 
 ## See Also
 
-[ADD](/functions/add.md) · [SUB](/functions/sub.md) · [DIV](/functions/div.md)
+[ADD](/functions/add) · [SUB](/functions/sub) · [DIV](/functions/div)

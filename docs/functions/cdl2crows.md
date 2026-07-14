@@ -39,4 +39,4 @@ Two Crows
 
 ## See Also
 
-[CDLUPSIDEGAP2CROWS](/functions/cdlupsidegap2crows.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md)
+[CDLUPSIDEGAP2CROWS](/functions/cdlupsidegap2crows) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows)

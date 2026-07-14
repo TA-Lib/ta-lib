@@ -35,4 +35,4 @@ Kicking
 
 ## See Also
 
-[CDLKICKINGBYLENGTH](/functions/cdlkickingbylength.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)
+[CDLKICKINGBYLENGTH](/functions/cdlkickingbylength) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite)

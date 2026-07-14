@@ -50,4 +50,4 @@ Parabolic SAR Extended, Extended Parabolic Stop and Reverse
 
 ## See Also
 
-[SAR](/functions/sar.md) · [MINUS_DM](/functions/minus_dm.md)
+[SAR](/functions/sar) · [MINUS_DM](/functions/minus_dm)

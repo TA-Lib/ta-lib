@@ -43,4 +43,4 @@ Long Legged Doji
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md) · [CDLDRAGONFLYDOJI](/functions/cdldragonflydoji.md) · [CDLRICKSHAWMAN](/functions/cdlrickshawman.md)
+[CDLDOJI](/functions/cdldoji) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji) · [CDLDRAGONFLYDOJI](/functions/cdldragonflydoji) · [CDLRICKSHAWMAN](/functions/cdlrickshawman)

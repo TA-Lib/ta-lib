@@ -39,4 +39,4 @@ Chaikin A/D Line, Accumulation/Distribution Line, Accumulation Distribution
 
 ## See Also
 
-[ADOSC](/functions/adosc.md) · [OBV](/functions/obv.md)
+[ADOSC](/functions/adosc) · [OBV](/functions/obv)

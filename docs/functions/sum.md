@@ -43,4 +43,4 @@ Summation, Rolling Sum, Moving Sum
 
 ## See Also
 
-[SMA](/functions/sma.md)
+[SMA](/functions/sma)

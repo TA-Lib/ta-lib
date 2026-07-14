@@ -44,4 +44,4 @@ Mat Hold
 
 ## See Also
 
-[CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)
+[CDLRISEFALL3METHODS](/functions/cdlrisefall3methods) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods)

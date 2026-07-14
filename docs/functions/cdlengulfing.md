@@ -39,4 +39,4 @@ Engulfing Pattern, Engulfing, Bullish/Bearish Engulfing
 
 ## See Also
 
-[CDLHARAMI](/functions/cdlharami.md) · [CDLCOUNTERATTACK](/functions/cdlcounterattack.md) · [CDLHARAMICROSS](/functions/cdlharamicross.md)
+[CDLHARAMI](/functions/cdlharami) · [CDLCOUNTERATTACK](/functions/cdlcounterattack) · [CDLHARAMICROSS](/functions/cdlharamicross)

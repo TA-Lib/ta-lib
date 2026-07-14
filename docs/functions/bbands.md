@@ -53,7 +53,7 @@ Bollinger Bands
 
 ## See Also
 
-[MA](/functions/ma.md) · [STDDEV](/functions/stddev.md) · [SMA](/functions/sma.md)
+[MA](/functions/ma) · [STDDEV](/functions/stddev) · [SMA](/functions/sma)
 
 ## References
 

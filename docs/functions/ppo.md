@@ -45,4 +45,4 @@ Percentage Price Oscillator
 
 ## See Also
 
-[APO](/functions/apo.md) · [MACD](/functions/macd.md) · [MA](/functions/ma.md)
+[APO](/functions/apo) · [MACD](/functions/macd) · [MA](/functions/ma)

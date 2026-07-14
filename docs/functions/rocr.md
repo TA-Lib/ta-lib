@@ -43,4 +43,4 @@ Rate of Change Ratio
 
 ## See Also
 
-[ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [ROCR100](/functions/rocr100.md) · [MOM](/functions/mom.md)
+[ROC](/functions/roc) · [ROCP](/functions/rocp) · [ROCR100](/functions/rocr100) · [MOM](/functions/mom)

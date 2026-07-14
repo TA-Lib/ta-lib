@@ -39,4 +39,4 @@ tangent
 
 ## See Also
 
-[ATAN](/functions/atan.md) · [SIN](/functions/sin.md) · [COS](/functions/cos.md) · [TANH](/functions/tanh.md)
+[ATAN](/functions/atan) · [SIN](/functions/sin) · [COS](/functions/cos) · [TANH](/functions/tanh)

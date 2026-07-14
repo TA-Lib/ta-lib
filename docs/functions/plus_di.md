@@ -51,7 +51,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[MINUS_DI](/functions/minus_di.md) · [DX](/functions/dx.md) · [ADX](/functions/adx.md) · [ADXR](/functions/adxr.md) · [PLUS_DM](/functions/plus_dm.md) · [TRANGE](/functions/trange.md)
+[MINUS_DI](/functions/minus_di) · [DX](/functions/dx) · [ADX](/functions/adx) · [ADXR](/functions/adxr) · [PLUS_DM](/functions/plus_dm) · [TRANGE](/functions/trange)
 
 ## References
 

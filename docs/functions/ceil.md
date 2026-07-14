@@ -39,4 +39,4 @@ Vector Ceil, Ceiling
 
 ## See Also
 
-[FLOOR](/functions/floor.md)
+[FLOOR](/functions/floor)

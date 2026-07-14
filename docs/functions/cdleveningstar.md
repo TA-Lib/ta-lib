@@ -44,4 +44,4 @@ Evening Star
 
 ## See Also
 
-[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · CDLSTARSINSOUTH
+[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar) · [CDLMORNINGSTAR](/functions/cdlmorningstar) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · CDLSTARSINSOUTH

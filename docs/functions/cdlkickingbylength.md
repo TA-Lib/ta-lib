@@ -35,4 +35,4 @@ Kicking by Length, Kicking - bull/bear decided by the longer marubozu
 
 ## See Also
 
-[CDLKICKING](/functions/cdlkicking.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)
+[CDLKICKING](/functions/cdlkicking) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite)

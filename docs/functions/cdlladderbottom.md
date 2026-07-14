@@ -39,4 +39,4 @@ Ladder Bottom
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md) · [CDLBREAKAWAY](/functions/cdlbreakaway.md)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDLMATCHINGLOW](/functions/cdlmatchinglow) · [CDLBREAKAWAY](/functions/cdlbreakaway)

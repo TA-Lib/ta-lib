@@ -43,4 +43,4 @@ Midpoint Price
 
 ## See Also
 
-[MIDPOINT](/functions/midpoint.md) · [MEDPRICE](/functions/medprice.md)
+[MIDPOINT](/functions/midpoint) · [MEDPRICE](/functions/medprice)

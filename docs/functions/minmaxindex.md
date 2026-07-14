@@ -48,4 +48,4 @@ Lowest/Highest Index
 
 ## See Also
 
-[MINMAX](/functions/minmax.md) · [MIN](/functions/min.md) · [MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MAXINDEX](/functions/maxindex.md)
+[MINMAX](/functions/minmax) · [MIN](/functions/min) · [MAX](/functions/max) · [MININDEX](/functions/minindex) · [MAXINDEX](/functions/maxindex)

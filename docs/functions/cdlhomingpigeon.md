@@ -43,4 +43,4 @@ Homing Pigeon
 
 ## See Also
 
-[CDLHARAMI](/functions/cdlharami.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md)
+[CDLHARAMI](/functions/cdlharami) · [CDLMATCHINGLOW](/functions/cdlmatchinglow)

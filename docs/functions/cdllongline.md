@@ -35,4 +35,4 @@ Long Line Candle, Long Line
 
 ## See Also
 
-[CDLSHORTLINE](/functions/cdlshortline.md) · [CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md)
+[CDLSHORTLINE](/functions/cdlshortline) · [CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji)
