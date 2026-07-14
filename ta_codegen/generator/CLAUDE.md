@@ -55,7 +55,7 @@ include/ta_func.h        (generated public header)
 | `backends/dotnet.rs` | Generates .NET P/Invoke wrappers |
 | `backends/ta_abstract_c.rs` | Generates `ta_abstract` introspection layer (tables, frames, group index, runtime API) |
 | `backends/func_api_xml.rs` | Generates `ta_func_api.xml` metadata |
-| `backends/docs_site.rs` | Generates the ta-lib.org website (`docs/functions/<name>.md` + `index.md`) from each function's `ta_codegen/input/<name>/<name>.md` — the one output written under `docs/`, not `ta_codegen/output/` |
+| `backends/docs_site.rs` | Generates the ta-lib.org website (`website/src/functions/<name>.md` + `index.md`) from each function's `ta_codegen/input/<name>/<name>.md` — written directly into the VuePress site source tree (`website/`), not `ta_codegen/output/` |
 | `server_gen` | Generates JSON-RPC server wrappers + `include/ta_func_unguarded.h` |
 | `bench_gen` | Generates direct-call benchmark binary |
 | `registry` | Function registry for tracking available indicators |

@@ -11,10 +11,10 @@ binary, `include/ta_func_unguarded.h`, the `include/ta_defs.h` FuncUnstId enum, 
 shipped Java (`java/.../Core.java`, `CoreAnnotated.java`, `FuncUnstId.java`), and owns the
 build-system source lists (CMake `LIB_SOURCES`, `src/ta_func/Makefile.am`,
 `ta_func_list.txt`). It also generates the **ta-lib.org website** — one page per function
-under `docs/functions/` (from each function's `ta_codegen/input/<name>/<name>.md`) plus a
-grouped `docs/functions/index.md`; this is the only generated output that lives in `docs/`,
-not `ta_codegen/output/`. The VuePress site (`website/`) consumes these pages via the
-`website/src/functions` → `../../docs/functions` symlink.
+under `website/src/functions/` (from each function's `ta_codegen/input/<name>/<name>.md`)
+plus a grouped `website/src/functions/index.md`, written directly into the VuePress site
+source tree (`website/`) — the one generated output that lives there rather than under
+`ta_codegen/output/`. (`docs/` itself now holds only hand-written dev-docs.)
 
 > The legacy C generator `gen_code` was **removed** in the canonical cutover (Stage 7);
 > `ta_codegen` is the only generator.

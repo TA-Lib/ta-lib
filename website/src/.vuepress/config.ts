@@ -1,8 +1,5 @@
-import * as path from "path";
-import { fileURLToPath } from "url";
 import { defineUserConfig } from "vuepress";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import theme from "./theme.js";
 import { viteBundler } from "@vuepress/bundler-vite";
 
@@ -16,30 +13,9 @@ export default defineUserConfig({
     ["link", { rel: "apple-touch-icon", href: "/apple-touch-icon.png" }],
   ],
 
-  bundler: viteBundler({
-    viteOptions: {
-      // src/functions is a symlink to ../../docs/functions (ta_codegen's
-      // generated output — kept in its canonical location so the generator
-      // needs no changes). Vite/Rolldown resolve bare imports from a
-      // symlinked page's real (out-of-tree) path, where "vue" isn't reachable
-      // via the normal node_modules walk-up, so alias it explicitly (same fix
-      // suibase uses for its symlinked demo pages).
-      resolve: {
-        alias: [
-          {
-            find: /^vue$/,
-            replacement: path.resolve(__dirname, "../../node_modules/vue"),
-          },
-          {
-            find: /^vue\//,
-            replacement:
-              path.resolve(__dirname, "../../node_modules/vue") + "/",
-          },
-        ],
-      },
-    },
-    vuePluginOptions: {},
-  }),
+  // ta_codegen writes the generated function pages directly into src/functions
+  // (real files, in-tree), so no symlink and no Vite vue-alias workaround are needed.
+  bundler: viteBundler(),
 
   locales: {
     "/": {

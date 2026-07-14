@@ -6,7 +6,7 @@ title: "ta_codegen Input: Documentation (<name>.md) Reference"
 
 > **Status (2026-07-01).** All 161 `<name>.md` source files exist, and `ta_codegen`
 > generates two render targets from them: the **ta-lib.org website**
-> (`backends/docs_site.rs` → `docs/functions/`, served at `/functions/<name>`) and the
+> (`backends/docs_site.rs` → `website/src/functions/`, served at `/functions/<name>`) and the
 > **embedded rustdoc** in the generated Rust crate (`backends/rust_doc.rs`, including a
 > runnable doctest per function, verified by `cargo test --doc`). Still **planned**: the
 > npm/TSDoc render, Javadoc/.NET XML-doc, and the `docs-lint` gate (the "Rendering targets"
@@ -96,7 +96,7 @@ them per target as needed.
 
 | Target | Mechanism | What is emitted |
 |--------|-----------|-----------------|
-| **ta-lib.org** (mkdocs) | new `DocsBackend` on the `LanguageBackend` trait → `docs/functions/<NAME>.md` (scoped `clean_glob`) | Summary; brief `$$` formula; Inputs/Outputs/Parameters tables **joining** `.md` prose with live YAML numbers; Notes; Implementation links; cross-links. A cross-function emitter regenerates the grouped `functions/index.md`. |
+| **ta-lib.org** (VuePress) | `backends/docs_site.rs` → `website/src/functions/<name>.md` (scoped prune) | Summary; brief `$$` formula; Inputs/Outputs/Parameters tables **joining** `.md` prose with live YAML numbers; Notes; Implementation links; cross-links. A cross-function emitter regenerates the grouped `functions/index.md`. |
 | **crates.io / docs.rs** | inline `///` in the generated Rust (`backends/rust_doc.rs`) | Crate `//!` overview + quick-start doctest; per-function summary, ```` ```text ```` formula, notes; `# Arguments` joining `.md` prose with YAML defaults/ranges; `# Errors`/`# Panics`; a **generated runnable doctest** per function (synthetic data, defaults, asserts `Success` — run by `cargo test --doc`); `# See also` intra-doc links; `#[doc(alias)]` from Aliases; trailing ta-lib.org deep link. Plus Cargo.toml `description`/`license`/`homepage`/`keywords`/`categories` and a generated crate README.md. Prose is escaped for rustdoc (`[`, `<` outside code spans; list/quote markers at wrapped-line starts). |
 | **Java / .NET / XML** (phase 3) | Javadoc / XML-doc / `<description>` | Summary + arguments prose. |
 | **npm** (phase 4, when a JS/TS backend exists) | TSDoc `/** */` + README | Summary tier for IntelliSense; `package.json` `homepage`/`documentation` deep link. |
@@ -131,7 +131,7 @@ that same code**. A `/document-indicator` skill (mirroring `/convert-indicator`)
   mandatory — distinct from the byte-oracle.
 - **Staleness:** a soft CI gate flags a function whose `<name>.c`/`<name>.yaml` changed without
   a corresponding `<name>.md` update, prompting re-authoring.
-- Generated outputs (`docs/functions/*`, rustdoc, …) are **generator-owned and never hand-edited**.
+- Generated outputs (`website/src/functions/*`, rustdoc, …) are **generator-owned and never hand-edited**.
 
 ## Related
 

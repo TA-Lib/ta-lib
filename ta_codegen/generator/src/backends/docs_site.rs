@@ -1,22 +1,23 @@
-//! ta-lib.org website generator — the one `ta_codegen` output that lives under `docs/`
-//! instead of `ta_codegen/output/`. The VuePress site (`website/`) consumes these pages
-//! via the `website/src/functions` -> `../../docs/functions` symlink.
+//! ta-lib.org website generator — writes the generated function pages directly into the
+//! VuePress site source tree at `website/src/functions/` (real files served in-tree, no
+//! symlink). This is the one `ta_codegen` output that lives under `website/` rather than
+//! `ta_codegen/output/`.
 //!
 //! For each function it reads the canonical documentation source
 //! `ta_codegen/input/<dir>/<dir>.md` and emits a website page at
-//! `docs/functions/<dir>.md` (served at `https://ta-lib.org/functions/<name>`), plus a
-//! grouped `docs/functions/index.md`. The page transform is deterministic (SEO front
-//! matter + `## See Also` links), so the output stays byte-stable under the regen oracle.
+//! `website/src/functions/<dir>.md` (served at `https://ta-lib.org/functions/<name>`), plus
+//! a grouped `website/src/functions/index.md`. The page transform is deterministic (SEO
+//! front matter + `## See Also` links), so the output stays byte-stable under the regen oracle.
 
 use crate::ir::FuncDef;
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
-/// Generate the per-function website pages + index into `docs/functions/`.
+/// Generate the per-function website pages + index into `website/src/functions/`.
 pub fn generate(funcs: &[FuncDef], root: &Path) {
     let input_base = root.join("ta_codegen/input");
-    let out_dir = root.join("docs/functions");
-    std::fs::create_dir_all(&out_dir).expect("create docs/functions");
+    let out_dir = root.join("website/src/functions");
+    std::fs::create_dir_all(&out_dir).expect("create website/src/functions");
 
     let mut funcs: Vec<&FuncDef> = funcs.iter().collect();
     funcs.sort_by(|a, b| a.name.cmp(&b.name));
@@ -38,7 +39,12 @@ pub fn generate(funcs: &[FuncDef], root: &Path) {
     }
 
     let index = build_index(&paged);
-    super::write_if_changed(&out_dir.join("index.md"), &index, "docs/functions", paged.len());
+    super::write_if_changed(
+        &out_dir.join("index.md"),
+        &index,
+        "website/src/functions",
+        paged.len(),
+    );
 
     // Prune stale pages (functions removed since the last run).
     let mut keep: HashSet<String> = paged
