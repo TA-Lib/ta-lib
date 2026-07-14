@@ -214,6 +214,22 @@ static int fuzz_cdl_concealbabyswall(double *o,double *h,double *l,double *c,dou
     return p;
 }
 
+/* CDLMATHOLD (bullish, +100 on the 5th candle): a long white candle, a short
+ * black candle gapping up above it, two more short candles holding within the 1st
+ * range with falling tops, then a white candle opening above the 4th close and
+ * closing above the highest reaction high. */
+static int fuzz_cdl_mathold(double *o,double *h,double *l,double *c,double *v,double *oi,
+                            int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,14,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base,      base+21.0, base-1.0,  base+20.0); /* c1 white long        */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+31.0, base+32.0, base+29.0, base+30.0); /* c2 short black gap up */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+16.0, base+17.0, base+14.0, base+15.0); /* c3 short, in 1st range*/
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+14.0, base+15.0, base+12.0, base+13.0); /* c4 short, falling     */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+35.0, base+41.0, base+34.0, base+40.0); /* c5 white breakout     */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -225,6 +241,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_3starsinsouth(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3linestrike(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_concealbabyswall(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_mathold(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
