@@ -3512,7 +3512,7 @@ static const int CDL_STREAM_SHAPES[] =
  * Exempt from the assertion until their family's window lands. */
 static const char * const cdl_pending[] = {
     "CDLADVANCEBLOCK", "CDLINNECK",
-    "CDLRISEFALL3METHODS", "CDLUNIQUE3RIVER"
+    "CDLUNIQUE3RIVER"
 };
 #define CDL_NPENDING ((int)(sizeof(cdl_pending)/sizeof(cdl_pending[0])))
 
