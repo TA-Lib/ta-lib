@@ -414,6 +414,17 @@ static int fuzz_cdl_ladderbottom(double *o,double *h,double *l,double *c,double 
     return p;
 }
 
+/* CDLXSIDEGAP3METHODS: 3rd pattern bar (index 14) = +100 (bullish; output = candlecolor(1st white) * 100) */
+static int fuzz_cdl_xsidegap3methods(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                     int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base, base+6, base-1, base+5); /* 1st: white body [100,105], candlecolor=+1 */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+8, base+14, base+7, base+13); /* 2nd: white body [108,113], same color as 1st; realbodygapup over 1st (min(108,113)=108 > max(100,105)=105) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10, base+11, base+1, base+2); /* 3rd: black (close102<open110), opens within 2nd rb (108<110<113), closes within 1st rb (100<102<105) */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -442,6 +453,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_upsidegap2crows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_breakaway(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_ladderbottom(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_xsidegap3methods(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
