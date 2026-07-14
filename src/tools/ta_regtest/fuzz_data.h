@@ -388,6 +388,19 @@ static int fuzz_cdl_upsidegap2crows(double *o,double *h,double *l,double *c,doub
     return p;
 }
 
+/* CDLBREAKAWAY: 5th pattern bar (index 16) = +100 (1st-candle-black branch; output = candlecolor(5th)*100, 5th is white) */
+static int fuzz_cdl_breakaway(double *o,double *h,double *l,double *c,double *v,double *oi,
+                              int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+20, base+21, base+7, base+8); /* 1st (idx12): black LONG body (body 12 > BodyLong avg 2) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+4, base+5, base-1, base); /* 2nd (idx13): black, body gaps DOWN under 1st (max(104,100)=104 < min(120,108)=108) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-2, base, base-5, base-4); /* 3rd (idx14): lower high & low than 2nd (high 100<105, low 95<99) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-7, base-6, base-11, base-9); /* 4th (idx15): black, lower high & low than 3rd (high 94<100, low 89<95) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+5, base+7, base+4, base+6); /* 5th (idx16): white, close 106 in gap (open3=104 < 106 < close4=108) */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -414,6 +427,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_identical3crows(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_stalledpattern(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_upsidegap2crows(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_breakaway(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
