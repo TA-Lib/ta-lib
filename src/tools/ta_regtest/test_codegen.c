@@ -3527,6 +3527,27 @@ static int cdl_is_pending(const char *name)
     return 0;
 }
 
+/* Patterns with a deterministic FUZZ_CANDLE window (fuzz_data.h, issue #109).
+ * These are held to a STRONGER standard: they must fire on FUZZ_CANDLE (shape 7)
+ * specifically, not merely on some stream-run shape. That way a window that rots
+ * (an edit to fuzz_data.h that stops producing the pattern) is caught even for
+ * patterns that also happen to fire on the random shapes — otherwise the random
+ * firing would mask the broken window. Grows as each family's window lands. */
+static const char * const cdl_catalog[] = {
+    "CDL2CROWS", "CDL3BLACKCROWS", "CDL3WHITESOLDIERS", "CDL3STARSINSOUTH",
+    "CDL3LINESTRIKE", "CDLCONCEALBABYSWALL", "CDLMATHOLD", "CDLRISEFALL3METHODS",
+    "CDLADVANCEBLOCK", "CDLINNECK", "CDLUNIQUE3RIVER"
+};
+#define CDL_NCATALOG ((int)(sizeof(cdl_catalog)/sizeof(cdl_catalog[0])))
+
+static int cdl_in_catalog(const char *name)
+{
+    int i;
+    for( i = 0; i < CDL_NCATALOG; i++ )
+        if( strcmp(name, cdl_catalog[i]) == 0 ) return 1;
+    return 0;
+}
+
 /* Count non-zero outputs of a candlestick on one (shape,seed,n) fuzz case. */
 static int cdl_fire_on(const TA_FuncHandle *handle, int shape, int seed, int n)
 {
@@ -3551,6 +3572,15 @@ static int cdl_fires_at_size(const TA_FuncHandle *handle, int n)
     for( si = 0; si < CDL_NSTREAM_SHAPES; si++ )
         for( seed = 1; seed <= 6; seed++ )
             if( cdl_fire_on(handle, CDL_STREAM_SHAPES[si], seed, n) > 0 ) return 1;
+    return 0;
+}
+
+/* Fires on FUZZ_CANDLE specifically at size n (seeds 1..6)? */
+static int cdl_fires_candle_at_size(const TA_FuncHandle *handle, int n)
+{
+    int seed;
+    for( seed = 1; seed <= 6; seed++ )
+        if( cdl_fire_on(handle, FUZZ_CANDLE, seed, n) > 0 ) return 1;
     return 0;
 }
 
@@ -3588,6 +3618,20 @@ static ErrorNumber verify_fuzz_candle_nonvacuous(void)
                    "(issue #109) or list it in cdl_pending[].\n",
                    L.nm[i], f240, f512);
             failed++;
+        }
+        else if( cdl_in_catalog(L.nm[i]) )
+        {
+            /* Held to the stronger FUZZ_CANDLE-specific standard. */
+            int c240 = cdl_fires_candle_at_size(L.h[i], 240);
+            int c512 = cdl_fires_candle_at_size(L.h[i], 512);
+            if( !(c240 && c512) )
+            {
+                printf("CANDLE WINDOW BROKEN: %s is listed in cdl_catalog[] but no "
+                       "longer fires on FUZZ_CANDLE (N=240:%d N=512:%d) — its "
+                       "deterministic window in fuzz_data.h regressed (issue #109).\n",
+                       L.nm[i], c240, c512);
+                failed++;
+            }
         }
     }
     if( failed )
