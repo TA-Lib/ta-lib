@@ -304,6 +304,16 @@ static int fuzz_cdl_kickingbylength(double *o,double *h,double *l,double *c,doub
     return p;
 }
 
+/* CDLDARKCLOUDCOVER: 2nd pattern bar (index 13) = -100 */
+static int fuzz_cdl_darkcloudcover(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                   int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base, base+21, base-1, base+20); /* 1st pattern bar (idx 12): white LONG body, body=20 >> BodyLong avg ~2.0 */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+30, base+31, base+4, base+5); /* 2nd pattern bar (idx 13): black; open 130 > prior high 121; close 105 > prior open 100; close 105 < midpoint 110 */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -322,6 +332,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_unique3river(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_kicking(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_kickingbylength(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_darkcloudcover(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
