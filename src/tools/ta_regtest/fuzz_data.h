@@ -355,6 +355,17 @@ static int fuzz_cdl_3inside(double *o,double *h,double *l,double *c,double *v,do
     return p;
 }
 
+/* CDLIDENTICAL3CROWS: 3rd pattern bar (index 14) = -100 */
+static int fuzz_cdl_identical3crows(double *o,double *h,double *l,double *c,double *v,double *oi,
+                                    int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,6,base,2.0,1.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base, base, base-3, base-3); /* 1st crow: black (close 97 < open 100), lower shadow = 0 (low=close) */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-3, base-3, base-6, base-6); /* 2nd crow: black, opens exactly at 1st close (97), close 94, lower shadow = 0 */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-6, base-6, base-9, base-9); /* 3rd crow: black, opens exactly at 2nd close (94), close 91, lower shadow = 0 */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -378,6 +389,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_thrusting(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_homingpigeon(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_3inside(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_identical3crows(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
