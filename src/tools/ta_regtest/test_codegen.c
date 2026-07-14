@@ -3086,8 +3086,19 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
  *                uncapped bound would balloon to ~2 deg; the cap holds it near
  *                ANGLE's true worst-case drift (measured 0.065 deg) so a real
  *                future ANGLE regression can't hide, while realistic-scale cases
- *                (bound ~1e-7 deg) are unaffected (cap never binds there). */
-enum { TOL_ABS = 0, TOL_REL_IN = 1 };
+ *                (bound ~1e-7 deg) are unaffected (cap never binds there).
+ *
+ *   TOL_NAN_TO : 0.6.4 emitted NaN from an unguarded x/0 in a *successful* call;
+ *                the fix substitutes a defined neutral value. This is NOT a
+ *                numeric bound — it is the categorical divergence NaN(0.6.4) ->
+ *                finite. Tolerated ONLY when 0.6.4 is NaN AND current equals the
+ *                authorized value carried in `tol` (e.g. IMI #112: 50.0). Any
+ *                other element diff for such a function is a real failure, so a
+ *                regression that returns a *different* value where 0.6.4 was NaN
+ *                (or diverges anywhere 0.6.4 was finite) still fails. Kept
+ *                maximally tight by requiring the exact neutral value, not merely
+ *                "any finite". */
+enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2 };
 static const struct { const char *name; int mode; double tol; double cap; } FUZZ_064_TOL[] = {
     { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
     { "LINEARREG",           TOL_REL_IN, 1e-9, 0.0 },  /* #103 O(1) sliding-sum recurrence   */
@@ -3095,6 +3106,7 @@ static const struct { const char *name; int mode; double tol; double cap; } FUZZ
     { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
     { "LINEARREG_ANGLE",     TOL_REL_IN, 1e-9, 0.5 },  /* #103 bounded degrees -> capped 0.5 */
     { "TSF",                 TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
+    { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 
 /* Look up a function's authorized tolerance; returns NULL if it must be exact. */
@@ -3168,6 +3180,17 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
             {
                 double a = p->outRealBufs[o][j], b = g_fz064Real[o][j];
                 if( memcmp(&a, &b, sizeof(double)) == 0 ) continue;
+                /* NaN-to-neutral manifest case (#112): 0.6.4's successful call
+                 * emitted NaN (an unguarded x/0); the fix substitutes a defined
+                 * neutral value. Tolerate ONLY when 0.6.4 is NaN AND current is
+                 * exactly the authorized value; any other diff is real. (b != b
+                 * is true only for NaN — catches -nan too.) */
+                if( tolEntry && tolMode == TOL_NAN_TO )
+                {
+                    if( (b != b) && a == tolVal ) tolDiff = 1;
+                    else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
+                    continue;
+                }
                 double d = a - b; if( d < 0 ) d = -d;
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
                 else if( tolEntry && d <= tolBound ) tolDiff = 1; /* within manifest bound */
@@ -3374,7 +3397,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                              vec[k], inScale, (int)curRc, curBeg, curNb,
                                              refRc, refBeg, refNb);
                 if( cls == 0 )      ctx->failures++;
-                else if( cls == 2 ) ctx->cciTol++;   /* CCI issue-#7 near-zero (not a failure) */
+                else if( cls == 2 ) ctx->cciTol++;   /* manifest-tolerated (CCI #7 / LINEARREG #103 / IMI #112) — not a failure */
                 else                ctx->benign++;
             }
         }
@@ -3385,10 +3408,15 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         int tm = 0; double tv = 0.0, tc = 0.0;
         fuzz_064_tol_lookup(funcInfo->name, &tm, &tv, &tc);
-        printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound)\n",
-               funcInfo->name, ctx->cciTol - cciTolBefore, tv,
-               tm == TOL_REL_IN ? " * max|input|" : "",
-               (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "");
+        if( tm == TOL_NAN_TO )
+            printf("  TOLERATED TA_%s: %lld case(s) where v0.6.4 emitted NaN (x/0) and current "
+                   "returns the guarded %g (authorized manifest)\n",
+                   funcInfo->name, ctx->cciTol - cciTolBefore, tv);
+        else
+            printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound)\n",
+                   funcInfo->name, ctx->cciTol - cciTolBefore, tv,
+                   tm == TOL_REL_IN ? " * max|input|" : "",
+                   (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "");
     }
     else if( ctx->benign > benignBefore )
     {
@@ -3452,8 +3480,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
         printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.8.1, issue #98\n",
                ctx.skipped98);
     if( ctx.cciTol > 0 )
-        printf("manifest-tolerated: %lld case(s) within an authorized latest->0.6.4 bound "
-               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum)\n", ctx.cciTol);
+        printf("manifest-tolerated: %lld case(s) under an authorized latest->0.6.4 entry "
+               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum; IMI #112 NaN->50.0)\n", ctx.cciTol);
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
@@ -3467,7 +3495,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.failures == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — current library is bit-identical to v0.6.4 at period>=2"
-               " (benign signed-zero and CCI issue-#7 tolerance aside; STOCHRSI excluded, issue #107).\n");
+               " (benign signed-zero and authorized manifest tolerances aside; STOCHRSI excluded, issue #107).\n");
         return TA_TEST_PASS;
     }
     printf("FAIL — %lld real divergence(s) across %d function(s).\n",

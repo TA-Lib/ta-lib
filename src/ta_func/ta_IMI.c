@@ -60,6 +60,9 @@
  *                to period+u bars; window is now always 'period'.
  *  070726 WZ,CC  (#14) IMI has no unstable period; drop the unstable-period
  *                term from the lookback so TA_SetUnstablePeriod is a no-op.
+ *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
+ *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
+ *                call. Guard the divide, returning IMI's neutral center 50.0.
  */
 
 TA_LIB_API int TA_IMI_Lookback( int optInTimePeriod )
@@ -129,7 +132,11 @@ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
          {
             downsum += open - close;
          }
-         outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+         /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+          * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+          * oscillator, so no up/down bias returns its neutral center, 50.0.
+          */
+         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       }
       startIdx += 1;
       outIdx += 1;
@@ -179,7 +186,7 @@ TA_LIB_API TA_RetCode TA_IMI_Unguarded( int    startIdx,
          {
             downsum += open - close;
          }
-         outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       }
       startIdx += 1;
       outIdx += 1;
@@ -245,7 +252,7 @@ TA_RetCode TA_S_IMI( int    startIdx,
          {
             downsum += open - close;
          }
-         outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       }
       startIdx += 1;
       outIdx += 1;
@@ -295,7 +302,7 @@ TA_RetCode TA_S_IMI_Unguarded( int    startIdx,
          {
             downsum += open - close;
          }
-         outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       }
       startIdx += 1;
       outIdx += 1;
@@ -349,7 +356,11 @@ static void TA_IMI_StreamStep( struct TA_IMI_Stream *sp, double inOpen, double i
       {
          downsum += open - close;
       }
-      *outReal= 100.0 * (upsum / (upsum + downsum));
+      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+       * oscillator, so no up/down bias returns its neutral center, 50.0.
+       */
+      *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    }
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
@@ -413,7 +424,11 @@ TA_RetCode TA_IMI_OpenInternal( int optInTimePeriod, const double inOpen[], cons
             {
                downsum += open - close;
             }
-            lastValue_outReal = 100.0 * (upsum / (upsum + downsum));
+            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+             * oscillator, so no up/down bias returns its neutral center, 50.0.
+             */
+            lastValue_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          }
          startIdx += 1;
          outIdx += 1;

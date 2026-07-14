@@ -246,5 +246,15 @@ Scope rules (deliberate):
   sweep never runs a u&gt;0 variant for them.)
   Reported in the summary as a `skipped:` line; everything else remains
   waiver-free at period ≥ 2.
+- **#112 NaN-to-neutral (`TOL_NAN_TO`):** where 0.6.4's *successful* call emitted
+  NaN from an unguarded `x/0`, the fix substitutes a defined neutral value; that
+  categorical `NaN(0.6.4) → finite` divergence is tolerated by the manifest.
+  IMI is the first: an all-flat window (`FUZZ_CONSTANT`/`FUZZ_TIE_HEAVY`, every
+  `close == open`) made `upsum+downsum == 0` → `100*(0/0)` → NaN; the guard now
+  returns 50.0. The `FUZZ_064_TOL` entry `{ "IMI", TOL_NAN_TO, 50.0 }` tolerates
+  a case **only** when 0.6.4 is NaN *and* current is *exactly* 50.0 — any other
+  value (incl. a still-NaN regression, caught instead by `test_imi.c`) fails. The
+  exact-`==0.0` guard keeps this the *sole* IMI divergence from 0.6.4; every
+  `sum > 0` bar stays bit-identical. Reported as a `manifest-tolerated:` line.
 - The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one
   bad case can't sink the run.

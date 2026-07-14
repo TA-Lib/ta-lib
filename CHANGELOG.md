@@ -32,6 +32,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#99) BBANDS with `TA_MAType_MAMA` and a period >= 34 returned a misaligned middle band.
 - (#77) The CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
+- (#112) IMI returned NaN from a successful call on an all-flat window (every bar `close == open`, e.g. a halted/illiquid instrument or a constant series): the `0/0` is now guarded to return IMI's neutral center, 50.0.
 
 ## [0.7.1] 2026-07-03
 ### Added

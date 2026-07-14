@@ -38536,6 +38536,9 @@ class Core {
      *                to period+u bars; window is now always 'period'.
      *  070726 WZ,CC  (#14) IMI has no unstable period; drop the unstable-period
      *                term from the lookback so TA_SetUnstablePeriod is a no-op.
+     *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
+     *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
+     *                call. Guard the divide, returning IMI's neutral center 50.0.
      */
 
        public int imiLookback( int optInTimePeriod )
@@ -38594,7 +38597,11 @@ class Core {
                 } else {
                    downsum += open - close;
                 }
-                outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+                /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+                 * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+                 * oscillator, so no up/down bias returns its neutral center, 50.0.
+                 */
+                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              }
              startIdx += 1;
              outIdx += 1;
@@ -38636,7 +38643,7 @@ class Core {
                 } else {
                    downsum += open - close;
                 }
-                outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              }
              startIdx += 1;
              outIdx += 1;
@@ -38689,7 +38696,7 @@ class Core {
                 } else {
                    downsum += open - close;
                 }
-                outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              }
              startIdx += 1;
              outIdx += 1;
@@ -38731,7 +38738,7 @@ class Core {
                 } else {
                    downsum += open - close;
                 }
-                outReal[outIdx] = 100.0 * (upsum / (upsum + downsum));
+                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              }
              startIdx += 1;
              outIdx += 1;
