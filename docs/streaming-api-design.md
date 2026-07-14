@@ -1,6 +1,6 @@
 # Generated Streaming (Incremental) API for ta_codegen
 
-Status: Implementation in progress, planned for release 0.7.2
+Status: Implementation in progress, planned for release 0.8.1
 
 ## Design
 

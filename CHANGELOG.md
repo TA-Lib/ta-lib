@@ -6,7 +6,7 @@ Just re-install to upgrade. Older versions are automatically removed.
 
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
-## [0.7.2] Not Released Yet
+## [0.8.1] Not Released Yet
 ### Added
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !

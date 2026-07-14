@@ -3449,7 +3449,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
            ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
     if( ctx.skipped98 > 0 )
-        printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.7.2, issue #98\n",
+        printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.8.1, issue #98\n",
                ctx.skipped98);
     if( ctx.cciTol > 0 )
         printf("manifest-tolerated: %lld case(s) within an authorized latest->0.6.4 bound "

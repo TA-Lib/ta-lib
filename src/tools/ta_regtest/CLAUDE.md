@@ -236,7 +236,7 @@ Scope rules (deliberate):
 - **Benign class:** a diff where every differing element is numerically equal
   (`+0.0` vs `-0.0`, from cached-index rewrites) is reported, not failed.
 - **#98 exceptions:** TRIX/NATR `startIdx > lookback` cases are skipped
-  (mislabeled / wrong-close output through 0.6.4, fixed in 0.7.2), plus NATR
+  (mislabeled / wrong-close output through 0.6.4, fixed in 0.8.1), plus NATR
   cases with a zero close in the output range (old code clobbered
   `outReal[0]`). Comparing these against frozen oracles would diff the bug
   fixes themselves. The fixed behavior is validated instead by the (now

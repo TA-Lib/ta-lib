@@ -1,6 +1,6 @@
 [package]
 name = "ta-lib"
-version = "0.7.2"
+version = "0.8.1"
 edition = "2021"
 description = "Technical analysis library: 161 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) — the official Rust port of TA-Lib, verified against the C reference."
 license = "BSD-3-Clause"
