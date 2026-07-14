@@ -258,6 +258,19 @@ static int fuzz_cdl_advanceblock(double *o,double *h,double *l,double *c,double 
     return p;
 }
 
+/* CDLINNECK (bearish, -100 on the 2nd candle): a long black candle, then a white
+ * candle opening below the 1st low and closing just into the 1st body (close
+ * within the Equal band above the 1st close). Wider primer (hr=6) so the Equal
+ * threshold (0.05*avg high-low) is a comfortable margin. */
+static int fuzz_cdl_inneck(double *o,double *h,double *l,double *c,double *v,double *oi,
+                           int p,int n,double base)
+{
+    p=fuzz_cdl_primer(o,h,l,c,v,oi,p,n,12,base,2.0,6.0);
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base+10.0, base+12.0, base-1.0, base);       /* 1st long black         */
+    p=fuzz_cdl_bar(o,h,l,c,v,oi,p,n, base-5.0,  base+1.0,  base-6.0, base+0.35);  /* 2nd white into neck    */
+    return p;
+}
+
 /* Lay the deterministic per-family catalog. Appended to as each family's window
  * lands (issue #109); one entry per otherwise-vacuous pattern. */
 static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,double *oi,
@@ -272,6 +285,7 @@ static int fuzz_cdl_catalog(double *o,double *h,double *l,double *c,double *v,do
     p=fuzz_cdl_mathold(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_risefall3methods(o,h,l,c,v,oi,p,n,100.0);
     p=fuzz_cdl_advanceblock(o,h,l,c,v,oi,p,n,100.0);
+    p=fuzz_cdl_inneck(o,h,l,c,v,oi,p,n,100.0);
     return p;
 }
 
