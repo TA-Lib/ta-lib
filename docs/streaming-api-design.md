@@ -1,6 +1,6 @@
 # Generated Streaming (Incremental) API for ta_codegen
 
-Status: Implementation in progress, planned for release 0.8.1
+Status: C tier complete (all 161 functions, bit-exact CI gate); Rust/Java/.NET emitters remaining. Planned for release 0.8.1.
 
 ## Design
 
@@ -291,9 +291,10 @@ is checked here against how Python *would* wrap it:
 
 ### Non-goals / risks
 - **No behavioral change to the batch tier.** The stream tier is additive.
-- In first release, MAVP (per-bar variable periods) stays unsupported
-  (documented); functions taking an `MAType` parameter with `MAType=MAMA`
-  either follow MAMA's own tier or are documented per the composed-tier notes.
+- `MAType=MAMA` is the one unsupported case on functions taking an `MAType`
+  parameter — it rejects at `open` (documented), since MAMA's dispatch arm has
+  no bit-exact stream; every other MA type streams. (MAVP's per-bar variable
+  period is supported.)
 - **Single precision:** no `TA_S_*` stream twin; the stream tier is
   double-only.
 - Handle lifetime: the handle is valid only within the exact library version
@@ -340,8 +341,9 @@ mechanism end-to-end:
   bit-exactness argument survives batch-code evolution: the stream is
   re-derived from the same IR on every generate.
 - **Analyzer census.** The naive spike census (62/161 clean) is superseded by
-  the Staging results below (138 streamable); its four failure categories have
-  nearly all landed — only the CIRCBUF deep shapes (HT_\* family, MAMA) remain.
+  the Staging results below: all 161 functions stream in C — the four failure
+  categories all landed, including the CIRCBUF deep shapes (HT_\* family, MAMA)
+  and MAVP's period-bank tier.
 
 ### Streamability tiers (classification of all 161 functions)
 
@@ -355,7 +357,7 @@ Corrected after a full 161-function audit:
 | T4a | window extrema, value-output | monotonic deque O(period) | amortized O(1) | MIN/MAX, MIDPOINT/MIDPRICE, WILLR, STOCH's raw range |
 | T4b | window extrema, **index-observable** | ring + cached-index automaton (transcribed verbatim) | amortized O(1), worst O(period) | MININDEX/MAXINDEX/MINMAXINDEX, AROON/AROONOSC |
 | TC | **composed** — calls other indicators over intermediate arrays | sub-stream handles as state members | sum of parts | BBANDS, STOCH/STOCHF (T4a + MA slowing), STOCHRSI, APO/PPO, MACDEXT, MA (factory over the 9 MA streams), ACCBANDS, ADXR (ADX sub-stream **+ O(period) ring of past ADX outputs** — not T2), STDDEV-as-written (fusable into VAR), NATR (degenerate path) |
-| T5 | unsupported v1 | — | — | MAVP (per-bar variable period) |
+| PB | period bank (per-bar variable period) | (maxP-minP+1) MA sub-streams | sum of sub-streams | MAVP |
 
 Structural notes:
 
@@ -528,8 +530,8 @@ claim in *Motivation* gets measured, not asserted).
    MFI as CIRCBUF state — the batch loop already carries the circular
    buffer, so open captures the LIVE buffer contents and rotation phase and
    the ring-order constraint holds by construction, no replay needed).
-   HT_\* and MAMA remain blocked on deeper shapes (cursor-aliased
-   `startIdx`, `in[idx--]` reads, fixed-size array locals).
+   (HT_\* and MAMA — needing cursor-aliased `startIdx`, `in[idx--]` reads and
+   fixed-size array locals — landed later as their own stage, below.)
 3. **T4 extrema — DONE** (+10: MIN MAX MININDEX MAXINDEX MINMAX
    MINMAXINDEX MIDPOINT WILLR AROON AROONOSC), and **not** via deques: the
    cached-index automaton is transcribed verbatim over an absolute-index
@@ -553,9 +555,10 @@ claim in *Motivation* gets measured, not asserted).
    `cap = lag + back + 1`, current bar pre-written at `pos`), fixed-size
    array locals as carried state, ternary-index normalization
    (`in[c ? a : b]` → `c ? in[a] : in[b]`), widest-literal merge for
-   multi-bound rescan counters. CDLHIKKAKE/CDLHIKKAKEMOD stay batch-only
-   for now (they save bar indices — absolute-index recall beyond the
-   extrema automaton).
+   multi-bound rescan counters. CDLHIKKAKE/CDLHIKKAKEMOD (which save bar
+   indices — absolute-index recall beyond the extrema automaton) later joined
+   via a bit-exact countdown + cached-value refactor, so all 61 CDL patterns
+   stream.
 5. **Stage-1.5 param-degenerate paths — PARTIALLY DONE** (+RSI, CMO, WMA,
    AVGDEV, then DX and IMI = 131 streamable; DX's zero-denominator
    `out[idx-1]` repeat carries as `lastOut_*` state refreshed after each
@@ -669,8 +672,9 @@ claim in *Motivation* gets measured, not asserted).
      use and shifts the boundary leg. The stream sweep now also moves each
      RealRange param to a non-default value, so STDDEV's scaling branch is
      verified rather than run vacuously. A 1e-9 output perturbation fails
-     every leg; the unsupported `optInFastD_MAType` arms (TRIMA/MAMA)
-     expect-reject through the recursive STOCHRSI→stochf→ma precheck.
+     every leg; the unsupported `optInFastD_MAType` arm (MAMA — TRIMA joined
+     once its stream landed) expect-rejects through the recursive
+     STOCHRSI→stochf→ma precheck.
    - **Same-bar combine maps — APO + PPO DONE (138 streamable).** A composed
      combine map may now read a sub-output at a proven same-bar shift:
      `outReal[i] = tempBuffer[i + offset] - outReal[i]`, where the fast MA fills
@@ -693,20 +697,26 @@ claim in *Motivation* gets measured, not asserted).
      — bit-identical to the guarded two-cursor original (the fuzz-064 differential
      vs 0.6.4 is unchanged before/after) and portable (a plain array index, no
      pointer or memmove).
-   - **Remaining:** MACDEXT (loopless, three MA subs + an all-EMA arm), ADXR
-     (its combine reads a past ADX output at a param lag, not a same-bar shift,
-     so the combine-map gate rejects it — it needs a real lag ring), BBANDS.
-     Then the delegating param-degenerates
-     (ATR/NATR period 1 =
-     an embedded TRANGE stream; MACDFIX = generation-time inlining of
-     macd's IR with substituted `0,0` args — those select the FIXED
-     k=0.15/0.075 coefficients inside macd's body, so the public
-     `TA_MACD_Open` validation can never accept them), while DI/DM, TRIMA
-     and MIDPRICE need a dual transition selected once at Open by the
-     fixed param.
+   - **MACDEXT, ADXR, BBANDS — DONE.** MACDEXT (loopless, three MA subs +
+     an all-EMA arm) via the OpenInternal start-anchor; ADXR via a real lag
+     ring (its combine reads a past ADX output at a param lag, not a same-bar
+     shift, so the combine-map gate correctly refuses the same-bar collapse);
+     BBANDS as composed MA + STDDEV sub-streams. The delegating
+     param-degenerates also landed (ATR/NATR period 1 = an embedded TRANGE
+     stream; MACDFIX = generation-time inlining of macd's IR with substituted
+     `0,0` args selecting the fixed k=0.15/0.075 coefficients inside macd's
+     body, which the public `TA_MACD_Open` validation can never accept), as did
+     the fixed-param dual transitions (DI/DM, TRIMA, MIDPRICE) selected once at
+     Open.
    **Strategy: exhaust the C emitter tier by tier — every gotcha is
    language-neutral — and only then port the proven model to Rust; the Rust
    emitter is a re-rendering of settled machinery, not a second discovery.**
-7. **T5 leftovers**: MAVP documented-unsupported; HT_\* deep shapes.
-8. **Rust emitter** (re-applying the exhausted C model), then Java/.NET
-   (managed C# emitter, not P/Invoke — see lifecycle section).
+7. **HT_\* family, MAMA, and MAVP — DONE**, completing all 161 functions in
+   C. The HT_\* Hilbert functions and MAMA stream over the existing
+   ring/circular-buffer/fixed-array machinery via two general steady-loop
+   normalizations (a carried-parity recognizer and an in-loop output-gate
+   strip); MAVP streams via the period-bank tier — a bank of `maxP-minP+1` MA
+   sub-streams advanced in lockstep.
+8. **Rust emitter** (re-applying the now-complete C model), then Java/.NET
+   (managed C# emitter, not P/Invoke — see lifecycle section) — the sole
+   remaining streaming work.
