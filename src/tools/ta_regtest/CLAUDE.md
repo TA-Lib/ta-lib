@@ -316,3 +316,46 @@ Scope rules (deliberate):
   sites via the shared `backends/fma.rs` detector and builds with
   `-ffp-contract=off`, and `fma`/`mul_add` are IEEE correctly-rounded → bit-
   identical for equal operands.
+
+## `server_verify` — bitwise C⇄server on the hard-coded tests (issue #115)
+
+`server_verify.c` runs during the hand-written tests (whenever `--codegen` is
+active and at least one language server started). It is the **same** "in-process
+C ⇄ language server, bit-for-bit, on identical inputs" operation as `--xlang-hash`
+— it just feeds the hard-coded test's exact arrays instead of a seed, and shares
+the driver core in `test_codegen.c` (`codegen_output_hash` /
+`codegen_hash_compare` / `codegen_hash_report`, declared in `test_codegen.h`;
+`--xlang-hash`'s `fuzz_hash_local` is a thin wrapper over `codegen_output_hash`).
+
+The hard-coded tests validate **in-process C vs the expected constants** at a
+legitimate tolerance. `server_verify` runs the *transitive* check: feed the same
+inputs to another language and compare to what C computed — which must be
+**exact** (same algorithm + same inputs ⇒ same bits). A `1e-6` re-compare there
+would be strictly weaker than "C == server, then C == expected ⇒ server ==
+expected", so the old `SV_EPSILON` was deleted.
+
+- **Lossless input.** Inputs are serialized as **hex-of-IEEE-bits** strings (one
+  16-hex group per double, via `to_bits`/`from_bits` — no float-parse rounding,
+  no library in any language). Every server's array parser
+  (`json_find_double_array` / `parse_f64_array` / `jsonDoubleArray` /
+  `GetDoubleArray`) grew a "string ⇒ decode hex, else number array" branch; every
+  other caller sends a number array and is unaffected.
+- **Output by hash.** The request carries `want_hash:1`; each server's
+  **per-function** handler (`TA_<name>`, not `abstract_call`) returns
+  `out_hash` — a full-precision FNV-1a of the raw GUARDED output bytes — which the
+  shared `codegen_hash_compare` diffs against the C golden's `codegen_output_hash`.
+  Java/.NET gained this hasher; the C per-function handler is `#ifndef
+  TA_REF_SERVE`-guarded (its `fuzz_hash_*` live in `fuzz_data.h`, absent from the
+  frozen `ta_ref_serve`, which `server_verify` never drives).
+- **Tolerance rule.** Zero tolerance (bitwise) for **C ⇄ Rust** and **C ⇄ .NET**
+  (Rust uses the system libm; .NET P/Invokes the C lib — this also guards against
+  C-server / .NET-lib build-flag drift vs the in-process library, cf. the
+  `-ffp-contract=off` server fix). **Java** is bitwise for pure-arith + IEEE ops
+  (incl. SQRT/CEIL/FLOOR) but gets a narrow `SV_JAVA_TRANSCENDENTAL_TOL` (1e-9,
+  measured drift ~1e-13..1e-11) on the transcendental-using functions only —
+  Java's fdlibm ≠ the C libm by ~1 ULP. The transcendental set is decided **per
+  call**, not just by name: the MA-dispatch functions (MA/MAVP/BBANDS/MACDEXT/
+  APO/PPO/STOCH*) route to MAMA (which uses `atan`) when a `*MAType` parameter
+  selects `TA_MAType_MAMA` (7), so that call is transcendental for Java even
+  though the function name is not (integer outputs like HT_TRENDMODE still match
+  exactly). Every other language stays bitwise even on the transcendentals.

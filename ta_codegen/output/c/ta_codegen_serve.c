@@ -216,6 +216,29 @@ static int json_find_double_array(const char *json, const char *field,
     if( !p ) return 0;
     p += strlen(pattern);
     while( *p == ' ' ) p++;
+    if( *p == '"' ) {
+        /* Lossless hex-bits transport (issue #115): a string of concatenated
+         * 16-hex-char groups, each one f64's IEEE-754 bit pattern. Decoded
+         * exactly (no strtod rounding). Every other caller sends a [ ] array. */
+        p++;
+        int count = 0;
+        while( count < max_count && *p && *p != '"' ) {
+            unsigned long long bits = 0;
+            int k;
+            for( k = 0; k < 16 && p[k] && p[k] != '"'; k++ ) {
+                char c = p[k];
+                unsigned int v = (c >= '0' && c <= '9') ? (unsigned int)(c - '0')
+                               : (c >= 'a' && c <= 'f') ? (unsigned int)(c - 'a' + 10)
+                               : (c >= 'A' && c <= 'F') ? (unsigned int)(c - 'A' + 10) : 0u;
+                bits = (bits << 4) | v;
+            }
+            if( k < 16 ) break;   /* truncated trailing group */
+            memcpy(&out[count], &bits, sizeof(double));
+            count++;
+            p += 16;
+        }
+        return count;
+    }
     if( *p != '[' ) return 0;
     p++;
     int count = 0;
@@ -12340,6 +12363,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ACCBANDS_Unguarded(
@@ -12411,6 +12447,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ACOS_Unguarded(
@@ -12472,6 +12519,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -12543,6 +12601,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ADD_Unguarded(
@@ -12612,6 +12681,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -12694,6 +12774,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ADX_Unguarded(
@@ -12768,6 +12859,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ADXR_Unguarded(
@@ -12841,6 +12943,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_APO_Unguarded(
@@ -12909,6 +13022,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -12979,6 +13104,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_AROONOSC_Unguarded(
@@ -13042,6 +13178,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ASIN_Unguarded(
@@ -13097,6 +13244,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13160,6 +13318,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13230,6 +13399,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_AVGDEV_Unguarded(
@@ -13294,6 +13474,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13371,6 +13562,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_BBANDS_Unguarded(
@@ -13447,6 +13651,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_BETA_Unguarded(
@@ -13515,6 +13730,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13590,6 +13816,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CCI_Unguarded(
@@ -13662,6 +13899,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13737,6 +13985,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDL3BLACKCROWS_Unguarded(
@@ -13810,6 +14069,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -13885,6 +14155,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDL3LINESTRIKE_Unguarded(
@@ -13958,6 +14239,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14033,6 +14325,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDL3STARSINSOUTH_Unguarded(
@@ -14106,6 +14409,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14182,6 +14496,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14260,6 +14585,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLADVANCEBLOCK_Unguarded(
@@ -14333,6 +14669,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14408,6 +14755,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLBREAKAWAY_Unguarded(
@@ -14481,6 +14839,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14556,6 +14925,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLCONCEALBABYSWALL_Unguarded(
@@ -14629,6 +15009,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14705,6 +15096,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14783,6 +15185,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLDOJI_Unguarded(
@@ -14856,6 +15269,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -14931,6 +15355,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLDRAGONFLYDOJI_Unguarded(
@@ -15004,6 +15439,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15080,6 +15526,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15160,6 +15617,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLEVENINGSTAR_Unguarded(
@@ -15237,6 +15705,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLGAPSIDESIDEWHITE_Unguarded(
@@ -15310,6 +15789,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15385,6 +15875,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLHAMMER_Unguarded(
@@ -15458,6 +15959,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15533,6 +16045,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLHARAMI_Unguarded(
@@ -15606,6 +16129,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15681,6 +16215,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLHIGHWAVE_Unguarded(
@@ -15754,6 +16299,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15829,6 +16385,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLHIKKAKEMOD_Unguarded(
@@ -15902,6 +16469,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -15977,6 +16555,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLIDENTICAL3CROWS_Unguarded(
@@ -16050,6 +16639,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16125,6 +16725,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLINVERTEDHAMMER_Unguarded(
@@ -16198,6 +16809,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16273,6 +16895,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLKICKINGBYLENGTH_Unguarded(
@@ -16346,6 +16979,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16421,6 +17065,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLLONGLEGGEDDOJI_Unguarded(
@@ -16494,6 +17149,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16569,6 +17235,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLMARUBOZU_Unguarded(
@@ -16642,6 +17319,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16718,6 +17406,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -16798,6 +17497,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLMORNINGDOJISTAR_Unguarded(
@@ -16877,6 +17587,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLMORNINGSTAR_Unguarded(
@@ -16954,6 +17675,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLONNECK_Unguarded(
@@ -17027,6 +17759,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17102,6 +17845,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLRICKSHAWMAN_Unguarded(
@@ -17175,6 +17929,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17250,6 +18015,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLSEPARATINGLINES_Unguarded(
@@ -17323,6 +18099,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17398,6 +18185,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLSHORTLINE_Unguarded(
@@ -17471,6 +18269,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17546,6 +18355,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLSTALLEDPATTERN_Unguarded(
@@ -17619,6 +18439,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17694,6 +18525,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLTAKURI_Unguarded(
@@ -17767,6 +18609,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17842,6 +18695,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLTHRUSTING_Unguarded(
@@ -17915,6 +18779,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -17990,6 +18865,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLUNIQUE3RIVER_Unguarded(
@@ -18063,6 +18949,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18138,6 +19035,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CDLXSIDEGAP3METHODS_Unguarded(
@@ -18206,6 +19114,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CEIL_Unguarded(
@@ -18264,6 +19183,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18328,6 +19258,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_CORREL_Unguarded(
@@ -18391,6 +19332,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_COS_Unguarded(
@@ -18446,6 +19398,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18504,6 +19467,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18565,6 +19539,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18632,6 +19617,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18703,6 +19699,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_EMA_Unguarded(
@@ -18762,6 +19769,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_EXP_Unguarded(
@@ -18817,6 +19835,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -18875,6 +19904,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_HT_DCPERIOD_Unguarded(
@@ -18932,6 +19972,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_HT_DCPHASE_Unguarded(
@@ -18988,6 +20039,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19048,6 +20111,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_HT_SINE_Unguarded(
@@ -19107,6 +20182,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_HT_TRENDLINE_Unguarded(
@@ -19163,6 +20249,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19223,6 +20320,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19290,6 +20398,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_KAMA_Unguarded(
@@ -19350,6 +20469,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19412,6 +20542,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_LINEARREG_ANGLE_Unguarded(
@@ -19472,6 +20613,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19534,6 +20686,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_LINEARREG_SLOPE_Unguarded(
@@ -19593,6 +20756,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_LN_Unguarded(
@@ -19648,6 +20822,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19708,6 +20893,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19776,6 +20972,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -19858,6 +21067,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MACDEXT_Unguarded(
@@ -19938,6 +21160,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MACDFIX_Unguarded(
@@ -20005,6 +21240,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20078,6 +21325,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MAVP_Unguarded(
@@ -20149,6 +21407,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MAX_Unguarded(
@@ -20210,6 +21479,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MAXINDEX_Unguarded(
@@ -20270,6 +21550,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20338,6 +21629,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20412,6 +21714,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MIDPOINT_Unguarded(
@@ -20474,6 +21787,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20540,6 +21864,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MIN_Unguarded(
@@ -20601,6 +21936,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MININDEX_Unguarded(
@@ -20661,6 +22007,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20724,6 +22082,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outIntBuf0, g_outIntBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf1, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20792,6 +22162,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -20865,6 +22246,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MINUS_DM_Unguarded(
@@ -20930,6 +22322,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_MOM_Unguarded(
@@ -20990,6 +22393,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21057,6 +22471,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21127,6 +22552,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_OBV_Unguarded(
@@ -21193,6 +22629,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21266,6 +22713,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_PLUS_DM_Unguarded(
@@ -21335,6 +22793,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_PPO_Unguarded(
@@ -21402,6 +22871,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ROC_Unguarded(
@@ -21462,6 +22942,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21524,6 +23015,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_ROCR_Unguarded(
@@ -21584,6 +23086,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21646,6 +23159,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21711,6 +23235,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21796,6 +23331,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_SAREXT_Unguarded(
@@ -21880,6 +23426,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_SIN_Unguarded(
@@ -21935,6 +23492,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -21993,6 +23561,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22053,6 +23632,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_SQRT_Unguarded(
@@ -22112,6 +23702,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22188,6 +23789,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22280,6 +23893,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_STOCHF_Unguarded(
@@ -22364,6 +23989,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_STOCHRSI_Unguarded(
@@ -22436,6 +24073,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_SUB_Unguarded(
@@ -22497,6 +24145,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22562,6 +24221,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_T3_Unguarded(
@@ -22624,6 +24294,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_TAN_Unguarded(
@@ -22679,6 +24360,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22737,6 +24429,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22800,6 +24503,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -22867,6 +24581,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_TRIMA_Unguarded(
@@ -22928,6 +24653,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_TRIX_Unguarded(
@@ -22988,6 +24724,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -23051,6 +24798,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -23125,6 +24883,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -23203,6 +24972,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_VAR_Unguarded(
@@ -23268,6 +25048,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
@@ -23339,6 +25130,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
 #ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {
         rc = TA_WILLR_Unguarded(
@@ -23407,6 +25209,17 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             &outBegIdx, &outNBElement, g_outBuf0);
         }
         long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
         long _t0_ung = get_nanotime();
         for( int _biu = 0; _biu < bench_iters; _biu++ ) {

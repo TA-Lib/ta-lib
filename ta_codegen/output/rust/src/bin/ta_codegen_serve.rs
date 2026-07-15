@@ -735,6 +735,26 @@ impl RefData {
 }
 
 fn parse_f64_array(val: &Value) -> Vec<f64> {
+    if let Some(hs) = val.as_str() {
+        let b = hs.as_bytes();
+        let mut out = Vec::with_capacity(b.len() / 16);
+        let mut i = 0;
+        while i + 16 <= b.len() {
+            let mut bits: u64 = 0;
+            for &c in &b[i..i + 16] {
+                let d = match c {
+                    b'0'..=b'9' => c - b'0',
+                    b'a'..=b'f' => c - b'a' + 10,
+                    b'A'..=b'F' => c - b'A' + 10,
+                    _ => 0,
+                };
+                bits = (bits << 4) | d as u64;
+            }
+            out.push(f64::from_bits(bits));
+            i += 16;
+        }
+        return out;
+    }
     match val.as_array() {
         Some(arr) => arr.iter().filter_map(|v| v.as_f64()).collect(),
         None => Vec::new(),
@@ -863,6 +883,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -915,7 +936,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -955,6 +976,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -987,7 +1009,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1020,6 +1042,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -1076,7 +1099,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1112,6 +1135,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -1152,7 +1176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1186,6 +1210,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -1246,7 +1271,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1284,6 +1309,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -1337,7 +1363,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1373,6 +1399,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -1426,7 +1453,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1462,6 +1489,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -1500,7 +1528,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1536,6 +1564,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -1579,7 +1608,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1616,6 +1645,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -1658,7 +1688,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1693,6 +1723,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -1725,7 +1756,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1758,6 +1789,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -1790,7 +1822,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1823,6 +1855,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -1876,7 +1909,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1912,6 +1945,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -1946,7 +1980,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -1980,6 +2014,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2036,7 +2071,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -2072,6 +2107,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -2114,7 +2150,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -2155,6 +2191,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -2197,7 +2234,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -2232,6 +2269,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2288,7 +2326,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -2324,6 +2362,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -2374,7 +2413,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -2410,6 +2449,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2466,7 +2506,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2502,6 +2542,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2558,7 +2599,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2594,6 +2635,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2650,7 +2692,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2686,6 +2728,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2742,7 +2785,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2778,6 +2821,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2834,7 +2878,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2870,6 +2914,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -2926,7 +2971,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -2962,6 +3007,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3018,7 +3064,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3054,6 +3100,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3112,7 +3159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3149,6 +3196,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3205,7 +3253,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3241,6 +3289,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3297,7 +3346,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3333,6 +3382,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3389,7 +3439,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3425,6 +3475,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3481,7 +3532,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3517,6 +3568,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3573,7 +3625,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3609,6 +3661,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3665,7 +3718,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3701,6 +3754,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3759,7 +3813,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3796,6 +3850,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3852,7 +3907,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3888,6 +3943,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -3944,7 +4000,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -3980,6 +4036,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4036,7 +4093,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4072,6 +4129,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4128,7 +4186,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4164,6 +4222,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4222,7 +4281,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4259,6 +4318,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4317,7 +4377,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4354,6 +4414,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4410,7 +4471,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4446,6 +4507,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4502,7 +4564,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4538,6 +4600,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4594,7 +4657,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4630,6 +4693,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4686,7 +4750,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4722,6 +4786,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4778,7 +4843,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4814,6 +4879,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4870,7 +4936,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4906,6 +4972,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -4962,7 +5029,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -4998,6 +5065,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5054,7 +5122,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5090,6 +5158,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5146,7 +5215,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5182,6 +5251,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5238,7 +5308,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5274,6 +5344,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5330,7 +5401,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5366,6 +5437,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5422,7 +5494,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5458,6 +5530,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5514,7 +5587,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5550,6 +5623,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5606,7 +5680,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5642,6 +5716,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5698,7 +5773,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5734,6 +5809,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5790,7 +5866,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5826,6 +5902,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5882,7 +5959,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -5918,6 +5995,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -5974,7 +6052,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6010,6 +6088,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6066,7 +6145,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6102,6 +6181,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6158,7 +6238,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6194,6 +6274,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6252,7 +6333,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6289,6 +6370,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6347,7 +6429,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6384,6 +6466,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6442,7 +6525,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6479,6 +6562,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6535,7 +6619,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6571,6 +6655,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6627,7 +6712,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6663,6 +6748,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6719,7 +6805,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6755,6 +6841,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6811,7 +6898,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6847,6 +6934,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6903,7 +6991,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -6939,6 +7027,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -6995,7 +7084,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7031,6 +7120,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7087,7 +7177,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7123,6 +7213,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7179,7 +7270,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7215,6 +7306,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7271,7 +7363,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7307,6 +7399,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7363,7 +7456,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7399,6 +7492,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7455,7 +7549,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7491,6 +7585,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7547,7 +7642,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7583,6 +7678,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7639,7 +7735,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7675,6 +7771,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7731,7 +7828,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7767,6 +7864,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7823,7 +7921,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7859,6 +7957,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -7915,7 +8014,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -7951,6 +8050,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
@@ -8007,7 +8107,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -8043,6 +8143,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8075,7 +8176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8108,6 +8209,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8145,7 +8247,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8179,6 +8281,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -8221,7 +8324,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8256,6 +8359,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8288,7 +8392,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8321,6 +8425,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8353,7 +8458,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8386,6 +8491,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8420,7 +8526,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8454,6 +8560,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -8494,7 +8601,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8528,6 +8635,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -8581,7 +8689,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8617,6 +8725,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8654,7 +8763,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8688,6 +8797,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8720,7 +8830,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8753,6 +8863,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8785,7 +8896,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8818,6 +8929,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8853,7 +8965,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8886,6 +8998,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8921,7 +9034,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -8954,6 +9067,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -8990,7 +9104,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9025,6 +9139,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9061,7 +9176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9096,6 +9211,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9131,7 +9247,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9164,6 +9280,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9199,7 +9316,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -9232,6 +9349,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inOpen: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
             let inOpen: &[f64];
@@ -9274,7 +9392,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9309,6 +9427,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9346,7 +9465,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9380,6 +9499,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9414,7 +9534,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9448,6 +9568,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9482,7 +9603,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9516,6 +9637,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9550,7 +9672,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9584,6 +9706,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9618,7 +9741,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9652,6 +9775,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9684,7 +9808,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9717,6 +9841,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9749,7 +9874,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9782,6 +9907,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9818,7 +9944,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9853,6 +9979,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9893,7 +10020,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -9933,6 +10060,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -9979,7 +10107,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10022,6 +10150,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10058,7 +10187,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10096,6 +10225,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10136,7 +10266,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10173,6 +10303,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -10219,7 +10350,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10256,6 +10387,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10290,7 +10422,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10324,6 +10456,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10358,7 +10491,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -10392,6 +10525,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -10432,7 +10566,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10466,6 +10600,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -10524,7 +10659,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10561,6 +10696,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10595,7 +10731,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10629,6 +10765,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -10671,7 +10808,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10706,6 +10843,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10740,7 +10878,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10774,6 +10912,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10808,7 +10947,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -10842,6 +10981,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10877,7 +11017,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -10913,6 +11053,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -10948,7 +11089,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf0[..outNBElement]);
@@ -10984,6 +11125,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -11037,7 +11179,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11073,6 +11215,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -11118,7 +11261,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11153,6 +11296,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11187,7 +11331,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11221,6 +11365,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -11261,7 +11406,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11295,6 +11440,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -11348,7 +11494,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11384,6 +11530,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let mut _json_inVolume: Vec<f64> = Vec::new();
             let inReal: &[f64];
@@ -11424,7 +11571,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11458,6 +11605,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -11511,7 +11659,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11547,6 +11695,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -11592,7 +11741,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11627,6 +11776,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11665,7 +11815,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11701,6 +11851,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11735,7 +11886,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11769,6 +11920,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11803,7 +11955,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11837,6 +11989,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11871,7 +12024,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11905,6 +12058,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -11939,7 +12093,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -11973,6 +12127,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12010,7 +12165,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12044,6 +12199,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -12088,7 +12244,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12124,6 +12280,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let inHigh: &[f64];
@@ -12180,7 +12337,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12222,6 +12379,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12254,7 +12412,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12287,6 +12445,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12319,7 +12478,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12352,6 +12511,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12386,7 +12546,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12420,6 +12580,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12452,7 +12613,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12485,6 +12646,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12521,7 +12683,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12556,6 +12718,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -12615,7 +12778,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12657,6 +12820,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -12712,7 +12876,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12752,6 +12916,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12796,7 +12961,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12835,6 +13000,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal0: Vec<f64> = Vec::new();
             let mut _json_inReal1: Vec<f64> = Vec::new();
             let inReal0: &[f64];
@@ -12875,7 +13041,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12909,6 +13075,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -12943,7 +13110,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -12977,6 +13144,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13016,7 +13184,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13051,6 +13219,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13083,7 +13252,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13116,6 +13285,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13148,7 +13318,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13181,6 +13351,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13215,7 +13386,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13249,6 +13420,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -13297,7 +13469,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13332,6 +13504,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13366,7 +13539,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13400,6 +13573,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13434,7 +13608,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13468,6 +13642,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13502,7 +13677,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13536,6 +13711,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -13584,7 +13760,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13619,6 +13795,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -13673,7 +13850,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13711,6 +13888,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13747,7 +13925,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13782,6 +13960,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -13830,7 +14009,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13865,6 +14044,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inHigh: Vec<f64> = Vec::new();
             let mut _json_inLow: Vec<f64> = Vec::new();
             let mut _json_inClose: Vec<f64> = Vec::new();
@@ -13915,7 +14095,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
@@ -13951,6 +14131,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
             let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
             let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
             let mut _json_inReal: Vec<f64> = Vec::new();
             let inReal: &[f64];
             if gen_present != 0 {
@@ -13985,7 +14166,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             );
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
-            if gen_present != 0 && full_output == 0 {
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);

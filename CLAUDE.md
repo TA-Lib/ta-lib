@@ -108,9 +108,13 @@ unstable-period functions. It produces a timing summary, cross-language
 comparison table, and JSONL report.
 
 `server_verify.c` additionally lets the hand-written ta_regtest test functions
-verify each call against the language servers. Note: it must be registered in
-BOTH `CMakeLists.txt` and the autotools `Makefile.am` (the dist-verification CI
-path builds with autotools — a missing entry there breaks the nightly).
+verify each call against the language servers **bitwise** — same inputs (sent
+losslessly as hex-of-IEEE-bits), same algorithm ⇒ same bits — reusing the shared
+`codegen_output_hash`/`codegen_hash_compare` core with `--xlang-hash` (issue
+#115; zero tolerance except a narrow Java-transcendental one). Note: it must be
+registered in BOTH `CMakeLists.txt` and the autotools `Makefile.am` (the
+dist-verification CI path builds with autotools — a missing entry there breaks
+the nightly).
 `scripts/build.py check-source-lists` verifies the two lists agree (also run
 by the dev nightly regen-check job).
 

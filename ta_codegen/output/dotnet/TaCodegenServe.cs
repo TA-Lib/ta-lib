@@ -3098,6 +3098,17 @@ public class TaCodegenServe {
                 rc = TA_ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                        _h = SvHashF64(_h, outArr2, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ACCBANDS_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
@@ -3131,6 +3142,15 @@ public class TaCodegenServe {
                 rc = TA_ACOS(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ACOS_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -3171,6 +3191,15 @@ public class TaCodegenServe {
                 rc = TA_AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_AD_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
@@ -3205,6 +3234,15 @@ public class TaCodegenServe {
                 rc = TA_ADD(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ADD_Unguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
@@ -3247,6 +3285,15 @@ public class TaCodegenServe {
                 rc = TA_ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ADOSC_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3287,6 +3334,15 @@ public class TaCodegenServe {
                 rc = TA_ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ADX_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3327,6 +3383,15 @@ public class TaCodegenServe {
                 rc = TA_ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ADXR_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3361,6 +3426,15 @@ public class TaCodegenServe {
                 rc = TA_APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_APO_Unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
@@ -3397,6 +3471,16 @@ public class TaCodegenServe {
                 rc = TA_AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_AROON_Unguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -3433,6 +3517,15 @@ public class TaCodegenServe {
                 rc = TA_AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_AROONOSC_Unguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3464,6 +3557,15 @@ public class TaCodegenServe {
                 rc = TA_ASIN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ASIN_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -3495,6 +3597,15 @@ public class TaCodegenServe {
                 rc = TA_ATAN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ATAN_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -3535,6 +3646,15 @@ public class TaCodegenServe {
                 rc = TA_ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ATR_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3567,6 +3687,15 @@ public class TaCodegenServe {
                 rc = TA_AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_AVGDEV_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3607,6 +3736,15 @@ public class TaCodegenServe {
                 rc = TA_AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_AVGPRICE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3644,6 +3782,17 @@ public class TaCodegenServe {
                 rc = TA_BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                        _h = SvHashF64(_h, outArr2, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_BBANDS_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
@@ -3681,6 +3830,15 @@ public class TaCodegenServe {
                 rc = TA_BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_BETA_Unguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3721,6 +3879,15 @@ public class TaCodegenServe {
                 rc = TA_BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_BOP_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3759,6 +3926,15 @@ public class TaCodegenServe {
                 rc = TA_CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CCI_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -3799,6 +3975,15 @@ public class TaCodegenServe {
                 rc = TA_CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL2CROWS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3839,6 +4024,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3BLACKCROWS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3879,6 +4073,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3INSIDE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3919,6 +4122,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3LINESTRIKE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3959,6 +4171,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3OUTSIDE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -3999,6 +4220,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3STARSINSOUTH_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4039,6 +4269,15 @@ public class TaCodegenServe {
                 rc = TA_CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDL3WHITESOLDIERS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4080,6 +4319,15 @@ public class TaCodegenServe {
                 rc = TA_CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLABANDONEDBABY_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -4120,6 +4368,15 @@ public class TaCodegenServe {
                 rc = TA_CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLADVANCEBLOCK_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4160,6 +4417,15 @@ public class TaCodegenServe {
                 rc = TA_CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLBELTHOLD_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4200,6 +4466,15 @@ public class TaCodegenServe {
                 rc = TA_CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLBREAKAWAY_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4240,6 +4515,15 @@ public class TaCodegenServe {
                 rc = TA_CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLCLOSINGMARUBOZU_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4280,6 +4564,15 @@ public class TaCodegenServe {
                 rc = TA_CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLCONCEALBABYSWALL_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4320,6 +4613,15 @@ public class TaCodegenServe {
                 rc = TA_CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLCOUNTERATTACK_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4361,6 +4663,15 @@ public class TaCodegenServe {
                 rc = TA_CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLDARKCLOUDCOVER_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -4401,6 +4712,15 @@ public class TaCodegenServe {
                 rc = TA_CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLDOJI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4441,6 +4761,15 @@ public class TaCodegenServe {
                 rc = TA_CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLDOJISTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4481,6 +4810,15 @@ public class TaCodegenServe {
                 rc = TA_CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLDRAGONFLYDOJI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4521,6 +4859,15 @@ public class TaCodegenServe {
                 rc = TA_CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLENGULFING_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4562,6 +4909,15 @@ public class TaCodegenServe {
                 rc = TA_CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLEVENINGDOJISTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -4603,6 +4959,15 @@ public class TaCodegenServe {
                 rc = TA_CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLEVENINGSTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -4643,6 +5008,15 @@ public class TaCodegenServe {
                 rc = TA_CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLGAPSIDESIDEWHITE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4683,6 +5057,15 @@ public class TaCodegenServe {
                 rc = TA_CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLGRAVESTONEDOJI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4723,6 +5106,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHAMMER_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4763,6 +5155,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHANGINGMAN_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4803,6 +5204,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHARAMI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4843,6 +5253,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHARAMICROSS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4883,6 +5302,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHIGHWAVE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4923,6 +5351,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHIKKAKE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -4963,6 +5400,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHIKKAKEMOD_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5003,6 +5449,15 @@ public class TaCodegenServe {
                 rc = TA_CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLHOMINGPIGEON_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5043,6 +5498,15 @@ public class TaCodegenServe {
                 rc = TA_CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLIDENTICAL3CROWS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5083,6 +5547,15 @@ public class TaCodegenServe {
                 rc = TA_CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLINNECK_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5123,6 +5596,15 @@ public class TaCodegenServe {
                 rc = TA_CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLINVERTEDHAMMER_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5163,6 +5645,15 @@ public class TaCodegenServe {
                 rc = TA_CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLKICKING_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5203,6 +5694,15 @@ public class TaCodegenServe {
                 rc = TA_CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLKICKINGBYLENGTH_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5243,6 +5743,15 @@ public class TaCodegenServe {
                 rc = TA_CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLLADDERBOTTOM_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5283,6 +5792,15 @@ public class TaCodegenServe {
                 rc = TA_CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLLONGLEGGEDDOJI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5323,6 +5841,15 @@ public class TaCodegenServe {
                 rc = TA_CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLLONGLINE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5363,6 +5890,15 @@ public class TaCodegenServe {
                 rc = TA_CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLMARUBOZU_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5403,6 +5939,15 @@ public class TaCodegenServe {
                 rc = TA_CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLMATCHINGLOW_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5444,6 +5989,15 @@ public class TaCodegenServe {
                 rc = TA_CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLMATHOLD_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -5485,6 +6039,15 @@ public class TaCodegenServe {
                 rc = TA_CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLMORNINGDOJISTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -5526,6 +6089,15 @@ public class TaCodegenServe {
                 rc = TA_CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLMORNINGSTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
@@ -5566,6 +6138,15 @@ public class TaCodegenServe {
                 rc = TA_CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLONNECK_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5606,6 +6187,15 @@ public class TaCodegenServe {
                 rc = TA_CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLPIERCING_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5646,6 +6236,15 @@ public class TaCodegenServe {
                 rc = TA_CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLRICKSHAWMAN_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5686,6 +6285,15 @@ public class TaCodegenServe {
                 rc = TA_CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLRISEFALL3METHODS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5726,6 +6334,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSEPARATINGLINES_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5766,6 +6383,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSHOOTINGSTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5806,6 +6432,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSHORTLINE_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5846,6 +6481,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSPINNINGTOP_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5886,6 +6530,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSTALLEDPATTERN_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5926,6 +6579,15 @@ public class TaCodegenServe {
                 rc = TA_CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLSTICKSANDWICH_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -5966,6 +6628,15 @@ public class TaCodegenServe {
                 rc = TA_CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLTAKURI_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6006,6 +6677,15 @@ public class TaCodegenServe {
                 rc = TA_CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLTASUKIGAP_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6046,6 +6726,15 @@ public class TaCodegenServe {
                 rc = TA_CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLTHRUSTING_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6086,6 +6775,15 @@ public class TaCodegenServe {
                 rc = TA_CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLTRISTAR_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6126,6 +6824,15 @@ public class TaCodegenServe {
                 rc = TA_CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLUNIQUE3RIVER_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6166,6 +6873,15 @@ public class TaCodegenServe {
                 rc = TA_CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLUPSIDEGAP2CROWS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6206,6 +6922,15 @@ public class TaCodegenServe {
                 rc = TA_CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CDLXSIDEGAP3METHODS_Unguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -6237,6 +6962,15 @@ public class TaCodegenServe {
                 rc = TA_CEIL(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CEIL_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6271,6 +7005,15 @@ public class TaCodegenServe {
                 rc = TA_CMO(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CMO_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6306,6 +7049,15 @@ public class TaCodegenServe {
                 rc = TA_CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_CORREL_Unguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6337,6 +7089,15 @@ public class TaCodegenServe {
                 rc = TA_COS(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_COS_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6368,6 +7129,15 @@ public class TaCodegenServe {
                 rc = TA_COSH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_COSH_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6400,6 +7170,15 @@ public class TaCodegenServe {
                 rc = TA_DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_DEMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6434,6 +7213,15 @@ public class TaCodegenServe {
                 rc = TA_DIV(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_DIV_Unguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
@@ -6474,6 +7262,15 @@ public class TaCodegenServe {
                 rc = TA_DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_DX_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6508,6 +7305,15 @@ public class TaCodegenServe {
                 rc = TA_EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_EMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6539,6 +7345,15 @@ public class TaCodegenServe {
                 rc = TA_EXP(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_EXP_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6570,6 +7385,15 @@ public class TaCodegenServe {
                 rc = TA_FLOOR(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_FLOOR_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6603,6 +7427,15 @@ public class TaCodegenServe {
                 rc = TA_HT_DCPERIOD(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_DCPERIOD_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6636,6 +7469,15 @@ public class TaCodegenServe {
                 rc = TA_HT_DCPHASE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_DCPHASE_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6670,6 +7512,16 @@ public class TaCodegenServe {
                 rc = TA_HT_PHASOR(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_PHASOR_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -6705,6 +7557,16 @@ public class TaCodegenServe {
                 rc = TA_HT_SINE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_SINE_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -6739,6 +7601,15 @@ public class TaCodegenServe {
                 rc = TA_HT_TRENDLINE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_TRENDLINE_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6772,6 +7643,15 @@ public class TaCodegenServe {
                 rc = TA_HT_TRENDMODE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_HT_TRENDMODE_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -6807,6 +7687,15 @@ public class TaCodegenServe {
                 rc = TA_IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_IMI_Unguarded(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6841,6 +7730,15 @@ public class TaCodegenServe {
                 rc = TA_KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_KAMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6873,6 +7771,15 @@ public class TaCodegenServe {
                 rc = TA_LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LINEARREG_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6905,6 +7812,15 @@ public class TaCodegenServe {
                 rc = TA_LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LINEARREG_ANGLE_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6937,6 +7853,15 @@ public class TaCodegenServe {
                 rc = TA_LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LINEARREG_INTERCEPT_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -6969,6 +7894,15 @@ public class TaCodegenServe {
                 rc = TA_LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LINEARREG_SLOPE_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7000,6 +7934,15 @@ public class TaCodegenServe {
                 rc = TA_LN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LN_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -7031,6 +7974,15 @@ public class TaCodegenServe {
                 rc = TA_LOG10(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_LOG10_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -7064,6 +8016,15 @@ public class TaCodegenServe {
                 rc = TA_MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
@@ -7100,6 +8061,17 @@ public class TaCodegenServe {
                 rc = TA_MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                        _h = SvHashF64(_h, outArr2, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MACD_Unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
@@ -7141,6 +8113,17 @@ public class TaCodegenServe {
                 rc = TA_MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                        _h = SvHashF64(_h, outArr2, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MACDEXT_Unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
@@ -7177,6 +8160,17 @@ public class TaCodegenServe {
                 rc = TA_MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                        _h = SvHashF64(_h, outArr2, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MACDFIX_Unguarded(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
@@ -7215,6 +8209,16 @@ public class TaCodegenServe {
                 rc = TA_MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MAMA_Unguarded(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -7253,6 +8257,15 @@ public class TaCodegenServe {
                 rc = TA_MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MAVP_Unguarded(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
@@ -7285,6 +8298,15 @@ public class TaCodegenServe {
                 rc = TA_MAX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MAX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7317,6 +8339,15 @@ public class TaCodegenServe {
                 rc = TA_MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MAXINDEX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7351,6 +8382,15 @@ public class TaCodegenServe {
                 rc = TA_MEDPRICE(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MEDPRICE_Unguarded(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
@@ -7392,6 +8432,15 @@ public class TaCodegenServe {
                 rc = TA_MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MFI_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7424,6 +8473,15 @@ public class TaCodegenServe {
                 rc = TA_MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MIDPOINT_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7459,6 +8517,15 @@ public class TaCodegenServe {
                 rc = TA_MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MIDPRICE_Unguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7491,6 +8558,15 @@ public class TaCodegenServe {
                 rc = TA_MIN(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MIN_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7523,6 +8599,15 @@ public class TaCodegenServe {
                 rc = TA_MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MININDEX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7556,6 +8641,16 @@ public class TaCodegenServe {
                 rc = TA_MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MINMAX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -7590,6 +8685,16 @@ public class TaCodegenServe {
                 rc = TA_MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashI32(_h, outArr0, outNBElement);
+                        _h = SvHashI32(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MINMAXINDEX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -7631,6 +8736,15 @@ public class TaCodegenServe {
                 rc = TA_MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MINUS_DI_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7668,6 +8782,15 @@ public class TaCodegenServe {
                 rc = TA_MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MINUS_DM_Unguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7700,6 +8823,15 @@ public class TaCodegenServe {
                 rc = TA_MOM(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MOM_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7734,6 +8866,15 @@ public class TaCodegenServe {
                 rc = TA_MULT(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_MULT_Unguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
@@ -7774,6 +8915,15 @@ public class TaCodegenServe {
                 rc = TA_NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_NATR_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7808,6 +8958,15 @@ public class TaCodegenServe {
                 rc = TA_OBV(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_OBV_Unguarded(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
@@ -7848,6 +9007,15 @@ public class TaCodegenServe {
                 rc = TA_PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_PLUS_DI_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7885,6 +9053,15 @@ public class TaCodegenServe {
                 rc = TA_PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_PLUS_DM_Unguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7919,6 +9096,15 @@ public class TaCodegenServe {
                 rc = TA_PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_PPO_Unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
@@ -7951,6 +9137,15 @@ public class TaCodegenServe {
                 rc = TA_ROC(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ROC_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -7983,6 +9178,15 @@ public class TaCodegenServe {
                 rc = TA_ROCP(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ROCP_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8015,6 +9219,15 @@ public class TaCodegenServe {
                 rc = TA_ROCR(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ROCR_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8047,6 +9260,15 @@ public class TaCodegenServe {
                 rc = TA_ROCR100(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ROCR100_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8081,6 +9303,15 @@ public class TaCodegenServe {
                 rc = TA_RSI(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_RSI_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8117,6 +9348,15 @@ public class TaCodegenServe {
                 rc = TA_SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SAR_Unguarded(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
@@ -8159,6 +9399,15 @@ public class TaCodegenServe {
                 rc = TA_SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SAREXT_Unguarded(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
@@ -8190,6 +9439,15 @@ public class TaCodegenServe {
                 rc = TA_SIN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SIN_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -8221,6 +9479,15 @@ public class TaCodegenServe {
                 rc = TA_SINH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SINH_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -8253,6 +9520,15 @@ public class TaCodegenServe {
                 rc = TA_SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8284,6 +9560,15 @@ public class TaCodegenServe {
                 rc = TA_SQRT(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SQRT_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -8317,6 +9602,15 @@ public class TaCodegenServe {
                 rc = TA_STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_STDDEV_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
@@ -8360,6 +9654,16 @@ public class TaCodegenServe {
                 rc = TA_STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_STOCH_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -8402,6 +9706,16 @@ public class TaCodegenServe {
                 rc = TA_STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_STOCHF_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -8441,6 +9755,16 @@ public class TaCodegenServe {
                 rc = TA_STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                        _h = SvHashF64(_h, outArr1, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_STOCHRSI_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
@@ -8476,6 +9800,15 @@ public class TaCodegenServe {
                 rc = TA_SUB(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SUB_Unguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
@@ -8508,6 +9841,15 @@ public class TaCodegenServe {
                 rc = TA_SUM(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_SUM_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8543,6 +9885,15 @@ public class TaCodegenServe {
                 rc = TA_T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_T3_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
@@ -8574,6 +9925,15 @@ public class TaCodegenServe {
                 rc = TA_TAN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TAN_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -8605,6 +9965,15 @@ public class TaCodegenServe {
                 rc = TA_TANH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TANH_Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
@@ -8637,6 +10006,15 @@ public class TaCodegenServe {
                 rc = TA_TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TEMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8674,6 +10052,15 @@ public class TaCodegenServe {
                 rc = TA_TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TRANGE_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -8706,6 +10093,15 @@ public class TaCodegenServe {
                 rc = TA_TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TRIMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8738,6 +10134,15 @@ public class TaCodegenServe {
                 rc = TA_TRIX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TRIX_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8770,6 +10175,15 @@ public class TaCodegenServe {
                 rc = TA_TSF(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TSF_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8807,6 +10221,15 @@ public class TaCodegenServe {
                 rc = TA_TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_TYPPRICE_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -8847,6 +10270,15 @@ public class TaCodegenServe {
                 rc = TA_ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_ULTOSC_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
@@ -8880,6 +10312,15 @@ public class TaCodegenServe {
                 rc = TA_VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_VAR_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
@@ -8917,6 +10358,15 @@ public class TaCodegenServe {
                 rc = TA_WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_WCLPRICE_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
@@ -8955,6 +10405,15 @@ public class TaCodegenServe {
                 rc = TA_WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_WILLR_Unguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -8987,6 +10446,15 @@ public class TaCodegenServe {
                 rc = TA_WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_WMA_Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
@@ -9347,10 +10815,39 @@ public class TaCodegenServe {
 
     static double[] GetDoubleArray(JsonElement p, string name) {
         var arr = p.GetProperty(name);
+        if (arr.ValueKind == JsonValueKind.String) {
+            string hex = arr.GetString()!;
+            int cnt = hex.Length / 16;
+            double[] r = new double[cnt];
+            for (int i = 0; i < cnt; i++)
+                r[i] = BitConverter.Int64BitsToDouble(unchecked((long)Convert.ToUInt64(hex.Substring(i * 16, 16), 16)));
+            return r;
+        }
         double[] result = new double[arr.GetArrayLength()];
         for (int i = 0; i < result.Length; i++)
             result[i] = arr[i].GetDouble();
         return result;
+    }
+
+    static ulong SvHashInit() => 1469598103934665603UL;
+    static ulong SvHashF64(ulong h, double[] a, int n) {
+        for (int i = 0; i < n; i++) {
+            long bits = BitConverter.DoubleToInt64Bits(a[i]);
+            for (int b = 0; b < 8; b++) { h ^= (ulong)((bits >> (8 * b)) & 0xffL); h *= 1099511628211UL; }
+        }
+        return h;
+    }
+    static ulong SvHashI32(ulong h, int[] a, int n) {
+        for (int i = 0; i < n; i++) {
+            int bits = a[i];
+            for (int b = 0; b < 4; b++) { h ^= (ulong)((bits >> (8 * b)) & 0xff); h *= 1099511628211UL; }
+        }
+        return h;
+    }
+    static ulong SvHashFin(ulong h) {
+        h ^= h >> 33; h *= 0xFF51AFD7ED558CCDUL;
+        h ^= h >> 33; h *= 0xC4CEB9FE1A85EC53UL;
+        h ^= h >> 33; return h;
     }
 
     static string FormatArray(double[] arr, int count) {

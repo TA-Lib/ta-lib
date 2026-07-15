@@ -362,6 +362,7 @@ int main( int argc, char **argv )
           * relative to the bin directory (same as test_codegen.c).
           */
          CodegenPipe svPipes[SV_MAX_PIPES];
+         const char *svPipeLang[SV_MAX_PIPES] = {0};
          int nbSvPipes = 0;
          if( doCodegenTest )
          {
@@ -397,7 +398,10 @@ int main( int argc, char **argv )
                if( !svLanguageEnabled(codegenLanguageFilter, svServers[svIdx].lang) )
                   continue;
                if( codegen_pipe_open(&svPipes[nbSvPipes], svServers[svIdx].argvSv) == TA_TEST_PASS )
+               {
+                  svPipeLang[nbSvPipes] = svServers[svIdx].lang;
                   nbSvPipes++;
+               }
                else
                   printf( "  (%s server not available for hand-written test verification)\n",
                           svServers[svIdx].lang );
@@ -408,7 +412,7 @@ int main( int argc, char **argv )
                int p;
                for( p = 0; p < nbSvPipes; p++ )
                   pipes[p] = &svPipes[p];
-               server_verify_init(pipes, nbSvPipes);
+               server_verify_init(pipes, svPipeLang, nbSvPipes);
                printf( "  (hand-written tests verified against %d language server(s))\n",
                        nbSvPipes );
             }

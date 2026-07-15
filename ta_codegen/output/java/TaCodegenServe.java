@@ -63664,6 +63664,17 @@ public class TaCodegenServe {
     static double[] jsonDoubleArray(String json, String field) {
         int idx = json.indexOf('"' + field + '"');
         if (idx < 0) return new double[0];
+        idx = json.indexOf(':', idx) + 1;
+        while (idx < json.length() && json.charAt(idx) == ' ') idx++;
+        if (idx < json.length() && json.charAt(idx) == '"') {
+            int hend = json.indexOf('"', idx + 1);
+            String hex = json.substring(idx + 1, hend);
+            int cnt = hex.length() / 16;
+            double[] r = new double[cnt];
+            for (int i = 0; i < cnt; i++)
+                r[i] = Double.longBitsToDouble(Long.parseUnsignedLong(hex.substring(i * 16, i * 16 + 16), 16));
+            return r;
+        }
         idx = json.indexOf('[', idx);
         int end = json.indexOf(']', idx);
         String inner = json.substring(idx + 1, end).trim();
@@ -63693,6 +63704,27 @@ public class TaCodegenServe {
         }
         sb.append(']');
         return sb.toString();
+    }
+
+    static long svHashInit() { return 1469598103934665603L; }
+    static long svHashF64(long h, double[] a, int n) {
+        for (int i = 0; i < n; i++) {
+            long bits = Double.doubleToRawLongBits(a[i]);
+            for (int b = 0; b < 8; b++) { h ^= (bits >>> (8 * b)) & 0xffL; h *= 1099511628211L; }
+        }
+        return h;
+    }
+    static long svHashI32(long h, int[] a, int n) {
+        for (int i = 0; i < n; i++) {
+            int bits = a[i];
+            for (int b = 0; b < 4; b++) { h ^= (bits >>> (8 * b)) & 0xffL; h *= 1099511628211L; }
+        }
+        return h;
+    }
+    static long svHashFin(long h) {
+        h ^= h >>> 33; h *= 0xFF51AFD7ED558CCDL;
+        h ^= h >>> 33; h *= 0xC4CEB9FE1A85EC53L;
+        h ^= h >>> 33; return h;
     }
 
     static String handleRequest(String json) {
@@ -64278,6 +64310,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.accbandsUnguarded(
@@ -64327,6 +64369,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.acosUnguarded(
@@ -64386,6 +64436,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.adUnguarded(
@@ -64438,6 +64496,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.addUnguarded(
@@ -64502,6 +64568,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.adOscUnguarded(
@@ -64564,6 +64638,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.adxUnguarded(
@@ -64624,6 +64706,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.adxrUnguarded(
@@ -64677,6 +64767,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.apoUnguarded(
@@ -64732,6 +64830,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.aroonUnguarded(
@@ -64786,6 +64893,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.aroonOscUnguarded(
@@ -64832,6 +64947,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.asinUnguarded(
@@ -64876,6 +64999,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.atanUnguarded(
@@ -64933,6 +65064,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.atrUnguarded(
@@ -64982,6 +65121,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.avgDevUnguarded(
@@ -65042,6 +65189,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.avgPriceUnguarded(
@@ -65099,6 +65254,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.bbandsUnguarded(
@@ -65156,6 +65321,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.betaUnguarded(
@@ -65217,6 +65390,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.bopUnguarded(
@@ -65276,6 +65457,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cciUnguarded(
@@ -65338,6 +65527,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl2CrowsUnguarded(
@@ -65400,6 +65597,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3BlackCrowsUnguarded(
@@ -65462,6 +65667,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3InsideUnguarded(
@@ -65524,6 +65737,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3LineStrikeUnguarded(
@@ -65586,6 +65807,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3OutsideUnguarded(
@@ -65648,6 +65877,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3StarsInSouthUnguarded(
@@ -65710,6 +65947,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdl3WhiteSoldiersUnguarded(
@@ -65774,6 +66019,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlAbandonedBabyUnguarded(
@@ -65837,6 +66090,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlAdvanceBlockUnguarded(
@@ -65899,6 +66160,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlBeltHoldUnguarded(
@@ -65961,6 +66230,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlBreakawayUnguarded(
@@ -66023,6 +66300,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlClosingMarubozuUnguarded(
@@ -66085,6 +66370,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlConcealBabysWallUnguarded(
@@ -66147,6 +66440,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlCounterAttackUnguarded(
@@ -66211,6 +66512,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlDarkCloudCoverUnguarded(
@@ -66274,6 +66583,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlDojiUnguarded(
@@ -66336,6 +66653,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlDojiStarUnguarded(
@@ -66398,6 +66723,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlDragonflyDojiUnguarded(
@@ -66460,6 +66793,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlEngulfingUnguarded(
@@ -66524,6 +66865,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlEveningDojiStarUnguarded(
@@ -66589,6 +66938,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlEveningStarUnguarded(
@@ -66652,6 +67009,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlGapSideSideWhiteUnguarded(
@@ -66714,6 +67079,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlGravestoneDojiUnguarded(
@@ -66776,6 +67149,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHammerUnguarded(
@@ -66838,6 +67219,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHangingManUnguarded(
@@ -66900,6 +67289,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHaramiUnguarded(
@@ -66962,6 +67359,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHaramiCrossUnguarded(
@@ -67024,6 +67429,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHignWaveUnguarded(
@@ -67086,6 +67499,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHikkakeUnguarded(
@@ -67148,6 +67569,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHikkakeModUnguarded(
@@ -67210,6 +67639,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlHomingPigeonUnguarded(
@@ -67272,6 +67709,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlIdentical3CrowsUnguarded(
@@ -67334,6 +67779,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlInNeckUnguarded(
@@ -67396,6 +67849,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlInvertedHammerUnguarded(
@@ -67458,6 +67919,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlKickingUnguarded(
@@ -67520,6 +67989,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlKickingByLengthUnguarded(
@@ -67582,6 +68059,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlLadderBottomUnguarded(
@@ -67644,6 +68129,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlLongLeggedDojiUnguarded(
@@ -67706,6 +68199,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlLongLineUnguarded(
@@ -67768,6 +68269,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlMarubozuUnguarded(
@@ -67830,6 +68339,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlMatchingLowUnguarded(
@@ -67894,6 +68411,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlMatHoldUnguarded(
@@ -67959,6 +68484,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlMorningDojiStarUnguarded(
@@ -68024,6 +68557,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlMorningStarUnguarded(
@@ -68087,6 +68628,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlOnNeckUnguarded(
@@ -68149,6 +68698,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlPiercingUnguarded(
@@ -68211,6 +68768,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlRickshawManUnguarded(
@@ -68273,6 +68838,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlRiseFall3MethodsUnguarded(
@@ -68335,6 +68908,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlSeperatingLinesUnguarded(
@@ -68397,6 +68978,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlShootingStarUnguarded(
@@ -68459,6 +69048,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlShortLineUnguarded(
@@ -68521,6 +69118,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlSpinningTopUnguarded(
@@ -68583,6 +69188,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlStalledPatternUnguarded(
@@ -68645,6 +69258,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlStickSandwichUnguarded(
@@ -68707,6 +69328,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlTakuriUnguarded(
@@ -68769,6 +69398,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlTasukiGapUnguarded(
@@ -68831,6 +69468,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlThrustingUnguarded(
@@ -68893,6 +69538,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlTristarUnguarded(
@@ -68955,6 +69608,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlUnique3RiverUnguarded(
@@ -69017,6 +69678,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlUpsideGap2CrowsUnguarded(
@@ -69079,6 +69748,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cdlXSideGap3MethodsUnguarded(
@@ -69126,6 +69803,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.ceilUnguarded(
@@ -69173,6 +69858,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cmoUnguarded(
@@ -69225,6 +69918,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.correlUnguarded(
@@ -69271,6 +69972,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.cosUnguarded(
@@ -69315,6 +70024,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.coshUnguarded(
@@ -69361,6 +70078,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.demaUnguarded(
@@ -69411,6 +70136,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.divUnguarded(
@@ -69469,6 +70202,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.dxUnguarded(
@@ -69519,6 +70260,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.emaUnguarded(
@@ -69564,6 +70313,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.expUnguarded(
@@ -69608,6 +70365,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.floorUnguarded(
@@ -69653,6 +70418,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htDcPeriodUnguarded(
@@ -69698,6 +70471,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htDcPhaseUnguarded(
@@ -69744,6 +70525,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htPhasorUnguarded(
@@ -69791,6 +70581,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htSineUnguarded(
@@ -69837,6 +70636,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htTrendlineUnguarded(
@@ -69882,6 +70689,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.htTrendModeUnguarded(
@@ -69933,6 +70748,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.imiUnguarded(
@@ -69982,6 +70805,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.kamaUnguarded(
@@ -70029,6 +70860,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.linearRegUnguarded(
@@ -70076,6 +70915,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.linearRegAngleUnguarded(
@@ -70123,6 +70970,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.linearRegInterceptUnguarded(
@@ -70170,6 +71025,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.linearRegSlopeUnguarded(
@@ -70215,6 +71078,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.lnUnguarded(
@@ -70259,6 +71130,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.log10Unguarded(
@@ -70307,6 +71186,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.movingAverageUnguarded(
@@ -70361,6 +71248,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.macdUnguarded(
@@ -70424,6 +71321,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.macdExtUnguarded(
@@ -70480,6 +71387,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.macdFixUnguarded(
@@ -70533,6 +71450,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.mamaUnguarded(
@@ -70591,6 +71517,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.movingAverageVariablePeriodUnguarded(
@@ -70641,6 +71575,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.maxUnguarded(
@@ -70688,6 +71630,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.maxIndexUnguarded(
@@ -70738,6 +71688,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.medPriceUnguarded(
@@ -70800,6 +71758,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.mfiUnguarded(
@@ -70850,6 +71816,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.midPointUnguarded(
@@ -70902,6 +71876,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.midPriceUnguarded(
@@ -70950,6 +71932,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minUnguarded(
@@ -70997,6 +71987,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minIndexUnguarded(
@@ -71045,6 +72043,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minMaxUnguarded(
@@ -71094,6 +72101,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+                _h = svHashI32(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minMaxIndexUnguarded(
@@ -71153,6 +72169,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minusDIUnguarded(
@@ -71208,6 +72232,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.minusDMUnguarded(
@@ -71256,6 +72288,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.momUnguarded(
@@ -71306,6 +72346,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.multUnguarded(
@@ -71364,6 +72412,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.natrUnguarded(
@@ -71416,6 +72472,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.obvUnguarded(
@@ -71474,6 +72538,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.plusDIUnguarded(
@@ -71529,6 +72601,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.plusDMUnguarded(
@@ -71581,6 +72661,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.ppoUnguarded(
@@ -71630,6 +72718,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.rocUnguarded(
@@ -71677,6 +72773,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.rocPUnguarded(
@@ -71724,6 +72828,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.rocRUnguarded(
@@ -71771,6 +72883,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.rocR100Unguarded(
@@ -71819,6 +72939,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.rsiUnguarded(
@@ -71873,6 +73001,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sarUnguarded(
@@ -71941,6 +73077,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sarExtUnguarded(
@@ -71994,6 +73138,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sinUnguarded(
@@ -72038,6 +73190,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sinhUnguarded(
@@ -72084,6 +73244,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.smaUnguarded(
@@ -72129,6 +73297,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sqrtUnguarded(
@@ -72177,6 +73353,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.stdDevUnguarded(
@@ -72244,6 +73428,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.stochUnguarded(
@@ -72313,6 +73506,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.stochFUnguarded(
@@ -72373,6 +73575,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.stochRsiUnguarded(
@@ -72427,6 +73638,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.subUnguarded(
@@ -72474,6 +73693,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.sumUnguarded(
@@ -72524,6 +73751,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.t3Unguarded(
@@ -72570,6 +73805,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.tanUnguarded(
@@ -72614,6 +73857,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.tanhUnguarded(
@@ -72660,6 +73911,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.temaUnguarded(
@@ -72715,6 +73974,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.trueRangeUnguarded(
@@ -72763,6 +74030,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.trimaUnguarded(
@@ -72810,6 +74085,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.trixUnguarded(
@@ -72857,6 +74140,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.tsfUnguarded(
@@ -72912,6 +74203,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.typPriceUnguarded(
@@ -72974,6 +74273,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.ultOscUnguarded(
@@ -73027,6 +74334,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.varianceUnguarded(
@@ -73083,6 +74398,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.wclPriceUnguarded(
@@ -73141,6 +74464,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.willRUnguarded(
@@ -73190,6 +74521,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
         long startNsUng = System.nanoTime();
         for (int _biu = 0; _biu < bench_iters; _biu++) {
         rc = core.wmaUnguarded(

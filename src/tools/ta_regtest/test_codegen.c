@@ -2953,19 +2953,35 @@ static int fuzz_call(FuzzContext *ctx)
     return 0;
 }
 
-/* Hash the in-process outputs in logical output order (matches the server). */
-static unsigned long long fuzz_hash_local(const CodegenRangeTestParam *p, int nb)
+/* ---- Shared "in-process C <=> server, bit-for-bit" core (issue #115) ---------
+ * codegen_output_hash / codegen_hash_compare / codegen_hash_report back BOTH the
+ * --xlang-hash gate and server_verify (declared in test_codegen.h). Same
+ * operation, different input source: a seed vs the hard-coded test arrays. */
+
+/* Golden output hash in logical order — byte-identical to every server's
+ * out_hash. Reuses the shared fuzz_hash_* FNV primitives (fuzz_data.h). */
+unsigned long long codegen_output_hash(unsigned int nbOutput,
+                                       const int *outIsInteger,
+                                       const void *const *outBufs, int nb)
 {
     unsigned long long h = fuzz_hash_init();
     if( nb > 0 )
-        for( unsigned int o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
-        {
-            if( p->outputIsInteger[o] )
-                h = fuzz_hash_bytes(h, p->outIntBufs[o], (unsigned long)nb * sizeof(int));
-            else
-                h = fuzz_hash_bytes(h, p->outRealBufs[o], (unsigned long)nb * sizeof(double));
-        }
+        for( unsigned int o = 0; o < nbOutput && o < MAX_OUTPUTS; o++ )
+            h = fuzz_hash_bytes(h, outBufs[o],
+                                (unsigned long)nb *
+                                (outIsInteger[o] ? sizeof(int) : sizeof(double)));
     return fuzz_hash_fin(h);
+}
+
+/* Hash the in-process outputs in logical output order (matches the server). */
+static unsigned long long fuzz_hash_local(const CodegenRangeTestParam *p, int nb)
+{
+    const void *bufs[MAX_OUTPUTS];
+    unsigned int o;
+    for( o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+        bufs[o] = p->outputIsInteger[o] ? (const void *)p->outIntBufs[o]
+                                        : (const void *)p->outRealBufs[o];
+    return codegen_output_hash(p->funcInfo->nbOutput, p->outputIsInteger, bufs, nb);
 }
 
 /* Build an abstract_call request that generates its inputs from (shape,seed,n).
@@ -3682,6 +3698,38 @@ static unsigned long long xlang_parse_hash(const char *resp, const char *field, 
     return strtoull(h, NULL, 16);
 }
 
+/* Shared per-server compare: parse a server's hash-mode response and diff it
+ * against the in-process C golden. Pure — no I/O. See test_codegen.h. */
+XHashVerdict codegen_hash_compare(const char *resp,
+                                  TA_RetCode goldRc, int goldBeg, int goldNb,
+                                  unsigned long long goldHash, XHashParsed *parsed)
+{
+    XHashParsed local;
+    int present = 0;
+    if( !parsed ) parsed = &local;
+    parsed->rc        = json_get_int(resp, "retCode");
+    parsed->begIdx    = json_get_int(resp, "outBegIdx");
+    parsed->nbElement = json_get_int(resp, "outNBElement");
+    parsed->hash      = xlang_parse_hash(resp, "out_hash", &present);
+    if( !present )                    return XHASH_NO_HASH;
+    if( parsed->rc != (int)goldRc )   return XHASH_RETCODE;
+    if( goldRc != TA_SUCCESS )        return XHASH_MATCH;  /* matching error code */
+    if( parsed->begIdx != goldBeg || parsed->nbElement != goldNb )
+                                      return XHASH_SHAPE;
+    if( parsed->hash != goldHash )    return XHASH_BITS;
+    return XHASH_MATCH;
+}
+
+/* Shared diagnostic tail (the prefix — seed/scenario — is the caller's). */
+void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
+                         int goldNb, unsigned long long goldHash,
+                         const XHashParsed *parsed)
+{
+    printf("    retCode %d/%d  begIdx %d/%d  nbElem %d/%d  hash %016llx/%016llx (golden/%s)\n",
+           (int)goldRc, parsed->rc, goldBeg, parsed->begIdx, goldNb, parsed->nbElement,
+           goldHash, parsed->hash, who);
+}
+
 /* Send req to one server; reopen once if it died (a dead server that cannot be
  * recovered marks itself closed so the run fails loudly — never a false green). */
 static int xlang_call(XlangServer *s, const char *req, char *resp)
@@ -3880,26 +3928,17 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         sv->mism++;
                         continue;
                     }
-                    int present = 0;
-                    int refRc  = json_get_int(ctx->respBuf, "retCode");
-                    int refBeg = json_get_int(ctx->respBuf, "outBegIdx");
-                    int refNb  = json_get_int(ctx->respBuf, "outNBElement");
-                    unsigned long long refHash = xlang_parse_hash(ctx->respBuf, "out_hash", &present);
-
                     sv->cases++;
-                    int bad = 0;
-                    if( !present )
+                    XHashParsed hp;
+                    XHashVerdict v = codegen_hash_compare(ctx->respBuf, curRc, curBeg,
+                                                          curNb, curHash, &hp);
+                    if( v == XHASH_NO_HASH )
                     {
                         printf("  XLANG PROTOCOL MISSING [%s] TA_%s: response has no out_hash "
                                "(server lacks gen_present support?)\n", sv->display, funcInfo->name);
                         if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
-                        bad = 1;
                     }
-                    else if( (int)curRc != refRc ) bad = 1;
-                    else if( curRc == TA_SUCCESS &&
-                             (curBeg != refBeg || curNb != refNb || curHash != refHash) ) bad = 1;
-
-                    if( bad )
+                    if( v != XHASH_MATCH )
                     {
                         sv->mism++;
                         if( ctx->reportedThisFunc < 3 )
@@ -3914,10 +3953,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                 TA_GetOptInputParameterInfo(funcInfo->handle, q, &oi);
                                 printf(" %s=%.15g", oi->paramName, vec[k][q]);
                             }
-                            printf("\n    retCode %d/%d  begIdx %d/%d  nbElem %d/%d  "
-                                   "hash %016llx/%016llx (golden/%s)\n",
-                                   (int)curRc, refRc, curBeg, refBeg, curNb, refNb,
-                                   curHash, refHash, sv->display);
+                            printf("\n");
+                            codegen_hash_report(sv->display, curRc, curBeg, curNb, curHash, &hp);
                         }
                     }
                 }

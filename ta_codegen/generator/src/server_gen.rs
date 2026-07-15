@@ -506,6 +506,7 @@ pub fn generate_c_server(funcs: &[FuncDef]) -> String {
     s
 }
 
+#[allow(clippy::too_many_lines)]
 fn generate_c_json_helpers() -> String {
     r#"/* ---- Minimal JSON helpers ---- */
 
@@ -539,6 +540,29 @@ static int json_find_double_array(const char *json, const char *field,
     if( !p ) return 0;
     p += strlen(pattern);
     while( *p == ' ' ) p++;
+    if( *p == '"' ) {
+        /* Lossless hex-bits transport (issue #115): a string of concatenated
+         * 16-hex-char groups, each one f64's IEEE-754 bit pattern. Decoded
+         * exactly (no strtod rounding). Every other caller sends a [ ] array. */
+        p++;
+        int count = 0;
+        while( count < max_count && *p && *p != '"' ) {
+            unsigned long long bits = 0;
+            int k;
+            for( k = 0; k < 16 && p[k] && p[k] != '"'; k++ ) {
+                char c = p[k];
+                unsigned int v = (c >= '0' && c <= '9') ? (unsigned int)(c - '0')
+                               : (c >= 'a' && c <= 'f') ? (unsigned int)(c - 'a' + 10)
+                               : (c >= 'A' && c <= 'F') ? (unsigned int)(c - 'A' + 10) : 0u;
+                bits = (bits << 4) | v;
+            }
+            if( k < 16 ) break;   /* truncated trailing group */
+            memcpy(&out[count], &bits, sizeof(double));
+            count++;
+            p += 16;
+        }
+        return count;
+    }
     if( *p != '[' ) return 0;
     p++;
     int count = 0;
@@ -1580,6 +1604,41 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
         s.push_str("        }\n"); // end bench_iters loop
         s.push_str("        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;\n");
 
+        // want_hash mode (server_verify / issue #115): after the GUARDED call —
+        // the same public API TA_CallFunc runs in-process for the golden — return
+        // a full-precision FNV digest of the raw output bytes instead of %.15g
+        // arrays, so a same-input C-vs-C build-flag drift becomes a hard mismatch.
+        // fuzz_hash_* live in fuzz_data.h, only present when not TA_REF_SERVE; the
+        // frozen reference server never receives want_hash (server_verify drives
+        // the four generated servers, not ta_ref_serve).
+        s.push_str("#ifndef TA_REF_SERVE\n");
+        s.push_str("        if( json_find_int(json, \"want_hash\") && !json_find_int(json, \"full_output\") ) {\n");
+        s.push_str("            unsigned long long _oh = fuzz_hash_init();\n");
+        s.push_str("            if( rc == TA_SUCCESS && outNBElement > 0 ) {\n");
+        {
+            let mut real_idx = 0usize;
+            let mut int_idx = 0usize;
+            for out in outputs {
+                if out.param_type == ParamType::Integer {
+                    s.push_str(&format!(
+                        "                _oh = fuzz_hash_bytes(_oh, g_outIntBuf{int_idx}, (unsigned long)outNBElement * sizeof(int));\n"
+                    ));
+                    int_idx += 1;
+                } else {
+                    s.push_str(&format!(
+                        "                _oh = fuzz_hash_bytes(_oh, g_outBuf{real_idx}, (unsigned long)outNBElement * sizeof(double));\n"
+                    ));
+                    real_idx += 1;
+                }
+            }
+        }
+        s.push_str("            }\n");
+        s.push_str("            _oh = fuzz_hash_fin(_oh);\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"out_hash\\\":\\\"%016llx\\\"}\", (int)rc, outBegIdx, outNBElement, _oh);\n");
+        s.push_str("            return;\n");
+        s.push_str("        }\n");
+        s.push_str("#endif /* TA_REF_SERVE */\n");
+
         // Unguarded timing pass — skipped when built as ta_ref_serve (no _Unguarded in libta-lib.a)
         s.push_str("#ifndef TA_REF_SERVE\n");
         s.push_str("        long _t0_ung = get_nanotime();\n");
@@ -1985,6 +2044,20 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static double[] jsonDoubleArray(String json, String field) {\n");
     s.push_str("        int idx = json.indexOf('\"' + field + '\"');\n");
     s.push_str("        if (idx < 0) return new double[0];\n");
+    s.push_str("        idx = json.indexOf(':', idx) + 1;\n");
+    s.push_str("        while (idx < json.length() && json.charAt(idx) == ' ') idx++;\n");
+    // Lossless hex-bits transport (issue #115): a string of concatenated 16-hex
+    // groups, each one double's IEEE-754 bit pattern. Decoded exactly. Every
+    // other caller sends a [ ] number array (fallback below).
+    s.push_str("        if (idx < json.length() && json.charAt(idx) == '\"') {\n");
+    s.push_str("            int hend = json.indexOf('\"', idx + 1);\n");
+    s.push_str("            String hex = json.substring(idx + 1, hend);\n");
+    s.push_str("            int cnt = hex.length() / 16;\n");
+    s.push_str("            double[] r = new double[cnt];\n");
+    s.push_str("            for (int i = 0; i < cnt; i++)\n");
+    s.push_str("                r[i] = Double.longBitsToDouble(Long.parseUnsignedLong(hex.substring(i * 16, i * 16 + 16), 16));\n");
+    s.push_str("            return r;\n");
+    s.push_str("        }\n");
     s.push_str("        idx = json.indexOf('[', idx);\n");
     s.push_str("        int end = json.indexOf(']', idx);\n");
     s.push_str("        String inner = json.substring(idx + 1, end).trim();\n");
@@ -2014,6 +2087,33 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        }\n");
     s.push_str("        sb.append(']');\n");
     s.push_str("        return sb.toString();\n");
+    s.push_str("    }\n\n");
+
+    // FNV-1a output hasher for want_hash mode (server_verify / issue #115).
+    // Byte-for-byte identical to fuzz_data.h / the Rust fuzz port: FNV-1a over
+    // each value's LITTLE-ENDIAN raw bytes (doubleToRawLongBits preserves -0.0
+    // and NaN payloads) + the fmix64 finalizer. Java's fdlibm makes transcendental
+    // functions differ from the C libm by ~1 ULP, so the driver hashes only the
+    // non-transcendental functions bitwise and tolerances the rest.
+    s.push_str("    static long svHashInit() { return 1469598103934665603L; }\n");
+    s.push_str("    static long svHashF64(long h, double[] a, int n) {\n");
+    s.push_str("        for (int i = 0; i < n; i++) {\n");
+    s.push_str("            long bits = Double.doubleToRawLongBits(a[i]);\n");
+    s.push_str("            for (int b = 0; b < 8; b++) { h ^= (bits >>> (8 * b)) & 0xffL; h *= 1099511628211L; }\n");
+    s.push_str("        }\n");
+    s.push_str("        return h;\n");
+    s.push_str("    }\n");
+    s.push_str("    static long svHashI32(long h, int[] a, int n) {\n");
+    s.push_str("        for (int i = 0; i < n; i++) {\n");
+    s.push_str("            int bits = a[i];\n");
+    s.push_str("            for (int b = 0; b < 4; b++) { h ^= (bits >>> (8 * b)) & 0xffL; h *= 1099511628211L; }\n");
+    s.push_str("        }\n");
+    s.push_str("        return h;\n");
+    s.push_str("    }\n");
+    s.push_str("    static long svHashFin(long h) {\n");
+    s.push_str("        h ^= h >>> 33; h *= 0xFF51AFD7ED558CCDL;\n");
+    s.push_str("        h ^= h >>> 33; h *= 0xC4CEB9FE1A85EC53L;\n");
+    s.push_str("        h ^= h >>> 33; return h;\n");
     s.push_str("    }\n\n");
 
     // Dispatch method
@@ -2234,6 +2334,28 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         // Timing capture
         s.push_str("        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;\n");
+
+        // want_hash mode (server_verify / issue #115): digest of the GUARDED
+        // output (like-for-like with the in-process C golden's TA_CallFunc),
+        // returned before the unguarded rerun.
+        s.push_str("        if (jsonInt(json, \"want_hash\") != 0 && jsonInt(json, \"full_output\") == 0) {\n");
+        s.push_str("            long _h = svHashInit();\n");
+        s.push_str("            if (rc == RetCode.Success && outNBElement.value > 0) {\n");
+        for (k, out) in outputs.iter().enumerate() {
+            if out.param_type == ParamType::Integer {
+                s.push_str(&format!(
+                    "                _h = svHashI32(_h, outArr{k}, outNBElement.value);\n"
+                ));
+            } else {
+                s.push_str(&format!(
+                    "                _h = svHashF64(_h, outArr{k}, outNBElement.value);\n"
+                ));
+            }
+        }
+        s.push_str("            }\n");
+        s.push_str("            _h = svHashFin(_h);\n");
+        s.push_str("            return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"outBegIdx\\\":\" + outBegIdx.value + \",\\\"outNBElement\\\":\" + outNBElement.value + \",\\\"out_hash\\\":\\\"\" + String.format(\"%016x\", _h) + \"\\\"}\";\n");
+        s.push_str("        }\n");
 
         // Unguarded timing loop
         let unguarded_name = format!("{func_lower}Unguarded");
@@ -2549,6 +2671,28 @@ pub fn generate_dotnet_server(funcs: &[FuncDef]) -> String {
         s.push_str("                }\n"); // end bench_iters loop
         s.push_str("                long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
 
+        // want_hash mode (server_verify / issue #115): digest of the GUARDED
+        // output, returned before the unguarded rerun (rc == 0 is TA_SUCCESS).
+        s.push_str("                if ((p.TryGetProperty(\"want_hash\", out var _wh) ? _wh.GetInt32() : 0) != 0 &&\n");
+        s.push_str("                    (p.TryGetProperty(\"full_output\", out var _fo) ? _fo.GetInt32() : 0) == 0) {\n");
+        s.push_str("                    ulong _h = SvHashInit();\n");
+        s.push_str("                    if (rc == 0 && outNBElement > 0) {\n");
+        for (k, out) in outputs.iter().enumerate() {
+            if out.param_type == ParamType::Integer {
+                s.push_str(&format!(
+                    "                        _h = SvHashI32(_h, outArr{k}, outNBElement);\n"
+                ));
+            } else {
+                s.push_str(&format!(
+                    "                        _h = SvHashF64(_h, outArr{k}, outNBElement);\n"
+                ));
+            }
+        }
+        s.push_str("                    }\n");
+        s.push_str("                    _h = SvHashFin(_h);\n");
+        s.push_str("                    return $\"{{\\\"retCode\\\":{rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement},\\\"out_hash\\\":\\\"{_h:x16}\\\"}}\";\n");
+        s.push_str("                }\n");
+
         // Unguarded timing loop
         s.push_str("                long _t0u = GetNanoTime();\n");
         s.push_str("                for (int _biu = 0; _biu < bench_iters; _biu++) {\n");
@@ -2632,13 +2776,49 @@ pub fn generate_dotnet_server(funcs: &[FuncDef]) -> String {
     s.push_str("        }\n");
     s.push_str("    }\n\n");
 
-    // Helper: extract double array from JSON
+    // Helper: extract double array from JSON. Lossless hex-bits transport
+    // (issue #115): a string of concatenated 16-hex groups, each one double's
+    // IEEE-754 bit pattern. Decoded exactly; every other caller sends an array.
     s.push_str("    static double[] GetDoubleArray(JsonElement p, string name) {\n");
     s.push_str("        var arr = p.GetProperty(name);\n");
+    s.push_str("        if (arr.ValueKind == JsonValueKind.String) {\n");
+    s.push_str("            string hex = arr.GetString()!;\n");
+    s.push_str("            int cnt = hex.Length / 16;\n");
+    s.push_str("            double[] r = new double[cnt];\n");
+    s.push_str("            for (int i = 0; i < cnt; i++)\n");
+    s.push_str("                r[i] = BitConverter.Int64BitsToDouble(unchecked((long)Convert.ToUInt64(hex.Substring(i * 16, 16), 16)));\n");
+    s.push_str("            return r;\n");
+    s.push_str("        }\n");
     s.push_str("        double[] result = new double[arr.GetArrayLength()];\n");
     s.push_str("        for (int i = 0; i < result.Length; i++)\n");
     s.push_str("            result[i] = arr[i].GetDouble();\n");
     s.push_str("        return result;\n");
+    s.push_str("    }\n\n");
+
+    // FNV-1a output hasher for want_hash mode (server_verify / issue #115),
+    // byte-for-byte identical to fuzz_data.h: FNV-1a over each value's
+    // LITTLE-ENDIAN raw bytes (DoubleToInt64Bits preserves -0.0 / NaN payloads)
+    // + fmix64 finalizer. .NET P/Invokes the C library, so this is expected
+    // bit-identical to the in-process C golden (a build-flag drift guard).
+    s.push_str("    static ulong SvHashInit() => 1469598103934665603UL;\n");
+    s.push_str("    static ulong SvHashF64(ulong h, double[] a, int n) {\n");
+    s.push_str("        for (int i = 0; i < n; i++) {\n");
+    s.push_str("            long bits = BitConverter.DoubleToInt64Bits(a[i]);\n");
+    s.push_str("            for (int b = 0; b < 8; b++) { h ^= (ulong)((bits >> (8 * b)) & 0xffL); h *= 1099511628211UL; }\n");
+    s.push_str("        }\n");
+    s.push_str("        return h;\n");
+    s.push_str("    }\n");
+    s.push_str("    static ulong SvHashI32(ulong h, int[] a, int n) {\n");
+    s.push_str("        for (int i = 0; i < n; i++) {\n");
+    s.push_str("            int bits = a[i];\n");
+    s.push_str("            for (int b = 0; b < 4; b++) { h ^= (ulong)((bits >> (8 * b)) & 0xff); h *= 1099511628211UL; }\n");
+    s.push_str("        }\n");
+    s.push_str("        return h;\n");
+    s.push_str("    }\n");
+    s.push_str("    static ulong SvHashFin(ulong h) {\n");
+    s.push_str("        h ^= h >> 33; h *= 0xFF51AFD7ED558CCDUL;\n");
+    s.push_str("        h ^= h >> 33; h *= 0xC4CEB9FE1A85EC53UL;\n");
+    s.push_str("        h ^= h >> 33; return h;\n");
     s.push_str("    }\n\n");
 
     // Helper: format a double array as a JSON array string
@@ -2747,8 +2927,32 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
-    // Helper: parse f64 array from JSON value
+    // Helper: parse f64 array from JSON value. Lossless hex-bits transport
+    // (issue #115): an input array may arrive as a string of concatenated
+    // 16-hex-char groups, each the IEEE-754 bit pattern of one f64 (from_bits =>
+    // exact, no JSON float-parse rounding). Every other caller sends a number
+    // array, which takes the fallback path unchanged.
     s.push_str("fn parse_f64_array(val: &Value) -> Vec<f64> {\n");
+    s.push_str("    if let Some(hs) = val.as_str() {\n");
+    s.push_str("        let b = hs.as_bytes();\n");
+    s.push_str("        let mut out = Vec::with_capacity(b.len() / 16);\n");
+    s.push_str("        let mut i = 0;\n");
+    s.push_str("        while i + 16 <= b.len() {\n");
+    s.push_str("            let mut bits: u64 = 0;\n");
+    s.push_str("            for &c in &b[i..i + 16] {\n");
+    s.push_str("                let d = match c {\n");
+    s.push_str("                    b'0'..=b'9' => c - b'0',\n");
+    s.push_str("                    b'a'..=b'f' => c - b'a' + 10,\n");
+    s.push_str("                    b'A'..=b'F' => c - b'A' + 10,\n");
+    s.push_str("                    _ => 0,\n");
+    s.push_str("                };\n");
+    s.push_str("                bits = (bits << 4) | d as u64;\n");
+    s.push_str("            }\n");
+    s.push_str("            out.push(f64::from_bits(bits));\n");
+    s.push_str("            i += 16;\n");
+    s.push_str("        }\n");
+    s.push_str("        return out;\n");
+    s.push_str("    }\n");
     s.push_str("    match val.as_array() {\n");
     s.push_str("        Some(arr) => arr.iter().filter_map(|v| v.as_f64()).collect(),\n");
     s.push_str("        None => Vec::new(),\n");
@@ -2897,6 +3101,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            let gen_seed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
         s.push_str("            let gen_n = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
         s.push_str("            let full_output = params[\"full_output\"].as_i64().unwrap_or(0);\n");
+        // --xlang-hash uses gen_present; server_verify (issue #115) uses want_hash
+        // with explicit lossless inputs. Either drives the same out_hash return.
+        s.push_str("            let want_hash = params[\"want_hash\"].as_i64().unwrap_or(0);\n");
 
         // Declare input arrays: Vec for JSON fallback, &[f64] for actual reference.
         // Preloaded path borrows from ref_data (zero-copy), JSON path owns a Vec.
@@ -3059,7 +3266,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // guarded output (like-for-like with the C golden) — not the unguarded
         // rerun. full_output suppresses it (arrays to pinpoint a divergence).
         // Hashes outputs in logical order; nothing unless the call succeeded.
-        s.push_str("            if gen_present != 0 && full_output == 0 {\n");
+        s.push_str("            if (gen_present != 0 || want_hash != 0) && full_output == 0 {\n");
         s.push_str("                let mut _oh = fuzz_hash_init();\n");
         s.push_str("                if matches!(rc, RetCode::Success) && outNBElement > 0 {\n");
         {

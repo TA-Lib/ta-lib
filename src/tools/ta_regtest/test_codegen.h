@@ -27,4 +27,45 @@ ErrorNumber fuzz_ref064(const char *functionFilter);
  * (NULL = all). Returns TA_TEST_PASS iff every server is bit-identical to C. */
 ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter);
 
+/* ---- Shared "in-process C <=> language server, bit-for-bit" core (issue #115).
+ * One operation with a pluggable input source: --xlang-hash feeds a seed;
+ * server_verify feeds the hard-coded test's exact arrays (lossless hex-bits).
+ * Both hash the C outputs (codegen_output_hash), request the server's out_hash,
+ * and diff via codegen_hash_compare. ---- */
+
+/* Verdict of comparing one server's out_hash response to the in-process C golden
+ * on identical inputs. */
+typedef enum {
+    XHASH_MATCH = 0,   /* bit-identical (or matching non-Success retCode) */
+    XHASH_NO_HASH,     /* response carried no out_hash (server lacks want_hash) */
+    XHASH_RETCODE,     /* retCode differs */
+    XHASH_SHAPE,       /* outBegIdx / outNBElement differs */
+    XHASH_BITS         /* output bytes differ (bitwise divergence) */
+} XHashVerdict;
+
+/* Server-side values parsed from the response, for the caller's diagnostic. */
+typedef struct { int rc, begIdx, nbElement; unsigned long long hash; } XHashParsed;
+
+/* Golden output hash: FNV-1a (fuzz_hash_*) over `nb` elements of each output in
+ * logical order — reals as f64 bytes, integers as i32 bytes — byte-identical to
+ * every server's out_hash. outIsInteger[o] selects the type; outBufs[o] is the
+ * matching TA_Real* / TA_Integer* buffer. nb==0 hashes nothing (the FNV basis),
+ * matching an empty server output. */
+unsigned long long codegen_output_hash(unsigned int nbOutput,
+                                        const int *outIsInteger,
+                                        const void *const *outBufs, int nb);
+
+/* Pure parse+compare of a server's hash-mode response vs the in-process C golden.
+ * Fills *parsed (server side) for diagnostics. Returns XHASH_MATCH iff the server
+ * is bit-identical to C. No I/O — the caller does the send/reporting prefix. */
+XHashVerdict codegen_hash_compare(const char *resp,
+                                  TA_RetCode goldRc, int goldBeg, int goldNb,
+                                  unsigned long long goldHash, XHashParsed *parsed);
+
+/* Shared diagnostic tail: prints the common
+ *   "retCode a/b  begIdx c/d  nbElem e/f  hash G/H (golden/<who>)" line. */
+void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
+                         int goldNb, unsigned long long goldHash,
+                         const XHashParsed *parsed);
+
 #endif
