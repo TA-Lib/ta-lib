@@ -612,7 +612,7 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "*.am",
         "ta_func_api.xml",
         "ta_func_list.txt",
-        "java/src/**/*.java",
+        "ta_codegen/output/java/library/src/**/*.java",
         "LICENSE",
         "VERSION",
     ]

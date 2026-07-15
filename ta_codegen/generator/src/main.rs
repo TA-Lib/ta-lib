@@ -643,7 +643,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // java/src/com/tictactec/ta/lib/ (the Rust/.NET bindings have no canonical home
     // and stay under ta_codegen/output/, but Java — like C — is a shipped product).
     if backends_to_run.contains(&"java") {
-        let java_pkg = root.join("java/src/com/tictactec/ta/lib");
+        let java_pkg = root.join("ta_codegen/output/java/library/src/com/tictactec/ta/lib");
         // FuncUnstId.java depends only on enums.yaml — always safe to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
         // Core.java's GENCODE section and CoreAnnotated.java splice ALL indicators
@@ -1040,7 +1040,7 @@ fn build_servers(backend_filter: Option<&str>) {
             }
             "java" => {
                 print!("  Building Java server... ");
-                let java_dir = out_base.join("java");
+                let java_dir = out_base.join("java/tools");
                 let class_dir = bin_dir.join("ta_codegen_java");
                 std::fs::create_dir_all(&class_dir).ok();
                 match std::process::Command::new("javac")

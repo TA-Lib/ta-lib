@@ -91,7 +91,8 @@ rust/target
 ta_codegen/output/c/tools/ta_codegen_funcs.c
 ta_codegen/output/dotnet/tools/bin/
 ta_codegen/output/dotnet/tools/obj/
-ta_codegen/output/java/*.class
+ta_codegen/output/java/**/*.class
+ta_codegen/output/java/library/classes/
 
 # Git worktrees
 .worktrees/

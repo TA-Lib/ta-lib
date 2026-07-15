@@ -206,7 +206,7 @@ impl LanguageBackend for JavaBackend {
         java::generate(func, enums, registry, helpers)
     }
     fn out_subdir(&self) -> &'static str {
-        "java"
+        "java/library/fragments"
     }
     fn file_name(&self, func: &FuncDef) -> String {
         format!("Core_{}.java", func.name)
@@ -220,11 +220,14 @@ impl LanguageBackend for JavaBackend {
         enums: &HashMap<String, EnumDef>,
         out_base: &Path,
     ) {
-        let dir = out_base.join("java");
-        std::fs::create_dir_all(&dir).unwrap();
+        // Per-function fragments (Core_<name>.java) live in the library; the
+        // server is a tools-layer that inlines them.
+        let frag_dir = out_base.join("java/library/fragments");
+        let tools_dir = out_base.join("java/tools");
+        std::fs::create_dir_all(&tools_dir).unwrap();
         let template = server_gen::generate_java_server(funcs, enums);
-        let output = server_gen::inline_java_core_methods(&template, &dir, funcs);
-        let path = dir.join("TaCodegenServe.java");
+        let output = server_gen::inline_java_core_methods(&template, &frag_dir, funcs);
+        let path = tools_dir.join("TaCodegenServe.java");
         std::fs::write(&path, &output).unwrap();
         println!("  Java server -> {}", path.display());
     }

@@ -264,7 +264,7 @@ def get_all_generated_files() -> list:
     TA-Lib maintainers should update this list everytime a new file is generated (or not).
     """
     return [
-        'java/src/**',
+        'ta_codegen/output/java/library/src/**',
     ]  + get_src_generated_files()
 
 def expand_globs(root_dir: str, file_list: list) -> list:
