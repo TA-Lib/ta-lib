@@ -9,7 +9,7 @@ TA-Lib reaches a wider ecosystem through these community-maintained wrappers:
 | Language | Github Repos |
 | --- | --- |
 | Go | [ta-lib-cgo](https://github.com/TA-Lib/ta-lib-cgo) |
-| pandas | [pandas-ta](https://github.com/twopirllc/pandas-ta) |
+| pandas | [pandas-ta-classic](https://github.com/xgboosted/pandas-ta-classic) |
 | PHP | [ext-ta-lib](https://github.com/TA-Lib/ext-ta-lib) |
 | PostgreSQL | [ta_pg](https://github.com/TA-Lib/ta_pg) |
 | Python | [ta-lib-python](https://github.com/ta-lib/ta-lib-python) |

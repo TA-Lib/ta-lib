@@ -46,7 +46,7 @@ TA-Lib reaches many languages thanks to the maintainers of these wrappers:
 | **Marcelo Teixeira Monteiro** — [@tuxmonteiro](https://github.com/tuxmonteiro) | PostgreSQL — [ta_pg](https://github.com/TA-Lib/ta_pg) |
 | **Victor Yang** — [@Youngv](https://github.com/Youngv) | Ruby — [ta-lib-ruby](https://github.com/TA-Lib/ta-lib-ruby) |
 | **Serkan Korkmaz** — [@serkor1](https://github.com/serkor1) | R — [ta-lib-R](https://github.com/serkor1/ta-lib-R) |
-| **Kevin Johnson** — [@twopirllc](https://github.com/twopirllc) | pandas — [pandas-ta](https://github.com/twopirllc/pandas-ta) |
+| **Kevin Johnson** — [@twopirllc](https://github.com/twopirllc) (original author) · **[@xgboosted](https://github.com/xgboosted)** (current maintainer) | pandas — [pandas-ta-classic](https://github.com/xgboosted/pandas-ta-classic) |
 
 ## Other Code Contributors
 

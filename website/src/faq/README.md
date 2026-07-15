@@ -20,4 +20,3 @@ Various ways:
 - Open a [Github Issue](https://github.com/TA-Lib/ta-lib/issues)
 - Check these communities:
     - [https://github.com/ta-lib/ta-lib-python](https://github.com/ta-lib/ta-lib-python)
-    - [https://github.com/twopirllc/pandas-ta](https://github.com/twopirllc/pandas-ta)
