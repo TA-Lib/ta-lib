@@ -8,7 +8,7 @@ per-backend (C, Java, .NET, Rust). The C backend is generated **in place** into
 `src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/.NET bindings
 live under `ta_codegen/output/`. It also generates the JSON-RPC test servers, the bench
 binary, `include/ta_func_unguarded.h`, the `include/ta_defs.h` FuncUnstId enum, the
-shipped Java (`java/.../Core.java`, `CoreAnnotated.java`, `FuncUnstId.java`), and owns the
+shipped Java (`ta_codegen/output/java/library/.../Core.java`, `CoreAnnotated.java`, `FuncUnstId.java`), and owns the
 build-system source lists (CMake `LIB_SOURCES`, `src/ta_func/Makefile.am`,
 `ta_func_list.txt`). It also generates the **ta-lib.org website** — one page per function
 under `website/src/functions/` (from each function's `ta_codegen/input/<name>/<name>.md`)
@@ -47,8 +47,10 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
   - **No logic in YAML, ever.**
 
 No hand-coded string literals for type definitions or scaffolding in the codegen.
-Do not hand-edit anything under `ta_codegen/output/` — it is overwritten on the
-next `generate`.
+Do not hand-edit **generated** files under `ta_codegen/output/` — they are
+overwritten on the next `generate`. Note some hand-written library source now
+lives under `output/` too (e.g. the Java `meta/` reflection layer and tests under
+`output/java/library/`); the generator preserves those and never overwrites them.
 
 ## Quick Reference Commands
 
@@ -135,7 +137,8 @@ Without `--function`, all test groups run.
 
 ## Rust Backend
 
-Generated Rust lives in `ta_codegen/output/rust/` (a standalone crate).
+Generated Rust lives in `ta_codegen/output/rust/` — a Cargo workspace: `library/`
+is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
 
 - TA-Lib exports a `Core` struct (`src/ta_func/types.rs`, with `RetCode`);
   indicators are methods on `Core`, one file per indicator extending it via
@@ -206,8 +209,11 @@ ta-lib/
 │   ├── <name>/<name>.c       # Indicator logic
 │   ├── helpers/              # Shared helper functions
 │   └── types/                # Enums, RetCode, CandleSettings, etc. (YAML)
-├── ta_codegen/output/        # Generated bindings per language (java, dotnet, rust) + codegen artifacts
-│   └── rust/                 # Standalone Rust crate
+├── ta_codegen/output/        # Generated per-language products, each split library/ (shipped) + tools/ (server/bench)
+│   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
+│   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
+│   ├── java/{library,tools}/ # library/ = shipped Java package + hand-written meta/; tools/ = JSON-RPC server
+│   └── dotnet/tools/         # .NET P/Invoke server (tools-only; no managed library)
 ├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
 ├── src/
 │   ├── ta_func/              # The shipped C library, generated in place by ta_codegen

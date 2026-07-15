@@ -23,10 +23,11 @@ ta_abstract_c.rs
   ↓
 src/ta_func/*.c          (C indicator code — generated IN PLACE)
 src/ta_abstract/         (ta_abstract introspection layer — generated IN PLACE)
-ta_codegen/output/       (other backends + C aggregation TUs)
-  c/                     (server + bench + shared-lib aggregation TUs only)
-  rust/src/ta_func/*.rs  (Rust indicator code)
-  java/, dotnet/         (Java/.NET code)
+ta_codegen/output/       (per-language products: library/ (shipped) + tools/ (server/bench))
+  c/tools/               (server + bench + aggregation TUs; C library ships from src/)
+  rust/library/ + rust/tools/  (ta-lib crate + server/bench — a Cargo workspace)
+  java/library/ + java/tools/  (shipped package + meta/  +  JSON-RPC server)
+  dotnet/tools/          (P/Invoke server; no managed library)
 include/ta_func.h        (generated public header)
 ```
 
@@ -34,7 +35,7 @@ include/ta_func.h        (generated public header)
 `ta_codegen/generator/templates/` — the generator's own assets, kept out of `input/`
 (which holds only the 161 indicator definitions) and out of `output/` (100% generated):
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
-  scaffolding, copied verbatim into the Rust crate (`output/rust/src/ta_func/types.rs`).
+  scaffolding, copied verbatim into the Rust crate (`output/rust/library/src/ta_func/types.rs`).
 - `templates/c/ta_retcode.c.template` — spliced with `src/ta_common/ta_retcode.csv`
   (`backends/retcode.rs`) → `src/ta_common/ta_retcode.c`.
 - `templates/c/ta_abstract_serve.c` — hand-written abstract-serve handlers `#include`d

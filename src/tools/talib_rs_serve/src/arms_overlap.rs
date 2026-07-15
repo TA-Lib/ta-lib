@@ -2,7 +2,7 @@
 //! family, HT_TRENDLINE — backed by `talib_rs::overlap`.
 //!
 //! Param names / defaults / input-column mappings mirror the generated
-//! ta_codegen server arms (ta_codegen/output/rust/src/bin/ta_codegen_serve.rs).
+//! ta_codegen server arms (ta_codegen/output/rust/tools/src/bin/ta_codegen_serve.rs).
 
 use crate::{call_ctx, get_input, ma_type_param, respond_error, respond_error_shaped, respond_reals, RefData};
 use serde_json::Value;
