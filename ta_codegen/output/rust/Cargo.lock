@@ -88,8 +88,13 @@ dependencies = [
 [[package]]
 name = "ta-lib"
 version = "0.8.1"
+
+[[package]]
+name = "ta-lib-tools"
+version = "0.8.1"
 dependencies = [
  "serde_json",
+ "ta-lib",
 ]
 
 [[package]]

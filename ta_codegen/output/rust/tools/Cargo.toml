@@ -1,0 +1,13 @@
+[package]
+name = "ta-lib-tools"
+version = "0.8.1"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "ta_codegen_serve"
+path = "src/bin/ta_codegen_serve.rs"
+
+[dependencies]
+ta-lib = { path = "../library" }
+serde_json = "1"

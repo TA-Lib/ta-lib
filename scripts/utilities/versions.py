@@ -281,10 +281,11 @@ def set_version_string_spec_in(root_dir: str, new_version:str):
 
 def get_version_string_cargo(root_dir: str) -> str:
     """
-    Parse the file ta_codegen/output/rust/Cargo.toml to get the version string. Example:
+    Parse the Rust library crate manifest
+    ta_codegen/output/rust/library/Cargo.toml to get the version string. Example:
       version = "0.6.4"
     """
-    cargo_file_path = path_join(root_dir, "ta_codegen/output", "rust", "Cargo.toml")
+    cargo_file_path = path_join(root_dir, "ta_codegen/output", "rust", "library", "Cargo.toml")
 
     if not os.path.exists(cargo_file_path):
         print(f"Error: Cargo.toml not found at {cargo_file_path}")
@@ -307,42 +308,37 @@ def get_version_string_cargo(root_dir: str) -> str:
 
 def set_version_string_cargo(root_dir: str, new_version: str):
     """
-    Update the version in ta_codegen/output/rust/Cargo.toml.
+    Update the version in both Rust workspace member manifests
+    (ta_codegen/output/rust/{library,tools}/Cargo.toml) — kept in lockstep.
     """
-    cargo_file_path = path_join(root_dir, "ta_codegen/output", "rust", "Cargo.toml")
-
-    if not os.path.exists(cargo_file_path):
-        print(f"Warning: Cargo.toml not found at {cargo_file_path}")
-        return  # No action if file doesn't exist
-
-    current_version = get_version_string_cargo(root_dir)
-
-    if current_version == new_version:
+    if get_version_string_cargo(root_dir) == new_version:
         return  # No changes needed. The version is already up to date.
 
-    # Read the Cargo.toml file
-    with open(cargo_file_path, 'r') as cargo_file:
-        lines = cargo_file.readlines()
-
-    # Update the version information in the lines
     version_pattern = re.compile(r'version\s*=\s*"(\d+\.\d+\.\d+)"')
-    updated = False
+    for member in ("library", "tools"):
+        cargo_file_path = path_join(root_dir, "ta_codegen/output", "rust", member, "Cargo.toml")
 
-    for i, line in enumerate(lines):
-        match = version_pattern.search(line)
-        if match:
-            lines[i] = re.sub(version_pattern, f'version = "{new_version}"', line)
-            updated = True
-            break
+        if not os.path.exists(cargo_file_path):
+            print(f"Warning: Cargo.toml not found at {cargo_file_path}")
+            continue
 
-    # Check if version was found and updated
-    if not updated:
-        print(f"Warning: Version line not found in {cargo_file_path}")
-        return
+        with open(cargo_file_path, 'r') as cargo_file:
+            lines = cargo_file.readlines()
 
-    # Write the updated lines back to the Cargo.toml file
-    with open(cargo_file_path, 'w') as cargo_file:
-        cargo_file.writelines(lines)
+        # Update the first `version = "x.y.z"` (the [package] version) in the member.
+        updated = False
+        for i, line in enumerate(lines):
+            if version_pattern.search(line):
+                lines[i] = re.sub(version_pattern, f'version = "{new_version}"', line)
+                updated = True
+                break
+
+        if not updated:
+            print(f"Warning: Version line not found in {cargo_file_path}")
+            continue
+
+        with open(cargo_file_path, 'w') as cargo_file:
+            cargo_file.writelines(lines)
 
 def get_version_string_conanfile(root_dir: str) -> str:
     """
@@ -437,7 +433,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
     """
     Synchronize the version between:
           src/ta_common/ta_version.c
-          ta_codegen/output/rust/Cargo.toml
+          ta_codegen/output/rust/library/Cargo.toml
           CMakeLists.txt (root of repos)
           VERSION file (root of repos)
           conanfile.py (root of repos)

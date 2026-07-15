@@ -1505,19 +1505,28 @@ fn generate_rust_crate_scaffolding(out_base: &Path, funcs: &[ir::FuncDef], types
         .unwrap_or_else(|e| panic!("cannot read {}: {e}", version_path.display()))
         .trim()
         .to_string();
-    let rust_dir = out_base.join("rust");
-    let src_dir = rust_dir.join("src");
+    // Two-crate Cargo workspace: `library/` is the published `ta-lib` crate;
+    // `tools/` holds the JSON-RPC server/bench — a layer on top of the library.
+    let rust_dir = out_base.join("rust"); // workspace root
+    let lib_dir = rust_dir.join("library");
+    let src_dir = lib_dir.join("src");
     let ta_func_dir = src_dir.join("ta_func");
-    let bin_dir = src_dir.join("bin");
+    let tools_dir = rust_dir.join("tools");
+    let bin_dir = tools_dir.join("src/bin");
 
     std::fs::create_dir_all(&ta_func_dir).unwrap();
     std::fs::create_dir_all(&bin_dir).unwrap();
 
-    // --- Cargo.toml ---
-    let cargo_toml_head = format!(
+    // --- workspace Cargo.toml (virtual manifest — profiles apply at the root) ---
+    let workspace_toml = "[workspace]\nmembers = [\"library\", \"tools\"]\nresolver = \"2\"\n\n\
+        [profile.release]\nlto = \"thin\"\ncodegen-units = 1\n";
+    std::fs::write(rust_dir.join("Cargo.toml"), workspace_toml).unwrap();
+
+    // --- library/Cargo.toml (the published `ta-lib` crate — no bin, no deps) ---
+    let lib_toml_head = format!(
         "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\""
     );
-    let cargo_toml_tail = r#"
+    let lib_toml_tail = r#"
 description = "Technical analysis library: 161 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) — the official Rust port of TA-Lib, verified against the C reference."
 license = "BSD-3-Clause"
 homepage = "https://ta-lib.org"
@@ -1530,21 +1539,21 @@ categories = ["finance", "mathematics", "algorithms"]
 [lib]
 name = "ta_lib"
 path = "src/lib.rs"
-
-[[bin]]
-name = "ta_codegen_serve"
-path = "src/bin/ta_codegen_serve.rs"
-
-[dependencies]
-serde_json = "1"
-
-[profile.release]
-lto = "thin"
-codegen-units = 1
 "#;
-    let cargo_path = rust_dir.join("Cargo.toml");
-    std::fs::write(&cargo_path, format!("{cargo_toml_head}{cargo_toml_tail}")).unwrap();
-    println!("  Scaffolding -> {}", cargo_path.display());
+    let lib_cargo_path = lib_dir.join("Cargo.toml");
+    std::fs::write(&lib_cargo_path, format!("{lib_toml_head}{lib_toml_tail}")).unwrap();
+    println!("  Scaffolding -> {}", lib_cargo_path.display());
+
+    // --- tools/Cargo.toml (server/bench crate; depends on the library) ---
+    let tools_toml = format!(
+        "[package]\nname = \"ta-lib-tools\"\nversion = \"{crate_version}\"\nedition = \"2021\"\n\
+         publish = false\n\n[[bin]]\nname = \"ta_codegen_serve\"\n\
+         path = \"src/bin/ta_codegen_serve.rs\"\n\n[dependencies]\n\
+         ta-lib = {{ path = \"../library\" }}\nserde_json = \"1\"\n"
+    );
+    let tools_cargo_path = tools_dir.join("Cargo.toml");
+    std::fs::write(&tools_cargo_path, tools_toml).unwrap();
+    println!("  Scaffolding -> {}", tools_cargo_path.display());
 
     // --- .cargo/config.toml ---
     let cargo_config_dir = rust_dir.join(".cargo");
@@ -1713,7 +1722,7 @@ indicator calls) without locking. To change a setting, build a new `Core`.
 
 BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENSE).
 "#;
-    let readme_path = rust_dir.join("README.md");
+    let readme_path = lib_dir.join("README.md");
     std::fs::write(&readme_path, readme).unwrap();
     println!("  Scaffolding -> {}", readme_path.display());
 

@@ -164,7 +164,7 @@ impl LanguageBackend for RustBackend {
         rust_lang::generate(func, enums, registry, helpers)
     }
     fn out_subdir(&self) -> &'static str {
-        "rust/src/ta_func"
+        "rust/library/src/ta_func"
     }
     fn file_name(&self, func: &FuncDef) -> String {
         format!("{}.rs", func.name.to_lowercase())
@@ -181,7 +181,7 @@ impl LanguageBackend for RustBackend {
         enums: &HashMap<String, EnumDef>,
         out_base: &Path,
     ) {
-        let dir = out_base.join("rust/src/bin");
+        let dir = out_base.join("rust/tools/src/bin");
         std::fs::create_dir_all(&dir).unwrap();
         let output = server_gen::generate_rust_server(funcs, enums);
         let path = dir.join("ta_codegen_serve.rs");

@@ -72,10 +72,10 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     // Byte-identical to the repo-root ta_func_api.xml (same generator + same input),
     // which C's TA_FunctionDescriptionXML also bakes — so the two are equal.
     let xml = super::func_api_xml::generate_string(funcs);
-    let xml_path = out_base.join("rust/src/ta_func_api.xml");
+    let xml_path = out_base.join("rust/library/src/ta_func_api.xml");
     super::write_if_changed(&xml_path, &xml, "ta_func_api.xml (rust embed)", n);
 
-    let out_path = out_base.join("rust/src/abstract_api.rs");
+    let out_path = out_base.join("rust/library/src/abstract_api.rs");
     super::write_if_changed(&out_path, &o, "abstract_api.rs", n);
 }
 
