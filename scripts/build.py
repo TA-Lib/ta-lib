@@ -150,7 +150,7 @@ def build_talib_rs_server(root_dir: str):
     language servers. Never built by default — it downloads a third-party
     crate.
     """
-    crate_dir = os.path.join(root_dir, "src", "tools", "talib_rs_serve")
+    crate_dir = os.path.join(root_dir, "ta_codegen", "output", "rust", "tools", "talib_rs_serve")
     subprocess.run(['cargo', 'build', '--release'], check=True, cwd=crate_dir)
     shutil.copy2(
         os.path.join(crate_dir, "target", "release", "talib_rs_serve"),
