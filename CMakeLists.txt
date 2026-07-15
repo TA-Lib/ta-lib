@@ -35,14 +35,10 @@ if(ENABLE_SANITIZERS)
     message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined -fno-sanitize-recover=all)")
 endif()
 
-# FMA numerical contract (PR #96): the generated indicator code uses explicit
-# fma(), and the fused indicators are marked for runtime CPU dispatch
-# (target_clones) so a hardware `vfmadd` is used on FMA-capable CPUs while the
-# binary stays portable to pre-FMA CPUs. -ffp-contract=off makes the explicit
-# fma() calls the ONLY fusion: it stops the compiler auto-contracting the a*b+c
-# sites we deliberately left un-fused, which would otherwise differ between the
-# dispatched clones and versus the Rust/Java backends. GCC/Clang only; a no-op on
-# a target without hardware FMA, so it does not change the baseline build.
+# FMA numerical contract (PR #96): indicators use explicit fma(); fused ones are
+# marked target_clones for runtime CPU dispatch. -ffp-contract=off makes explicit
+# fma() the ONLY fusion (no compiler auto-contraction of the un-fused a*b+c), for
+# cross-clone/-language determinism. GCC/Clang only; no-op without hardware FMA.
 if(NOT MSVC)
     add_compile_options(-ffp-contract=off)
 endif()

@@ -1,20 +1,12 @@
 #!/usr/bin/env bash
-# Verify the ta-lib C library builds CORRECTLY on musl (musllinux) with the FMA
-# runtime dispatch correctly EXCLUDED. target_clones/ifunc is glibc-ONLY: musl
-# supports GNU ifunc in NO version and stock Alpine GCC hard-errors on the
-# attribute ("the call requires 'ifunc', which is not supported by this target").
-# So TA_FMA_MULTIVERSION in src/ta_func/ta_utility.h is gated on __GLIBC__, and a
-# musl build must fall through to a plain, correctly-rounded software fma()
-# (accepted, unaccelerated — same bucket as Windows / macOS-Intel). This is the
-# local twin of the `musl-build` job in .github/workflows/dev-nightly-tests.yml,
-# and a regression guard against ever widening that guard back to __linux__
-# (which breaks the musllinux x86_64 wheel build at compile time).
+# Verify ta-lib builds on musl (musllinux) with FMA dispatch correctly EXCLUDED.
+# target_clones/ifunc is glibc-only (musl has no ifunc; Alpine gcc hard-errors), so
+# TA_FMA_MULTIVERSION is gated on __GLIBC__ and a musl build falls through to plain
+# software fma(). Local twin of the `musl-build` nightly job; a regression guard
+# against widening the guard back to __linux__ (which breaks the musllinux build).
 #
-# Needs Docker. If your user is not in the `docker` group, run with sudo:
-#     sudo scripts/verify-musl-fma.sh
-#
-# Override the musl image (e.g. the literal cibuildwheel toolchain) with:
-#     MUSL_IMAGE=quay.io/pypa/musllinux_1_2_x86_64 scripts/verify-musl-fma.sh
+# Needs Docker (sudo if not in the docker group):  sudo scripts/verify-musl-fma.sh
+# Override image:  MUSL_IMAGE=quay.io/pypa/musllinux_1_2_x86_64 scripts/verify-musl-fma.sh
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"

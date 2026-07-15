@@ -679,16 +679,10 @@ fn gen_func_inner(
 
     out.push_str("}\n\n");
 
-    // FMA runtime CPU dispatch (PR #96): any function that emits an explicit
-    // fma() call gets marked with TA_FMA_MULTIVERSION (defined in ta_utility.h),
-    // so on platforms that support it the compiler builds a portable software-fma
-    // clone AND a hardware-vfmadd clone and dispatches per-CPU at load time via an
-    // ifunc — a baseline-compiled binary (e.g. a manylinux wheel) still runs the
-    // hardware fma on capable CPUs, with no -mfma flag and no SIGILL on old ones.
-    // Detect fusion by the `fma(` call site: the trailing "(" makes it disjoint
-    // from fmax(/fmin(/fmaf( (we never emit fmaf). `out` starts with the function
-    // signature, so the marker prepends onto its own line. EMIT_FMA-gated so the
-    // pre-FMA output stays byte-identical.
+    // FMA runtime CPU dispatch (PR #96): mark any function emitting an explicit
+    // fma() with TA_FMA_MULTIVERSION (see ta_utility.h). Detect by the `fma(` call
+    // site — the trailing "(" excludes fmax/fmin/fmaf. `out` starts with the
+    // signature, so prepend there. EMIT_FMA-gated (pre-FMA output byte-stable).
     if fma::EMIT_FMA && out.contains("fma(") {
         out.insert_str(0, "TA_FMA_MULTIVERSION\n");
     }

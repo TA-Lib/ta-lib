@@ -23,32 +23,13 @@
    #endif
 #endif
 
-/* FMA runtime CPU dispatch (PR #96). The fused indicators call fma(); the
- * generator marks their definitions with TA_FMA_MULTIVERSION so the compiler
- * emits BOTH a portable software-fma clone and a hardware-vfmadd clone and
- * dispatches per-CPU at load time (ifunc). A baseline-compiled binary — e.g. a
- * manylinux Python wheel built to run on any x86-64 CPU — therefore still runs
- * the hardware fma on FMA-capable CPUs, with no SIGILL on older ones and no
- * -mfma build flag.
- *
- * Gated on __GLIBC__ because target_clones REQUIRES GNU ifunc, and glibc is the
- * only libc that implements it. musl in particular supports ifunc in NO version
- * (still true in musl 1.2.5): stock GCC on a musl target disables ifunc and
- * HARD-ERRORS on target_clones ("the call requires 'ifunc', which is not
- * supported by this target"), so a musllinux build MUST NOT see this attribute —
- * it would fail to compile. __GLIBC__ cleanly excludes musl (musllinux), macOS
- * (not glibc), and MSVC; those all fall through to a plain, correctly-rounded
- * software fma() — correct, just not CPU-dispatched, exactly like the accepted
- * Windows/macOS-Intel path. __x86_64__ excludes ARM (baseline ARMv8 FMA, no
- * dispatch needed); !__clang__ is belt-and-suspenders (clang compiles
- * target_clones on a musl target but then crashes at load with a relocation
- * error). NOTE: __GLIBC__ is only defined once a libc header has been included;
- * every generated .c #includes <string.h>/<math.h> before this header, so it is
- * reliably defined on glibc here. Do NOT relax this to __linux__ — that provably
- * breaks the musllinux x86_64 build (see scripts/verify-musl-fma.sh).
- *
- * -ffp-contract=off (set by the build) keeps the two clones bit-identical to
- * each other and to the Rust/Java backends. */
+/* FMA runtime CPU dispatch (PR #96): mark fused indicators with target_clones so
+ * a portable baseline build (e.g. a manylinux wheel) dispatches to a hardware-fma
+ * clone at load — no -mfma, no SIGILL on pre-2013 CPUs. glibc-only: target_clones
+ * needs GNU ifunc, which musl has in NO version (Alpine gcc hard-errors), so
+ * musl/macOS/MSVC fall through to plain software fma(). Do NOT relax to __linux__
+ * (breaks the musllinux build; see scripts/verify-musl-fma.sh). -ffp-contract=off
+ * keeps the clones bit-exact with each other and the Rust/Java backends. */
 #if defined( __x86_64__ ) && defined( __GLIBC__ ) && defined( __GNUC__ ) && !defined( __clang__ )
    #define TA_FMA_MULTIVERSION __attribute__((target_clones("default","fma")))
 #else

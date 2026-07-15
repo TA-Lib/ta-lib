@@ -337,20 +337,12 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
-  # musllinux build gate (PR #96). target_clones/ifunc is glibc-ONLY: musl
-  # supports GNU ifunc in NO version (still true in musl 1.2.5) and stock Alpine
-  # GCC disables it, hard-erroring on the attribute ("the call requires 'ifunc',
-  # which is not supported by this target"). The TA_FMA_MULTIVERSION guard in
-  # src/ta_func/ta_utility.h is therefore gated on __GLIBC__, so a musllinux build
-  # gets NO marker and uses a plain, correctly-rounded software fma() (accepted,
-  # unaccelerated — same bucket as Windows/macOS-Intel). This job is the
-  # REGRESSION GUARD for that: it proves the library still BUILDS on musl (a guard
-  # wrongly widened to __linux__ would fail the compile here on the fused .c
-  # files), emits ZERO ifunc symbols, and still computes correctly. Checkout on
-  # the ubuntu host (Alpine has no Node for actions/checkout); build + test inside
-  # an Alpine/musl container. Swap alpine:3.20 for quay.io/pypa/musllinux_1_2_x86_64
-  # to test the literal cibuildwheel toolchain. Pinned to `dev`; before #96 lands
-  # there, run scripts/verify-musl-fma.sh locally.
+  # musllinux build gate (PR #96): regression guard that the library still BUILDS
+  # on musl with FMA dispatch excluded. target_clones/ifunc is glibc-only (musl has
+  # no ifunc; a guard wrongly widened to __linux__ would fail the compile here), so
+  # a musl build must emit ZERO ifunc and still compute correctly. Checkout on the
+  # ubuntu host (Alpine lacks Node for actions/checkout); build + test in an Alpine
+  # container. Pinned to `dev`; pre-merge use scripts/verify-musl-fma.sh.
   musl-build:
     name: musllinux build (FMA dispatch correctly excluded)
     needs: test
