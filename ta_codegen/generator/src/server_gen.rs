@@ -2682,13 +2682,6 @@ fn format_default_f64(v: f64) -> String {
     }
 }
 
-/// Generate a Rust JSON-RPC server source file.
-///
-/// The generated file is a standalone binary that imports from the `ta_lib` crate.
-/// It reads JSON-RPC requests from stdin, dispatches to the generated TA function
-/// implementations, and writes JSON responses to stdout.
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::implicit_hasher)]
 /// Bit-exact Rust port of `src/tools/ta_regtest/fuzz_data.h` (seed-based OHLCV
 /// generator + FNV output hasher), embedded verbatim into the Rust server to
 /// power the cross-language bitwise-parity gate (`--xlang-hash`, issue #113).
@@ -2696,6 +2689,14 @@ fn format_default_f64(v: f64) -> String {
 /// file so it reads/reviews as normal Rust rather than an escaped string blob.
 const RUST_FUZZ: &str = include_str!("../templates/rust/fuzz.rs");
 
+/// Generate a Rust JSON-RPC server source file.
+///
+/// The generated file is a standalone binary that imports from the `ta_lib` crate.
+/// It reads JSON-RPC requests from stdin, dispatches to the generated TA function
+/// implementations, and writes JSON responses to stdout.
+#[allow(clippy::too_many_lines)]
+#[allow(clippy::implicit_hasher)]
+#[allow(clippy::cognitive_complexity)]
 pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 

@@ -198,7 +198,7 @@ jobs:
   # non-default-parameter ref differential sweep. POSIX-only (the server
   # harness uses fork/exec), hence no Windows leg.
   cross-language:
-    name: Cross-language codegen tests
+    name: Codegen tests (all langs vs ref, 1e-9)
     needs: test
     runs-on: ubuntu-latest
 
@@ -344,7 +344,7 @@ jobs:
   # Rust today; Java joins after #114. cmake+gcc+cargo are preinstalled on
   # ubuntu-latest (no JDK/.NET needed — only the Rust server is driven).
   xlang-hash:
-    name: Cross-language bitwise parity (C vs Rust)
+    name: Bitwise parity (C vs Rust, seed+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest

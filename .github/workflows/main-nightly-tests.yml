@@ -157,7 +157,7 @@ jobs:
   # seed-generated inputs (no tolerance). Rust today; Java joins after #114.
   # cmake+gcc+cargo are preinstalled on ubuntu-latest (no JDK/.NET needed).
   xlang-hash:
-    name: Cross-language bitwise parity (C vs Rust)
+    name: Bitwise parity (C vs Rust, seed+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
