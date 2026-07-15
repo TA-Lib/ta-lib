@@ -36,3 +36,17 @@ body:has(.home-hero) .vp-page-title {
 .credits table:first-of-type tbody tr {
   background: transparent;
 }
+
+// Anchor scroll-offset for headings inside `.credits`.
+// The theme offsets scroll targets for its fixed navbar via padding-top/negative
+// margin-top, but only on *direct* children of the content root
+// (`#markdown-content > h2`, a child combinator). The About Us section headings
+// sit one level deeper inside the `.credits` wrapper, so they miss that rule and
+// anchor jumps (e.g. /about/#feature-contributors) land with the heading hidden
+// behind the navbar. Re-apply the same offset to the nested headings.
+[vp-content]:not(.custom) #markdown-content .credits > :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: calc(0.5rem - var(--navbar-height));
+  padding-top: calc(1rem + var(--navbar-height));
+  margin-bottom: 0.5rem;
+  outline: none;
+}
