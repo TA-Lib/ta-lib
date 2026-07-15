@@ -2632,10 +2632,6 @@ fn render_condition(
     render_expr(expr, ctx, opt_real_params, registry, helpers)
 }
 
-#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
-/// Check if an expression is definitely integer-typed (conservative — only triggers on
-/// known integer variables, not heuristics). Used to gate mul_add emission.
-
 /// Rust-backend leaf formatting for the shared [`ExprEmitter`] tree-walk. Bundles
 /// the render context with `opt_real_params` and the registry/helper services the
 /// type-inference hooks need; the recursion itself lives in [`ExprEmitter::walk`].

@@ -377,7 +377,7 @@ jobs:
             SO=$(find /tmp/bm -name "libta-lib.so*" -type f | head -1)
             echo "DSO: $SO"
             # (2) Guard must have EXCLUDED musl: ZERO ifunc dispatch symbols.
-            n=$(readelf -sW "$SO" | grep -c IFUNC); echo "IFUNC symbols in DSO (must be 0 on musl): $n"; test "$n" -eq 0
+            n=$(readelf -sW "$SO" | grep -c IFUNC || true); echo "IFUNC symbols in DSO (must be 0 on musl): $n"; test "$n" -eq 0
             # (3) The plain software-fma library must still be correct on musl.
             REG=$(find /tmp/bm -name ta_regtest -type f | head -1)
             echo "== running C reference suite (software fma on musl) =="

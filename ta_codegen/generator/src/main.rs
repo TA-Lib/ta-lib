@@ -829,7 +829,18 @@ fn generate_bench(backend_filter: Option<&str>) {
 
 /// Optimization/link flags shared by every gcc invocation in the build pipeline.
 /// Centralized so the C server, C bench, and shared-library builds cannot drift.
-const COMMON_GCC_FLAGS: &[&str] = &["-lm", "-O3", "-flto", "-DNDEBUG", "-Wno-parentheses-equality"];
+///
+/// `-ffp-contract=off` is load-bearing for the FMA numerical contract (PR #96),
+/// exactly as in the CMake/autotools library build. These are single-TU compiles
+/// of the generated indicators, so the batch functions' `target_clones` `.fma`
+/// clone is built with the FMA instruction available; under gcc's default
+/// `-ffp-contract=fast` that clone would AUTO-CONTRACT the non-explicit `a*b+c`
+/// sites we deliberately left un-fused (e.g. ADOSC's `ad += x*vol`), while the
+/// unmarked streaming path does not — breaking the bitwise batch-vs-stream
+/// stream_verify gate. `off` keeps only our explicit `fma()` fused, so batch,
+/// stream, and the Rust/Java backends stay bit-identical.
+const COMMON_GCC_FLAGS: &[&str] =
+    &["-lm", "-O3", "-flto", "-DNDEBUG", "-ffp-contract=off", "-Wno-parentheses-equality"];
 
 /// Verify the hand-maintained Rust `FuncUnstId` enum matches enums.yaml.
 ///
