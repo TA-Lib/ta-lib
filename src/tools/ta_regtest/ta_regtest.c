@@ -345,10 +345,11 @@ int main( int argc, char **argv )
       }
    }
 
-   /* Java abstract metadata parity (issue #114). The metadata RPCs (TA_GetFuncInfo
-    * + the param-info getters) are compared to the C reference. The dynamic-dispatch
-    * path (test_abstract) is enabled once the Java abstract_call/abstract_get_lookback
-    * handlers land. Java server spawns via `java -cp ta_codegen_java TaCodegenServe`. */
+   /* Java abstract parity (issue #114): metadata RPCs (TA_GetFuncInfo + the
+    * param-info getters) AND the dynamic-dispatch path (abstract_call /
+    * abstract_get_lookback / TA_FunctionDescriptionXML), comparing output VALUES
+    * to the C reference for every function. Java server spawns via
+    * `java -cp ta_codegen_java TaCodegenServe`. */
    if( retValue == TA_TEST_PASS && doCodegenTest &&
        ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "java") != NULL ) )
    {
@@ -360,6 +361,11 @@ int main( int argc, char **argv )
          printf( "Testing Abstract metadata parity (Java server vs C)\n" );
          test_abstract_set_server(&javaAbstractPipe);
          e = test_abstract_server_metadata(functionFilter);
+         if( e == TA_TEST_PASS )
+         {
+            printf( "Testing Abstract dynamic dispatch (Java server vs C)\n" );
+            e = test_abstract();
+         }
          test_abstract_set_server(NULL);
          codegen_pipe_close(&javaAbstractPipe);
          if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )

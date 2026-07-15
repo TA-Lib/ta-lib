@@ -65051,6 +65051,8 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_GetOutputParameterInfo\"")) return handleGetOutputParameterInfo(json);
         else if (json.contains("\"abstract_for_each_func\"")) return handleForEachFunc();
         else if (json.contains("\"TA_FunctionDescriptionXML\"")) return handleFunctionDescriptionXML();
+        else if (json.contains("\"abstract_call\"")) return handleAbstractCall(json);
+        else if (json.contains("\"abstract_get_lookback\"")) return "{\"lookback\":" + computeLookback(jsonString(json, "funcName"), json) + "}";
         else {
             return "{\"error\":\"Unknown method\"}";
         }
@@ -75332,6 +75334,781 @@ public class TaCodegenServe {
         sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
         sb.append("}");
         return sb.toString();
+    }
+
+    static int computeLookback(String funcName, String json) {
+        switch (funcName) {
+        case "ACCBANDS": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.accbandsLookback(optInTimePeriod);
+        }
+        case "ACOS": {
+            return core.acosLookback();
+        }
+        case "AD": {
+            return core.adLookback();
+        }
+        case "ADD": {
+            return core.addLookback();
+        }
+        case "ADOSC": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            return core.adOscLookback(optInFastPeriod, optInSlowPeriod);
+        }
+        case "ADX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.adxLookback(optInTimePeriod);
+        }
+        case "ADXR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.adxrLookback(optInTimePeriod);
+        }
+        case "APO": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "AROON": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.aroonLookback(optInTimePeriod);
+        }
+        case "AROONOSC": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.aroonOscLookback(optInTimePeriod);
+        }
+        case "ASIN": {
+            return core.asinLookback();
+        }
+        case "ATAN": {
+            return core.atanLookback();
+        }
+        case "ATR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.atrLookback(optInTimePeriod);
+        }
+        case "AVGDEV": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.avgDevLookback(optInTimePeriod);
+        }
+        case "AVGPRICE": {
+            return core.avgPriceLookback();
+        }
+        case "BBANDS": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            double optInNbDevUp = jsonDouble(json, "optInNbDevUp");
+            double optInNbDevDn = jsonDouble(json, "optInNbDevDn");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        }
+        case "BETA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.betaLookback(optInTimePeriod);
+        }
+        case "BOP": {
+            return core.bopLookback();
+        }
+        case "CCI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.cciLookback(optInTimePeriod);
+        }
+        case "CDL2CROWS": {
+            return core.cdl2CrowsLookback();
+        }
+        case "CDL3BLACKCROWS": {
+            return core.cdl3BlackCrowsLookback();
+        }
+        case "CDL3INSIDE": {
+            return core.cdl3InsideLookback();
+        }
+        case "CDL3LINESTRIKE": {
+            return core.cdl3LineStrikeLookback();
+        }
+        case "CDL3OUTSIDE": {
+            return core.cdl3OutsideLookback();
+        }
+        case "CDL3STARSINSOUTH": {
+            return core.cdl3StarsInSouthLookback();
+        }
+        case "CDL3WHITESOLDIERS": {
+            return core.cdl3WhiteSoldiersLookback();
+        }
+        case "CDLABANDONEDBABY": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlAbandonedBabyLookback(optInPenetration);
+        }
+        case "CDLADVANCEBLOCK": {
+            return core.cdlAdvanceBlockLookback();
+        }
+        case "CDLBELTHOLD": {
+            return core.cdlBeltHoldLookback();
+        }
+        case "CDLBREAKAWAY": {
+            return core.cdlBreakawayLookback();
+        }
+        case "CDLCLOSINGMARUBOZU": {
+            return core.cdlClosingMarubozuLookback();
+        }
+        case "CDLCONCEALBABYSWALL": {
+            return core.cdlConcealBabysWallLookback();
+        }
+        case "CDLCOUNTERATTACK": {
+            return core.cdlCounterAttackLookback();
+        }
+        case "CDLDARKCLOUDCOVER": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlDarkCloudCoverLookback(optInPenetration);
+        }
+        case "CDLDOJI": {
+            return core.cdlDojiLookback();
+        }
+        case "CDLDOJISTAR": {
+            return core.cdlDojiStarLookback();
+        }
+        case "CDLDRAGONFLYDOJI": {
+            return core.cdlDragonflyDojiLookback();
+        }
+        case "CDLENGULFING": {
+            return core.cdlEngulfingLookback();
+        }
+        case "CDLEVENINGDOJISTAR": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlEveningDojiStarLookback(optInPenetration);
+        }
+        case "CDLEVENINGSTAR": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlEveningStarLookback(optInPenetration);
+        }
+        case "CDLGAPSIDESIDEWHITE": {
+            return core.cdlGapSideSideWhiteLookback();
+        }
+        case "CDLGRAVESTONEDOJI": {
+            return core.cdlGravestoneDojiLookback();
+        }
+        case "CDLHAMMER": {
+            return core.cdlHammerLookback();
+        }
+        case "CDLHANGINGMAN": {
+            return core.cdlHangingManLookback();
+        }
+        case "CDLHARAMI": {
+            return core.cdlHaramiLookback();
+        }
+        case "CDLHARAMICROSS": {
+            return core.cdlHaramiCrossLookback();
+        }
+        case "CDLHIGHWAVE": {
+            return core.cdlHignWaveLookback();
+        }
+        case "CDLHIKKAKE": {
+            return core.cdlHikkakeLookback();
+        }
+        case "CDLHIKKAKEMOD": {
+            return core.cdlHikkakeModLookback();
+        }
+        case "CDLHOMINGPIGEON": {
+            return core.cdlHomingPigeonLookback();
+        }
+        case "CDLIDENTICAL3CROWS": {
+            return core.cdlIdentical3CrowsLookback();
+        }
+        case "CDLINNECK": {
+            return core.cdlInNeckLookback();
+        }
+        case "CDLINVERTEDHAMMER": {
+            return core.cdlInvertedHammerLookback();
+        }
+        case "CDLKICKING": {
+            return core.cdlKickingLookback();
+        }
+        case "CDLKICKINGBYLENGTH": {
+            return core.cdlKickingByLengthLookback();
+        }
+        case "CDLLADDERBOTTOM": {
+            return core.cdlLadderBottomLookback();
+        }
+        case "CDLLONGLEGGEDDOJI": {
+            return core.cdlLongLeggedDojiLookback();
+        }
+        case "CDLLONGLINE": {
+            return core.cdlLongLineLookback();
+        }
+        case "CDLMARUBOZU": {
+            return core.cdlMarubozuLookback();
+        }
+        case "CDLMATCHINGLOW": {
+            return core.cdlMatchingLowLookback();
+        }
+        case "CDLMATHOLD": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlMatHoldLookback(optInPenetration);
+        }
+        case "CDLMORNINGDOJISTAR": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlMorningDojiStarLookback(optInPenetration);
+        }
+        case "CDLMORNINGSTAR": {
+            double optInPenetration = jsonDouble(json, "optInPenetration");
+            return core.cdlMorningStarLookback(optInPenetration);
+        }
+        case "CDLONNECK": {
+            return core.cdlOnNeckLookback();
+        }
+        case "CDLPIERCING": {
+            return core.cdlPiercingLookback();
+        }
+        case "CDLRICKSHAWMAN": {
+            return core.cdlRickshawManLookback();
+        }
+        case "CDLRISEFALL3METHODS": {
+            return core.cdlRiseFall3MethodsLookback();
+        }
+        case "CDLSEPARATINGLINES": {
+            return core.cdlSeperatingLinesLookback();
+        }
+        case "CDLSHOOTINGSTAR": {
+            return core.cdlShootingStarLookback();
+        }
+        case "CDLSHORTLINE": {
+            return core.cdlShortLineLookback();
+        }
+        case "CDLSPINNINGTOP": {
+            return core.cdlSpinningTopLookback();
+        }
+        case "CDLSTALLEDPATTERN": {
+            return core.cdlStalledPatternLookback();
+        }
+        case "CDLSTICKSANDWICH": {
+            return core.cdlStickSandwichLookback();
+        }
+        case "CDLTAKURI": {
+            return core.cdlTakuriLookback();
+        }
+        case "CDLTASUKIGAP": {
+            return core.cdlTasukiGapLookback();
+        }
+        case "CDLTHRUSTING": {
+            return core.cdlThrustingLookback();
+        }
+        case "CDLTRISTAR": {
+            return core.cdlTristarLookback();
+        }
+        case "CDLUNIQUE3RIVER": {
+            return core.cdlUnique3RiverLookback();
+        }
+        case "CDLUPSIDEGAP2CROWS": {
+            return core.cdlUpsideGap2CrowsLookback();
+        }
+        case "CDLXSIDEGAP3METHODS": {
+            return core.cdlXSideGap3MethodsLookback();
+        }
+        case "CEIL": {
+            return core.ceilLookback();
+        }
+        case "CMO": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.cmoLookback(optInTimePeriod);
+        }
+        case "CORREL": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.correlLookback(optInTimePeriod);
+        }
+        case "COS": {
+            return core.cosLookback();
+        }
+        case "COSH": {
+            return core.coshLookback();
+        }
+        case "DEMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.demaLookback(optInTimePeriod);
+        }
+        case "DIV": {
+            return core.divLookback();
+        }
+        case "DX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.dxLookback(optInTimePeriod);
+        }
+        case "EMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.emaLookback(optInTimePeriod);
+        }
+        case "EXP": {
+            return core.expLookback();
+        }
+        case "FLOOR": {
+            return core.floorLookback();
+        }
+        case "HT_DCPERIOD": {
+            return core.htDcPeriodLookback();
+        }
+        case "HT_DCPHASE": {
+            return core.htDcPhaseLookback();
+        }
+        case "HT_PHASOR": {
+            return core.htPhasorLookback();
+        }
+        case "HT_SINE": {
+            return core.htSineLookback();
+        }
+        case "HT_TRENDLINE": {
+            return core.htTrendlineLookback();
+        }
+        case "HT_TRENDMODE": {
+            return core.htTrendModeLookback();
+        }
+        case "IMI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.imiLookback(optInTimePeriod);
+        }
+        case "KAMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.kamaLookback(optInTimePeriod);
+        }
+        case "LINEARREG": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.linearRegLookback(optInTimePeriod);
+        }
+        case "LINEARREG_ANGLE": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.linearRegAngleLookback(optInTimePeriod);
+        }
+        case "LINEARREG_INTERCEPT": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.linearRegInterceptLookback(optInTimePeriod);
+        }
+        case "LINEARREG_SLOPE": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.linearRegSlopeLookback(optInTimePeriod);
+        }
+        case "LN": {
+            return core.lnLookback();
+        }
+        case "LOG10": {
+            return core.log10Lookback();
+        }
+        case "MA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.movingAverageLookback(optInTimePeriod, optInMAType);
+        }
+        case "MACD": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+            return core.macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        }
+        case "MACDEXT": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            MAType optInFastMAType = MAType.values()[jsonInt(json, "optInFastMAType")];
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            MAType optInSlowMAType = MAType.values()[jsonInt(json, "optInSlowMAType")];
+            int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+            MAType optInSignalMAType = MAType.values()[jsonInt(json, "optInSignalMAType")];
+            return core.macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+        }
+        case "MACDFIX": {
+            int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+            return core.macdFixLookback(optInSignalPeriod);
+        }
+        case "MAMA": {
+            double optInFastLimit = jsonDouble(json, "optInFastLimit");
+            double optInSlowLimit = jsonDouble(json, "optInSlowLimit");
+            return core.mamaLookback(optInFastLimit, optInSlowLimit);
+        }
+        case "MAVP": {
+            int optInMinPeriod = jsonInt(json, "optInMinPeriod");
+            int optInMaxPeriod = jsonInt(json, "optInMaxPeriod");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        }
+        case "MAX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.maxLookback(optInTimePeriod);
+        }
+        case "MAXINDEX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.maxIndexLookback(optInTimePeriod);
+        }
+        case "MEDPRICE": {
+            return core.medPriceLookback();
+        }
+        case "MFI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.mfiLookback(optInTimePeriod);
+        }
+        case "MIDPOINT": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.midPointLookback(optInTimePeriod);
+        }
+        case "MIDPRICE": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.midPriceLookback(optInTimePeriod);
+        }
+        case "MIN": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minLookback(optInTimePeriod);
+        }
+        case "MININDEX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minIndexLookback(optInTimePeriod);
+        }
+        case "MINMAX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minMaxLookback(optInTimePeriod);
+        }
+        case "MINMAXINDEX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minMaxIndexLookback(optInTimePeriod);
+        }
+        case "MINUS_DI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minusDILookback(optInTimePeriod);
+        }
+        case "MINUS_DM": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.minusDMLookback(optInTimePeriod);
+        }
+        case "MOM": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.momLookback(optInTimePeriod);
+        }
+        case "MULT": {
+            return core.multLookback();
+        }
+        case "NATR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.natrLookback(optInTimePeriod);
+        }
+        case "OBV": {
+            return core.obvLookback();
+        }
+        case "PLUS_DI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.plusDILookback(optInTimePeriod);
+        }
+        case "PLUS_DM": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.plusDMLookback(optInTimePeriod);
+        }
+        case "PPO": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "ROC": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.rocLookback(optInTimePeriod);
+        }
+        case "ROCP": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.rocPLookback(optInTimePeriod);
+        }
+        case "ROCR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.rocRLookback(optInTimePeriod);
+        }
+        case "ROCR100": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.rocR100Lookback(optInTimePeriod);
+        }
+        case "RSI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.rsiLookback(optInTimePeriod);
+        }
+        case "SAR": {
+            double optInAcceleration = jsonDouble(json, "optInAcceleration");
+            double optInMaximum = jsonDouble(json, "optInMaximum");
+            return core.sarLookback(optInAcceleration, optInMaximum);
+        }
+        case "SAREXT": {
+            double optInStartValue = jsonDouble(json, "optInStartValue");
+            double optInOffsetOnReverse = jsonDouble(json, "optInOffsetOnReverse");
+            double optInAccelerationInitLong = jsonDouble(json, "optInAccelerationInitLong");
+            double optInAccelerationLong = jsonDouble(json, "optInAccelerationLong");
+            double optInAccelerationMaxLong = jsonDouble(json, "optInAccelerationMaxLong");
+            double optInAccelerationInitShort = jsonDouble(json, "optInAccelerationInitShort");
+            double optInAccelerationShort = jsonDouble(json, "optInAccelerationShort");
+            double optInAccelerationMaxShort = jsonDouble(json, "optInAccelerationMaxShort");
+            return core.sarExtLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        }
+        case "SIN": {
+            return core.sinLookback();
+        }
+        case "SINH": {
+            return core.sinhLookback();
+        }
+        case "SMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.smaLookback(optInTimePeriod);
+        }
+        case "SQRT": {
+            return core.sqrtLookback();
+        }
+        case "STDDEV": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            double optInNbDev = jsonDouble(json, "optInNbDev");
+            return core.stdDevLookback(optInTimePeriod, optInNbDev);
+        }
+        case "STOCH": {
+            int optInFastK_Period = jsonInt(json, "optInFastK_Period");
+            int optInSlowK_Period = jsonInt(json, "optInSlowK_Period");
+            MAType optInSlowK_MAType = MAType.values()[jsonInt(json, "optInSlowK_MAType")];
+            int optInSlowD_Period = jsonInt(json, "optInSlowD_Period");
+            MAType optInSlowD_MAType = MAType.values()[jsonInt(json, "optInSlowD_MAType")];
+            return core.stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        }
+        case "STOCHF": {
+            int optInFastK_Period = jsonInt(json, "optInFastK_Period");
+            int optInFastD_Period = jsonInt(json, "optInFastD_Period");
+            MAType optInFastD_MAType = MAType.values()[jsonInt(json, "optInFastD_MAType")];
+            return core.stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        }
+        case "STOCHRSI": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            int optInFastK_Period = jsonInt(json, "optInFastK_Period");
+            int optInFastD_Period = jsonInt(json, "optInFastD_Period");
+            MAType optInFastD_MAType = MAType.values()[jsonInt(json, "optInFastD_MAType")];
+            return core.stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        }
+        case "SUB": {
+            return core.subLookback();
+        }
+        case "SUM": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.sumLookback(optInTimePeriod);
+        }
+        case "T3": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            double optInVFactor = jsonDouble(json, "optInVFactor");
+            return core.t3Lookback(optInTimePeriod, optInVFactor);
+        }
+        case "TAN": {
+            return core.tanLookback();
+        }
+        case "TANH": {
+            return core.tanhLookback();
+        }
+        case "TEMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.temaLookback(optInTimePeriod);
+        }
+        case "TRANGE": {
+            return core.trueRangeLookback();
+        }
+        case "TRIMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.trimaLookback(optInTimePeriod);
+        }
+        case "TRIX": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.trixLookback(optInTimePeriod);
+        }
+        case "TSF": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.tsfLookback(optInTimePeriod);
+        }
+        case "TYPPRICE": {
+            return core.typPriceLookback();
+        }
+        case "ULTOSC": {
+            int optInTimePeriod1 = jsonInt(json, "optInTimePeriod1");
+            int optInTimePeriod2 = jsonInt(json, "optInTimePeriod2");
+            int optInTimePeriod3 = jsonInt(json, "optInTimePeriod3");
+            return core.ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        }
+        case "VAR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            double optInNbDev = jsonDouble(json, "optInNbDev");
+            return core.varianceLookback(optInTimePeriod, optInNbDev);
+        }
+        case "WCLPRICE": {
+            return core.wclPriceLookback();
+        }
+        case "WILLR": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.willRLookback(optInTimePeriod);
+        }
+        case "WMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.wmaLookback(optInTimePeriod);
+        }
+        default: return -1;
+        }
+    }
+
+    static String handleAbstractCall(String json) {
+        String fn = jsonString(json, "funcName");
+        String resp;
+        switch (fn) {
+        case "ACCBANDS": resp = handle_ACCBANDS(json); break;
+        case "ACOS": resp = handle_ACOS(json); break;
+        case "AD": resp = handle_AD(json); break;
+        case "ADD": resp = handle_ADD(json); break;
+        case "ADOSC": resp = handle_ADOSC(json); break;
+        case "ADX": resp = handle_ADX(json); break;
+        case "ADXR": resp = handle_ADXR(json); break;
+        case "APO": resp = handle_APO(json); break;
+        case "AROON": resp = handle_AROON(json); break;
+        case "AROONOSC": resp = handle_AROONOSC(json); break;
+        case "ASIN": resp = handle_ASIN(json); break;
+        case "ATAN": resp = handle_ATAN(json); break;
+        case "ATR": resp = handle_ATR(json); break;
+        case "AVGDEV": resp = handle_AVGDEV(json); break;
+        case "AVGPRICE": resp = handle_AVGPRICE(json); break;
+        case "BBANDS": resp = handle_BBANDS(json); break;
+        case "BETA": resp = handle_BETA(json); break;
+        case "BOP": resp = handle_BOP(json); break;
+        case "CCI": resp = handle_CCI(json); break;
+        case "CDL2CROWS": resp = handle_CDL2CROWS(json); break;
+        case "CDL3BLACKCROWS": resp = handle_CDL3BLACKCROWS(json); break;
+        case "CDL3INSIDE": resp = handle_CDL3INSIDE(json); break;
+        case "CDL3LINESTRIKE": resp = handle_CDL3LINESTRIKE(json); break;
+        case "CDL3OUTSIDE": resp = handle_CDL3OUTSIDE(json); break;
+        case "CDL3STARSINSOUTH": resp = handle_CDL3STARSINSOUTH(json); break;
+        case "CDL3WHITESOLDIERS": resp = handle_CDL3WHITESOLDIERS(json); break;
+        case "CDLABANDONEDBABY": resp = handle_CDLABANDONEDBABY(json); break;
+        case "CDLADVANCEBLOCK": resp = handle_CDLADVANCEBLOCK(json); break;
+        case "CDLBELTHOLD": resp = handle_CDLBELTHOLD(json); break;
+        case "CDLBREAKAWAY": resp = handle_CDLBREAKAWAY(json); break;
+        case "CDLCLOSINGMARUBOZU": resp = handle_CDLCLOSINGMARUBOZU(json); break;
+        case "CDLCONCEALBABYSWALL": resp = handle_CDLCONCEALBABYSWALL(json); break;
+        case "CDLCOUNTERATTACK": resp = handle_CDLCOUNTERATTACK(json); break;
+        case "CDLDARKCLOUDCOVER": resp = handle_CDLDARKCLOUDCOVER(json); break;
+        case "CDLDOJI": resp = handle_CDLDOJI(json); break;
+        case "CDLDOJISTAR": resp = handle_CDLDOJISTAR(json); break;
+        case "CDLDRAGONFLYDOJI": resp = handle_CDLDRAGONFLYDOJI(json); break;
+        case "CDLENGULFING": resp = handle_CDLENGULFING(json); break;
+        case "CDLEVENINGDOJISTAR": resp = handle_CDLEVENINGDOJISTAR(json); break;
+        case "CDLEVENINGSTAR": resp = handle_CDLEVENINGSTAR(json); break;
+        case "CDLGAPSIDESIDEWHITE": resp = handle_CDLGAPSIDESIDEWHITE(json); break;
+        case "CDLGRAVESTONEDOJI": resp = handle_CDLGRAVESTONEDOJI(json); break;
+        case "CDLHAMMER": resp = handle_CDLHAMMER(json); break;
+        case "CDLHANGINGMAN": resp = handle_CDLHANGINGMAN(json); break;
+        case "CDLHARAMI": resp = handle_CDLHARAMI(json); break;
+        case "CDLHARAMICROSS": resp = handle_CDLHARAMICROSS(json); break;
+        case "CDLHIGHWAVE": resp = handle_CDLHIGHWAVE(json); break;
+        case "CDLHIKKAKE": resp = handle_CDLHIKKAKE(json); break;
+        case "CDLHIKKAKEMOD": resp = handle_CDLHIKKAKEMOD(json); break;
+        case "CDLHOMINGPIGEON": resp = handle_CDLHOMINGPIGEON(json); break;
+        case "CDLIDENTICAL3CROWS": resp = handle_CDLIDENTICAL3CROWS(json); break;
+        case "CDLINNECK": resp = handle_CDLINNECK(json); break;
+        case "CDLINVERTEDHAMMER": resp = handle_CDLINVERTEDHAMMER(json); break;
+        case "CDLKICKING": resp = handle_CDLKICKING(json); break;
+        case "CDLKICKINGBYLENGTH": resp = handle_CDLKICKINGBYLENGTH(json); break;
+        case "CDLLADDERBOTTOM": resp = handle_CDLLADDERBOTTOM(json); break;
+        case "CDLLONGLEGGEDDOJI": resp = handle_CDLLONGLEGGEDDOJI(json); break;
+        case "CDLLONGLINE": resp = handle_CDLLONGLINE(json); break;
+        case "CDLMARUBOZU": resp = handle_CDLMARUBOZU(json); break;
+        case "CDLMATCHINGLOW": resp = handle_CDLMATCHINGLOW(json); break;
+        case "CDLMATHOLD": resp = handle_CDLMATHOLD(json); break;
+        case "CDLMORNINGDOJISTAR": resp = handle_CDLMORNINGDOJISTAR(json); break;
+        case "CDLMORNINGSTAR": resp = handle_CDLMORNINGSTAR(json); break;
+        case "CDLONNECK": resp = handle_CDLONNECK(json); break;
+        case "CDLPIERCING": resp = handle_CDLPIERCING(json); break;
+        case "CDLRICKSHAWMAN": resp = handle_CDLRICKSHAWMAN(json); break;
+        case "CDLRISEFALL3METHODS": resp = handle_CDLRISEFALL3METHODS(json); break;
+        case "CDLSEPARATINGLINES": resp = handle_CDLSEPARATINGLINES(json); break;
+        case "CDLSHOOTINGSTAR": resp = handle_CDLSHOOTINGSTAR(json); break;
+        case "CDLSHORTLINE": resp = handle_CDLSHORTLINE(json); break;
+        case "CDLSPINNINGTOP": resp = handle_CDLSPINNINGTOP(json); break;
+        case "CDLSTALLEDPATTERN": resp = handle_CDLSTALLEDPATTERN(json); break;
+        case "CDLSTICKSANDWICH": resp = handle_CDLSTICKSANDWICH(json); break;
+        case "CDLTAKURI": resp = handle_CDLTAKURI(json); break;
+        case "CDLTASUKIGAP": resp = handle_CDLTASUKIGAP(json); break;
+        case "CDLTHRUSTING": resp = handle_CDLTHRUSTING(json); break;
+        case "CDLTRISTAR": resp = handle_CDLTRISTAR(json); break;
+        case "CDLUNIQUE3RIVER": resp = handle_CDLUNIQUE3RIVER(json); break;
+        case "CDLUPSIDEGAP2CROWS": resp = handle_CDLUPSIDEGAP2CROWS(json); break;
+        case "CDLXSIDEGAP3METHODS": resp = handle_CDLXSIDEGAP3METHODS(json); break;
+        case "CEIL": resp = handle_CEIL(json); break;
+        case "CMO": resp = handle_CMO(json); break;
+        case "CORREL": resp = handle_CORREL(json); break;
+        case "COS": resp = handle_COS(json); break;
+        case "COSH": resp = handle_COSH(json); break;
+        case "DEMA": resp = handle_DEMA(json); break;
+        case "DIV": resp = handle_DIV(json); break;
+        case "DX": resp = handle_DX(json); break;
+        case "EMA": resp = handle_EMA(json); break;
+        case "EXP": resp = handle_EXP(json); break;
+        case "FLOOR": resp = handle_FLOOR(json); break;
+        case "HT_DCPERIOD": resp = handle_HT_DCPERIOD(json); break;
+        case "HT_DCPHASE": resp = handle_HT_DCPHASE(json); break;
+        case "HT_PHASOR": resp = handle_HT_PHASOR(json); break;
+        case "HT_SINE": resp = handle_HT_SINE(json); break;
+        case "HT_TRENDLINE": resp = handle_HT_TRENDLINE(json); break;
+        case "HT_TRENDMODE": resp = handle_HT_TRENDMODE(json); break;
+        case "IMI": resp = handle_IMI(json); break;
+        case "KAMA": resp = handle_KAMA(json); break;
+        case "LINEARREG": resp = handle_LINEARREG(json); break;
+        case "LINEARREG_ANGLE": resp = handle_LINEARREG_ANGLE(json); break;
+        case "LINEARREG_INTERCEPT": resp = handle_LINEARREG_INTERCEPT(json); break;
+        case "LINEARREG_SLOPE": resp = handle_LINEARREG_SLOPE(json); break;
+        case "LN": resp = handle_LN(json); break;
+        case "LOG10": resp = handle_LOG10(json); break;
+        case "MA": resp = handle_MA(json); break;
+        case "MACD": resp = handle_MACD(json); break;
+        case "MACDEXT": resp = handle_MACDEXT(json); break;
+        case "MACDFIX": resp = handle_MACDFIX(json); break;
+        case "MAMA": resp = handle_MAMA(json); break;
+        case "MAVP": resp = handle_MAVP(json); break;
+        case "MAX": resp = handle_MAX(json); break;
+        case "MAXINDEX": resp = handle_MAXINDEX(json); break;
+        case "MEDPRICE": resp = handle_MEDPRICE(json); break;
+        case "MFI": resp = handle_MFI(json); break;
+        case "MIDPOINT": resp = handle_MIDPOINT(json); break;
+        case "MIDPRICE": resp = handle_MIDPRICE(json); break;
+        case "MIN": resp = handle_MIN(json); break;
+        case "MININDEX": resp = handle_MININDEX(json); break;
+        case "MINMAX": resp = handle_MINMAX(json); break;
+        case "MINMAXINDEX": resp = handle_MINMAXINDEX(json); break;
+        case "MINUS_DI": resp = handle_MINUS_DI(json); break;
+        case "MINUS_DM": resp = handle_MINUS_DM(json); break;
+        case "MOM": resp = handle_MOM(json); break;
+        case "MULT": resp = handle_MULT(json); break;
+        case "NATR": resp = handle_NATR(json); break;
+        case "OBV": resp = handle_OBV(json); break;
+        case "PLUS_DI": resp = handle_PLUS_DI(json); break;
+        case "PLUS_DM": resp = handle_PLUS_DM(json); break;
+        case "PPO": resp = handle_PPO(json); break;
+        case "ROC": resp = handle_ROC(json); break;
+        case "ROCP": resp = handle_ROCP(json); break;
+        case "ROCR": resp = handle_ROCR(json); break;
+        case "ROCR100": resp = handle_ROCR100(json); break;
+        case "RSI": resp = handle_RSI(json); break;
+        case "SAR": resp = handle_SAR(json); break;
+        case "SAREXT": resp = handle_SAREXT(json); break;
+        case "SIN": resp = handle_SIN(json); break;
+        case "SINH": resp = handle_SINH(json); break;
+        case "SMA": resp = handle_SMA(json); break;
+        case "SQRT": resp = handle_SQRT(json); break;
+        case "STDDEV": resp = handle_STDDEV(json); break;
+        case "STOCH": resp = handle_STOCH(json); break;
+        case "STOCHF": resp = handle_STOCHF(json); break;
+        case "STOCHRSI": resp = handle_STOCHRSI(json); break;
+        case "SUB": resp = handle_SUB(json); break;
+        case "SUM": resp = handle_SUM(json); break;
+        case "T3": resp = handle_T3(json); break;
+        case "TAN": resp = handle_TAN(json); break;
+        case "TANH": resp = handle_TANH(json); break;
+        case "TEMA": resp = handle_TEMA(json); break;
+        case "TRANGE": resp = handle_TRANGE(json); break;
+        case "TRIMA": resp = handle_TRIMA(json); break;
+        case "TRIX": resp = handle_TRIX(json); break;
+        case "TSF": resp = handle_TSF(json); break;
+        case "TYPPRICE": resp = handle_TYPPRICE(json); break;
+        case "ULTOSC": resp = handle_ULTOSC(json); break;
+        case "VAR": resp = handle_VAR(json); break;
+        case "WCLPRICE": resp = handle_WCLPRICE(json); break;
+        case "WILLR": resp = handle_WILLR(json); break;
+        case "WMA": resp = handle_WMA(json); break;
+        default: return "{\"error\":\"Unknown function\"}";
+        }
+        int lb = computeLookback(fn, json);
+        return "{\"lookback\":" + lb + "," + resp.substring(1);
     }
 
     public static void main(String[] args) throws Exception {

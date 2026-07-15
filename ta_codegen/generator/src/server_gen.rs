@@ -1908,6 +1908,7 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
 /// (`RetCode` enum, `MInteger`, Core class with methods, main server loop).
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::implicit_hasher)]
+#[allow(clippy::cognitive_complexity)]
 pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
@@ -2232,6 +2233,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"TA_GetOutputParameterInfo\\\"\")) return handleGetOutputParameterInfo(json);\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_for_each_func\\\"\")) return handleForEachFunc();\n");
     s.push_str("        else if (json.contains(\"\\\"TA_FunctionDescriptionXML\\\"\")) return handleFunctionDescriptionXML();\n");
+    s.push_str("        else if (json.contains(\"\\\"abstract_call\\\"\")) return handleAbstractCall(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"abstract_get_lookback\\\"\")) return \"{\\\"lookback\\\":\" + computeLookback(jsonString(json, \"funcName\"), json) + \"}\";\n");
 
     s.push_str("        else {\n");
     s.push_str("            return \"{\\\"error\\\":\\\"Unknown method\\\"}\";\n");
@@ -2428,6 +2431,60 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         s.push_str("    }\n\n");
     }
+
+    // ta_abstract dynamic dispatch (issue #114): abstract_get_lookback + abstract_call.
+    // computeLookback parses a function's opt params (same JSON keys as the per-function
+    // handler) and calls its guarded <name>Lookback; abstract_call reroutes to the
+    // existing per-function handler and prepends the `lookback` the C ta_abstract path returns.
+    s.push_str("    static int computeLookback(String funcName, String json) {\n");
+    s.push_str("        switch (funcName) {\n");
+    for func in funcs {
+        let func_lower = to_java_method_name(&func.name, func.camel_case.as_deref());
+        s.push_str(&format!("        case \"{}\": {{\n", func.name));
+        for opt in &func.optional_inputs {
+            match &opt.param_type {
+                ParamType::Real => s.push_str(&format!(
+                    "            double {} = jsonDouble(json, \"{}\");\n",
+                    opt.name, opt.name
+                )),
+                ParamType::Enum(enum_name) => s.push_str(&format!(
+                    "            {} {} = {}.values()[jsonInt(json, \"{}\")];\n",
+                    enum_name, opt.name, enum_name, opt.name
+                )),
+                _ => s.push_str(&format!(
+                    "            int {} = jsonInt(json, \"{}\");\n",
+                    opt.name, opt.name
+                )),
+            }
+        }
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        s.push_str(&format!(
+            "            return core.{}Lookback({});\n",
+            func_lower,
+            args.join(", ")
+        ));
+        s.push_str("        }\n");
+    }
+    s.push_str("        default: return -1;\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+
+    s.push_str("    static String handleAbstractCall(String json) {\n");
+    s.push_str("        String fn = jsonString(json, \"funcName\");\n");
+    s.push_str("        String resp;\n");
+    s.push_str("        switch (fn) {\n");
+    for func in funcs {
+        s.push_str(&format!(
+            "        case \"{}\": resp = handle_{}(json); break;\n",
+            func.name, func.name
+        ));
+    }
+    s.push_str("        default: return \"{\\\"error\\\":\\\"Unknown function\\\"}\";\n");
+    s.push_str("        }\n");
+    s.push_str("        int lb = computeLookback(fn, json);\n");
+    // The per-function response starts with '{'; splice "lookback" in as the first key.
+    s.push_str("        return \"{\\\"lookback\\\":\" + lb + \",\" + resp.substring(1);\n");
+    s.push_str("    }\n\n");
 
     // Main method
     s.push_str("    public static void main(String[] args) throws Exception {\n");
