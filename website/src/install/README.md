@@ -5,7 +5,7 @@ toc: false
 
 # Install C/C++
 
-Instructions are for installing the C/C++ shared, static libraries and headers on your system.
+Instructions for installing the shared/static libraries and headers on your system.
 
 Latest release is [0.7.1 on Github](https://github.com/ta-lib/ta-lib/releases/latest)
 
