@@ -1,9 +1,9 @@
 ---
-title: Install
+title: Install C/C++
 toc: false
 ---
 
-# Install
+# Install C/C++
 
 Instructions are for installing the C/C++ shared, static libraries and headers on your system.
 

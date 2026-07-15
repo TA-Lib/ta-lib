@@ -6,8 +6,7 @@ toc: false
 # C/C++ API Documentation #
 <p><a href="#intro">1.0 Introduction</a></p>
 
-<p><a href="#build">2.0 How
-to build and link to TA-Lib</a></p>
+<p><a href="#build">2.0 How to add TA-Lib to your app</a></p>
 
 <p><a href="#ta_func">3.0 Technical Analysis Functions</a></p>
 
@@ -29,7 +28,7 @@ to build and link to TA-Lib</a></p>
 <p>All public functions of the libraries are documented here.</p>
 <p>You must first <a href="/install/">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile with your program.</p>
 
-<h2 id="build">2.0 How to build and link to TA-Lib</h2>
+<h2 id="build">2.0 How to add TA-Lib to your app</h2>
 
 In your source code, add <b>#include &quot;ta_libc.h&quot;</b> and link to the library named "ta-lib".
 
