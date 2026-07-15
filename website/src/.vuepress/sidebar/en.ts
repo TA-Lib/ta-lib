@@ -11,7 +11,7 @@ export const enSidebar = sidebar({
     {
       text: "Docs",
       link: "functions/",
-      children: ["functions/", "api/", "faq/"],
+      children: ["functions/", "api/", "api/stream/", "faq/"],
     },
     "about/",
   ],

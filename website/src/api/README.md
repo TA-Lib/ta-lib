@@ -1,9 +1,9 @@
 ---
-title: C/C++ API
+title: C/C++ Core API
 toc: false
 ---
 
-# C/C++ API Documentation #
+# C/C++ Core API Documentation #
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 How to add TA-Lib to your app</a></p>
@@ -25,7 +25,8 @@ toc: false
 
 <h2 id="intro">1.0 Introduction</h2>
 
-<p>All public functions of the libraries are documented here.</p>
+<p>This covers the <b>Core API</b>: the batch (array-processing) functions that compute an indicator over a whole range of data at once, plus the <a href="#abstract">abstraction layer</a> for calling them dynamically.</p>
+<p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile with your program.</p>
 
 <h2 id="build">2.0 How to add TA-Lib to your app</h2>
