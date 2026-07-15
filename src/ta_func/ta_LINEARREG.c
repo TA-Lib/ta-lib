@@ -67,6 +67,7 @@ TA_LIB_API int TA_LINEARREG_Lookback( int optInTimePeriod )
    return optInTimePeriod - 1;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
                                     int    endIdx,
                                     const double inReal[],
@@ -155,7 +156,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
-   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
    today += 1;
    /* Slide the window one bar at a time, keeping both sums in O(1): advancing
     * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -170,7 +171,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -178,6 +179,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
                                               int    endIdx,
                                               const double inReal[],
@@ -228,7 +230,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
-   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
    today += 1;
    while( today <= endIdx )
    {
@@ -237,7 +239,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -245,6 +247,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_LINEARREG( int    startIdx,
                            int    endIdx,
                            const float inReal[],
@@ -309,7 +312,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
-   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
    today += 1;
    while( today <= endIdx )
    {
@@ -318,7 +321,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -326,6 +329,7 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
                                      int    endIdx,
                                      const float inReal[],
@@ -376,7 +380,7 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
-   outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
    today += 1;
    while( today <= endIdx )
    {
@@ -385,7 +389,7 @@ TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -432,7 +436,7 @@ static void TA_LINEARREG_StepInternal( struct TA_LINEARREG_Stream *sp, double in
    sp->SumY = sp->SumY - trailingValue + inReal;
    m = (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
    b = (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
-   *outReal= b + m * (double)(sp->optInTimePeriod - 1);
+   *outReal= fma(m, (double)(sp->optInTimePeriod - 1), b);
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
@@ -531,7 +535,7 @@ TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[]
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      lastValue_outReal = b + m * (double)(optInTimePeriod - 1);
+      lastValue_outReal = fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
        * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -546,7 +550,7 @@ TA_RetCode TA_LINEARREG_OpenInternal( int optInTimePeriod, const double inReal[]
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         lastValue_outReal = b + m * (double)(optInTimePeriod - 1);
+         lastValue_outReal = fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       dummyBegIdx = startIdx;

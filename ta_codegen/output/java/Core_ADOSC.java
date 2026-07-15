@@ -159,8 +159,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       /* Perform the calculation for the requested range */
       outIdx = 0;
@@ -173,8 +173,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -247,8 +247,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -260,8 +260,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -350,8 +350,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -363,8 +363,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -437,8 +437,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -450,8 +450,8 @@
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;

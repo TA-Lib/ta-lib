@@ -32,6 +32,7 @@ use super::c::{
     c_decl, emit_opt_param_validation, render_c_switch_label, render_expression,
     render_statement, render_statement_stream,
 };
+use super::fma;
 
 /// C name mapping for the transition rewrite: state fields through the
 /// handle pointer, current bars as same-named scalar params, outputs as
@@ -307,6 +308,26 @@ pub fn generate(
     );
     let plan = streaming::validate_streamable(func, registry)
         .unwrap_or_else(|e| panic!("streaming gate: {e}"));
+
+    // Install this function's FMA fusion sets for the crate-public render entry
+    // points (render_statement*/render_expression) used throughout this call, so
+    // the streamed per-bar code fuses `a*b+c` at the same sites as the batch body
+    // (keeps the bitwise batch-vs-stream stream_verify gate green under FMA). The
+    // detector strips the transition rewrite's `sp->`/`cur_` qualifiers (see
+    // fma::stream_base), so state/series operands classify by their batch name;
+    // the per-bar bar inputs become bare scalar params (`inClose[i]` -> `inClose`)
+    // that carry no prefix, so seed them into real_vars explicitly — else a
+    // non-power-of-two input weight would fuse in the batch/Open replay but not in
+    // Update. Cleared when the guard drops.
+    let mut stream_fma = fma::build_fma_var_sets(
+        &func.private_body,
+        &func.outputs,
+        &fma::UNGUARDED_INDEX_SEEDS,
+    );
+    for input in streaming::input_array_names(func) {
+        stream_fma.real_vars.insert(input);
+    }
+    let _stream_fma_guard = super::c::StreamFmaGuard::new(stream_fma);
 
     let counter = Cell::new(0usize);
     let mut o = String::new();

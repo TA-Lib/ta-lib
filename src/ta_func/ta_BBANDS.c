@@ -89,6 +89,7 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
    return TA_MA_Lookback(optInTimePeriod,optInMAType);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
                                  int    endIdx,
                                  const double inReal[],
@@ -239,7 +240,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
          {
             tempReal = tempBuffer2[i];
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
          }
       }
@@ -313,7 +314,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       for( i = 0; i < (int)*outNBElement; i += 1 )
       {
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
          outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
       }
    }
@@ -322,6 +323,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
                                            int    endIdx,
                                            const double inReal[],
@@ -427,7 +429,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
          {
             tempReal = tempBuffer2[i];
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
          }
       }
@@ -483,7 +485,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
       for( i = 0; i < (int)*outNBElement; i += 1 )
       {
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
          outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
       }
    }
@@ -492,6 +494,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_BBANDS( int    startIdx,
                         int    endIdx,
                         const float inReal[],
@@ -623,7 +626,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
          {
             tempReal = tempBuffer2[i];
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
          }
       }
@@ -679,7 +682,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       for( i = 0; i < (int)*outNBElement; i += 1 )
       {
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
          outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
       }
    }
@@ -688,6 +691,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
                                   int    endIdx,
                                   const float inReal[],
@@ -793,7 +797,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
          {
             tempReal = tempBuffer2[i];
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
          }
       }
@@ -849,7 +853,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
       for( i = 0; i < (int)*outNBElement; i += 1 )
       {
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
          outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
       }
    }
@@ -903,7 +907,7 @@ static void TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, 
    } else 
    {
       tempReal2 = cur_tempBuffer1;
-      cur_outRealUpperBand = tempReal2 + cur_tempBuffer2 * sp->optInNbDevUp;
+      cur_outRealUpperBand = fma(cur_tempBuffer2, sp->optInNbDevUp, tempReal2);
       cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp->optInNbDevDn;
    }
    *outRealUpperBand = cur_outRealUpperBand;
@@ -1071,7 +1075,7 @@ TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, dou
          for( i = 0; i < (int)dummyNBElement; i += 1 )
          {
             tempReal2 = sc_outRealMiddleBand[i];
-            sc_outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            sc_outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }

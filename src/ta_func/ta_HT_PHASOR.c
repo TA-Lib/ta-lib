@@ -63,6 +63,7 @@ TA_LIB_API int TA_HT_PHASOR_Lookback( void )
    return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
                                     int    endIdx,
                                     const double inReal[],
@@ -274,7 +275,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
     */
    while( today <= endIdx )
    {
-      adjustedPrevPeriod = 0.075 * period + 0.54;
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
       todayValue = inReal[today];
       periodWMASub += todayValue;
       periodWMASub -= trailingWMAValue;
@@ -330,8 +331,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
          {
             hilbertIdx = 0;
          }
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -384,8 +385,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
          jQ += prev_jQ_Odd;
          prev_jQ_input_Odd = Q1;
          jQ *= adjustedPrevPeriod;
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -396,8 +397,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
          I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-      Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
       prevQ2 = Q2;
       prevI2 = I2;
       tempReal = period;
@@ -422,7 +423,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
       {
          period = 50;
       }
-      period = 0.2 * period + 0.8 * tempReal;
+      period = fma(0.2, period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
       today += 1;
    }
@@ -431,6 +432,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Unguarded( int    startIdx,
                                               int    endIdx,
                                               const double inReal[],
@@ -592,7 +594,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Unguarded( int    startIdx,
    I1ForOddPrev2 = I1ForEvenPrev2;
    while( today <= endIdx )
    {
-      adjustedPrevPeriod = 0.075 * period + 0.54;
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
       todayValue = inReal[today];
       periodWMASub += todayValue;
       periodWMASub -= trailingWMAValue;
@@ -647,8 +649,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Unguarded( int    startIdx,
          {
             hilbertIdx = 0;
          }
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
          I1ForOddPrev3 = I1ForOddPrev2;
          I1ForOddPrev2 = detrender;
       } else 
@@ -694,13 +696,13 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Unguarded( int    startIdx,
          jQ += prev_jQ_Odd;
          prev_jQ_input_Odd = Q1;
          jQ *= adjustedPrevPeriod;
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
          I1ForEvenPrev3 = I1ForEvenPrev2;
          I1ForEvenPrev2 = detrender;
       }
-      Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-      Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
       prevQ2 = Q2;
       prevI2 = I2;
       tempReal = period;
@@ -725,13 +727,14 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Unguarded( int    startIdx,
       {
          period = 50;
       }
-      period = 0.2 * period + 0.8 * tempReal;
+      period = fma(0.2, period, 0.8 * tempReal);
       today += 1;
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_HT_PHASOR( int    startIdx,
                            int    endIdx,
                            const float inReal[],
@@ -907,7 +910,7 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
    I1ForOddPrev2 = I1ForEvenPrev2;
    while( today <= endIdx )
    {
-      adjustedPrevPeriod = 0.075 * period + 0.54;
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
       todayValue = (double)inReal[today];
       periodWMASub += todayValue;
       periodWMASub -= trailingWMAValue;
@@ -962,8 +965,8 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
          {
             hilbertIdx = 0;
          }
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
          I1ForOddPrev3 = I1ForOddPrev2;
          I1ForOddPrev2 = detrender;
       } else 
@@ -1009,13 +1012,13 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
          jQ += prev_jQ_Odd;
          prev_jQ_input_Odd = Q1;
          jQ *= adjustedPrevPeriod;
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
          I1ForEvenPrev3 = I1ForEvenPrev2;
          I1ForEvenPrev2 = detrender;
       }
-      Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-      Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
       prevQ2 = Q2;
       prevI2 = I2;
       tempReal = period;
@@ -1040,13 +1043,14 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
       {
          period = 50;
       }
-      period = 0.2 * period + 0.8 * tempReal;
+      period = fma(0.2, period, 0.8 * tempReal);
       today += 1;
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_HT_PHASOR_Unguarded( int    startIdx,
                                      int    endIdx,
                                      const float inReal[],
@@ -1208,7 +1212,7 @@ TA_RetCode TA_S_HT_PHASOR_Unguarded( int    startIdx,
    I1ForOddPrev2 = I1ForEvenPrev2;
    while( today <= endIdx )
    {
-      adjustedPrevPeriod = 0.075 * period + 0.54;
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
       todayValue = (double)inReal[today];
       periodWMASub += todayValue;
       periodWMASub -= trailingWMAValue;
@@ -1263,8 +1267,8 @@ TA_RetCode TA_S_HT_PHASOR_Unguarded( int    startIdx,
          {
             hilbertIdx = 0;
          }
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
          I1ForOddPrev3 = I1ForOddPrev2;
          I1ForOddPrev2 = detrender;
       } else 
@@ -1310,13 +1314,13 @@ TA_RetCode TA_S_HT_PHASOR_Unguarded( int    startIdx,
          jQ += prev_jQ_Odd;
          prev_jQ_input_Odd = Q1;
          jQ *= adjustedPrevPeriod;
-         Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-         I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
          I1ForEvenPrev3 = I1ForEvenPrev2;
          I1ForEvenPrev2 = detrender;
       }
-      Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-      Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
       prevQ2 = Q2;
       prevI2 = I2;
       tempReal = period;
@@ -1341,7 +1345,7 @@ TA_RetCode TA_S_HT_PHASOR_Unguarded( int    startIdx,
       {
          period = 50;
       }
-      period = 0.2 * period + 0.8 * tempReal;
+      period = fma(0.2, period, 0.8 * tempReal);
       today += 1;
    }
    *outNBElement= outIdx;
@@ -1427,7 +1431,7 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
    {
       sp->ring_trailingWMAIdx_inReal[0] = inReal;
    }
-   adjustedPrevPeriod = 0.075 * sp->period + 0.54;
+   adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
    sp->periodWMASub += todayValue;
    sp->periodWMASub -= sp->trailingWMAValue;
@@ -1480,8 +1484,8 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
       {
          sp->hilbertIdx = 0;
       }
-      sp->Q2 = 0.2 * (sp->Q1 + sp->jI) + 0.8 * sp->prevQ2;
-      sp->I2 = 0.2 * (sp->I1ForEvenPrev3 - sp->jQ) + 0.8 * sp->prevI2;
+      sp->Q2 = fma(0.2, sp->Q1 + sp->jI, 0.8 * sp->prevQ2);
+      sp->I2 = fma(0.2, sp->I1ForEvenPrev3 - sp->jQ, 0.8 * sp->prevI2);
       /* The variable I1 is the detrender delayed for
        * 3 price bars.
        *
@@ -1531,8 +1535,8 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
       sp->jQ += sp->prev_jQ_Odd;
       sp->prev_jQ_input_Odd = sp->Q1;
       sp->jQ *= adjustedPrevPeriod;
-      sp->Q2 = 0.2 * (sp->Q1 + sp->jI) + 0.8 * sp->prevQ2;
-      sp->I2 = 0.2 * (sp->I1ForOddPrev3 - sp->jQ) + 0.8 * sp->prevI2;
+      sp->Q2 = fma(0.2, sp->Q1 + sp->jI, 0.8 * sp->prevQ2);
+      sp->I2 = fma(0.2, sp->I1ForOddPrev3 - sp->jQ, 0.8 * sp->prevI2);
       /* The varaiable I1 is the detrender delayed for
        * 3 price bars.
        *
@@ -1543,8 +1547,8 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
       sp->I1ForEvenPrev2 = sp->detrender;
    }
    /* Adjust the period for next price bar */
-   sp->Re = 0.2 * (sp->I2 * sp->prevI2 + sp->Q2 * sp->prevQ2) + 0.8 * sp->Re;
-   sp->Im = 0.2 * (sp->I2 * sp->prevQ2 - sp->Q2 * sp->prevI2) + 0.8 * sp->Im;
+   sp->Re = fma(0.8, sp->Re, 0.2 * (fma(sp->I2, sp->prevI2, sp->Q2 * sp->prevQ2)));
+   sp->Im = fma(0.8, sp->Im, 0.2 * (sp->I2 * sp->prevQ2 - sp->Q2 * sp->prevI2));
    sp->prevQ2 = sp->Q2;
    sp->prevI2 = sp->I2;
    sp->tempReal = sp->period;
@@ -1569,7 +1573,7 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
    {
       sp->period = 50;
    }
-   sp->period = 0.2 * sp->period + 0.8 * sp->tempReal;
+   sp->period = fma(0.2, sp->period, 0.8 * sp->tempReal);
    /* Ooof... let's do the next price bar now! */
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
@@ -1789,7 +1793,7 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
        */
       while( today <= endIdx )
       {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -1845,8 +1849,8 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
             {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -1899,8 +1903,8 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -1911,8 +1915,8 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+         Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -1937,7 +1941,7 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
          {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = fma(0.2, period, 0.8 * tempReal);
          /* Ooof... let's do the next price bar now! */
          today += 1;
       }

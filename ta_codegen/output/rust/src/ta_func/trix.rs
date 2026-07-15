@@ -220,7 +220,7 @@ impl Core {
             // Advance EMA1 alone through its unstable period, up to
             // the bar where EMA2 seeding begins.
             while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
             }
             // Seed EMA2 with a simple average of the first 'period'
             // EMA1 values, accumulated as EMA1 produces them.
@@ -228,7 +228,7 @@ impl Core {
             tempReal += prevEMA1;
             i = (optInTimePeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
                 tempReal += prevEMA1;
             }
             prevEMA2 = tempReal / ((optInTimePeriod) as f64);
@@ -238,15 +238,15 @@ impl Core {
             prevEMA1 = inReal[0];
             today = 1;
             while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
             }
             prevEMA2 = prevEMA1;
         }
         // Advance EMA1 and EMA2 in lockstep through the unstable
         // period of EMA2, up to the bar where EMA3 seeding begins.
         while today <= startIdx - (lookbackEMA + 1) {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
         }
         if self.compatibility == Compatibility::Default {
             // Seed EMA3 with a simple average of the first 'period'
@@ -255,8 +255,8 @@ impl Core {
             tempReal += prevEMA2;
             i = (optInTimePeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
                 tempReal += prevEMA2;
             }
             prevEMA3 = tempReal / ((optInTimePeriod) as f64);
@@ -268,18 +268,18 @@ impl Core {
         // Advance all three EMA in lockstep through the unstable
         // period of EMA3, up to the bar before the first output.
         while today <= startIdx - 1 {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
-            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
         }
         // Stable zone: keep advancing the three EMA in lockstep and
         // write the 1-day rate-of-change of EMA3 into the output.
         outIdx = 0;
         while today <= endIdx {
             tempReal = prevEMA3;
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
-            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
             if tempReal != 0.0 {
                 outReal[outIdx] = (prevEMA3 / tempReal - 1.0) * 100.0;
                 outIdx += 1;
@@ -345,13 +345,13 @@ impl Core {
             }
             prevEMA1 = tempReal / ((optInTimePeriod) as f64);
             while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
             }
             tempReal = 0.0;
             tempReal += prevEMA1;
             i = (optInTimePeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
                 tempReal += prevEMA1;
             }
             prevEMA2 = tempReal / ((optInTimePeriod) as f64);
@@ -359,21 +359,21 @@ impl Core {
             prevEMA1 = inReal[0];
             today = 1;
             while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
             }
             prevEMA2 = prevEMA1;
         }
         while today <= startIdx - (lookbackEMA + 1) {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
         }
         if self.compatibility == Compatibility::Default {
             tempReal = 0.0;
             tempReal += prevEMA2;
             i = (optInTimePeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
                 tempReal += prevEMA2;
             }
             prevEMA3 = tempReal / ((optInTimePeriod) as f64);
@@ -381,16 +381,16 @@ impl Core {
             prevEMA3 = prevEMA2;
         }
         while today <= startIdx - 1 {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
-            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
         }
         outIdx = 0;
         while today <= endIdx {
             tempReal = prevEMA3;
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
-            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
             if tempReal != 0.0 {
                 outReal[outIdx] = (prevEMA3 / tempReal - 1.0) * 100.0;
                 outIdx += 1;

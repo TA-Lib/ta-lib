@@ -74,6 +74,7 @@ TA_LIB_API int TA_SAR_Lookback( double optInAcceleration, double optInMaximum )
    return 1;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
                               int    endIdx,
                               const double inHigh[],
@@ -255,7 +256,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
             af = optInAcceleration;
             ep = newLow;
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -283,7 +284,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
                }
             }
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -319,7 +320,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
          af = optInAcceleration;
          ep = newHigh;
          /* Calculate the new SAR */
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -347,7 +348,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
             }
          }
          /* Calculate the new SAR */
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -365,6 +366,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
                                         int    endIdx,
                                         const double inHigh[],
@@ -459,7 +461,7 @@ TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newLow;
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar < prevHigh )
             {
                sar = prevHigh;
@@ -480,7 +482,7 @@ TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar > prevLow )
             {
                sar = prevLow;
@@ -505,7 +507,7 @@ TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
          outReal[outIdx++] = sar;
          af = optInAcceleration;
          ep = newHigh;
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar > prevLow )
          {
             sar = prevLow;
@@ -526,7 +528,7 @@ TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
                af = optInMaximum;
             }
          }
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar < prevHigh )
          {
             sar = prevHigh;
@@ -541,6 +543,7 @@ TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_SAR( int    startIdx,
                      int    endIdx,
                      const float inHigh[],
@@ -655,7 +658,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newLow;
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar < prevHigh )
             {
                sar = prevHigh;
@@ -676,7 +679,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar > prevLow )
             {
                sar = prevLow;
@@ -701,7 +704,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
          outReal[outIdx++] = sar;
          af = optInAcceleration;
          ep = newHigh;
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar > prevLow )
          {
             sar = prevLow;
@@ -722,7 +725,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
                af = optInMaximum;
             }
          }
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar < prevHigh )
          {
             sar = prevHigh;
@@ -737,6 +740,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
                                int    endIdx,
                                const float inHigh[],
@@ -831,7 +835,7 @@ TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newLow;
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar < prevHigh )
             {
                sar = prevHigh;
@@ -852,7 +856,7 @@ TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             if( sar > prevLow )
             {
                sar = prevLow;
@@ -877,7 +881,7 @@ TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
          outReal[outIdx++] = sar;
          af = optInAcceleration;
          ep = newHigh;
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar > prevLow )
          {
             sar = prevLow;
@@ -898,7 +902,7 @@ TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
                af = optInMaximum;
             }
          }
-         sar = sar + af * (ep - sar);
+         sar = fma(af, ep - sar, sar);
          if( sar < prevHigh )
          {
             sar = prevHigh;
@@ -961,7 +965,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
          sp->af = sp->optInAcceleration;
          sp->ep = sp->newLow;
          /* Calculate the new SAR */
-         sp->sar = sp->sar + sp->af * (sp->ep - sp->sar);
+         sp->sar = fma(sp->af, sp->ep - sp->sar, sp->sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -989,7 +993,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
             }
          }
          /* Calculate the new SAR */
-         sp->sar = sp->sar + sp->af * (sp->ep - sp->sar);
+         sp->sar = fma(sp->af, sp->ep - sp->sar, sp->sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -1025,7 +1029,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
       sp->af = sp->optInAcceleration;
       sp->ep = sp->newHigh;
       /* Calculate the new SAR */
-      sp->sar = sp->sar + sp->af * (sp->ep - sp->sar);
+      sp->sar = fma(sp->af, sp->ep - sp->sar, sp->sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
@@ -1053,7 +1057,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
          }
       }
       /* Calculate the new SAR */
-      sp->sar = sp->sar + sp->af * (sp->ep - sp->sar);
+      sp->sar = fma(sp->af, sp->ep - sp->sar, sp->sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
@@ -1247,7 +1251,7 @@ TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, c
                af = optInAcceleration;
                ep = newLow;
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -1275,7 +1279,7 @@ TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, c
                   }
                }
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -1311,7 +1315,7 @@ TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, c
             af = optInAcceleration;
             ep = newHigh;
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -1339,7 +1343,7 @@ TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, c
                }
             }
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */

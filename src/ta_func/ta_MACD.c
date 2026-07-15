@@ -95,6 +95,7 @@ TA_LIB_API int TA_MACD_Lookback( int optInFastPeriod, int optInSlowPeriod, int o
    return TA_EMA_Lookback(optInSlowPeriod) + TA_EMA_Lookback(optInSignalPeriod);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
                                int    endIdx,
                                const double inReal[],
@@ -251,8 +252,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -265,8 +266,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
       while( i-- > 0 )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -284,8 +285,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = macdValue;
@@ -296,10 +297,10 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
    }
    /* Stable zone: keep advancing in lockstep and write the three
     * outputs.
@@ -311,10 +312,10 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
       outMACDHist[outIdx] = macdValue - prevSignal;
@@ -326,6 +327,7 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
                                          int    endIdx,
                                          const double inReal[],
@@ -410,8 +412,8 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -420,8 +422,8 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
       while( i-- > 0 )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -434,8 +436,8 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = macdValue;
@@ -443,10 +445,10 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
    }
    outMACD[0] = macdValue;
    outMACDSignal[0] = prevSignal;
@@ -455,10 +457,10 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
       outMACDHist[outIdx] = macdValue - prevSignal;
@@ -469,6 +471,7 @@ TA_LIB_API TA_RetCode TA_MACD_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_MACD( int    startIdx,
                       int    endIdx,
                       const float inReal[],
@@ -581,8 +584,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -591,8 +594,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
       while( i-- > 0 )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -605,8 +608,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = macdValue;
@@ -614,10 +617,10 @@ TA_RetCode TA_S_MACD( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
    }
    outMACD[0] = macdValue;
    outMACDSignal[0] = prevSignal;
@@ -626,10 +629,10 @@ TA_RetCode TA_S_MACD( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
       outMACDHist[outIdx] = macdValue - prevSignal;
@@ -640,6 +643,7 @@ TA_RetCode TA_S_MACD( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
                                 int    endIdx,
                                 const float inReal[],
@@ -724,8 +728,8 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -734,8 +738,8 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       while( i-- > 0 )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -748,8 +752,8 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = macdValue;
@@ -757,10 +761,10 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
    }
    outMACD[0] = macdValue;
    outMACDSignal[0] = prevSignal;
@@ -769,10 +773,10 @@ TA_RetCode TA_S_MACD_Unguarded( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = (tempReal - prevFast) * fastK + prevFast;
-      prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+      prevFast = fma(tempReal - prevFast, fastK, prevFast);
+      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
       macdValue = prevFast - prevSlow;
-      prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+      prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
       outMACDHist[outIdx] = macdValue - prevSignal;
@@ -804,10 +808,10 @@ static void TA_MACD_StepInternal( struct TA_MACD_Stream *sp, double inReal, doub
    double tempReal;
 
    tempReal = inReal;
-   sp->prevFast = (tempReal - sp->prevFast) * sp->fastK + sp->prevFast;
-   sp->prevSlow = (tempReal - sp->prevSlow) * sp->slowK + sp->prevSlow;
+   sp->prevFast = fma(tempReal - sp->prevFast, sp->fastK, sp->prevFast);
+   sp->prevSlow = fma(tempReal - sp->prevSlow, sp->slowK, sp->prevSlow);
    macdValue = sp->prevFast - sp->prevSlow;
-   sp->prevSignal = (macdValue - sp->prevSignal) * sp->signalK + sp->prevSignal;
+   sp->prevSignal = fma(macdValue - sp->prevSignal, sp->signalK, sp->prevSignal);
    *outMACD= macdValue;
    *outMACDSignal= sp->prevSignal;
    *outMACDHist= macdValue - sp->prevSignal;
@@ -965,8 +969,8 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
          while( today <= startIdx - lookbackSignal )
          {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          /* Seed the signal EMA with a simple average of the first
@@ -979,8 +983,8 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
          while( i-- > 0 )
          {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -998,8 +1002,8 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
          while( today <= startIdx - lookbackSignal )
          {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
@@ -1010,10 +1014,10 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
       while( today <= startIdx )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -1025,10 +1029,10 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
       while( today <= endIdx )
       {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
          lastValue_outMACD = macdValue;
          lastValue_outMACDSignal = prevSignal;
          lastValue_outMACDHist = macdValue - prevSignal;

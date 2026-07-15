@@ -13,11 +13,43 @@ use crate::registry::{Lang, Registry};
 use super::common::{expr_directly_contains_candle_call, pascal_word};
 use super::expr_walk::{binop_prec, expr_prec, wrap_child, wrap_inlined, ExprEmitter};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
+use super::fma::{self, FmaVarSets};
 use super::stmt_walk::StatementEmitter;
 
 /// Candle helper functions emitted as C preprocessor macros instead of expanded code.
 /// This enables compiler loop-unswitching, matching the reference library's macro pattern.
 const C_CANDLE_MACRO_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
+
+thread_local! {
+    /// FMA fusion name-sets for the function currently being stream-emitted. The
+    /// stream emitter ([`c_stream`]) renders through the crate-public
+    /// `render_statement*` / `render_expression` entry points one statement at a
+    /// time — there is no shared context object threaded through its deep helper
+    /// tree — so the per-function fusion sets are stashed here for the span of one
+    /// stream `generate()` (bounded by [`StreamFmaGuard`]). Codegen processes one
+    /// function at a time, so this is unambiguous. The batch path does NOT use
+    /// this — it builds and threads its own [`CRenderCtx::fma`] directly.
+    static STREAM_FMA: std::cell::RefCell<Option<FmaVarSets>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// RAII guard installing the stream FMA sets for the current function; the stash
+/// is cleared when the guard drops, so it can never leak into another function's
+/// (or the batch path's) rendering.
+pub(crate) struct StreamFmaGuard;
+
+impl StreamFmaGuard {
+    pub(crate) fn new(sets: FmaVarSets) -> Self {
+        STREAM_FMA.with(|c| *c.borrow_mut() = Some(sets));
+        StreamFmaGuard
+    }
+}
+
+impl Drop for StreamFmaGuard {
+    fn drop(&mut self) {
+        STREAM_FMA.with(|c| *c.borrow_mut() = None);
+    }
+}
 
 /// Per-render state for the C backend, mirroring `RustRenderCtx` in `rust_lang.rs`.
 /// Bundles the loose state (precision flag + inline-helper counter) threaded through
@@ -30,6 +62,10 @@ struct CRenderCtx<'a> {
     /// batch macros' arithmetic exactly) instead of the array-indexed
     /// TA_CANDLE* macros.
     stream_scalar_candles: bool,
+    /// FMA fusion name-sets for the body being rendered (`None` disables
+    /// fusion for that render pass). Populated by [`build_fma_var_sets`] so C's
+    /// `binop` emits `fma(a,b,c)` at exactly the sites Rust/Java fuse.
+    fma: Option<&'a FmaVarSets>,
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -458,7 +494,17 @@ fn gen_func_inner(
     }
 
     let inline_counter = Cell::new(0);
-    let ctx = &CRenderCtx { single_precision, inline_counter: &inline_counter, stream_scalar_candles: false };
+    // FMA fusion sites for this body (same detector Rust/Java use → identical
+    // sites → cross-language bit-parity). The index-param seeds don't affect any
+    // fusion decision (never float operands), so the unguarded seed set is used
+    // uniformly across variants.
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    let ctx = &CRenderCtx {
+        single_precision,
+        inline_counter: &inline_counter,
+        stream_scalar_candles: false,
+        fma: Some(&fma_sets),
+    };
 
     // For S_ variants with explicit _private: emit private_param_init as local VarDecls.
     // These provide the extra params (e.g., k factor) that the inlined private body needs.
@@ -633,6 +679,20 @@ fn gen_func_inner(
 
     out.push_str("}\n\n");
 
+    // FMA runtime CPU dispatch (PR #96): any function that emits an explicit
+    // fma() call gets marked with TA_FMA_MULTIVERSION (defined in ta_utility.h),
+    // so on platforms that support it the compiler builds a portable software-fma
+    // clone AND a hardware-vfmadd clone and dispatches per-CPU at load time via an
+    // ifunc — a baseline-compiled binary (e.g. a manylinux wheel) still runs the
+    // hardware fma on capable CPUs, with no -mfma flag and no SIGILL on old ones.
+    // Detect fusion by the `fma(` call site: the trailing "(" makes it disjoint
+    // from fmax(/fmin(/fmaf( (we never emit fmaf). `out` starts with the function
+    // signature, so the marker prepends onto its own line. EMIT_FMA-gated so the
+    // pre-FMA output stays byte-identical.
+    if fma::EMIT_FMA && out.contains("fma(") {
+        out.insert_str(0, "TA_FMA_MULTIVERSION\n");
+    }
+
     out
 }
 
@@ -701,8 +761,16 @@ pub fn render_statement(
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
 ) -> String {
-    let ctx = CRenderCtx { single_precision, inline_counter, stream_scalar_candles: false };
-    render_stmt(stmt, indent, &ctx, enums, registry, helpers)
+    STREAM_FMA.with(|f| {
+        let fma_sets = f.borrow();
+        let ctx = CRenderCtx {
+            single_precision,
+            inline_counter,
+            stream_scalar_candles: false,
+            fma: fma_sets.as_ref(),
+        };
+        render_stmt(stmt, indent, &ctx, enums, registry, helpers)
+    })
 }
 
 /// Like [`render_statement`], but for generated stream-transition bodies:
@@ -716,12 +784,16 @@ pub fn render_statement_stream(
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
 ) -> String {
-    let ctx = CRenderCtx {
-        single_precision: false,
-        inline_counter,
-        stream_scalar_candles: true,
-    };
-    render_stmt(stmt, indent, &ctx, enums, registry, helpers)
+    STREAM_FMA.with(|f| {
+        let fma_sets = f.borrow();
+        let ctx = CRenderCtx {
+            single_precision: false,
+            inline_counter,
+            stream_scalar_candles: true,
+            fma: fma_sets.as_ref(),
+        };
+        render_stmt(stmt, indent, &ctx, enums, registry, helpers)
+    })
 }
 
 /// C-backend leaf formatting for the shared [`StatementEmitter`] tree-walk.
@@ -887,6 +959,13 @@ impl StatementEmitter for CStmt<'_> {
         let new_value = hoist_block_helpers(
             value, self.helpers, &mut hoisted, &mut cnt, C_CANDLE_MACRO_FNS,
         );
+        // Canonicalize accumulator recurrences so batch and stream fuse the same
+        // product (the streaming rewrite can reorder `k*x + (1-k)*prev`).
+        let new_value = if fma::EMIT_FMA {
+            fma::canonicalize_accumulator_add(target, &new_value)
+        } else {
+            new_value
+        };
         self.ctx.inline_counter.set(cnt);
         let mut out = render_hoisted_blocks(
             &hoisted, indent, self.ctx, self.enums, self.registry,
@@ -1402,6 +1481,20 @@ impl ExprEmitter for CExpr<'_> {
     }
 
     fn binop(&self, left: &Expr, op: &BinOp, right: &Expr) -> String {
+        // Fused multiply-add: (a * b) + c → fma(a, b, c) (C99 <math.h>, already
+        // included). IEEE-754 correctly-rounded, so it matches Rust `mul_add` and
+        // Java `Math.fma` at the same sites (site selection is the shared
+        // `fma::fuse_operands`). Both the double and single-precision (TA_S_*)
+        // paths compute in `double` (PR #33 widens float reads), so `fma` — never
+        // `fmaf` — is correct for both. The args are rendered by `self.walk`, and
+        // `fma(...)` is a call (atomic), so no outer parens / wrap_child needed.
+        if fma::EMIT_FMA {
+            if let Some(fs) = self.ctx.fma {
+                if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &fs.view()) {
+                    return format!("fma({}, {}, {})", self.walk(a), self.walk(b), self.walk(c));
+                }
+            }
+        }
         let op_str = match op {
             BinOp::Add => "+",
             BinOp::Sub => "-",
@@ -1557,8 +1650,16 @@ pub(crate) fn render_expression(
     helpers: &HelperRegistry,
     inline_counter: &std::cell::Cell<usize>,
 ) -> String {
-    let ctx = CRenderCtx { single_precision: false, inline_counter, stream_scalar_candles: false };
-    render_expr(expr, &ctx, registry, helpers)
+    STREAM_FMA.with(|f| {
+        let fma_sets = f.borrow();
+        let ctx = CRenderCtx {
+            single_precision: false,
+            inline_counter,
+            stream_scalar_candles: false,
+            fma: fma_sets.as_ref(),
+        };
+        render_expr(expr, &ctx, registry, helpers)
+    })
 }
 
 
@@ -1874,7 +1975,9 @@ fn render_lookback_code(
 ) -> String {
     let mut out = String::new();
     let inline_counter = Cell::new(0);
-    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false };
+    // Lookback bodies are pure integer index arithmetic (the first-valid-output
+    // count) — no float multiply-add, so fusion never applies here.
+    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None };
 
     // Declare local variables (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();

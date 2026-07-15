@@ -141,12 +141,12 @@
          tempReal = Math.abs(periodROC / sumROC1);
       }
       /* Calculate the smoothing constant */
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       /* 'today' keep track of where the processing is within the
        * input.
        */
@@ -174,12 +174,12 @@
             tempReal = Math.abs(periodROC / sumROC1);
          }
          /* Calculate the smoothing constant */
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          /* Calculate the KAMA like an EMA, using the
           * smoothing constant as the adaptive factor.
           */
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       /* Write the first value. */
       outReal[0] = prevKAMA;
@@ -207,12 +207,12 @@
             tempReal = Math.abs(periodROC / sumROC1);
          }
          /* Calculate the smoothing constant */
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          /* Calculate the KAMA like an EMA, using the
           * smoothing constant as the adaptive factor.
           */
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -288,9 +288,9 @@
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = inReal[today];
          tempReal2 = inReal[trailingIdx++];
@@ -303,9 +303,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -322,9 +322,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -411,9 +411,9 @@
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
          tempReal2 = (double)inReal[trailingIdx++];
@@ -426,9 +426,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -445,9 +445,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -523,9 +523,9 @@
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
          tempReal2 = (double)inReal[trailingIdx++];
@@ -538,9 +538,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -557,9 +557,9 @@
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;

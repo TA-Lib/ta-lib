@@ -2901,6 +2901,8 @@ typedef struct {
     long long    comparisons, matches, benign, failures;
     long long    skipped98;   /* TRIX startIdx>lookback cases (issue #98 fix) */
     long long    cciTol;      /* CCI near-zero cases tolerated vs 0.6.4 (issue #7 fix) */
+    long long    fmaTol;      /* cases tolerated by the one-time FMA re-baselining gate (PR #96) */
+    double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
@@ -3098,6 +3100,55 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
  *                (or diverges anywhere 0.6.4 was finite) still fails. Kept
  *                maximally tight by requiring the exact neutral value, not merely
  *                "any finite". */
+/* ---- One-time FMA re-baselining transition gate (PR #96) -------------------
+ * TA-Lib adopted an explicit-FMA numerical contract: each function is faithful
+ * to its algorithm within 1e-9 relative, NOT bit-for-bit
+ * (docs/fma-readiness-audit.md). The current library now fuses `a*b + c` into
+ * `fma()` wherever the shared codegen detector fires; the frozen v0.6.4 oracle
+ * does not. So the two differ by <=~1.7e-10 relative on the fused functions —
+ * authorized, below the 1e-9 contract, but no longer hash-exact.
+ *
+ * While this is 1, any per-element diff NOT covered by an explicit FUZZ_064_TOL
+ * entry is tolerated when it is within the contract itself:
+ *     |current - v0.6.4| <= 1e-9 * max(|current|, |v0.6.4|, inScale)
+ * Output-relative (so it scales correctly for volume-magnitude outputs like
+ * ADOSC and bounded oscillators alike), floored at the input scale so the few
+ * functions that difference two large near-equal quantities (DEMA/MACDFIX/
+ * MACDEXT EMA cascades, HT_PHASOR) are judged against the ULP-of-operands drift
+ * near a zero-crossing rather than the ill-posed near-zero output. These cases
+ * are counted and reported on their OWN summary line, with the largest relative
+ * divergence seen, so a genuine >1e-9 regression still fails loudly and is never
+ * folded into the authorized-manifest bucket. Integer outputs are NOT given any
+ * tolerance here — a candlestick/index flip must still fail.
+ *
+ * RE-FREEZE (once a FMA-enabled release is tagged): point
+ * scripts/build_064_serve.py's REF_TAG at that release, rebuild the oracle, then
+ * set FMA_TRANSITION_TOLERANCE to 0 — current == new reference bitwise, so every
+ * function returns to strict hash-exact comparison against the FMA baseline. */
+#define FMA_TRANSITION_TOLERANCE 1
+#define FMA_TRANSITION_REL 1e-9
+
+/* Functions whose output differences two large near-equal quantities (EMA
+ * cascades near a zero-crossing, near-zero phasor components). Their FMA drift
+ * is bounded by the ULP of the ~price-scale operands, not the tiny output, so
+ * the transition tolerance for them is floored at the input scale rather than
+ * the ill-posed output-relative bound. Kept to the SHORT list that empirically
+ * needs it (all four exceed output-relative 1e-9 near a crossing without it);
+ * every other function — bounded oscillators included — stays tight
+ * output-relative so an extreme-scale regression cannot hide behind inScale. */
+static int fma_needs_input_scale(const char *name)
+{
+    /* The EMA-cascade differences (output = a difference of large ~price-scale
+     * EMAs, tiny near a crossing) + HT_PHASOR (near-zero I/Q components). NOT the
+     * bounded oscillators (HT_SINE/HT_DCPHASE/HT_DCPERIOD/STOCH/...), which are
+     * well-conditioned at their own scale and stay tight output-relative. */
+    return strcmp(name, "DEMA") == 0 || strcmp(name, "TEMA") == 0
+        || strcmp(name, "TRIX") == 0 || strcmp(name, "MACD") == 0
+        || strcmp(name, "MACDFIX") == 0 || strcmp(name, "MACDEXT") == 0
+        || strcmp(name, "APO") == 0 || strcmp(name, "PPO") == 0
+        || strcmp(name, "HT_PHASOR") == 0;
+}
+
 enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2 };
 static const struct { const char *name; int mode; double tol; double cap; } FUZZ_064_TOL[] = {
     { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
@@ -3146,7 +3197,7 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
     if( !fuzz_call(ctx) )
         return 0;   /* treat as real; the pipe failure is also counted */
 
-    int realDiff = 0, benignDiff = 0, tolDiff = 0;
+    int realDiff = 0, benignDiff = 0, tolDiff = 0, fmaDiff = 0;
     int tolMode = 0; double tolVal = 0.0, tolCap = 0.0;
     const void *tolEntry = fuzz_064_tol_lookup(fi->name, &tolMode, &tolVal, &tolCap);
     /* TOL_REL_IN bound is data-scaled (optionally capped); TOL_ABS is fixed. */
@@ -3194,13 +3245,38 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                 double d = a - b; if( d < 0 ) d = -d;
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
                 else if( tolEntry && d <= tolBound ) tolDiff = 1; /* within manifest bound */
+#if FMA_TRANSITION_TOLERANCE
+                /* One-time FMA re-baseline: within the 1e-9 relative contract,
+                 * output-relative (`1e-9 × max(|current|, |v0.6.4|)`). The
+                 * input-scale floor is applied ONLY to the functions that
+                 * difference two large near-equal quantities (see
+                 * fma_needs_input_scale): near the difference's zero-crossing the
+                 * FMA drift is a ULP of the ~price-scale operands yet unbounded
+                 * relative to the near-zero output, so output-relative is
+                 * ill-posed there. Everyone else stays tight output-relative — a
+                 * blanket inScale floor would over-loosen bounded oscillators at
+                 * extreme input magnitude (HT_SINE ∈ [-1,1] would get a ~2.0
+                 * bound on FUZZ_EXTREME's close≈2e9, masking real divergence).
+                 * Tracked separately so a >bound regression still fails. */
+                else if( !tolEntry )
+                {
+                    double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
+                    if( fma_needs_input_scale(fi->name) && inScale > m ) m = inScale;
+                    if( m > 0.0 && d <= FMA_TRANSITION_REL * m )
+                    {
+                        fmaDiff = 1;
+                        if( d / m > ctx->maxFmaRel ) ctx->maxFmaRel = d / m;
+                    }
+                    else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
+                }
+#endif
                 else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
             }
         }
     }
 
-    if( !realDiff && (benignDiff || tolDiff) )
-        return tolDiff ? 2 : 1;   /* 2 = manifest-tolerated, 1 = signed-zero only */
+    if( !realDiff && (benignDiff || tolDiff || fmaDiff) )
+        return tolDiff ? 2 : (fmaDiff ? 3 : 1);   /* 2 = manifest, 3 = FMA re-baseline, 1 = signed-zero */
 
     if( report )
     {
@@ -3293,6 +3369,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     long long failBefore = ctx->failures;
     long long benignBefore = ctx->benign;
     long long cciTolBefore = ctx->cciTol;
+    long long fmaTolBefore = ctx->fmaTol;
 
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
     for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
@@ -3398,6 +3475,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                              refRc, refBeg, refNb);
                 if( cls == 0 )      ctx->failures++;
                 else if( cls == 2 ) ctx->cciTol++;   /* manifest-tolerated (CCI #7 / LINEARREG #103 / IMI #112) — not a failure */
+                else if( cls == 3 ) ctx->fmaTol++;   /* one-time FMA re-baseline tolerance (PR #96) — not a failure */
                 else                ctx->benign++;
             }
         }
@@ -3418,6 +3496,10 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                    tm == TOL_REL_IN ? " * max|input|" : "",
                    (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "");
     }
+    else if( ctx->fmaTol > fmaTolBefore )
+        printf("  FMA-REBASELINE TA_%s: %lld case(s) within 1e-9 relative of v0.6.4 "
+               "(explicit fma() adoption, PR #96)\n",
+               funcInfo->name, ctx->fmaTol - fmaTolBefore);
     else if( ctx->benign > benignBefore )
     {
         ctx->funcsBenign++;
@@ -3472,8 +3554,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
 
     printf("\n---------------------------------------------\n");
     printf("comparisons: %lld   matches: %lld   benign(signed-zero): %lld   "
-           "cci-tolerated: %lld   failures: %lld\n",
-           ctx.comparisons, ctx.matches, ctx.benign, ctx.cciTol, ctx.failures);
+           "cci-tolerated: %lld   fma-tolerated: %lld   failures: %lld\n",
+           ctx.comparisons, ctx.matches, ctx.benign, ctx.cciTol, ctx.fmaTol, ctx.failures);
     printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
            ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
     if( ctx.skipped98 > 0 )
@@ -3482,6 +3564,12 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.cciTol > 0 )
         printf("manifest-tolerated: %lld case(s) under an authorized latest->0.6.4 entry "
                "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum; IMI #112 NaN->50.0)\n", ctx.cciTol);
+#if FMA_TRANSITION_TOLERANCE
+    if( ctx.fmaTol > 0 )
+        printf("fma-rebaseline: %lld case(s) within the 1e-9 relative FMA contract vs 0.6.4 "
+               "(max observed %.3g); one-time transition, re-freeze to hash-exact after the "
+               "FMA-enabled release is tagged (PR #96)\n", ctx.fmaTol, ctx.maxFmaRel);
+#endif
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);

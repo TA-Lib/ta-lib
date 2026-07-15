@@ -373,7 +373,7 @@ impl Core {
         // first at the Excel implementation in "test_MAMA.xls" included
         // in this package.
         while today <= endIdx {
-            adjustedPrevPeriod = 0.075 * period + 0.54;
+            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -422,8 +422,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-                I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -475,8 +475,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-                I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -507,17 +507,17 @@ impl Core {
                 tempReal = optInFastLimit;
             }
             // Calculate MAMA, FAMA
-            mama = tempReal * todayValue + (1_f64 - tempReal) * mama;
+            mama = (1_f64 - tempReal as f64).mul_add(mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = tempReal * mama + (1_f64 - tempReal) * fama;
+            fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
                 outMAMA[outIdx] = mama;
                 outFAMA[outIdx] = fama;
                 outIdx += 1;
             }
             // Adjust the period for next price bar
-            Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-            Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
+            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -537,7 +537,7 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = 0.2 * period + 0.8 * tempReal;
+            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             // Ooof... let's do the next price bar now!
             today += 1;
         }
@@ -724,7 +724,7 @@ impl Core {
         I1ForOddPrev2 = I1ForEvenPrev2;
         prevPhase = 0.0;
         while today <= endIdx {
-            adjustedPrevPeriod = 0.075 * period + 0.54;
+            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -772,8 +772,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-                I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 I1ForOddPrev3 = I1ForOddPrev2;
                 I1ForOddPrev2 = detrender;
                 if I1ForEvenPrev3 != 0.0 {
@@ -818,8 +818,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-                I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 I1ForEvenPrev3 = I1ForEvenPrev2;
                 I1ForEvenPrev2 = detrender;
                 if I1ForOddPrev3 != 0.0 {
@@ -841,16 +841,16 @@ impl Core {
             } else {
                 tempReal = optInFastLimit;
             }
-            mama = tempReal * todayValue + (1_f64 - tempReal) * mama;
+            mama = (1_f64 - tempReal as f64).mul_add(mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = tempReal * mama + (1_f64 - tempReal) * fama;
+            fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
                 outMAMA[outIdx] = mama;
                 outFAMA[outIdx] = fama;
                 outIdx += 1;
             }
-            Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-            Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
+            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -870,7 +870,7 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = 0.2 * period + 0.8 * tempReal;
+            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             today += 1;
         }
         (*outNBElement) = outIdx;

@@ -80,6 +80,7 @@ TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
    return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_T3( int    startIdx,
                              int    endIdx,
                              const double inReal[],
@@ -185,7 +186,7 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    tempReal = e1;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
       tempReal += e1;
    }
    e2 = tempReal / optInTimePeriod;
@@ -193,8 +194,8 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    tempReal = e2;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
       tempReal += e2;
    }
    e3 = tempReal / optInTimePeriod;
@@ -202,9 +203,9 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    tempReal = e3;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
       tempReal += e3;
    }
    e4 = tempReal / optInTimePeriod;
@@ -212,10 +213,10 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    tempReal = e4;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
       tempReal += e4;
    }
    e5 = tempReal / optInTimePeriod;
@@ -223,11 +224,11 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    tempReal = e5;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
       tempReal += e5;
    }
    e6 = tempReal / optInTimePeriod;
@@ -235,32 +236,32 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    while( today <= startIdx )
    {
       /* Do the calculation but do not write the output */
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
    }
    /* Calculate the constants */
    tempReal = optInVFactor * optInVFactor;
    c1 = 0 - tempReal * optInVFactor;
    c2 = 3.0 * (tempReal - c1);
    c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-   c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+   c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    /* Write the first output */
    outIdx = 0;
-   outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+   outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    /* Calculate and output the remaining of the range. */
    while( today <= endIdx )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
+      outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    }
    /* Indicates to the caller the number of output
     * successfully calculated.
@@ -269,6 +270,7 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_T3_Unguarded( int    startIdx,
                                        int    endIdx,
                                        const double inReal[],
@@ -332,78 +334,79 @@ TA_LIB_API TA_RetCode TA_T3_Unguarded( int    startIdx,
    tempReal = e1;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
       tempReal += e1;
    }
    e2 = tempReal / optInTimePeriod;
    tempReal = e2;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
       tempReal += e2;
    }
    e3 = tempReal / optInTimePeriod;
    tempReal = e3;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
       tempReal += e3;
    }
    e4 = tempReal / optInTimePeriod;
    tempReal = e4;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
       tempReal += e4;
    }
    e5 = tempReal / optInTimePeriod;
    tempReal = e5;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
       tempReal += e5;
    }
    e6 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
    }
    tempReal = optInVFactor * optInVFactor;
    c1 = 0 - tempReal * optInVFactor;
    c2 = 3.0 * (tempReal - c1);
    c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-   c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+   c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    outIdx = 0;
-   outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+   outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    while( today <= endIdx )
    {
-      e1 = k * inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      e1 = fma(one_minus_k, e1, k * inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
+      outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_T3( int    startIdx,
                     int    endIdx,
                     const float inReal[],
@@ -485,78 +488,79 @@ TA_RetCode TA_S_T3( int    startIdx,
    tempReal = e1;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
       tempReal += e1;
    }
    e2 = tempReal / optInTimePeriod;
    tempReal = e2;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
       tempReal += e2;
    }
    e3 = tempReal / optInTimePeriod;
    tempReal = e3;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
       tempReal += e3;
    }
    e4 = tempReal / optInTimePeriod;
    tempReal = e4;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
       tempReal += e4;
    }
    e5 = tempReal / optInTimePeriod;
    tempReal = e5;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
       tempReal += e5;
    }
    e6 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
    }
    tempReal = optInVFactor * optInVFactor;
    c1 = 0 - tempReal * optInVFactor;
    c2 = 3.0 * (tempReal - c1);
    c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-   c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+   c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    outIdx = 0;
-   outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+   outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    while( today <= endIdx )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
+      outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_T3_Unguarded( int    startIdx,
                               int    endIdx,
                               const float inReal[],
@@ -620,73 +624,73 @@ TA_RetCode TA_S_T3_Unguarded( int    startIdx,
    tempReal = e1;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
       tempReal += e1;
    }
    e2 = tempReal / optInTimePeriod;
    tempReal = e2;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
       tempReal += e2;
    }
    e3 = tempReal / optInTimePeriod;
    tempReal = e3;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
       tempReal += e3;
    }
    e4 = tempReal / optInTimePeriod;
    tempReal = e4;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
       tempReal += e4;
    }
    e5 = tempReal / optInTimePeriod;
    tempReal = e5;
    for( i = optInTimePeriod - 1; i > 0; i -= 1 )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
       tempReal += e5;
    }
    e6 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
    }
    tempReal = optInVFactor * optInVFactor;
    c1 = 0 - tempReal * optInVFactor;
    c2 = 3.0 * (tempReal - c1);
    c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-   c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+   c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    outIdx = 0;
-   outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+   outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    while( today <= endIdx )
    {
-      e1 = k * (double)inReal[today++] + one_minus_k * e1;
-      e2 = k * e1 + one_minus_k * e2;
-      e3 = k * e2 + one_minus_k * e3;
-      e4 = k * e3 + one_minus_k * e4;
-      e5 = k * e4 + one_minus_k * e5;
-      e6 = k * e5 + one_minus_k * e6;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      e1 = fma(one_minus_k, e1, k * (double)inReal[today++]);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
+      outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -719,13 +723,13 @@ static void TA_T3_StepInternal( struct TA_T3_Stream *sp, double inReal, double *
       *outReal= inReal;
       return;
    }
-   sp->e1 = sp->k * inReal + sp->one_minus_k * sp->e1;
-   sp->e2 = sp->k * sp->e1 + sp->one_minus_k * sp->e2;
-   sp->e3 = sp->k * sp->e2 + sp->one_minus_k * sp->e3;
-   sp->e4 = sp->k * sp->e3 + sp->one_minus_k * sp->e4;
-   sp->e5 = sp->k * sp->e4 + sp->one_minus_k * sp->e5;
-   sp->e6 = sp->k * sp->e5 + sp->one_minus_k * sp->e6;
-   *outReal= sp->c1 * sp->e6 + sp->c2 * sp->e5 + sp->c3 * sp->e4 + sp->c4 * sp->e3;
+   sp->e1 = fma(sp->one_minus_k, sp->e1, sp->k * inReal);
+   sp->e2 = fma(sp->one_minus_k, sp->e2, sp->k * sp->e1);
+   sp->e3 = fma(sp->one_minus_k, sp->e3, sp->k * sp->e2);
+   sp->e4 = fma(sp->one_minus_k, sp->e4, sp->k * sp->e3);
+   sp->e5 = fma(sp->one_minus_k, sp->e5, sp->k * sp->e4);
+   sp->e6 = fma(sp->one_minus_k, sp->e6, sp->k * sp->e5);
+   *outReal= fma(sp->c4, sp->e3, fma(sp->c3, sp->e4, fma(sp->c1, sp->e6, sp->c2 * sp->e5)));
 }
 
 /* Private function, not in public API. */
@@ -847,7 +851,7 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
@@ -855,8 +859,8 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
@@ -864,9 +868,9 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
+         e3 = fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
@@ -874,10 +878,10 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
+         e3 = fma(one_minus_k, e3, k * e2);
+         e4 = fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
@@ -885,11 +889,11 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
+         e3 = fma(one_minus_k, e3, k * e2);
+         e4 = fma(one_minus_k, e4, k * e3);
+         e5 = fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
@@ -897,32 +901,32 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
       while( today <= startIdx )
       {
          /* Do the calculation but do not write the output */
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
+         e3 = fma(one_minus_k, e3, k * e2);
+         e4 = fma(one_minus_k, e4, k * e3);
+         e5 = fma(one_minus_k, e5, k * e4);
+         e6 = fma(one_minus_k, e6, k * e5);
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
-      lastValue_outReal = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      lastValue_outReal = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
       /* Calculate and output the remaining of the range. */
       while( today <= endIdx )
       {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         lastValue_outReal = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = fma(one_minus_k, e2, k * e1);
+         e3 = fma(one_minus_k, e3, k * e2);
+         e4 = fma(one_minus_k, e4, k * e3);
+         e5 = fma(one_minus_k, e5, k * e4);
+         e6 = fma(one_minus_k, e6, k * e5);
+         lastValue_outReal = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
       }
       /* Indicates to the caller the number of output
        * successfully calculated.

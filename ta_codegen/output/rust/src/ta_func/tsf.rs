@@ -223,7 +223,7 @@ impl Core {
         }
         m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
         b = (SumY - m * SumX) / (optInTimePeriod as f64);
-        outReal[outIdx] = b + m * (optInTimePeriod as f64);
+        outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
         outIdx += 1;
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -237,7 +237,7 @@ impl Core {
             SumY = SumY - trailingValue + inReal[today];
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            outReal[outIdx] = b + m * (optInTimePeriod as f64);
+            outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
             outIdx += 1;
             today += 1;
         }
@@ -306,7 +306,7 @@ impl Core {
         }
         m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
         b = (SumY - m * SumX) / (optInTimePeriod as f64);
-        outReal[outIdx] = b + m * (optInTimePeriod as f64);
+        outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
         outIdx += 1;
         today += 1;
         while today <= endIdx {
@@ -315,7 +315,7 @@ impl Core {
             SumY = SumY - trailingValue + inReal[today];
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            outReal[outIdx] = b + m * (optInTimePeriod as f64);
+            outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
             outIdx += 1;
             today += 1;
         }

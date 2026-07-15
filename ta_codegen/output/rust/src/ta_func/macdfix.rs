@@ -269,8 +269,8 @@ impl Core {
             // first MACD-line bar.
             while today <= startIdx - lookbackSignal {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             }
             macdValue = prevFast - prevSlow;
             // Seed the signal EMA with a simple average of the first
@@ -281,8 +281,8 @@ impl Core {
             i = (optInSignalPeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
                 macdValue = prevFast - prevSlow;
                 prevSignal += macdValue;
             }
@@ -297,8 +297,8 @@ impl Core {
             today = 1;
             while today <= startIdx - lookbackSignal {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             }
             macdValue = prevFast - prevSlow;
             prevSignal = macdValue;
@@ -307,10 +307,10 @@ impl Core {
         // of the signal EMA, up to the first output bar.
         while today <= startIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
@@ -320,10 +320,10 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
             outMACD[outIdx] = macdValue;
             outMACDSignal[outIdx] = prevSignal;
             outMACDHist[outIdx] = macdValue - prevSignal;
@@ -407,8 +407,8 @@ impl Core {
             prevFast = prevFast / ((optInFastPeriod) as f64);
             while today <= startIdx - lookbackSignal {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             }
             macdValue = prevFast - prevSlow;
             prevSignal = 0.0;
@@ -416,8 +416,8 @@ impl Core {
             i = (optInSignalPeriod - 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
                 macdValue = prevFast - prevSlow;
                 prevSignal += macdValue;
             }
@@ -428,18 +428,18 @@ impl Core {
             today = 1;
             while today <= startIdx - lookbackSignal {
                 tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast) * fastK + prevFast;
-                prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             }
             macdValue = prevFast - prevSlow;
             prevSignal = macdValue;
         }
         while today <= startIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
         }
         outMACD[0] = macdValue;
         outMACDSignal[0] = prevSignal;
@@ -447,10 +447,10 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
             outMACD[outIdx] = macdValue;
             outMACDSignal[outIdx] = prevSignal;
             outMACDHist[outIdx] = macdValue - prevSignal;

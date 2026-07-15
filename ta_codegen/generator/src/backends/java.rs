@@ -12,6 +12,7 @@ use crate::registry::{Lang, Registry};
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::expr_walk::{binop_prec, expr_prec, wrap_child, wrap_inlined, ExprEmitter};
+use super::fma::{self, FmaVarSets};
 use super::stmt_walk::StatementEmitter;
 
 /// Candle helper function names that should be rendered inline (as ternary
@@ -31,6 +32,10 @@ struct JavaRenderCtx<'a> {
     double_address_of_vars: &'a HashSet<String>,
     float_input_params: &'a HashSet<String>,
     inline_counter: &'a Cell<usize>,
+    /// FMA fusion name-sets for the body being rendered (`None` disables fusion).
+    /// Populated by [`build_fma_var_sets`] so Java's `binop` emits `Math.fma(a,b,c)`
+    /// at exactly the sites C/Rust fuse (cross-language bit-parity).
+    fma: Option<&'a FmaVarSets>,
 }
 
 /// Check if an expression renders to a boolean result in Java.
@@ -777,12 +782,17 @@ fn gen_func_inner(
     }
 
     let inline_counter = Cell::new(0);
+    // FMA fusion sites for this body — same detector Rust/C use, so the three
+    // backends fuse identical sites. The index-param seeds never affect a fusion
+    // decision (never float operands), so the unguarded seed set is used uniformly.
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
     let ctx = JavaRenderCtx {
         single_precision,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
+        fma: Some(&fma_sets),
     };
 
     // Emit VarDecl initializations
@@ -939,6 +949,9 @@ pub fn render_statement(
         double_address_of_vars,
         float_input_params,
         inline_counter,
+        // Auxiliary entry (no body available to derive fusion sets); fusion for
+        // the shipped indicator bodies flows through gen_func_inner's context.
+        fma: None,
     };
     render_statement_ctx(stmt, indent, &ctx, enums, registry, helpers)
 }
@@ -1090,6 +1103,13 @@ impl StatementEmitter for JavaStmt<'_> {
         let new_value = hoist_block_helpers(
             value, self.helpers, &mut hoisted, &mut cnt, JAVA_CANDLE_FNS,
         );
+        // Canonicalize accumulator recurrences so all backends fuse the same
+        // product regardless of operand order (cross-language / batch-vs-stream).
+        let new_value = if fma::EMIT_FMA {
+            fma::canonicalize_accumulator_add(target, &new_value)
+        } else {
+            new_value
+        };
         self.ctx.inline_counter.set(cnt);
         let mut out = render_hoisted_blocks(
             &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
@@ -1561,6 +1581,17 @@ impl ExprEmitter for JavaExpr<'_> {
                 }
             }
         }
+        // Fused multiply-add: (a * b) + c → Math.fma(a, b, c) (Java 9+). IEEE-754
+        // correctly-rounded, so it matches C `fma()` and Rust `mul_add` at the same
+        // sites (site selection is the shared `fma::fuse_operands`). `Math.fma` is a
+        // call expression (atomic), so no outer parens / wrap_child needed.
+        if fma::EMIT_FMA {
+            if let Some(fs) = self.ctx.fma {
+                if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &fs.view()) {
+                    return format!("Math.fma({}, {}, {})", self.walk(a), self.walk(b), self.walk(c));
+                }
+            }
+        }
         let op_str = match op {
             BinOp::Add => "+",
             BinOp::Sub => "-",
@@ -1645,6 +1676,9 @@ impl ExprEmitter for JavaExpr<'_> {
             double_address_of_vars: &empty,
             float_input_params: self.ctx.float_input_params,
             inline_counter: self.ctx.inline_counter,
+            // Carry the fusion sets so any a*b+c inside the address-of expression
+            // fuses consistently with the surrounding body.
+            fma: self.ctx.fma,
         };
         render_expr(inner, &inner_ctx, self.registry, self.helpers)
     }
@@ -2057,6 +2091,8 @@ fn render_lookback_code(
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
+        // Lookback bodies are pure integer index arithmetic — no float multiply-add.
+        fma: None,
     };
 
     // Declare local variables

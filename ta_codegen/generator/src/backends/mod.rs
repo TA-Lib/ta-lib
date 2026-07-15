@@ -6,6 +6,7 @@ pub mod common;
 pub mod docs_site;
 pub mod dotnet;
 pub mod expr_walk;
+pub mod fma;
 pub mod func_api_xml;
 pub mod func_list;
 pub mod java;

@@ -40,7 +40,7 @@
       /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -59,7 +59,7 @@
       int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -84,7 +84,7 @@
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma((double)inClose[i], 2.0, (double)inHigh[i] + (double)inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -103,7 +103,7 @@
       int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma((double)inClose[i], 2.0, (double)inHigh[i] + (double)inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;

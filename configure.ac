@@ -14,6 +14,21 @@ AM_PROG_AR
 AC_PROG_CC
 LT_INIT
 
+# FMA numerical contract (PR #96) — mirrors CMakeLists.txt. The generated
+# indicator code uses explicit fma(), and the fused indicators are marked for
+# runtime CPU dispatch (target_clones) so a hardware vfmadd is used on FMA
+# CPUs while the binary stays portable. -ffp-contract=off makes the explicit
+# fma() calls the ONLY fusion (stops the compiler auto-contracting the a*b+c
+# sites we deliberately left un-fused, which would otherwise differ between the
+# dispatched clones and versus the Rust/Java backends). Added if the compiler
+# accepts it (GCC/Clang); a no-op on a target without hardware FMA.
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -ffp-contract=off"
+AC_MSG_CHECKING([whether $CC accepts -ffp-contract=off])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
+
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT

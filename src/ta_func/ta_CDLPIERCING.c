@@ -64,6 +64,7 @@ TA_LIB_API int TA_CDLPIERCING_Lookback( void )
    return BodyLong_avgPeriod + 1;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
                                       int    endIdx,
                                       const double inOpen[],
@@ -150,7 +151,7 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
           fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && /* long */
           inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
           inClose[i] < inOpen[i - 1] &&                               /* close within prior body */
-          inClose[i] > inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* above midpoint */
+          inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -173,6 +174,7 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Unguarded( int    startIdx,
                                                 int    endIdx,
                                                 const double inOpen[],
@@ -218,7 +220,7 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && inOpen[i] < inLow[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 )
+      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && inOpen[i] < inLow[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -237,6 +239,7 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_CDLPIERCING( int    startIdx,
                              int    endIdx,
                              const float inOpen[],
@@ -298,7 +301,7 @@ TA_RetCode TA_S_CDLPIERCING( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > fma(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -317,6 +320,7 @@ TA_RetCode TA_S_CDLPIERCING( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_CDLPIERCING_Unguarded( int    startIdx,
                                        int    endIdx,
                                        const float inOpen[],
@@ -362,7 +366,7 @@ TA_RetCode TA_S_CDLPIERCING_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > fma(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -453,7 +457,7 @@ static void TA_CDLPIERCING_StepInternal( struct TA_CDLPIERCING_Stream *sp, doubl
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* long */
        inOpen < sp->lag1_inLow &&                                      /* open below prior low */
        inClose < sp->lag1_inOpen &&                                    /* close within prior body */
-       inClose > sp->lag1_inClose + fabs(sp->lag1_inClose - sp->lag1_inOpen) * 0.5 ) /* above midpoint */
+       inClose > fma(fabs(sp->lag1_inClose - sp->lag1_inOpen), 0.5, sp->lag1_inClose) ) /* above midpoint */
    {
       *outInteger= 100;
    } else 
@@ -565,7 +569,7 @@ TA_RetCode TA_CDLPIERCING_OpenInternal( const double inOpen[], const double inHi
              fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && /* long */
              inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
              inClose[i] < inOpen[i - 1] &&                               /* close within prior body */
-             inClose[i] > inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* above midpoint */
+             inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
          {
             lastValue_outInteger = 100;
          } else 

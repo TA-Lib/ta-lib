@@ -1,7 +1,8 @@
 # FMA Readiness Audit — evidence that fusion is safe to adopt
 
-Status: **preparation** (no fusion enabled yet). Companion to
-[`fma-proposal.md`](fma-proposal.md) (PR #96). 2026-07-14.
+Status: **implemented** (PR #96). Fusion is enabled in all backends; the sections
+below are the pre-adoption analysis, followed by an [implementation
+note](#implemented) recording what landed and how it verified. 2026-07-14.
 
 ## The contract
 
@@ -45,14 +46,63 @@ want SAR bit-stable regardless, an explicit non-fused path with
 ## How to enforce the tolerance (regression gate)
 
 The one-time transition is verified by the existing differential-fuzz harness
-using a **scale-relative** bound (`TOL_REL_IN`, `tol=1e-9 × input scale` — the
-same mechanism already used for LINEARREG/TSF). After the transition the FMA
-build is the frozen reference and gates return to bitwise comparison.
+(`ta_regtest --fuzz-064`, current build vs frozen v0.6.4). While
+`FMA_TRANSITION_TOLERANCE` is on (`test_codegen.c`), a per-element diff not
+covered by an explicit manifest entry is tolerated when it is within the contract
+— `|current − v0.6.4| ≤ 1e-9 × max(|current|, |v0.6.4|, inScale)`. It is
+output-relative (so volume-scaled outputs like ADOSC and bounded oscillators
+alike are sized right), floored at the input scale for the functions that
+difference two large near-equal quantities (DEMA/MACDFIX/MACDEXT/HT_PHASOR),
+where output-relative is ill-posed near a zero-crossing. These cases are counted
+in their own `fma-rebaseline` line with the largest ratio observed, so a genuine
+`>1e-9` regression still fails loudly; integer outputs get no tolerance.
+**Re-freeze:** once an FMA-enabled release is tagged, point
+`scripts/build_064_serve.py`'s `REF_TAG` at it, rebuild the oracle, and set
+`FMA_TRANSITION_TOLERANCE` to 0 — every function returns to strict hash-exact
+comparison against the FMA baseline.
+
+## Determinism: pin the fused product (canonicalization)
+
+`a*b + c*d` (both operands products — the `k·x + (1−k)·prev` EMA form) is
+order-ambiguous under FMA: fusing the left product vs the right gives different
+bits, and the streaming transition rewrite can reorder such a statement (`+`
+commutes, so pre-FMA this was invisible). The generator therefore canonicalizes
+`target = P1 + P2` so the product referencing `target` — the accumulator — is
+always the fused (left) one, in every backend and both the batch and stream
+paths. This makes fusion independent of incidental operand order, so batch ==
+stream and C == Rust == Java bit-for-bit. (Accumulator-first was chosen so the
+Hilbert family — whose `HT_TRENDMODE` integer output the audit certified
+flip-free — is left byte-for-byte unchanged.)
 
 ## Reproducing the fusion-site enumeration
 
-`ta_codegen/generator/src/backends/rust_lang.rs:2763` gates the emitter
-(`const EMIT_FMA`). Set it `true`, `cargo run -- generate --backend=rust`, diff
-the generated code to see every `a*b+c` → `mul_add` site, then revert. (The C
-backend gains an analogous emitter; rustc never contracts `a*b+c` on its own, so
-the Rust generator is the enumeration oracle.)
+`ta_codegen/generator/src/backends/fma.rs` holds the shared detector
+(`fuse_operands`) and the master gate (`const EMIT_FMA`, now `true`). Set it
+`false`, `cargo run -- generate`, diff the generated code to see every fused site
+(and confirm the pre-FMA output is byte-identical), then revert. The three
+independent backends (C `fma`, Rust `mul_add`, Java `Math.fma`) call the one
+detector, so they fuse the identical sites; `.NET` P/Invokes the generated C and
+inherits it.
+
+## Implemented
+
+Landed on `rfc/fma-numerical-contract` (PR #96):
+
+- **Single shared detector** (`fma::fuse_operands`) + the accumulator
+  canonicalization, used by the C, Rust, and Java backends so all three fuse
+  identical sites. `.NET` inherits fusion from the C library it wraps.
+- **Runtimes:** C99 `fma` (double even in the `TA_S_` single-precision path — it
+  computes in double), Rust `f64::mul_add`, Java `Math.fma` (JDK 9+; the CI/build
+  toolchain is JDK 21). All three are IEEE-754 correctly-rounded, hence
+  bit-identical for equal operands (verified directly: C `fma` == Rust `mul_add`
+  across hardware/software and baseline/native builds).
+- **Streaming:** the batch and per-bar stream paths fuse the same sites (a
+  state-field name-alias feeds the detector the `sp->`-qualified operands), so
+  `stream_verify` stays bit-exact (161/161 functions, 14271 legs).
+- **Verification:** `fuzz-064` passes with 0 failures, max FMA divergence
+  **2.99e-11** (33× under the 1e-9 contract), integer outputs bit-exact;
+  cross-language regtest 161×4; 165 doctests; 551 generator tests (incl. a
+  fusion-site seed-invariance guard). A sabotage probe (a 1e-7 coefficient error
+  injected into MACD) is caught by the gate — the tolerance does not mask real
+  bugs. The C library and the generated Rust crate are bit-identical for the same
+  inputs.

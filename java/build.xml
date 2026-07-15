@@ -27,7 +27,11 @@
 		<copy todir="${dir.classes}" includeEmptyDirs="false">
 			<fileset dir="${dir.src}" excludes="**/*.java"/>
 		</copy>
-		<javac srcdir="${dir.src}" destdir="${dir.classes}" debug="${debug}">
+		<!-- Minimum JDK 9: the generated Core.java uses java.lang.Math.fma
+		     (the FMA numerical contract, PR #96), which was added in Java 9.
+		     Pinning release=9 makes an older-JDK build fail with a clear
+		     unsupported-release error instead of a confusing missing-symbol one. -->
+		<javac srcdir="${dir.src}" destdir="${dir.classes}" debug="${debug}" release="9">
 			<classpath refid="classpath.base"/>
 		</javac>
 		<delete file="${file.jar}"/>

@@ -1177,8 +1177,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       /* Perform the calculation for the requested range */
       outIdx = 0;
@@ -1191,8 +1191,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -1265,8 +1265,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -1278,8 +1278,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -1368,8 +1368,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -1381,8 +1381,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -1455,8 +1455,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
       }
       outIdx = 0;
       while( today <= endIdx ) {
@@ -1468,8 +1468,8 @@ public class Core {
             ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
          }
          today += 1;
-         fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-         slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
          outReal[outIdx++] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
@@ -4939,7 +4939,7 @@ public class Core {
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -4992,7 +4992,7 @@ public class Core {
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -5086,7 +5086,7 @@ public class Core {
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -5121,7 +5121,7 @@ public class Core {
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -5235,7 +5235,7 @@ public class Core {
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -5270,7 +5270,7 @@ public class Core {
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -5364,7 +5364,7 @@ public class Core {
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -5399,7 +5399,7 @@ public class Core {
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -8959,7 +8959,7 @@ public class Core {
          if( Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
              Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
              Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inLow[i - 1] > inHigh[i - 2]) && (inHigh[i] < inLow[i - 1]) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inHigh[i - 1] < inLow[i - 2]) && (inLow[i] > inHigh[i - 1])) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inLow[i - 1] > inHigh[i - 2]) && (inHigh[i] < inLow[i - 1]) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && (inHigh[i - 1] < inLow[i - 2]) && (inLow[i] > inHigh[i - 1])) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
          {
             outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
@@ -9043,7 +9043,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inLow[i - 1] > inHigh[i - 2]) && (inHigh[i] < inLow[i - 1]) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inHigh[i - 1] < inLow[i - 2]) && (inLow[i] > inHigh[i - 1])) ) {
+         if( Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && (inLow[i - 1] > inHigh[i - 2]) && (inHigh[i] < inLow[i - 1]) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && (inHigh[i - 1] < inLow[i - 2]) && (inLow[i] > inHigh[i - 1])) ) {
             outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -9133,7 +9133,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inClose[i - 2] - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
+         if( Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inClose[i - 2] - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
             outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -9212,7 +9212,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inClose[i - 2] - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
+         if( Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inClose[i - 2] - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
             outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -20865,7 +20865,7 @@ public class Core {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* black */
              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* white real body */
              (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && /* gapping down */
-             inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* closing well within 1st rb */
+             inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* closing well within 1st rb */
              Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
              Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
              Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
@@ -20952,7 +20952,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21042,7 +21042,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21121,7 +21121,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21257,7 +21257,7 @@ public class Core {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* black */
              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* white real body */
              (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && /* gapping down */
-             inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* closing well within 1st rb */
+             inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* closing well within 1st rb */
              Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
              Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: short */
              Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
@@ -21334,7 +21334,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && inClose[i] > inClose[i - 2] + Math.abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && inClose[i] > Math.fma(Math.abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21414,7 +21414,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21483,7 +21483,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > (double)inClose[i - 2] + Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -21913,7 +21913,7 @@ public class Core {
              Math.abs(inClose[i] - inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
              inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
              inClose[i] < inOpen[i - 1] &&                               /* close within prior body */
-             inClose[i] > inClose[i - 1] + Math.abs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* above midpoint */
+             inClose[i] > Math.fma(Math.abs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
          {
             outInteger[outIdx++] = 100;
          } else {
@@ -21973,7 +21973,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs(inClose[i] - inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && inOpen[i] < inLow[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > inClose[i - 1] + Math.abs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) {
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs(inClose[i] - inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && inOpen[i] < inLow[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > Math.fma(Math.abs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -22034,7 +22034,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 ) {
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -22089,7 +22089,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 ) {
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && Math.abs((double)inClose[i] - (double)inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > Math.fma(Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -25663,7 +25663,7 @@ public class Core {
              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
              inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
              inClose[i] > inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close into prior body */
-             inClose[i] <= inClose[i - 1] + Math.abs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* under the midpoint */
+             inClose[i] <= Math.fma(Math.abs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* under the midpoint */
          {
             outInteger[outIdx++] = 0 - 100;
          } else {
@@ -25732,7 +25732,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && inClose[i] <= inClose[i - 1] + Math.abs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) {
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && inClose[i] <= Math.fma(Math.abs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) {
             outInteger[outIdx++] = 0 - 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -25802,7 +25802,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] <= (double)inClose[i - 1] + Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 ) {
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] <= Math.fma(Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) ) {
             outInteger[outIdx++] = 0 - 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -25866,7 +25866,7 @@ public class Core {
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] <= (double)inClose[i - 1] + Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 ) {
+         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] <= Math.fma(Math.abs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) ) {
             outInteger[outIdx++] = 0 - 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -28491,7 +28491,7 @@ public class Core {
           * the bar where EMA2 seeding begins.
           */
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          /* Seed EMA2 with a simple average of the first 'period'
           * EMA1 values, accumulated as EMA1 produces them.
@@ -28500,7 +28500,7 @@ public class Core {
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -28512,7 +28512,7 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
@@ -28520,8 +28520,8 @@ public class Core {
        * of EMA2, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       /* Stable zone: keep advancing both EMA in lockstep and
        * write the DEMA into the output.
@@ -28529,8 +28529,8 @@ public class Core {
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       /* Succeed. Indicate where the output starts relative to
@@ -28577,13 +28577,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -28591,19 +28591,19 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -28658,13 +28658,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -28672,19 +28672,19 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -28728,13 +28728,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -28742,19 +28742,19 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -30428,7 +30428,7 @@ public class Core {
        * in this package.
        */
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -30477,8 +30477,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -30525,8 +30525,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -30537,8 +30537,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -30558,8 +30558,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          if( today >= startIdx ) {
             outReal[outIdx++] = smoothPeriod;
          }
@@ -30726,7 +30726,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -30774,8 +30774,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -30815,13 +30815,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -30841,8 +30841,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          if( today >= startIdx ) {
             outReal[outIdx++] = smoothPeriod;
          }
@@ -31014,7 +31014,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -31062,8 +31062,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -31103,13 +31103,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -31129,8 +31129,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          if( today >= startIdx ) {
             outReal[outIdx++] = smoothPeriod;
          }
@@ -31296,7 +31296,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -31344,8 +31344,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -31385,13 +31385,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -31411,8 +31411,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          if( today >= startIdx ) {
             outReal[outIdx++] = smoothPeriod;
          }
@@ -31671,7 +31671,7 @@ public class Core {
        */
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -31724,8 +31724,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -31772,8 +31772,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -31784,8 +31784,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -31805,8 +31805,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -32031,7 +32031,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -32080,8 +32080,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -32121,13 +32121,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -32147,8 +32147,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -32373,7 +32373,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -32422,8 +32422,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -32463,13 +32463,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -32489,8 +32489,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -32709,7 +32709,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -32758,8 +32758,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -32799,13 +32799,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -32825,8 +32825,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -33093,7 +33093,7 @@ public class Core {
        * in this package.
        */
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -33146,8 +33146,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -33198,8 +33198,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -33210,8 +33210,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -33231,7 +33231,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          /* Ooof... let's do the next price bar now! */
          today += 1;
       }
@@ -33395,7 +33395,7 @@ public class Core {
       I1ForEvenPrev2 = 0.0;
       I1ForOddPrev2 = I1ForEvenPrev2;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -33447,8 +33447,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -33492,13 +33492,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -33518,7 +33518,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -33689,7 +33689,7 @@ public class Core {
       I1ForEvenPrev2 = 0.0;
       I1ForOddPrev2 = I1ForEvenPrev2;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -33741,8 +33741,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -33786,13 +33786,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -33812,7 +33812,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -33974,7 +33974,7 @@ public class Core {
       I1ForEvenPrev2 = 0.0;
       I1ForOddPrev2 = I1ForEvenPrev2;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -34026,8 +34026,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -34071,13 +34071,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -34097,7 +34097,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -34359,7 +34359,7 @@ public class Core {
        */
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -34412,8 +34412,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -34460,8 +34460,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -34472,8 +34472,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -34493,8 +34493,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -34723,7 +34723,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -34772,8 +34772,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -34813,13 +34813,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -34839,8 +34839,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -35072,7 +35072,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -35121,8 +35121,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -35162,13 +35162,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -35188,8 +35188,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -35412,7 +35412,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -35461,8 +35461,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -35502,13 +35502,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -35528,8 +35528,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          realPart = 0.0;
@@ -35825,7 +35825,7 @@ public class Core {
        * in this package.
        */
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -35874,8 +35874,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -35922,8 +35922,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -35934,8 +35934,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -35955,8 +35955,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -35981,7 +35981,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         tempReal2 = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -36160,7 +36160,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -36208,8 +36208,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -36249,13 +36249,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -36275,8 +36275,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          tempReal = 0.0;
@@ -36288,7 +36288,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         tempReal2 = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -36472,7 +36472,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -36520,8 +36520,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -36561,13 +36561,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -36587,8 +36587,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          tempReal = 0.0;
@@ -36600,7 +36600,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         tempReal2 = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -36778,7 +36778,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       smoothPeriod = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -36826,8 +36826,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -36867,13 +36867,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -36893,8 +36893,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
          tempReal = 0.0;
@@ -36906,7 +36906,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         tempReal2 = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -37202,7 +37202,7 @@ public class Core {
        */
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -37255,8 +37255,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -37303,8 +37303,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -37315,8 +37315,8 @@ public class Core {
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -37336,8 +37336,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
@@ -37407,7 +37407,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -37639,7 +37639,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -37688,8 +37688,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -37729,13 +37729,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -37755,8 +37755,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -37807,7 +37807,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -38042,7 +38042,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -38091,8 +38091,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -38132,13 +38132,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -38158,8 +38158,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -38210,7 +38210,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -38439,7 +38439,7 @@ public class Core {
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -38488,8 +38488,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -38529,13 +38529,13 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -38555,8 +38555,8 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -38607,7 +38607,7 @@ public class Core {
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -39009,12 +39009,12 @@ public class Core {
          tempReal = Math.abs(periodROC / sumROC1);
       }
       /* Calculate the smoothing constant */
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       /* 'today' keep track of where the processing is within the
        * input.
        */
@@ -39042,12 +39042,12 @@ public class Core {
             tempReal = Math.abs(periodROC / sumROC1);
          }
          /* Calculate the smoothing constant */
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          /* Calculate the KAMA like an EMA, using the
           * smoothing constant as the adaptive factor.
           */
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       /* Write the first value. */
       outReal[0] = prevKAMA;
@@ -39075,12 +39075,12 @@ public class Core {
             tempReal = Math.abs(periodROC / sumROC1);
          }
          /* Calculate the smoothing constant */
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          /* Calculate the KAMA like an EMA, using the
           * smoothing constant as the adaptive factor.
           */
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -39156,9 +39156,9 @@ public class Core {
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = inReal[today];
          tempReal2 = inReal[trailingIdx++];
@@ -39171,9 +39171,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -39190,9 +39190,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = (inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -39279,9 +39279,9 @@ public class Core {
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
          tempReal2 = (double)inReal[trailingIdx++];
@@ -39294,9 +39294,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -39313,9 +39313,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -39391,9 +39391,9 @@ public class Core {
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
       }
-      tempReal = tempReal * constDiff + constMax;
+      tempReal = Math.fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
-      prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+      prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
          tempReal2 = (double)inReal[trailingIdx++];
@@ -39406,9 +39406,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       outReal[0] = prevKAMA;
       outIdx = 1;
@@ -39425,9 +39425,9 @@ public class Core {
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
          }
-         tempReal = tempReal * constDiff + constMax;
+         tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
-         prevKAMA = ((double)inReal[today++] - prevKAMA) * tempReal + prevKAMA;
+         prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
@@ -39540,7 +39540,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
        * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -39554,7 +39554,7 @@ public class Core {
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -39607,7 +39607,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = inReal[trailingIdx++];
@@ -39615,7 +39615,7 @@ public class Core {
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -39679,7 +39679,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -39687,7 +39687,7 @@ public class Core {
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -39740,7 +39740,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -39748,7 +39748,7 @@ public class Core {
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -41387,8 +41387,8 @@ public class Core {
           */
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          /* Seed the signal EMA with a simple average of the first
@@ -41400,8 +41400,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -41417,8 +41417,8 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
@@ -41428,10 +41428,10 @@ public class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -41442,10 +41442,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -41528,8 +41528,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -41537,8 +41537,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -41549,18 +41549,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -41568,10 +41568,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -41677,8 +41677,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -41686,8 +41686,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -41698,18 +41698,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -41717,10 +41717,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -41802,8 +41802,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -41811,8 +41811,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -41823,18 +41823,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -41842,10 +41842,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -42498,8 +42498,8 @@ public class Core {
           */
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          /* Seed the signal EMA with a simple average of the first
@@ -42511,8 +42511,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -42528,8 +42528,8 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
@@ -42539,10 +42539,10 @@ public class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -42553,10 +42553,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -42625,8 +42625,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -42634,8 +42634,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -42646,18 +42646,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -42665,10 +42665,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -42750,8 +42750,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -42759,8 +42759,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -42771,18 +42771,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -42790,10 +42790,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -42861,8 +42861,8 @@ public class Core {
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -42870,8 +42870,8 @@ public class Core {
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -42882,18 +42882,18 @@ public class Core {
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -42901,10 +42901,10 @@ public class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -43184,7 +43184,7 @@ public class Core {
        * in this package.
        */
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -43233,8 +43233,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -43287,8 +43287,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -43320,16 +43320,16 @@ public class Core {
             tempReal = optInFastLimit;
          }
          /* Calculate MAMA, FAMA */
-         mama = tempReal * todayValue + (1 - tempReal) * mama;
+         mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
-         fama = tempReal * mama + (1 - tempReal) * fama;
+         fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
             outMAMA[outIdx] = mama;
             outFAMA[outIdx++] = fama;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -43349,7 +43349,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          /* Ooof... let's do the next price bar now! */
          today += 1;
       }
@@ -43521,7 +43521,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       prevPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -43569,8 +43569,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
             if( I1ForEvenPrev3 != 0.0 ) {
@@ -43615,8 +43615,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
             if( I1ForOddPrev3 != 0.0 ) {
@@ -43638,15 +43638,15 @@ public class Core {
          } else {
             tempReal = optInFastLimit;
          }
-         mama = tempReal * todayValue + (1 - tempReal) * mama;
+         mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
-         fama = tempReal * mama + (1 - tempReal) * fama;
+         fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
             outMAMA[outIdx] = mama;
             outFAMA[outIdx++] = fama;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -43666,7 +43666,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -43855,7 +43855,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       prevPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -43903,8 +43903,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
             if( I1ForEvenPrev3 != 0.0 ) {
@@ -43949,8 +43949,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
             if( I1ForOddPrev3 != 0.0 ) {
@@ -43972,15 +43972,15 @@ public class Core {
          } else {
             tempReal = optInFastLimit;
          }
-         mama = tempReal * todayValue + (1 - tempReal) * mama;
+         mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
-         fama = tempReal * mama + (1 - tempReal) * fama;
+         fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
             outMAMA[outIdx] = mama;
             outFAMA[outIdx++] = fama;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -44000,7 +44000,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -44170,7 +44170,7 @@ public class Core {
       I1ForOddPrev2 = I1ForEvenPrev2;
       prevPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -44218,8 +44218,8 @@ public class Core {
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
             if( I1ForEvenPrev3 != 0.0 ) {
@@ -44264,8 +44264,8 @@ public class Core {
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
             if( I1ForOddPrev3 != 0.0 ) {
@@ -44287,15 +44287,15 @@ public class Core {
          } else {
             tempReal = optInFastLimit;
          }
-         mama = tempReal * todayValue + (1 - tempReal) * mama;
+         mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
-         fama = tempReal * mama + (1 - tempReal) * fama;
+         fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
             outMAMA[outIdx] = mama;
             outFAMA[outIdx++] = fama;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -44315,7 +44315,7 @@ public class Core {
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -54215,7 +54215,7 @@ public class Core {
                af = optInAcceleration;
                ep = newLow;
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -54238,7 +54238,7 @@ public class Core {
                   }
                }
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -54269,7 +54269,7 @@ public class Core {
             af = optInAcceleration;
             ep = newHigh;
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -54292,7 +54292,7 @@ public class Core {
                }
             }
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -54387,7 +54387,7 @@ public class Core {
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -54403,7 +54403,7 @@ public class Core {
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -54423,7 +54423,7 @@ public class Core {
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -54439,7 +54439,7 @@ public class Core {
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -54547,7 +54547,7 @@ public class Core {
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -54563,7 +54563,7 @@ public class Core {
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -54583,7 +54583,7 @@ public class Core {
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -54599,7 +54599,7 @@ public class Core {
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -54691,7 +54691,7 @@ public class Core {
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -54707,7 +54707,7 @@ public class Core {
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -54727,7 +54727,7 @@ public class Core {
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -54743,7 +54743,7 @@ public class Core {
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -55072,7 +55072,7 @@ public class Core {
                afShort = optInAccelerationInitShort;
                ep = newLow;
                /* Calculate the new SAR */
-               sar = sar + afShort * (ep - sar);
+               sar = Math.fma(afShort, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -55095,7 +55095,7 @@ public class Core {
                   }
                }
                /* Calculate the new SAR */
-               sar = sar + afLong * (ep - sar);
+               sar = Math.fma(afLong, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -55129,7 +55129,7 @@ public class Core {
             afLong = optInAccelerationInitLong;
             ep = newHigh;
             /* Calculate the new SAR */
-            sar = sar + afLong * (ep - sar);
+            sar = Math.fma(afLong, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -55152,7 +55152,7 @@ public class Core {
                }
             }
             /* Calculate the new SAR */
-            sar = sar + afShort * (ep - sar);
+            sar = Math.fma(afShort, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -55282,7 +55282,7 @@ public class Core {
                outReal[outIdx++] = 0 - sar;
                afShort = optInAccelerationInitShort;
                ep = newLow;
-               sar = sar + afShort * (ep - sar);
+               sar = Math.fma(afShort, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -55298,7 +55298,7 @@ public class Core {
                      afLong = optInAccelerationMaxLong;
                   }
                }
-               sar = sar + afLong * (ep - sar);
+               sar = Math.fma(afLong, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -55321,7 +55321,7 @@ public class Core {
             outReal[outIdx++] = sar;
             afLong = optInAccelerationInitLong;
             ep = newHigh;
-            sar = sar + afLong * (ep - sar);
+            sar = Math.fma(afLong, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -55337,7 +55337,7 @@ public class Core {
                   afShort = optInAccelerationMaxShort;
                }
             }
-            sar = sar + afShort * (ep - sar);
+            sar = Math.fma(afShort, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -55508,7 +55508,7 @@ public class Core {
                outReal[outIdx++] = 0 - sar;
                afShort = optInAccelerationInitShort;
                ep = newLow;
-               sar = sar + afShort * (ep - sar);
+               sar = Math.fma(afShort, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -55524,7 +55524,7 @@ public class Core {
                      afLong = optInAccelerationMaxLong;
                   }
                }
-               sar = sar + afLong * (ep - sar);
+               sar = Math.fma(afLong, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -55547,7 +55547,7 @@ public class Core {
             outReal[outIdx++] = sar;
             afLong = optInAccelerationInitLong;
             ep = newHigh;
-            sar = sar + afLong * (ep - sar);
+            sar = Math.fma(afLong, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -55563,7 +55563,7 @@ public class Core {
                   afShort = optInAccelerationMaxShort;
                }
             }
-            sar = sar + afShort * (ep - sar);
+            sar = Math.fma(afShort, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -55690,7 +55690,7 @@ public class Core {
                outReal[outIdx++] = 0 - sar;
                afShort = optInAccelerationInitShort;
                ep = newLow;
-               sar = sar + afShort * (ep - sar);
+               sar = Math.fma(afShort, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -55706,7 +55706,7 @@ public class Core {
                      afLong = optInAccelerationMaxLong;
                   }
                }
-               sar = sar + afLong * (ep - sar);
+               sar = Math.fma(afLong, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -55729,7 +55729,7 @@ public class Core {
             outReal[outIdx++] = sar;
             afLong = optInAccelerationInitLong;
             ep = newHigh;
-            sar = sar + afLong * (ep - sar);
+            sar = Math.fma(afLong, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -55745,7 +55745,7 @@ public class Core {
                   afShort = optInAccelerationMaxShort;
                }
             }
-            sar = sar + afShort * (ep - sar);
+            sar = Math.fma(afShort, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -58600,76 +58600,76 @@ public class Core {
       /* Initialize e2 */
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       /* Initialize e3 */
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       /* Initialize e4 */
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       /* Initialize e5 */
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       /* Initialize e6 */
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       /* Skip the unstable period */
       while( today <= startIdx ) {
          /* Do the calculation but do not write the output */
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       /* Calculate and output the remaining of the range. */
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       /* Indicates to the caller the number of output
        * successfully calculated.
@@ -58733,67 +58733,67 @@ public class Core {
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
@@ -58870,67 +58870,67 @@ public class Core {
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
@@ -58991,67 +58991,67 @@ public class Core {
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
@@ -59396,7 +59396,7 @@ public class Core {
           * the bar where EMA2 seeding begins.
           */
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          /* Seed EMA2 with a simple average of the first 'period'
           * EMA1 values, accumulated as EMA1 produces them.
@@ -59405,7 +59405,7 @@ public class Core {
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -59416,7 +59416,7 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
@@ -59424,8 +59424,8 @@ public class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          /* Seed EMA3 with a simple average of the first 'period'
@@ -59435,8 +59435,8 @@ public class Core {
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -59450,9 +59450,9 @@ public class Core {
        * period of EMA3, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -59460,9 +59460,9 @@ public class Core {
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -59519,13 +59519,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -59533,21 +59533,21 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -59555,16 +59555,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       outBegIdx.value = startIdx;
@@ -59629,13 +59629,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -59643,21 +59643,21 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -59665,16 +59665,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       outBegIdx.value = startIdx;
@@ -59728,13 +59728,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -59742,21 +59742,21 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA * 2 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -59764,16 +59764,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       outBegIdx.value = startIdx;
@@ -60772,7 +60772,7 @@ public class Core {
           * the bar where EMA2 seeding begins.
           */
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          /* Seed EMA2 with a simple average of the first 'period'
           * EMA1 values, accumulated as EMA1 produces them.
@@ -60781,7 +60781,7 @@ public class Core {
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -60792,7 +60792,7 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
@@ -60800,8 +60800,8 @@ public class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          /* Seed EMA3 with a simple average of the first 'period'
@@ -60811,8 +60811,8 @@ public class Core {
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -60826,9 +60826,9 @@ public class Core {
        * period of EMA3, up to the bar before the first output.
        */
       while( today <= startIdx - 1 ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the 1-day rate-of-change of EMA3 into the output.
@@ -60836,9 +60836,9 @@ public class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -60890,13 +60890,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -60904,21 +60904,21 @@ public class Core {
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -60926,16 +60926,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx - 1 ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -60995,13 +60995,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -61009,21 +61009,21 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -61031,16 +61031,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx - 1 ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -61089,13 +61089,13 @@ public class Core {
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -61103,21 +61103,21 @@ public class Core {
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       if( this.compatibility == Compatibility.Default ) {
          tempReal = 0.0;
          tempReal += prevEMA2;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-            prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
             tempReal += prevEMA2;
          }
          prevEMA3 = tempReal / optInTimePeriod;
@@ -61125,16 +61125,16 @@ public class Core {
          prevEMA3 = prevEMA2;
       }
       while( today <= startIdx - 1 ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
       }
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
-         prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -61252,7 +61252,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)optInTimePeriod;
+      outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
        * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -61266,7 +61266,7 @@ public class Core {
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)optInTimePeriod;
+         outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -61319,7 +61319,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)optInTimePeriod;
+      outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = inReal[trailingIdx++];
@@ -61327,7 +61327,7 @@ public class Core {
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)optInTimePeriod;
+         outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -61391,7 +61391,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)optInTimePeriod;
+      outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -61399,7 +61399,7 @@ public class Core {
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)optInTimePeriod;
+         outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -61452,7 +61452,7 @@ public class Core {
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)optInTimePeriod;
+      outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -61460,7 +61460,7 @@ public class Core {
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)optInTimePeriod;
+         outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -62922,7 +62922,7 @@ public class Core {
       /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -62941,7 +62941,7 @@ public class Core {
       int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -62966,7 +62966,7 @@ public class Core {
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma((double)inClose[i], 2.0, (double)inHigh[i] + (double)inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -62985,7 +62985,7 @@ public class Core {
       int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] * 2.0) / 4.0;
+         outReal[outIdx++] = (Math.fma((double)inClose[i], 2.0, (double)inHigh[i] + (double)inLow[i])) / 4.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
