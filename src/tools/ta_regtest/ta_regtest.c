@@ -345,6 +345,32 @@ int main( int argc, char **argv )
       }
    }
 
+   /* Java abstract metadata parity (issue #114). The metadata RPCs (TA_GetFuncInfo
+    * + the param-info getters) are compared to the C reference. The dynamic-dispatch
+    * path (test_abstract) is enabled once the Java abstract_call/abstract_get_lookback
+    * handlers land. Java server spawns via `java -cp ta_codegen_java TaCodegenServe`. */
+   if( retValue == TA_TEST_PASS && doCodegenTest &&
+       ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "java") != NULL ) )
+   {
+      CodegenPipe javaAbstractPipe;
+      const char *const javaArgv[] = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
+      if( codegen_pipe_open(&javaAbstractPipe, javaArgv) == TA_TEST_PASS )
+      {
+         ErrorNumber e;
+         printf( "Testing Abstract metadata parity (Java server vs C)\n" );
+         test_abstract_set_server(&javaAbstractPipe);
+         e = test_abstract_server_metadata(functionFilter);
+         test_abstract_set_server(NULL);
+         codegen_pipe_close(&javaAbstractPipe);
+         if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
+            retValue = e;
+      }
+      else
+      {
+         printf( "  (Java server not available, skipping Java abstract parity)\n" );
+      }
+   }
+
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed: Abstract interface Tests (error number = %d)\n", retValue );

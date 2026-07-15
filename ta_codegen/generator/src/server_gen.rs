@@ -2116,6 +2116,20 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        h ^= h >>> 33; return h;\n");
     s.push_str("    }\n\n");
 
+    // jsonString — extract a string field's value (funcName for the ta_abstract RPCs).
+    s.push_str("    static String jsonString(String json, String field) {\n");
+    s.push_str("        int idx = json.indexOf('\"' + field + '\"');\n");
+    s.push_str("        if (idx < 0) return \"\";\n");
+    s.push_str("        idx = json.indexOf(':', idx) + 1;\n");
+    s.push_str("        while (idx < json.length() && (json.charAt(idx) == ' ' || json.charAt(idx) == '\"')) idx++;\n");
+    s.push_str("        int end = idx;\n");
+    s.push_str("        while (end < json.length() && json.charAt(end) != '\"' && json.charAt(end) != ',' && json.charAt(end) != '}') end++;\n");
+    s.push_str("        return json.substring(idx, end);\n");
+    s.push_str("    }\n\n");
+
+    // ta_abstract metadata table + introspection RPC handlers (issue #114).
+    s.push_str(&crate::backends::java_abstract::generate(funcs, enums));
+
     // Dispatch method
     s.push_str("    static String handleRequest(String json) {\n");
 
@@ -2210,6 +2224,14 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            }\n");
     s.push_str("            return \"{\\\"outInteger\\\":\" + intArrayToJson(out, n) + \"}\";\n");
     s.push_str("        }\n");
+
+    // ta_abstract introspection RPCs (issue #114) — metadata parity with C/Rust via test_abstract.c.
+    s.push_str("        else if (json.contains(\"\\\"TA_GetFuncInfo\\\"\")) return handleGetFuncInfo(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_GetInputParameterInfo\\\"\")) return handleGetInputParameterInfo(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_GetOptInputParameterInfo\\\"\")) return handleGetOptInputParameterInfo(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_GetOutputParameterInfo\\\"\")) return handleGetOutputParameterInfo(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"abstract_for_each_func\\\"\")) return handleForEachFunc();\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_FunctionDescriptionXML\\\"\")) return handleFunctionDescriptionXML();\n");
 
     s.push_str("        else {\n");
     s.push_str("            return \"{\\\"error\\\":\\\"Unknown method\\\"}\";\n");

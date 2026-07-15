@@ -63727,6 +63727,785 @@ public class TaCodegenServe {
         h ^= h >>> 33; return h;
     }
 
+    static String jsonString(String json, String field) {
+        int idx = json.indexOf('"' + field + '"');
+        if (idx < 0) return "";
+        idx = json.indexOf(':', idx) + 1;
+        while (idx < json.length() && (json.charAt(idx) == ' ' || json.charAt(idx) == '"')) idx++;
+        int end = idx;
+        while (end < json.length() && json.charAt(end) != '"' && json.charAt(end) != ',' && json.charAt(end) != '}') end++;
+        return json.substring(idx, end);
+    }
+
+    // ---- ta_abstract metadata (issue #114) ----
+    // Type codes match the C TA_*ParameterType enums so test_abstract.c compares equal:
+    //   input:  Price=0 Real=1 Integer=2      output: Real=0 Integer=1
+    //   opt domain: RealRange=0 RealList=1 IntegerRange=2 IntegerList=3
+    static final class AbsIn {
+        final int type; final String paramName; final int flags;
+        AbsIn(int t, String p, int f) { type = t; paramName = p; flags = f; }
+    }
+    static final class AbsOut {
+        final int type; final String paramName; final int flags;
+        AbsOut(int t, String p, int f) { type = t; paramName = p; flags = f; }
+    }
+    static final class AbsOpt {
+        final int type; final String paramName; final int flags; final String displayName; final double defaultValue;
+        final double rmin, rmax; final int precision; final double rsugS, rsugE, rsugI; // RealRange
+        final int imin, imax, isugS, isugE, isugI;                                      // IntegerRange
+        final String valueList;                                                          // IntegerList
+        AbsOpt(int type, String paramName, int flags, String displayName, double defaultValue,
+               double rmin, double rmax, int precision, double rsugS, double rsugE, double rsugI,
+               int imin, int imax, int isugS, int isugE, int isugI, String valueList) {
+            this.type = type; this.paramName = paramName; this.flags = flags;
+            this.displayName = displayName; this.defaultValue = defaultValue;
+            this.rmin = rmin; this.rmax = rmax; this.precision = precision;
+            this.rsugS = rsugS; this.rsugE = rsugE; this.rsugI = rsugI;
+            this.imin = imin; this.imax = imax; this.isugS = isugS; this.isugE = isugE; this.isugI = isugI;
+            this.valueList = valueList;
+        }
+    }
+    static final class AbsFunc {
+        final String name, group, hint, camelCaseName; final int flags;
+        final AbsIn[] inputs; final AbsOpt[] optInputs; final AbsOut[] outputs;
+        AbsFunc(String name, String group, String hint, String camelCaseName, int flags,
+                AbsIn[] inputs, AbsOpt[] optInputs, AbsOut[] outputs) {
+            this.name = name; this.group = group; this.hint = hint; this.camelCaseName = camelCaseName;
+            this.flags = flags; this.inputs = inputs; this.optInputs = optInputs; this.outputs = outputs;
+        }
+    }
+    static final java.util.LinkedHashMap<String,AbsFunc> ABSTRACT = new java.util.LinkedHashMap<>();
+    static {
+        ABSTRACT.put("ACCBANDS", new AbsFunc("ACCBANDS", "Overlap Studies", "Acceleration Bands", "Accbands", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
+        ABSTRACT.put("ACOS", new AbsFunc("ACOS", "Math Transform", "Vector Trigonometric ACos", "Acos", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("AD", new AbsFunc("AD", "Volume Indicators", "Chaikin A/D Line", "Ad", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ADD", new AbsFunc("ADD", "Math Operators", "Vector Arithmetic Add", "Add", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", "AdOsc", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",3.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ADX", new AbsFunc("ADX", "Momentum Indicators", "Average Directional Movement Index", "Adx", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ADXR", new AbsFunc("ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", "Adxr", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", "Apo", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", "Aroon", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outAroonDown",4), new AbsOut(0,"outAroonUp",1) }));
+        ABSTRACT.put("AROONOSC", new AbsFunc("AROONOSC", "Momentum Indicators", "Aroon Oscillator", "AroonOsc", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ASIN", new AbsFunc("ASIN", "Math Transform", "Vector Trigonometric ASin", "Asin", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ATAN", new AbsFunc("ATAN", "Math Transform", "Vector Trigonometric ATan", "Atan", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ATR", new AbsFunc("ATR", "Volatility Indicators", "Average True Range", "Atr", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("AVGDEV", new AbsFunc("AVGDEV", "Price Transform", "Average Deviation", "AvgDev", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("AVGPRICE", new AbsFunc("AVGPRICE", "Price Transform", "Average Price", "AvgPrice", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", "Bbands", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
+        ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", "Beta", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("BOP", new AbsFunc("BOP", "Momentum Indicators", "Balance Of Power", "Bop", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CCI", new AbsFunc("CCI", "Momentum Indicators", "Commodity Channel Index", "Cci", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CDL2CROWS", new AbsFunc("CDL2CROWS", "Pattern Recognition", "Two Crows", "Cdl2Crows", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3BLACKCROWS", new AbsFunc("CDL3BLACKCROWS", "Pattern Recognition", "Three Black Crows", "Cdl3BlackCrows", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3INSIDE", new AbsFunc("CDL3INSIDE", "Pattern Recognition", "Three Inside Up/Down", "Cdl3Inside", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3LINESTRIKE", new AbsFunc("CDL3LINESTRIKE", "Pattern Recognition", "Three-Line Strike", "Cdl3LineStrike", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3OUTSIDE", new AbsFunc("CDL3OUTSIDE", "Pattern Recognition", "Three Outside Up/Down", "Cdl3Outside", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3STARSINSOUTH", new AbsFunc("CDL3STARSINSOUTH", "Pattern Recognition", "Three Stars In The South", "Cdl3StarsInSouth", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDL3WHITESOLDIERS", new AbsFunc("CDL3WHITESOLDIERS", "Pattern Recognition", "Three Advancing White Soldiers", "Cdl3WhiteSoldiers", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLABANDONEDBABY", new AbsFunc("CDLABANDONEDBABY", "Pattern Recognition", "Abandoned Baby", "CdlAbandonedBaby", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLADVANCEBLOCK", new AbsFunc("CDLADVANCEBLOCK", "Pattern Recognition", "Advance Block", "CdlAdvanceBlock", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLBELTHOLD", new AbsFunc("CDLBELTHOLD", "Pattern Recognition", "Belt-hold", "CdlBeltHold", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLBREAKAWAY", new AbsFunc("CDLBREAKAWAY", "Pattern Recognition", "Breakaway", "CdlBreakaway", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLCLOSINGMARUBOZU", new AbsFunc("CDLCLOSINGMARUBOZU", "Pattern Recognition", "Closing Marubozu", "CdlClosingMarubozu", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLCONCEALBABYSWALL", new AbsFunc("CDLCONCEALBABYSWALL", "Pattern Recognition", "Concealing Baby Swallow", "CdlConcealBabysWall", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLCOUNTERATTACK", new AbsFunc("CDLCOUNTERATTACK", "Pattern Recognition", "Counterattack", "CdlCounterAttack", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLDARKCLOUDCOVER", new AbsFunc("CDLDARKCLOUDCOVER", "Pattern Recognition", "Dark Cloud Cover", "CdlDarkCloudCover", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLDOJI", new AbsFunc("CDLDOJI", "Pattern Recognition", "Doji", "CdlDoji", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLDOJISTAR", new AbsFunc("CDLDOJISTAR", "Pattern Recognition", "Doji Star", "CdlDojiStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLDRAGONFLYDOJI", new AbsFunc("CDLDRAGONFLYDOJI", "Pattern Recognition", "Dragonfly Doji", "CdlDragonflyDoji", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLENGULFING", new AbsFunc("CDLENGULFING", "Pattern Recognition", "Engulfing Pattern", "CdlEngulfing", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLEVENINGDOJISTAR", new AbsFunc("CDLEVENINGDOJISTAR", "Pattern Recognition", "Evening Doji Star", "CdlEveningDojiStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLEVENINGSTAR", new AbsFunc("CDLEVENINGSTAR", "Pattern Recognition", "Evening Star", "CdlEveningStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLGAPSIDESIDEWHITE", new AbsFunc("CDLGAPSIDESIDEWHITE", "Pattern Recognition", "Up/Down-gap side-by-side white lines", "CdlGapSideSideWhite", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLGRAVESTONEDOJI", new AbsFunc("CDLGRAVESTONEDOJI", "Pattern Recognition", "Gravestone Doji", "CdlGravestoneDoji", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHAMMER", new AbsFunc("CDLHAMMER", "Pattern Recognition", "Hammer", "CdlHammer", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHANGINGMAN", new AbsFunc("CDLHANGINGMAN", "Pattern Recognition", "Hanging Man", "CdlHangingMan", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHARAMI", new AbsFunc("CDLHARAMI", "Pattern Recognition", "Harami Pattern", "CdlHarami", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHARAMICROSS", new AbsFunc("CDLHARAMICROSS", "Pattern Recognition", "Harami Cross Pattern", "CdlHaramiCross", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHIGHWAVE", new AbsFunc("CDLHIGHWAVE", "Pattern Recognition", "High-Wave Candle", "CdlHignWave", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHIKKAKE", new AbsFunc("CDLHIKKAKE", "Pattern Recognition", "Hikkake Pattern", "CdlHikkake", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHIKKAKEMOD", new AbsFunc("CDLHIKKAKEMOD", "Pattern Recognition", "Modified Hikkake Pattern", "CdlHikkakeMod", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLHOMINGPIGEON", new AbsFunc("CDLHOMINGPIGEON", "Pattern Recognition", "Homing Pigeon", "CdlHomingPigeon", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLIDENTICAL3CROWS", new AbsFunc("CDLIDENTICAL3CROWS", "Pattern Recognition", "Identical Three Crows", "CdlIdentical3Crows", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLINNECK", new AbsFunc("CDLINNECK", "Pattern Recognition", "In-Neck Pattern", "CdlInNeck", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLINVERTEDHAMMER", new AbsFunc("CDLINVERTEDHAMMER", "Pattern Recognition", "Inverted Hammer", "CdlInvertedHammer", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLKICKING", new AbsFunc("CDLKICKING", "Pattern Recognition", "Kicking", "CdlKicking", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLKICKINGBYLENGTH", new AbsFunc("CDLKICKINGBYLENGTH", "Pattern Recognition", "Kicking - bull/bear determined by the longer marubozu", "CdlKickingByLength", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLLADDERBOTTOM", new AbsFunc("CDLLADDERBOTTOM", "Pattern Recognition", "Ladder Bottom", "CdlLadderBottom", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLLONGLEGGEDDOJI", new AbsFunc("CDLLONGLEGGEDDOJI", "Pattern Recognition", "Long Legged Doji", "CdlLongLeggedDoji", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLLONGLINE", new AbsFunc("CDLLONGLINE", "Pattern Recognition", "Long Line Candle", "CdlLongLine", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLMARUBOZU", new AbsFunc("CDLMARUBOZU", "Pattern Recognition", "Marubozu", "CdlMarubozu", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLMATCHINGLOW", new AbsFunc("CDLMATCHINGLOW", "Pattern Recognition", "Matching Low", "CdlMatchingLow", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLMATHOLD", new AbsFunc("CDLMATHOLD", "Pattern Recognition", "Mat Hold", "CdlMatHold", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLMORNINGDOJISTAR", new AbsFunc("CDLMORNINGDOJISTAR", "Pattern Recognition", "Morning Doji Star", "CdlMorningDojiStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLMORNINGSTAR", new AbsFunc("CDLMORNINGSTAR", "Pattern Recognition", "Morning Star", "CdlMorningStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLONNECK", new AbsFunc("CDLONNECK", "Pattern Recognition", "On-Neck Pattern", "CdlOnNeck", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLPIERCING", new AbsFunc("CDLPIERCING", "Pattern Recognition", "Piercing Pattern", "CdlPiercing", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLRICKSHAWMAN", new AbsFunc("CDLRICKSHAWMAN", "Pattern Recognition", "Rickshaw Man", "CdlRickshawMan", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLRISEFALL3METHODS", new AbsFunc("CDLRISEFALL3METHODS", "Pattern Recognition", "Rising/Falling Three Methods", "CdlRiseFall3Methods", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSEPARATINGLINES", new AbsFunc("CDLSEPARATINGLINES", "Pattern Recognition", "Separating Lines", "CdlSeperatingLines", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSHOOTINGSTAR", new AbsFunc("CDLSHOOTINGSTAR", "Pattern Recognition", "Shooting Star", "CdlShootingStar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSHORTLINE", new AbsFunc("CDLSHORTLINE", "Pattern Recognition", "Short Line Candle", "CdlShortLine", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSPINNINGTOP", new AbsFunc("CDLSPINNINGTOP", "Pattern Recognition", "Spinning Top", "CdlSpinningTop", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSTALLEDPATTERN", new AbsFunc("CDLSTALLEDPATTERN", "Pattern Recognition", "Stalled Pattern", "CdlStalledPattern", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLSTICKSANDWICH", new AbsFunc("CDLSTICKSANDWICH", "Pattern Recognition", "Stick Sandwich", "CdlStickSandwich", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLTAKURI", new AbsFunc("CDLTAKURI", "Pattern Recognition", "Takuri (Dragonfly Doji with very long lower shadow)", "CdlTakuri", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLTASUKIGAP", new AbsFunc("CDLTASUKIGAP", "Pattern Recognition", "Tasuki Gap", "CdlTasukiGap", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLTHRUSTING", new AbsFunc("CDLTHRUSTING", "Pattern Recognition", "Thrusting Pattern", "CdlThrusting", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLTRISTAR", new AbsFunc("CDLTRISTAR", "Pattern Recognition", "Tristar Pattern", "CdlTristar", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLUNIQUE3RIVER", new AbsFunc("CDLUNIQUE3RIVER", "Pattern Recognition", "Unique 3 River", "CdlUnique3River", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLUPSIDEGAP2CROWS", new AbsFunc("CDLUPSIDEGAP2CROWS", "Pattern Recognition", "Upside Gap Two Crows", "CdlUpsideGap2Crows", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CDLXSIDEGAP3METHODS", new AbsFunc("CDLXSIDEGAP3METHODS", "Pattern Recognition", "Upside/Downside Gap Three Methods", "CdlXSideGap3Methods", 301989888,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("CEIL", new AbsFunc("CEIL", "Math Transform", "Vector Ceil", "Ceil", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CMO", new AbsFunc("CMO", "Momentum Indicators", "Chande Momentum Oscillator", "Cmo", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CORREL", new AbsFunc("CORREL", "Statistic Functions", "Pearson's Correlation Coefficient (r)", "Correl", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("COS", new AbsFunc("COS", "Math Transform", "Vector Trigonometric Cos", "Cos", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("COSH", new AbsFunc("COSH", "Math Transform", "Vector Trigonometric Cosh", "Cosh", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("DEMA", new AbsFunc("DEMA", "Overlap Studies", "Double Exponential Moving Average", "Dema", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("DIV", new AbsFunc("DIV", "Math Operators", "Vector Arithmetic Div", "Div", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("DX", new AbsFunc("DX", "Momentum Indicators", "Directional Movement Index", "Dx", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", "Ema", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("EXP", new AbsFunc("EXP", "Math Transform", "Vector Arithmetic Exp", "Exp", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("FLOOR", new AbsFunc("FLOOR", "Math Transform", "Vector Floor", "Floor", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("HT_DCPERIOD", new AbsFunc("HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", "HtDcPeriod", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("HT_DCPHASE", new AbsFunc("HT_DCPHASE", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Phase", "HtDcPhase", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("HT_PHASOR", new AbsFunc("HT_PHASOR", "Cycle Indicators", "Hilbert Transform - Phasor Components", "HtPhasor", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outInPhase",1), new AbsOut(0,"outQuadrature",4) }));
+        ABSTRACT.put("HT_SINE", new AbsFunc("HT_SINE", "Cycle Indicators", "Hilbert Transform - SineWave", "HtSine", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outSine",1), new AbsOut(0,"outLeadSine",4) }));
+        ABSTRACT.put("HT_TRENDLINE", new AbsFunc("HT_TRENDLINE", "Overlap Studies", "Hilbert Transform - Instantaneous Trendline", "HtTrendline", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("HT_TRENDMODE", new AbsFunc("HT_TRENDMODE", "Cycle Indicators", "Hilbert Transform - Trend vs Cycle Mode", "HtTrendMode", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("IMI", new AbsFunc("IMI", "Momentum Indicators", "Intraday Momentum Index", "Imi", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceOC",9) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("KAMA", new AbsFunc("KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", "Kama", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LINEARREG", new AbsFunc("LINEARREG", "Statistic Functions", "Linear Regression", "LinearReg", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LINEARREG_ANGLE", new AbsFunc("LINEARREG_ANGLE", "Statistic Functions", "Linear Regression Angle", "LinearRegAngle", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LINEARREG_INTERCEPT", new AbsFunc("LINEARREG_INTERCEPT", "Statistic Functions", "Linear Regression Intercept", "LinearRegIntercept", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LINEARREG_SLOPE", new AbsFunc("LINEARREG_SLOPE", "Statistic Functions", "Linear Regression Slope", "LinearRegSlope", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LN", new AbsFunc("LN", "Math Transform", "Vector Log Natural", "Ln", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("LOG10", new AbsFunc("LOG10", "Math Transform", "Vector Log10", "Log10", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", "MovingAverage", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", "Macd", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
+        ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", "MacdExt", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
+        ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", "MacdFix", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
+        ABSTRACT.put("MAMA", new AbsFunc("MAMA", "Overlap Studies", "MESA Adaptive Moving Average", "Mama", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",4) }));
+        ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", "MovingAverageVariablePeriod", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", "Max", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MAXINDEX", new AbsFunc("MAXINDEX", "Math Operators", "Index of highest value over a specified period", "MaxIndex", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("MEDPRICE", new AbsFunc("MEDPRICE", "Price Transform", "Median Price", "MedPrice", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MFI", new AbsFunc("MFI", "Momentum Indicators", "Money Flow Index", "Mfi", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MIDPOINT", new AbsFunc("MIDPOINT", "Overlap Studies", "MidPoint over period", "MidPoint", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MIDPRICE", new AbsFunc("MIDPRICE", "Overlap Studies", "Midpoint Price over period", "MidPrice", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MIN", new AbsFunc("MIN", "Math Operators", "Lowest value over a specified period", "Min", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MININDEX", new AbsFunc("MININDEX", "Math Operators", "Index of lowest value over a specified period", "MinIndex", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("MINMAX", new AbsFunc("MINMAX", "Math Operators", "Lowest and highest values over a specified period", "MinMax", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outMin",1), new AbsOut(0,"outMax",1) }));
+        ABSTRACT.put("MINMAXINDEX", new AbsFunc("MINMAXINDEX", "Math Operators", "Indexes of lowest and highest values over a specified period", "MinMaxIndex", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(1,"outMinIdx",1), new AbsOut(1,"outMaxIdx",1) }));
+        ABSTRACT.put("MINUS_DI", new AbsFunc("MINUS_DI", "Momentum Indicators", "Minus Directional Indicator", "MinusDI", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MINUS_DM", new AbsFunc("MINUS_DM", "Momentum Indicators", "Minus Directional Movement", "MinusDM", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MOM", new AbsFunc("MOM", "Momentum Indicators", "Momentum", "Mom", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("MULT", new AbsFunc("MULT", "Math Operators", "Vector Arithmetic Mult", "Mult", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("NATR", new AbsFunc("NATR", "Volatility Indicators", "Normalized Average True Range", "Natr", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("OBV", new AbsFunc("OBV", "Volume Indicators", "On Balance Volume", "Obv", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("PLUS_DI", new AbsFunc("PLUS_DI", "Momentum Indicators", "Plus Directional Indicator", "PlusDI", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("PLUS_DM", new AbsFunc("PLUS_DM", "Momentum Indicators", "Plus Directional Movement", "PlusDM", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", "Ppo", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", "Roc", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ROCP", new AbsFunc("ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", "RocP", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ROCR", new AbsFunc("ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", "RocR", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ROCR100", new AbsFunc("ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", "RocR100", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("RSI", new AbsFunc("RSI", "Momentum Indicators", "Relative Strength Index", "Rsi", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SAR", new AbsFunc("SAR", "Overlap Studies", "Parabolic SAR", "Sar", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(0,"optInAcceleration",0,"Acceleration Factor",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInMaximum",0,"AF Maximum",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SAREXT", new AbsFunc("SAREXT", "Overlap Studies", "Parabolic SAR - Extended", "SarExt", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(0,"optInStartValue",0,"Start Value",0.0, -3e37,3e37,4,0.0,0.0,0.0, 0,0,0,0,0, null), new AbsOpt(0,"optInOffsetOnReverse",0,"Offset on Reverse",0.0, 0.0,3e37,4,0.01,0.15,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitLong",0,"AF Init Long",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationLong",0,"AF Long",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxLong",0,"AF Max Long",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitShort",0,"AF Init Short",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationShort",0,"AF Short",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxShort",0,"AF Max Short",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SIN", new AbsFunc("SIN", "Math Transform", "Vector Trigonometric Sin", "Sin", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SINH", new AbsFunc("SINH", "Math Transform", "Vector Trigonometric Sinh", "Sinh", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SMA", new AbsFunc("SMA", "Overlap Studies", "Simple Moving Average", "Sma", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SQRT", new AbsFunc("SQRT", "Math Transform", "Vector Square Root", "Sqrt", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("STDDEV", new AbsFunc("STDDEV", "Statistic Functions", "Standard Deviation", "StdDev", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", "Stoch", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outSlowK",4), new AbsOut(0,"outSlowD",4) }));
+        ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", "StochF", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
+        ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", "StochRsi", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
+        ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", "Sub", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SUM", new AbsFunc("SUM", "Math Operators", "Summation", "Sum", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", "T3", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TAN", new AbsFunc("TAN", "Math Transform", "Vector Trigonometric Tan", "Tan", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TANH", new AbsFunc("TANH", "Math Transform", "Vector Trigonometric Tanh", "Tanh", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TEMA", new AbsFunc("TEMA", "Overlap Studies", "Triple Exponential Moving Average", "Tema", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TRANGE", new AbsFunc("TRANGE", "Volatility Indicators", "True Range", "TrueRange", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TRIMA", new AbsFunc("TRIMA", "Overlap Studies", "Triangular Moving Average", "Trima", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TRIX", new AbsFunc("TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", "Trix", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TSF", new AbsFunc("TSF", "Statistic Functions", "Time Series Forecast", "Tsf", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TYPPRICE", new AbsFunc("TYPPRICE", "Price Transform", "Typical Price", "TypPrice", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ULTOSC", new AbsFunc("ULTOSC", "Momentum Indicators", "Ultimate Oscillator", "UltOsc", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod1",0,"First Period",7.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod2",0,"Second Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod3",0,"Third Period",28.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("VAR", new AbsFunc("VAR", "Statistic Functions", "Variance", "Variance", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("WCLPRICE", new AbsFunc("WCLPRICE", "Price Transform", "Weighted Close Price", "WclPrice", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("WILLR", new AbsFunc("WILLR", "Momentum Indicators", "Williams' %R", "WillR", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("WMA", new AbsFunc("WMA", "Overlap Studies", "Weighted Moving Average", "Wma", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+    }
+
+    // JSON string-escaper for metadata values (paramName/hint/... may contain quotes).
+    static String absStr(String v) {
+        if (v == null) return "\"\"";
+        StringBuilder b = new StringBuilder("\"");
+        for (int i = 0; i < v.length(); i++) {
+            char c = v.charAt(i);
+            if (c == '"' || c == '\\') b.append('\\');
+            b.append(c);
+        }
+        b.append('"');
+        return b.toString();
+    }
+
+    static String handleGetFuncInfo(String json) {
+        AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
+        if (f == null) return "{\"retCode\":2}";
+        return "{\"name\":" + absStr(f.name) + ",\"group\":" + absStr(f.group)
+             + ",\"hint\":" + absStr(f.hint) + ",\"camelCaseName\":" + absStr(f.camelCaseName)
+             + ",\"flags\":" + f.flags + ",\"nbInput\":" + f.inputs.length
+             + ",\"nbOptInput\":" + f.optInputs.length + ",\"nbOutput\":" + f.outputs.length + "}";
+    }
+
+    static String handleGetInputParameterInfo(String json) {
+        AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
+        int idx = jsonInt(json, "paramIndex");
+        if (f == null || idx < 0 || idx >= f.inputs.length) return "{\"retCode\":2}";
+        AbsIn ii = f.inputs[idx];
+        return "{\"type\":" + ii.type + ",\"paramName\":" + absStr(ii.paramName) + ",\"flags\":" + ii.flags + "}";
+    }
+
+    static String handleGetOptInputParameterInfo(String json) {
+        AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
+        int idx = jsonInt(json, "paramIndex");
+        if (f == null || idx < 0 || idx >= f.optInputs.length) return "{\"retCode\":2}";
+        AbsOpt o = f.optInputs[idx];
+        StringBuilder b = new StringBuilder("{\"type\":").append(o.type)
+            .append(",\"paramName\":").append(absStr(o.paramName))
+            .append(",\"flags\":").append(o.flags)
+            .append(",\"displayName\":").append(absStr(o.displayName))
+            .append(",\"defaultValue\":").append(o.defaultValue);
+        if (o.type == 0) { // RealRange
+            b.append(",\"min\":").append(o.rmin).append(",\"max\":").append(o.rmax)
+             .append(",\"precision\":").append(o.precision)
+             .append(",\"suggestedStart\":").append(o.rsugS).append(",\"suggestedEnd\":").append(o.rsugE)
+             .append(",\"suggestedIncrement\":").append(o.rsugI);
+        } else if (o.type == 2) { // IntegerRange
+            b.append(",\"min\":").append(o.imin).append(",\"max\":").append(o.imax)
+             .append(",\"suggestedStart\":").append(o.isugS).append(",\"suggestedEnd\":").append(o.isugE)
+             .append(",\"suggestedIncrement\":").append(o.isugI);
+        } else if (o.type == 3) { // IntegerList
+            b.append(",\"valueList\":").append(absStr(o.valueList));
+        }
+        b.append("}");
+        return b.toString();
+    }
+
+    static String handleGetOutputParameterInfo(String json) {
+        AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
+        int idx = jsonInt(json, "paramIndex");
+        if (f == null || idx < 0 || idx >= f.outputs.length) return "{\"retCode\":2}";
+        AbsOut oo = f.outputs[idx];
+        return "{\"type\":" + oo.type + ",\"paramName\":" + absStr(oo.paramName) + ",\"flags\":" + oo.flags + "}";
+    }
+
+    static String handleForEachFunc() {
+        StringBuilder b = new StringBuilder("{\"functions\":[");
+        boolean first = true;
+        for (AbsFunc f : ABSTRACT.values()) {
+            if (!first) b.append(',');
+            first = false;
+            b.append("{\"name\":").append(absStr(f.name)).append(",\"group\":").append(absStr(f.group))
+             .append(",\"nbInput\":").append(f.inputs.length).append(",\"nbOptInput\":").append(f.optInputs.length)
+             .append(",\"nbOutput\":").append(f.outputs.length).append("}");
+        }
+        b.append("]}");
+        return b.toString();
+    }
+
+    static final int ABSTRACT_XML_LENGTH = 187318;
+    static final long ABSTRACT_XML_CHECKSUM = 15012822L;
+    static String handleFunctionDescriptionXML() {
+        return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
+    }
+
     static String handleRequest(String json) {
         if (json.contains("\"load_data\"")) {
             double[] tmp = jsonDoubleArray(json, "open");
@@ -64266,6 +65045,12 @@ public class TaCodegenServe {
             }
             return "{\"outInteger\":" + intArrayToJson(out, n) + "}";
         }
+        else if (json.contains("\"TA_GetFuncInfo\"")) return handleGetFuncInfo(json);
+        else if (json.contains("\"TA_GetInputParameterInfo\"")) return handleGetInputParameterInfo(json);
+        else if (json.contains("\"TA_GetOptInputParameterInfo\"")) return handleGetOptInputParameterInfo(json);
+        else if (json.contains("\"TA_GetOutputParameterInfo\"")) return handleGetOutputParameterInfo(json);
+        else if (json.contains("\"abstract_for_each_func\"")) return handleForEachFunc();
+        else if (json.contains("\"TA_FunctionDescriptionXML\"")) return handleFunctionDescriptionXML();
         else {
             return "{\"error\":\"Unknown method\"}";
         }
