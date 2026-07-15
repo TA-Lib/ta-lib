@@ -88,7 +88,7 @@ cmake-build*/
 rust/target
 
 # Build artifacts (platform-specific, rebuilt locally)
-ta_codegen/output/c/ta_func/ta_codegen_funcs.c
+ta_codegen/output/c/tools/ta_codegen_funcs.c
 ta_codegen/output/dotnet/bin/
 ta_codegen/output/dotnet/obj/
 ta_codegen/output/java/*.class

@@ -595,7 +595,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::cmake_lists::generate(all_funcs, &root.join("CMakeLists.txt"), &root);
 
         let c_lib_src = root.join("ta_codegen/generator/templates/c");
-        let c_dir = root.join("ta_codegen/output/c");
+        let c_dir = root.join("ta_codegen/output/c/tools");
         std::fs::create_dir_all(&c_dir).unwrap();
         // Single-entry file list, kept as a loop to match the sibling copy loops below.
         #[allow(clippy::single_element_loop)]
@@ -817,7 +817,7 @@ fn generate_bench(backend_filter: Option<&str>) {
     let out_base = root.join("ta_codegen/output");
     for backend in &backends {
         if *backend == "c" {
-            let dir = out_base.join("c");
+            let dir = out_base.join("c/tools");
             std::fs::create_dir_all(&dir).unwrap();
             ta_codegen_lib::bench_gen::write_c_bench(&funcs, &dir);
             ta_codegen_lib::bench_gen::write_c_stream_bench(&funcs, &dir);
@@ -932,7 +932,7 @@ fn build_servers(backend_filter: Option<&str>) {
         match *backend {
             "c" => {
                 print!("  Building C server... ");
-                let c_dir = out_base.join("c");
+                let c_dir = out_base.join("c/tools");
                 let include_dir = root.join("include");
                 let src_dir = root.join("src");
                 // Option B: the whole C library (indicators + ta_common + the generated
@@ -976,11 +976,11 @@ fn build_servers(backend_filter: Option<&str>) {
                     }
                 }
                 // Also build direct-call benchmark binary if source exists
-                let bench_src = out_base.join("c/ta_bench_cg.c");
+                let bench_src = out_base.join("c/tools/ta_bench_cg.c");
                 if bench_src.exists() {
                     print!("  Building C bench... ");
                     let bench_dst = bin_dir.join("ta_bench_cg");
-                    let bench_inc_c = out_base.join("c");
+                    let bench_inc_c = out_base.join("c/tools");
                     match std::process::Command::new("gcc")
                         .args([
                             "-o",
@@ -1007,11 +1007,11 @@ fn build_servers(backend_filter: Option<&str>) {
                     }
                 }
                 // Also build the streaming benchmark binary if source exists
-                let sbench_src = out_base.join("c/ta_bench_stream.c");
+                let sbench_src = out_base.join("c/tools/ta_bench_stream.c");
                 if sbench_src.exists() {
                     print!("  Building C stream bench... ");
                     let sbench_dst = bin_dir.join("ta_bench_stream");
-                    let bench_inc_c = out_base.join("c");
+                    let bench_inc_c = out_base.join("c/tools");
                     match std::process::Command::new("gcc")
                         .args([
                             "-o",
@@ -1238,7 +1238,7 @@ fn build_shared_lib(out_base: &Path, bin_dir: &Path) -> bool {
         unity_src.push_str(&format!("#include \"{}\"\n", name));
     }
 
-    let unity_path = out_base.join("c").join("ta_codegen_funcs.c");
+    let unity_path = out_base.join("c/tools").join("ta_codegen_funcs.c");
     std::fs::write(&unity_path, &unity_src).unwrap();
 
     let include_dir = root.join("include");

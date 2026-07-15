@@ -168,9 +168,9 @@ For one-off runs: just invoke `/codegen-perf-iteration` directly.
 `scripts/regtest.py` rebuilds `ta_ref_serve` automatically in its cmake step, so the
 normal pipeline handles this. The manual fallback (when cmake rebuilds `libta-lib.a`
 and you need the reference server refreshed by hand) reads from
-`ta_codegen/output/c/ta_codegen_serve.c`:
+`ta_codegen/output/c/tools/ta_codegen_serve.c`:
 ```bash
-sed '/#include "ta_[A-Z].*\.c"/d' ta_codegen/output/c/ta_codegen_serve.c > /tmp/ta_ref_serve.c
+sed '/#include "ta_[A-Z].*\.c"/d' ta_codegen/output/c/tools/ta_codegen_serve.c > /tmp/ta_ref_serve.c
 sed -i '' '/#include "ta_lib_globals.c"/a\
 extern int TA_Initialize(void);\
 extern int TA_RestoreCandleDefaultSettings(int settingType);

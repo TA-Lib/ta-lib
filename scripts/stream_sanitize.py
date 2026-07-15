@@ -30,11 +30,11 @@ import glob
 import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SERVER_SRC = os.path.join(ROOT, "ta_codegen/output/c/ta_codegen_serve.c")
+SERVER_SRC = os.path.join(ROOT, "ta_codegen/output/c/tools/ta_codegen_serve.c")
 SERVER_BIN = os.path.join(ROOT, "cmake-build/bin/ta_codegen_serve_c_asan")
 
 INCLUDE_DIRS = [
-    "ta_codegen/output/c", "src/ta_abstract", "src/ta_abstract/frames",
+    "ta_codegen/output/c/tools", "src/ta_abstract", "src/ta_abstract/frames",
     "include", "src", "src/ta_func", "src/ta_common",
     "ta_codegen/generator/templates/c", "src/tools/ta_regtest",
 ]
