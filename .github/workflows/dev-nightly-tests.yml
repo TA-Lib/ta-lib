@@ -198,7 +198,7 @@ jobs:
   # non-default-parameter ref differential sweep. POSIX-only (the server
   # harness uses fork/exec), hence no Windows leg.
   cross-language:
-    name: Codegen tests (all langs vs ref, 1e-9)
+    name: "xlang: all langs vs pre-cutover C"
     needs: test
     runs-on: ubuntu-latest
 
@@ -242,7 +242,7 @@ jobs:
   # run_edge_range_sweep) against it, so any such overflow becomes a hard
   # failure. Rust-only (no JDK/.NET), gated on the C hero job.
   cross-language-rust-debug:
-    name: Rust codegen tests (debug profile — overflow gate)
+    name: Rust tests (debug profile — overflow gate)
     needs: test
     runs-on: ubuntu-latest
 
@@ -314,7 +314,7 @@ jobs:
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
   fuzz-vs-064:
-    name: Bit-exact fuzz vs released v0.6.4
+    name: C Latest vs released v0.6.4
     needs: test
     # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
     # silently skip this release gate — it has its own checkout+build.
@@ -344,7 +344,7 @@ jobs:
   # Rust today; Java joins after #114. cmake+gcc+cargo are preinstalled on
   # ubuntu-latest (no JDK/.NET needed — only the Rust server is driven).
   xlang-hash:
-    name: Bitwise parity (C vs Rust, seed+hash)
+    name: xlang matching (seed+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
