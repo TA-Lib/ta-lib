@@ -32,8 +32,8 @@ TA-Lib Definition: [`linearreg_angle.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | Native | File |
 |--------|------|
 | C | [`ta_LINEARREG_ANGLE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_LINEARREG_ANGLE.c) |
-| Rust | [`linearreg_angle.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/linearreg_angle.rs) |
-| Java | [`Core_LINEARREG_ANGLE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_LINEARREG_ANGLE.java) |
+| Rust | [`linearreg_angle.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_angle.rs) |
+| Java | [`Core_LINEARREG_ANGLE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_LINEARREG_ANGLE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

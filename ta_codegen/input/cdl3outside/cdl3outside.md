@@ -23,8 +23,8 @@ TA-Lib Definition: [`cdl3outside.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Native | File |
 |--------|------|
 | C | [`ta_CDL3OUTSIDE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDL3OUTSIDE.c) |
-| Rust | [`cdl3outside.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdl3outside.rs) |
-| Java | [`Core_CDL3OUTSIDE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDL3OUTSIDE.java) |
+| Rust | [`cdl3outside.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdl3outside.rs) |
+| Java | [`Core_CDL3OUTSIDE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDL3OUTSIDE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

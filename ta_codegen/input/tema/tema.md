@@ -31,8 +31,8 @@ TA-Lib Definition: [`tema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_TEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TEMA.c) |
-| Rust | [`tema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/tema.rs) |
-| Java | [`Core_TEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_TEMA.java) |
+| Rust | [`tema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/tema.rs) |
+| Java | [`Core_TEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_TEMA.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

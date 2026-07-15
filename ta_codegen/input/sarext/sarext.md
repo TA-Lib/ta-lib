@@ -34,8 +34,8 @@ TA-Lib Definition: [`sarext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Native | File |
 |--------|------|
 | C | [`ta_SAREXT.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SAREXT.c) |
-| Rust | [`sarext.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/sarext.rs) |
-| Java | [`Core_SAREXT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_SAREXT.java) |
+| Rust | [`sarext.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sarext.rs) |
+| Java | [`Core_SAREXT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_SAREXT.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -23,8 +23,8 @@ TA-Lib Definition: [`cdlbreakaway.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Native | File |
 |--------|------|
 | C | [`ta_CDLBREAKAWAY.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLBREAKAWAY.c) |
-| Rust | [`cdlbreakaway.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlbreakaway.rs) |
-| Java | [`Core_CDLBREAKAWAY.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLBREAKAWAY.java) |
+| Rust | [`cdlbreakaway.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlbreakaway.rs) |
+| Java | [`Core_CDLBREAKAWAY.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLBREAKAWAY.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -23,8 +23,8 @@ TA-Lib Definition: [`atan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_ATAN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ATAN.c) |
-| Rust | [`atan.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/atan.rs) |
-| Java | [`Core_ATAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ATAN.java) |
+| Rust | [`atan.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/atan.rs) |
+| Java | [`Core_ATAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ATAN.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

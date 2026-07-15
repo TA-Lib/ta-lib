@@ -31,8 +31,8 @@ TA-Lib Definition: [`adxr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_ADXR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADXR.c) |
-| Rust | [`adxr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/adxr.rs) |
-| Java | [`Core_ADXR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ADXR.java) |
+| Rust | [`adxr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adxr.rs) |
+| Java | [`Core_ADXR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ADXR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

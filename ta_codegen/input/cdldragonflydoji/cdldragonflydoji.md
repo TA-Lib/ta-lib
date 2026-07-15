@@ -27,8 +27,8 @@ TA-Lib Definition: [`cdldragonflydoji.c`](https://github.com/TA-Lib/ta-lib/blob/
 | Native | File |
 |--------|------|
 | C | [`ta_CDLDRAGONFLYDOJI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLDRAGONFLYDOJI.c) |
-| Rust | [`cdldragonflydoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdldragonflydoji.rs) |
-| Java | [`Core_CDLDRAGONFLYDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLDRAGONFLYDOJI.java) |
+| Rust | [`cdldragonflydoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdldragonflydoji.rs) |
+| Java | [`Core_CDLDRAGONFLYDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLDRAGONFLYDOJI.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

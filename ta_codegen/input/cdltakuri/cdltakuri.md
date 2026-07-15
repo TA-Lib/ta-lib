@@ -19,8 +19,8 @@ TA-Lib Definition: [`cdltakuri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Native | File |
 |--------|------|
 | C | [`ta_CDLTAKURI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLTAKURI.c) |
-| Rust | [`cdltakuri.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdltakuri.rs) |
-| Java | [`Core_CDLTAKURI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLTAKURI.java) |
+| Rust | [`cdltakuri.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdltakuri.rs) |
+| Java | [`Core_CDLTAKURI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLTAKURI.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -23,8 +23,8 @@ TA-Lib Definition: [`ad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Native | File |
 |--------|------|
 | C | [`ta_AD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_AD.c) |
-| Rust | [`ad.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/ad.rs) |
-| Java | [`Core_AD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_AD.java) |
+| Rust | [`ad.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ad.rs) |
+| Java | [`Core_AD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_AD.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

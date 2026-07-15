@@ -32,8 +32,8 @@ TA-Lib Definition: [`cdlbelthold.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Native | File |
 |--------|------|
 | C | [`ta_CDLBELTHOLD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLBELTHOLD.c) |
-| Rust | [`cdlbelthold.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlbelthold.rs) |
-| Java | [`Core_CDLBELTHOLD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLBELTHOLD.java) |
+| Rust | [`cdlbelthold.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlbelthold.rs) |
+| Java | [`Core_CDLBELTHOLD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLBELTHOLD.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

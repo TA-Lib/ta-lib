@@ -37,8 +37,8 @@ TA-Lib Definition: [`stddev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Native | File |
 |--------|------|
 | C | [`ta_STDDEV.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STDDEV.c) |
-| Rust | [`stddev.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/stddev.rs) |
-| Java | [`Core_STDDEV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_STDDEV.java) |
+| Rust | [`stddev.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/stddev.rs) |
+| Java | [`Core_STDDEV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_STDDEV.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

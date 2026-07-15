@@ -28,8 +28,8 @@ TA-Lib Definition: [`cdlinvertedhammer.c`](https://github.com/TA-Lib/ta-lib/blob
 | Native | File |
 |--------|------|
 | C | [`ta_CDLINVERTEDHAMMER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLINVERTEDHAMMER.c) |
-| Rust | [`cdlinvertedhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlinvertedhammer.rs) |
-| Java | [`Core_CDLINVERTEDHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLINVERTEDHAMMER.java) |
+| Rust | [`cdlinvertedhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlinvertedhammer.rs) |
+| Java | [`Core_CDLINVERTEDHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLINVERTEDHAMMER.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -28,8 +28,8 @@ TA-Lib Definition: [`beta.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_BETA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_BETA.c) |
-| Rust | [`beta.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/beta.rs) |
-| Java | [`Core_BETA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_BETA.java) |
+| Rust | [`beta.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/beta.rs) |
+| Java | [`Core_BETA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_BETA.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -27,8 +27,8 @@ TA-Lib Definition: [`cdllongleggeddoji.c`](https://github.com/TA-Lib/ta-lib/blob
 | Native | File |
 |--------|------|
 | C | [`ta_CDLLONGLEGGEDDOJI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLLONGLEGGEDDOJI.c) |
-| Rust | [`cdllongleggeddoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdllongleggeddoji.rs) |
-| Java | [`Core_CDLLONGLEGGEDDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLLONGLEGGEDDOJI.java) |
+| Rust | [`cdllongleggeddoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdllongleggeddoji.rs) |
+| Java | [`Core_CDLLONGLEGGEDDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLLONGLEGGEDDOJI.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

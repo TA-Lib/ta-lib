@@ -31,8 +31,8 @@ TA-Lib Definition: [`trix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_TRIX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TRIX.c) |
-| Rust | [`trix.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/trix.rs) |
-| Java | [`Core_TRIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_TRIX.java) |
+| Rust | [`trix.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/trix.rs) |
+| Java | [`Core_TRIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_TRIX.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

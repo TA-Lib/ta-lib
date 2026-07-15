@@ -28,8 +28,8 @@ TA-Lib Definition: [`cdlpiercing.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Native | File |
 |--------|------|
 | C | [`ta_CDLPIERCING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLPIERCING.c) |
-| Rust | [`cdlpiercing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlpiercing.rs) |
-| Java | [`Core_CDLPIERCING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLPIERCING.java) |
+| Rust | [`cdlpiercing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlpiercing.rs) |
+| Java | [`Core_CDLPIERCING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLPIERCING.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

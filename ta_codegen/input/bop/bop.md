@@ -23,8 +23,8 @@ TA-Lib Definition: [`bop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_BOP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_BOP.c) |
-| Rust | [`bop.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/bop.rs) |
-| Java | [`Core_BOP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_BOP.java) |
+| Rust | [`bop.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/bop.rs) |
+| Java | [`Core_BOP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_BOP.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

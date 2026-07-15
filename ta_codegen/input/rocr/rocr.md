@@ -27,8 +27,8 @@ TA-Lib Definition: [`rocr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_ROCR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ROCR.c) |
-| Rust | [`rocr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/rocr.rs) |
-| Java | [`Core_ROCR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ROCR.java) |
+| Rust | [`rocr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rocr.rs) |
+| Java | [`Core_ROCR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ROCR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

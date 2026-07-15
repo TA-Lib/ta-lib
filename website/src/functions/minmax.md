@@ -29,8 +29,8 @@ TA-Lib Definition: [`minmax.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Native | File |
 |--------|------|
 | C | [`ta_MINMAX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MINMAX.c) |
-| Rust | [`minmax.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/minmax.rs) |
-| Java | [`Core_MINMAX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_MINMAX.java) |
+| Rust | [`minmax.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/minmax.rs) |
+| Java | [`Core_MINMAX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_MINMAX.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

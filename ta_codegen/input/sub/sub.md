@@ -24,8 +24,8 @@ TA-Lib Definition: [`sub.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_SUB.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SUB.c) |
-| Rust | [`sub.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/sub.rs) |
-| Java | [`Core_SUB.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_SUB.java) |
+| Rust | [`sub.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sub.rs) |
+| Java | [`Core_SUB.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_SUB.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

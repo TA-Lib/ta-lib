@@ -40,8 +40,8 @@ TA-Lib Definition: [`mavp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_MAVP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MAVP.c) |
-| Rust | [`mavp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/mavp.rs) |
-| Java | [`Core_MAVP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_MAVP.java) |
+| Rust | [`mavp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mavp.rs) |
+| Java | [`Core_MAVP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_MAVP.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -28,8 +28,8 @@ TA-Lib Definition: [`cdlhammer.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Native | File |
 |--------|------|
 | C | [`ta_CDLHAMMER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHAMMER.c) |
-| Rust | [`cdlhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlhammer.rs) |
-| Java | [`Core_CDLHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLHAMMER.java) |
+| Rust | [`cdlhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlhammer.rs) |
+| Java | [`Core_CDLHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLHAMMER.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

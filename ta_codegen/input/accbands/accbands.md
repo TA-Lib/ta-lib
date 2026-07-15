@@ -31,8 +31,8 @@ TA-Lib Definition: [`accbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Native | File |
 |--------|------|
 | C | [`ta_ACCBANDS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ACCBANDS.c) |
-| Rust | [`accbands.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/accbands.rs) |
-| Java | [`Core_ACCBANDS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ACCBANDS.java) |
+| Rust | [`accbands.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/accbands.rs) |
+| Java | [`Core_ACCBANDS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ACCBANDS.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -29,8 +29,8 @@ TA-Lib Definition: [`linearreg_slope.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | Native | File |
 |--------|------|
 | C | [`ta_LINEARREG_SLOPE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_LINEARREG_SLOPE.c) |
-| Rust | [`linearreg_slope.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/linearreg_slope.rs) |
-| Java | [`Core_LINEARREG_SLOPE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_LINEARREG_SLOPE.java) |
+| Rust | [`linearreg_slope.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_slope.rs) |
+| Java | [`Core_LINEARREG_SLOPE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_LINEARREG_SLOPE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

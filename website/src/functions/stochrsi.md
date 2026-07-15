@@ -43,8 +43,8 @@ TA-Lib Definition: [`stochrsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Native | File |
 |--------|------|
 | C | [`ta_STOCHRSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STOCHRSI.c) |
-| Rust | [`stochrsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/stochrsi.rs) |
-| Java | [`Core_STOCHRSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_STOCHRSI.java) |
+| Rust | [`stochrsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/stochrsi.rs) |
+| Java | [`Core_STOCHRSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_STOCHRSI.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

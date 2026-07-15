@@ -35,8 +35,8 @@ TA-Lib Definition: [`sar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_SAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SAR.c) |
-| Rust | [`sar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/sar.rs) |
-| Java | [`Core_SAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_SAR.java) |
+| Rust | [`sar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sar.rs) |
+| Java | [`Core_SAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_SAR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

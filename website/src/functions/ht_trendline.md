@@ -24,8 +24,8 @@ TA-Lib Definition: [`ht_trendline.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Native | File |
 |--------|------|
 | C | [`ta_HT_TRENDLINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_TRENDLINE.c) |
-| Rust | [`ht_trendline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/ht_trendline.rs) |
-| Java | [`Core_HT_TRENDLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_HT_TRENDLINE.java) |
+| Rust | [`ht_trendline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_trendline.rs) |
+| Java | [`Core_HT_TRENDLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_HT_TRENDLINE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

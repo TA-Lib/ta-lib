@@ -27,8 +27,8 @@ TA-Lib Definition: [`cdlshortline.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Native | File |
 |--------|------|
 | C | [`ta_CDLSHORTLINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLSHORTLINE.c) |
-| Rust | [`cdlshortline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlshortline.rs) |
-| Java | [`Core_CDLSHORTLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLSHORTLINE.java) |
+| Rust | [`cdlshortline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlshortline.rs) |
+| Java | [`Core_CDLSHORTLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLSHORTLINE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

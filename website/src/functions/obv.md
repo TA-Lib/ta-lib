@@ -29,8 +29,8 @@ TA-Lib Definition: [`obv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_OBV.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_OBV.c) |
-| Rust | [`obv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/obv.rs) |
-| Java | [`Core_OBV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_OBV.java) |
+| Rust | [`obv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/obv.rs) |
+| Java | [`Core_OBV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_OBV.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

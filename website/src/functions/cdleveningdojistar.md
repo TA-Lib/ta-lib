@@ -32,8 +32,8 @@ TA-Lib Definition: [`cdleveningdojistar.c`](https://github.com/TA-Lib/ta-lib/blo
 | Native | File |
 |--------|------|
 | C | [`ta_CDLEVENINGDOJISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLEVENINGDOJISTAR.c) |
-| Rust | [`cdleveningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdleveningdojistar.rs) |
-| Java | [`Core_CDLEVENINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLEVENINGDOJISTAR.java) |
+| Rust | [`cdleveningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdleveningdojistar.rs) |
+| Java | [`Core_CDLEVENINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLEVENINGDOJISTAR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

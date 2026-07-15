@@ -31,8 +31,8 @@ TA-Lib Definition: [`adosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Native | File |
 |--------|------|
 | C | [`ta_ADOSC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADOSC.c) |
-| Rust | [`adosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/adosc.rs) |
-| Java | [`Core_ADOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ADOSC.java) |
+| Rust | [`adosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adosc.rs) |
+| Java | [`Core_ADOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ADOSC.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

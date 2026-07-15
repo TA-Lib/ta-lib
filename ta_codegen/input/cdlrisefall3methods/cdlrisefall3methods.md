@@ -25,8 +25,8 @@ TA-Lib Definition: [`cdlrisefall3methods.c`](https://github.com/TA-Lib/ta-lib/bl
 | Native | File |
 |--------|------|
 | C | [`ta_CDLRISEFALL3METHODS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLRISEFALL3METHODS.c) |
-| Rust | [`cdlrisefall3methods.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlrisefall3methods.rs) |
-| Java | [`Core_CDLRISEFALL3METHODS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLRISEFALL3METHODS.java) |
+| Rust | [`cdlrisefall3methods.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlrisefall3methods.rs) |
+| Java | [`Core_CDLRISEFALL3METHODS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLRISEFALL3METHODS.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

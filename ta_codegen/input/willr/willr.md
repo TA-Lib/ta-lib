@@ -27,8 +27,8 @@ TA-Lib Definition: [`willr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Native | File |
 |--------|------|
 | C | [`ta_WILLR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_WILLR.c) |
-| Rust | [`willr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/willr.rs) |
-| Java | [`Core_WILLR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_WILLR.java) |
+| Rust | [`willr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/willr.rs) |
+| Java | [`Core_WILLR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_WILLR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

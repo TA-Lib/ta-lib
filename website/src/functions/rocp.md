@@ -32,8 +32,8 @@ TA-Lib Definition: [`rocp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Native | File |
 |--------|------|
 | C | [`ta_ROCP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ROCP.c) |
-| Rust | [`rocp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/rocp.rs) |
-| Java | [`Core_ROCP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ROCP.java) |
+| Rust | [`rocp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rocp.rs) |
+| Java | [`Core_ROCP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ROCP.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

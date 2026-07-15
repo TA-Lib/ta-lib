@@ -31,8 +31,8 @@ TA-Lib Definition: [`mfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_MFI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MFI.c) |
-| Rust | [`mfi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/mfi.rs) |
-| Java | [`Core_MFI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_MFI.java) |
+| Rust | [`mfi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mfi.rs) |
+| Java | [`Core_MFI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_MFI.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

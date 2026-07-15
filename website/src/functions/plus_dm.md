@@ -35,8 +35,8 @@ TA-Lib Definition: [`plus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Native | File |
 |--------|------|
 | C | [`ta_PLUS_DM.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PLUS_DM.c) |
-| Rust | [`plus_dm.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/plus_dm.rs) |
-| Java | [`Core_PLUS_DM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_PLUS_DM.java) |
+| Rust | [`plus_dm.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/plus_dm.rs) |
+| Java | [`Core_PLUS_DM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_PLUS_DM.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

@@ -29,8 +29,8 @@ TA-Lib Definition: [`atr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Native | File |
 |--------|------|
 | C | [`ta_ATR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ATR.c) |
-| Rust | [`atr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/atr.rs) |
-| Java | [`Core_ATR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_ATR.java) |
+| Rust | [`atr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/atr.rs) |
+| Java | [`Core_ATR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_ATR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

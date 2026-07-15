@@ -28,8 +28,8 @@ TA-Lib Definition: [`cdlmorningdojistar.c`](https://github.com/TA-Lib/ta-lib/blo
 | Native | File |
 |--------|------|
 | C | [`ta_CDLMORNINGDOJISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLMORNINGDOJISTAR.c) |
-| Rust | [`cdlmorningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/cdlmorningdojistar.rs) |
-| Java | [`Core_CDLMORNINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_CDLMORNINGDOJISTAR.java) |
+| Rust | [`cdlmorningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmorningdojistar.rs) |
+| Java | [`Core_CDLMORNINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLMORNINGDOJISTAR.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

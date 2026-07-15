@@ -32,8 +32,8 @@ TA-Lib Definition: [`midprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Native | File |
 |--------|------|
 | C | [`ta_MIDPRICE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MIDPRICE.c) |
-| Rust | [`midprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/src/ta_func/midprice.rs) |
-| Java | [`Core_MIDPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/Core_MIDPRICE.java) |
+| Rust | [`midprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/midprice.rs) |
+| Java | [`Core_MIDPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_MIDPRICE.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 
