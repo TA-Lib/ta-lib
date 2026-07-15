@@ -65,6 +65,14 @@ pub trait LanguageBackend {
         &[]
     }
 
+    /// Whether this backend emits per-indicator library source files. A backend
+    /// that returns `false` produces only a JSON-RPC test server (no shipped
+    /// library): .NET is a P/Invoke harness over the C shared library, so it has
+    /// no managed indicator source to generate or clean.
+    fn emits_lib_files(&self) -> bool {
+        true
+    }
+
     /// Absolute directory the per-indicator library files are written to.
     /// Defaults to `out_base/<out_subdir>`. The C backend overrides this to emit
     /// the shipped C library **directly into `src/ta_func`** (canonical cutover
@@ -228,6 +236,11 @@ impl LanguageBackend for DotNetBackend {
     fn name(&self) -> &'static str {
         "dotnet"
     }
+    /// .NET is a P/Invoke server over the C shared library — no managed library,
+    /// so no per-indicator source files are emitted (only the server).
+    fn emits_lib_files(&self) -> bool {
+        false
+    }
     fn generate(
         &self,
         func: &FuncDef,
@@ -253,7 +266,7 @@ impl LanguageBackend for DotNetBackend {
         out_base: &Path,
     ) {
         let output = server_gen::generate_dotnet_server(funcs);
-        let dir = out_base.join("dotnet");
+        let dir = out_base.join("dotnet/tools");
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("TaCodegenServe.cs");
         std::fs::write(&path, &output).unwrap();

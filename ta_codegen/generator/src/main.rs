@@ -1069,7 +1069,7 @@ fn build_servers(backend_filter: Option<&str>) {
                 }
 
                 print!("  Building .NET server... ");
-                let dotnet_dir = out_base.join("dotnet");
+                let dotnet_dir = out_base.join("dotnet/tools");
                 let dotnet_out = bin_dir.join("ta_codegen_dotnet");
                 std::fs::create_dir_all(&dotnet_out).ok();
 
@@ -1774,6 +1774,10 @@ fn clean_generated_files(out_base: &Path, backend: &str) {
     let Some(backend) = backends::get(backend) else {
         return;
     };
+    // Server-only backends (e.g. .NET) emit no per-indicator files to clean.
+    if !backend.emits_lib_files() {
+        return;
+    }
     let dir = backend.lib_output_dir(out_base);
     if !dir.exists() {
         return;
@@ -1813,6 +1817,10 @@ fn generate_backend(
         eprintln!("Unknown backend: {}", backend);
         return;
     };
+    // Server-only backends (e.g. .NET P/Invoke) emit no per-indicator library files.
+    if !backend.emits_lib_files() {
+        return;
+    }
     let output = backend.generate(func_def, enums, registry, helpers);
     let dir = backend.lib_output_dir(out_base);
     std::fs::create_dir_all(&dir).unwrap();
