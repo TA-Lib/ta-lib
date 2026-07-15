@@ -26,10 +26,12 @@ Every TA function gets four calls:
 TA_SMA_Stream *s;
 double sma;
 
-/* Seed with warm-up history.
- * historyLen must be >= TA_SMA_Lookback(period) + 1. */
+int    period     = 30;
+int    historyLen  = 30;   /* must be >= TA_SMA_Lookback(period) + 1 */
+
+/* Seed with warm-up history. */
 double history[30] = { /* ...your closing prices... */ };
-if( TA_SMA_Open( 30, history, 30, &s, &sma ) != TA_SUCCESS )
+if( TA_SMA_Open( period, history, historyLen, &s, &sma ) != TA_SUCCESS )
     return; /* *s is NULL on failure */
 
 /* Each time a bar closes: */
