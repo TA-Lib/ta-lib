@@ -173,7 +173,7 @@
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -226,7 +226,7 @@
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -320,7 +320,7 @@
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -355,7 +355,7 @@
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -469,7 +469,7 @@
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -504,7 +504,7 @@
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
@@ -598,7 +598,7 @@
             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
                tempReal = tempBuffer2[i];
                tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
@@ -633,7 +633,7 @@
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempBuffer2[i] * optInNbDevUp;
+            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }

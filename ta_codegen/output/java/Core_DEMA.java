@@ -127,7 +127,7 @@
           * the bar where EMA2 seeding begins.
           */
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          /* Seed EMA2 with a simple average of the first 'period'
           * EMA1 values, accumulated as EMA1 produces them.
@@ -136,7 +136,7 @@
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -148,7 +148,7 @@
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
@@ -156,8 +156,8 @@
        * of EMA2, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       /* Stable zone: keep advancing both EMA in lockstep and
        * write the DEMA into the output.
@@ -165,8 +165,8 @@
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       /* Succeed. Indicate where the output starts relative to
@@ -213,13 +213,13 @@
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -227,19 +227,19 @@
          prevEMA1 = inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -294,13 +294,13 @@
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -308,19 +308,19 @@
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -364,13 +364,13 @@
          }
          prevEMA1 = tempReal / optInTimePeriod;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          tempReal = 0.0;
          tempReal += prevEMA1;
          i = optInTimePeriod - 1;
          while( i-- > 0 ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
             tempReal += prevEMA1;
          }
          prevEMA2 = tempReal / optInTimePeriod;
@@ -378,19 +378,19 @@
          prevEMA1 = (double)inReal[0];
          today = 1;
          while( today <= startIdx - lookbackEMA ) {
-            prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+            prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          }
          prevEMA2 = prevEMA1;
       }
       while( today <= startIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = ((double)inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
-         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;

@@ -134,76 +134,76 @@
       /* Initialize e2 */
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       /* Initialize e3 */
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       /* Initialize e4 */
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       /* Initialize e5 */
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       /* Initialize e6 */
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       /* Skip the unstable period */
       while( today <= startIdx ) {
          /* Do the calculation but do not write the output */
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       /* Calculate and output the remaining of the range. */
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       /* Indicates to the caller the number of output
        * successfully calculated.
@@ -267,67 +267,67 @@
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
@@ -404,67 +404,67 @@
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
@@ -525,67 +525,67 @@
       e1 = tempReal / optInTimePeriod;
       tempReal = e1;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
          tempReal += e1;
       }
       e2 = tempReal / optInTimePeriod;
       tempReal = e2;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
          tempReal += e2;
       }
       e3 = tempReal / optInTimePeriod;
       tempReal = e3;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
          tempReal += e3;
       }
       e4 = tempReal / optInTimePeriod;
       tempReal = e4;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
          tempReal += e4;
       }
       e5 = tempReal / optInTimePeriod;
       tempReal = e5;
       for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
          tempReal += e5;
       }
       e6 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
       c1 = 0 - tempReal * optInVFactor;
       c2 = 3.0 * (tempReal - c1);
       c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
+      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
-      outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       while( today <= endIdx ) {
-         e1 = k * (double)inReal[today++] + one_minus_k * e1;
-         e2 = k * e1 + one_minus_k * e2;
-         e3 = k * e2 + one_minus_k * e3;
-         e4 = k * e3 + one_minus_k * e4;
-         e5 = k * e4 + one_minus_k * e5;
-         e6 = k * e5 + one_minus_k * e6;
-         outReal[outIdx++] = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3;
+         e1 = Math.fma(one_minus_k, e1, k * (double)inReal[today++]);
+         e2 = Math.fma(one_minus_k, e2, k * e1);
+         e3 = Math.fma(one_minus_k, e3, k * e2);
+         e4 = Math.fma(one_minus_k, e4, k * e3);
+         e5 = Math.fma(one_minus_k, e5, k * e4);
+         e6 = Math.fma(one_minus_k, e6, k * e5);
+         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;

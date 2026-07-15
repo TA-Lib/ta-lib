@@ -67,6 +67,7 @@ TA_LIB_API int TA_CDLTHRUSTING_Lookback( void )
    return max(Equal_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
                                        int    endIdx,
                                        const double inOpen[],
@@ -163,7 +164,7 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
           ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
           inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
           inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* close into prior body */
-          inClose[i] <= inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* under the midpoint */
+          inClose[i] <= fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* under the midpoint */
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -185,6 +186,7 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Unguarded( int    startIdx,
                                                  int    endIdx,
                                                  const double inOpen[],
@@ -240,7 +242,7 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && inClose[i] <= inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 )
+      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && inClose[i] <= fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -258,6 +260,7 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
                               int    endIdx,
                               const float inOpen[],
@@ -329,7 +332,7 @@ TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] <= (double)inClose[i - 1] + fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] <= fma(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -347,6 +350,7 @@ TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_CDLTHRUSTING_Unguarded( int    startIdx,
                                         int    endIdx,
                                         const float inOpen[],
@@ -402,7 +406,7 @@ TA_RetCode TA_S_CDLTHRUSTING_Unguarded( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] <= (double)inClose[i - 1] + fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) * 0.5 )
+      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inLow[i - 1] && (double)inClose[i] > (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] <= fma(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]), 0.5, (double)inClose[i - 1]) )
       {
          outInteger[outIdx++] = 0 - 100;
       } else 
@@ -492,7 +496,7 @@ static void TA_CDLTHRUSTING_StepInternal( struct TA_CDLTHRUSTING_Stream *sp, dou
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* 2nd: white */
        inOpen < sp->lag1_inLow &&                                      /* open below prior low */
        inClose > sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* close into prior body */
-       inClose <= sp->lag1_inClose + fabs(sp->lag1_inClose - sp->lag1_inOpen) * 0.5 ) /* under the midpoint */
+       inClose <= fma(fabs(sp->lag1_inClose - sp->lag1_inOpen), 0.5, sp->lag1_inClose) ) /* under the midpoint */
    {
       *outInteger= 0 - 100;
    } else 
@@ -614,7 +618,7 @@ TA_RetCode TA_CDLTHRUSTING_OpenInternal( const double inOpen[], const double inH
              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
              inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
              inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* close into prior body */
-             inClose[i] <= inClose[i - 1] + fabs(inClose[i - 1] - inOpen[i - 1]) * 0.5 ) /* under the midpoint */
+             inClose[i] <= fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* under the midpoint */
          {
             lastValue_outInteger = 0 - 100;
          } else 

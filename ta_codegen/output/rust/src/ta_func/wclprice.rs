@@ -150,7 +150,7 @@ impl Core {
         // Weighted Close Price = (High + Low + (Close*2) ) / 4
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0) as f64);
+            outReal[outIdx] = ((((inClose[i] as f64).mul_add(2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
             outIdx += 1;
         }
         i = (endIdx as usize) + 1;
@@ -186,7 +186,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0) as f64);
+            outReal[outIdx] = ((((inClose[i] as f64).mul_add(2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
             outIdx += 1;
         }
         i = (endIdx as usize) + 1;

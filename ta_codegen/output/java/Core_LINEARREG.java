@@ -105,7 +105,7 @@
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
        * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -119,7 +119,7 @@
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -172,7 +172,7 @@
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = inReal[trailingIdx++];
@@ -180,7 +180,7 @@
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -244,7 +244,7 @@
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -252,7 +252,7 @@
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -305,7 +305,7 @@
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+      outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
          trailingValue = (double)inReal[trailingIdx++];
@@ -313,7 +313,7 @@
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         outReal[outIdx++] = b + m * (double)(optInTimePeriod - 1);
+         outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx.value = startIdx;

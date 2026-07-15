@@ -193,8 +193,8 @@
           */
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          /* Seed the signal EMA with a simple average of the first
@@ -206,8 +206,8 @@
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -223,8 +223,8 @@
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
@@ -234,10 +234,10 @@
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -248,10 +248,10 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -334,8 +334,8 @@
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -343,8 +343,8 @@
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -355,18 +355,18 @@
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -374,10 +374,10 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -483,8 +483,8 @@
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -492,8 +492,8 @@
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -504,18 +504,18 @@
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -523,10 +523,10 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -608,8 +608,8 @@
          prevFast = prevFast / optInFastPeriod;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = 0.0;
@@ -617,8 +617,8 @@
          i = optInSignalPeriod - 1;
          while( i-- > 0 ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
          }
@@ -629,18 +629,18 @@
          today = 1;
          while( today <= startIdx - lookbackSignal ) {
             tempReal = (double)inReal[today++];
-            prevFast = (tempReal - prevFast) * fastK + prevFast;
-            prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+            prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+            prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          }
          macdValue = prevFast - prevSlow;
          prevSignal = macdValue;
       }
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -648,10 +648,10 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = (tempReal - prevFast) * fastK + prevFast;
-         prevSlow = (tempReal - prevSlow) * slowK + prevSlow;
+         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = (macdValue - prevSignal) * signalK + prevSignal;
+         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;

@@ -259,7 +259,7 @@ impl Core {
                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && // 2nd: white
                inOpen[i] < inLow[i - 1] &&                               // open below prior low
                inClose[i] > inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // close into prior body
-               inClose[i] <= inClose[i - 1] + (inClose[i - 1] - inOpen[i - 1]).abs() * 0.5 // under the midpoint
+               inClose[i] <= ((inClose[i - 1] - inOpen[i - 1]).abs() as f64).mul_add(0.5, inClose[i - 1]) // under the midpoint
             {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;
@@ -442,7 +442,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && inClose[i] <= inClose[i - 1] + (inClose[i - 1] - inOpen[i - 1]).abs() * 0.5 {
+            if ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inLow[i - 1] && inClose[i] > inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && inClose[i] <= ((inClose[i - 1] - inOpen[i - 1]).abs() as f64).mul_add(0.5, inClose[i - 1]) {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;
             } else {

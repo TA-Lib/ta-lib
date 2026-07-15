@@ -289,8 +289,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
         }
         // Perform the calculation for the requested range
         outIdx = 0;
@@ -303,8 +303,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
             outReal[outIdx] = fastEMA - slowEMA;
             outIdx += 1;
         }
@@ -394,8 +394,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
         }
         outIdx = 0;
         while today <= endIdx {
@@ -407,8 +407,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
-            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
             outReal[outIdx] = fastEMA - slowEMA;
             outIdx += 1;
         }

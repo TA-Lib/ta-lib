@@ -12,6 +12,7 @@ use crate::registry::Registry;
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::expr_walk::ExprEmitter;
+use super::fma::{self, is_i32_opt_in_param, is_integer_returning_helper, FmaCtx};
 use super::stmt_walk::StatementEmitter;
 
 /// Controls how the Rust renderer emits code.
@@ -48,6 +49,18 @@ pub struct RustRenderCtx {
 }
 
 impl RustRenderCtx {
+    /// Borrowing view of the name-sets the shared FMA detector needs, so Rust
+    /// fuses the identical sites C/Java derive from [`fma::build_fma_var_sets`].
+    pub(crate) fn fma_view(&self) -> FmaCtx<'_> {
+        FmaCtx {
+            real_vars: &self.real_vars,
+            index_vars: &self.index_vars,
+            real_array_vars: &self.real_array_vars,
+            int_output_names: &self.int_output_names,
+            sentinel_vars: &self.sentinel_vars,
+        }
+    }
+
     pub fn for_lookback() -> Self {
         RustRenderCtx {
             bounds_asserts: false,
@@ -1013,7 +1026,7 @@ fn emit_circbuf_prolog_rust(id: &str, layout: &CircBufLayout, static_size: i64) 
 }
 
 #[allow(clippy::too_many_lines)]
-fn collect_var_types(
+pub(crate) fn collect_var_types(
     body: &[Statement],
     index_vars: &mut std::collections::HashSet<String>,
     real_vars: &mut std::collections::HashSet<String>,
@@ -1137,7 +1150,7 @@ fn condition_implies_signed(
 /// Only considers variables known to be integer-typed (in `int_vars`).
 /// Extends `signed_vars` with variables assigned potentially-negative values or
 /// compared with `< 0`.
-fn collect_signed_int_vars(
+pub(crate) fn collect_signed_int_vars(
     body: &[Statement],
     int_vars: &std::collections::HashSet<String>,
     signed_vars: &mut std::collections::HashSet<String>,
@@ -1192,7 +1205,7 @@ fn collect_signed_int_vars(
 }
 
 /// Pre-scan function body for variables assigned negative values (sentinel pattern).
-fn collect_sentinel_vars(
+pub(crate) fn collect_sentinel_vars(
     body: &[Statement],
     sentinel_vars: &mut std::collections::HashSet<String>,
 ) {
@@ -1834,6 +1847,13 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let new_value = hoist_block_helpers(
             value, self.helpers, &mut hoisted, &mut cnt, &[],
         );
+        // Canonicalize accumulator recurrences so all backends fuse the same
+        // product regardless of operand order (cross-language / batch-vs-stream).
+        let new_value = if fma::EMIT_FMA {
+            fma::canonicalize_accumulator_add(target, &new_value)
+        } else {
+            new_value
+        };
         self.inline_counter.set(cnt);
         let mut out = render_hoisted_blocks(
             &hoisted, indent, self.ctx, self.for_loop_vars, self.var_inits,
@@ -2615,18 +2635,6 @@ fn render_condition(
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 /// Check if an expression is definitely integer-typed (conservative — only triggers on
 /// known integer variables, not heuristics). Used to gate mul_add emission.
-fn is_definitely_integer(expr: &Expr, ctx: &RustRenderCtx) -> bool {
-    match expr {
-        Expr::Var(name) => {
-            ctx.index_vars.contains(name)
-                || ctx.sentinel_vars.contains(name)
-                || ctx.int_output_names.contains(name)
-        }
-        Expr::BinOp(a, _, b) => is_definitely_integer(a, ctx) || is_definitely_integer(b, ctx),
-        // IntLiteral and everything else: not definitely integer (literals coerce to f64).
-        _ => false,
-    }
-}
 
 /// Rust-backend leaf formatting for the shared [`ExprEmitter`] tree-walk. Bundles
 /// the render context with `opt_real_params` and the registry/helper services the
@@ -2751,20 +2759,10 @@ impl ExprEmitter for RustExpr<'_> {
     }
 }
 
-/// FMA emission gate — intentionally OFF until the FMA-era transition
-/// (docs/fma-proposal.md, PR #96). With default (baseline) x86-64 rustflags,
-/// `f64::mul_add` cannot inline and degrades to a per-operation dispatch call
-/// into software `fma` (measured ~2x slower on EMA-family recursions), and on
-/// FMA-native targets (aarch64) it produces different bits than the C library,
-/// breaking cross-platform and cross-language bitwise consistency. Plain
-/// `a * b + c` is never contracted by rustc, so generated Rust matches C
-/// bit-for-bit on every target. Re-enable as part of the one-time FMA
-/// re-baselining event.
-const EMIT_FMA: bool = false;
-
-/// Render an `Expr::BinOp` to Rust, including the FMA fusion (gated by
-/// [`EMIT_FMA`]), pointer-identity buffer comparisons, and the operand
-/// int/usize/f64 cast inference. Delegated to by [`RustExpr::binop`].
+/// Render an `Expr::BinOp` to Rust, including the FMA fusion (via the shared
+/// [`fma::fuse_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
+/// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
+/// by [`RustExpr::binop`].
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 fn render_binop(
     left: &Expr,
@@ -2775,32 +2773,16 @@ fn render_binop(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    // Fused multiply-add: (a * b) + c → a.mul_add(b, c)
-    // Emits ARM fmadd (1 FP op, 4 cycles) vs fmul+fadd (2 FP ops, 8 cycles).
-    // Only for f64 operands (not integer arithmetic).
-    // Fused multiply-add: (a * b) + c → (a as f64).mul_add(b, c)
-    // Emits ARM fmadd (1 FP op) vs fmul+fadd (2 FP ops).
-    // Only when BOTH multiply operands are float (not i32 * f64 patterns).
-    if EMIT_FMA && matches!(op, BinOp::Add) {
-        if let Expr::BinOp(a, BinOp::Mul, b) = left {
-            let a_ok = expr_is_float_typed_ctx(a, Some(ctx)) && !is_definitely_integer(a, ctx);
-            let b_ok = expr_is_float_typed_ctx(b, Some(ctx)) && !is_definitely_integer(b, ctx);
-            if a_ok && b_ok {
-                let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
-                let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
-                let c_str = render_expr(right, ctx, opt_real_params, registry, helpers);
-                return format!("({a_str} as f64).mul_add({b_str}, {c_str})");
-            }
-        }
-        if let Expr::BinOp(a, BinOp::Mul, b) = right {
-            let a_ok = expr_is_float_typed_ctx(a, Some(ctx)) && !is_definitely_integer(a, ctx);
-            let b_ok = expr_is_float_typed_ctx(b, Some(ctx)) && !is_definitely_integer(b, ctx);
-            if a_ok && b_ok {
-                let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
-                let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
-                let c_str = render_expr(left, ctx, opt_real_params, registry, helpers);
-                return format!("({a_str} as f64).mul_add({b_str}, {c_str})");
-            }
+    // Fused multiply-add: (a * b) + c → (a as f64).mul_add(b, c). Emits ARM
+    // fmadd (1 FP op) vs fmul+fadd (2 FP ops), IEEE-754 correctly-rounded so it
+    // matches the C `fma()` / Java `Math.fma` the other backends emit at the same
+    // sites (site selection lives in `fma::fuse_operands`, shared by all backends).
+    if fma::EMIT_FMA {
+        if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &ctx.fma_view()) {
+            let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
+            let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
+            let c_str = render_expr(c, ctx, opt_real_params, registry, helpers);
+            return format!("({a_str} as f64).mul_add({b_str}, {c_str})");
         }
     }
     // C pointer-identity buffer comparisons (BBANDS' `inReal == outRealUpperBand`,
@@ -3081,94 +3063,13 @@ fn expr_is_integer(expr: &Expr) -> bool {
     }
 }
 
-/// Check if an optIn parameter name is i32 (Integer type, not Real type).
-/// Real optIn params (optInAcceleration, optInFastLimit, optInSlowLimit, optInNbDevUp/Dn,
-/// optInMaximum, optInPenetration, optInVFactor) are f64, NOT i32.
-fn is_i32_opt_in_param(name: &str) -> bool {
-    if !name.starts_with("optIn") {
-        return false;
-    }
-    // Known Real optIn params that are f64
-    !matches!(name,
-        "optInAcceleration" | "optInMaximum" | "optInOffsetOnReverse"
-        | "optInFastLimit" | "optInSlowLimit"
-        | "optInNbDevUp" | "optInNbDevDn" | "optInNbDev"
-        | "optInPenetration" | "optInVFactor"
-        | "optInStartValue" | "optInPercentage"
-        | "optInAccelerationInitLong" | "optInAccelerationLong" | "optInAccelerationMaxLong"
-        | "optInAccelerationInitShort" | "optInAccelerationShort" | "optInAccelerationMaxShort"
-    )
-}
-
-/// Check if an expression is likely T-typed (float/Real) in generic context.
-/// Used to decide whether an IntLiteral should be wrapped with `T::ta_from_i32()`.
-/// Conservative: only returns true when there's strong evidence the expression produces T.
+/// Thin adapter over the shared [`fma::expr_is_float_typed`] so existing Rust
+/// call sites keep their `Option<&RustRenderCtx>` signature. Used to decide
+/// whether an `IntLiteral` should be wrapped with `T::ta_from_i32()` and to gate
+/// the FMA detector; conservative (strong evidence the expression produces T).
 fn expr_is_float_typed_ctx(expr: &Expr, ctx: Option<&RustRenderCtx>) -> bool {
-    match expr {
-        Expr::Literal(_) | Expr::Cast(VarType::Real, _) => true,
-        Expr::Var(name) => {
-            // Check context's real_vars set first
-            if let Some(c) = ctx {
-                if c.real_vars.contains(name) {
-                    return true;
-                }
-                // If declared as index/integer in VarDecl, it's NOT float
-                // Only use explicit declarations, not naming heuristics (which overlap)
-                if c.index_vars.contains(name) {
-                    return false;
-                }
-            }
-            // optIn Real params are f64 in the function signature
-            if name.starts_with("optIn") && !is_i32_opt_in_param(name) {
-                return true;
-            }
-            // Only match known float-typed variable patterns.
-            // Exclude anything that could be an integer/index variable.
-            name.starts_with("temp") || name.starts_with("prev")
-                || name.starts_with("sum") || name.starts_with("diff")
-                || name.ends_with("PeriodTotal")
-                || name == "k" || name == "k1"
-                || name.starts_with("factor") || name.ends_with("_factor")
-                || name.starts_with("_true_range")
-                || name.starts_with("_candlerange")
-                || name.starts_with("_periodTotal")
-                || name.starts_with("_meanValue")
-                || name.starts_with("_tempReal")
-        }
-        Expr::ArrayAccess(name, _) => {
-            // Check context's real_array_vars set
-            if let Some(c) = ctx {
-                if c.real_array_vars.contains(name) {
-                    return true;
-                }
-            }
-            // Real arrays: input arrays, temp buffers, output Real arrays
-            name.starts_with("in") || name.starts_with("temp")
-                || (name.starts_with("out") && !name.contains("Int") && !name.contains("integer"))
-                || name.contains("_Odd") || name.contains("_Even")
-                || name.starts_with("detrender") || name.starts_with("Q1")
-                || name.starts_with("jI") || name.starts_with("jQ")
-        }
-        Expr::FuncCall(name, _) => {
-            // Math functions and ta_ methods return T, but NOT integer-returning helpers
-            if is_integer_returning_helper(name) {
-                return false;
-            }
-            name.starts_with("ta_") || name.contains("_from_")
-                || matches!(name.as_str(),
-                    "sqrt" | "sin" | "cos" | "tan" | "asin" | "acos" | "atan"
-                    | "exp" | "log" | "log10" | "ceil" | "floor" | "abs" | "fabs"
-                    | "cosh" | "sinh" | "tanh" | "max" | "fmax" | "min" | "fmin"
-                    | "IS_ZERO" | "IS_ZERO_OR_NEG" | "PER_TO_K"
-                )
-        }
-        Expr::BinOp(left, op, right) => {
-            matches!(op, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div)
-                && (expr_is_float_typed_ctx(left, ctx) || expr_is_float_typed_ctx(right, ctx))
-        }
-        Expr::Ternary(_, then_expr, _) => expr_is_float_typed_ctx(then_expr, ctx),
-        _ => false,
-    }
+    let view = ctx.map(RustRenderCtx::fma_view);
+    fma::expr_is_float_typed(expr, view.as_ref())
 }
 
 /// Check if an expression is likely i32-typed (integer optIn params, unstable_period access, etc.)
@@ -4131,13 +4032,6 @@ fn is_int_array_var(name: &str) -> bool {
 
 /// Helper functions that return int (not double/T).
 /// These must NOT be treated as float-typed by `expr_is_float_typed`.
-fn is_integer_returning_helper(name: &str) -> bool {
-    matches!(name,
-        "ta_candlecolor" | "ta_realbodygapup" | "ta_realbodygapdown"
-        | "ta_candlegapup" | "ta_candlegapdown"
-    )
-}
-
 /// Check if a variable name is likely an index/counter (usize) rather than a Real (T) variable.
 fn is_likely_index_var(name: &str) -> bool {
     // Never match optIn params — they are i32 in the function signature

@@ -195,7 +195,7 @@
                af = optInAcceleration;
                ep = newLow;
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -218,7 +218,7 @@
                   }
                }
                /* Calculate the new SAR */
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                /* Make sure the new SAR is within
                 * yesterday's and today's range.
                 */
@@ -249,7 +249,7 @@
             af = optInAcceleration;
             ep = newHigh;
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -272,7 +272,7 @@
                }
             }
             /* Calculate the new SAR */
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             /* Make sure the new SAR is within
              * yesterday's and today's range.
              */
@@ -367,7 +367,7 @@
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -383,7 +383,7 @@
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -403,7 +403,7 @@
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -419,7 +419,7 @@
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -527,7 +527,7 @@
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -543,7 +543,7 @@
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -563,7 +563,7 @@
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -579,7 +579,7 @@
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }
@@ -671,7 +671,7 @@
                outReal[outIdx++] = sar;
                af = optInAcceleration;
                ep = newLow;
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar < prevHigh ) {
                   sar = prevHigh;
                }
@@ -687,7 +687,7 @@
                      af = optInMaximum;
                   }
                }
-               sar = sar + af * (ep - sar);
+               sar = Math.fma(af, ep - sar, sar);
                if( sar > prevLow ) {
                   sar = prevLow;
                }
@@ -707,7 +707,7 @@
             outReal[outIdx++] = sar;
             af = optInAcceleration;
             ep = newHigh;
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar > prevLow ) {
                sar = prevLow;
             }
@@ -723,7 +723,7 @@
                   af = optInMaximum;
                }
             }
-            sar = sar + af * (ep - sar);
+            sar = Math.fma(af, ep - sar, sar);
             if( sar < prevHigh ) {
                sar = prevHigh;
             }

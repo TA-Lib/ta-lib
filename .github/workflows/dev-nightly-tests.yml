@@ -337,6 +337,52 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
+  # musllinux build gate (PR #96). target_clones/ifunc is glibc-ONLY: musl
+  # supports GNU ifunc in NO version (still true in musl 1.2.5) and stock Alpine
+  # GCC disables it, hard-erroring on the attribute ("the call requires 'ifunc',
+  # which is not supported by this target"). The TA_FMA_MULTIVERSION guard in
+  # src/ta_func/ta_utility.h is therefore gated on __GLIBC__, so a musllinux build
+  # gets NO marker and uses a plain, correctly-rounded software fma() (accepted,
+  # unaccelerated — same bucket as Windows/macOS-Intel). This job is the
+  # REGRESSION GUARD for that: it proves the library still BUILDS on musl (a guard
+  # wrongly widened to __linux__ would fail the compile here on the fused .c
+  # files), emits ZERO ifunc symbols, and still computes correctly. Checkout on
+  # the ubuntu host (Alpine has no Node for actions/checkout); build + test inside
+  # an Alpine/musl container. Swap alpine:3.20 for quay.io/pypa/musllinux_1_2_x86_64
+  # to test the literal cibuildwheel toolchain. Pinned to `dev`; before #96 lands
+  # there, run scripts/verify-musl-fma.sh locally.
+  musl-build:
+    name: musllinux build (FMA dispatch correctly excluded)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Build under musl — must compile, emit no ifunc, and compute correctly
+        shell: bash
+        run: |
+          docker run --rm -v "$PWD":/src -w /src alpine:3.20 sh -c '
+            set -e
+            apk add --no-cache build-base cmake >/dev/null
+            echo "== musl target: alpine $(cat /etc/alpine-release) =="
+            # (1) Must COMPILE. A guard wrongly widened to include musl would
+            #     hard-error here on the target_clones attribute in the fused .c.
+            cmake -S . -B /tmp/bm -DCMAKE_BUILD_TYPE=Release >/dev/null
+            cmake --build /tmp/bm -j"$(nproc)" >/dev/null
+            SO=$(find /tmp/bm -name "libta-lib.so*" -type f | head -1)
+            echo "DSO: $SO"
+            # (2) Guard must have EXCLUDED musl: ZERO ifunc dispatch symbols.
+            n=$(readelf -sW "$SO" | grep -c IFUNC); echo "IFUNC symbols in DSO (must be 0 on musl): $n"; test "$n" -eq 0
+            # (3) The plain software-fma library must still be correct on musl.
+            REG=$(find /tmp/bm -name ta_regtest -type f | head -1)
+            echo "== running C reference suite (software fma on musl) =="
+            LD_LIBRARY_PATH="$(dirname "$SO")" "$REG"'
+
   # Memory-safety gate (#94): build the library + ta_regtest with
   # AddressSanitizer + UBSan and run the full C reference suite, including the
   # parameter-boundary sweep (every optional parameter at min/min+1/default+-1/

@@ -282,7 +282,7 @@
        */
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -335,8 +335,8 @@
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -383,8 +383,8 @@
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -395,8 +395,8 @@
             I1ForEvenPrev2 = detrender;
          }
          /* Adjust the period for next price bar */
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -416,8 +416,8 @@
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
@@ -487,7 +487,7 @@
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -719,7 +719,7 @@
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -768,8 +768,8 @@
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -809,13 +809,13 @@
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -835,8 +835,8 @@
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -887,7 +887,7 @@
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -1122,7 +1122,7 @@
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -1171,8 +1171,8 @@
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -1212,13 +1212,13 @@
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -1238,8 +1238,8 @@
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -1290,7 +1290,7 @@
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
@@ -1519,7 +1519,7 @@
       }
       DCPhase = 0.0;
       while( today <= endIdx ) {
-         adjustedPrevPeriod = 0.075 * period + 0.54;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = (double)inReal[today];
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
@@ -1568,8 +1568,8 @@
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForEvenPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
             I1ForOddPrev3 = I1ForOddPrev2;
             I1ForOddPrev2 = detrender;
          } else {
@@ -1609,13 +1609,13 @@
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = 0.2 * (Q1 + jI) + 0.8 * prevQ2;
-            I2 = 0.2 * (I1ForOddPrev3 - jQ) + 0.8 * prevI2;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         Re = 0.2 * (I2 * prevI2 + Q2 * prevQ2) + 0.8 * Re;
-         Im = 0.2 * (I2 * prevQ2 - Q2 * prevI2) + 0.8 * Im;
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
          prevQ2 = Q2;
          prevI2 = I2;
          tempReal = period;
@@ -1635,8 +1635,8 @@
          } else if( period > 50 ) {
             period = 50;
          }
-         period = 0.2 * period + 0.8 * tempReal;
-         smoothPeriod = 0.33 * period + 0.67 * smoothPeriod;
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
          DCPeriodInt = (int)DCPeriod;
@@ -1687,7 +1687,7 @@
          if( DCPeriodInt > 0 ) {
             tempReal = tempReal / (double)DCPeriodInt;
          }
-         trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
          iTrend3 = iTrend2;
          iTrend2 = iTrend1;
          iTrend1 = tempReal;
