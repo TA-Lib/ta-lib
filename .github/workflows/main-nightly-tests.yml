@@ -151,3 +151,28 @@ jobs:
       - name: Fuzz current library vs frozen v0.6.4
         shell: bash
         run: python3 scripts/build.py fuzz-064
+
+  # Cross-language BITWISE parity gate (issue #113): the generated language
+  # servers must be BIT-IDENTICAL to the shipped in-process C library on
+  # seed-generated inputs (no tolerance). Rust today; Java joins after #114.
+  # cmake+gcc+cargo are preinstalled on ubuntu-latest (no JDK/.NET needed).
+  xlang-hash:
+    name: Cross-language bitwise parity (C vs Rust)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Bitwise-diff each language server vs the in-process C library
+        shell: bash
+        run: python3 scripts/build.py xlang-hash

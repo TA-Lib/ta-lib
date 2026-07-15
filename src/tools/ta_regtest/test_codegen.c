@@ -89,7 +89,13 @@ static int              g_numTimingResults = 0;
 
 /* ---- Constants ---- */
 
-#define CODEGEN_EPSILON  1e-6
+#define CODEGEN_EPSILON  1e-6   /* float leg (TA_S_*): single-precision noise */
+/* Double-leg cross-language / cross-version tolerance. Tightened from 1e-6 to
+ * 1e-9 (issue #113 follow-up): a full-precision measurement of every language
+ * server vs the frozen reference showed the real floor is <1e-11 for all 161
+ * functions except LINEARREG_ANGLE (~4.4e-10, the authorized #103 recurrence) —
+ * the %.15g transport was never the limit. Applied as 1e-9 * max(1, |value|). */
+#define CODEGEN_EPSILON_DOUBLE  1e-9
 #define JSON_BUF_SIZE    (128 * 1024)   /* 128KB: enough for OHLCV inputs */
 #define MAX_OUTPUTS      3              /* Max outputs any TA function has */
 
@@ -685,15 +691,33 @@ static void compare_codegen_output_generic(
         {
             double cVal = p->outRealBufs[outputNb][i];
             double diff = fabs(cVal - cg_out[i]);
-            double scale = (p->epsilonScale > 0.0) ? p->epsilonScale : 1.0;
-            double threshold = CODEGEN_EPSILON * scale;
-            /* Use relative epsilon for large values (JSON roundtrip precision;
-             * for the float leg, single-precision significand). */
-            if( fabs(cVal) > 1.0 )
+            double threshold;
+            if( p->widenFloatInputs )
             {
-                double relThreshold = fabs(cVal) * ((scale > 1.0) ? 1e-6 * scale : 1e-12);
-                if( relThreshold > threshold )
-                    threshold = relThreshold;
+                /* Float leg (TA_S_* single precision): the codegen widens float
+                 * inputs to double, so ~1e-6-relative single-significand noise is
+                 * expected. Unchanged. */
+                double scale = (p->epsilonScale > 0.0) ? p->epsilonScale : 1.0;
+                threshold = CODEGEN_EPSILON * scale;
+                if( fabs(cVal) > 1.0 )
+                {
+                    double relThreshold = fabs(cVal) * 1e-6 * scale;
+                    if( relThreshold > threshold ) threshold = relThreshold;
+                }
+            }
+            else
+            {
+                /* Double leg, tightened 1e-6 -> 1e-9 (issue #113 follow-up).
+                 * A full-precision measurement of every language server against the
+                 * frozen reference found the cross-language / cross-version
+                 * divergence is <1e-11 for all 161 functions EXCEPT LINEARREG_ANGLE
+                 * (~4.4e-10, the authorized #103 O(1) sliding-sum recurrence vs the
+                 * frozen O(n) recompute). The 1e-6 floor was never a %.15g-transport
+                 * limit — the transport contributes <1e-11 — so 1e-9 holds with
+                 * margin: 1e-9 absolute below 1, 1e-9 relative above. Bit-exact
+                 * cross-language parity on seed data is separately gated by
+                 * --xlang-hash. */
+                threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal));
             }
             if( diff > threshold )
             {
@@ -3588,6 +3612,439 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     }
     printf("FAIL — %lld real divergence(s) across %d function(s).\n",
            ctx.failures, ctx.funcsWithFailures);
+    return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
+}
+
+/* ======================================================================== *
+ * --xlang-hash: cross-language BITWISE parity gate (issue #113).
+ *
+ * Proves the generated language servers compute BIT-IDENTICAL outputs to the
+ * shipped in-process C library on seed-generated inputs, with NO tolerance
+ * (contrast --codegen's CODEGEN_EPSILON_DOUBLE == 1e-9 element-wise gate). It
+ * closes the two precision losses that make a %.15g cross-language comparison
+ * unable to see ~1e-10 FMA drift: (a) inputs are generated in-language from
+ * (shape,seed,n) — never
+ * serialized, so no JSON float-parse rounding; (b) outputs are compared by a
+ * full-precision FNV-1a hash of the raw bytes — never %.15g-serialized. Since
+ * PR #96 every backend fuses the identical a*b+c sites (shared detector in
+ * backends/fma.rs) and builds with -ffp-contract=off, so this gate is expected
+ * GREEN; any mismatch is a real fusion-site / codegen divergence to fix.
+ *
+ * The C library is linked IN-PROCESS in ta_regtest, so there is no JSON-RPC
+ * boundary on the C side and no precision to reconcile — it is the GOLDEN
+ * reference (exactly as --fuzz-064 uses the in-process current library). The
+ * seed+hash trick is applied only where a language actually crosses the
+ * JSON-RPC boundary: the Rust server today, the Java server after issue #114.
+ * Each such server is diffed BITWISE against the in-process C golden. There is
+ * NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there are ZERO
+ * tolerances, waivers, or #98/#107 carve-outs: every case is bitwise.
+ *
+ * .NET P/Invokes the C library (== C by construction) so it is not a distinct
+ * cross-language check. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
+ * ======================================================================== */
+
+typedef struct {
+    const char        *name;      /* "c", "rust" — matches --language= tokens */
+    const char        *display;   /* "C", "Rust"                              */
+    const char *const *argv;      /* server launch command                   */
+    CodegenPipe        cp;
+    int                open;      /* 1 once the subprocess is up              */
+    long long          cases;     /* cases compared against the golden        */
+    long long          mism;      /* real bitwise mismatches                  */
+    int                restarts;  /* recovered subprocess crashes             */
+} XlangServer;
+
+typedef struct {
+    const char  *functionFilter;
+    XlangServer *sv;
+    int          nsv;
+    char        *reqBuf;
+    char        *respBuf;
+    long long    comparisons;        /* golden cases evaluated                 */
+    long long    nonEmpty;           /* cases with a non-empty successful output
+                                      * (non-vacuity: an empty output hashes the
+                                      * same on both sides, so a healthy fraction
+                                      * must be non-empty for the gate to bite)   */
+    int          reportedThisFunc;
+    int          funcsWithFailures;
+    ErrorNumber  error;
+} XlangCtx;
+
+/* Parse a hex hash string field; *present=0 if the field is absent (which for a
+ * gen_present request means the server does not speak the out_hash protocol). */
+static unsigned long long xlang_parse_hash(const char *resp, const char *field, int *present)
+{
+    int len;
+    const char *h = json_find_field(resp, field, &len);
+    if( !h ) { if( present ) *present = 0; return 0; }
+    if( present ) *present = 1;
+    if( *h == '"' ) h++;
+    return strtoull(h, NULL, 16);
+}
+
+/* Send req to one server; reopen once if it died (a dead server that cannot be
+ * recovered marks itself closed so the run fails loudly — never a false green). */
+static int xlang_call(XlangServer *s, const char *req, char *resp)
+{
+    if( !s->open ) return 0;
+    if( codegen_pipe_call(&s->cp, req, resp, JSON_BUF_SIZE) == TA_TEST_PASS ) return 1;
+    s->restarts++;
+    codegen_pipe_close(&s->cp);
+    if( codegen_pipe_open(&s->cp, s->argv) != TA_TEST_PASS ) { s->open = 0; return 0; }
+    if( codegen_pipe_call(&s->cp, req, resp, JSON_BUF_SIZE) == TA_TEST_PASS ) return 1;
+    s->open = 0;
+    return 0;
+}
+
+/* Golden input hash: hash the seed-generated O,H,L,C,V,OI arrays in order —
+ * byte-identical to each server's fuzz_in_hash handler. */
+static unsigned long long xlang_in_hash_local(int shape, int seed, int n)
+{
+    fuzz_gen(shape, seed, n,
+             g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
+    unsigned long long h = fuzz_hash_init();
+    for( int a = 0; a < 6; a++ )
+        h = fuzz_hash_bytes(h, g_fzBuf[a], (unsigned long)n * sizeof(double));
+    return fuzz_hash_fin(h);
+}
+
+/* Phase 1: prove every server's ported fuzz_gen reproduces the C inputs exactly.
+ * A divergence here would surface below as an output mismatch, but reporting it
+ * as an INPUT mismatch isolates a generator-port bug from a real indicator bug.
+ * Returns the number of input-port mismatches (0 = all ports bit-identical). */
+static int xlang_selfcheck_inputs(XlangCtx *ctx)
+{
+    static const int sizes[] = {40, 120, 240};
+    static const int seeds[] = {1, 2, 3};
+    int fails = 0;
+    printf("Input-port self-check (fuzz_gen parity)...\n");
+    for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
+    for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
+    for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
+    {
+        int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
+        unsigned long long gold = xlang_in_hash_local(shape, seeds[si], n);
+        snprintf(ctx->reqBuf, JSON_BUF_SIZE,
+                 "{\"method\":\"fuzz_in_hash\",\"params\":{"
+                 "\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d}}", shape, seeds[si], n);
+        for( int s = 0; s < ctx->nsv; s++ )
+        {
+            XlangServer *sv = &ctx->sv[s];
+            if( !sv->open ) continue;
+            if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
+            {
+                printf("  INPUT PIPE FAIL [%s] shape=%d seed=%d n=%d\n",
+                       sv->display, shape, seeds[si], n);
+                fails++; ctx->error = TA_CODEGEN_PIPE_READ_FAILED; continue;
+            }
+            int present = 0;
+            unsigned long long ih = xlang_parse_hash(ctx->respBuf, "in_hash", &present);
+            if( !present )
+            {
+                printf("  INPUT PROTOCOL MISSING [%s]: no fuzz_in_hash support "
+                       "(server out of date?)\n", sv->display);
+                fails++; ctx->error = TA_CODEGEN_OUTPUT_MISMATCH; continue;
+            }
+            if( ih != gold )
+            {
+                printf("  INPUT PORT MISMATCH [%s] shape=%d seed=%d n=%d: "
+                       "server=%016llx golden=%016llx — the ported fuzz_gen "
+                       "diverges from fuzz_data.h (fix before trusting outputs)\n",
+                       sv->display, shape, seeds[si], n, ih, gold);
+                fails++;
+            }
+        }
+    }
+    if( !fails ) printf("  input-port parity: OK (all servers reproduce fuzz_gen bit-for-bit)\n");
+    return fails;
+}
+
+/* Per-function bitwise comparison: golden in-process C vs each server. */
+static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
+{
+    XlangCtx *ctx = (XlangCtx *)opaqueData;
+    unsigned int i;
+
+    if( ctx->error != TA_TEST_PASS ) return;
+    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+    if( funcInfo->nbOptInput > FUZZ_MAX_OPT ) return;
+
+    for( i = 0; i < funcInfo->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(funcInfo->handle, i, &ii);
+        if( ii->type == TA_Input_Integer ) return;   /* no test data */
+    }
+
+    TA_ParamHolder *paramHolder = NULL;
+    if( TA_ParamHolderAlloc(funcInfo->handle, &paramHolder) != TA_SUCCESS ) return;
+
+    TA_History hist;
+    memset(&hist, 0, sizeof(hist));
+    hist.open = g_fzBuf[0]; hist.high = g_fzBuf[1]; hist.low = g_fzBuf[2];
+    hist.close = g_fzBuf[3]; hist.volume = g_fzBuf[4]; hist.openInterest = g_fzBuf[5];
+
+    CodegenRangeTestParam p;
+    memset(&p, 0, sizeof(p));
+    p.funcInfo = funcInfo;
+    p.paramHolder = paramHolder;
+    p.history = &hist;
+    setup_inputs(paramHolder, funcInfo, &hist);
+    setup_outputs(&p);
+
+    double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
+    int vecOverflow = 0;
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow);
+    if( vecOverflow > 0 )
+    {
+        printf("XLANG VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped\n",
+               funcInfo->name, vecOverflow);
+        for( int s = 0; s < ctx->nsv; s++ ) ctx->sv[s].mism++;   /* fail the run */
+        ctx->funcsWithFailures++;
+        free_outputs(&p);
+        TA_ParamHolderFree(paramHolder);
+        return;
+    }
+
+    static const int sizes[] = {40, 120, 240};
+    static const int seeds[] = {1, 2, 3};
+    ctx->reportedThisFunc = 0;
+    long long mismBefore = 0;
+    for( int s = 0; s < ctx->nsv; s++ ) mismBefore += ctx->sv[s].mism;
+
+    for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
+    for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
+    for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
+    {
+        int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
+        fuzz_gen(shape, seeds[si], n,
+                 g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
+        hist.nbBars = (unsigned int)n;
+        p.nbBars = n;
+
+        for( int k = 0; k < nvec; k++ )
+        {
+            for( i = 0; i < funcInfo->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+            {
+                const TA_OptInputParameterInfo *oi;
+                TA_GetOptInputParameterInfo(funcInfo->handle, i, &oi);
+                if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+                    TA_SetOptInputParamReal(paramHolder, i, vec[k][i]);
+                else
+                    TA_SetOptInputParamInteger(paramHolder, i, (int)vec[k][i]);
+            }
+
+            /* subranges: full + two deterministic random windows (as --fuzz-064) */
+            unsigned long long rs = 0xF0F0ULL ^ ((unsigned long long)shape<<8)
+                                    ^ ((unsigned long long)seeds[si]<<16) ^ ((unsigned long long)k<<24);
+            int ranges[3][2];
+            ranges[0][0] = 0; ranges[0][1] = n - 1;
+            for( int rr = 1; rr < 3; rr++ )
+            {
+                int rsS = (int)(fuzz_sm_unit(&rs) * n);
+                int rsE = rsS + (int)(fuzz_sm_unit(&rs) * (n - rsS));
+                if( rsS > n - 1 ) rsS = n - 1;
+                if( rsE > n - 1 ) rsE = n - 1;
+                if( rsE < rsS ) rsE = rsS;
+                ranges[rr][0] = rsS; ranges[rr][1] = rsE;
+            }
+
+            for( int ri = 0; ri < 3; ri++ )
+            {
+                int s = ranges[ri][0], e = ranges[ri][1];
+                TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+
+                TA_Integer curBeg = 0, curNb = 0;
+                for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
+                {
+                    if( p.outputIsInteger[o] )
+                        TA_SetOutputParamIntegerPtr(paramHolder, o, p.outIntBufs[o]);
+                    else
+                        TA_SetOutputParamRealPtr(paramHolder, o, p.outRealBufs[o]);
+                }
+                TA_RetCode curRc = TA_CallFunc(paramHolder, s, e, &curBeg, &curNb);
+                unsigned long long curHash =
+                    fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
+                if( curRc == TA_SUCCESS && curNb > 0 ) ctx->nonEmpty++;
+
+                fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
+                ctx->comparisons++;
+
+                for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
+                {
+                    XlangServer *sv = &ctx->sv[sIdx];
+                    if( !sv->open ) continue;
+                    if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
+                    {
+                        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+                        sv->mism++;
+                        continue;
+                    }
+                    int present = 0;
+                    int refRc  = json_get_int(ctx->respBuf, "retCode");
+                    int refBeg = json_get_int(ctx->respBuf, "outBegIdx");
+                    int refNb  = json_get_int(ctx->respBuf, "outNBElement");
+                    unsigned long long refHash = xlang_parse_hash(ctx->respBuf, "out_hash", &present);
+
+                    sv->cases++;
+                    int bad = 0;
+                    if( !present )
+                    {
+                        printf("  XLANG PROTOCOL MISSING [%s] TA_%s: response has no out_hash "
+                               "(server lacks gen_present support?)\n", sv->display, funcInfo->name);
+                        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                        bad = 1;
+                    }
+                    else if( (int)curRc != refRc ) bad = 1;
+                    else if( curRc == TA_SUCCESS &&
+                             (curBeg != refBeg || curNb != refNb || curHash != refHash) ) bad = 1;
+
+                    if( bad )
+                    {
+                        sv->mism++;
+                        if( ctx->reportedThisFunc < 3 )
+                        {
+                            ctx->reportedThisFunc++;
+                            printf("  XLANG MISMATCH TA_%s  C(golden) vs %s  "
+                                   "shape=%d seed=%d n=%d range=[%d,%d]  params:",
+                                   funcInfo->name, sv->display, shape, seeds[si], n, s, e);
+                            for( unsigned int q = 0; q < funcInfo->nbOptInput; q++ )
+                            {
+                                const TA_OptInputParameterInfo *oi;
+                                TA_GetOptInputParameterInfo(funcInfo->handle, q, &oi);
+                                printf(" %s=%.15g", oi->paramName, vec[k][q]);
+                            }
+                            printf("\n    retCode %d/%d  begIdx %d/%d  nbElem %d/%d  "
+                                   "hash %016llx/%016llx (golden/%s)\n",
+                                   (int)curRc, refRc, curBeg, refBeg, curNb, refNb,
+                                   curHash, refHash, sv->display);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    long long mismAfter = 0;
+    for( int s = 0; s < ctx->nsv; s++ ) mismAfter += ctx->sv[s].mism;
+    if( mismAfter > mismBefore ) ctx->funcsWithFailures++;
+
+    free_outputs(&p);
+    TA_ParamHolderFree(paramHolder);
+}
+
+ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
+{
+    printf("\n=============================================\n");
+    printf("Cross-language BITWISE parity gate (--xlang-hash)\n");
+    printf("=============================================\n");
+
+    /* Protocol-capable servers (they answer abstract_call+gen_present with
+     * out_hash and fuzz_in_hash), each diffed against the in-process C golden.
+     * C is the golden, not a server row. Java joins after issue #114. */
+    static XlangServer servers[] = {
+        {"rust", "Rust", argv_rust, {0,0,0}, 0, 0, 0, 0},
+    };
+    int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
+
+    XlangCtx ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.functionFilter = functionFilter;
+    ctx.sv = servers;
+    ctx.nsv = nsv;
+    ctx.reqBuf = malloc(JSON_BUF_SIZE);
+    ctx.respBuf = malloc(JSON_BUF_SIZE);
+    ctx.error = TA_TEST_PASS;
+    if( !ctx.reqBuf || !ctx.respBuf )
+    { free(ctx.reqBuf); free(ctx.respBuf); return TA_CODEGEN_ALLOC_FAILED; }
+
+    int nopen = 0, nrequested = 0;
+    for( int s = 0; s < nsv; s++ )
+    {
+        XlangServer *sv = &servers[s];
+        if( languageFilter && !language_matches_filter(languageFilter, sv->name) )
+        { sv->open = 0; continue; }
+        nrequested++;
+        if( codegen_pipe_open(&sv->cp, sv->argv) == TA_TEST_PASS )
+        { sv->open = 1; nopen++; printf("server up: %-4s (pid=%d)\n", sv->display, sv->cp.child_pid); }
+        else
+        {
+            printf("FAILED to start %s server (%s). Build the servers first "
+                   "(scripts/build.py servers / xlang-hash).\n", sv->display, sv->argv[0]);
+            sv->open = 0;
+            ctx.error = TA_CODEGEN_ALLOC_FAILED;
+        }
+    }
+    printf("\n");
+
+    if( nrequested == 0 )
+    {
+        printf("FAIL — no protocol-capable server matched --language=%s "
+               "(valid: rust; C is the in-process golden, java pending #114).\n",
+               languageFilter ? languageFilter : "");
+        free(ctx.reqBuf); free(ctx.respBuf);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+
+    int inFails = 0;
+    if( ctx.error == TA_TEST_PASS )
+        inFails = xlang_selfcheck_inputs(&ctx);
+
+    if( inFails == 0 && ctx.error == TA_TEST_PASS )
+    {
+        printf("\nOutput bitwise gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
+               161);
+        TA_ForEachFunc(xlang_one_function, &ctx);
+    }
+    else if( inFails > 0 )
+        printf("\nSkipping the output gate: %d input-port mismatch(es) make output "
+               "hashes meaningless — fix the ported fuzz_gen first.\n", inFails);
+
+    for( int s = 0; s < nsv; s++ )
+        if( servers[s].open ) codegen_pipe_close(&servers[s].cp);
+
+    long long totalMism = 0, totalCases = 0, totalRestarts = 0;
+    printf("\n---------------------------------------------\n");
+    printf("golden cases: %lld   (in-process C library; %lld with non-empty output = %.0f%% non-vacuous)\n",
+           ctx.comparisons, ctx.nonEmpty,
+           ctx.comparisons ? 100.0 * (double)ctx.nonEmpty / (double)ctx.comparisons : 0.0);
+    for( int s = 0; s < nsv; s++ )
+    {
+        if( servers[s].cases == 0 && !servers[s].open && !languageFilter ) continue;
+        if( servers[s].cases == 0 && languageFilter
+            && !language_matches_filter(languageFilter, servers[s].name) ) continue;
+        printf("%-4s: %lld cases, %lld bitwise mismatch(es)%s\n",
+               servers[s].display, servers[s].cases, servers[s].mism,
+               servers[s].restarts ? " (server restarted)" : "");
+        totalMism += servers[s].mism;
+        totalCases += servers[s].cases;
+        totalRestarts += servers[s].restarts;
+    }
+
+    free(ctx.reqBuf); free(ctx.respBuf);
+
+    if( totalCases == 0 && inFails == 0 )
+    {
+        printf("FAIL — zero comparisons (over-narrow filter or servers down?).\n");
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    /* Non-vacuity: an empty output (outNBElement==0) hashes identically on both
+     * sides, so a run where NOTHING produced output would pass vacuously. Fail if
+     * so — the seed shapes/sizes are chosen to always yield real output. */
+    if( ctx.comparisons > 0 && ctx.nonEmpty == 0 )
+    {
+        printf("FAIL — VACUOUS: every golden case had empty output; the gate would "
+               "match all-empty==all-empty. Check the fuzz sizes/params.\n");
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
+    {
+        printf("PASS — every server is BIT-IDENTICAL to the in-process C library "
+               "(no tolerance; current-vs-current, all shapes, period>=2).\n");
+        return TA_TEST_PASS;
+    }
+    printf("FAIL — %lld bitwise mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
+           totalMism, inFails, ctx.funcsWithFailures);
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }
 

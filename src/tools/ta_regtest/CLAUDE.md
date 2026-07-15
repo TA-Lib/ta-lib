@@ -258,3 +258,61 @@ Scope rules (deliberate):
   `sum > 0` bar stays bit-identical. Reported as a `manifest-tolerated:` line.
 - The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one
   bad case can't sink the run.
+
+## `--xlang-hash` — cross-language BITWISE parity gate (issue #113)
+
+An opt-in mode (`ta_regtest --xlang-hash`) that proves each **generated language
+server** computes **bit-identical** outputs to the **shipped in-process C
+library** on seed-generated inputs, with **zero tolerance**. It is the strong
+form of the cross-language `--codegen` check, which can only compare at `1e-6`
+(`CODEGEN_EPSILON`) because its inputs/outputs cross the JSON-RPC boundary as
+lossy `%.15g`. `--xlang-hash` routes around that boundary the same way
+`--fuzz-064` does — inputs are generated *in each language* from `(shape,seed,n)`
+(never serialized) and outputs are compared by a full-precision FNV hash — so a
+~1e-10 FMA-fusion-site divergence that `1e-6` cannot see becomes a hard failure.
+
+Build + run everything with `scripts/build.py xlang-hash`. Both CI nightlies
+(dev + main) run it as a gate (`xlang-hash` job). Needs only cmake + gcc + cargo
+(the Rust server) — **not** the JDK or .NET SDK.
+
+Architecture (see `fuzz_data.h`, the Rust port in
+`ta_codegen/generator/templates/rust/fuzz.rs`, and `xlang_hash` in
+`test_codegen.c`):
+- **Golden = the in-process C library.** The C library is linked into
+  `ta_regtest`, so there is no JSON-RPC boundary on the C side — it is called
+  directly (`TA_CallFunc`) and its raw output hashed (`fuzz_hash_local`), exactly
+  as `--fuzz-064` treats the current library. The seed+hash trick is applied only
+  where a language actually crosses the boundary: the **Rust server** today, the
+  **Java server after issue #114** (its server lacks the `abstract_call`
+  interface). **.NET** P/Invokes the C library (== C by construction) and is not a
+  distinct check.
+- **Server protocol.** A request with `"gen_present":1` +
+  `(gen_shape,gen_seed,gen_n)` makes the server generate the OHLCV inputs from its
+  own bit-exact `fuzz_gen` port (mapping price inputs to O/H/L/C/V/OI and generic
+  reals to real0=close, real1=volume — matching the driver), run the **guarded**
+  function, and return `"out_hash"` (a full-precision FNV digest of the raw output
+  bytes) instead of the arrays. The digest is taken of the guarded call —
+  like-for-like with the golden's `TA_CallFunc` — before the unguarded timing
+  loop runs.
+- **Input-port self-check.** Before the output gate, a `fuzz_in_hash` RPC on each
+  server hashes its generated OHLCV inputs; the driver compares against its own
+  in-process generation. A divergence is reported as an INPUT mismatch, isolating
+  a `fuzz_gen`-port bug from a real indicator-output bug. The Rust port is unit-
+  verified byte-for-byte against `fuzz_data.h`.
+- **Coverage:** all 161 functions × 9 shapes × 3 seeds × 3 sizes × parameter
+  vectors × 3 subranges ≈ 182k comparisons, ~94% with non-empty output (a
+  non-vacuity guard fails the run if nothing produced output — an empty output
+  hashes the same on both sides).
+
+Scope rules (deliberate):
+- **No 0.6.4, no tolerance, no waivers.** This is current-vs-current across
+  languages, so — unlike `--fuzz-064` — there are ZERO tolerances and none of the
+  `#98`/`#107`/FMA-transition carve-outs. Every case is bitwise. A mismatch is a
+  real fusion-site / codegen divergence to fix.
+- **period == 1 is in scope** (no 0.6.4 to trip on it), though the shared
+  `fuzz_build_vectors` currently floors periods at 2; period-1 parity is also
+  covered by the `--codegen` edge sweeps.
+- Why this is expected GREEN (PR #96): every backend fuses the identical `a*b+c`
+  sites via the shared `backends/fma.rs` detector and builds with
+  `-ffp-contract=off`, and `fma`/`mul_add` are IEEE correctly-rounded → bit-
+  identical for equal operands.

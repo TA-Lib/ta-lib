@@ -337,6 +337,33 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
+  # Cross-language BITWISE parity gate (issue #113): the generated language
+  # servers must compute BIT-IDENTICAL outputs to the shipped in-process C
+  # library on seed-generated inputs (no tolerance — the seed+hash design routes
+  # around the JSON-RPC float-serialization limit that forces --codegen's 1e-6).
+  # Rust today; Java joins after #114. cmake+gcc+cargo are preinstalled on
+  # ubuntu-latest (no JDK/.NET needed — only the Rust server is driven).
+  xlang-hash:
+    name: Cross-language bitwise parity (C vs Rust)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Bitwise-diff each language server vs the in-process C library
+        shell: bash
+        run: python3 scripts/build.py xlang-hash
+
   # musllinux build gate (PR #96): regression guard that the library still BUILDS
   # on musl with FMA dispatch excluded. target_clones/ifunc is glibc-only (musl has
   # no ifunc; a guard wrongly widened to __linux__ would fail the compile here), so

@@ -20,4 +20,11 @@ ErrorNumber test_codegen(const TA_History *history,
  * (NULL = all). Returns TA_TEST_PASS iff there is no unwaived divergence. */
 ErrorNumber fuzz_ref064(const char *functionFilter);
 
+/* Cross-language BITWISE parity gate (--xlang-hash, issue #113). Diffs each
+ * protocol-capable language server (Rust today; Java after #114) against the
+ * shipped in-process C library on seed-generated inputs, comparing full-precision
+ * output hashes with NO tolerance. functionFilter/languageFilter: CSV filters
+ * (NULL = all). Returns TA_TEST_PASS iff every server is bit-identical to C. */
+ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter);
+
 #endif

@@ -91,6 +91,7 @@ static const char *functionFilter = NULL;
 static int doCodegenTest = 0;
 static int codegenOnly = 0;
 static int doFuzz064 = 0;
+static int doXlangHash = 0;
 static const char *codegenLanguageFilter = NULL;
 
 /**** Local declarations.              ****/
@@ -179,6 +180,10 @@ int main( int argc, char **argv )
          {
             doFuzz064 = 1;
          }
+         else if( strcmp(argv[i], "--xlang-hash") == 0 )
+         {
+            doXlangHash = 1;
+         }
          else if( strcmp(argv[i], "--no-guarded") == 0 )
          {
             extern int g_hideGuarded;
@@ -214,6 +219,23 @@ int main( int argc, char **argv )
       fuzzRet = fuzz_ref064( functionFilter );
       TA_Shutdown();
       return fuzzRet;
+   }
+
+   /* Opt-in cross-language BITWISE parity gate (issue #113). Self-contained:
+    * init the lib (the in-process C golden), run the gate, done. Must run from
+    * the bin/ directory so the language servers launch (like --fuzz-064). */
+   if( doXlangHash )
+   {
+      ErrorNumber xlangRet;
+      if( TA_Initialize() != TA_SUCCESS )
+      {
+         printf( "TA_Initialize failed\n" );
+         return TA_TESTUTIL_INIT_FAILED;
+      }
+      TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+      xlangRet = xlang_hash( functionFilter, codegenLanguageFilter );
+      TA_Shutdown();
+      return xlangRet;
    }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
@@ -624,6 +646,13 @@ static void printUsage(void)
       printf( "\n" );
       printf( "       Requires language server binaries in the bin directory.\n" );
       printf( "       Build with: ta_codegen build\n" );
+      printf( "\n" );
+      printf( "    --xlang-hash\n" );
+      printf( "       Cross-language BITWISE parity gate (issue #113): diff each\n" );
+      printf( "       language server against the in-process C library on\n" );
+      printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
+      printf( "       with no tolerance. Honors --function and --language (rust today).\n" );
+      printf( "       Run from the bin directory (needs the language servers).\n" );
       printf( "\n" );
       printf( "   On success, the exit code is 0.\n" );
       printf( "   On failure, the exit code is a number that can be\n" );

@@ -2689,6 +2689,13 @@ fn format_default_f64(v: f64) -> String {
 /// implementations, and writes JSON responses to stdout.
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::implicit_hasher)]
+/// Bit-exact Rust port of `src/tools/ta_regtest/fuzz_data.h` (seed-based OHLCV
+/// generator + FNV output hasher), embedded verbatim into the Rust server to
+/// power the cross-language bitwise-parity gate (`--xlang-hash`, issue #113).
+/// Verified byte-for-byte against the C generator. Kept as a standalone template
+/// file so it reads/reviews as normal Rust rather than an escaped string blob.
+const RUST_FUZZ: &str = include_str!("../templates/rust/fuzz.rs");
+
 pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
@@ -2704,6 +2711,15 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use std::time::Instant;\n");
     s.push_str("use ta_lib::{Core, RetCode, FuncUnstId, Compatibility};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptDomain};\n\n");
+
+    // Seed-based fuzz input generator + FNV output hasher — a bit-exact port of
+    // src/tools/ta_regtest/fuzz_data.h. Powers the cross-language bitwise-parity
+    // gate (--xlang-hash, issue #113): the server regenerates the driver's seed
+    // inputs in-process (no JSON float parse) and returns a full-precision hash
+    // of its raw outputs (no %.15g rounding), so ~1e-10 FMA drift cannot hide.
+    s.push_str("// ---- fuzz_data.h port (issue #113 --xlang-hash) ----\n");
+    s.push_str(RUST_FUZZ);
+    s.push_str("\n// ---- end fuzz_data.h port ----\n\n");
 
     // Pre-loaded reference data struct
     s.push_str("const MAX_ARRAY_SIZE: usize = 200000;\n\n");
@@ -2873,6 +2889,13 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         s.push_str("            let use_preloaded = params[\"use_preloaded\"].as_i64().unwrap_or(0);\n");
         s.push_str("            let bench_iters = std::cmp::max(1, params[\"iters\"].as_i64().unwrap_or(1)) as u64;\n");
+        // --xlang-hash (issue #113): seed-based input generation + out_hash. Absent
+        // (0) for the normal per-function / preloaded paths.
+        s.push_str("            let gen_present = params[\"gen_present\"].as_i64().unwrap_or(0);\n");
+        s.push_str("            let gen_shape = params[\"gen_shape\"].as_i64().unwrap_or(0) as i32;\n");
+        s.push_str("            let gen_seed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
+        s.push_str("            let gen_n = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
+        s.push_str("            let full_output = params[\"full_output\"].as_i64().unwrap_or(0);\n");
 
         // Declare input arrays: Vec for JSON fallback, &[f64] for actual reference.
         // Preloaded path borrows from ref_data (zero-copy), JSON path owns a Vec.
@@ -2887,8 +2910,39 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
         }
 
-        // Populate from preloaded or JSON
-        s.push_str("            if use_preloaded != 0 && ref_data.n > 0 {\n");
+        // Populate from seed-generated fuzz inputs (--xlang-hash), preloaded, or JSON.
+        // The fuzz convention mirrors the C driver: price components read their OHLCV
+        // series; generic real inputs read real0=close, real1=volume.
+        s.push_str("            if gen_present != 0 {\n");
+        s.push_str("                let mut _fz_o = vec![0.0f64; gen_n];\n");
+        s.push_str("                let mut _fz_h = vec![0.0f64; gen_n];\n");
+        s.push_str("                let mut _fz_l = vec![0.0f64; gen_n];\n");
+        s.push_str("                let mut _fz_c = vec![0.0f64; gen_n];\n");
+        s.push_str("                let mut _fz_v = vec![0.0f64; gen_n];\n");
+        s.push_str("                let mut _fz_oi = vec![0.0f64; gen_n];\n");
+        s.push_str("                fuzz_gen(gen_shape, gen_seed, gen_n as i32, &mut _fz_o, &mut _fz_h, &mut _fz_l, &mut _fz_c, &mut _fz_v, &mut _fz_oi);\n");
+        {
+            let mut fz_real_idx = 0usize;
+            for name in &input_names {
+                let src = match name.as_str() {
+                    "inOpen" => "_fz_o",
+                    "inHigh" => "_fz_h",
+                    "inLow" => "_fz_l",
+                    "inClose" => "_fz_c",
+                    "inVolume" => "_fz_v",
+                    "inOpenInterest" => "_fz_oi",
+                    _ => {
+                        // generic real: real0=close, real1=volume (matches the C driver)
+                        let a = if fz_real_idx == 1 { "_fz_v" } else { "_fz_c" };
+                        fz_real_idx += 1;
+                        a
+                    }
+                };
+                s.push_str(&format!("                _json_{name} = {src}.clone();\n"));
+                s.push_str(&format!("                {name} = &_json_{name};\n"));
+            }
+        }
+        s.push_str("            } else if use_preloaded != 0 && ref_data.n > 0 {\n");
         for (j, name) in input_names.iter().enumerate() {
             let ref_field = if let Some(f) = price_input_to_rust_ref(name) {
                 f.to_string()
@@ -2995,6 +3049,39 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            );\n");
         s.push_str("            }\n"); // end guarded bench loop
         s.push_str("            let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;\n");
+
+        // [fuzz] out_hash mode (--xlang-hash, issue #113): after the GUARDED call —
+        // the public API the C golden's TA_CallFunc also runs — return a
+        // full-precision FNV digest of the raw outputs instead of the arrays, so a
+        // ~1e-10 cross-language divergence cannot be blurred by %.15g. Returns HERE,
+        // deliberately BEFORE the unguarded timing loop, so the digest is of the
+        // guarded output (like-for-like with the C golden) — not the unguarded
+        // rerun. full_output suppresses it (arrays to pinpoint a divergence).
+        // Hashes outputs in logical order; nothing unless the call succeeded.
+        s.push_str("            if gen_present != 0 && full_output == 0 {\n");
+        s.push_str("                let mut _oh = fuzz_hash_init();\n");
+        s.push_str("                if matches!(rc, RetCode::Success) && outNBElement > 0 {\n");
+        {
+            let mut r2 = 0usize;
+            let mut i2 = 0usize;
+            for out in outputs {
+                if out.param_type == ParamType::Integer {
+                    s.push_str(&format!(
+                        "                    _oh = fuzz_hash_bytes_i32(_oh, &outIntBuf{i2}[..outNBElement]);\n"
+                    ));
+                    i2 += 1;
+                } else {
+                    s.push_str(&format!(
+                        "                    _oh = fuzz_hash_bytes_f64(_oh, &outBuf{r2}[..outNBElement]);\n"
+                    ));
+                    r2 += 1;
+                }
+            }
+        }
+        s.push_str("                }\n");
+        s.push_str("                _oh = fuzz_hash_fin(_oh);\n");
+        s.push_str("                return format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"out_hash\\\":\\\"{:016x}\\\"}}\", retcode_to_int(rc), outBegIdx, outNBElement, _oh);\n");
+        s.push_str("            }\n");
 
         // Unguarded timing loop (same signature as guarded, no extra params)
         s.push_str("            let start_time_ung = Instant::now();\n");
@@ -3141,6 +3228,24 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                i32::from(r)\n");
     s.push_str("            }).collect();\n");
     s.push_str("            format!(\"{{\\\"outInteger\\\":{}}}\", json_i32_array(&out))\n");
+    s.push_str("        }\n");
+
+    // fuzz_in_hash — cross-language input-port self-check (--xlang-hash, issue #113).
+    // Generates the OHLCV+OI inputs from (gen_shape,gen_seed,gen_n) and returns a
+    // 64-bit FNV digest of the six raw arrays in O,H,L,C,V,OI order, byte-identical
+    // to the C driver's in-process generation — so a ported-fuzz_gen divergence is
+    // caught as an INPUT mismatch, isolated from any indicator-output divergence.
+    s.push_str("        \"fuzz_in_hash\" => {\n");
+    s.push_str("            let shape = params[\"gen_shape\"].as_i64().unwrap_or(0) as i32;\n");
+    s.push_str("            let seed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
+    s.push_str("            let n = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
+    s.push_str("            let mut fo = vec![0.0f64; n]; let mut fh = vec![0.0f64; n]; let mut fl = vec![0.0f64; n];\n");
+    s.push_str("            let mut fc = vec![0.0f64; n]; let mut fv = vec![0.0f64; n]; let mut foi = vec![0.0f64; n];\n");
+    s.push_str("            fuzz_gen(shape, seed, n as i32, &mut fo, &mut fh, &mut fl, &mut fc, &mut fv, &mut foi);\n");
+    s.push_str("            let mut h = fuzz_hash_init();\n");
+    s.push_str("            for arr in [&fo, &fh, &fl, &fc, &fv, &foi] { h = fuzz_hash_bytes_f64(h, arr); }\n");
+    s.push_str("            h = fuzz_hash_fin(h);\n");
+    s.push_str("            format!(\"{{\\\"in_hash\\\":\\\"{:016x}\\\"}}\", h)\n");
     s.push_str("        }\n");
 
     // Abstract/introspection metadata handlers (mirror ta_abstract_serve.c),
