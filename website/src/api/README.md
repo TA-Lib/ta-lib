@@ -25,7 +25,13 @@ toc: false
 
 <h2 id="intro">1.0 Introduction</h2>
 
-<p>This covers the <b>Core API</b>: the batch (array-processing) functions that compute an indicator over a whole range of data at once, plus the <a href="#abstract">abstraction layer</a> for calling them dynamically.</p>
+<p>The <b>Core API</b> provides:</p>
+<ul>
+  <li>Initialize/Shutdown of the library (TA_Initialize / TA_Shutdown).</li>
+  <li>Setting global variables (e.g. TA_SetUnstablePeriod, TA_SetCompatibility, TA_SetCandleSettings).</li>
+  <li>Each <a href="#ta_func">TA function</a> for processing a whole array of data at once.</li>
+  <li>An <a href="#abstract">abstraction layer</a> for calling these functions dynamically.</li>
+</ul>
 <p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile with your program.</p>
 
