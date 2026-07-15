@@ -34,7 +34,7 @@ The people behind some of TA-Lib's major features.
 | **Paweł Konieczny** | Early contributor to `ta_regtest`, the build system and the now-defunct `ta_data` feature. |
 | **Alexander Trufanov** — [@trufanov-nok](https://github.com/trufanov-nok) | Numerical-robustness improvements and streaming-API inspiration. |
 
-### Language wrappers
+### Language wrappers {#wrappers}
 
 TA-Lib reaches many languages thanks to the maintainers of these wrappers:
 
