@@ -47,13 +47,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MW       Michael Williamson
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  122006 MW   Initial Version
+ *  122006 MW    Initial Version
+ *  071626 MF,CC Fix reversed inReal0/inReal1 roles in the algorithm
+ *               description: inReal0 holds the index prices and inReal1
+ *               the stock prices (SourceForge bug 98).
  */
 
 TA_LIB_API int TA_BETA_Lookback( int optInTimePeriod )
@@ -129,8 +133,8 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
    /* the 'x' value, which is the last change between values in inReal0 */
    /* the 'y' value, which is the last change between values in inReal1 */
    /* DESCRIPTION OF ALGORITHM:
-    *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The stock prices
-    *   are given in inReal0 and the index prices are give in inReal1. The size of these vectors
+    *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The index prices
+    *   are given in inReal0 and the stock prices are given in inReal1. The size of these vectors
     *   should be equal. The algorithm is to calculate the change between prices in both vectors
     *   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
     *   is market return and the y value is the security return. The beta value is the slope of a
@@ -859,8 +863,8 @@ TA_RetCode TA_BETA_OpenInternal( struct TA_BETA_Stream **stream, const double in
       int trailingIdx;
       int nbInitialElementNeeded;
       /* DESCRIPTION OF ALGORITHM:
-       *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The stock prices
-       *   are given in inReal0 and the index prices are give in inReal1. The size of these vectors
+       *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The index prices
+       *   are given in inReal0 and the stock prices are given in inReal1. The size of these vectors
        *   should be equal. The algorithm is to calculate the change between prices in both vectors
        *   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
        *   is market return and the y value is the security return. The beta value is the slope of a
