@@ -24,6 +24,8 @@ Both CMake and autotools build systems are included, enabling an optimized build
     - [Debian packages](#linux-debian-packages)
     - [Build from source](#linux-build-from-source)
 
+- [vcpkg](#vcpkg)
+
 - [GitHub Actions](#github-actions)
 
 
@@ -160,6 +162,27 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
     ```bash
     sudo make uninstall
     ```
+
+
+## vcpkg
+
+TA-Lib is available as the [`talib`](https://vcpkg.io/en/package/talib) port in
+[vcpkg](https://vcpkg.io/), Microsoft's cross-platform C/C++ package manager
+(Windows, Linux and macOS).
+
+Classic mode:
+```bash
+vcpkg install talib
+```
+
+Manifest mode (add it to your project's `vcpkg.json`):
+```bash
+vcpkg add port talib
+```
+
+The port is updated with each release. See the
+[vcpkg documentation](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
+for one-time setup and CMake/MSBuild integration.
 
 
 ## GitHub Actions
