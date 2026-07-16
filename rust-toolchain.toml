@@ -1,0 +1,13 @@
+# Pin the Rust toolchain so `cargo clippy`/`cargo build`/`cargo test` behave
+# identically for every developer and in CI — rustup honours this file in both
+# places (ubuntu-latest's preinstalled rustup auto-installs the pinned version on
+# first use). Before this pin, local and CI each used their own ambient `stable`,
+# so `clippy::pedantic` heuristics (e.g. `similar_names`) fired differently and
+# the nightly clippy gate could go red on a runner-image bump with no code change.
+#
+# Pin a specific NUMBER, not "stable" — "stable" still floats to the latest
+# release. Bump this deliberately (and re-run `cargo clippy` on both crates) when
+# adopting a newer toolchain.
+[toolchain]
+channel = "1.97.0"
+components = ["clippy", "rustfmt"]
