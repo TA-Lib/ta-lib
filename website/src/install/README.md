@@ -9,7 +9,7 @@ Instructions for installing the shared/static libraries and headers on your syst
 
 Latest release is [0.7.1 on Github](https://github.com/ta-lib/ta-lib/releases/latest)
 
-For python and Rusers, see instead [ta-lib-python](https://github.com/TA-Lib/ta-lib-python) or [ta-lib-R](https://github.com/serkor1/ta-lib-R)
+Both CMake and autotools build systems are included, enabling an optimized build from source on most platforms.
 
 - [Windows](#windows)
     - [Executable Installer (recommended)](#executable-installer-recommended)
