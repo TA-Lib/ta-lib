@@ -40,7 +40,7 @@ Both CMake and autotools build systems are included, enabling an optimized build
 
     To update, just repeat the installation (older version is automatically uninstalled).
 
-    If you choose to uninstall, us the [Add/Remove Apps](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98) in windows settings.
+    If you choose to uninstall, use the [Add/Remove Apps](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98) in windows settings.
 
  If you prefer a non-interactive installation, you can use msiexec [from the command line](https://learn.microsoft.com/en-us/windows/win32/msi/standard-installer-command-line-options).
 
@@ -57,7 +57,7 @@ Use the .zip packages when you prefer to get the libraries without installing (e
 
 ### Windows Build from Source
 
-Install VSCode 2022 community and do:
+Install Visual Studio 2022 Community and do:
 ```cmd
 C:\ta-lib> "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 C:\ta-lib> mkdir build
@@ -65,7 +65,7 @@ C:\ta-lib> cd build
 C:\ta-lib\build> cmake ..
 C:\ta-lib\build> cmake --build .
 ```
-You might need to adjust the `vcvarsall.bat` command depending on your VSCode installation and platform.
+You might need to adjust the `vcvarsall.bat` command depending on your Visual Studio installation and platform.
 
 
 ## macOS
@@ -149,7 +149,10 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
    ./configure
    make
    sudo make install
+   sudo ldconfig     # refresh the shared-library cache so the linker finds libta-lib.so
    ```
+
+    If you cloned the repository instead of downloading the tarball, the `configure` script is not included; generate it first with `./autogen.sh` (requires the `autoconf`, `automake` and `libtool` packages).
 
     Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
 
