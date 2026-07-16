@@ -115,8 +115,6 @@ def show_help():
                         in-process C library (Rust via seed inputs, Java via
                         lossless hex inputs) with no tolerance (except Java's
                         transcendental calls: fdlibm != libm). Needs the JDK.
-    talib-rs-server     Build the third-party talib-rs benchmark server (opt-in;
-                        then: ta_bench --language=cref,c,talib_rs --function=...)
 
   Other:
     clean               Remove cmake-build/ and cmake-build-asan/
@@ -143,22 +141,6 @@ def build_servers(root_dir: str):
     """Generate the JSON-RPC language servers and compile them (cargo)."""
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers')
     run_codegen(root_dir, 'run', '--release', '--', 'build')
-
-def build_talib_rs_server(root_dir: str):
-    """Build the third-party talib-rs benchmark server (cargo, opt-in).
-
-    Wraps the crates.io `talib-rs` crate in the ta_codegen JSON-RPC protocol so
-    `ta_bench --language=...,talib_rs` can benchmark it alongside the TA-Lib
-    language servers. Never built by default — it downloads a third-party
-    crate.
-    """
-    crate_dir = os.path.join(root_dir, "ta_codegen", "output", "rust", "tools", "talib_rs_serve")
-    subprocess.run(['cargo', 'build', '--release'], check=True, cwd=crate_dir)
-    shutil.copy2(
-        os.path.join(crate_dir, "target", "release", "talib_rs_serve"),
-        os.path.join(root_dir, "bin", "ta_talib_rs_serve"),
-    )
-    print("  talib-rs comparison server -> bin/ta_talib_rs_serve")
 
 def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
     """Opt-in bit-exact differential fuzz of the current library vs the frozen
@@ -280,8 +262,7 @@ def check_regtest_source_lists(root_dir: str) -> bool:
     return True
 
 # Rust targets run cargo directly (no CMake).
-CARGO_TARGETS = {'ta_codegen', 'generate', 'servers', 'format', 'format-check',
-                 'talib-rs-server'}
+CARGO_TARGETS = {'ta_codegen', 'generate', 'servers', 'format', 'format-check'}
 
 # C targets map to a cmake target.
 SIMPLE_TARGETS = {
@@ -300,7 +281,6 @@ TARGET_PREREQS = {
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
     'servers':      PREREQS_BUILD_SERVERS,
-    'talib-rs-server': PREREQS_BUILD_CODEGEN,
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
     'regtest-only': PREREQS_BUILD_SERVERS,
@@ -374,8 +354,6 @@ def main():
             run_codegen(root_dir, 'run', '--release', '--', 'format')
         elif args.target == 'format-check':
             run_codegen(root_dir, 'run', '--release', '--', 'format', '--check')
-        elif args.target == 'talib-rs-server':
-            build_talib_rs_server(root_dir)
         else:  # servers
             build_servers(root_dir)
         return

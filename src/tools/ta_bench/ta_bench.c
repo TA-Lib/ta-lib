@@ -131,8 +131,8 @@ typedef struct {
     const char *const *argv;
     CodegenPipe cp;
     int active;
-    int optional;   /* 1 = only run when named in --language (third-party
-                       comparison servers, e.g. talib_rs) */
+    int optional;   /* 1 = only run when explicitly named in --language
+                       (e.g. an opt-in third-party comparison server) */
 } BenchLanguage;
 
 static const char *const argv_cref[]   = {"./ta_ref_serve", NULL};
@@ -140,8 +140,6 @@ static const char *const argv_c[]      = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_rust[]   = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_java[]   = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
 static const char *const argv_dotnet[] = {"dotnet", "ta_codegen_dotnet/TaCodegenServe.dll", NULL};
-/* Third-party comparison server (pure-Rust talib-rs crate, opt-in only). */
-static const char *const argv_talib_rs[] = {"./ta_talib_rs_serve", NULL};
 
 static BenchLanguage LANGUAGES[] = {
     {"cref",     "C-ref",    argv_cref,     {0}, 0, 0},
@@ -149,7 +147,6 @@ static BenchLanguage LANGUAGES[] = {
     {"rust",     "Rust",     argv_rust,     {0}, 0, 0},
     {"java",     "Java",     argv_java,     {0}, 0, 0},
     {"dotnet",   ".NET",     argv_dotnet,   {0}, 0, 0},
-    {"talib_rs", "talib-rs", argv_talib_rs, {0}, 0, 1},
 };
 #define NUM_LANGUAGES (sizeof(LANGUAGES)/sizeof(LANGUAGES[0]))
 
