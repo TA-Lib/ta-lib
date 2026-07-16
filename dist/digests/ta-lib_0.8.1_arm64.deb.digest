@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib_0.8.1_arm64.deb",
-    "sources_digest": "cb768baf7f295dcd1f032fff46151300",
+    "sources_digest": "402a116d52900968c825c8e4e852b4b5",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_md5": "ecab04b14d41e3d50754506197f01b8b",
+    "package_md5": "6af6fb021eaa67bc22bf5308f581a166",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
