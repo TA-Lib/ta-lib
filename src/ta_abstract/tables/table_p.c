@@ -91,6 +91,20 @@ DEF_FUNCTION( PLUS_DM,
 /* PLUS_DM END */
 
 /* PPO BEGIN */
+const TA_OptInputParameterInfo TA_DEF_UI_D_PPO_MAType =
+{
+   TA_OptInput_IntegerList,
+   "optInMAType",
+   0,
+
+   "MA Type",
+   (const void *)&TA_MA_TypeList,
+   1,
+   "Type of Moving Average",
+
+   NULL
+};
+
 static const TA_InputParameterInfo    *TA_PPO_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -106,7 +120,7 @@ static const TA_OutputParameterInfo   *TA_PPO_Outputs[]   =
 static const TA_OptInputParameterInfo *TA_PPO_OptInputs[] =
 { &TA_DEF_UI_Fast_Period,
   &TA_DEF_UI_Slow_Period,
-  &TA_DEF_UI_MA_Method,
+  &TA_DEF_UI_D_PPO_MAType,
   NULL
 };
 

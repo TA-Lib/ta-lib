@@ -553,7 +553,7 @@ public RetCode apo(
             )
             @IntegerList(
                     paramName    = "optInMAType",
-                    defaultValue = 0,
+                    defaultValue = 1,
                     value  = { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
                     string = { "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3" }
             )
@@ -7339,7 +7339,7 @@ public RetCode ppo(
             )
             @IntegerList(
                     paramName    = "optInMAType",
-                    defaultValue = 0,
+                    defaultValue = 1,
                     value  = { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
                     string = { "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3" }
             )

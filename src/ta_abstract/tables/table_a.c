@@ -256,6 +256,20 @@ DEF_FUNCTION( ADXR,
 /* ADXR END */
 
 /* APO BEGIN */
+const TA_OptInputParameterInfo TA_DEF_UI_D_APO_MAType =
+{
+   TA_OptInput_IntegerList,
+   "optInMAType",
+   0,
+
+   "MA Type",
+   (const void *)&TA_MA_TypeList,
+   1,
+   "Type of Moving Average",
+
+   NULL
+};
+
 static const TA_InputParameterInfo    *TA_APO_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -271,7 +285,7 @@ static const TA_OutputParameterInfo   *TA_APO_Outputs[]   =
 static const TA_OptInputParameterInfo *TA_APO_OptInputs[] =
 { &TA_DEF_UI_Fast_Period,
   &TA_DEF_UI_Slow_Period,
-  &TA_DEF_UI_MA_Method,
+  &TA_DEF_UI_D_APO_MAType,
   NULL
 };
 

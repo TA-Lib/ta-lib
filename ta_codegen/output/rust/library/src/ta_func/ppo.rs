@@ -76,7 +76,7 @@ impl Core {
     ///
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
-    /// * `optInMAType` — Moving average type used for both MAs (default 0 = SMA, values: 0=SMA,
+    /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
@@ -105,6 +105,8 @@ impl Core {
     ///
     /// ```text
     /// PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
+    ///
+    /// The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-day EMA) / 26-day EMA) * 100, i.e. the MACD oscillator expressed as a percentage. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
     /// ```
     ///
     /// # Arguments
@@ -114,7 +116,7 @@ impl Core {
     /// * `inReal` — Input data series.
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
-    /// * `optInMAType` — Moving average type used for both MAs (default 0 = SMA, values: 0=SMA,
+    /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
@@ -146,7 +148,7 @@ impl Core {
     /// let mut out = vec![0.0; 252];
     ///
     /// let ret = core.ppo(
-    ///     0, data.len() - 1, &data, 12, 26, 0,
+    ///     0, data.len() - 1, &data, 12, 26, 1,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
     /// assert_eq!(ret, RetCode::Success);

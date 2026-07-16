@@ -231,9 +231,14 @@ static int json_is_error(const char *json)
 /* ---- Unstable period lookup ---- */
 
 /* Map function name to TA_FuncUnstId for range-sweep tolerance selection.
- * Entries are the 22 functions that carry TA_FUNC_FLG_UNST_PER, plus the 6
- * EMA-derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX) that converge
- * like EMA. IMI and MFI are deliberately excluded (finite-window, stable).
+ * Entries are the 22 functions that carry TA_FUNC_FLG_UNST_PER, plus the 8
+ * EMA-derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX + APO/PPO) that
+ * converge like EMA. APO and PPO now default to EMA (issue #120), so their
+ * default-parameter range sweep is EMA-converging and needs the loose convergence
+ * envelope; the envelope is a safe superset for their finite-window (SMA/WMA/…)
+ * parameterisations too. (MACDEXT defaults to SMA but is in this list on the same
+ * safe-superset basis — it converges only when an optional MA type is set to EMA.)
+ * IMI and MFI are deliberately excluded (finite-window, stable).
  */
 typedef struct {
     const char   *name;
@@ -277,6 +282,9 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MACD",         TA_FUNC_UNST_EMA},
     {"MACDEXT",      TA_FUNC_UNST_EMA},
     {"MACDFIX",      TA_FUNC_UNST_EMA},
+    /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. */
+    {"APO",          TA_FUNC_UNST_EMA},
+    {"PPO",          TA_FUNC_UNST_EMA},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 
@@ -1105,10 +1113,13 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
      * only by ~1e-9 FP rounding across ranges. This is also the default for any
      * function not listed above, so the array need only carry MFI (issue #4) as a
      * documented archetype. Audited running-accumulator functions that rely on
-     * that default: ACCBANDS, APO, BBANDS, BETA, CCI, CORREL, MA, MAVP, PPO, SMA,
-     * STDDEV, STOCH, STOCHF, SUM, TRIMA, ULTOSC, VAR, WMA. MACDEXT stays
-     * CONVERGING (it is EPSILON only at the default SMA type, but carries the EMA
-     * unstable-period id for its EMA-type parameterisations). */
+     * that default: ACCBANDS, BBANDS, BETA, CCI, CORREL, MA, MAVP, SMA,
+     * STDDEV, STOCH, STOCHF, SUM, TRIMA, ULTOSC, VAR, WMA. MACDEXT — and now
+     * APO/PPO (issue #120) — stay CONVERGING: they are EPSILON at the SMA MA type
+     * but carry the EMA unstable-period id (via UNSTABLE_MAP), so the convergence
+     * envelope covers every MA-type sweep. APO/PPO default to EMA (their default
+     * sweep is genuinely converging); MACDEXT defaults to SMA and is listed on the
+     * safe-superset basis (converging only for its EMA-type parameterisations). */
     static const char *epsilon[] = { "MFI" };
 
     for( unsigned int i = 0; i < sizeof(exact)/sizeof(exact[0]); i++ )

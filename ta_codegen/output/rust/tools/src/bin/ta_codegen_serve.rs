@@ -1510,7 +1510,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
@@ -11797,7 +11797,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
@@ -14656,7 +14656,7 @@ fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usi
         "APO" => {
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
             Some(core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType))
         }
         "AROON" => {
@@ -15085,7 +15085,7 @@ fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usi
         "PPO" => {
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
             Some(core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType))
         }
         "PVO" => {

@@ -21,6 +21,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - ~10% faster: ATR and NATR
 
 ### Changed
+- (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. This changes the default output; pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences from all previous versions — an intentional modernization.
 - API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use CMake (generates IDE solutions on demand) and vcpkg — these hand-maintained projects drifted every few releases and had no way to be tested.

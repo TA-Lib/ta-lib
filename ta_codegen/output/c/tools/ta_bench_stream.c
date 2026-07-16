@@ -183,6 +183,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_PLUS_DI.c"
 #include "ta_PLUS_DM.c"
 #include "ta_PPO.c"
+#include "ta_PVO.c"
 #include "ta_ROC.c"
 #include "ta_ROCP.c"
 #include "ta_ROCR.c"
@@ -761,14 +762,14 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_APO_Lookback(12, 26, 0);
+        int lb = TA_APO_Lookback(12, 26, 1);
         if( lb < 0 ) lb = 0;
         for( int pass = 0; pass < 3; pass++ ) {
             int t = lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_APO(t, t, g_rt_close, 12, 26, 0, &begIdx, &nb, g_outBuf0);
+                TA_APO(t, t, g_rt_close, 12, 26, 1, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -778,7 +779,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_APO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_APO_Open(&st, g_close, g_nPoints, 12, 26, 0, &v0);
+        TA_RetCode orc = TA_APO_Open(&st, g_close, g_nPoints, 12, 26, 1, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8856,14 +8857,14 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PPO_Lookback(12, 26, 0);
+        int lb = TA_PPO_Lookback(12, 26, 1);
         if( lb < 0 ) lb = 0;
         for( int pass = 0; pass < 3; pass++ ) {
             int t = lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PPO(t, t, g_rt_close, 12, 26, 0, &begIdx, &nb, g_outBuf0);
+                TA_PPO(t, t, g_rt_close, 12, 26, 1, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8873,7 +8874,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PPO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PPO_Open(&st, g_close, g_nPoints, 12, 26, 0, &v0);
+        TA_RetCode orc = TA_PPO_Open(&st, g_close, g_nPoints, 12, 26, 1, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;

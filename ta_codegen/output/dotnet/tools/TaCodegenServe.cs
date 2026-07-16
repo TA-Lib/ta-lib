@@ -3437,7 +3437,7 @@ public class TaCodegenServe {
                 }
                 int optInFastPeriod = p.TryGetProperty("optInFastPeriod", out var _optInFastPeriodVal) ? _optInFastPeriodVal.GetInt32() : 12;
                 int optInSlowPeriod = p.TryGetProperty("optInSlowPeriod", out var _optInSlowPeriodVal) ? _optInSlowPeriodVal.GetInt32() : 26;
-                int optInMAType = p.TryGetProperty("optInMAType", out var _optInMATypeVal) ? _optInMATypeVal.GetInt32() : 0;
+                int optInMAType = p.TryGetProperty("optInMAType", out var _optInMATypeVal) ? _optInMATypeVal.GetInt32() : 1;
                 double[] outArr0 = new double[n];
                 int rc = 0;
                 int outBegIdx = 0, outNBElement = 0;
@@ -9107,7 +9107,7 @@ public class TaCodegenServe {
                 }
                 int optInFastPeriod = p.TryGetProperty("optInFastPeriod", out var _optInFastPeriodVal) ? _optInFastPeriodVal.GetInt32() : 12;
                 int optInSlowPeriod = p.TryGetProperty("optInSlowPeriod", out var _optInSlowPeriodVal) ? _optInSlowPeriodVal.GetInt32() : 26;
-                int optInMAType = p.TryGetProperty("optInMAType", out var _optInMATypeVal) ? _optInMATypeVal.GetInt32() : 0;
+                int optInMAType = p.TryGetProperty("optInMAType", out var _optInMATypeVal) ? _optInMATypeVal.GetInt32() : 1;
                 double[] outArr0 = new double[n];
                 int rc = 0;
                 int outBegIdx = 0, outNBElement = 0;

@@ -8,6 +8,8 @@ Absolute Price Oscillator: the difference between a fast and a slow moving avera
 
 $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
 
+The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
+
 ## Inputs
 
 - `inReal` — Source data series
@@ -41,3 +43,7 @@ Absolute Price Oscillator
 ## See Also
 
 PPO · MACD · MA · EMA · SMA
+
+## References
+
+- Gerald Appel, creator of the MACD (introduced 1979 in his *Systems and Forecasts* newsletter). The APO is the same fast-minus-slow moving-average oscillator in price units; with exponential moving averages and periods 12/26 it is the oscillator underlying the MACD line. Appel's original definition uses **exponential** moving averages.

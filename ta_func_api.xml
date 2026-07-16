@@ -377,7 +377,7 @@
 				<Name>MA Type</Name>
 				<ShortDescription>Type of Moving Average</ShortDescription>
 				<Type>MA Type</Type>
-				<DefaultValue>0</DefaultValue>
+				<DefaultValue>1</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
 		<OutputArguments>
@@ -5608,7 +5608,7 @@
 				<Name>MA Type</Name>
 				<ShortDescription>Type of Moving Average</ShortDescription>
 				<Type>MA Type</Type>
-				<DefaultValue>0</DefaultValue>
+				<DefaultValue>1</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
 		<OutputArguments>
