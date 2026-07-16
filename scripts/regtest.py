@@ -74,11 +74,12 @@ def _ta_ref_serve_paths(src_root, build_dir):
     """(serve_src, lib_a, include_dirs) for building ta_ref_serve from a given
     checkout (src_root) whose static lib lives in build_dir."""
     c_out = os.path.join(src_root, "ta_codegen", "output", "c")
+    c_tools = os.path.join(c_out, "tools")
     return (
-        os.path.join(c_out, "ta_codegen_serve.c"),
+        os.path.join(c_tools, "ta_codegen_serve.c"),
         os.path.join(build_dir, "libta-lib.a"),
         [
-            c_out,
+            c_tools,
             os.path.join(src_root, "include"),
             os.path.join(c_out, "ta_common"),
             os.path.join(c_out, "ta_abstract"),

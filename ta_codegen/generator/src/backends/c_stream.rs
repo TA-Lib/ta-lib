@@ -189,14 +189,14 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
     for p in &func.optional_inputs {
         let _ = write!(opts, "{}, ", p.name);
     }
-    let outs: String = func
+    let outputs: String = func
         .outputs
         .iter()
         .map(|out| out.name.clone())
         .collect::<Vec<_>>()
         .join(", ");
     let _ = writeln!(o, "{}\n{{", open_signature(func));
-    let _ = writeln!(o, "   return TA_{n}_OpenInternal( stream, {hist}0, historyLen, {opts}{outs} );");
+    let _ = writeln!(o, "   return TA_{n}_OpenInternal( stream, {hist}0, historyLen, {opts}{outputs} );");
     let _ = writeln!(o, "}}\n");
 }
 

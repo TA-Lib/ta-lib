@@ -75,10 +75,11 @@ def ensure_worktree_and_lib(root):
 
 def include_dirs(root, bin_dir):
     c_out = os.path.join(root, "ta_codegen", "output", "c")
+    c_tools = os.path.join(c_out, "tools")
     return [
         bin_dir,                                        # patched ta_abstract_serve.c
         os.path.join(root, "src", "tools", "ta_regtest"),  # fuzz_data.h (shared)
-        c_out,
+        c_tools,
         os.path.join(root, "include"),
         os.path.join(c_out, "ta_common"),
         os.path.join(c_out, "ta_abstract"),
@@ -146,7 +147,7 @@ OUTPUT_HOOK = r'''
 
 def build(root, bin_dir, lib_a):
     c_out = os.path.join(root, "ta_codegen", "output", "c")
-    serve_src = os.path.join(c_out, "ta_codegen_serve.c")
+    serve_src = os.path.join(c_out, "tools", "ta_codegen_serve.c")
     abstract_src = os.path.join(root, "ta_codegen", "generator", "templates", "c", "ta_abstract_serve.c")
 
     # 1. Main transport: strip generated .c includes, add ref headers + init,
