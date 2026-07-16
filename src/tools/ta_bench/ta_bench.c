@@ -172,6 +172,9 @@ static int send_load_data(BenchLanguage *lang, char *buf, int sz, char *resp, in
 
 /* ---- Build server request (use_preloaded, no inline data) ---- */
 
+/* When >0, overrides any integer optInTimePeriod param (diagnostic period sweep). */
+static int g_period_override = 0;
+
 static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
                                 int startIdx, int endIdx, int iters) {
     int pos = snprintf(buf, sz,
@@ -186,8 +189,11 @@ static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
             pos += snprintf(buf+pos, sz-pos, ",\"%s\":%.15g",
                             optInfo->paramName, optInfo->defaultValue);
         } else {
+            int val = (int)optInfo->defaultValue;
+            if( g_period_override > 0 && strcmp(optInfo->paramName, "optInTimePeriod") == 0 )
+                val = g_period_override;
             pos += snprintf(buf+pos, sz-pos, ",\"%s\":%d",
-                            optInfo->paramName, (int)optInfo->defaultValue);
+                            optInfo->paramName, val);
         }
     }
     pos += snprintf(buf+pos, sz-pos, "}}");
@@ -351,6 +357,7 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--iters=", 8) == 0 )    n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--language=", 11) == 0 ) lang_filter = argv[i]+11;
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
+        else if( strncmp(argv[i], "--period=", 9) == 0 )    g_period_override = atoi(argv[i]+9);
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
 
