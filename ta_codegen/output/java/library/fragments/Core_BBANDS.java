@@ -21,6 +21,8 @@
  *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
  *                mean) and a general MA + STDDEV path, so BBANDS streams as a
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
+ *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
+ *                average and standard deviation into a single pass. Bit-identical.
  */
 
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -88,10 +90,10 @@
          return RetCode.BadParam ;
       }
       if( optInMAType == MAType.Sma ) {
-         /* SMA fast path: the middle band is a simple moving average, which is
-          * also the mean the standard deviation is measured against - so the SMA
-          * is reused instead of recomputing the mean. Bit-identical to the general
-          * MA + STDDEV path below (which the stream composes for every MA type).
+         /* SMA fast path (issue #117): the middle band moving average is also the
+          * mean the standard deviation is measured against, so both come from one
+          * pass below. Bit-identical to the general MA + STDDEV path (which the
+          * stream composes for every MA type).
           *
           * Identify TWO temporary buffers among the outputs so the calculation
           * needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -116,45 +118,63 @@
          if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
             return RetCode.BadParam ;
          }
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-         if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-            outNBElement.value = 0;
-            return retCode ;
-         }
-         /* Calculate the standard deviation into tempBuffer2, re-using the
-          * already calculated SMA (Inline stddev_using_precalc_ma).
+         /* One pass: running sum (mean -> tempBuffer1) and sum of squares
+          * (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
+          * and sqrt inline. tempBuffer1/2 never alias inReal (checked above).
           */
+         double periodTotal1;
+         double periodTotal2;
+         double meanValue1;
+         double meanValue2;
          double _tempReal;
-         double _periodTotal2;
-         double _meanValue2;
+         int _i;
          int _outIdx;
-         int _startSum;
-         int _endSum;
-         _startSum = 1 + (int)outBegIdx.value - optInTimePeriod;
-         _endSum = (int)outBegIdx.value;
-         _periodTotal2 = 0;
-         for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = inReal[_outIdx];
-            _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
+         int _trailingIdx;
+         int _lookbackTotal;
+         _lookbackTotal = optInTimePeriod - 1;
+         if( startIdx < _lookbackTotal ) {
+            startIdx = _lookbackTotal;
          }
-         for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = inReal[_endSum];
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.Success ;
+         }
+         periodTotal1 = 0;
+         periodTotal2 = 0;
+         _trailingIdx = startIdx - _lookbackTotal;
+         _i = _trailingIdx;
+         if( optInTimePeriod > 1 ) {
+            while( _i < startIdx ) {
+               _tempReal = inReal[_i++];
+               periodTotal1 += _tempReal;
+               _tempReal *= _tempReal;
+               periodTotal2 += _tempReal;
+            }
+         }
+         _outIdx = 0;
+         do {
+            _tempReal = inReal[_i++];
+            periodTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
-            _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_startSum];
+            periodTotal2 += _tempReal;
+            meanValue1 = periodTotal1 / optInTimePeriod;
+            meanValue2 = periodTotal2 / optInTimePeriod;
+            _tempReal = inReal[_trailingIdx++];
+            periodTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 -= _tempReal;
-            _tempReal = tempBuffer1[_outIdx];
-            _tempReal *= _tempReal;
-            _meanValue2 -= _tempReal;
-            if( !(_meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(_meanValue2);
+            periodTotal2 -= _tempReal;
+            tempBuffer1[_outIdx] = meanValue1;
+            meanValue2 -= meanValue1 * meanValue1;
+            if( !(meanValue2 < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
-         }
+            _outIdx += 1;
+         } while( _i <= endIdx );
+         outNBElement.value = _outIdx;
+         outBegIdx.value = startIdx;
          /* Copy the MA calculation into the middle band ouput, unless
           * the calculation was done into it already!
           */
@@ -270,42 +290,59 @@
          if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
             return RetCode.BadParam ;
          }
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-         if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-            outNBElement.value = 0;
-            return retCode ;
-         }
+         double periodTotal1;
+         double periodTotal2;
+         double meanValue1;
+         double meanValue2;
          double _tempReal;
-         double _periodTotal2;
-         double _meanValue2;
+         int _i;
          int _outIdx;
-         int _startSum;
-         int _endSum;
-         _startSum = 1 + (int)outBegIdx.value - optInTimePeriod;
-         _endSum = (int)outBegIdx.value;
-         _periodTotal2 = 0;
-         for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = inReal[_outIdx];
-            _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
+         int _trailingIdx;
+         int _lookbackTotal;
+         _lookbackTotal = optInTimePeriod - 1;
+         if( startIdx < _lookbackTotal ) {
+            startIdx = _lookbackTotal;
          }
-         for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = inReal[_endSum];
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.Success ;
+         }
+         periodTotal1 = 0;
+         periodTotal2 = 0;
+         _trailingIdx = startIdx - _lookbackTotal;
+         _i = _trailingIdx;
+         if( optInTimePeriod > 1 ) {
+            while( _i < startIdx ) {
+               _tempReal = inReal[_i++];
+               periodTotal1 += _tempReal;
+               _tempReal *= _tempReal;
+               periodTotal2 += _tempReal;
+            }
+         }
+         _outIdx = 0;
+         do {
+            _tempReal = inReal[_i++];
+            periodTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
-            _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_startSum];
+            periodTotal2 += _tempReal;
+            meanValue1 = periodTotal1 / optInTimePeriod;
+            meanValue2 = periodTotal2 / optInTimePeriod;
+            _tempReal = inReal[_trailingIdx++];
+            periodTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 -= _tempReal;
-            _tempReal = tempBuffer1[_outIdx];
-            _tempReal *= _tempReal;
-            _meanValue2 -= _tempReal;
-            if( !(_meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(_meanValue2);
+            periodTotal2 -= _tempReal;
+            tempBuffer1[_outIdx] = meanValue1;
+            meanValue2 -= meanValue1 * meanValue1;
+            if( !(meanValue2 < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
-         }
+            _outIdx += 1;
+         } while( _i <= endIdx );
+         outNBElement.value = _outIdx;
+         outBegIdx.value = startIdx;
          if( tempBuffer1 != outRealMiddleBand ) {
             System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
          }
@@ -419,42 +456,59 @@
          if( false || false ) {
             return RetCode.BadParam ;
          }
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-         if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-            outNBElement.value = 0;
-            return retCode ;
-         }
+         double periodTotal1;
+         double periodTotal2;
+         double meanValue1;
+         double meanValue2;
          double _tempReal;
-         double _periodTotal2;
-         double _meanValue2;
+         int _i;
          int _outIdx;
-         int _startSum;
-         int _endSum;
-         _startSum = 1 + (int)outBegIdx.value - optInTimePeriod;
-         _endSum = (int)outBegIdx.value;
-         _periodTotal2 = 0;
-         for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = (double)inReal[_outIdx];
-            _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
+         int _trailingIdx;
+         int _lookbackTotal;
+         _lookbackTotal = optInTimePeriod - 1;
+         if( startIdx < _lookbackTotal ) {
+            startIdx = _lookbackTotal;
          }
-         for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = (double)inReal[_endSum];
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.Success ;
+         }
+         periodTotal1 = 0;
+         periodTotal2 = 0;
+         _trailingIdx = startIdx - _lookbackTotal;
+         _i = _trailingIdx;
+         if( optInTimePeriod > 1 ) {
+            while( _i < startIdx ) {
+               _tempReal = (double)inReal[_i++];
+               periodTotal1 += _tempReal;
+               _tempReal *= _tempReal;
+               periodTotal2 += _tempReal;
+            }
+         }
+         _outIdx = 0;
+         do {
+            _tempReal = (double)inReal[_i++];
+            periodTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
-            _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = (double)inReal[_startSum];
+            periodTotal2 += _tempReal;
+            meanValue1 = periodTotal1 / optInTimePeriod;
+            meanValue2 = periodTotal2 / optInTimePeriod;
+            _tempReal = (double)inReal[_trailingIdx++];
+            periodTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 -= _tempReal;
-            _tempReal = tempBuffer1[_outIdx];
-            _tempReal *= _tempReal;
-            _meanValue2 -= _tempReal;
-            if( !(_meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(_meanValue2);
+            periodTotal2 -= _tempReal;
+            tempBuffer1[_outIdx] = meanValue1;
+            meanValue2 -= meanValue1 * meanValue1;
+            if( !(meanValue2 < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
-         }
+            _outIdx += 1;
+         } while( _i <= endIdx );
+         outNBElement.value = _outIdx;
+         outBegIdx.value = startIdx;
          if( tempBuffer1 != outRealMiddleBand ) {
             System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
          }
@@ -548,42 +602,59 @@
          if( false || false ) {
             return RetCode.BadParam ;
          }
-         retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-         if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-            outNBElement.value = 0;
-            return retCode ;
-         }
+         double periodTotal1;
+         double periodTotal2;
+         double meanValue1;
+         double meanValue2;
          double _tempReal;
-         double _periodTotal2;
-         double _meanValue2;
+         int _i;
          int _outIdx;
-         int _startSum;
-         int _endSum;
-         _startSum = 1 + (int)outBegIdx.value - optInTimePeriod;
-         _endSum = (int)outBegIdx.value;
-         _periodTotal2 = 0;
-         for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 ) {
-            _tempReal = (double)inReal[_outIdx];
-            _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
+         int _trailingIdx;
+         int _lookbackTotal;
+         _lookbackTotal = optInTimePeriod - 1;
+         if( startIdx < _lookbackTotal ) {
+            startIdx = _lookbackTotal;
          }
-         for( _outIdx = 0; _outIdx < (int)outNBElement.value; _outIdx += 1, _startSum += 1, _endSum += 1 ) {
-            _tempReal = (double)inReal[_endSum];
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.Success ;
+         }
+         periodTotal1 = 0;
+         periodTotal2 = 0;
+         _trailingIdx = startIdx - _lookbackTotal;
+         _i = _trailingIdx;
+         if( optInTimePeriod > 1 ) {
+            while( _i < startIdx ) {
+               _tempReal = (double)inReal[_i++];
+               periodTotal1 += _tempReal;
+               _tempReal *= _tempReal;
+               periodTotal2 += _tempReal;
+            }
+         }
+         _outIdx = 0;
+         do {
+            _tempReal = (double)inReal[_i++];
+            periodTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
-            _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = (double)inReal[_startSum];
+            periodTotal2 += _tempReal;
+            meanValue1 = periodTotal1 / optInTimePeriod;
+            meanValue2 = periodTotal2 / optInTimePeriod;
+            _tempReal = (double)inReal[_trailingIdx++];
+            periodTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 -= _tempReal;
-            _tempReal = tempBuffer1[_outIdx];
-            _tempReal *= _tempReal;
-            _meanValue2 -= _tempReal;
-            if( !(_meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(_meanValue2);
+            periodTotal2 -= _tempReal;
+            tempBuffer1[_outIdx] = meanValue1;
+            meanValue2 -= meanValue1 * meanValue1;
+            if( !(meanValue2 < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
-         }
+            _outIdx += 1;
+         } while( _i <= endIdx );
+         outNBElement.value = _outIdx;
+         outBegIdx.value = startIdx;
          if( tempBuffer1 != outRealMiddleBand ) {
             System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
          }

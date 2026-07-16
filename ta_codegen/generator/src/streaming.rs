@@ -1849,9 +1849,17 @@ pub fn analyze_composed<'a>(
     // start (`tail` therefore has no fast-path block to filter).
     let params_pre: BTreeSet<String> =
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    // Enum (MA-type) optional params: an enum-guarded fast-path block is a
+    // batch-only specialization even without a sub-call. See `is_fastpath_block`.
+    let enum_params: BTreeSet<String> = func
+        .optional_inputs
+        .iter()
+        .filter(|p| matches!(p.param_type, ParamType::Enum(_)))
+        .map(|p| p.name.clone())
+        .collect();
     let region_open: Vec<Statement> = region
         .iter()
-        .filter(|st| !is_fastpath_block(st, &params_pre, lookup))
+        .filter(|st| !is_fastpath_block(st, &params_pre, &enum_params, lookup))
         .cloned()
         .collect();
     // Composed-shaped = the tail delegates to another indicator. A tail of
@@ -2790,15 +2798,18 @@ fn guard_frees_series(st: &Statement, series: &str) -> bool {
                 && matches!(args.first(), Some(Expr::Var(v)) if v == series))
 }
 
-/// A parameter-guarded fast-path block: `if( <param test> ) { ...; return; }`
-/// with an empty else whose body calls a sub-indicator. This is a batch-only
-/// specialization — BBANDS's SMA path reuses the moving average as the mean
-/// instead of a separate STDDEV pass. It is EXCLUDED from the composed pipeline:
-/// the stream composes the GENERAL path (below the block) for every parameter
-/// value, and `stream_verify` proves that path bit-exact against the batch
-/// fast-path across the swept parameters (SMA included). The sub-call requirement
-/// tells it apart from a plain error guard (which never calls an indicator — the
-/// G2 rule) and from a `period == 1` identity path (a plain copy, no sub-call).
+/// A parameter-guarded fast-path block `if( <param test> ) { ...; return; }`
+/// (empty else): a batch-only specialization EXCLUDED from the composed pipeline,
+/// so the stream composes the GENERAL path below for every parameter value.
+///
+/// Qualifies when it ends in `return` and EITHER its body calls a sub-indicator
+/// (MACDEXT's all-EMA shortcut delegates to TA_MACD) OR its guard tests an
+/// MA-type (enum) optional parameter AND it returns success (BBANDS's fused SMA
+/// path, which inlines its work with no sub-call). The success-return requirement
+/// keeps an enum-guarded ERROR guard (`return TA_BAD_PARAM`) in the stream; that
+/// the inlined body reproduces the general path is proven by `stream_verify`. The
+/// enum rule never matches an `optInTimePeriod == 1` identity (integer guard), so
+/// those still stream in place.
 ///
 /// The condition must be a compile-time parameter test: it names at least one
 /// optional parameter and reads no series, pointers or calls (enum constants such
@@ -2806,6 +2817,7 @@ fn guard_frees_series(st: &Statement, series: &str) -> bool {
 fn is_fastpath_block(
     st: &Statement,
     params: &BTreeSet<String>,
+    enum_params: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
 ) -> bool {
     let Statement::If {
@@ -2821,9 +2833,15 @@ fn is_fastpath_block(
         return false;
     }
     let mut refs_param = false;
+    let mut refs_enum_param = false;
     let mut data_dependent = false;
     walk_expr(condition, &mut |e| match e {
-        Expr::Var(v) if params.contains(v) => refs_param = true,
+        Expr::Var(v) if params.contains(v) => {
+            refs_param = true;
+            if enum_params.contains(v) {
+                refs_enum_param = true;
+            }
+        }
         Expr::ArrayAccess(..) | Expr::PointerDeref(_) | Expr::FuncCall(..) => {
             data_dependent = true;
         }
@@ -2832,14 +2850,31 @@ fn is_fastpath_block(
     if !refs_param || data_dependent {
         return false;
     }
-    let ends_in_return = matches!(
-        then_body
-            .iter()
-            .rev()
-            .find(|s| !matches!(s, Statement::Comment(_))),
-        Some(Statement::Return { .. })
-    );
-    ends_in_return && !find_indicator_calls(then_body, lookup).is_empty()
+    let last_return = then_body
+        .iter()
+        .rev()
+        .find(|s| !matches!(s, Statement::Comment(_)));
+    if !matches!(last_return, Some(Statement::Return { .. })) {
+        return false;
+    }
+    // Delegates to a sub-indicator (MACDEXT's all-EMA shortcut -> TA_MACD): a
+    // proven batch-only specialization, regardless of the value it returns.
+    if !find_indicator_calls(then_body, lookup).is_empty() {
+        return true;
+    }
+    // Otherwise an MA-type (enum) guard whose body inlines a full computation with
+    // no sub-call (BBANDS's fused SMA path). Require a SUCCESS return: an
+    // enum-guarded ERROR guard (`return TA_BAD_PARAM`) must NOT be stripped, so the
+    // streamed call still rejects the MA types the batch call rejects. That the
+    // inlined body actually reproduces the general path is proven bit-exact by
+    // stream_verify. An `optInTimePeriod == 1` identity has an integer guard, so
+    // the enum rule never touches it.
+    refs_enum_param
+        && matches!(
+            last_return,
+            Some(Statement::Return { value: Some(Expr::Var(v)) })
+                if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS")
+        )
 }
 
 /// A composed-tail guard must be pure control flow over scalars: no
@@ -6045,6 +6080,37 @@ mod tests {
         let bad = func_with_body(vec![Statement::Return { value: None }]);
         let err = validate_streamable(&bad, &NoCallees).unwrap_err();
         assert!(err.contains("not streamable"), "{err}");
+    }
+
+    #[test]
+    fn fastpath_enum_guard_requires_success_return() {
+        // A sub-call-less fast-path block is recognized only when an MA-type (enum)
+        // guard returns SUCCESS -- a full batch-only specialization. An enum-guarded
+        // ERROR guard must NOT be classified as one (else the stream would silently
+        // drop it and accept an MA type the batch API rejects), and an integer
+        // `optInTimePeriod == 1` identity is never matched by the enum rule.
+        let params: BTreeSet<String> =
+            ["optInMAType".to_string(), "optInTimePeriod".to_string()].into_iter().collect();
+        let enum_params: BTreeSet<String> = ["optInMAType".to_string()].into_iter().collect();
+        let eq = |l: Expr, r: Expr| Expr::BinOp(Box::new(l), BinOp::Eq, Box::new(r));
+        let guard = |cond: Expr, ret: &str| Statement::If {
+            condition: cond,
+            then_body: vec![Statement::Return { value: Some(var(ret)) }],
+            else_body: vec![],
+            cond_comments: vec![],
+        };
+
+        // Enum guard + SUCCESS return -> batch-only fast path (excluded from stream).
+        let sma_ok = guard(eq(var("optInMAType"), var("TA_MAType_SMA")), "TA_SUCCESS");
+        assert!(is_fastpath_block(&sma_ok, &params, &enum_params, &NoCallees));
+
+        // Enum guard + ERROR return -> NOT a fast path (the guard must stay).
+        let sma_err = guard(eq(var("optInMAType"), var("TA_MAType_SMA")), "TA_BAD_PARAM");
+        assert!(!is_fastpath_block(&sma_err, &params, &enum_params, &NoCallees));
+
+        // Integer (period == 1) identity guard -> the enum rule never touches it.
+        let p1 = guard(eq(var("optInTimePeriod"), Expr::IntLiteral(1)), "TA_SUCCESS");
+        assert!(!is_fastpath_block(&p1, &params, &enum_params, &NoCallees));
     }
 
     struct TestNames;

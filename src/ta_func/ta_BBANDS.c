@@ -65,6 +65,8 @@
  *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
  *                mean) and a general MA + STDDEV path, so BBANDS streams as a
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
+ *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
+ *                average and standard deviation into a single pass. Bit-identical.
  */
 
 TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
@@ -140,10 +142,10 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
 
    if( optInMAType == TA_MAType_SMA )
    {
-      /* SMA fast path: the middle band is a simple moving average, which is
-       * also the mean the standard deviation is measured against - so the SMA
-       * is reused instead of recomputing the mean. Bit-identical to the general
-       * MA + STDDEV path below (which the stream composes for every MA type).
+      /* SMA fast path (issue #117): the middle band moving average is also the
+       * mean the standard deviation is measured against, so both come from one
+       * pass below. Bit-identical to the general MA + STDDEV path (which the
+       * stream composes for every MA type).
        *
        * Identify TWO temporary buffers among the outputs so the calculation
        * needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -173,50 +175,70 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       {
          return TA_BAD_PARAM;
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-      if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-      {
-         *outNBElement= 0;
-         return retCode;
-      }
-      /* Calculate the standard deviation into tempBuffer2, re-using the
-       * already calculated SMA (Inline stddev_using_precalc_ma).
+      /* One pass: running sum (mean -> tempBuffer1) and sum of squares
+       * (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
+       * and sqrt inline. tempBuffer1/2 never alias inReal (checked above).
        */
+      double periodTotal1;
+      double periodTotal2;
+      double meanValue1;
+      double meanValue2;
       double _tempReal;
-      double _periodTotal2;
-      double _meanValue2;
+      int _i;
       int _outIdx;
-      int _startSum;
-      int _endSum;
-      _startSum = 1 + (int)*outBegIdx - optInTimePeriod;
-      _endSum = (int)*outBegIdx;
-      _periodTotal2 = 0;
-      for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
+      int _trailingIdx;
+      int _lookbackTotal;
+      _lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < _lookbackTotal )
       {
-         _tempReal = inReal[_outIdx];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
+         startIdx = _lookbackTotal;
       }
-      for( _outIdx = 0; _outIdx < (int)*outNBElement; _outIdx += 1, _startSum += 1, _endSum += 1 )
+      if( startIdx > endIdx )
       {
-         _tempReal = inReal[_endSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
-         _meanValue2 = _periodTotal2 / optInTimePeriod;
-         _tempReal = inReal[_startSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 -= _tempReal;
-         _tempReal = tempBuffer1[_outIdx];
-         _tempReal *= _tempReal;
-         _meanValue2 -= _tempReal;
-         if( !TA_IS_ZERO_OR_NEG(_meanValue2) )
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_SUCCESS;
+      }
+      periodTotal1 = 0;
+      periodTotal2 = 0;
+      _trailingIdx = startIdx - _lookbackTotal;
+      _i = _trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( _i < startIdx )
          {
-            tempBuffer2[_outIdx] = sqrt(_meanValue2);
+            _tempReal = inReal[_i++];
+            periodTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            periodTotal2 += _tempReal;
+         }
+      }
+      _outIdx = 0;
+      do
+      {
+         _tempReal = inReal[_i++];
+         periodTotal1 += _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 += _tempReal;
+         meanValue1 = periodTotal1 / optInTimePeriod;
+         meanValue2 = periodTotal2 / optInTimePeriod;
+         _tempReal = inReal[_trailingIdx++];
+         periodTotal1 -= _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 -= _tempReal;
+         tempBuffer1[_outIdx] = meanValue1;
+         meanValue2 -= meanValue1 * meanValue1;
+         if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+         {
+            tempBuffer2[_outIdx] = sqrt(meanValue2);
          } else 
          {
             tempBuffer2[_outIdx] = 0.0;
          }
-      }
+         _outIdx += 1;
+      } while( _i <= endIdx );
+      *outNBElement= _outIdx;
+      *outBegIdx= startIdx;
       /* Copy the MA calculation into the middle band ouput, unless
        * the calculation was done into it already!
        */
@@ -369,47 +391,66 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
       {
          return TA_BAD_PARAM;
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-      if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-      {
-         *outNBElement= 0;
-         return retCode;
-      }
+      double periodTotal1;
+      double periodTotal2;
+      double meanValue1;
+      double meanValue2;
       double _tempReal;
-      double _periodTotal2;
-      double _meanValue2;
+      int _i;
       int _outIdx;
-      int _startSum;
-      int _endSum;
-      _startSum = 1 + (int)*outBegIdx - optInTimePeriod;
-      _endSum = (int)*outBegIdx;
-      _periodTotal2 = 0;
-      for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
+      int _trailingIdx;
+      int _lookbackTotal;
+      _lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < _lookbackTotal )
       {
-         _tempReal = inReal[_outIdx];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
+         startIdx = _lookbackTotal;
       }
-      for( _outIdx = 0; _outIdx < (int)*outNBElement; _outIdx += 1, _startSum += 1, _endSum += 1 )
+      if( startIdx > endIdx )
       {
-         _tempReal = inReal[_endSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
-         _meanValue2 = _periodTotal2 / optInTimePeriod;
-         _tempReal = inReal[_startSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 -= _tempReal;
-         _tempReal = tempBuffer1[_outIdx];
-         _tempReal *= _tempReal;
-         _meanValue2 -= _tempReal;
-         if( !TA_IS_ZERO_OR_NEG(_meanValue2) )
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_SUCCESS;
+      }
+      periodTotal1 = 0;
+      periodTotal2 = 0;
+      _trailingIdx = startIdx - _lookbackTotal;
+      _i = _trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( _i < startIdx )
          {
-            tempBuffer2[_outIdx] = sqrt(_meanValue2);
+            _tempReal = inReal[_i++];
+            periodTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            periodTotal2 += _tempReal;
+         }
+      }
+      _outIdx = 0;
+      do
+      {
+         _tempReal = inReal[_i++];
+         periodTotal1 += _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 += _tempReal;
+         meanValue1 = periodTotal1 / optInTimePeriod;
+         meanValue2 = periodTotal2 / optInTimePeriod;
+         _tempReal = inReal[_trailingIdx++];
+         periodTotal1 -= _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 -= _tempReal;
+         tempBuffer1[_outIdx] = meanValue1;
+         meanValue2 -= meanValue1 * meanValue1;
+         if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+         {
+            tempBuffer2[_outIdx] = sqrt(meanValue2);
          } else 
          {
             tempBuffer2[_outIdx] = 0.0;
          }
-      }
+         _outIdx += 1;
+      } while( _i <= endIdx );
+      *outNBElement= _outIdx;
+      *outBegIdx= startIdx;
       if( tempBuffer1 != outRealMiddleBand )
       {
          memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
@@ -566,47 +607,66 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       {
          return TA_BAD_PARAM;
       }
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-      if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-      {
-         *outNBElement= 0;
-         return retCode;
-      }
+      double periodTotal1;
+      double periodTotal2;
+      double meanValue1;
+      double meanValue2;
       double _tempReal;
-      double _periodTotal2;
-      double _meanValue2;
+      int _i;
       int _outIdx;
-      int _startSum;
-      int _endSum;
-      _startSum = 1 + (int)*outBegIdx - optInTimePeriod;
-      _endSum = (int)*outBegIdx;
-      _periodTotal2 = 0;
-      for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
+      int _trailingIdx;
+      int _lookbackTotal;
+      _lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < _lookbackTotal )
       {
-         _tempReal = (double)inReal[_outIdx];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
+         startIdx = _lookbackTotal;
       }
-      for( _outIdx = 0; _outIdx < (int)*outNBElement; _outIdx += 1, _startSum += 1, _endSum += 1 )
+      if( startIdx > endIdx )
       {
-         _tempReal = (double)inReal[_endSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
-         _meanValue2 = _periodTotal2 / optInTimePeriod;
-         _tempReal = (double)inReal[_startSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 -= _tempReal;
-         _tempReal = tempBuffer1[_outIdx];
-         _tempReal *= _tempReal;
-         _meanValue2 -= _tempReal;
-         if( !TA_IS_ZERO_OR_NEG(_meanValue2) )
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_SUCCESS;
+      }
+      periodTotal1 = 0;
+      periodTotal2 = 0;
+      _trailingIdx = startIdx - _lookbackTotal;
+      _i = _trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( _i < startIdx )
          {
-            tempBuffer2[_outIdx] = sqrt(_meanValue2);
+            _tempReal = (double)inReal[_i++];
+            periodTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            periodTotal2 += _tempReal;
+         }
+      }
+      _outIdx = 0;
+      do
+      {
+         _tempReal = (double)inReal[_i++];
+         periodTotal1 += _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 += _tempReal;
+         meanValue1 = periodTotal1 / optInTimePeriod;
+         meanValue2 = periodTotal2 / optInTimePeriod;
+         _tempReal = (double)inReal[_trailingIdx++];
+         periodTotal1 -= _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 -= _tempReal;
+         tempBuffer1[_outIdx] = meanValue1;
+         meanValue2 -= meanValue1 * meanValue1;
+         if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+         {
+            tempBuffer2[_outIdx] = sqrt(meanValue2);
          } else 
          {
             tempBuffer2[_outIdx] = 0.0;
          }
-      }
+         _outIdx += 1;
+      } while( _i <= endIdx );
+      *outNBElement= _outIdx;
+      *outBegIdx= startIdx;
       if( (void *)tempBuffer1 != (void *)outRealMiddleBand )
       {
          memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
@@ -737,47 +797,66 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
       {
          return TA_BAD_PARAM;
       }
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-      if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-      {
-         *outNBElement= 0;
-         return retCode;
-      }
+      double periodTotal1;
+      double periodTotal2;
+      double meanValue1;
+      double meanValue2;
       double _tempReal;
-      double _periodTotal2;
-      double _meanValue2;
+      int _i;
       int _outIdx;
-      int _startSum;
-      int _endSum;
-      _startSum = 1 + (int)*outBegIdx - optInTimePeriod;
-      _endSum = (int)*outBegIdx;
-      _periodTotal2 = 0;
-      for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
+      int _trailingIdx;
+      int _lookbackTotal;
+      _lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < _lookbackTotal )
       {
-         _tempReal = (double)inReal[_outIdx];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
+         startIdx = _lookbackTotal;
       }
-      for( _outIdx = 0; _outIdx < (int)*outNBElement; _outIdx += 1, _startSum += 1, _endSum += 1 )
+      if( startIdx > endIdx )
       {
-         _tempReal = (double)inReal[_endSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 += _tempReal;
-         _meanValue2 = _periodTotal2 / optInTimePeriod;
-         _tempReal = (double)inReal[_startSum];
-         _tempReal *= _tempReal;
-         _periodTotal2 -= _tempReal;
-         _tempReal = tempBuffer1[_outIdx];
-         _tempReal *= _tempReal;
-         _meanValue2 -= _tempReal;
-         if( !TA_IS_ZERO_OR_NEG(_meanValue2) )
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_SUCCESS;
+      }
+      periodTotal1 = 0;
+      periodTotal2 = 0;
+      _trailingIdx = startIdx - _lookbackTotal;
+      _i = _trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( _i < startIdx )
          {
-            tempBuffer2[_outIdx] = sqrt(_meanValue2);
+            _tempReal = (double)inReal[_i++];
+            periodTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            periodTotal2 += _tempReal;
+         }
+      }
+      _outIdx = 0;
+      do
+      {
+         _tempReal = (double)inReal[_i++];
+         periodTotal1 += _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 += _tempReal;
+         meanValue1 = periodTotal1 / optInTimePeriod;
+         meanValue2 = periodTotal2 / optInTimePeriod;
+         _tempReal = (double)inReal[_trailingIdx++];
+         periodTotal1 -= _tempReal;
+         _tempReal *= _tempReal;
+         periodTotal2 -= _tempReal;
+         tempBuffer1[_outIdx] = meanValue1;
+         meanValue2 -= meanValue1 * meanValue1;
+         if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+         {
+            tempBuffer2[_outIdx] = sqrt(meanValue2);
          } else 
          {
             tempBuffer2[_outIdx] = 0.0;
          }
-      }
+         _outIdx += 1;
+      } while( _i <= endIdx );
+      *outNBElement= _outIdx;
+      *outBegIdx= startIdx;
       if( (void *)tempBuffer1 != (void *)outRealMiddleBand )
       {
          memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));

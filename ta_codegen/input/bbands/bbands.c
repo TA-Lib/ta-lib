@@ -21,6 +21,8 @@
  *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
  *                mean) and a general MA + STDDEV path, so BBANDS streams as a
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
+ *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
+ *                average and standard deviation into a single pass. Bit-identical.
  *
  */
 
@@ -60,10 +62,10 @@ TA_RetCode bbands(int startIdx, int endIdx,
 
    if( optInMAType == TA_MAType_SMA )
    {
-      /* SMA fast path: the middle band is a simple moving average, which is
-       * also the mean the standard deviation is measured against - so the SMA
-       * is reused instead of recomputing the mean. Bit-identical to the general
-       * MA + STDDEV path below (which the stream composes for every MA type).
+      /* SMA fast path (issue #117): the middle band moving average is also the
+       * mean the standard deviation is measured against, so both come from one
+       * pass below. Bit-identical to the general MA + STDDEV path (which the
+       * stream composes for every MA type).
        *
        * Identify TWO temporary buffers among the outputs so the calculation
        * needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -95,49 +97,68 @@ TA_RetCode bbands(int startIdx, int endIdx,
       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
          return TA_BAD_PARAM;
 
-      retCode = ma( startIdx, endIdx, inReal,
-         optInTimePeriod, optInMAType,
-         outBegIdx, outNBElement, tempBuffer1 );
-
-      if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
+      /* One pass: running sum (mean -> tempBuffer1) and sum of squares
+       * (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
+       * and sqrt inline. tempBuffer1/2 never alias inReal (checked above). */
       {
-         *outNBElement = 0;
-         return retCode;
-      }
+         double periodTotal1, periodTotal2, meanValue1, meanValue2, _tempReal;
+         int _i, _outIdx, _trailingIdx, _lookbackTotal;
 
-      /* Calculate the standard deviation into tempBuffer2, re-using the
-       * already calculated SMA (Inline stddev_using_precalc_ma).
-       */
-      {
-         double _tempReal, _periodTotal2, _meanValue2;
-         int _outIdx;
-         int _startSum, _endSum;
-         _startSum = 1 + (int)*outBegIdx - optInTimePeriod;
-         _endSum = (int)*outBegIdx;
-         _periodTotal2 = 0;
-         for( _outIdx = _startSum; _outIdx < _endSum; _outIdx++ )
+         _lookbackTotal = optInTimePeriod - 1;
+         if( startIdx < _lookbackTotal )
+            startIdx = _lookbackTotal;
+
+         if( startIdx > endIdx )
          {
-            _tempReal = inReal[_outIdx];
-            _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
+            *outBegIdx = 0;
+            *outNBElement = 0;
+            return TA_SUCCESS;
          }
-         for( _outIdx = 0; _outIdx < (int)*outNBElement; _outIdx++, _startSum++, _endSum++ )
+
+         periodTotal1 = 0;
+         periodTotal2 = 0;
+         _trailingIdx = startIdx - _lookbackTotal;
+
+         _i = _trailingIdx;
+         if( optInTimePeriod > 1 )
          {
-            _tempReal = inReal[_endSum];
+            while( _i < startIdx )
+            {
+               _tempReal = inReal[_i++];
+               periodTotal1 += _tempReal;
+               _tempReal *= _tempReal;
+               periodTotal2 += _tempReal;
+            }
+         }
+
+         _outIdx = 0;
+         do
+         {
+            _tempReal = inReal[_i++];
+            periodTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 += _tempReal;
-            _meanValue2 = _periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_startSum];
+            periodTotal2 += _tempReal;
+
+            meanValue1 = periodTotal1 / optInTimePeriod;
+            meanValue2 = periodTotal2 / optInTimePeriod;
+
+            _tempReal = inReal[_trailingIdx++];
+            periodTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            _periodTotal2 -= _tempReal;
-            _tempReal = tempBuffer1[_outIdx];
-            _tempReal *= _tempReal;
-            _meanValue2 -= _tempReal;
-            if( !TA_IS_ZERO_OR_NEG(_meanValue2) )
-               tempBuffer2[_outIdx] = sqrt(_meanValue2);
+            periodTotal2 -= _tempReal;
+
+            tempBuffer1[_outIdx] = meanValue1;
+
+            meanValue2 -= meanValue1 * meanValue1;
+            if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+               tempBuffer2[_outIdx] = sqrt(meanValue2);
             else
                tempBuffer2[_outIdx] = 0.0;
-         }
+            _outIdx++;
+         } while( _i <= endIdx );
+
+         *outNBElement = _outIdx;
+         *outBegIdx = startIdx;
       }
 
       /* Copy the MA calculation into the middle band ouput, unless

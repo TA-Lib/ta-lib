@@ -62,6 +62,8 @@
  *  071126 MF,CC  Split into an SMA fast path (reuses the moving average as the
  *                mean) and a general MA + STDDEV path, so BBANDS streams as a
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
+ *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
+ *                average and standard deviation into a single pass. Bit-identical.
  */
 
 // Import types from parent module
@@ -217,10 +219,10 @@ impl Core {
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
         if (optInMAType) as usize == 0 {
-            // SMA fast path: the middle band is a simple moving average, which is
-            // also the mean the standard deviation is measured against - so the SMA
-            // is reused instead of recomputing the mean. Bit-identical to the general
-            // MA + STDDEV path below (which the stream composes for every MA type).
+            // SMA fast path (issue #117): the middle band moving average is also the
+            // mean the standard deviation is measured against, so both come from one
+            // pass below. Bit-identical to the general MA + STDDEV path (which the
+            // stream composes for every MA type).
             //
             // Identify TWO temporary buffers among the outputs so the calculation
             // needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -243,52 +245,63 @@ impl Core {
             if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
                 return RetCode::BadParam;
             }
-            retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-            if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-                (*outNBElement) = 0;
-                return retCode;
-            }
-            // Calculate the standard deviation into tempBuffer2, re-using the
-            // already calculated SMA (Inline stddev_using_precalc_ma).
+            // One pass: running sum (mean -> tempBuffer1) and sum of squares
+            // (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
+            // and sqrt inline. tempBuffer1/2 never alias inReal (checked above).
+            let mut periodTotal1: f64 = 0.0_f64;
+            let mut periodTotal2: f64 = 0.0_f64;
+            let mut meanValue1: f64 = 0.0_f64;
+            let mut meanValue2: f64 = 0.0_f64;
             let mut _tempReal: f64 = 0.0_f64;
-            let mut _periodTotal2: f64 = 0.0_f64;
-            let mut _meanValue2: f64 = 0.0_f64;
+            let mut _i: usize = 0_usize;
             let mut _outIdx: usize = 0_usize;
-            let mut _startSum: usize = 0_usize;
-            let mut _endSum: usize = 0_usize;
-            _startSum = (1 + ((*outBegIdx) as usize) - (optInTimePeriod) as usize) as usize;
-            _endSum = ((*outBegIdx) as usize) as usize;
-            _periodTotal2 = 0.0;
-            // for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
-            _outIdx = _startSum;
-            while _outIdx < _endSum {
-                _tempReal = inReal[_outIdx];
-                _tempReal *= _tempReal;
-                _periodTotal2 += _tempReal;
-                _outIdx += 1;
+            let mut _trailingIdx: usize = 0_usize;
+            let mut _lookbackTotal: usize = 0_usize;
+            _lookbackTotal = (optInTimePeriod - 1) as usize;
+            if startIdx < _lookbackTotal {
+                startIdx = _lookbackTotal;
             }
-            // for( _outIdx = 0; _outIdx < (((*outNBElement) as usize)) as usize; _outIdx += 1, _startSum += 1, _endSum += 1 )
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return RetCode::Success;
+            }
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            _trailingIdx = startIdx - _lookbackTotal;
+            _i = _trailingIdx;
+            if optInTimePeriod > 1 {
+                while _i < startIdx {
+                    _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
+                    periodTotal1 += _tempReal;
+                    _tempReal *= _tempReal;
+                    periodTotal2 += _tempReal;
+                }
+            }
             _outIdx = 0;
-            while _outIdx < (((*outNBElement) as usize)) as usize {
-                _tempReal = inReal[_endSum];
+            loop {
+                _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
+                periodTotal1 += _tempReal;
                 _tempReal *= _tempReal;
-                _periodTotal2 += _tempReal;
-                _meanValue2 = _periodTotal2 / ((optInTimePeriod) as f64);
-                _tempReal = inReal[_startSum];
+                periodTotal2 += _tempReal;
+                meanValue1 = periodTotal1 / ((optInTimePeriod) as f64);
+                meanValue2 = periodTotal2 / ((optInTimePeriod) as f64);
+                _tempReal = inReal[{ let _v = _trailingIdx; _trailingIdx += 1; _v }];
+                periodTotal1 -= _tempReal;
                 _tempReal *= _tempReal;
-                _periodTotal2 -= _tempReal;
-                _tempReal = tempBuffer1[_outIdx];
-                _tempReal *= _tempReal;
-                _meanValue2 -= _tempReal;
-                if !((_meanValue2) < 1e-14) {
-                    tempBuffer2[_outIdx] = (_meanValue2).sqrt();
+                periodTotal2 -= _tempReal;
+                tempBuffer1[_outIdx] = meanValue1;
+                meanValue2 -= meanValue1 * meanValue1;
+                if !((meanValue2) < 1e-14) {
+                    tempBuffer2[_outIdx] = (meanValue2).sqrt();
                 } else {
                     tempBuffer2[_outIdx] = 0.0;
                 }
                 _outIdx += 1;
-                _startSum += 1;
-                _endSum += 1;
+                if !(_i <= endIdx) { break; }
             }
+            (*outNBElement) = _outIdx;
+            (*outBegIdx) = startIdx;
             // Copy the MA calculation into the middle band ouput, unless
             // the calculation was done into it already!
             if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
@@ -438,50 +451,60 @@ impl Core {
             if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
                 return RetCode::BadParam;
             }
-            retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-            if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-                (*outNBElement) = 0;
-                return retCode;
-            }
+            let mut periodTotal1: f64 = 0.0_f64;
+            let mut periodTotal2: f64 = 0.0_f64;
+            let mut meanValue1: f64 = 0.0_f64;
+            let mut meanValue2: f64 = 0.0_f64;
             let mut _tempReal: f64 = 0.0_f64;
-            let mut _periodTotal2: f64 = 0.0_f64;
-            let mut _meanValue2: f64 = 0.0_f64;
+            let mut _i: usize = 0_usize;
             let mut _outIdx: usize = 0_usize;
-            let mut _startSum: usize = 0_usize;
-            let mut _endSum: usize = 0_usize;
-            _startSum = (1 + ((*outBegIdx) as usize) - (optInTimePeriod) as usize) as usize;
-            _endSum = ((*outBegIdx) as usize) as usize;
-            _periodTotal2 = 0.0;
-            // for( _outIdx = _startSum; _outIdx < _endSum; _outIdx += 1 )
-            _outIdx = _startSum;
-            while _outIdx < _endSum {
-                _tempReal = inReal[_outIdx];
-                _tempReal *= _tempReal;
-                _periodTotal2 += _tempReal;
-                _outIdx += 1;
+            let mut _trailingIdx: usize = 0_usize;
+            let mut _lookbackTotal: usize = 0_usize;
+            _lookbackTotal = (optInTimePeriod - 1) as usize;
+            if startIdx < _lookbackTotal {
+                startIdx = _lookbackTotal;
             }
-            // for( _outIdx = 0; _outIdx < (((*outNBElement) as usize)) as usize; _outIdx += 1, _startSum += 1, _endSum += 1 )
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return RetCode::Success;
+            }
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            _trailingIdx = startIdx - _lookbackTotal;
+            _i = _trailingIdx;
+            if optInTimePeriod > 1 {
+                while _i < startIdx {
+                    _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
+                    periodTotal1 += _tempReal;
+                    _tempReal *= _tempReal;
+                    periodTotal2 += _tempReal;
+                }
+            }
             _outIdx = 0;
-            while _outIdx < (((*outNBElement) as usize)) as usize {
-                _tempReal = inReal[_endSum];
+            loop {
+                _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
+                periodTotal1 += _tempReal;
                 _tempReal *= _tempReal;
-                _periodTotal2 += _tempReal;
-                _meanValue2 = _periodTotal2 / ((optInTimePeriod) as f64);
-                _tempReal = inReal[_startSum];
+                periodTotal2 += _tempReal;
+                meanValue1 = periodTotal1 / ((optInTimePeriod) as f64);
+                meanValue2 = periodTotal2 / ((optInTimePeriod) as f64);
+                _tempReal = inReal[{ let _v = _trailingIdx; _trailingIdx += 1; _v }];
+                periodTotal1 -= _tempReal;
                 _tempReal *= _tempReal;
-                _periodTotal2 -= _tempReal;
-                _tempReal = tempBuffer1[_outIdx];
-                _tempReal *= _tempReal;
-                _meanValue2 -= _tempReal;
-                if !((_meanValue2) < 1e-14) {
-                    tempBuffer2[_outIdx] = (_meanValue2).sqrt();
+                periodTotal2 -= _tempReal;
+                tempBuffer1[_outIdx] = meanValue1;
+                meanValue2 -= meanValue1 * meanValue1;
+                if !((meanValue2) < 1e-14) {
+                    tempBuffer2[_outIdx] = (meanValue2).sqrt();
                 } else {
                     tempBuffer2[_outIdx] = 0.0;
                 }
                 _outIdx += 1;
-                _startSum += 1;
-                _endSum += 1;
+                if !(_i <= endIdx) { break; }
             }
+            (*outNBElement) = _outIdx;
+            (*outBegIdx) = startIdx;
             if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
                 {
             let _n = ((*outNBElement) * 1) as usize;

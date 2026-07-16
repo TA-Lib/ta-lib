@@ -790,6 +790,26 @@ fn stochf_derives_composed_plan() {
 }
 
 #[test]
+fn bbands_derives_composed_plan_after_sma_fusion() {
+    // Regression for #117: the fused SMA fast path no longer calls TA_MA, so
+    // `is_fastpath_block` must recognize it by its MA-type (enum) guard and keep
+    // excluding it, so BBANDS still streams as the general TA_MA + TA_STDDEV
+    // composition.
+    let f = load("bbands");
+    assert!(f.streaming, "bbands.yaml must carry the stream flag");
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("BBANDS derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("BBANDS must derive a composed plan");
+    };
+    let callees: Vec<&str> = cp.subs.iter().map(|s| s.callee.as_str()).collect();
+    assert_eq!(
+        callees,
+        ["ma", "stddev"],
+        "BBANDS composes TA_MA (middle band) + TA_STDDEV (deviation)"
+    );
+}
+
+#[test]
 fn composed_hard_errors_when_subcall_callee_lacks_stream() {
     // A composed function only streams when every sub-call does: a callee
     // without a stream is a loud error (actionable census line), never a

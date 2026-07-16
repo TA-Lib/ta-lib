@@ -110,6 +110,8 @@ typedef struct
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
+static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history );
+static ErrorNumber test_bbands_sma_reciprocal_guard( void );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -295,6 +297,27 @@ ErrorNumber test_func_bbands( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "%s Failed BBANDS/MAMA alignment regression test (#99) (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
+   /* Regression test for issue #117: the BBANDS SMA fast path must stay
+    * bit-identical to the independent TA_MA(SMA) + TA_STDDEV composition that
+    * the general path (and the stream) computes.
+    */
+   retValue = test_bbands_sma_fastpath_equivalence( history );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed BBANDS/SMA fast-path equivalence regression test (#117) (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
+   /* Guard against the rejected reciprocal-multiply optimization (#118). */
+   retValue = test_bbands_sma_reciprocal_guard();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed BBANDS/SMA reciprocal-multiply guard (#118) (Code=%d)\n",
               __FILE__, retValue );
       return retValue;
    }
@@ -768,4 +791,240 @@ done:
    if( low  ) TA_Free( low );
 
    return errNb;
+}
+
+/* Regression test for issue #117 (BBANDS SMA fast-path fusion).
+ *
+ * The SMA fast path must stay BIT-IDENTICAL to the TA_MA(SMA) + TA_STDDEV
+ * composition the general path and the stream evaluate. This recomputes the
+ * expected bands from those two independent functions and compares with EXACT
+ * equality, replicating the band arithmetic (mid + std*nbDevUp, mid -
+ * std*nbDevDn) so any ULP-level change in the fused loop fails loudly. Sweeps
+ * periods, both band-multiplier branches, and several start indices; also
+ * cross-checks every active language server (under --codegen).
+ */
+static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history )
+{
+   static const int periods[] = { 2, 3, 5, 14, 20, 50 };
+   static const struct { double up, dn; } devs[] = {
+      { 1.0, 1.0 }, { 2.0, 2.0 }, { 2.0, 1.5 }, { 0.5, 3.0 },
+      { 1.5, 2.0 }   /* distinct with a non-power-of-2 upper: exercises the fma
+                      * band path where fma != mul+add (guards the #117 fix) */
+   };
+   static const int starts[] = { 0, 30, 100 };
+   const int nbPer   = (int)( sizeof(periods) / sizeof(periods[0]) );
+   const int nbDev   = (int)( sizeof(devs)    / sizeof(devs[0])    );
+   const int nbStart = (int)( sizeof(starts)  / sizeof(starts[0])  );
+   const int endIdx  = (int)history->nbBars - 1;
+   int pi, di, si, i;
+   ErrorNumber errNb = TA_TEST_PASS;
+
+   double *sma, *sd, *up, *mid, *low;
+
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   sma = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   sd  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   up  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   mid = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   low = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   if( !sma || !sd || !up || !mid || !low )
+   {
+      errNb = TA_TESTUTIL_TFRR_BAD_PARAM;
+      goto done;
+   }
+
+   for( pi = 0; pi < nbPer; pi++ )
+   {
+      const int period = periods[pi];
+      for( si = 0; si < nbStart; si++ )
+      {
+         const int s = starts[si];
+         TA_RetCode rc;
+         TA_Integer maBeg, maNb, sdBeg, sdNb;
+
+         if( s > endIdx )
+            continue;
+
+         /* Independent references from the SAME startIdx BBANDS uses internally.
+          * For SMA both the MA lookback and the stddev lookback are period-1, so
+          * all three functions clamp to the identical begIdx / element count. */
+         rc = TA_MA( s, endIdx, history->close, period, TA_MAType_SMA,
+                     &maBeg, &maNb, sma );
+         if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+         rc = TA_STDDEV( s, endIdx, history->close, period, 1.0,
+                         &sdBeg, &sdNb, sd );
+         if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+         if( maBeg != sdBeg || maNb != sdNb )
+         {
+            printf( "BBANDS/SMA #117: period=%d startIdx=%d MA(beg=%d,nb=%d) != "
+                    "STDDEV(beg=%d,nb=%d)\n",
+                    period, s, (int)maBeg, (int)maNb, (int)sdBeg, (int)sdNb );
+            errNb = TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            goto done;
+         }
+
+         for( di = 0; di < nbDev; di++ )
+         {
+            const double nbDevUp = devs[di].up;
+            const double nbDevDn = devs[di].dn;
+            TA_Integer bbBeg, bbNb;
+
+            rc = TA_BBANDS( s, endIdx, history->close, period, nbDevUp, nbDevDn,
+                            TA_MAType_SMA, &bbBeg, &bbNb, up, mid, low );
+            if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+            if( bbBeg != maBeg || (int)bbNb != (int)maNb )
+            {
+               printf( "BBANDS/SMA #117: period=%d startIdx=%d up=%g dn=%g "
+                       "BBANDS(beg=%d,nb=%d) != MA(beg=%d,nb=%d)\n",
+                       period, s, nbDevUp, nbDevDn, (int)bbBeg, (int)bbNb,
+                       (int)maBeg, (int)maNb );
+               errNb = TA_TESTUTIL_TFRR_BAD_BEGIDX;
+               goto done;
+            }
+
+            for( i = 0; i < (int)bbNb; i++ )
+            {
+               /* Replicate the fast path's EXACT band arithmetic so the compare
+                * is bit-for-bit. Middle IS the SMA. The band loop has two forms
+                * (ta_BBANDS.c): equal multipliers reuse one rounded product
+                * (mid +/- dev*nbDev); distinct multipliers fuse the upper band as
+                * a single-rounding fma(dev, nbDevUp, mid) and take the lower as an
+                * unfused mid - dev*nbDevDn (a subtraction never fuses). Modelling
+                * the upper as mid + dev*nbDevUp instead would only match when
+                * dev*nbDevUp is exact (power-of-two nbDevUp), silently mis-blaming
+                * the library on a future non-power-of-two multiplier. */
+               const double expMid = sma[i];
+               double expUp, expLow;
+               if( nbDevUp == nbDevDn )
+               {
+                  const double off = sd[i] * nbDevUp;
+                  expUp  = sma[i] + off;
+                  expLow = sma[i] - off;
+               }
+               else
+               {
+                  expUp  = fma( sd[i], nbDevUp, sma[i] );
+                  expLow = sma[i] - ( sd[i] * nbDevDn );
+               }
+
+               if( mid[i] != expMid || up[i] != expUp || low[i] != expLow )
+               {
+                  printf( "BBANDS/SMA #117: period=%d startIdx=%d up=%g dn=%g "
+                          "i=%d (bar %d) mid=%.17g/%.17g up=%.17g/%.17g "
+                          "low=%.17g/%.17g\n",
+                          period, s, nbDevUp, nbDevDn, i, (int)bbBeg + i,
+                          mid[i], expMid, up[i], expUp, low[i], expLow );
+                  errNb = TA_TESTUTIL_TFRR_BAD_CALCULATION;
+                  goto done;
+               }
+            }
+
+            /* Cross-check every active language server for the same call. */
+            if( server_verify_active() )
+            {
+               errNb = server_verify( "BBANDS", s, endIdx, (int)history->nbBars,
+                                      rc, bbBeg, bbNb,
+                                      (const TA_Real*[]){ history->close, NULL },
+                                      (double[]){ (double)period, nbDevUp, nbDevDn,
+                                                  (double)TA_MAType_SMA }, 4,
+                                      (const TA_Real*[]){ up, mid, low, NULL }, NULL );
+               if( errNb != TA_TEST_PASS )
+                  goto done;
+            }
+         }
+      }
+   }
+
+done:
+   if( sma ) TA_Free( sma );
+   if( sd  ) TA_Free( sd );
+   if( up  ) TA_Free( up );
+   if( mid ) TA_Free( mid );
+   if( low ) TA_Free( low );
+
+   return errNb;
+}
+
+/* Guard against the rejected reciprocal-multiply optimization (issue #118).
+ *
+ * The BBANDS SMA path (and the TA_VAR it must match) computes the deviation from
+ * variance = E[x^2] - mean^2 using per-bar `sum / period` DIVISIONS. Replacing
+ * those with a hoisted reciprocal multiply `sum * (1/period)` was measured (#117
+ * discussion) to be ~2x faster but numerically unsafe: E[x^2] - mean^2
+ * catastrophically cancels, so a ~1 ULP perturbation of the (huge) E[x^2] / mean^2
+ * terms lands on the (tiny) variance and blows past the 1e-9 FMA tolerance for
+ * low-volatility / high-magnitude inputs.
+ *
+ * This pins the division form on exactly such an ill-conditioned window: a large
+ * offset (1e6) with a few units of variation, one single period-wide window. The
+ * reference recomputes the mean and standard deviation with EXPLICIT `/ period`
+ * division in the library's own accumulation order (the lone `m1 * m1` statement
+ * blocks FMA contraction, matching the -ffp-contract=off library), then asserts
+ * every band matches BIT-FOR-BIT. Under division this is exact; a reciprocal
+ * multiply anywhere in that path shifts the bands ~1e-4 here and fails loudly.
+ * If VAR is ever moved to a cancellation-free algorithm (#118) this expectation
+ * changes with it.
+ */
+static ErrorNumber test_bbands_sma_reciprocal_guard( void )
+{
+   enum { NB = 12 };
+   const int    period = NB;          /* one period-wide window -> one output */
+   const double base   = 1.0e6;
+   const double nbDev  = 2.0;
+   double in[NB];
+   double up[1], mid[1], low[1];
+   double sum = 0.0, sumSq = 0.0, m1, m2, sq, expVar, expMean, expStd, off, expUp, expLow;
+   TA_Integer begIdx = 0, nbElt = 0;
+   TA_RetCode rc;
+   int i;
+
+   for( i = 0; i < NB; i++ )
+      in[i] = base + (double)( ( i * 7 ) % 5 - 2 );   /* {-2..+2} around 1e6 */
+
+   /* Reference: E[x^2] - mean^2 with explicit division, same left-to-right
+    * accumulation the library uses; materialize m1*m1 so no FMA fuses it. */
+   for( i = 0; i < NB; i++ ) { double t = in[i]; sum += t; sumSq += t * t; }
+   m1      = sum   / (double)period;
+   m2      = sumSq / (double)period;
+   sq      = m1 * m1;
+   expVar  = m2 - sq;
+   expMean = m1;
+   expStd  = !TA_IS_ZERO_OR_NEG(expVar) ? sqrt(expVar) : 0.0;
+   off     = expStd * nbDev;
+   expUp   = expMean + off;
+   expLow  = expMean - off;
+
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+   rc = TA_BBANDS( 0, NB - 1, in, period, nbDev, nbDev, TA_MAType_SMA,
+                   &begIdx, &nbElt, up, mid, low );
+   if( rc != TA_SUCCESS || nbElt != 1 )
+   {
+      printf( "BBANDS/SMA #118 guard: rc=%d nb=%d (expected SUCCESS,1)\n",
+              (int)rc, (int)nbElt );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* Non-vacuity: the window must actually be ill-conditioned (small positive
+    * variance under a large mean), else the guard proves nothing. */
+   if( !( expVar > 1e-6 && expVar < 1.0e3 ) )
+   {
+      printf( "BBANDS/SMA #118 guard: reference variance %.6g out of the "
+              "ill-conditioned range\n", expVar );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   if( mid[0] != expMean || up[0] != expUp || low[0] != expLow )
+   {
+      printf( "BBANDS/SMA #118 guard: bands are not the division form "
+              "(reciprocal-multiply regression?) mid=%.17g/%.17g up=%.17g/%.17g "
+              "low=%.17g/%.17g (var=%.4g)\n",
+              mid[0], expMean, up[0], expUp, low[0], expLow, expVar );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
 }
