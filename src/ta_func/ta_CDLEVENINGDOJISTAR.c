@@ -661,7 +661,7 @@ static void TA_CDLEVENINGDOJISTAR_StepInternal( struct TA_CDLEVENINGDOJISTAR_Str
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLEVENINGDOJISTAR_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLEVENINGDOJISTAR_OpenInternal( struct TA_CDLEVENINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
 {
    struct TA_CDLEVENINGDOJISTAR_Stream *sp;
    int endIdx;
@@ -883,9 +883,9 @@ TA_RetCode TA_CDLEVENINGDOJISTAR_OpenInternal( double optInPenetration, const do
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( TA_CDLEVENINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
-   return TA_CDLEVENINGDOJISTAR_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLEVENINGDOJISTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Update( TA_CDLEVENINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

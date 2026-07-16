@@ -507,7 +507,7 @@ static void TA_CDLLONGLINE_StepInternal( struct TA_CDLLONGLINE_Stream *sp, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLLONGLINE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLLONGLINE_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLLONGLINE_OpenInternal( struct TA_CDLLONGLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLLONGLINE_Stream *sp;
    int endIdx;
@@ -664,9 +664,9 @@ TA_RetCode TA_CDLLONGLINE_OpenInternal( const double inOpen[], const double inHi
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLLONGLINE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLLONGLINE_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLLONGLINE_Open( TA_CDLLONGLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLLONGLINE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLLONGLINE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_Update( TA_CDLLONGLINE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

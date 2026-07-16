@@ -601,7 +601,7 @@ static void TA_ADOSC_StepInternal( struct TA_ADOSC_Stream *sp, double inHigh, do
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ADOSC_OpenInternal( int optInFastPeriod, int optInSlowPeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_ADOSC_Stream **stream, double *outReal )
+TA_RetCode TA_ADOSC_OpenInternal( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
    struct TA_ADOSC_Stream *sp;
    int endIdx;
@@ -772,9 +772,9 @@ TA_RetCode TA_ADOSC_OpenInternal( int optInFastPeriod, int optInSlowPeriod, cons
    }
 }
 
-TA_LIB_API TA_RetCode TA_ADOSC_Open( int optInFastPeriod, int optInSlowPeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_ADOSC_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_ADOSC_Open( TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
-   return TA_ADOSC_OpenInternal( optInFastPeriod, optInSlowPeriod, inHigh, inLow, inClose, inVolume, 0, historyLen, stream, outReal );
+   return TA_ADOSC_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )

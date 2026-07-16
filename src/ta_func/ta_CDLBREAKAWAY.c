@@ -455,7 +455,7 @@ static void TA_CDLBREAKAWAY_StepInternal( struct TA_CDLBREAKAWAY_Stream *sp, dou
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLBREAKAWAY_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLBREAKAWAY_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLBREAKAWAY_OpenInternal( struct TA_CDLBREAKAWAY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLBREAKAWAY_Stream *sp;
    int endIdx;
@@ -612,9 +612,9 @@ TA_RetCode TA_CDLBREAKAWAY_OpenInternal( const double inOpen[], const double inH
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLBREAKAWAY_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Open( TA_CDLBREAKAWAY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLBREAKAWAY_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLBREAKAWAY_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Update( TA_CDLBREAKAWAY_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

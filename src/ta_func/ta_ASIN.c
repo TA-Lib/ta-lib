@@ -170,7 +170,7 @@ static void TA_ASIN_StepInternal( struct TA_ASIN_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ASIN_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ASIN_Stream **stream, double *outReal )
+TA_RetCode TA_ASIN_OpenInternal( struct TA_ASIN_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_ASIN_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_ASIN_OpenInternal( const double inReal[], int startIdx, int histor
    }
 }
 
-TA_LIB_API TA_RetCode TA_ASIN_Open( const double inReal[], int historyLen, TA_ASIN_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_ASIN_Open( TA_ASIN_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_ASIN_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_ASIN_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, double *outReal )

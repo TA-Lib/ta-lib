@@ -329,7 +329,7 @@ static void TA_CDLXSIDEGAP3METHODS_StepInternal( struct TA_CDLXSIDEGAP3METHODS_S
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLXSIDEGAP3METHODS_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( struct TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLXSIDEGAP3METHODS_Stream *sp;
    int endIdx;
@@ -422,9 +422,9 @@ TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( const double inOpen[], const dou
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLXSIDEGAP3METHODS_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Open( TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLXSIDEGAP3METHODS_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLXSIDEGAP3METHODS_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Update( TA_CDLXSIDEGAP3METHODS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

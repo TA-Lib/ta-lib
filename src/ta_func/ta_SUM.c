@@ -344,7 +344,7 @@ static void TA_SUM_StepInternal( struct TA_SUM_Stream *sp, double inReal, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_SUM_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_SUM_Stream **stream, double *outReal )
+TA_RetCode TA_SUM_OpenInternal( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_SUM_Stream *sp;
    int endIdx;
@@ -443,9 +443,9 @@ TA_RetCode TA_SUM_OpenInternal( int optInTimePeriod, const double inReal[], int 
    }
 }
 
-TA_LIB_API TA_RetCode TA_SUM_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_SUM_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_SUM_Open( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_SUM_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
+   return TA_SUM_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SUM_Update( TA_SUM_Stream *stream, double inReal, double *outReal )

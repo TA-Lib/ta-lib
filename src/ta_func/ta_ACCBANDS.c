@@ -632,7 +632,7 @@ static void TA_ACCBANDS_StepInternal( struct TA_ACCBANDS_Stream *sp, double inHi
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ACCBANDS_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+TA_RetCode TA_ACCBANDS_OpenInternal( struct TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_ACCBANDS_Stream *sp;
    int endIdx;
@@ -812,9 +812,9 @@ TA_RetCode TA_ACCBANDS_OpenInternal( int optInTimePeriod, const double inHigh[],
    }
 }
 
-TA_LIB_API TA_RetCode TA_ACCBANDS_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+TA_LIB_API TA_RetCode TA_ACCBANDS_Open( TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
-   return TA_ACCBANDS_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_ACCBANDS_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )

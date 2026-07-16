@@ -570,7 +570,7 @@ static void TA_MINMAXINDEX_StepInternal( struct TA_MINMAXINDEX_Stream *sp, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MINMAXINDEX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MINMAXINDEX_Stream **stream, int *outMinIdx, int *outMaxIdx )
+TA_RetCode TA_MINMAXINDEX_OpenInternal( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outMinIdx, int *outMaxIdx )
 {
    struct TA_MINMAXINDEX_Stream *sp;
    int endIdx;
@@ -724,9 +724,9 @@ TA_RetCode TA_MINMAXINDEX_OpenInternal( int optInTimePeriod, const double inReal
    }
 }
 
-TA_LIB_API TA_RetCode TA_MINMAXINDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAXINDEX_Stream **stream, int *outMinIdx, int *outMaxIdx )
+TA_LIB_API TA_RetCode TA_MINMAXINDEX_Open( TA_MINMAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outMinIdx, int *outMaxIdx )
 {
-   return TA_MINMAXINDEX_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outMinIdx, outMaxIdx );
+   return TA_MINMAXINDEX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outMinIdx, outMaxIdx );
 }
 
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Update( TA_MINMAXINDEX_Stream *stream, double inReal, int *outMinIdx, int *outMaxIdx )

@@ -426,7 +426,7 @@ static void TA_MININDEX_StepInternal( struct TA_MININDEX_Stream *sp, double inRe
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MININDEX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MININDEX_Stream **stream, int *outInteger )
+TA_RetCode TA_MININDEX_OpenInternal( struct TA_MININDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outInteger )
 {
    struct TA_MININDEX_Stream *sp;
    int endIdx;
@@ -546,9 +546,9 @@ TA_RetCode TA_MININDEX_OpenInternal( int optInTimePeriod, const double inReal[],
    }
 }
 
-TA_LIB_API TA_RetCode TA_MININDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MININDEX_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_MININDEX_Open( TA_MININDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outInteger )
 {
-   return TA_MININDEX_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outInteger );
+   return TA_MININDEX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_MININDEX_Update( TA_MININDEX_Stream *stream, double inReal, int *outInteger )

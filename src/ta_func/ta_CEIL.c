@@ -170,7 +170,7 @@ static void TA_CEIL_StepInternal( struct TA_CEIL_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CEIL_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_CEIL_Stream **stream, double *outReal )
+TA_RetCode TA_CEIL_OpenInternal( struct TA_CEIL_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_CEIL_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_CEIL_OpenInternal( const double inReal[], int startIdx, int histor
    }
 }
 
-TA_LIB_API TA_RetCode TA_CEIL_Open( const double inReal[], int historyLen, TA_CEIL_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_CEIL_Open( TA_CEIL_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_CEIL_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_CEIL_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, double *outReal )

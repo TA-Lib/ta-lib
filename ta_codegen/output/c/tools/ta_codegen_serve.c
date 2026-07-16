@@ -402,7 +402,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ACCBANDS_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ACCBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_ACCBANDS_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0, &v1, &v2);
+            { TA_ACCBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_ACCBANDS_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ACCBANDS_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -426,7 +426,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
             double v2 = 0.0, pk2 = 0.0;
-            rc = TA_ACCBANDS_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0, &v1, &v2);
+            rc = TA_ACCBANDS_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -456,7 +456,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v1 = 0.0;
                     double v2 = 0.0;
                     TA_ACCBANDS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ACCBANDS_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0, &v1, &v2);
+                    TA_RetCode arc = TA_ACCBANDS_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0, &v1, &v2);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -479,7 +479,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ACOS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ACOS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ACOS_Open(sv_c, svN, &st, &v0);
+            { TA_ACOS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ACOS_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ACOS_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -501,7 +501,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ACOS_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ACOS_Open(sv_c, P, &st, &v0);
+            rc = TA_ACOS_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -525,7 +525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ACOS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ACOS_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ACOS_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ACOS_Close(stA);
@@ -546,7 +546,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_AD_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_AD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AD_Open(sv_h, sv_l, sv_c, sv_v, svN, &st, &v0);
+            { TA_AD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AD_Open(&st, sv_h, sv_l, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AD_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -568,7 +568,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_AD_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_AD_Open(sv_h, sv_l, sv_c, sv_v, P, &st, &v0);
+            rc = TA_AD_Open(&st, sv_h, sv_l, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -592,7 +592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_AD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_AD_OpenInternal(sv_h, sv_l, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_AD_OpenInternal(&stA, sv_h, sv_l, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_AD_Close(stA);
@@ -613,7 +613,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ADD_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ADD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADD_Open(sv_c, sv_v, svN, &st, &v0);
+            { TA_ADD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADD_Open(&st, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADD_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -635,7 +635,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ADD_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ADD_Open(sv_c, sv_v, P, &st, &v0);
+            rc = TA_ADD_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -659,7 +659,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ADD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ADD_OpenInternal(sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ADD_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ADD_Close(stA);
@@ -683,7 +683,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ADOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADOSC_Open(optInFastPeriod, optInSlowPeriod, sv_h, sv_l, sv_c, sv_v, svN, &st, &v0);
+            { TA_ADOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADOSC_Open(&st, sv_h, sv_l, sv_c, sv_v, svN, optInFastPeriod, optInSlowPeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADOSC_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -706,7 +706,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ADOSC_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ADOSC_Open(optInFastPeriod, optInSlowPeriod, sv_h, sv_l, sv_c, sv_v, P, &st, &v0);
+            rc = TA_ADOSC_Open(&st, sv_h, sv_l, sv_c, sv_v, P, optInFastPeriod, optInSlowPeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -730,7 +730,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ADOSC_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ADOSC_OpenInternal(optInFastPeriod, optInSlowPeriod, sv_h, sv_l, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ADOSC_OpenInternal(&stA, sv_h, sv_l, sv_c, sv_v, Sidx, svN, optInFastPeriod, optInSlowPeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ADOSC_Close(stA);
@@ -754,7 +754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ADX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ADX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADX_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_ADX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADX_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADX_Close(st); }
             TA_SetUnstablePeriod(0, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -777,7 +777,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ADX_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ADX_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_ADX_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -801,7 +801,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ADX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ADX_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ADX_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ADX_Close(stA);
@@ -826,7 +826,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ADXR_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ADXR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADXR_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_ADXR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADXR_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADXR_Close(st); }
             TA_SetUnstablePeriod(1, 0);
             TA_SetUnstablePeriod(0, 0);
@@ -850,7 +850,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ADXR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ADXR_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_ADXR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -874,7 +874,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ADXR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ADXR_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ADXR_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ADXR_Close(stA);
@@ -897,7 +897,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_APO_Open( optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, svN, &st, &v0 );
+            orc = TA_APO_Open( &st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_APO_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -915,7 +915,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_APO_Open(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, svN, &st, &v0);
+            { TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_APO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_APO_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -941,7 +941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_APO_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_APO_Open(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, P, &st, &v0);
+            rc = TA_APO_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -965,7 +965,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_APO_Stream *stA = NULL;
-                    TA_RetCode arc = TA_APO_OpenInternal(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_APO_OpenInternal(&stA, sv_c, Sidx, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_APO_Close(stA);
@@ -991,7 +991,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_AROON_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_AROON_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_AROON_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0, &v1);
+            { TA_AROON_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_AROON_Open(&st, sv_h, sv_l, svN, optInTimePeriod, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AROON_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1014,7 +1014,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AROON_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_AROON_Open(optInTimePeriod, sv_h, sv_l, P, &st, &v0, &v1);
+            rc = TA_AROON_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -1041,7 +1041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_AROON_Stream *stA = NULL;
-                    TA_RetCode arc = TA_AROON_OpenInternal(optInTimePeriod, sv_h, sv_l, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_AROON_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -1064,7 +1064,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_AROONOSC_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_AROONOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AROONOSC_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0);
+            { TA_AROONOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AROONOSC_Open(&st, sv_h, sv_l, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AROONOSC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1086,7 +1086,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_AROONOSC_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_AROONOSC_Open(optInTimePeriod, sv_h, sv_l, P, &st, &v0);
+            rc = TA_AROONOSC_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1110,7 +1110,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_AROONOSC_Stream *stA = NULL;
-                    TA_RetCode arc = TA_AROONOSC_OpenInternal(optInTimePeriod, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_AROONOSC_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_AROONOSC_Close(stA);
@@ -1131,7 +1131,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ASIN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ASIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ASIN_Open(sv_c, svN, &st, &v0);
+            { TA_ASIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ASIN_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ASIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1153,7 +1153,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ASIN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ASIN_Open(sv_c, P, &st, &v0);
+            rc = TA_ASIN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1177,7 +1177,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ASIN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ASIN_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ASIN_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ASIN_Close(stA);
@@ -1198,7 +1198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ATAN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ATAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ATAN_Open(sv_c, svN, &st, &v0);
+            { TA_ATAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ATAN_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ATAN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1220,7 +1220,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ATAN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ATAN_Open(sv_c, P, &st, &v0);
+            rc = TA_ATAN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1244,7 +1244,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ATAN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ATAN_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ATAN_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ATAN_Close(stA);
@@ -1267,7 +1267,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ATR_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ATR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ATR_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_ATR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ATR_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ATR_Close(st); }
             TA_SetUnstablePeriod(2, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -1290,7 +1290,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ATR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ATR_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_ATR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1314,7 +1314,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ATR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ATR_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ATR_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ATR_Close(stA);
@@ -1337,7 +1337,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_AVGDEV_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_AVGDEV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGDEV_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_AVGDEV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGDEV_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AVGDEV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1359,7 +1359,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_AVGDEV_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_AVGDEV_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_AVGDEV_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1383,7 +1383,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_AVGDEV_Stream *stA = NULL;
-                    TA_RetCode arc = TA_AVGDEV_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_AVGDEV_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_AVGDEV_Close(stA);
@@ -1404,7 +1404,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_AVGPRICE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_AVGPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGPRICE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_AVGPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_AVGPRICE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_AVGPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1426,7 +1426,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_AVGPRICE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_AVGPRICE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_AVGPRICE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1450,7 +1450,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_AVGPRICE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_AVGPRICE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_AVGPRICE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_AVGPRICE_Close(stA);
@@ -1472,7 +1472,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_BBANDS_Open( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sv_c, svN, &st, &v0, &v1, &v2 );
+            orc = TA_BBANDS_Open( &st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_BBANDS_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -1490,7 +1490,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_BBANDS_Open(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sv_c, svN, &st, &v0, &v1, &v2);
+            { TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_BBANDS_Open(&st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BBANDS_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -1518,7 +1518,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
             double v2 = 0.0, pk2 = 0.0;
-            rc = TA_BBANDS_Open(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sv_c, P, &st, &v0, &v1, &v2);
+            rc = TA_BBANDS_Open(&st, sv_c, P, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -1548,7 +1548,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v1 = 0.0;
                     double v2 = 0.0;
                     TA_BBANDS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_BBANDS_OpenInternal(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sv_c, Sidx, svN, &stA, &v0, &v1, &v2);
+                    TA_RetCode arc = TA_BBANDS_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -1576,7 +1576,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_BETA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_BETA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BETA_Open(optInTimePeriod, sv_c, sv_v, svN, &st, &v0);
+            { TA_BETA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BETA_Open(&st, sv_c, sv_v, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BETA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1598,7 +1598,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_BETA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_BETA_Open(optInTimePeriod, sv_c, sv_v, P, &st, &v0);
+            rc = TA_BETA_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1622,7 +1622,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_BETA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_BETA_OpenInternal(optInTimePeriod, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_BETA_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_BETA_Close(stA);
@@ -1643,7 +1643,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_BOP_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_BOP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BOP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_BOP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BOP_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BOP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1665,7 +1665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_BOP_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_BOP_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_BOP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1689,7 +1689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_BOP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_BOP_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_BOP_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_BOP_Close(stA);
@@ -1711,7 +1711,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CCI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CCI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CCI_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CCI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CCI_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CCI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1733,7 +1733,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CCI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_CCI_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CCI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1757,7 +1757,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_CCI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CCI_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CCI_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_CCI_Close(stA);
@@ -1783,7 +1783,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL2CROWS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL2CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL2CROWS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -1807,7 +1807,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL2CROWS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL2CROWS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1834,7 +1834,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL2CROWS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL2CROWS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL2CROWS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL2CROWS_Close(stA);
@@ -1860,7 +1860,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3BLACKCROWS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3BLACKCROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3BLACKCROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3BLACKCROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3BLACKCROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3BLACKCROWS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -1884,7 +1884,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3BLACKCROWS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3BLACKCROWS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3BLACKCROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1911,7 +1911,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3BLACKCROWS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3BLACKCROWS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3BLACKCROWS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3BLACKCROWS_Close(stA);
@@ -1937,7 +1937,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3INSIDE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3INSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3INSIDE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3INSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3INSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3INSIDE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -1961,7 +1961,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3INSIDE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3INSIDE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3INSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -1988,7 +1988,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3INSIDE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3INSIDE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3INSIDE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3INSIDE_Close(stA);
@@ -2014,7 +2014,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3LINESTRIKE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3LINESTRIKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3LINESTRIKE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3LINESTRIKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3LINESTRIKE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3LINESTRIKE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2038,7 +2038,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3LINESTRIKE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3LINESTRIKE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3LINESTRIKE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2065,7 +2065,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3LINESTRIKE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3LINESTRIKE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3LINESTRIKE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3LINESTRIKE_Close(stA);
@@ -2091,7 +2091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3OUTSIDE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3OUTSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3OUTSIDE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3OUTSIDE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3OUTSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3OUTSIDE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2115,7 +2115,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3OUTSIDE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3OUTSIDE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3OUTSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2142,7 +2142,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3OUTSIDE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3OUTSIDE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3OUTSIDE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3OUTSIDE_Close(stA);
@@ -2168,7 +2168,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3STARSINSOUTH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3STARSINSOUTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3STARSINSOUTH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3STARSINSOUTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3STARSINSOUTH_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3STARSINSOUTH_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2192,7 +2192,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3STARSINSOUTH_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3STARSINSOUTH_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3STARSINSOUTH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2219,7 +2219,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3STARSINSOUTH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3STARSINSOUTH_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3STARSINSOUTH_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3STARSINSOUTH_Close(stA);
@@ -2245,7 +2245,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDL3WHITESOLDIERS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDL3WHITESOLDIERS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3WHITESOLDIERS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDL3WHITESOLDIERS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDL3WHITESOLDIERS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDL3WHITESOLDIERS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2269,7 +2269,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDL3WHITESOLDIERS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDL3WHITESOLDIERS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDL3WHITESOLDIERS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2296,7 +2296,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDL3WHITESOLDIERS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDL3WHITESOLDIERS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDL3WHITESOLDIERS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDL3WHITESOLDIERS_Close(stA);
@@ -2323,7 +2323,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLABANDONEDBABY_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLABANDONEDBABY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLABANDONEDBABY_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLABANDONEDBABY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLABANDONEDBABY_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLABANDONEDBABY_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2347,7 +2347,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLABANDONEDBABY_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLABANDONEDBABY_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLABANDONEDBABY_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2374,7 +2374,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLABANDONEDBABY_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLABANDONEDBABY_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLABANDONEDBABY_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLABANDONEDBABY_Close(stA);
@@ -2400,7 +2400,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLADVANCEBLOCK_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLADVANCEBLOCK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLADVANCEBLOCK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLADVANCEBLOCK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLADVANCEBLOCK_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLADVANCEBLOCK_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2424,7 +2424,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLADVANCEBLOCK_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLADVANCEBLOCK_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLADVANCEBLOCK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2451,7 +2451,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLADVANCEBLOCK_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLADVANCEBLOCK_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLADVANCEBLOCK_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLADVANCEBLOCK_Close(stA);
@@ -2477,7 +2477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLBELTHOLD_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLBELTHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBELTHOLD_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLBELTHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBELTHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLBELTHOLD_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2501,7 +2501,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLBELTHOLD_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLBELTHOLD_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLBELTHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2528,7 +2528,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLBELTHOLD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLBELTHOLD_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLBELTHOLD_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLBELTHOLD_Close(stA);
@@ -2554,7 +2554,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLBREAKAWAY_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLBREAKAWAY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBREAKAWAY_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLBREAKAWAY_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLBREAKAWAY_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLBREAKAWAY_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2578,7 +2578,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLBREAKAWAY_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLBREAKAWAY_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLBREAKAWAY_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2605,7 +2605,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLBREAKAWAY_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLBREAKAWAY_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLBREAKAWAY_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLBREAKAWAY_Close(stA);
@@ -2631,7 +2631,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLCLOSINGMARUBOZU_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLCLOSINGMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCLOSINGMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLCLOSINGMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCLOSINGMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCLOSINGMARUBOZU_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2655,7 +2655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLCLOSINGMARUBOZU_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLCLOSINGMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLCLOSINGMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2682,7 +2682,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLCLOSINGMARUBOZU_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLCLOSINGMARUBOZU_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLCLOSINGMARUBOZU_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLCLOSINGMARUBOZU_Close(stA);
@@ -2708,7 +2708,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLCONCEALBABYSWALL_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLCONCEALBABYSWALL_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCONCEALBABYSWALL_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLCONCEALBABYSWALL_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCONCEALBABYSWALL_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCONCEALBABYSWALL_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2732,7 +2732,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLCONCEALBABYSWALL_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLCONCEALBABYSWALL_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLCONCEALBABYSWALL_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2759,7 +2759,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLCONCEALBABYSWALL_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLCONCEALBABYSWALL_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLCONCEALBABYSWALL_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLCONCEALBABYSWALL_Close(stA);
@@ -2785,7 +2785,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLCOUNTERATTACK_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLCOUNTERATTACK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCOUNTERATTACK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLCOUNTERATTACK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLCOUNTERATTACK_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLCOUNTERATTACK_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2809,7 +2809,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLCOUNTERATTACK_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLCOUNTERATTACK_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLCOUNTERATTACK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2836,7 +2836,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLCOUNTERATTACK_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLCOUNTERATTACK_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLCOUNTERATTACK_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLCOUNTERATTACK_Close(stA);
@@ -2863,7 +2863,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLDARKCLOUDCOVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLDARKCLOUDCOVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDARKCLOUDCOVER_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2887,7 +2887,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLDARKCLOUDCOVER_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLDARKCLOUDCOVER_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLDARKCLOUDCOVER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2914,7 +2914,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLDARKCLOUDCOVER_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLDARKCLOUDCOVER_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLDARKCLOUDCOVER_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLDARKCLOUDCOVER_Close(stA);
@@ -2940,7 +2940,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLDOJI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDOJI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -2964,7 +2964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLDOJI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLDOJI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -2991,7 +2991,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLDOJI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLDOJI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLDOJI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLDOJI_Close(stA);
@@ -3017,7 +3017,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLDOJISTAR_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJISTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDOJISTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3041,7 +3041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLDOJISTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLDOJISTAR_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3068,7 +3068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLDOJISTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLDOJISTAR_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLDOJISTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLDOJISTAR_Close(stA);
@@ -3094,7 +3094,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLDRAGONFLYDOJI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLDRAGONFLYDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDRAGONFLYDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLDRAGONFLYDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLDRAGONFLYDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLDRAGONFLYDOJI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3118,7 +3118,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLDRAGONFLYDOJI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLDRAGONFLYDOJI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLDRAGONFLYDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3145,7 +3145,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLDRAGONFLYDOJI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLDRAGONFLYDOJI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLDRAGONFLYDOJI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLDRAGONFLYDOJI_Close(stA);
@@ -3171,7 +3171,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLENGULFING_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLENGULFING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLENGULFING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLENGULFING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLENGULFING_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLENGULFING_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3195,7 +3195,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLENGULFING_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLENGULFING_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLENGULFING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3222,7 +3222,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLENGULFING_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLENGULFING_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLENGULFING_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLENGULFING_Close(stA);
@@ -3249,7 +3249,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLEVENINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLEVENINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLEVENINGDOJISTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3273,7 +3273,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLEVENINGDOJISTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLEVENINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLEVENINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3300,7 +3300,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLEVENINGDOJISTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLEVENINGDOJISTAR_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLEVENINGDOJISTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLEVENINGDOJISTAR_Close(stA);
@@ -3327,7 +3327,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLEVENINGSTAR_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLEVENINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLEVENINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLEVENINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLEVENINGSTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3351,7 +3351,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLEVENINGSTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLEVENINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLEVENINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3378,7 +3378,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLEVENINGSTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLEVENINGSTAR_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLEVENINGSTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLEVENINGSTAR_Close(stA);
@@ -3404,7 +3404,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLGAPSIDESIDEWHITE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGAPSIDESIDEWHITE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGAPSIDESIDEWHITE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLGAPSIDESIDEWHITE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3428,7 +3428,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLGAPSIDESIDEWHITE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLGAPSIDESIDEWHITE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3455,7 +3455,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLGAPSIDESIDEWHITE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLGAPSIDESIDEWHITE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLGAPSIDESIDEWHITE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLGAPSIDESIDEWHITE_Close(stA);
@@ -3481,7 +3481,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLGRAVESTONEDOJI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLGRAVESTONEDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGRAVESTONEDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLGRAVESTONEDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLGRAVESTONEDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLGRAVESTONEDOJI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3505,7 +3505,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLGRAVESTONEDOJI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLGRAVESTONEDOJI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLGRAVESTONEDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3532,7 +3532,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLGRAVESTONEDOJI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLGRAVESTONEDOJI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLGRAVESTONEDOJI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLGRAVESTONEDOJI_Close(stA);
@@ -3558,7 +3558,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHAMMER_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHAMMER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHAMMER_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3582,7 +3582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHAMMER_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHAMMER_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3609,7 +3609,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHAMMER_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHAMMER_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHAMMER_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHAMMER_Close(stA);
@@ -3635,7 +3635,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHANGINGMAN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHANGINGMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHANGINGMAN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHANGINGMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHANGINGMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHANGINGMAN_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3659,7 +3659,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHANGINGMAN_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHANGINGMAN_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHANGINGMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3686,7 +3686,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHANGINGMAN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHANGINGMAN_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHANGINGMAN_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHANGINGMAN_Close(stA);
@@ -3712,7 +3712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHARAMI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHARAMI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHARAMI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHARAMI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3736,7 +3736,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHARAMI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHARAMI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHARAMI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3763,7 +3763,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHARAMI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHARAMI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHARAMI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHARAMI_Close(stA);
@@ -3789,7 +3789,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHARAMICROSS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHARAMICROSS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMICROSS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHARAMICROSS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHARAMICROSS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHARAMICROSS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3813,7 +3813,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHARAMICROSS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHARAMICROSS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHARAMICROSS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3840,7 +3840,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHARAMICROSS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHARAMICROSS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHARAMICROSS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHARAMICROSS_Close(stA);
@@ -3866,7 +3866,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHIGHWAVE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHIGHWAVE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIGHWAVE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHIGHWAVE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIGHWAVE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIGHWAVE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3890,7 +3890,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHIGHWAVE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHIGHWAVE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHIGHWAVE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3917,7 +3917,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHIGHWAVE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHIGHWAVE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHIGHWAVE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHIGHWAVE_Close(stA);
@@ -3943,7 +3943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHIKKAKE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHIKKAKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHIKKAKE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIKKAKE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -3967,7 +3967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHIKKAKE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHIKKAKE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHIKKAKE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -3994,7 +3994,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHIKKAKE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHIKKAKE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHIKKAKE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHIKKAKE_Close(stA);
@@ -4020,7 +4020,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHIKKAKEMOD_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHIKKAKEMOD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKEMOD_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHIKKAKEMOD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHIKKAKEMOD_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHIKKAKEMOD_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4044,7 +4044,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHIKKAKEMOD_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHIKKAKEMOD_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHIKKAKEMOD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4071,7 +4071,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHIKKAKEMOD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHIKKAKEMOD_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHIKKAKEMOD_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHIKKAKEMOD_Close(stA);
@@ -4097,7 +4097,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLHOMINGPIGEON_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLHOMINGPIGEON_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHOMINGPIGEON_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLHOMINGPIGEON_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLHOMINGPIGEON_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLHOMINGPIGEON_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4121,7 +4121,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLHOMINGPIGEON_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLHOMINGPIGEON_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLHOMINGPIGEON_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4148,7 +4148,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLHOMINGPIGEON_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLHOMINGPIGEON_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLHOMINGPIGEON_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLHOMINGPIGEON_Close(stA);
@@ -4174,7 +4174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLIDENTICAL3CROWS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLIDENTICAL3CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLIDENTICAL3CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLIDENTICAL3CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLIDENTICAL3CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLIDENTICAL3CROWS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4198,7 +4198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLIDENTICAL3CROWS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLIDENTICAL3CROWS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLIDENTICAL3CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4225,7 +4225,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLIDENTICAL3CROWS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLIDENTICAL3CROWS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLIDENTICAL3CROWS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLIDENTICAL3CROWS_Close(stA);
@@ -4251,7 +4251,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLINNECK_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLINNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINNECK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLINNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLINNECK_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4275,7 +4275,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLINNECK_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLINNECK_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLINNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4302,7 +4302,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLINNECK_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLINNECK_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLINNECK_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLINNECK_Close(stA);
@@ -4328,7 +4328,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLINVERTEDHAMMER_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLINVERTEDHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINVERTEDHAMMER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLINVERTEDHAMMER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLINVERTEDHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLINVERTEDHAMMER_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4352,7 +4352,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLINVERTEDHAMMER_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLINVERTEDHAMMER_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLINVERTEDHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4379,7 +4379,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLINVERTEDHAMMER_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLINVERTEDHAMMER_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLINVERTEDHAMMER_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLINVERTEDHAMMER_Close(stA);
@@ -4405,7 +4405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLKICKING_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLKICKING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLKICKING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKING_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLKICKING_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4429,7 +4429,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLKICKING_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLKICKING_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLKICKING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4456,7 +4456,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLKICKING_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLKICKING_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLKICKING_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLKICKING_Close(stA);
@@ -4482,7 +4482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLKICKINGBYLENGTH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLKICKINGBYLENGTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKINGBYLENGTH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLKICKINGBYLENGTH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLKICKINGBYLENGTH_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLKICKINGBYLENGTH_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4506,7 +4506,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLKICKINGBYLENGTH_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLKICKINGBYLENGTH_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLKICKINGBYLENGTH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4533,7 +4533,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLKICKINGBYLENGTH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLKICKINGBYLENGTH_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLKICKINGBYLENGTH_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLKICKINGBYLENGTH_Close(stA);
@@ -4559,7 +4559,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLLADDERBOTTOM_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLLADDERBOTTOM_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLADDERBOTTOM_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLLADDERBOTTOM_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLADDERBOTTOM_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLADDERBOTTOM_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4583,7 +4583,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLLADDERBOTTOM_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLLADDERBOTTOM_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLLADDERBOTTOM_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4610,7 +4610,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLLADDERBOTTOM_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLLADDERBOTTOM_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLLADDERBOTTOM_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLLADDERBOTTOM_Close(stA);
@@ -4636,7 +4636,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLLONGLEGGEDDOJI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLLONGLEGGEDDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLEGGEDDOJI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLLONGLEGGEDDOJI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLEGGEDDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLONGLEGGEDDOJI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4660,7 +4660,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLLONGLEGGEDDOJI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLLONGLEGGEDDOJI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLLONGLEGGEDDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4687,7 +4687,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLLONGLEGGEDDOJI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLLONGLEGGEDDOJI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLLONGLEGGEDDOJI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLLONGLEGGEDDOJI_Close(stA);
@@ -4713,7 +4713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLLONGLINE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLLONGLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLINE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLLONGLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLLONGLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLLONGLINE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4737,7 +4737,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLLONGLINE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLLONGLINE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLLONGLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4764,7 +4764,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLLONGLINE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLLONGLINE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLLONGLINE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLLONGLINE_Close(stA);
@@ -4790,7 +4790,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLMARUBOZU_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLMARUBOZU_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMARUBOZU_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4814,7 +4814,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLMARUBOZU_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLMARUBOZU_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4841,7 +4841,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLMARUBOZU_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLMARUBOZU_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLMARUBOZU_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLMARUBOZU_Close(stA);
@@ -4867,7 +4867,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLMATCHINGLOW_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLMATCHINGLOW_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATCHINGLOW_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLMATCHINGLOW_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATCHINGLOW_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMATCHINGLOW_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4891,7 +4891,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLMATCHINGLOW_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLMATCHINGLOW_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLMATCHINGLOW_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4918,7 +4918,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLMATCHINGLOW_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLMATCHINGLOW_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLMATCHINGLOW_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLMATCHINGLOW_Close(stA);
@@ -4945,7 +4945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLMATHOLD_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLMATHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATHOLD_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLMATHOLD_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMATHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMATHOLD_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -4969,7 +4969,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLMATHOLD_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLMATHOLD_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLMATHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -4996,7 +4996,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLMATHOLD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLMATHOLD_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLMATHOLD_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLMATHOLD_Close(stA);
@@ -5023,7 +5023,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLMORNINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLMORNINGDOJISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMORNINGDOJISTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5047,7 +5047,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLMORNINGDOJISTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLMORNINGDOJISTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLMORNINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5074,7 +5074,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLMORNINGDOJISTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLMORNINGDOJISTAR_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLMORNINGDOJISTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLMORNINGDOJISTAR_Close(stA);
@@ -5101,7 +5101,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLMORNINGSTAR_Lookback(optInPenetration);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLMORNINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLMORNINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLMORNINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLMORNINGSTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5125,7 +5125,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLMORNINGSTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLMORNINGSTAR_Open(optInPenetration, sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLMORNINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5152,7 +5152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLMORNINGSTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLMORNINGSTAR_OpenInternal(optInPenetration, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLMORNINGSTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, optInPenetration, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLMORNINGSTAR_Close(stA);
@@ -5178,7 +5178,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLONNECK_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLONNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLONNECK_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLONNECK_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLONNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLONNECK_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5202,7 +5202,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLONNECK_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLONNECK_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLONNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5229,7 +5229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLONNECK_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLONNECK_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLONNECK_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLONNECK_Close(stA);
@@ -5255,7 +5255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLPIERCING_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLPIERCING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLPIERCING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLPIERCING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLPIERCING_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLPIERCING_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5279,7 +5279,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLPIERCING_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLPIERCING_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLPIERCING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5306,7 +5306,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLPIERCING_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLPIERCING_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLPIERCING_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLPIERCING_Close(stA);
@@ -5332,7 +5332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLRICKSHAWMAN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLRICKSHAWMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRICKSHAWMAN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLRICKSHAWMAN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRICKSHAWMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLRICKSHAWMAN_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5356,7 +5356,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLRICKSHAWMAN_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLRICKSHAWMAN_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLRICKSHAWMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5383,7 +5383,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLRICKSHAWMAN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLRICKSHAWMAN_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLRICKSHAWMAN_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLRICKSHAWMAN_Close(stA);
@@ -5409,7 +5409,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLRISEFALL3METHODS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLRISEFALL3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRISEFALL3METHODS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLRISEFALL3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLRISEFALL3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLRISEFALL3METHODS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5433,7 +5433,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLRISEFALL3METHODS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLRISEFALL3METHODS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLRISEFALL3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5460,7 +5460,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLRISEFALL3METHODS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLRISEFALL3METHODS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLRISEFALL3METHODS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLRISEFALL3METHODS_Close(stA);
@@ -5486,7 +5486,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSEPARATINGLINES_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSEPARATINGLINES_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSEPARATINGLINES_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSEPARATINGLINES_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSEPARATINGLINES_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSEPARATINGLINES_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5510,7 +5510,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSEPARATINGLINES_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSEPARATINGLINES_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSEPARATINGLINES_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5537,7 +5537,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSEPARATINGLINES_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSEPARATINGLINES_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSEPARATINGLINES_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSEPARATINGLINES_Close(stA);
@@ -5563,7 +5563,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSHOOTINGSTAR_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSHOOTINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHOOTINGSTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSHOOTINGSTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHOOTINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSHOOTINGSTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5587,7 +5587,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSHOOTINGSTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSHOOTINGSTAR_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSHOOTINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5614,7 +5614,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSHOOTINGSTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSHOOTINGSTAR_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSHOOTINGSTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSHOOTINGSTAR_Close(stA);
@@ -5640,7 +5640,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSHORTLINE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSHORTLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHORTLINE_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSHORTLINE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSHORTLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSHORTLINE_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5664,7 +5664,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSHORTLINE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSHORTLINE_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSHORTLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5691,7 +5691,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSHORTLINE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSHORTLINE_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSHORTLINE_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSHORTLINE_Close(stA);
@@ -5717,7 +5717,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSPINNINGTOP_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSPINNINGTOP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSPINNINGTOP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSPINNINGTOP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSPINNINGTOP_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSPINNINGTOP_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5741,7 +5741,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSPINNINGTOP_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSPINNINGTOP_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSPINNINGTOP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5768,7 +5768,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSPINNINGTOP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSPINNINGTOP_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSPINNINGTOP_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSPINNINGTOP_Close(stA);
@@ -5794,7 +5794,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSTALLEDPATTERN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSTALLEDPATTERN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTALLEDPATTERN_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSTALLEDPATTERN_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTALLEDPATTERN_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSTALLEDPATTERN_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5818,7 +5818,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSTALLEDPATTERN_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSTALLEDPATTERN_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSTALLEDPATTERN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5845,7 +5845,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSTALLEDPATTERN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSTALLEDPATTERN_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSTALLEDPATTERN_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSTALLEDPATTERN_Close(stA);
@@ -5871,7 +5871,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLSTICKSANDWICH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLSTICKSANDWICH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTICKSANDWICH_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLSTICKSANDWICH_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLSTICKSANDWICH_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLSTICKSANDWICH_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5895,7 +5895,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLSTICKSANDWICH_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLSTICKSANDWICH_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLSTICKSANDWICH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5922,7 +5922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLSTICKSANDWICH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLSTICKSANDWICH_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLSTICKSANDWICH_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLSTICKSANDWICH_Close(stA);
@@ -5948,7 +5948,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLTAKURI_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLTAKURI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTAKURI_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLTAKURI_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTAKURI_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTAKURI_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -5972,7 +5972,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLTAKURI_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLTAKURI_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLTAKURI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -5999,7 +5999,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLTAKURI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLTAKURI_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLTAKURI_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLTAKURI_Close(stA);
@@ -6025,7 +6025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLTASUKIGAP_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLTASUKIGAP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTASUKIGAP_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLTASUKIGAP_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTASUKIGAP_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTASUKIGAP_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6049,7 +6049,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLTASUKIGAP_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLTASUKIGAP_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLTASUKIGAP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6076,7 +6076,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLTASUKIGAP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLTASUKIGAP_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLTASUKIGAP_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLTASUKIGAP_Close(stA);
@@ -6102,7 +6102,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLTHRUSTING_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLTHRUSTING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTHRUSTING_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLTHRUSTING_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTHRUSTING_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTHRUSTING_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6126,7 +6126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLTHRUSTING_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLTHRUSTING_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLTHRUSTING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6153,7 +6153,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLTHRUSTING_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLTHRUSTING_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLTHRUSTING_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLTHRUSTING_Close(stA);
@@ -6179,7 +6179,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLTRISTAR_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLTRISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTRISTAR_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLTRISTAR_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLTRISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLTRISTAR_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6203,7 +6203,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLTRISTAR_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLTRISTAR_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLTRISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6230,7 +6230,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLTRISTAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLTRISTAR_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLTRISTAR_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLTRISTAR_Close(stA);
@@ -6256,7 +6256,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLUNIQUE3RIVER_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLUNIQUE3RIVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUNIQUE3RIVER_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLUNIQUE3RIVER_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUNIQUE3RIVER_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLUNIQUE3RIVER_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6280,7 +6280,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLUNIQUE3RIVER_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLUNIQUE3RIVER_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLUNIQUE3RIVER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6307,7 +6307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLUNIQUE3RIVER_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLUNIQUE3RIVER_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLUNIQUE3RIVER_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLUNIQUE3RIVER_Close(stA);
@@ -6333,7 +6333,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLUPSIDEGAP2CROWS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUPSIDEGAP2CROWS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLUPSIDEGAP2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLUPSIDEGAP2CROWS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6357,7 +6357,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLUPSIDEGAP2CROWS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLUPSIDEGAP2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6384,7 +6384,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLUPSIDEGAP2CROWS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLUPSIDEGAP2CROWS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLUPSIDEGAP2CROWS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLUPSIDEGAP2CROWS_Close(stA);
@@ -6410,7 +6410,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CDLXSIDEGAP3METHODS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CDLXSIDEGAP3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLXSIDEGAP3METHODS_Open(sv_o, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_CDLXSIDEGAP3METHODS_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_CDLXSIDEGAP3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CDLXSIDEGAP3METHODS_Close(st); }
             if( !openRejects ) allOk = 0;
             if( rd + 1 < rounds ) continue;
@@ -6434,7 +6434,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CDLXSIDEGAP3METHODS_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_CDLXSIDEGAP3METHODS_Open(sv_o, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_CDLXSIDEGAP3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6461,7 +6461,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_CDLXSIDEGAP3METHODS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CDLXSIDEGAP3METHODS_OpenInternal(sv_o, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CDLXSIDEGAP3METHODS_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_CDLXSIDEGAP3METHODS_Close(stA);
@@ -6482,7 +6482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CEIL_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CEIL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CEIL_Open(sv_c, svN, &st, &v0);
+            { TA_CEIL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CEIL_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CEIL_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -6504,7 +6504,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CEIL_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_CEIL_Open(sv_c, P, &st, &v0);
+            rc = TA_CEIL_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6528,7 +6528,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_CEIL_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CEIL_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CEIL_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_CEIL_Close(stA);
@@ -6551,7 +6551,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CMO_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CMO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CMO_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_CMO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CMO_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CMO_Close(st); }
             TA_SetUnstablePeriod(3, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -6574,7 +6574,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CMO_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_CMO_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_CMO_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6598,7 +6598,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_CMO_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CMO_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CMO_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_CMO_Close(stA);
@@ -6621,7 +6621,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_CORREL_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_CORREL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CORREL_Open(optInTimePeriod, sv_c, sv_v, svN, &st, &v0);
+            { TA_CORREL_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CORREL_Open(&st, sv_c, sv_v, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CORREL_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -6643,7 +6643,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_CORREL_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_CORREL_Open(optInTimePeriod, sv_c, sv_v, P, &st, &v0);
+            rc = TA_CORREL_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6667,7 +6667,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_CORREL_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CORREL_OpenInternal(optInTimePeriod, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_CORREL_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_CORREL_Close(stA);
@@ -6688,7 +6688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_COS_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_COS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COS_Open(sv_c, svN, &st, &v0);
+            { TA_COS_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COS_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_COS_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -6710,7 +6710,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_COS_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_COS_Open(sv_c, P, &st, &v0);
+            rc = TA_COS_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6734,7 +6734,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_COS_Stream *stA = NULL;
-                    TA_RetCode arc = TA_COS_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_COS_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_COS_Close(stA);
@@ -6755,7 +6755,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_COSH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_COSH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COSH_Open(sv_c, svN, &st, &v0);
+            { TA_COSH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_COSH_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_COSH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -6777,7 +6777,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_COSH_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_COSH_Open(sv_c, P, &st, &v0);
+            rc = TA_COSH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6801,7 +6801,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_COSH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_COSH_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_COSH_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_COSH_Close(stA);
@@ -6824,7 +6824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_DEMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_DEMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DEMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_DEMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DEMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DEMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -6847,7 +6847,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_DEMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_DEMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_DEMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6871,7 +6871,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_DEMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_DEMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_DEMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_DEMA_Close(stA);
@@ -6893,7 +6893,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_DIV_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_DIV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DIV_Open(sv_c, sv_v, svN, &st, &v0);
+            { TA_DIV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DIV_Open(&st, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DIV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -6915,7 +6915,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_DIV_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_DIV_Open(sv_c, sv_v, P, &st, &v0);
+            rc = TA_DIV_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -6939,7 +6939,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_DIV_Stream *stA = NULL;
-                    TA_RetCode arc = TA_DIV_OpenInternal(sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_DIV_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_DIV_Close(stA);
@@ -6962,7 +6962,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_DX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_DX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DX_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_DX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DX_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DX_Close(st); }
             TA_SetUnstablePeriod(4, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -6985,7 +6985,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_DX_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_DX_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_DX_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7009,7 +7009,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_DX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_DX_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_DX_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_DX_Close(stA);
@@ -7033,7 +7033,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_EMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_EMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_EMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_EMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7056,7 +7056,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_EMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_EMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_EMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7080,7 +7080,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_EMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_EMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_EMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_EMA_Close(stA);
@@ -7102,7 +7102,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_EXP_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_EXP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EXP_Open(sv_c, svN, &st, &v0);
+            { TA_EXP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EXP_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_EXP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7124,7 +7124,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_EXP_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_EXP_Open(sv_c, P, &st, &v0);
+            rc = TA_EXP_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7148,7 +7148,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_EXP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_EXP_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_EXP_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_EXP_Close(stA);
@@ -7169,7 +7169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_FLOOR_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_FLOOR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_FLOOR_Open(sv_c, svN, &st, &v0);
+            { TA_FLOOR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_FLOOR_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_FLOOR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7191,7 +7191,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_FLOOR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_FLOOR_Open(sv_c, P, &st, &v0);
+            rc = TA_FLOOR_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7215,7 +7215,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_FLOOR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_FLOOR_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_FLOOR_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_FLOOR_Close(stA);
@@ -7237,7 +7237,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_DCPERIOD_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_DCPERIOD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_DCPERIOD_Open(sv_c, svN, &st, &v0);
+            { TA_HT_DCPERIOD_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_DCPERIOD_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_DCPERIOD_Close(st); }
             TA_SetUnstablePeriod(6, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7260,7 +7260,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_HT_DCPERIOD_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_HT_DCPERIOD_Open(sv_c, P, &st, &v0);
+            rc = TA_HT_DCPERIOD_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7284,7 +7284,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_HT_DCPERIOD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_DCPERIOD_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_HT_DCPERIOD_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_HT_DCPERIOD_Close(stA);
@@ -7307,7 +7307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_DCPHASE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_DCPHASE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_DCPHASE_Open(sv_c, svN, &st, &v0);
+            { TA_HT_DCPHASE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_DCPHASE_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_DCPHASE_Close(st); }
             TA_SetUnstablePeriod(7, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7330,7 +7330,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_HT_DCPHASE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_HT_DCPHASE_Open(sv_c, P, &st, &v0);
+            rc = TA_HT_DCPHASE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7354,7 +7354,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_HT_DCPHASE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_DCPHASE_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_HT_DCPHASE_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_HT_DCPHASE_Close(stA);
@@ -7377,7 +7377,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_PHASOR_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_PHASOR_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_HT_PHASOR_Open(sv_c, svN, &st, &v0, &v1);
+            { TA_HT_PHASOR_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_HT_PHASOR_Open(&st, sv_c, svN, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_PHASOR_Close(st); }
             TA_SetUnstablePeriod(8, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7401,7 +7401,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_PHASOR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_HT_PHASOR_Open(sv_c, P, &st, &v0, &v1);
+            rc = TA_HT_PHASOR_Open(&st, sv_c, P, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -7428,7 +7428,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_HT_PHASOR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_PHASOR_OpenInternal(sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_HT_PHASOR_OpenInternal(&stA, sv_c, Sidx, svN, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -7452,7 +7452,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_SINE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_SINE_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_HT_SINE_Open(sv_c, svN, &st, &v0, &v1);
+            { TA_HT_SINE_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_HT_SINE_Open(&st, sv_c, svN, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_SINE_Close(st); }
             TA_SetUnstablePeriod(9, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7476,7 +7476,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_SINE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_HT_SINE_Open(sv_c, P, &st, &v0, &v1);
+            rc = TA_HT_SINE_Open(&st, sv_c, P, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -7503,7 +7503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_HT_SINE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_SINE_OpenInternal(sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_HT_SINE_OpenInternal(&stA, sv_c, Sidx, svN, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -7527,7 +7527,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_TRENDLINE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_TRENDLINE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_TRENDLINE_Open(sv_c, svN, &st, &v0);
+            { TA_HT_TRENDLINE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HT_TRENDLINE_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_TRENDLINE_Close(st); }
             TA_SetUnstablePeriod(10, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7550,7 +7550,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_HT_TRENDLINE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_HT_TRENDLINE_Open(sv_c, P, &st, &v0);
+            rc = TA_HT_TRENDLINE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7574,7 +7574,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_HT_TRENDLINE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_TRENDLINE_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_HT_TRENDLINE_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_HT_TRENDLINE_Close(stA);
@@ -7597,7 +7597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_HT_TRENDMODE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_HT_TRENDMODE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_HT_TRENDMODE_Open(sv_c, svN, &st, &v0);
+            { TA_HT_TRENDMODE_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_HT_TRENDMODE_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HT_TRENDMODE_Close(st); }
             TA_SetUnstablePeriod(11, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7620,7 +7620,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_HT_TRENDMODE_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_HT_TRENDMODE_Open(sv_c, P, &st, &v0);
+            rc = TA_HT_TRENDMODE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7644,7 +7644,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_HT_TRENDMODE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_HT_TRENDMODE_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_HT_TRENDMODE_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_HT_TRENDMODE_Close(stA);
@@ -7667,7 +7667,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_IMI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_IMI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_IMI_Open(optInTimePeriod, sv_o, sv_c, svN, &st, &v0);
+            { TA_IMI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_IMI_Open(&st, sv_o, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_IMI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7689,7 +7689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_IMI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_IMI_Open(optInTimePeriod, sv_o, sv_c, P, &st, &v0);
+            rc = TA_IMI_Open(&st, sv_o, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7713,7 +7713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_IMI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_IMI_OpenInternal(optInTimePeriod, sv_o, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_IMI_OpenInternal(&stA, sv_o, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_IMI_Close(stA);
@@ -7736,7 +7736,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_KAMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_KAMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_KAMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_KAMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_KAMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_KAMA_Close(st); }
             TA_SetUnstablePeriod(13, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -7759,7 +7759,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_KAMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_KAMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_KAMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7783,7 +7783,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_KAMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_KAMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_KAMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_KAMA_Close(stA);
@@ -7806,7 +7806,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LINEARREG_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LINEARREG_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_LINEARREG_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7828,7 +7828,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LINEARREG_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_LINEARREG_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7852,7 +7852,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LINEARREG_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LINEARREG_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LINEARREG_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LINEARREG_Close(stA);
@@ -7874,7 +7874,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LINEARREG_ANGLE_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LINEARREG_ANGLE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_ANGLE_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_LINEARREG_ANGLE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_ANGLE_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_ANGLE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7896,7 +7896,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_ANGLE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LINEARREG_ANGLE_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_LINEARREG_ANGLE_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7920,7 +7920,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LINEARREG_ANGLE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LINEARREG_ANGLE_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LINEARREG_ANGLE_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LINEARREG_ANGLE_Close(stA);
@@ -7942,7 +7942,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LINEARREG_INTERCEPT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_LINEARREG_INTERCEPT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_INTERCEPT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -7964,7 +7964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_INTERCEPT_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LINEARREG_INTERCEPT_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_LINEARREG_INTERCEPT_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -7988,7 +7988,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LINEARREG_INTERCEPT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LINEARREG_INTERCEPT_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LINEARREG_INTERCEPT_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LINEARREG_INTERCEPT_Close(stA);
@@ -8010,7 +8010,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LINEARREG_SLOPE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_SLOPE_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_LINEARREG_SLOPE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LINEARREG_SLOPE_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LINEARREG_SLOPE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8032,7 +8032,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_SLOPE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LINEARREG_SLOPE_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_LINEARREG_SLOPE_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8056,7 +8056,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LINEARREG_SLOPE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LINEARREG_SLOPE_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LINEARREG_SLOPE_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LINEARREG_SLOPE_Close(stA);
@@ -8077,7 +8077,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LN_Open(sv_c, svN, &st, &v0);
+            { TA_LN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LN_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8099,7 +8099,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LN_Open(sv_c, P, &st, &v0);
+            rc = TA_LN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8123,7 +8123,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LN_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LN_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LN_Close(stA);
@@ -8144,7 +8144,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_LOG10_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_LOG10_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LOG10_Open(sv_c, svN, &st, &v0);
+            { TA_LOG10_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_LOG10_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_LOG10_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8166,7 +8166,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_LOG10_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_LOG10_Open(sv_c, P, &st, &v0);
+            rc = TA_LOG10_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8190,7 +8190,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_LOG10_Stream *stA = NULL;
-                    TA_RetCode arc = TA_LOG10_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_LOG10_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_LOG10_Close(stA);
@@ -8210,7 +8210,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_MA_Open( optInTimePeriod, optInMAType, sv_c, svN, &st, &v0 );
+            orc = TA_MA_Open( &st, sv_c, svN, optInTimePeriod, optInMAType, &v0 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_MA_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8228,7 +8228,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MA_Lookback(optInTimePeriod, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(optInTimePeriod, optInMAType, sv_c, svN, &st, &v0);
+            { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(&st, sv_c, svN, optInTimePeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MA_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -8254,7 +8254,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MA_Open(optInTimePeriod, optInMAType, sv_c, P, &st, &v0);
+            rc = TA_MA_Open(&st, sv_c, P, optInTimePeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8278,7 +8278,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MA_OpenInternal(optInTimePeriod, optInMAType, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInMAType, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MA_Close(stA);
@@ -8307,7 +8307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MACD_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACD_Open(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sv_c, svN, &st, &v0, &v1, &v2);
+            { TA_MACD_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACD_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACD_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8332,7 +8332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
             double v2 = 0.0, pk2 = 0.0;
-            rc = TA_MACD_Open(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sv_c, P, &st, &v0, &v1, &v2);
+            rc = TA_MACD_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -8362,7 +8362,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v1 = 0.0;
                     double v2 = 0.0;
                     TA_MACD_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MACD_OpenInternal(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sv_c, Sidx, svN, &stA, &v0, &v1, &v2);
+                    TA_RetCode arc = TA_MACD_OpenInternal(&stA, sv_c, Sidx, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1, &v2);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -8389,7 +8389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_MACDEXT_Open( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sv_c, svN, &st, &v0, &v1, &v2 );
+            orc = TA_MACDEXT_Open( &st, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_MACDEXT_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8407,7 +8407,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDEXT_Open(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sv_c, svN, &st, &v0, &v1, &v2);
+            { TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDEXT_Open(&st, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACDEXT_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -8435,7 +8435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
             double v2 = 0.0, pk2 = 0.0;
-            rc = TA_MACDEXT_Open(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sv_c, P, &st, &v0, &v1, &v2);
+            rc = TA_MACDEXT_Open(&st, sv_c, P, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -8465,7 +8465,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v1 = 0.0;
                     double v2 = 0.0;
                     TA_MACDEXT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MACDEXT_OpenInternal(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sv_c, Sidx, svN, &stA, &v0, &v1, &v2);
+                    TA_RetCode arc = TA_MACDEXT_OpenInternal(&stA, sv_c, Sidx, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -8494,7 +8494,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MACDFIX_Lookback(optInSignalPeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MACDFIX_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDFIX_Open(optInSignalPeriod, sv_c, svN, &st, &v0, &v1, &v2);
+            { TA_MACDFIX_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDFIX_Open(&st, sv_c, svN, optInSignalPeriod, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACDFIX_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8519,7 +8519,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
             double v2 = 0.0, pk2 = 0.0;
-            rc = TA_MACDFIX_Open(optInSignalPeriod, sv_c, P, &st, &v0, &v1, &v2);
+            rc = TA_MACDFIX_Open(&st, sv_c, P, optInSignalPeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -8549,7 +8549,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v1 = 0.0;
                     double v2 = 0.0;
                     TA_MACDFIX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MACDFIX_OpenInternal(optInSignalPeriod, sv_c, Sidx, svN, &stA, &v0, &v1, &v2);
+                    TA_RetCode arc = TA_MACDFIX_OpenInternal(&stA, sv_c, Sidx, svN, optInSignalPeriod, &v0, &v1, &v2);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -8576,7 +8576,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MAMA_Lookback(optInFastLimit, optInSlowLimit);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MAMA_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_MAMA_Open(optInFastLimit, optInSlowLimit, sv_c, svN, &st, &v0, &v1);
+            { TA_MAMA_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_MAMA_Open(&st, sv_c, svN, optInFastLimit, optInSlowLimit, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAMA_Close(st); }
             TA_SetUnstablePeriod(14, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8600,7 +8600,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MAMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_MAMA_Open(optInFastLimit, optInSlowLimit, sv_c, P, &st, &v0, &v1);
+            rc = TA_MAMA_Open(&st, sv_c, P, optInFastLimit, optInSlowLimit, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -8627,7 +8627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_MAMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MAMA_OpenInternal(optInFastLimit, optInSlowLimit, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_MAMA_OpenInternal(&stA, sv_c, Sidx, svN, optInFastLimit, optInSlowLimit, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -8651,7 +8651,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_MAVP_Open( optInMinPeriod, optInMaxPeriod, optInMAType, sv_c, sv_v, svN, &st, &v0 );
+            orc = TA_MAVP_Open( &st, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_MAVP_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -8669,7 +8669,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAVP_Open(optInMinPeriod, optInMaxPeriod, optInMAType, sv_c, sv_v, svN, &st, &v0);
+            { TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAVP_Open(&st, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAVP_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -8695,7 +8695,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MAVP_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MAVP_Open(optInMinPeriod, optInMaxPeriod, optInMAType, sv_c, sv_v, P, &st, &v0);
+            rc = TA_MAVP_Open(&st, sv_c, sv_v, P, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8719,7 +8719,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MAVP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MAVP_OpenInternal(optInMinPeriod, optInMaxPeriod, optInMAType, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MAVP_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MAVP_Close(stA);
@@ -8745,7 +8745,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MAX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MAX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MAX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAX_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8767,7 +8767,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MAX_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MAX_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MAX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8791,7 +8791,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MAX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MAX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MAX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MAX_Close(stA);
@@ -8813,7 +8813,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MAXINDEX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MAXINDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MAXINDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MAXINDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MAXINDEX_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAXINDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8835,7 +8835,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MAXINDEX_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_MAXINDEX_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MAXINDEX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8859,7 +8859,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_MAXINDEX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MAXINDEX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MAXINDEX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_MAXINDEX_Close(stA);
@@ -8880,7 +8880,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MEDPRICE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MEDPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MEDPRICE_Open(sv_h, sv_l, svN, &st, &v0);
+            { TA_MEDPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MEDPRICE_Open(&st, sv_h, sv_l, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MEDPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8902,7 +8902,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MEDPRICE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MEDPRICE_Open(sv_h, sv_l, P, &st, &v0);
+            rc = TA_MEDPRICE_Open(&st, sv_h, sv_l, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8926,7 +8926,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MEDPRICE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MEDPRICE_OpenInternal(sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MEDPRICE_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MEDPRICE_Close(stA);
@@ -8948,7 +8948,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MFI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MFI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MFI_Open(optInTimePeriod, sv_h, sv_l, sv_c, sv_v, svN, &st, &v0);
+            { TA_MFI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MFI_Open(&st, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MFI_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -8970,7 +8970,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MFI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MFI_Open(optInTimePeriod, sv_h, sv_l, sv_c, sv_v, P, &st, &v0);
+            rc = TA_MFI_Open(&st, sv_h, sv_l, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -8994,7 +8994,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MFI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MFI_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MFI_OpenInternal(&stA, sv_h, sv_l, sv_c, sv_v, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MFI_Close(stA);
@@ -9016,7 +9016,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MIDPOINT_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MIDPOINT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIDPOINT_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MIDPOINT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIDPOINT_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MIDPOINT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9038,7 +9038,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MIDPOINT_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MIDPOINT_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MIDPOINT_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9062,7 +9062,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MIDPOINT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MIDPOINT_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MIDPOINT_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MIDPOINT_Close(stA);
@@ -9084,7 +9084,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MIDPRICE_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MIDPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIDPRICE_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0);
+            { TA_MIDPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIDPRICE_Open(&st, sv_h, sv_l, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MIDPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9106,7 +9106,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MIDPRICE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MIDPRICE_Open(optInTimePeriod, sv_h, sv_l, P, &st, &v0);
+            rc = TA_MIDPRICE_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9130,7 +9130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MIDPRICE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MIDPRICE_OpenInternal(optInTimePeriod, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MIDPRICE_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MIDPRICE_Close(stA);
@@ -9152,7 +9152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MIN_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIN_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MIN_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9174,7 +9174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MIN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MIN_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MIN_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9198,7 +9198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MIN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MIN_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MIN_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MIN_Close(stA);
@@ -9220,7 +9220,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MININDEX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MININDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MININDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MININDEX_Stream *st = NULL; int v0 = 0; TA_RetCode orc = TA_MININDEX_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MININDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9242,7 +9242,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MININDEX_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
-            rc = TA_MININDEX_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MININDEX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9266,7 +9266,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     int v0 = 0;
                     TA_MININDEX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MININDEX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MININDEX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( stA ) TA_MININDEX_Close(stA);
@@ -9288,7 +9288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MINMAX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MINMAX_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_MINMAX_Open(optInTimePeriod, sv_c, svN, &st, &v0, &v1);
+            { TA_MINMAX_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_MINMAX_Open(&st, sv_c, svN, optInTimePeriod, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINMAX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9311,7 +9311,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINMAX_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_MINMAX_Open(optInTimePeriod, sv_c, P, &st, &v0, &v1);
+            rc = TA_MINMAX_Open(&st, sv_c, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -9338,7 +9338,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_MINMAX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MINMAX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_MINMAX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -9361,7 +9361,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MINMAXINDEX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MINMAXINDEX_Stream *st = NULL; int v0 = 0; int v1 = 0; TA_RetCode orc = TA_MINMAXINDEX_Open(optInTimePeriod, sv_c, svN, &st, &v0, &v1);
+            { TA_MINMAXINDEX_Stream *st = NULL; int v0 = 0; int v1 = 0; TA_RetCode orc = TA_MINMAXINDEX_Open(&st, sv_c, svN, optInTimePeriod, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINMAXINDEX_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9384,7 +9384,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINMAXINDEX_Stream *st = NULL;
             int v0 = 0, pk0 = 0;
             int v1 = 0, pk1 = 0;
-            rc = TA_MINMAXINDEX_Open(optInTimePeriod, sv_c, P, &st, &v0, &v1);
+            rc = TA_MINMAXINDEX_Open(&st, sv_c, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
             if( ok && v1 != sv_ib1[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 1; bv = (double)sv_ib1[(P - 1) - svBeg]; sv = (double)v1; }
@@ -9411,7 +9411,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int v0 = 0;
                     int v1 = 0;
                     TA_MINMAXINDEX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MINMAXINDEX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_MINMAXINDEX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && v1 != sv_ib1[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 1; bv = (double)sv_ib1[(svN - 1) - svBegS]; sv = (double)v1; }
@@ -9435,7 +9435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MINUS_DI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MINUS_DI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MINUS_DI_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_MINUS_DI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MINUS_DI_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINUS_DI_Close(st); }
             TA_SetUnstablePeriod(16, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -9458,7 +9458,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MINUS_DI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MINUS_DI_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_MINUS_DI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9482,7 +9482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MINUS_DI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MINUS_DI_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MINUS_DI_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MINUS_DI_Close(stA);
@@ -9506,7 +9506,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MINUS_DM_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MINUS_DM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MINUS_DM_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0);
+            { TA_MINUS_DM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MINUS_DM_Open(&st, sv_h, sv_l, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MINUS_DM_Close(st); }
             TA_SetUnstablePeriod(17, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -9529,7 +9529,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MINUS_DM_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MINUS_DM_Open(optInTimePeriod, sv_h, sv_l, P, &st, &v0);
+            rc = TA_MINUS_DM_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9553,7 +9553,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MINUS_DM_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MINUS_DM_OpenInternal(optInTimePeriod, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MINUS_DM_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MINUS_DM_Close(stA);
@@ -9576,7 +9576,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MOM_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MOM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MOM_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_MOM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MOM_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MOM_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9598,7 +9598,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MOM_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MOM_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_MOM_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9622,7 +9622,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MOM_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MOM_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MOM_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MOM_Close(stA);
@@ -9643,7 +9643,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_MULT_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_MULT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MULT_Open(sv_c, sv_v, svN, &st, &v0);
+            { TA_MULT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MULT_Open(&st, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MULT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9665,7 +9665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_MULT_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_MULT_Open(sv_c, sv_v, P, &st, &v0);
+            rc = TA_MULT_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9689,7 +9689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_MULT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MULT_OpenInternal(sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_MULT_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_MULT_Close(stA);
@@ -9712,7 +9712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_NATR_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_NATR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_NATR_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_NATR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_NATR_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_NATR_Close(st); }
             TA_SetUnstablePeriod(18, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -9735,7 +9735,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_NATR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_NATR_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_NATR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9759,7 +9759,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_NATR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_NATR_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_NATR_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_NATR_Close(stA);
@@ -9781,7 +9781,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_OBV_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_OBV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_OBV_Open(sv_c, sv_v, svN, &st, &v0);
+            { TA_OBV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_OBV_Open(&st, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_OBV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -9803,7 +9803,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_OBV_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_OBV_Open(sv_c, sv_v, P, &st, &v0);
+            rc = TA_OBV_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9827,7 +9827,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_OBV_Stream *stA = NULL;
-                    TA_RetCode arc = TA_OBV_OpenInternal(sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_OBV_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_OBV_Close(stA);
@@ -9850,7 +9850,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_PLUS_DI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_PLUS_DI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PLUS_DI_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_PLUS_DI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PLUS_DI_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PLUS_DI_Close(st); }
             TA_SetUnstablePeriod(19, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -9873,7 +9873,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_PLUS_DI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_PLUS_DI_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_PLUS_DI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9897,7 +9897,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_PLUS_DI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_PLUS_DI_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_PLUS_DI_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_PLUS_DI_Close(stA);
@@ -9921,7 +9921,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_PLUS_DM_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_PLUS_DM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PLUS_DM_Open(optInTimePeriod, sv_h, sv_l, svN, &st, &v0);
+            { TA_PLUS_DM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PLUS_DM_Open(&st, sv_h, sv_l, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PLUS_DM_Close(st); }
             TA_SetUnstablePeriod(20, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -9944,7 +9944,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_PLUS_DM_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_PLUS_DM_Open(optInTimePeriod, sv_h, sv_l, P, &st, &v0);
+            rc = TA_PLUS_DM_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -9968,7 +9968,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_PLUS_DM_Stream *stA = NULL;
-                    TA_RetCode arc = TA_PLUS_DM_OpenInternal(optInTimePeriod, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_PLUS_DM_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_PLUS_DM_Close(stA);
@@ -9990,7 +9990,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_PPO_Open( optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, svN, &st, &v0 );
+            orc = TA_PPO_Open( &st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_PPO_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -10008,7 +10008,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PPO_Open(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, svN, &st, &v0);
+            { TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PPO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PPO_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -10034,7 +10034,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_PPO_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_PPO_Open(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, P, &st, &v0);
+            rc = TA_PPO_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10058,7 +10058,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_PPO_Stream *stA = NULL;
-                    TA_RetCode arc = TA_PPO_OpenInternal(optInFastPeriod, optInSlowPeriod, optInMAType, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_PPO_OpenInternal(&stA, sv_c, Sidx, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_PPO_Close(stA);
@@ -10084,7 +10084,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ROC_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ROC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROC_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_ROC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROC_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10106,7 +10106,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ROC_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ROC_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_ROC_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10130,7 +10130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ROC_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ROC_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ROC_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ROC_Close(stA);
@@ -10152,7 +10152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ROCP_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ROCP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCP_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_ROCP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCP_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCP_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10174,7 +10174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ROCP_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ROCP_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_ROCP_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10198,7 +10198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ROCP_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ROCP_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ROCP_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ROCP_Close(stA);
@@ -10220,7 +10220,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ROCR_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ROCR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_ROCR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10242,7 +10242,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ROCR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ROCR_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_ROCR_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10266,7 +10266,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ROCR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ROCR_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ROCR_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ROCR_Close(stA);
@@ -10288,7 +10288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ROCR100_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ROCR100_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR100_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_ROCR100_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ROCR100_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ROCR100_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10310,7 +10310,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ROCR100_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ROCR100_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_ROCR100_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10334,7 +10334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ROCR100_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ROCR100_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ROCR100_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ROCR100_Close(stA);
@@ -10357,7 +10357,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_RSI_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_RSI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_RSI_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_RSI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_RSI_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_RSI_Close(st); }
             TA_SetUnstablePeriod(21, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -10380,7 +10380,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_RSI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_RSI_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_RSI_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10404,7 +10404,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_RSI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_RSI_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_RSI_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_RSI_Close(stA);
@@ -10428,7 +10428,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SAR_Lookback(optInAcceleration, optInMaximum);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAR_Open(optInAcceleration, optInMaximum, sv_h, sv_l, svN, &st, &v0);
+            { TA_SAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAR_Open(&st, sv_h, sv_l, svN, optInAcceleration, optInMaximum, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SAR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10450,7 +10450,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SAR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SAR_Open(optInAcceleration, optInMaximum, sv_h, sv_l, P, &st, &v0);
+            rc = TA_SAR_Open(&st, sv_h, sv_l, P, optInAcceleration, optInMaximum, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10474,7 +10474,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SAR_OpenInternal(optInAcceleration, optInMaximum, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SAR_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInAcceleration, optInMaximum, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SAR_Close(stA);
@@ -10503,7 +10503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SAREXT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAREXT_Open(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sv_h, sv_l, svN, &st, &v0);
+            { TA_SAREXT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SAREXT_Open(&st, sv_h, sv_l, svN, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SAREXT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10525,7 +10525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SAREXT_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SAREXT_Open(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sv_h, sv_l, P, &st, &v0);
+            rc = TA_SAREXT_Open(&st, sv_h, sv_l, P, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10549,7 +10549,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SAREXT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SAREXT_OpenInternal(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sv_h, sv_l, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SAREXT_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SAREXT_Close(stA);
@@ -10570,7 +10570,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SIN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SIN_Open(sv_c, svN, &st, &v0);
+            { TA_SIN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SIN_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SIN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10592,7 +10592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SIN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SIN_Open(sv_c, P, &st, &v0);
+            rc = TA_SIN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10616,7 +10616,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SIN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SIN_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SIN_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SIN_Close(stA);
@@ -10637,7 +10637,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SINH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SINH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SINH_Open(sv_c, svN, &st, &v0);
+            { TA_SINH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SINH_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SINH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10659,7 +10659,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SINH_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SINH_Open(sv_c, P, &st, &v0);
+            rc = TA_SINH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10683,7 +10683,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SINH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SINH_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SINH_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SINH_Close(stA);
@@ -10705,7 +10705,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_SMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SMA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10727,7 +10727,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_SMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10751,7 +10751,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SMA_Close(stA);
@@ -10772,7 +10772,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SQRT_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SQRT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SQRT_Open(sv_c, svN, &st, &v0);
+            { TA_SQRT_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SQRT_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SQRT_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10794,7 +10794,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SQRT_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SQRT_Open(sv_c, P, &st, &v0);
+            rc = TA_SQRT_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10818,7 +10818,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SQRT_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SQRT_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SQRT_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SQRT_Close(stA);
@@ -10841,7 +10841,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_STDDEV_Lookback(optInTimePeriod, optInNbDev);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_STDDEV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_STDDEV_Open(optInTimePeriod, optInNbDev, sv_c, svN, &st, &v0);
+            { TA_STDDEV_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_STDDEV_Open(&st, sv_c, svN, optInTimePeriod, optInNbDev, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STDDEV_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -10863,7 +10863,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_STDDEV_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_STDDEV_Open(optInTimePeriod, optInNbDev, sv_c, P, &st, &v0);
+            rc = TA_STDDEV_Open(&st, sv_c, P, optInTimePeriod, optInNbDev, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -10887,7 +10887,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_STDDEV_Stream *stA = NULL;
-                    TA_RetCode arc = TA_STDDEV_OpenInternal(optInTimePeriod, optInNbDev, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_STDDEV_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInNbDev, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_STDDEV_Close(stA);
@@ -10910,7 +10910,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_STOCH_Open( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1 );
+            orc = TA_STOCH_Open( &st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_STOCH_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -10928,7 +10928,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCH_Open(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1);
+            { TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCH_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCH_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -10955,7 +10955,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCH_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_STOCH_Open(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, P, &st, &v0, &v1);
+            rc = TA_STOCH_Open(&st, sv_h, sv_l, sv_c, P, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -10982,7 +10982,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_STOCH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_STOCH_OpenInternal(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_STOCH_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -11008,7 +11008,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_STOCHF_Open( optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1 );
+            orc = TA_STOCHF_Open( &st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_STOCHF_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -11026,7 +11026,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHF_Open(optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, svN, &st, &v0, &v1);
+            { TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHF_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHF_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -11053,7 +11053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCHF_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_STOCHF_Open(optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, P, &st, &v0, &v1);
+            rc = TA_STOCHF_Open(&st, sv_h, sv_l, sv_c, P, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -11080,7 +11080,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_STOCHF_Stream *stA = NULL;
-                    TA_RetCode arc = TA_STOCHF_OpenInternal(optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_STOCHF_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -11107,7 +11107,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
             int rejected;
-            orc = TA_STOCHRSI_Open( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_c, svN, &st, &v0, &v1 );
+            orc = TA_STOCHRSI_Open( &st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1 );
             rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
             if( st ) TA_STOCHRSI_Close( st );
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -11127,7 +11127,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_c, svN, &st, &v0, &v1);
+            { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(&st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHRSI_Close(st); }
             TA_SetUnstablePeriod(22, 0);
             TA_SetUnstablePeriod(23, 0);
@@ -11156,7 +11156,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCHRSI_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
             double v1 = 0.0, pk1 = 0.0;
-            rc = TA_STOCHRSI_Open(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_c, P, &st, &v0, &v1);
+            rc = TA_STOCHRSI_Open(&st, sv_c, P, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             if( ok && sv_bitne(v1, sv_b1[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
@@ -11183,7 +11183,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     double v0 = 0.0;
                     double v1 = 0.0;
                     TA_STOCHRSI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_STOCHRSI_OpenInternal(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sv_c, Sidx, svN, &stA, &v0, &v1);
+                    TA_RetCode arc = TA_STOCHRSI_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && sv_bitne(v1, sv_b1[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
@@ -11211,7 +11211,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SUB_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SUB_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUB_Open(sv_c, sv_v, svN, &st, &v0);
+            { TA_SUB_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUB_Open(&st, sv_c, sv_v, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SUB_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11233,7 +11233,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SUB_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SUB_Open(sv_c, sv_v, P, &st, &v0);
+            rc = TA_SUB_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11257,7 +11257,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SUB_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SUB_OpenInternal(sv_c, sv_v, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SUB_OpenInternal(&stA, sv_c, sv_v, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SUB_Close(stA);
@@ -11279,7 +11279,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_SUM_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_SUM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUM_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_SUM_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_SUM_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SUM_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11301,7 +11301,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_SUM_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_SUM_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_SUM_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11325,7 +11325,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_SUM_Stream *stA = NULL;
-                    TA_RetCode arc = TA_SUM_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_SUM_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_SUM_Close(stA);
@@ -11349,7 +11349,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_T3_Lookback(optInTimePeriod, optInVFactor);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_T3_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_T3_Open(optInTimePeriod, optInVFactor, sv_c, svN, &st, &v0);
+            { TA_T3_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_T3_Open(&st, sv_c, svN, optInTimePeriod, optInVFactor, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_T3_Close(st); }
             TA_SetUnstablePeriod(23, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -11372,7 +11372,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_T3_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_T3_Open(optInTimePeriod, optInVFactor, sv_c, P, &st, &v0);
+            rc = TA_T3_Open(&st, sv_c, P, optInTimePeriod, optInVFactor, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11396,7 +11396,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_T3_Stream *stA = NULL;
-                    TA_RetCode arc = TA_T3_OpenInternal(optInTimePeriod, optInVFactor, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_T3_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInVFactor, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_T3_Close(stA);
@@ -11418,7 +11418,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TAN_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TAN_Open(sv_c, svN, &st, &v0);
+            { TA_TAN_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TAN_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TAN_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11440,7 +11440,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TAN_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TAN_Open(sv_c, P, &st, &v0);
+            rc = TA_TAN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11464,7 +11464,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TAN_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TAN_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TAN_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TAN_Close(stA);
@@ -11485,7 +11485,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TANH_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TANH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TANH_Open(sv_c, svN, &st, &v0);
+            { TA_TANH_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TANH_Open(&st, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TANH_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11507,7 +11507,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TANH_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TANH_Open(sv_c, P, &st, &v0);
+            rc = TA_TANH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11531,7 +11531,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TANH_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TANH_OpenInternal(sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TANH_OpenInternal(&stA, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TANH_Close(stA);
@@ -11554,7 +11554,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TEMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TEMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TEMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_TEMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TEMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TEMA_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -11577,7 +11577,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TEMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TEMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_TEMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11601,7 +11601,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TEMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TEMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TEMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TEMA_Close(stA);
@@ -11623,7 +11623,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TRANGE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TRANGE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRANGE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_TRANGE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRANGE_Open(&st, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRANGE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11645,7 +11645,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TRANGE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TRANGE_Open(sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_TRANGE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11669,7 +11669,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TRANGE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TRANGE_OpenInternal(sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TRANGE_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TRANGE_Close(stA);
@@ -11691,7 +11691,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TRIMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TRIMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRIMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_TRIMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRIMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRIMA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11713,7 +11713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TRIMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TRIMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_TRIMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11737,7 +11737,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TRIMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TRIMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TRIMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TRIMA_Close(stA);
@@ -11760,7 +11760,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TRIX_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TRIX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRIX_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_TRIX_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TRIX_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TRIX_Close(st); }
             TA_SetUnstablePeriod(5, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -11783,7 +11783,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TRIX_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TRIX_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_TRIX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11807,7 +11807,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TRIX_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TRIX_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TRIX_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TRIX_Close(stA);
@@ -11830,7 +11830,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TSF_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TSF_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TSF_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_TSF_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TSF_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TSF_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11852,7 +11852,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TSF_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TSF_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_TSF_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11876,7 +11876,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TSF_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TSF_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TSF_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TSF_Close(stA);
@@ -11897,7 +11897,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_TYPPRICE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_TYPPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TYPPRICE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_TYPPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_TYPPRICE_Open(&st, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_TYPPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11919,7 +11919,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_TYPPRICE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_TYPPRICE_Open(sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_TYPPRICE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -11943,7 +11943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_TYPPRICE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_TYPPRICE_OpenInternal(sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_TYPPRICE_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_TYPPRICE_Close(stA);
@@ -11967,7 +11967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_ULTOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ULTOSC_Open(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_ULTOSC_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ULTOSC_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ULTOSC_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -11989,7 +11989,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_ULTOSC_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_ULTOSC_Open(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_ULTOSC_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -12013,7 +12013,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_ULTOSC_Stream *stA = NULL;
-                    TA_RetCode arc = TA_ULTOSC_OpenInternal(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_ULTOSC_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_ULTOSC_Close(stA);
@@ -12036,7 +12036,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_VAR_Lookback(optInTimePeriod, optInNbDev);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_VAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_VAR_Open(optInTimePeriod, optInNbDev, sv_c, svN, &st, &v0);
+            { TA_VAR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_VAR_Open(&st, sv_c, svN, optInTimePeriod, optInNbDev, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_VAR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -12058,7 +12058,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_VAR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_VAR_Open(optInTimePeriod, optInNbDev, sv_c, P, &st, &v0);
+            rc = TA_VAR_Open(&st, sv_c, P, optInTimePeriod, optInNbDev, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -12082,7 +12082,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_VAR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_VAR_OpenInternal(optInTimePeriod, optInNbDev, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_VAR_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInNbDev, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_VAR_Close(stA);
@@ -12103,7 +12103,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_WCLPRICE_Lookback();
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_WCLPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WCLPRICE_Open(sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_WCLPRICE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WCLPRICE_Open(&st, sv_h, sv_l, sv_c, svN, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WCLPRICE_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -12125,7 +12125,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_WCLPRICE_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_WCLPRICE_Open(sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_WCLPRICE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -12149,7 +12149,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_WCLPRICE_Stream *stA = NULL;
-                    TA_RetCode arc = TA_WCLPRICE_OpenInternal(sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_WCLPRICE_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_WCLPRICE_Close(stA);
@@ -12171,7 +12171,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_WILLR_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_WILLR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WILLR_Open(optInTimePeriod, sv_h, sv_l, sv_c, svN, &st, &v0);
+            { TA_WILLR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WILLR_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WILLR_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -12193,7 +12193,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_WILLR_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_WILLR_Open(optInTimePeriod, sv_h, sv_l, sv_c, P, &st, &v0);
+            rc = TA_WILLR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -12217,7 +12217,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_WILLR_Stream *stA = NULL;
-                    TA_RetCode arc = TA_WILLR_OpenInternal(optInTimePeriod, sv_h, sv_l, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_WILLR_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_WILLR_Close(stA);
@@ -12239,7 +12239,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         lb = TA_WMA_Lookback(optInTimePeriod);
         if( rc != TA_SUCCESS || svNb <= 0 ) {
             int openRejects = 0;
-            { TA_WMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WMA_Open(optInTimePeriod, sv_c, svN, &st, &v0);
+            { TA_WMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_WMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_WMA_Close(st); }
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -12261,7 +12261,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             double bv = 0.0, sv = 0.0;
             TA_WMA_Stream *st = NULL;
             double v0 = 0.0, pk0 = 0.0;
-            rc = TA_WMA_Open(optInTimePeriod, sv_c, P, &st, &v0);
+            rc = TA_WMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
             for( t = P; ok && t < svN; t++ ) {
@@ -12285,7 +12285,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
                     double v0 = 0.0;
                     TA_WMA_Stream *stA = NULL;
-                    TA_RetCode arc = TA_WMA_OpenInternal(optInTimePeriod, sv_c, Sidx, svN, &stA, &v0);
+                    TA_RetCode arc = TA_WMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
                     if( arc != TA_SUCCESS || !stA ) ok = 0;
                     if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( stA ) TA_WMA_Close(stA);

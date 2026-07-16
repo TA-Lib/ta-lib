@@ -428,7 +428,7 @@ struct TA_MA_Stream {
 };
 
 /* Private function, not in public API. */
-TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_MA_Stream **stream, double *outReal )
+TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, TA_MAType optInMAType, double *outReal )
 {
    struct TA_MA_Stream *sp;
    TA_RetCode retCode;
@@ -465,56 +465,56 @@ TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const
    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
       {
          TA_SMA_Stream *sub = NULL;
-         retCode = TA_SMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_SMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
       {
          TA_EMA_Stream *sub = NULL;
-         retCode = TA_EMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_EMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
       {
          TA_WMA_Stream *sub = NULL;
-         retCode = TA_WMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_WMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
       {
          TA_DEMA_Stream *sub = NULL;
-         retCode = TA_DEMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_DEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       {
          TA_TEMA_Stream *sub = NULL;
-         retCode = TA_TEMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_TEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
       {
          TA_TRIMA_Stream *sub = NULL;
-         retCode = TA_TRIMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_TRIMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       {
          TA_KAMA_Stream *sub = NULL;
-         retCode = TA_KAMA_OpenInternal( optInTimePeriod, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_KAMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       {
          TA_T3_Stream *sub = NULL;
-         retCode = TA_T3_OpenInternal( optInTimePeriod, 0.7, inReal, startIdx, historyLen, &sub, outReal );
+         retCode = TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7, outReal );
          sp->sub = sub;
       }
       break;
@@ -533,9 +533,9 @@ TA_RetCode TA_MA_OpenInternal( int optInTimePeriod, TA_MAType optInMAType, const
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_MA_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_MA_Open( TA_MA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, TA_MAType optInMAType, double *outReal )
 {
-   return TA_MA_OpenInternal( optInTimePeriod, optInMAType, inReal, 0, historyLen, stream, outReal );
+   return TA_MA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInMAType, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )

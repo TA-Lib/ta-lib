@@ -1559,7 +1559,7 @@ static void TA_HT_DCPERIOD_StepInternal( struct TA_HT_DCPERIOD_Stream *sp, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_DCPERIOD_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_DCPERIOD_Stream **stream, double *outReal )
+TA_RetCode TA_HT_DCPERIOD_OpenInternal( struct TA_HT_DCPERIOD_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_HT_DCPERIOD_Stream *sp;
    int endIdx;
@@ -1988,9 +1988,9 @@ TA_RetCode TA_HT_DCPERIOD_OpenInternal( const double inReal[], int startIdx, int
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( const double inReal[], int historyLen, TA_HT_DCPERIOD_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( TA_HT_DCPERIOD_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_HT_DCPERIOD_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_HT_DCPERIOD_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal )

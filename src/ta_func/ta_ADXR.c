@@ -369,7 +369,7 @@ static void TA_ADXR_StepInternal( struct TA_ADXR_Stream *sp, double inHigh, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ADXR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ADXR_Stream **stream, double *outReal )
+TA_RetCode TA_ADXR_OpenInternal( struct TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_ADXR_Stream *sp;
    int endIdx;
@@ -451,7 +451,7 @@ TA_RetCode TA_ADXR_OpenInternal( int optInTimePeriod, const double inHigh[], con
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ADX_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, &sub0, &subOpenDummy );
+         subRc = TA_ADX_OpenInternal( &sub0, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, optInTimePeriod, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(adx);
@@ -504,9 +504,9 @@ TA_RetCode TA_ADXR_OpenInternal( int optInTimePeriod, const double inHigh[], con
    }
 }
 
-TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADXR_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_ADXR_Open( TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_ADXR_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_ADXR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

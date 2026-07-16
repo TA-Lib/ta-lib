@@ -203,7 +203,7 @@ static void TA_AVGPRICE_StepInternal( struct TA_AVGPRICE_Stream *sp, double inOp
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_AVGPRICE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_AVGPRICE_Stream **stream, double *outReal )
+TA_RetCode TA_AVGPRICE_OpenInternal( struct TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_AVGPRICE_Stream *sp;
    int endIdx;
@@ -244,9 +244,9 @@ TA_RetCode TA_AVGPRICE_OpenInternal( const double inOpen[], const double inHigh[
    }
 }
 
-TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_AVGPRICE_Open( TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
 {
-   return TA_AVGPRICE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_AVGPRICE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )

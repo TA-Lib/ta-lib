@@ -428,7 +428,7 @@ static void TA_STOCHRSI_StepInternal( struct TA_STOCHRSI_Stream *sp, double inRe
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int startIdx, int historyLen, struct TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
+TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD )
 {
    struct TA_STOCHRSI_Stream *sp;
    int endIdx;
@@ -534,7 +534,7 @@ TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period,
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_RSI_OpenInternal( optInTimePeriod, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, &sub0, &subOpenDummy );
+         subRc = TA_RSI_OpenInternal( &sub0, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, optInTimePeriod, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -554,7 +554,7 @@ TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period,
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_STOCHF_OpenInternal( optInFastK_Period, optInFastD_Period, optInFastD_MAType, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, &sub1, &subOpenDummy, &subOpenDummy );
+         subRc = TA_STOCHF_OpenInternal( &sub1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &subOpenDummy, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -592,9 +592,9 @@ TA_RetCode TA_STOCHRSI_OpenInternal( int optInTimePeriod, int optInFastK_Period,
    }
 }
 
-TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int historyLen, TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD )
+TA_LIB_API TA_RetCode TA_STOCHRSI_Open( TA_STOCHRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD )
 {
-   return TA_STOCHRSI_OpenInternal( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, inReal, 0, historyLen, stream, outFastK, outFastD );
+   return TA_STOCHRSI_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )

@@ -428,7 +428,7 @@ static void TA_LINEARREG_INTERCEPT_StepInternal( struct TA_LINEARREG_INTERCEPT_S
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_LINEARREG_INTERCEPT_Stream **stream, double *outReal )
+TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_LINEARREG_INTERCEPT_Stream *sp;
    int endIdx;
@@ -560,9 +560,9 @@ TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( int optInTimePeriod, const doubl
    }
 }
 
-TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_INTERCEPT_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Open( TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_LINEARREG_INTERCEPT_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
+   return TA_LINEARREG_INTERCEPT_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Update( TA_LINEARREG_INTERCEPT_Stream *stream, double inReal, double *outReal )

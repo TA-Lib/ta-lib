@@ -318,7 +318,7 @@ static void TA_CDL3OUTSIDE_StepInternal( struct TA_CDL3OUTSIDE_Stream *sp, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDL3OUTSIDE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDL3OUTSIDE_Stream **stream, int *outInteger )
+TA_RetCode TA_CDL3OUTSIDE_OpenInternal( struct TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDL3OUTSIDE_Stream *sp;
    int endIdx;
@@ -405,9 +405,9 @@ TA_RetCode TA_CDL3OUTSIDE_OpenInternal( const double inOpen[], const double inHi
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3OUTSIDE_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDL3OUTSIDE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDL3OUTSIDE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

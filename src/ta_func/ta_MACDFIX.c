@@ -701,7 +701,7 @@ static void TA_MACDFIX_StepInternal( struct TA_MACDFIX_Stream *sp, double inReal
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MACDFIX_OpenInternal( int optInSignalPeriod, const double inReal[], int startIdx, int historyLen, struct TA_MACDFIX_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACDFIX_Stream *sp;
    int endIdx;
@@ -916,9 +916,9 @@ TA_RetCode TA_MACDFIX_OpenInternal( int optInSignalPeriod, const double inReal[]
    }
 }
 
-TA_LIB_API TA_RetCode TA_MACDFIX_Open( int optInSignalPeriod, const double inReal[], int historyLen, TA_MACDFIX_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+TA_LIB_API TA_RetCode TA_MACDFIX_Open( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
-   return TA_MACDFIX_OpenInternal( optInSignalPeriod, inReal, 0, historyLen, stream, outMACD, outMACDSignal, outMACDHist );
+   return TA_MACDFIX_OpenInternal( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

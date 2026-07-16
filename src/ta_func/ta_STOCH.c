@@ -981,7 +981,7 @@ static void TA_STOCH_StepInternal( struct TA_STOCH_Stream *sp, double inHigh, do
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_STOCH_OpenInternal( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_STOCH_Stream **stream, double *outSlowK, double *outSlowD )
+TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, double *outSlowK, double *outSlowD )
 {
    struct TA_STOCH_Stream *sp;
    int endIdx;
@@ -1216,7 +1216,7 @@ TA_RetCode TA_STOCH_OpenInternal( int optInFastK_Period, int optInSlowK_Period, 
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInSlowK_Period, optInSlowK_MAType, tempBuffer, (0), (outIdx - 1) + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInSlowK_Period, optInSlowK_MAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             if( bufferIsAllocated )
@@ -1246,7 +1246,7 @@ TA_RetCode TA_STOCH_OpenInternal( int optInFastK_Period, int optInSlowK_Period, 
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInSlowD_Period, optInSlowD_MAType, tempBuffer, (0), ((int)dummyNBElement - 1) + 1, &sub1, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub1, tempBuffer, (0), ((int)dummyNBElement - 1) + 1, optInSlowD_Period, optInSlowD_MAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             if( bufferIsAllocated )
@@ -1336,9 +1336,9 @@ TA_RetCode TA_STOCH_OpenInternal( int optInFastK_Period, int optInSlowK_Period, 
    }
 }
 
-TA_LIB_API TA_RetCode TA_STOCH_Open( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCH_Stream **stream, double *outSlowK, double *outSlowD )
+TA_LIB_API TA_RetCode TA_STOCH_Open( TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, double *outSlowK, double *outSlowD )
 {
-   return TA_STOCH_OpenInternal( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, inHigh, inLow, inClose, 0, historyLen, stream, outSlowK, outSlowD );
+   return TA_STOCH_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outSlowK, outSlowD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )

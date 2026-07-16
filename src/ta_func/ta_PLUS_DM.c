@@ -761,7 +761,7 @@ static void TA_PLUS_DM_StepInternal( struct TA_PLUS_DM_Stream *sp, double inHigh
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_PLUS_DM_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_PLUS_DM_Stream **stream, double *outReal )
+TA_RetCode TA_PLUS_DM_OpenInternal( struct TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_PLUS_DM_Stream *sp;
    int endIdx;
@@ -1129,9 +1129,9 @@ TA_RetCode TA_PLUS_DM_OpenInternal( int optInTimePeriod, const double inHigh[], 
    return TA_INTERNAL_ERROR;
 }
 
-TA_LIB_API TA_RetCode TA_PLUS_DM_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_PLUS_DM_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_PLUS_DM_Open( TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_PLUS_DM_OpenInternal( optInTimePeriod, inHigh, inLow, 0, historyLen, stream, outReal );
+   return TA_PLUS_DM_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal )

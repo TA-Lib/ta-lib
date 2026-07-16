@@ -305,7 +305,7 @@ static void TA_AD_StepInternal( struct TA_AD_Stream *sp, double inHigh, double i
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_AD_OpenInternal( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_AD_Stream **stream, double *outReal )
+TA_RetCode TA_AD_OpenInternal( struct TA_AD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_AD_Stream *sp;
    int endIdx;
@@ -380,9 +380,9 @@ TA_RetCode TA_AD_OpenInternal( const double inHigh[], const double inLow[], cons
    }
 }
 
-TA_LIB_API TA_RetCode TA_AD_Open( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_AD_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_AD_Open( TA_AD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, double *outReal )
 {
-   return TA_AD_OpenInternal( inHigh, inLow, inClose, inVolume, 0, historyLen, stream, outReal );
+   return TA_AD_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )

@@ -593,7 +593,7 @@ static void TA_CDLKICKING_StepInternal( struct TA_CDLKICKING_Stream *sp, double 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLKICKING_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLKICKING_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLKICKING_OpenInternal( struct TA_CDLKICKING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLKICKING_Stream *sp;
    int endIdx;
@@ -821,9 +821,9 @@ TA_RetCode TA_CDLKICKING_OpenInternal( const double inOpen[], const double inHig
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLKICKING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLKICKING_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLKICKING_Open( TA_CDLKICKING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLKICKING_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLKICKING_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLKICKING_Update( TA_CDLKICKING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

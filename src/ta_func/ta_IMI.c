@@ -372,7 +372,7 @@ static void TA_IMI_StepInternal( struct TA_IMI_Stream *sp, double inOpen, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_IMI_OpenInternal( int optInTimePeriod, const double inOpen[], const double inClose[], int startIdx, int historyLen, struct TA_IMI_Stream **stream, double *outReal )
+TA_RetCode TA_IMI_OpenInternal( struct TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_IMI_Stream *sp;
    int endIdx;
@@ -462,9 +462,9 @@ TA_RetCode TA_IMI_OpenInternal( int optInTimePeriod, const double inOpen[], cons
    }
 }
 
-TA_LIB_API TA_RetCode TA_IMI_Open( int optInTimePeriod, const double inOpen[], const double inClose[], int historyLen, TA_IMI_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_IMI_Open( TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_IMI_OpenInternal( optInTimePeriod, inOpen, inClose, 0, historyLen, stream, outReal );
+   return TA_IMI_OpenInternal( stream, inOpen, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal )

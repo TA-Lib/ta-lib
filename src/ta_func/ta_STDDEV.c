@@ -351,7 +351,7 @@ static void TA_STDDEV_StepInternal( struct TA_STDDEV_Stream *sp, double inReal, 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_STDDEV_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_STDDEV_Stream **stream, double *outReal )
+TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
 {
    struct TA_STDDEV_Stream *sp;
    int endIdx;
@@ -391,7 +391,7 @@ TA_RetCode TA_STDDEV_OpenInternal( int optInTimePeriod, double optInNbDev, const
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_VAR_OpenInternal( optInTimePeriod, 1.0, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
+         subRc = TA_VAR_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, 1.0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
@@ -452,9 +452,9 @@ TA_RetCode TA_STDDEV_OpenInternal( int optInTimePeriod, double optInNbDev, const
    }
 }
 
-TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_STDDEV_Open( TA_STDDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
 {
-   return TA_STDDEV_OpenInternal( optInTimePeriod, optInNbDev, inReal, 0, historyLen, stream, outReal );
+   return TA_STDDEV_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )

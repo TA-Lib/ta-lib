@@ -888,7 +888,7 @@ static void TA_RSI_StepInternal( struct TA_RSI_Stream *sp, double inReal, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_RSI_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_RSI_Stream **stream, double *outReal )
+TA_RetCode TA_RSI_OpenInternal( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_RSI_Stream *sp;
    int endIdx;
@@ -1165,9 +1165,9 @@ TA_RetCode TA_RSI_OpenInternal( int optInTimePeriod, const double inReal[], int 
    }
 }
 
-TA_LIB_API TA_RetCode TA_RSI_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_RSI_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_RSI_Open( TA_RSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_RSI_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
+   return TA_RSI_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, double *outReal )

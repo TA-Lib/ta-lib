@@ -105,7 +105,7 @@ TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_ACCBANDS_Stream TA_ACCBANDS_Stream;
 
-TA_LIB_API TA_RetCode TA_ACCBANDS_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ACCBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+TA_LIB_API TA_RetCode TA_ACCBANDS_Open( TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 
 TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 
@@ -149,7 +149,7 @@ TA_LIB_API int TA_ACOS_Lookback( void );
  */
 typedef struct TA_ACOS_Stream TA_ACOS_Stream;
 
-TA_LIB_API TA_RetCode TA_ACOS_Open( const double inReal[], int historyLen, TA_ACOS_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ACOS_Open( TA_ACOS_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, double *outReal );
 
@@ -199,7 +199,7 @@ TA_LIB_API int TA_AD_Lookback( void );
  */
 typedef struct TA_AD_Stream TA_AD_Stream;
 
-TA_LIB_API TA_RetCode TA_AD_Open( const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_AD_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_AD_Open( TA_AD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
 
@@ -245,7 +245,7 @@ TA_LIB_API int TA_ADD_Lookback( void );
  */
 typedef struct TA_ADD_Stream TA_ADD_Stream;
 
-TA_LIB_API TA_RetCode TA_ADD_Open( const double inReal0[], const double inReal1[], int historyLen, TA_ADD_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ADD_Open( TA_ADD_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ADD_Update( TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -309,7 +309,7 @@ TA_LIB_API int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 10
  */
 typedef struct TA_ADOSC_Stream TA_ADOSC_Stream;
 
-TA_LIB_API TA_RetCode TA_ADOSC_Open( int optInFastPeriod, int optInSlowPeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_ADOSC_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ADOSC_Open( TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
 
@@ -365,7 +365,7 @@ TA_LIB_API int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_ADX_Stream TA_ADX_Stream;
 
-TA_LIB_API TA_RetCode TA_ADX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADX_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ADX_Open( TA_ADX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ADX_Update( TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -421,7 +421,7 @@ TA_LIB_API int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 
  */
 typedef struct TA_ADXR_Stream TA_ADXR_Stream;
 
-TA_LIB_API TA_RetCode TA_ADXR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ADXR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ADXR_Open( TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -484,7 +484,7 @@ TA_LIB_API int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 1000
  */
 typedef struct TA_APO_Stream TA_APO_Stream;
 
-TA_LIB_API TA_RetCode TA_APO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_APO_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_APO_Open( TA_APO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
 
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal );
 
@@ -540,7 +540,7 @@ TA_LIB_API int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to
  */
 typedef struct TA_AROON_Stream TA_AROON_Stream;
 
-TA_LIB_API TA_RetCode TA_AROON_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROON_Stream **stream, double *outAroonDown, double *outAroonUp );
+TA_LIB_API TA_RetCode TA_AROON_Open( TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outAroonDown, double *outAroonUp );
 
 TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp );
 
@@ -594,7 +594,7 @@ TA_LIB_API int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_AROONOSC_Stream TA_AROONOSC_Stream;
 
-TA_LIB_API TA_RetCode TA_AROONOSC_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROONOSC_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_AROONOSC_Open( TA_AROONOSC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_AROONOSC_Update( TA_AROONOSC_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -638,7 +638,7 @@ TA_LIB_API int TA_ASIN_Lookback( void );
  */
 typedef struct TA_ASIN_Stream TA_ASIN_Stream;
 
-TA_LIB_API TA_RetCode TA_ASIN_Open( const double inReal[], int historyLen, TA_ASIN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ASIN_Open( TA_ASIN_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, double *outReal );
 
@@ -682,7 +682,7 @@ TA_LIB_API int TA_ATAN_Lookback( void );
  */
 typedef struct TA_ATAN_Stream TA_ATAN_Stream;
 
-TA_LIB_API TA_RetCode TA_ATAN_Open( const double inReal[], int historyLen, TA_ATAN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ATAN_Open( TA_ATAN_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ATAN_Update( TA_ATAN_Stream *stream, double inReal, double *outReal );
 
@@ -738,7 +738,7 @@ TA_LIB_API int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_ATR_Stream TA_ATR_Stream;
 
-TA_LIB_API TA_RetCode TA_ATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ATR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ATR_Open( TA_ATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -790,7 +790,7 @@ TA_LIB_API int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 t
  */
 typedef struct TA_AVGDEV_Stream TA_AVGDEV_Stream;
 
-TA_LIB_API TA_RetCode TA_AVGDEV_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_AVGDEV_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_AVGDEV_Open( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal, double *outReal );
 
@@ -840,7 +840,7 @@ TA_LIB_API int TA_AVGPRICE_Lookback( void );
  */
 typedef struct TA_AVGPRICE_Stream TA_AVGPRICE_Stream;
 
-TA_LIB_API TA_RetCode TA_AVGPRICE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_AVGPRICE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_AVGPRICE_Open( TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -913,7 +913,7 @@ TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 1
  */
 typedef struct TA_BBANDS_Stream TA_BBANDS_Stream;
 
-TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int historyLen, TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+TA_LIB_API TA_RetCode TA_BBANDS_Open( TA_BBANDS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 
@@ -967,7 +967,7 @@ TA_LIB_API int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_BETA_Stream TA_BETA_Stream;
 
-TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_BETA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_BETA_Open( TA_BETA_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -1017,7 +1017,7 @@ TA_LIB_API int TA_BOP_Lookback( void );
  */
 typedef struct TA_BOP_Stream TA_BOP_Stream;
 
-TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_BOP_Open( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -1073,7 +1073,7 @@ TA_LIB_API int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_CCI_Stream TA_CCI_Stream;
 
-TA_LIB_API TA_RetCode TA_CCI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CCI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_CCI_Open( TA_CCI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -1123,7 +1123,7 @@ TA_LIB_API int TA_CDL2CROWS_Lookback( void );
  */
 typedef struct TA_CDL2CROWS_Stream TA_CDL2CROWS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL2CROWS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL2CROWS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL2CROWS_Open( TA_CDL2CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL2CROWS_Update( TA_CDL2CROWS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1173,7 +1173,7 @@ TA_LIB_API int TA_CDL3BLACKCROWS_Lookback( void );
  */
 typedef struct TA_CDL3BLACKCROWS_Stream TA_CDL3BLACKCROWS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3BLACKCROWS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Open( TA_CDL3BLACKCROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Update( TA_CDL3BLACKCROWS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1223,7 +1223,7 @@ TA_LIB_API int TA_CDL3INSIDE_Lookback( void );
  */
 typedef struct TA_CDL3INSIDE_Stream TA_CDL3INSIDE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3INSIDE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3INSIDE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3INSIDE_Open( TA_CDL3INSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_Update( TA_CDL3INSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1273,7 +1273,7 @@ TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void );
  */
 typedef struct TA_CDL3LINESTRIKE_Stream TA_CDL3LINESTRIKE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3LINESTRIKE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Open( TA_CDL3LINESTRIKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Update( TA_CDL3LINESTRIKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1323,7 +1323,7 @@ TA_LIB_API int TA_CDL3OUTSIDE_Lookback( void );
  */
 typedef struct TA_CDL3OUTSIDE_Stream TA_CDL3OUTSIDE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3OUTSIDE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1373,7 +1373,7 @@ TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void );
  */
 typedef struct TA_CDL3STARSINSOUTH_Stream TA_CDL3STARSINSOUTH_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3STARSINSOUTH_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Open( TA_CDL3STARSINSOUTH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Update( TA_CDL3STARSINSOUTH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1423,7 +1423,7 @@ TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void );
  */
 typedef struct TA_CDL3WHITESOLDIERS_Stream TA_CDL3WHITESOLDIERS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDL3WHITESOLDIERS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Open( TA_CDL3WHITESOLDIERS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Update( TA_CDL3WHITESOLDIERS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1481,7 +1481,7 @@ TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  
  */
 typedef struct TA_CDLABANDONEDBABY_Stream TA_CDLABANDONEDBABY_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLABANDONEDBABY_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( TA_CDLABANDONEDBABY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Update( TA_CDLABANDONEDBABY_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1531,7 +1531,7 @@ TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void );
  */
 typedef struct TA_CDLADVANCEBLOCK_Stream TA_CDLADVANCEBLOCK_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLADVANCEBLOCK_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Open( TA_CDLADVANCEBLOCK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Update( TA_CDLADVANCEBLOCK_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1581,7 +1581,7 @@ TA_LIB_API int TA_CDLBELTHOLD_Lookback( void );
  */
 typedef struct TA_CDLBELTHOLD_Stream TA_CDLBELTHOLD_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLBELTHOLD_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Open( TA_CDLBELTHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Update( TA_CDLBELTHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1631,7 +1631,7 @@ TA_LIB_API int TA_CDLBREAKAWAY_Lookback( void );
  */
 typedef struct TA_CDLBREAKAWAY_Stream TA_CDLBREAKAWAY_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLBREAKAWAY_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Open( TA_CDLBREAKAWAY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Update( TA_CDLBREAKAWAY_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1681,7 +1681,7 @@ TA_LIB_API int TA_CDLCLOSINGMARUBOZU_Lookback( void );
  */
 typedef struct TA_CDLCLOSINGMARUBOZU_Stream TA_CDLCLOSINGMARUBOZU_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLCLOSINGMARUBOZU_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Open( TA_CDLCLOSINGMARUBOZU_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Update( TA_CDLCLOSINGMARUBOZU_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1731,7 +1731,7 @@ TA_LIB_API int TA_CDLCONCEALBABYSWALL_Lookback( void );
  */
 typedef struct TA_CDLCONCEALBABYSWALL_Stream TA_CDLCONCEALBABYSWALL_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLCONCEALBABYSWALL_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Open( TA_CDLCONCEALBABYSWALL_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Update( TA_CDLCONCEALBABYSWALL_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1781,7 +1781,7 @@ TA_LIB_API int TA_CDLCOUNTERATTACK_Lookback( void );
  */
 typedef struct TA_CDLCOUNTERATTACK_Stream TA_CDLCOUNTERATTACK_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLCOUNTERATTACK_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Open( TA_CDLCOUNTERATTACK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Update( TA_CDLCOUNTERATTACK_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1839,7 +1839,7 @@ TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration ); 
  */
 typedef struct TA_CDLDARKCLOUDCOVER_Stream TA_CDLDARKCLOUDCOVER_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDARKCLOUDCOVER_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( TA_CDLDARKCLOUDCOVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Update( TA_CDLDARKCLOUDCOVER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1889,7 +1889,7 @@ TA_LIB_API int TA_CDLDOJI_Lookback( void );
  */
 typedef struct TA_CDLDOJI_Stream TA_CDLDOJI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLDOJI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDOJI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLDOJI_Open( TA_CDLDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLDOJI_Update( TA_CDLDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1939,7 +1939,7 @@ TA_LIB_API int TA_CDLDOJISTAR_Lookback( void );
  */
 typedef struct TA_CDLDOJISTAR_Stream TA_CDLDOJISTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDOJISTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Open( TA_CDLDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Update( TA_CDLDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -1989,7 +1989,7 @@ TA_LIB_API int TA_CDLDRAGONFLYDOJI_Lookback( void );
  */
 typedef struct TA_CDLDRAGONFLYDOJI_Stream TA_CDLDRAGONFLYDOJI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLDRAGONFLYDOJI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Open( TA_CDLDRAGONFLYDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Update( TA_CDLDRAGONFLYDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2039,7 +2039,7 @@ TA_LIB_API int TA_CDLENGULFING_Lookback( void );
  */
 typedef struct TA_CDLENGULFING_Stream TA_CDLENGULFING_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLENGULFING_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2097,7 +2097,7 @@ TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );
  */
 typedef struct TA_CDLEVENINGDOJISTAR_Stream TA_CDLEVENINGDOJISTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLEVENINGDOJISTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Open( TA_CDLEVENINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Update( TA_CDLEVENINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2155,7 +2155,7 @@ TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /*
  */
 typedef struct TA_CDLEVENINGSTAR_Stream TA_CDLEVENINGSTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLEVENINGSTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Open( TA_CDLEVENINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Update( TA_CDLEVENINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2205,7 +2205,7 @@ TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
  */
 typedef struct TA_CDLGAPSIDESIDEWHITE_Stream TA_CDLGAPSIDESIDEWHITE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLGAPSIDESIDEWHITE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Open( TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Update( TA_CDLGAPSIDESIDEWHITE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2255,7 +2255,7 @@ TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void );
  */
 typedef struct TA_CDLGRAVESTONEDOJI_Stream TA_CDLGRAVESTONEDOJI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLGRAVESTONEDOJI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Open( TA_CDLGRAVESTONEDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Update( TA_CDLGRAVESTONEDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2305,7 +2305,7 @@ TA_LIB_API int TA_CDLHAMMER_Lookback( void );
  */
 typedef struct TA_CDLHAMMER_Stream TA_CDLHAMMER_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHAMMER_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHAMMER_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHAMMER_Open( TA_CDLHAMMER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHAMMER_Update( TA_CDLHAMMER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2355,7 +2355,7 @@ TA_LIB_API int TA_CDLHANGINGMAN_Lookback( void );
  */
 typedef struct TA_CDLHANGINGMAN_Stream TA_CDLHANGINGMAN_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHANGINGMAN_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Open( TA_CDLHANGINGMAN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Update( TA_CDLHANGINGMAN_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2405,7 +2405,7 @@ TA_LIB_API int TA_CDLHARAMI_Lookback( void );
  */
 typedef struct TA_CDLHARAMI_Stream TA_CDLHARAMI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHARAMI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHARAMI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHARAMI_Open( TA_CDLHARAMI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHARAMI_Update( TA_CDLHARAMI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2455,7 +2455,7 @@ TA_LIB_API int TA_CDLHARAMICROSS_Lookback( void );
  */
 typedef struct TA_CDLHARAMICROSS_Stream TA_CDLHARAMICROSS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHARAMICROSS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Open( TA_CDLHARAMICROSS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Update( TA_CDLHARAMICROSS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2505,7 +2505,7 @@ TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void );
  */
 typedef struct TA_CDLHIGHWAVE_Stream TA_CDLHIGHWAVE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIGHWAVE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Open( TA_CDLHIGHWAVE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Update( TA_CDLHIGHWAVE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2555,7 +2555,7 @@ TA_LIB_API int TA_CDLHIKKAKE_Lookback( void );
  */
 typedef struct TA_CDLHIKKAKE_Stream TA_CDLHIKKAKE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( TA_CDLHIKKAKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2605,7 +2605,7 @@ TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void );
  */
 typedef struct TA_CDLHIKKAKEMOD_Stream TA_CDLHIKKAKEMOD_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKEMOD_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Open( TA_CDLHIKKAKEMOD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Update( TA_CDLHIKKAKEMOD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2655,7 +2655,7 @@ TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void );
  */
 typedef struct TA_CDLHOMINGPIGEON_Stream TA_CDLHOMINGPIGEON_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHOMINGPIGEON_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Open( TA_CDLHOMINGPIGEON_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Update( TA_CDLHOMINGPIGEON_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2705,7 +2705,7 @@ TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void );
  */
 typedef struct TA_CDLIDENTICAL3CROWS_Stream TA_CDLIDENTICAL3CROWS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLIDENTICAL3CROWS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Open( TA_CDLIDENTICAL3CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Update( TA_CDLIDENTICAL3CROWS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2755,7 +2755,7 @@ TA_LIB_API int TA_CDLINNECK_Lookback( void );
  */
 typedef struct TA_CDLINNECK_Stream TA_CDLINNECK_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLINNECK_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLINNECK_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLINNECK_Open( TA_CDLINNECK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLINNECK_Update( TA_CDLINNECK_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2805,7 +2805,7 @@ TA_LIB_API int TA_CDLINVERTEDHAMMER_Lookback( void );
  */
 typedef struct TA_CDLINVERTEDHAMMER_Stream TA_CDLINVERTEDHAMMER_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLINVERTEDHAMMER_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Open( TA_CDLINVERTEDHAMMER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Update( TA_CDLINVERTEDHAMMER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2855,7 +2855,7 @@ TA_LIB_API int TA_CDLKICKING_Lookback( void );
  */
 typedef struct TA_CDLKICKING_Stream TA_CDLKICKING_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLKICKING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLKICKING_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLKICKING_Open( TA_CDLKICKING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLKICKING_Update( TA_CDLKICKING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2905,7 +2905,7 @@ TA_LIB_API int TA_CDLKICKINGBYLENGTH_Lookback( void );
  */
 typedef struct TA_CDLKICKINGBYLENGTH_Stream TA_CDLKICKINGBYLENGTH_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLKICKINGBYLENGTH_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Open( TA_CDLKICKINGBYLENGTH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Update( TA_CDLKICKINGBYLENGTH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -2955,7 +2955,7 @@ TA_LIB_API int TA_CDLLADDERBOTTOM_Lookback( void );
  */
 typedef struct TA_CDLLADDERBOTTOM_Stream TA_CDLLADDERBOTTOM_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLLADDERBOTTOM_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Open( TA_CDLLADDERBOTTOM_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Update( TA_CDLLADDERBOTTOM_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3005,7 +3005,7 @@ TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void );
  */
 typedef struct TA_CDLLONGLEGGEDDOJI_Stream TA_CDLLONGLEGGEDDOJI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLLONGLEGGEDDOJI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Open( TA_CDLLONGLEGGEDDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Update( TA_CDLLONGLEGGEDDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3055,7 +3055,7 @@ TA_LIB_API int TA_CDLLONGLINE_Lookback( void );
  */
 typedef struct TA_CDLLONGLINE_Stream TA_CDLLONGLINE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLLONGLINE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLLONGLINE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLLONGLINE_Open( TA_CDLLONGLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_Update( TA_CDLLONGLINE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3105,7 +3105,7 @@ TA_LIB_API int TA_CDLMARUBOZU_Lookback( void );
  */
 typedef struct TA_CDLMARUBOZU_Stream TA_CDLMARUBOZU_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMARUBOZU_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Open( TA_CDLMARUBOZU_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Update( TA_CDLMARUBOZU_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3155,7 +3155,7 @@ TA_LIB_API int TA_CDLMATCHINGLOW_Lookback( void );
  */
 typedef struct TA_CDLMATCHINGLOW_Stream TA_CDLMATCHINGLOW_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMATCHINGLOW_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Open( TA_CDLMATCHINGLOW_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Update( TA_CDLMATCHINGLOW_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3213,7 +3213,7 @@ TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* Fro
  */
 typedef struct TA_CDLMATHOLD_Stream TA_CDLMATHOLD_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLMATHOLD_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMATHOLD_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_Open( TA_CDLMATHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Update( TA_CDLMATHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3271,7 +3271,7 @@ TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );
  */
 typedef struct TA_CDLMORNINGDOJISTAR_Stream TA_CDLMORNINGDOJISTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMORNINGDOJISTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Open( TA_CDLMORNINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Update( TA_CDLMORNINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3329,7 +3329,7 @@ TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /*
  */
 typedef struct TA_CDLMORNINGSTAR_Stream TA_CDLMORNINGSTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMORNINGSTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Open( TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Update( TA_CDLMORNINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3379,7 +3379,7 @@ TA_LIB_API int TA_CDLONNECK_Lookback( void );
  */
 typedef struct TA_CDLONNECK_Stream TA_CDLONNECK_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLONNECK_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLONNECK_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLONNECK_Open( TA_CDLONNECK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLONNECK_Update( TA_CDLONNECK_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3429,7 +3429,7 @@ TA_LIB_API int TA_CDLPIERCING_Lookback( void );
  */
 typedef struct TA_CDLPIERCING_Stream TA_CDLPIERCING_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLPIERCING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLPIERCING_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLPIERCING_Open( TA_CDLPIERCING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Update( TA_CDLPIERCING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3479,7 +3479,7 @@ TA_LIB_API int TA_CDLRICKSHAWMAN_Lookback( void );
  */
 typedef struct TA_CDLRICKSHAWMAN_Stream TA_CDLRICKSHAWMAN_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLRICKSHAWMAN_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Open( TA_CDLRICKSHAWMAN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Update( TA_CDLRICKSHAWMAN_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3529,7 +3529,7 @@ TA_LIB_API int TA_CDLRISEFALL3METHODS_Lookback( void );
  */
 typedef struct TA_CDLRISEFALL3METHODS_Stream TA_CDLRISEFALL3METHODS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLRISEFALL3METHODS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Open( TA_CDLRISEFALL3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Update( TA_CDLRISEFALL3METHODS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3579,7 +3579,7 @@ TA_LIB_API int TA_CDLSEPARATINGLINES_Lookback( void );
  */
 typedef struct TA_CDLSEPARATINGLINES_Stream TA_CDLSEPARATINGLINES_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSEPARATINGLINES_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Open( TA_CDLSEPARATINGLINES_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Update( TA_CDLSEPARATINGLINES_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3629,7 +3629,7 @@ TA_LIB_API int TA_CDLSHOOTINGSTAR_Lookback( void );
  */
 typedef struct TA_CDLSHOOTINGSTAR_Stream TA_CDLSHOOTINGSTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSHOOTINGSTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Open( TA_CDLSHOOTINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Update( TA_CDLSHOOTINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3679,7 +3679,7 @@ TA_LIB_API int TA_CDLSHORTLINE_Lookback( void );
  */
 typedef struct TA_CDLSHORTLINE_Stream TA_CDLSHORTLINE_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSHORTLINE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Open( TA_CDLSHORTLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Update( TA_CDLSHORTLINE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3729,7 +3729,7 @@ TA_LIB_API int TA_CDLSPINNINGTOP_Lookback( void );
  */
 typedef struct TA_CDLSPINNINGTOP_Stream TA_CDLSPINNINGTOP_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSPINNINGTOP_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Open( TA_CDLSPINNINGTOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Update( TA_CDLSPINNINGTOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3779,7 +3779,7 @@ TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void );
  */
 typedef struct TA_CDLSTALLEDPATTERN_Stream TA_CDLSTALLEDPATTERN_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSTALLEDPATTERN_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Open( TA_CDLSTALLEDPATTERN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Update( TA_CDLSTALLEDPATTERN_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3829,7 +3829,7 @@ TA_LIB_API int TA_CDLSTICKSANDWICH_Lookback( void );
  */
 typedef struct TA_CDLSTICKSANDWICH_Stream TA_CDLSTICKSANDWICH_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLSTICKSANDWICH_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Open( TA_CDLSTICKSANDWICH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Update( TA_CDLSTICKSANDWICH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3879,7 +3879,7 @@ TA_LIB_API int TA_CDLTAKURI_Lookback( void );
  */
 typedef struct TA_CDLTAKURI_Stream TA_CDLTAKURI_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLTAKURI_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLTAKURI_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLTAKURI_Open( TA_CDLTAKURI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLTAKURI_Update( TA_CDLTAKURI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3929,7 +3929,7 @@ TA_LIB_API int TA_CDLTASUKIGAP_Lookback( void );
  */
 typedef struct TA_CDLTASUKIGAP_Stream TA_CDLTASUKIGAP_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLTASUKIGAP_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Update( TA_CDLTASUKIGAP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -3979,7 +3979,7 @@ TA_LIB_API int TA_CDLTHRUSTING_Lookback( void );
  */
 typedef struct TA_CDLTHRUSTING_Stream TA_CDLTHRUSTING_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLTHRUSTING_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Open( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Update( TA_CDLTHRUSTING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -4029,7 +4029,7 @@ TA_LIB_API int TA_CDLTRISTAR_Lookback( void );
  */
 typedef struct TA_CDLTRISTAR_Stream TA_CDLTRISTAR_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLTRISTAR_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLTRISTAR_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLTRISTAR_Open( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Update( TA_CDLTRISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -4079,7 +4079,7 @@ TA_LIB_API int TA_CDLUNIQUE3RIVER_Lookback( void );
  */
 typedef struct TA_CDLUNIQUE3RIVER_Stream TA_CDLUNIQUE3RIVER_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLUNIQUE3RIVER_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Open( TA_CDLUNIQUE3RIVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Update( TA_CDLUNIQUE3RIVER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -4129,7 +4129,7 @@ TA_LIB_API int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
  */
 typedef struct TA_CDLUPSIDEGAP2CROWS_Stream TA_CDLUPSIDEGAP2CROWS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLUPSIDEGAP2CROWS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Open( TA_CDLUPSIDEGAP2CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Update( TA_CDLUPSIDEGAP2CROWS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -4179,7 +4179,7 @@ TA_LIB_API int TA_CDLXSIDEGAP3METHODS_Lookback( void );
  */
 typedef struct TA_CDLXSIDEGAP3METHODS_Stream TA_CDLXSIDEGAP3METHODS_Stream;
 
-TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLXSIDEGAP3METHODS_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Open( TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Update( TA_CDLXSIDEGAP3METHODS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger );
 
@@ -4223,7 +4223,7 @@ TA_LIB_API int TA_CEIL_Lookback( void );
  */
 typedef struct TA_CEIL_Stream TA_CEIL_Stream;
 
-TA_LIB_API TA_RetCode TA_CEIL_Open( const double inReal[], int historyLen, TA_CEIL_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_CEIL_Open( TA_CEIL_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, double *outReal );
 
@@ -4275,7 +4275,7 @@ TA_LIB_API int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_CMO_Stream TA_CMO_Stream;
 
-TA_LIB_API TA_RetCode TA_CMO_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_CMO_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_CMO_Open( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_CMO_Update( TA_CMO_Stream *stream, double inReal, double *outReal );
 
@@ -4329,7 +4329,7 @@ TA_LIB_API int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 t
  */
 typedef struct TA_CORREL_Stream TA_CORREL_Stream;
 
-TA_LIB_API TA_RetCode TA_CORREL_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_CORREL_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_CORREL_Open( TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -4373,7 +4373,7 @@ TA_LIB_API int TA_COS_Lookback( void );
  */
 typedef struct TA_COS_Stream TA_COS_Stream;
 
-TA_LIB_API TA_RetCode TA_COS_Open( const double inReal[], int historyLen, TA_COS_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_COS_Open( TA_COS_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, double *outReal );
 
@@ -4417,7 +4417,7 @@ TA_LIB_API int TA_COSH_Lookback( void );
  */
 typedef struct TA_COSH_Stream TA_COSH_Stream;
 
-TA_LIB_API TA_RetCode TA_COSH_Open( const double inReal[], int historyLen, TA_COSH_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_COSH_Open( TA_COSH_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_COSH_Update( TA_COSH_Stream *stream, double inReal, double *outReal );
 
@@ -4469,7 +4469,7 @@ TA_LIB_API int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_DEMA_Stream TA_DEMA_Stream;
 
-TA_LIB_API TA_RetCode TA_DEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_DEMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_DEMA_Open( TA_DEMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, double *outReal );
 
@@ -4515,7 +4515,7 @@ TA_LIB_API int TA_DIV_Lookback( void );
  */
 typedef struct TA_DIV_Stream TA_DIV_Stream;
 
-TA_LIB_API TA_RetCode TA_DIV_Open( const double inReal0[], const double inReal1[], int historyLen, TA_DIV_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_DIV_Open( TA_DIV_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_DIV_Update( TA_DIV_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -4571,7 +4571,7 @@ TA_LIB_API int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 10
  */
 typedef struct TA_DX_Stream TA_DX_Stream;
 
-TA_LIB_API TA_RetCode TA_DX_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_DX_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_DX_Open( TA_DX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_DX_Update( TA_DX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -4623,7 +4623,7 @@ TA_LIB_API int TA_EMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_EMA_Stream TA_EMA_Stream;
 
-TA_LIB_API TA_RetCode TA_EMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_EMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_EMA_Open( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, double *outReal );
 
@@ -4667,7 +4667,7 @@ TA_LIB_API int TA_EXP_Lookback( void );
  */
 typedef struct TA_EXP_Stream TA_EXP_Stream;
 
-TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_EXP_Open( TA_EXP_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, double *outReal );
 
@@ -4711,7 +4711,7 @@ TA_LIB_API int TA_FLOOR_Lookback( void );
  */
 typedef struct TA_FLOOR_Stream TA_FLOOR_Stream;
 
-TA_LIB_API TA_RetCode TA_FLOOR_Open( const double inReal[], int historyLen, TA_FLOOR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_FLOOR_Open( TA_FLOOR_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_FLOOR_Update( TA_FLOOR_Stream *stream, double inReal, double *outReal );
 
@@ -4755,7 +4755,7 @@ TA_LIB_API int TA_HT_DCPERIOD_Lookback( void );
  */
 typedef struct TA_HT_DCPERIOD_Stream TA_HT_DCPERIOD_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( const double inReal[], int historyLen, TA_HT_DCPERIOD_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Open( TA_HT_DCPERIOD_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal );
 
@@ -4799,7 +4799,7 @@ TA_LIB_API int TA_HT_DCPHASE_Lookback( void );
  */
 typedef struct TA_HT_DCPHASE_Stream TA_HT_DCPHASE_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( const double inReal[], int historyLen, TA_HT_DCPHASE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( TA_HT_DCPHASE_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Update( TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal );
 
@@ -4845,7 +4845,7 @@ TA_LIB_API int TA_HT_PHASOR_Lookback( void );
  */
 typedef struct TA_HT_PHASOR_Stream TA_HT_PHASOR_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( const double inReal[], int historyLen, TA_HT_PHASOR_Stream **stream, double *outInPhase, double *outQuadrature );
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const double inReal[], int historyLen, double *outInPhase, double *outQuadrature );
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature );
 
@@ -4891,7 +4891,7 @@ TA_LIB_API int TA_HT_SINE_Lookback( void );
  */
 typedef struct TA_HT_SINE_Stream TA_HT_SINE_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_SINE_Open( const double inReal[], int historyLen, TA_HT_SINE_Stream **stream, double *outSine, double *outLeadSine );
+TA_LIB_API TA_RetCode TA_HT_SINE_Open( TA_HT_SINE_Stream **stream, const double inReal[], int historyLen, double *outSine, double *outLeadSine );
 
 TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine );
 
@@ -4935,7 +4935,7 @@ TA_LIB_API int TA_HT_TRENDLINE_Lookback( void );
  */
 typedef struct TA_HT_TRENDLINE_Stream TA_HT_TRENDLINE_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Open( const double inReal[], int historyLen, TA_HT_TRENDLINE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Open( TA_HT_TRENDLINE_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal );
 
@@ -4979,7 +4979,7 @@ TA_LIB_API int TA_HT_TRENDMODE_Lookback( void );
  */
 typedef struct TA_HT_TRENDMODE_Stream TA_HT_TRENDMODE_Stream;
 
-TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( const double inReal[], int historyLen, TA_HT_TRENDMODE_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( TA_HT_TRENDMODE_Stream **stream, const double inReal[], int historyLen, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger );
 
@@ -5033,7 +5033,7 @@ TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_IMI_Stream TA_IMI_Stream;
 
-TA_LIB_API TA_RetCode TA_IMI_Open( int optInTimePeriod, const double inOpen[], const double inClose[], int historyLen, TA_IMI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_IMI_Open( TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal );
 
@@ -5085,7 +5085,7 @@ TA_LIB_API int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_KAMA_Stream TA_KAMA_Stream;
 
-TA_LIB_API TA_RetCode TA_KAMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_KAMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_KAMA_Open( TA_KAMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_KAMA_Update( TA_KAMA_Stream *stream, double inReal, double *outReal );
 
@@ -5137,7 +5137,7 @@ TA_LIB_API int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 
  */
 typedef struct TA_LINEARREG_Stream TA_LINEARREG_Stream;
 
-TA_LIB_API TA_RetCode TA_LINEARREG_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LINEARREG_Open( TA_LINEARREG_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LINEARREG_Update( TA_LINEARREG_Stream *stream, double inReal, double *outReal );
 
@@ -5189,7 +5189,7 @@ TA_LIB_API int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /*
  */
 typedef struct TA_LINEARREG_ANGLE_Stream TA_LINEARREG_ANGLE_Stream;
 
-TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_ANGLE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Open( TA_LINEARREG_ANGLE_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Update( TA_LINEARREG_ANGLE_Stream *stream, double inReal, double *outReal );
 
@@ -5241,7 +5241,7 @@ TA_LIB_API int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );
  */
 typedef struct TA_LINEARREG_INTERCEPT_Stream TA_LINEARREG_INTERCEPT_Stream;
 
-TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_INTERCEPT_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Open( TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Update( TA_LINEARREG_INTERCEPT_Stream *stream, double inReal, double *outReal );
 
@@ -5293,7 +5293,7 @@ TA_LIB_API int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /*
  */
 typedef struct TA_LINEARREG_SLOPE_Stream TA_LINEARREG_SLOPE_Stream;
 
-TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_SLOPE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Open( TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Update( TA_LINEARREG_SLOPE_Stream *stream, double inReal, double *outReal );
 
@@ -5337,7 +5337,7 @@ TA_LIB_API int TA_LN_Lookback( void );
  */
 typedef struct TA_LN_Stream TA_LN_Stream;
 
-TA_LIB_API TA_RetCode TA_LN_Open( const double inReal[], int historyLen, TA_LN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LN_Open( TA_LN_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double *outReal );
 
@@ -5381,7 +5381,7 @@ TA_LIB_API int TA_LOG10_Lookback( void );
  */
 typedef struct TA_LOG10_Stream TA_LOG10_Stream;
 
-TA_LIB_API TA_RetCode TA_LOG10_Open( const double inReal[], int historyLen, TA_LOG10_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_LOG10_Open( TA_LOG10_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal );
 
@@ -5442,7 +5442,7 @@ TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 10000
  */
 typedef struct TA_MA_Stream TA_MA_Stream;
 
-TA_LIB_API TA_RetCode TA_MA_Open( int optInTimePeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_MA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MA_Open( TA_MA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, TA_MAType optInMAType, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal );
 
@@ -5510,7 +5510,7 @@ TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100
  */
 typedef struct TA_MACD_Stream TA_MACD_Stream;
 
-TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int historyLen, TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+TA_LIB_API TA_RetCode TA_MACD_Open( TA_MACD_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
 TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
@@ -5595,7 +5595,7 @@ TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 
  */
 typedef struct TA_MACDEXT_Stream TA_MACDEXT_Stream;
 
-TA_LIB_API TA_RetCode TA_MACDEXT_Open( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, const double inReal[], int historyLen, TA_MACDEXT_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+TA_LIB_API TA_RetCode TA_MACDEXT_Open( TA_MACDEXT_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
@@ -5651,7 +5651,7 @@ TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 
  */
 typedef struct TA_MACDFIX_Stream TA_MACDFIX_Stream;
 
-TA_LIB_API TA_RetCode TA_MACDFIX_Open( int optInSignalPeriod, const double inReal[], int historyLen, TA_MACDFIX_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist );
+TA_LIB_API TA_RetCode TA_MACDFIX_Open( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist );
 
@@ -5711,7 +5711,7 @@ TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0
  */
 typedef struct TA_MAMA_Stream TA_MAMA_Stream;
 
-TA_LIB_API TA_RetCode TA_MAMA_Open( double optInFastLimit, double optInSlowLimit, const double inReal[], int historyLen, TA_MAMA_Stream **stream, double *outMAMA, double *outFAMA );
+TA_LIB_API TA_RetCode TA_MAMA_Open( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA );
 
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA );
 
@@ -5776,7 +5776,7 @@ TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 1000
  */
 typedef struct TA_MAVP_Stream TA_MAVP_Stream;
 
-TA_LIB_API TA_RetCode TA_MAVP_Open( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int historyLen, TA_MAVP_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MAVP_Open( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal );
 
@@ -5828,7 +5828,7 @@ TA_LIB_API int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_MAX_Stream TA_MAX_Stream;
 
-TA_LIB_API TA_RetCode TA_MAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MAX_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MAX_Open( TA_MAX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MAX_Update( TA_MAX_Stream *stream, double inReal, double *outReal );
 
@@ -5880,7 +5880,7 @@ TA_LIB_API int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_MAXINDEX_Stream TA_MAXINDEX_Stream;
 
-TA_LIB_API TA_RetCode TA_MAXINDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MAXINDEX_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_MAXINDEX_Open( TA_MAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_MAXINDEX_Update( TA_MAXINDEX_Stream *stream, double inReal, int *outInteger );
 
@@ -5926,7 +5926,7 @@ TA_LIB_API int TA_MEDPRICE_Lookback( void );
  */
 typedef struct TA_MEDPRICE_Stream TA_MEDPRICE_Stream;
 
-TA_LIB_API TA_RetCode TA_MEDPRICE_Open( const double inHigh[], const double inLow[], int historyLen, TA_MEDPRICE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MEDPRICE_Open( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -5984,7 +5984,7 @@ TA_LIB_API int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_MFI_Stream TA_MFI_Stream;
 
-TA_LIB_API TA_RetCode TA_MFI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_MFI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MFI_Open( TA_MFI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
 
@@ -6036,7 +6036,7 @@ TA_LIB_API int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_MIDPOINT_Stream TA_MIDPOINT_Stream;
 
-TA_LIB_API TA_RetCode TA_MIDPOINT_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MIDPOINT_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MIDPOINT_Open( TA_MIDPOINT_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MIDPOINT_Update( TA_MIDPOINT_Stream *stream, double inReal, double *outReal );
 
@@ -6090,7 +6090,7 @@ TA_LIB_API int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_MIDPRICE_Stream TA_MIDPRICE_Stream;
 
-TA_LIB_API TA_RetCode TA_MIDPRICE_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_MIDPRICE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MIDPRICE_Open( TA_MIDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -6142,7 +6142,7 @@ TA_LIB_API int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_MIN_Stream TA_MIN_Stream;
 
-TA_LIB_API TA_RetCode TA_MIN_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MIN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MIN_Open( TA_MIN_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MIN_Update( TA_MIN_Stream *stream, double inReal, double *outReal );
 
@@ -6194,7 +6194,7 @@ TA_LIB_API int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2
  */
 typedef struct TA_MININDEX_Stream TA_MININDEX_Stream;
 
-TA_LIB_API TA_RetCode TA_MININDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MININDEX_Stream **stream, int *outInteger );
+TA_LIB_API TA_RetCode TA_MININDEX_Open( TA_MININDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outInteger );
 
 TA_LIB_API TA_RetCode TA_MININDEX_Update( TA_MININDEX_Stream *stream, double inReal, int *outInteger );
 
@@ -6248,7 +6248,7 @@ TA_LIB_API int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 t
  */
 typedef struct TA_MINMAX_Stream TA_MINMAX_Stream;
 
-TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAX_Stream **stream, double *outMin, double *outMax );
+TA_LIB_API TA_RetCode TA_MINMAX_Open( TA_MINMAX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outMin, double *outMax );
 
 TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax );
 
@@ -6302,7 +6302,7 @@ TA_LIB_API int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* Fro
  */
 typedef struct TA_MINMAXINDEX_Stream TA_MINMAXINDEX_Stream;
 
-TA_LIB_API TA_RetCode TA_MINMAXINDEX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAXINDEX_Stream **stream, int *outMinIdx, int *outMaxIdx );
+TA_LIB_API TA_RetCode TA_MINMAXINDEX_Open( TA_MINMAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outMinIdx, int *outMaxIdx );
 
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Update( TA_MINMAXINDEX_Stream *stream, double inReal, int *outMinIdx, int *outMaxIdx );
 
@@ -6358,7 +6358,7 @@ TA_LIB_API int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1
  */
 typedef struct TA_MINUS_DI_Stream TA_MINUS_DI_Stream;
 
-TA_LIB_API TA_RetCode TA_MINUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_MINUS_DI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MINUS_DI_Open( TA_MINUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MINUS_DI_Update( TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -6412,7 +6412,7 @@ TA_LIB_API int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1
  */
 typedef struct TA_MINUS_DM_Stream TA_MINUS_DM_Stream;
 
-TA_LIB_API TA_RetCode TA_MINUS_DM_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_MINUS_DM_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MINUS_DM_Open( TA_MINUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MINUS_DM_Update( TA_MINUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -6464,7 +6464,7 @@ TA_LIB_API int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_MOM_Stream TA_MOM_Stream;
 
-TA_LIB_API TA_RetCode TA_MOM_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MOM_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MOM_Open( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MOM_Update( TA_MOM_Stream *stream, double inReal, double *outReal );
 
@@ -6510,7 +6510,7 @@ TA_LIB_API int TA_MULT_Lookback( void );
  */
 typedef struct TA_MULT_Stream TA_MULT_Stream;
 
-TA_LIB_API TA_RetCode TA_MULT_Open( const double inReal0[], const double inReal1[], int historyLen, TA_MULT_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_MULT_Open( TA_MULT_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -6566,7 +6566,7 @@ TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_NATR_Stream TA_NATR_Stream;
 
-TA_LIB_API TA_RetCode TA_NATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_NATR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_NATR_Open( TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -6612,7 +6612,7 @@ TA_LIB_API int TA_OBV_Lookback( void );
  */
 typedef struct TA_OBV_Stream TA_OBV_Stream;
 
-TA_LIB_API TA_RetCode TA_OBV_Open( const double inReal[], const double inVolume[], int historyLen, TA_OBV_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_OBV_Open( TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal );
 
@@ -6668,7 +6668,7 @@ TA_LIB_API int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 
  */
 typedef struct TA_PLUS_DI_Stream TA_PLUS_DI_Stream;
 
-TA_LIB_API TA_RetCode TA_PLUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_PLUS_DI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_PLUS_DI_Open( TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_PLUS_DI_Update( TA_PLUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -6722,7 +6722,7 @@ TA_LIB_API int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 
  */
 typedef struct TA_PLUS_DM_Stream TA_PLUS_DM_Stream;
 
-TA_LIB_API TA_RetCode TA_PLUS_DM_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_PLUS_DM_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_PLUS_DM_Open( TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -6785,7 +6785,7 @@ TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 1000
  */
 typedef struct TA_PPO_Stream TA_PPO_Stream;
 
-TA_LIB_API TA_RetCode TA_PPO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_PPO_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_PPO_Open( TA_PPO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
 
 TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, double *outReal );
 
@@ -6837,7 +6837,7 @@ TA_LIB_API int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_ROC_Stream TA_ROC_Stream;
 
-TA_LIB_API TA_RetCode TA_ROC_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROC_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ROC_Open( TA_ROC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ROC_Update( TA_ROC_Stream *stream, double inReal, double *outReal );
 
@@ -6889,7 +6889,7 @@ TA_LIB_API int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_ROCP_Stream TA_ROCP_Stream;
 
-TA_LIB_API TA_RetCode TA_ROCP_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROCP_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ROCP_Open( TA_ROCP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ROCP_Update( TA_ROCP_Stream *stream, double inReal, double *outReal );
 
@@ -6941,7 +6941,7 @@ TA_LIB_API int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_ROCR_Stream TA_ROCR_Stream;
 
-TA_LIB_API TA_RetCode TA_ROCR_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROCR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ROCR_Open( TA_ROCR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ROCR_Update( TA_ROCR_Stream *stream, double inReal, double *outReal );
 
@@ -6993,7 +6993,7 @@ TA_LIB_API int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 
  */
 typedef struct TA_ROCR100_Stream TA_ROCR100_Stream;
 
-TA_LIB_API TA_RetCode TA_ROCR100_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_ROCR100_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ROCR100_Open( TA_ROCR100_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ROCR100_Update( TA_ROCR100_Stream *stream, double inReal, double *outReal );
 
@@ -7045,7 +7045,7 @@ TA_LIB_API int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_RSI_Stream TA_RSI_Stream;
 
-TA_LIB_API TA_RetCode TA_RSI_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_RSI_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_RSI_Open( TA_RSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, double *outReal );
 
@@ -7105,7 +7105,7 @@ TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA
  */
 typedef struct TA_SAR_Stream TA_SAR_Stream;
 
-TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int historyLen, TA_SAR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SAR_Open( TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInAcceleration, double optInMaximum, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -7201,7 +7201,7 @@ TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REA
  */
 typedef struct TA_SAREXT_Stream TA_SAREXT_Stream;
 
-TA_LIB_API TA_RetCode TA_SAREXT_Open( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, const double inHigh[], const double inLow[], int historyLen, TA_SAREXT_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SAREXT_Open( TA_SAREXT_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal );
 
@@ -7245,7 +7245,7 @@ TA_LIB_API int TA_SIN_Lookback( void );
  */
 typedef struct TA_SIN_Stream TA_SIN_Stream;
 
-TA_LIB_API TA_RetCode TA_SIN_Open( const double inReal[], int historyLen, TA_SIN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SIN_Open( TA_SIN_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SIN_Update( TA_SIN_Stream *stream, double inReal, double *outReal );
 
@@ -7289,7 +7289,7 @@ TA_LIB_API int TA_SINH_Lookback( void );
  */
 typedef struct TA_SINH_Stream TA_SINH_Stream;
 
-TA_LIB_API TA_RetCode TA_SINH_Open( const double inReal[], int historyLen, TA_SINH_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SINH_Open( TA_SINH_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SINH_Update( TA_SINH_Stream *stream, double inReal, double *outReal );
 
@@ -7341,7 +7341,7 @@ TA_LIB_API int TA_SMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_SMA_Stream TA_SMA_Stream;
 
-TA_LIB_API TA_RetCode TA_SMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_SMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_Open( TA_SMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, double *outReal );
 
@@ -7385,7 +7385,7 @@ TA_LIB_API int TA_SQRT_Lookback( void );
  */
 typedef struct TA_SQRT_Stream TA_SQRT_Stream;
 
-TA_LIB_API TA_RetCode TA_SQRT_Open( const double inReal[], int historyLen, TA_SQRT_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SQRT_Open( TA_SQRT_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SQRT_Update( TA_SQRT_Stream *stream, double inReal, double *outReal );
 
@@ -7443,7 +7443,7 @@ TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 1
  */
 typedef struct TA_STDDEV_Stream TA_STDDEV_Stream;
 
-TA_LIB_API TA_RetCode TA_STDDEV_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_STDDEV_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_STDDEV_Open( TA_STDDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal );
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal );
 
@@ -7524,7 +7524,7 @@ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 
  */
 typedef struct TA_STOCH_Stream TA_STOCH_Stream;
 
-TA_LIB_API TA_RetCode TA_STOCH_Open( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCH_Stream **stream, double *outSlowK, double *outSlowD );
+TA_LIB_API TA_RetCode TA_STOCH_Open( TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, double *outSlowK, double *outSlowD );
 
 TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD );
 
@@ -7593,7 +7593,7 @@ TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to
  */
 typedef struct TA_STOCHF_Stream TA_STOCHF_Stream;
 
-TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCHF_Stream **stream, double *outFastK, double *outFastD );
+TA_LIB_API TA_RetCode TA_STOCHF_Open( TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD );
 
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD );
 
@@ -7664,7 +7664,7 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to
  */
 typedef struct TA_STOCHRSI_Stream TA_STOCHRSI_Stream;
 
-TA_LIB_API TA_RetCode TA_STOCHRSI_Open( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inReal[], int historyLen, TA_STOCHRSI_Stream **stream, double *outFastK, double *outFastD );
+TA_LIB_API TA_RetCode TA_STOCHRSI_Open( TA_STOCHRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD );
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD );
 
@@ -7710,7 +7710,7 @@ TA_LIB_API int TA_SUB_Lookback( void );
  */
 typedef struct TA_SUB_Stream TA_SUB_Stream;
 
-TA_LIB_API TA_RetCode TA_SUB_Open( const double inReal0[], const double inReal1[], int historyLen, TA_SUB_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SUB_Open( TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal );
 
@@ -7762,7 +7762,7 @@ TA_LIB_API int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_SUM_Stream TA_SUM_Stream;
 
-TA_LIB_API TA_RetCode TA_SUM_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_SUM_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SUM_Open( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_SUM_Update( TA_SUM_Stream *stream, double inReal, double *outReal );
 
@@ -7820,7 +7820,7 @@ TA_LIB_API int TA_T3_Lookback( int           optInTimePeriod, /* From 1 to 10000
  */
 typedef struct TA_T3_Stream TA_T3_Stream;
 
-TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, const double inReal[], int historyLen, TA_T3_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, double *outReal );
 
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal );
 
@@ -7864,7 +7864,7 @@ TA_LIB_API int TA_TAN_Lookback( void );
  */
 typedef struct TA_TAN_Stream TA_TAN_Stream;
 
-TA_LIB_API TA_RetCode TA_TAN_Open( const double inReal[], int historyLen, TA_TAN_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TAN_Open( TA_TAN_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TAN_Update( TA_TAN_Stream *stream, double inReal, double *outReal );
 
@@ -7908,7 +7908,7 @@ TA_LIB_API int TA_TANH_Lookback( void );
  */
 typedef struct TA_TANH_Stream TA_TANH_Stream;
 
-TA_LIB_API TA_RetCode TA_TANH_Open( const double inReal[], int historyLen, TA_TANH_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TANH_Open( TA_TANH_Stream **stream, const double inReal[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, double *outReal );
 
@@ -7960,7 +7960,7 @@ TA_LIB_API int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_TEMA_Stream TA_TEMA_Stream;
 
-TA_LIB_API TA_RetCode TA_TEMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TEMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TEMA_Open( TA_TEMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, double *outReal );
 
@@ -8008,7 +8008,7 @@ TA_LIB_API int TA_TRANGE_Lookback( void );
  */
 typedef struct TA_TRANGE_Stream TA_TRANGE_Stream;
 
-TA_LIB_API TA_RetCode TA_TRANGE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TRANGE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TRANGE_Open( TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -8060,7 +8060,7 @@ TA_LIB_API int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 1 to
  */
 typedef struct TA_TRIMA_Stream TA_TRIMA_Stream;
 
-TA_LIB_API TA_RetCode TA_TRIMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TRIMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TRIMA_Open( TA_TRIMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TRIMA_Update( TA_TRIMA_Stream *stream, double inReal, double *outReal );
 
@@ -8112,7 +8112,7 @@ TA_LIB_API int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 
  */
 typedef struct TA_TRIX_Stream TA_TRIX_Stream;
 
-TA_LIB_API TA_RetCode TA_TRIX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TRIX_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TRIX_Open( TA_TRIX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, double *outReal );
 
@@ -8164,7 +8164,7 @@ TA_LIB_API int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 1
  */
 typedef struct TA_TSF_Stream TA_TSF_Stream;
 
-TA_LIB_API TA_RetCode TA_TSF_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_TSF_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TSF_Open( TA_TSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, double *outReal );
 
@@ -8212,7 +8212,7 @@ TA_LIB_API int TA_TYPPRICE_Lookback( void );
  */
 typedef struct TA_TYPPRICE_Stream TA_TYPPRICE_Stream;
 
-TA_LIB_API TA_RetCode TA_TYPPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_TYPPRICE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_TYPPRICE_Open( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_TYPPRICE_Update( TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -8280,7 +8280,7 @@ TA_LIB_API int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 
  */
 typedef struct TA_ULTOSC_Stream TA_ULTOSC_Stream;
 
-TA_LIB_API TA_RetCode TA_ULTOSC_Open( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ULTOSC_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_ULTOSC_Open( TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double *outReal );
 
 TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -8338,7 +8338,7 @@ TA_LIB_API int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 1000
  */
 typedef struct TA_VAR_Stream TA_VAR_Stream;
 
-TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_VAR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_VAR_Open( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal );
 
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal );
 
@@ -8386,7 +8386,7 @@ TA_LIB_API int TA_WCLPRICE_Lookback( void );
  */
 typedef struct TA_WCLPRICE_Stream TA_WCLPRICE_Stream;
 
-TA_LIB_API TA_RetCode TA_WCLPRICE_Open( const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WCLPRICE_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_WCLPRICE_Open( TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
 
 TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -8442,7 +8442,7 @@ TA_LIB_API int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to
  */
 typedef struct TA_WILLR_Stream TA_WILLR_Stream;
 
-TA_LIB_API TA_RetCode TA_WILLR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_WILLR_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_WILLR_Open( TA_WILLR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_WILLR_Update( TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
 
@@ -8494,7 +8494,7 @@ TA_LIB_API int TA_WMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
  */
 typedef struct TA_WMA_Stream TA_WMA_Stream;
 
-TA_LIB_API TA_RetCode TA_WMA_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_WMA_Stream **stream, double *outReal );
+TA_LIB_API TA_RetCode TA_WMA_Open( TA_WMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
 
 TA_LIB_API TA_RetCode TA_WMA_Update( TA_WMA_Stream *stream, double inReal, double *outReal );
 

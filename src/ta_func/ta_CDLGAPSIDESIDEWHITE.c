@@ -536,7 +536,7 @@ static void TA_CDLGAPSIDESIDEWHITE_StepInternal( struct TA_CDLGAPSIDESIDEWHITE_S
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLGAPSIDESIDEWHITE_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenInternal( struct TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLGAPSIDESIDEWHITE_Stream *sp;
    int endIdx;
@@ -737,9 +737,9 @@ TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenInternal( const double inOpen[], const dou
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLGAPSIDESIDEWHITE_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Open( TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLGAPSIDESIDEWHITE_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLGAPSIDESIDEWHITE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Update( TA_CDLGAPSIDESIDEWHITE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

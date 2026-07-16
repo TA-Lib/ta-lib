@@ -1210,7 +1210,7 @@ static void TA_PLUS_DI_StepInternal( struct TA_PLUS_DI_Stream *sp, double inHigh
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_PLUS_DI_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_PLUS_DI_Stream **stream, double *outReal )
+TA_RetCode TA_PLUS_DI_OpenInternal( struct TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_PLUS_DI_Stream *sp;
    int endIdx;
@@ -1733,9 +1733,9 @@ TA_RetCode TA_PLUS_DI_OpenInternal( int optInTimePeriod, const double inHigh[], 
    return TA_INTERNAL_ERROR;
 }
 
-TA_LIB_API TA_RetCode TA_PLUS_DI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_PLUS_DI_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_PLUS_DI_Open( TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_PLUS_DI_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_PLUS_DI_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_PLUS_DI_Update( TA_PLUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

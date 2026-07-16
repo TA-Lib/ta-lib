@@ -611,7 +611,7 @@ static void TA_AROONOSC_StepInternal( struct TA_AROONOSC_Stream *sp, double inHi
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_AROONOSC_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_AROONOSC_Stream **stream, double *outReal )
+TA_RetCode TA_AROONOSC_OpenInternal( struct TA_AROONOSC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_AROONOSC_Stream *sp;
    int endIdx;
@@ -788,9 +788,9 @@ TA_RetCode TA_AROONOSC_OpenInternal( int optInTimePeriod, const double inHigh[],
    }
 }
 
-TA_LIB_API TA_RetCode TA_AROONOSC_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_AROONOSC_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_AROONOSC_Open( TA_AROONOSC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_AROONOSC_OpenInternal( optInTimePeriod, inHigh, inLow, 0, historyLen, stream, outReal );
+   return TA_AROONOSC_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_AROONOSC_Update( TA_AROONOSC_Stream *stream, double inHigh, double inLow, double *outReal )

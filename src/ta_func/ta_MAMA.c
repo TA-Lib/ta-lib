@@ -1824,7 +1824,7 @@ static void TA_MAMA_StepInternal( struct TA_MAMA_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MAMA_OpenInternal( double optInFastLimit, double optInSlowLimit, const double inReal[], int startIdx, int historyLen, struct TA_MAMA_Stream **stream, double *outMAMA, double *outFAMA )
+TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
 {
    struct TA_MAMA_Stream *sp;
    int endIdx;
@@ -2312,9 +2312,9 @@ TA_RetCode TA_MAMA_OpenInternal( double optInFastLimit, double optInSlowLimit, c
    }
 }
 
-TA_LIB_API TA_RetCode TA_MAMA_Open( double optInFastLimit, double optInSlowLimit, const double inReal[], int historyLen, TA_MAMA_Stream **stream, double *outMAMA, double *outFAMA )
+TA_LIB_API TA_RetCode TA_MAMA_Open( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
 {
-   return TA_MAMA_OpenInternal( optInFastLimit, optInSlowLimit, inReal, 0, historyLen, stream, outMAMA, outFAMA );
+   return TA_MAMA_OpenInternal( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA );
 }
 
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )

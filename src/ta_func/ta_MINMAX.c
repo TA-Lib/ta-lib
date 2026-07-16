@@ -570,7 +570,7 @@ static void TA_MINMAX_StepInternal( struct TA_MINMAX_Stream *sp, double inReal, 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MINMAX_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_MINMAX_Stream **stream, double *outMin, double *outMax )
+TA_RetCode TA_MINMAX_OpenInternal( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outMin, double *outMax )
 {
    struct TA_MINMAX_Stream *sp;
    int endIdx;
@@ -724,9 +724,9 @@ TA_RetCode TA_MINMAX_OpenInternal( int optInTimePeriod, const double inReal[], i
    }
 }
 
-TA_LIB_API TA_RetCode TA_MINMAX_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_MINMAX_Stream **stream, double *outMin, double *outMax )
+TA_LIB_API TA_RetCode TA_MINMAX_Open( TA_MINMAX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outMin, double *outMax )
 {
-   return TA_MINMAX_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outMin, outMax );
+   return TA_MINMAX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outMin, outMax );
 }
 
 TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )

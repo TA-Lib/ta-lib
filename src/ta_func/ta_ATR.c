@@ -654,7 +654,7 @@ static void TA_ATR_StepInternal( struct TA_ATR_Stream *sp, double inHigh, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ATR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_ATR_Stream **stream, double *outReal )
+TA_RetCode TA_ATR_OpenInternal( struct TA_ATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_ATR_Stream *sp;
    int endIdx;
@@ -847,9 +847,9 @@ TA_RetCode TA_ATR_OpenInternal( int optInTimePeriod, const double inHigh[], cons
    }
 }
 
-TA_LIB_API TA_RetCode TA_ATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_ATR_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_ATR_Open( TA_ATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_ATR_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_ATR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

@@ -818,7 +818,7 @@ static void TA_MACD_StepInternal( struct TA_MACD_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int startIdx, int historyLen, struct TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACD_Stream *sp;
    int endIdx;
@@ -1063,9 +1063,9 @@ TA_RetCode TA_MACD_OpenInternal( int optInFastPeriod, int optInSlowPeriod, int o
    }
 }
 
-TA_LIB_API TA_RetCode TA_MACD_Open( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, const double inReal[], int historyLen, TA_MACD_Stream **stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+TA_LIB_API TA_RetCode TA_MACD_Open( TA_MACD_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
-   return TA_MACD_OpenInternal( optInFastPeriod, optInSlowPeriod, optInSignalPeriod, inReal, 0, historyLen, stream, outMACD, outMACDSignal, outMACDHist );
+   return TA_MACD_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

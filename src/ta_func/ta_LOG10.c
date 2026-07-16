@@ -170,7 +170,7 @@ static void TA_LOG10_StepInternal( struct TA_LOG10_Stream *sp, double inReal, do
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_LOG10_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_LOG10_Stream **stream, double *outReal )
+TA_RetCode TA_LOG10_OpenInternal( struct TA_LOG10_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_LOG10_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_LOG10_OpenInternal( const double inReal[], int startIdx, int histo
    }
 }
 
-TA_LIB_API TA_RetCode TA_LOG10_Open( const double inReal[], int historyLen, TA_LOG10_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_LOG10_Open( TA_LOG10_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_LOG10_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_LOG10_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal )

@@ -1585,7 +1585,7 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_PHASOR_Stream **stream, double *outInPhase, double *outQuadrature )
+TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outInPhase, double *outQuadrature )
 {
    struct TA_HT_PHASOR_Stream *sp;
    int endIdx;
@@ -2020,9 +2020,9 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( const double inReal[], int startIdx, int h
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( const double inReal[], int historyLen, TA_HT_PHASOR_Stream **stream, double *outInPhase, double *outQuadrature )
+TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const double inReal[], int historyLen, double *outInPhase, double *outQuadrature )
 {
-   return TA_HT_PHASOR_OpenInternal( inReal, 0, historyLen, stream, outInPhase, outQuadrature );
+   return TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
 }
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature )

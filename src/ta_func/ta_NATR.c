@@ -804,7 +804,7 @@ static void TA_NATR_StepInternal( struct TA_NATR_Stream *sp, double inHigh, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_NATR_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_NATR_Stream **stream, double *outReal )
+TA_RetCode TA_NATR_OpenInternal( struct TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_NATR_Stream *sp;
    int endIdx;
@@ -1048,9 +1048,9 @@ TA_RetCode TA_NATR_OpenInternal( int optInTimePeriod, const double inHigh[], con
    }
 }
 
-TA_LIB_API TA_RetCode TA_NATR_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_NATR_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_NATR_Open( TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_NATR_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_NATR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

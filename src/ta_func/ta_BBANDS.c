@@ -916,7 +916,7 @@ static void TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_BBANDS_Stream *sp;
    int endIdx;
@@ -1001,7 +1001,7 @@ TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, dou
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInTimePeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, optInMAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer1);
@@ -1025,7 +1025,7 @@ TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, dou
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_STDDEV_OpenInternal( optInTimePeriod, 1.0, inReal, ((int)dummyBegIdx), (endIdx) + 1, &sub1, &subOpenDummy );
+         subRc = TA_STDDEV_OpenInternal( &sub1, inReal, ((int)dummyBegIdx), (endIdx) + 1, optInTimePeriod, 1.0, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer1);
@@ -1104,9 +1104,9 @@ TA_RetCode TA_BBANDS_OpenInternal( int optInTimePeriod, double optInNbDevUp, dou
    }
 }
 
-TA_LIB_API TA_RetCode TA_BBANDS_Open( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, const double inReal[], int historyLen, TA_BBANDS_Stream **stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+TA_LIB_API TA_RetCode TA_BBANDS_Open( TA_BBANDS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
-   return TA_BBANDS_OpenInternal( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, inReal, 0, historyLen, stream, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_BBANDS_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )

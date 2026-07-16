@@ -1946,7 +1946,7 @@ static void TA_HT_SINE_StepInternal( struct TA_HT_SINE_Stream *sp, double inReal
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_SINE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_SINE_Stream **stream, double *outSine, double *outLeadSine )
+TA_RetCode TA_HT_SINE_OpenInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outSine, double *outLeadSine )
 {
    struct TA_HT_SINE_Stream *sp;
    double local_smoothPrice[50];
@@ -2481,9 +2481,9 @@ TA_RetCode TA_HT_SINE_OpenInternal( const double inReal[], int startIdx, int his
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_SINE_Open( const double inReal[], int historyLen, TA_HT_SINE_Stream **stream, double *outSine, double *outLeadSine )
+TA_LIB_API TA_RetCode TA_HT_SINE_Open( TA_HT_SINE_Stream **stream, const double inReal[], int historyLen, double *outSine, double *outLeadSine )
 {
-   return TA_HT_SINE_OpenInternal( inReal, 0, historyLen, stream, outSine, outLeadSine );
+   return TA_HT_SINE_OpenInternal( stream, inReal, 0, historyLen, outSine, outLeadSine );
 }
 
 TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine )

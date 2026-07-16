@@ -661,7 +661,7 @@ static void TA_CDLABANDONEDBABY_StepInternal( struct TA_CDLABANDONEDBABY_Stream 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLABANDONEDBABY_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLABANDONEDBABY_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLABANDONEDBABY_OpenInternal( struct TA_CDLABANDONEDBABY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
 {
    struct TA_CDLABANDONEDBABY_Stream *sp;
    int endIdx;
@@ -882,9 +882,9 @@ TA_RetCode TA_CDLABANDONEDBABY_OpenInternal( double optInPenetration, const doub
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLABANDONEDBABY_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Open( TA_CDLABANDONEDBABY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
-   return TA_CDLABANDONEDBABY_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLABANDONEDBABY_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Update( TA_CDLABANDONEDBABY_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

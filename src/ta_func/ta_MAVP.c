@@ -559,7 +559,7 @@ struct TA_MAVP_Stream {
 };
 
 /* Private function, not in public API. */
-TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int startIdx, int historyLen, struct TA_MAVP_Stream **stream, double *outReal )
+TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int startIdx, int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal )
 {
    struct TA_MAVP_Stream *sp;
    int k, cp, lookbackTotal, subStart;
@@ -598,7 +598,7 @@ TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MATy
 
    for( k = 0; k < sp->nBank; k++ )
    {
-      retCode = TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, subStart, historyLen, &sp->bank[k], &sp->scratch[k] );
+      retCode = TA_MA_OpenInternal( &sp->bank[k], inReal, subStart, historyLen, optInMinPeriod + k, optInMAType, &sp->scratch[k] );
       if( retCode != TA_SUCCESS )
       {
          int j;
@@ -617,9 +617,9 @@ TA_RetCode TA_MAVP_OpenInternal( int optInMinPeriod, int optInMaxPeriod, TA_MATy
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_MAVP_Open( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, const double inReal[], const double inPeriods[], int historyLen, TA_MAVP_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_MAVP_Open( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal )
 {
-   return TA_MAVP_OpenInternal( optInMinPeriod, optInMaxPeriod, optInMAType, inReal, inPeriods, 0, historyLen, stream, outReal );
+   return TA_MAVP_OpenInternal( stream, inReal, inPeriods, 0, historyLen, optInMinPeriod, optInMaxPeriod, optInMAType, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )

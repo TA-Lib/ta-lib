@@ -141,9 +141,9 @@ pub fn open_signature(func: &FuncDef) -> String {
         let _ = write!(history, "const double {a}[], ");
     }
     format!(
-        "TA_LIB_API TA_RetCode TA_{n}_Open( {}{}int historyLen, TA_{n}_Stream **stream, {} )",
-        opt_params_sig(func),
+        "TA_LIB_API TA_RetCode TA_{n}_Open( TA_{n}_Stream **stream, {}int historyLen, {}{} )",
         history,
+        opt_params_sig(func),
         out_params_sig(func)
     )
 }
@@ -170,9 +170,9 @@ pub fn open_internal_signature(func: &FuncDef) -> String {
     // the definition (a bare `struct X` first seen in a prototype would otherwise
     // get prototype scope and collide).
     format!(
-        "TA_RetCode TA_{n}_OpenInternal( {}{}int startIdx, int historyLen, struct TA_{n}_Stream **stream, {} )",
-        opt_params_sig(func),
+        "TA_RetCode TA_{n}_OpenInternal( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}{} )",
         history,
+        opt_params_sig(func),
         out_params_sig(func)
     )
 }
@@ -181,12 +181,13 @@ pub fn open_internal_signature(func: &FuncDef) -> String {
 /// startIdx = 0 (the standalone/public default).
 fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
     let n = uname(func);
-    let mut fwd = String::new();
-    for p in &func.optional_inputs {
-        let _ = write!(fwd, "{}, ", p.name);
-    }
+    let mut hist = String::new();
     for a in streaming::input_array_names(func) {
-        let _ = write!(fwd, "{a}, ");
+        let _ = write!(hist, "{a}, ");
+    }
+    let mut opts = String::new();
+    for p in &func.optional_inputs {
+        let _ = write!(opts, "{}, ", p.name);
     }
     let outs: String = func
         .outputs
@@ -195,7 +196,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
         .collect::<Vec<_>>()
         .join(", ");
     let _ = writeln!(o, "{}\n{{", open_signature(func));
-    let _ = writeln!(o, "   return TA_{n}_OpenInternal( {fwd}0, historyLen, stream, {outs} );");
+    let _ = writeln!(o, "   return TA_{n}_OpenInternal( stream, {hist}0, historyLen, {opts}{outs} );");
     let _ = writeln!(o, "}}\n");
 }
 
@@ -885,7 +886,7 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "      {{");
     let _ = writeln!(
         o,
-        "         subRc = {cpfx}_OpenInternal( {opt_str}{src_ptrs}, ({s_arg}), ({e_arg}) + 1, &sub{si}, {out_dummies} );"
+        "         subRc = {cpfx}_OpenInternal( &sub{si}, {src_ptrs}, ({s_arg}), ({e_arg}) + 1, {opt_str}{out_dummies} );"
     );
     let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
     let _ = writeln!(o, "         {{");
@@ -1366,7 +1367,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
         let _ = writeln!(
             o,
-            "         retCode = {cp}_OpenInternal( {opt_str}{bar_args}, startIdx, historyLen, &sub, {out_args} );",
+            "         retCode = {cp}_OpenInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}{out_args} );",
         );
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
@@ -2120,7 +2121,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   {{");
     let _ = writeln!(
         o,
-        "      retCode = {pre}_OpenInternal( {open_opts}, {price}, subStart, historyLen, &sp->bank[k], &sp->scratch[k] );"
+        "      retCode = {pre}_OpenInternal( &sp->bank[k], {price}, subStart, historyLen, {open_opts}, &sp->scratch[k] );"
     );
     let _ = writeln!(o, "      if( retCode != TA_SUCCESS )");
     let _ = writeln!(o, "      {{");

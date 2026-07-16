@@ -582,7 +582,7 @@ static void TA_CDLMORNINGSTAR_StepInternal( struct TA_CDLMORNINGSTAR_Stream *sp,
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLMORNINGSTAR_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
 {
    struct TA_CDLMORNINGSTAR_Stream *sp;
    int endIdx;
@@ -783,9 +783,9 @@ TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( double optInPenetration, const double
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMORNINGSTAR_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Open( TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
-   return TA_CDLMORNINGSTAR_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLMORNINGSTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Update( TA_CDLMORNINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

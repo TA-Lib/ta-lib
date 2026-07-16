@@ -694,7 +694,7 @@ static void TA_MIDPRICE_StepInternal( struct TA_MIDPRICE_Stream *sp, double inHi
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MIDPRICE_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_MIDPRICE_Stream **stream, double *outReal )
+TA_RetCode TA_MIDPRICE_OpenInternal( struct TA_MIDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_MIDPRICE_Stream *sp;
    int endIdx;
@@ -865,9 +865,9 @@ TA_RetCode TA_MIDPRICE_OpenInternal( int optInTimePeriod, const double inHigh[],
    }
 }
 
-TA_LIB_API TA_RetCode TA_MIDPRICE_Open( int optInTimePeriod, const double inHigh[], const double inLow[], int historyLen, TA_MIDPRICE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_MIDPRICE_Open( TA_MIDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_MIDPRICE_OpenInternal( optInTimePeriod, inHigh, inLow, 0, historyLen, stream, outReal );
+   return TA_MIDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )

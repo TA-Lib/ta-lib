@@ -6430,7 +6430,7 @@ fn test_c_ma_dispatch_stream_section() {
     // T3's fixed vfactor literal forwards positionally; the dispatch threads
     // its own startIdx into the arm's internal open.
     assert!(
-        c.contains("TA_T3_OpenInternal( optInTimePeriod, 0.7, inReal, startIdx, historyLen"),
+        c.contains("TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7"),
         "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
     // MAMA is the only remaining unsupported arm — it rejects at Open and never
@@ -6705,7 +6705,7 @@ fn test_c_mavp_period_bank() {
     assert!(s.contains("lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );"), "shared max-period lookback anchor");
     assert!(s.contains("subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;"), "clamp start to the shared anchor");
     // Open: bank loop opening each period's sub-stream at subStart, all-freed-so-far on OOM.
-    assert!(s.contains("TA_MA_OpenInternal( optInMinPeriod + k, optInMAType, inReal, subStart, historyLen,"), "sub-open per period at the shared anchor, MAType forwarded");
+    assert!(s.contains("TA_MA_OpenInternal( &sp->bank[k], inReal, subStart, historyLen, optInMinPeriod + k, optInMAType,"), "sub-open per period at the shared anchor, MAType forwarded");
     assert!(s.contains("for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );"), "frees sub-streams opened so far on failure");
     // Update: lockstep advance + clamp-indexed output.
     let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
@@ -6804,11 +6804,15 @@ fn test_c_stoch_composed_stream_section() {
 
     // Open: sub0 opens on the RAW series strictly BEFORE the in-place
     // smoothing call; sub1 after it, before the %D call.
-    let sub0 = stream.find("subRc = TA_MA_OpenInternal( optInSlowK_Period, optInSlowK_MAType, tempBuffer").expect("sub0 open");
+    let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open");
     let ma1 = stream.find("retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
-    let sub1 = stream.find("subRc = TA_MA_OpenInternal( optInSlowD_Period, optInSlowD_MAType, tempBuffer").expect("sub1 open");
+    let sub1 = stream.find("subRc = TA_MA_OpenInternal( &sub1, tempBuffer").expect("sub1 open");
     let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
     assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
+    // Params trail the handle+history in the new Open order (input, optional, output):
+    // slowK/slowD forwarded just before the initial-output dummy.
+    assert!(stream.contains("optInSlowK_Period, optInSlowK_MAType, &subOpenDummy"), "slowK params forwarded to sub0 open");
+    assert!(stream.contains("optInSlowD_Period, optInSlowD_MAType, &subOpenDummy"), "slowD params forwarded to sub1 open");
 
     // Out-meta pointers mapped to the dummies in the transcription (the
     // Open signature has no outBegIdx/outNBElement).

@@ -170,7 +170,7 @@ static void TA_TANH_StepInternal( struct TA_TANH_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_TANH_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_TANH_Stream **stream, double *outReal )
+TA_RetCode TA_TANH_OpenInternal( struct TA_TANH_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_TANH_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_TANH_OpenInternal( const double inReal[], int startIdx, int histor
    }
 }
 
-TA_LIB_API TA_RetCode TA_TANH_Open( const double inReal[], int historyLen, TA_TANH_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_TANH_Open( TA_TANH_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_TANH_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_TANH_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, double *outReal )

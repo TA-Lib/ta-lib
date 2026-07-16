@@ -170,7 +170,7 @@ static void TA_ACOS_StepInternal( struct TA_ACOS_Stream *sp, double inReal, doub
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_ACOS_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_ACOS_Stream **stream, double *outReal )
+TA_RetCode TA_ACOS_OpenInternal( struct TA_ACOS_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_ACOS_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_ACOS_OpenInternal( const double inReal[], int startIdx, int histor
    }
 }
 
-TA_LIB_API TA_RetCode TA_ACOS_Open( const double inReal[], int historyLen, TA_ACOS_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_ACOS_Open( TA_ACOS_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_ACOS_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_ACOS_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, double *outReal )

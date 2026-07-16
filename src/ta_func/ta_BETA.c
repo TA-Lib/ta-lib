@@ -807,7 +807,7 @@ static void TA_BETA_StepInternal( struct TA_BETA_Stream *sp, double inReal0, dou
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_BETA_OpenInternal( int optInTimePeriod, const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_BETA_Stream **stream, double *outReal )
+TA_RetCode TA_BETA_OpenInternal( struct TA_BETA_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_BETA_Stream *sp;
    int endIdx;
@@ -1025,9 +1025,9 @@ TA_RetCode TA_BETA_OpenInternal( int optInTimePeriod, const double inReal0[], co
    }
 }
 
-TA_LIB_API TA_RetCode TA_BETA_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_BETA_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_BETA_Open( TA_BETA_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_BETA_OpenInternal( optInTimePeriod, inReal0, inReal1, 0, historyLen, stream, outReal );
+   return TA_BETA_OpenInternal( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal )

@@ -608,7 +608,7 @@ static void TA_CDLHARAMICROSS_StepInternal( struct TA_CDLHARAMICROSS_Stream *sp,
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLHARAMICROSS_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHARAMICROSS_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLHARAMICROSS_OpenInternal( struct TA_CDLHARAMICROSS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLHARAMICROSS_Stream *sp;
    int endIdx;
@@ -792,9 +792,9 @@ TA_RetCode TA_CDLHARAMICROSS_OpenInternal( const double inOpen[], const double i
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHARAMICROSS_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Open( TA_CDLHARAMICROSS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLHARAMICROSS_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLHARAMICROSS_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Update( TA_CDLHARAMICROSS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

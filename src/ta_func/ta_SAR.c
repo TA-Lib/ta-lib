@@ -1073,7 +1073,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_SAR_Stream **stream, double *outReal )
+TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, double *outReal )
 {
    struct TA_SAR_Stream *sp;
    int endIdx;
@@ -1377,9 +1377,9 @@ TA_RetCode TA_SAR_OpenInternal( double optInAcceleration, double optInMaximum, c
    }
 }
 
-TA_LIB_API TA_RetCode TA_SAR_Open( double optInAcceleration, double optInMaximum, const double inHigh[], const double inLow[], int historyLen, TA_SAR_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_SAR_Open( TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInAcceleration, double optInMaximum, double *outReal )
 {
-   return TA_SAR_OpenInternal( optInAcceleration, optInMaximum, inHigh, inLow, 0, historyLen, stream, outReal );
+   return TA_SAR_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal )

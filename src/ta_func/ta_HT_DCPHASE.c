@@ -1920,7 +1920,7 @@ static void TA_HT_DCPHASE_StepInternal( struct TA_HT_DCPHASE_Stream *sp, double 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_DCPHASE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_DCPHASE_Stream **stream, double *outReal )
+TA_RetCode TA_HT_DCPHASE_OpenInternal( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_HT_DCPHASE_Stream *sp;
    double local_smoothPrice[50];
@@ -2448,9 +2448,9 @@ TA_RetCode TA_HT_DCPHASE_OpenInternal( const double inReal[], int startIdx, int 
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( const double inReal[], int historyLen, TA_HT_DCPHASE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Open( TA_HT_DCPHASE_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_HT_DCPHASE_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_HT_DCPHASE_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Update( TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal )

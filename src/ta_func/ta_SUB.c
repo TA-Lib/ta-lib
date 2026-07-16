@@ -179,7 +179,7 @@ static void TA_SUB_StepInternal( struct TA_SUB_Stream *sp, double inReal0, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_SUB_OpenInternal( const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_SUB_Stream **stream, double *outReal )
+TA_RetCode TA_SUB_OpenInternal( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_SUB_Stream *sp;
    int endIdx;
@@ -219,9 +219,9 @@ TA_RetCode TA_SUB_OpenInternal( const double inReal0[], const double inReal1[], 
    }
 }
 
-TA_LIB_API TA_RetCode TA_SUB_Open( const double inReal0[], const double inReal1[], int historyLen, TA_SUB_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_SUB_Open( TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal )
 {
-   return TA_SUB_OpenInternal( inReal0, inReal1, 0, historyLen, stream, outReal );
+   return TA_SUB_OpenInternal( stream, inReal0, inReal1, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal )

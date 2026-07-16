@@ -639,7 +639,7 @@ static void TA_CDLHIKKAKEMOD_StepInternal( struct TA_CDLHIKKAKEMOD_Stream *sp, d
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLHIKKAKEMOD_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLHIKKAKEMOD_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLHIKKAKEMOD_OpenInternal( struct TA_CDLHIKKAKEMOD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLHIKKAKEMOD_Stream *sp;
    int endIdx;
@@ -847,9 +847,9 @@ TA_RetCode TA_CDLHIKKAKEMOD_OpenInternal( const double inOpen[], const double in
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLHIKKAKEMOD_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Open( TA_CDLHIKKAKEMOD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLHIKKAKEMOD_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLHIKKAKEMOD_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Update( TA_CDLHIKKAKEMOD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

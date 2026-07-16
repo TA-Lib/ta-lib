@@ -313,7 +313,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ACCBANDS_Open(20, g_high, g_low, g_close, g_nPoints, &st, &v0, &v1, &v2);
+        TA_RetCode orc = TA_ACCBANDS_Open(&st, g_high, g_low, g_close, g_nPoints, 20, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -383,7 +383,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ACOS_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ACOS_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ACOS_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -450,7 +450,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AD_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AD_Open(g_high, g_low, g_close, g_volume, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_AD_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -515,7 +515,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADD_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADD_Open(g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ADD_Open(&st, g_close, g_high, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -582,7 +582,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADOSC_Open(3, 10, g_high, g_low, g_close, g_volume, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ADOSC_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 3, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -648,7 +648,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADX_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ADX_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -714,7 +714,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADXR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADXR_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ADXR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -778,7 +778,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_APO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_APO_Open(12, 26, 0, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_APO_Open(&st, g_close, g_nPoints, 12, 26, 0, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -845,7 +845,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AROON_Open(14, g_high, g_low, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_AROON_Open(&st, g_high, g_low, g_nPoints, 14, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -913,7 +913,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AROONOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AROONOSC_Open(14, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_AROONOSC_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -977,7 +977,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ASIN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ASIN_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ASIN_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1041,7 +1041,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ATAN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ATAN_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ATAN_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1107,7 +1107,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ATR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ATR_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ATR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1171,7 +1171,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AVGDEV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AVGDEV_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_AVGDEV_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1238,7 +1238,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AVGPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AVGPRICE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_AVGPRICE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1306,7 +1306,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BBANDS_Open(5, 2.000000000000000, 2.000000000000000, 0, g_close, g_nPoints, &st, &v0, &v1, &v2);
+        TA_RetCode orc = TA_BBANDS_Open(&st, g_close, g_nPoints, 5, 2.000000000000000, 2.000000000000000, 0, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1377,7 +1377,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_BETA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BETA_Open(5, g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_BETA_Open(&st, g_close, g_high, g_nPoints, 5, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1444,7 +1444,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_BOP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BOP_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_BOP_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1510,7 +1510,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CCI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CCI_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_CCI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1577,7 +1577,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL2CROWS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL2CROWS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL2CROWS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1644,7 +1644,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3BLACKCROWS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3BLACKCROWS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3BLACKCROWS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1711,7 +1711,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3INSIDE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3INSIDE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3INSIDE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1778,7 +1778,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3LINESTRIKE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3LINESTRIKE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3LINESTRIKE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1845,7 +1845,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3OUTSIDE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3OUTSIDE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3OUTSIDE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1912,7 +1912,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3STARSINSOUTH_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3STARSINSOUTH_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3STARSINSOUTH_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1979,7 +1979,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDL3WHITESOLDIERS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDL3WHITESOLDIERS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDL3WHITESOLDIERS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2046,7 +2046,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLABANDONEDBABY_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLABANDONEDBABY_Open(0.300000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLABANDONEDBABY_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2113,7 +2113,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLADVANCEBLOCK_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLADVANCEBLOCK_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLADVANCEBLOCK_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2180,7 +2180,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLBELTHOLD_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLBELTHOLD_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLBELTHOLD_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2247,7 +2247,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLBREAKAWAY_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLBREAKAWAY_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLBREAKAWAY_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2314,7 +2314,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLCLOSINGMARUBOZU_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLCLOSINGMARUBOZU_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLCLOSINGMARUBOZU_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2381,7 +2381,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLCONCEALBABYSWALL_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLCONCEALBABYSWALL_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLCONCEALBABYSWALL_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2448,7 +2448,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLCOUNTERATTACK_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLCOUNTERATTACK_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLCOUNTERATTACK_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2515,7 +2515,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLDARKCLOUDCOVER_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(0.500000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.500000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2582,7 +2582,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLDOJI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLDOJI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLDOJI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2649,7 +2649,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLDOJISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLDOJISTAR_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2716,7 +2716,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLDRAGONFLYDOJI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLDRAGONFLYDOJI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLDRAGONFLYDOJI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2783,7 +2783,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLENGULFING_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLENGULFING_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLENGULFING_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2850,7 +2850,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLEVENINGDOJISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(0.300000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2917,7 +2917,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLEVENINGSTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLEVENINGSTAR_Open(0.300000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLEVENINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2984,7 +2984,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLGAPSIDESIDEWHITE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLGAPSIDESIDEWHITE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3051,7 +3051,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLGRAVESTONEDOJI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLGRAVESTONEDOJI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLGRAVESTONEDOJI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3118,7 +3118,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHAMMER_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHAMMER_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHAMMER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3185,7 +3185,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHANGINGMAN_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHANGINGMAN_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHANGINGMAN_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3252,7 +3252,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHARAMI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHARAMI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHARAMI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3319,7 +3319,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHARAMICROSS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHARAMICROSS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHARAMICROSS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3386,7 +3386,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHIGHWAVE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHIGHWAVE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHIGHWAVE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3453,7 +3453,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHIKKAKE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHIKKAKE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHIKKAKE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3520,7 +3520,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHIKKAKEMOD_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHIKKAKEMOD_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHIKKAKEMOD_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3587,7 +3587,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLHOMINGPIGEON_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLHOMINGPIGEON_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLHOMINGPIGEON_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3654,7 +3654,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLIDENTICAL3CROWS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLIDENTICAL3CROWS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLIDENTICAL3CROWS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3721,7 +3721,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLINNECK_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLINNECK_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLINNECK_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3788,7 +3788,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLINVERTEDHAMMER_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLINVERTEDHAMMER_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLINVERTEDHAMMER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3855,7 +3855,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLKICKING_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLKICKING_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLKICKING_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3922,7 +3922,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLKICKINGBYLENGTH_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLKICKINGBYLENGTH_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLKICKINGBYLENGTH_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3989,7 +3989,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLLADDERBOTTOM_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLLADDERBOTTOM_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLLADDERBOTTOM_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4056,7 +4056,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLLONGLEGGEDDOJI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLLONGLEGGEDDOJI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLLONGLEGGEDDOJI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4123,7 +4123,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLLONGLINE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLLONGLINE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLLONGLINE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4190,7 +4190,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMARUBOZU_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMARUBOZU_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLMARUBOZU_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4257,7 +4257,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMATCHINGLOW_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMATCHINGLOW_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLMATCHINGLOW_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4324,7 +4324,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMATHOLD_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMATHOLD_Open(0.500000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLMATHOLD_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.500000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4391,7 +4391,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMORNINGDOJISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(0.300000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4458,7 +4458,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMORNINGSTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMORNINGSTAR_Open(0.300000000000000, g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLMORNINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4525,7 +4525,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLONNECK_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLONNECK_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLONNECK_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4592,7 +4592,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLPIERCING_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLPIERCING_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLPIERCING_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4659,7 +4659,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLRICKSHAWMAN_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLRICKSHAWMAN_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLRICKSHAWMAN_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4726,7 +4726,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLRISEFALL3METHODS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLRISEFALL3METHODS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLRISEFALL3METHODS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4793,7 +4793,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSEPARATINGLINES_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSEPARATINGLINES_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSEPARATINGLINES_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4860,7 +4860,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSHOOTINGSTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSHOOTINGSTAR_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSHOOTINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4927,7 +4927,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSHORTLINE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSHORTLINE_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSHORTLINE_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4994,7 +4994,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSPINNINGTOP_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSPINNINGTOP_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSPINNINGTOP_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5061,7 +5061,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSTALLEDPATTERN_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSTALLEDPATTERN_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSTALLEDPATTERN_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5128,7 +5128,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLSTICKSANDWICH_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLSTICKSANDWICH_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLSTICKSANDWICH_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5195,7 +5195,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLTAKURI_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLTAKURI_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLTAKURI_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5262,7 +5262,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLTASUKIGAP_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLTASUKIGAP_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLTASUKIGAP_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5329,7 +5329,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLTHRUSTING_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLTHRUSTING_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLTHRUSTING_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5396,7 +5396,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLTRISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLTRISTAR_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLTRISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5463,7 +5463,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLUNIQUE3RIVER_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLUNIQUE3RIVER_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLUNIQUE3RIVER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5530,7 +5530,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLUPSIDEGAP2CROWS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLUPSIDEGAP2CROWS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5597,7 +5597,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLXSIDEGAP3METHODS_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLXSIDEGAP3METHODS_Open(g_open, g_high, g_low, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_CDLXSIDEGAP3METHODS_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5661,7 +5661,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CEIL_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CEIL_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_CEIL_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5725,7 +5725,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CMO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CMO_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_CMO_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5790,7 +5790,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CORREL_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CORREL_Open(30, g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_CORREL_Open(&st, g_close, g_high, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5854,7 +5854,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_COS_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_COS_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_COS_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5918,7 +5918,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_COSH_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_COSH_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_COSH_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5982,7 +5982,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DEMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DEMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_DEMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6047,7 +6047,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DIV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DIV_Open(g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_DIV_Open(&st, g_close, g_high, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6113,7 +6113,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DX_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_DX_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6177,7 +6177,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_EMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_EMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_EMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6241,7 +6241,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_EXP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_EXP_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_EXP_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6305,7 +6305,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_FLOOR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_FLOOR_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_FLOOR_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6369,7 +6369,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_HT_DCPERIOD_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_DCPERIOD_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_HT_DCPERIOD_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6433,7 +6433,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_HT_DCPHASE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_DCPHASE_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_HT_DCPHASE_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6499,7 +6499,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_PHASOR_Open(g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_HT_PHASOR_Open(&st, g_close, g_nPoints, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6568,7 +6568,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_SINE_Open(g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_HT_SINE_Open(&st, g_close, g_nPoints, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6635,7 +6635,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_HT_TRENDLINE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_TRENDLINE_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_HT_TRENDLINE_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6699,7 +6699,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_HT_TRENDMODE_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HT_TRENDMODE_Open(g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_HT_TRENDMODE_Open(&st, g_close, g_nPoints, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6764,7 +6764,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_IMI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_IMI_Open(14, g_open, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_IMI_Open(&st, g_open, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6828,7 +6828,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_KAMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_KAMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_KAMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6892,7 +6892,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LINEARREG_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6956,7 +6956,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_ANGLE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_ANGLE_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LINEARREG_ANGLE_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7020,7 +7020,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_INTERCEPT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7084,7 +7084,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_SLOPE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_SLOPE_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LINEARREG_SLOPE_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7148,7 +7148,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LN_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LN_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7212,7 +7212,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LOG10_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LOG10_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_LOG10_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7276,7 +7276,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MA_Open(30, 0, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MA_Open(&st, g_close, g_nPoints, 30, 0, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7344,7 +7344,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACD_Open(12, 26, 9, g_close, g_nPoints, &st, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACD_Open(&st, g_close, g_nPoints, 12, 26, 9, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7418,7 +7418,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACDEXT_Open(12, 0, 26, 0, 9, 0, g_close, g_nPoints, &st, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACDEXT_Open(&st, g_close, g_nPoints, 12, 0, 26, 0, 9, 0, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7492,7 +7492,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACDFIX_Open(9, g_close, g_nPoints, &st, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACDFIX_Open(&st, g_close, g_nPoints, 9, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7564,7 +7564,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAMA_Open(0.500000000000000, 0.050000000000000, g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_MAMA_Open(&st, g_close, g_nPoints, 0.500000000000000, 0.050000000000000, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7632,7 +7632,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAVP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAVP_Open(2, 30, 0, g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MAVP_Open(&st, g_close, g_high, g_nPoints, 2, 30, 0, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7696,7 +7696,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAX_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MAX_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7760,7 +7760,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAXINDEX_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAXINDEX_Open(30, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_MAXINDEX_Open(&st, g_close, g_nPoints, 30, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7825,7 +7825,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MEDPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MEDPRICE_Open(g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MEDPRICE_Open(&st, g_high, g_low, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7892,7 +7892,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MFI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MFI_Open(14, g_high, g_low, g_close, g_volume, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MFI_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7956,7 +7956,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIDPOINT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIDPOINT_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MIDPOINT_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8021,7 +8021,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIDPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIDPRICE_Open(14, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MIDPRICE_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8085,7 +8085,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIN_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MIN_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8149,7 +8149,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MININDEX_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MININDEX_Open(30, g_close, g_nPoints, &st, &iv0);
+        TA_RetCode orc = TA_MININDEX_Open(&st, g_close, g_nPoints, 30, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8215,7 +8215,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINMAX_Open(30, g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_MINMAX_Open(&st, g_close, g_nPoints, 30, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8284,7 +8284,7 @@ static void bench_stream_all(const char *filter, int iters) {
             int iv0 = 0;
             int iv1 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINMAXINDEX_Open(30, g_close, g_nPoints, &st, &iv0, &iv1);
+        TA_RetCode orc = TA_MINMAXINDEX_Open(&st, g_close, g_nPoints, 30, &iv0, &iv1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8353,7 +8353,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MINUS_DI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINUS_DI_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MINUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8418,7 +8418,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MINUS_DM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINUS_DM_Open(14, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MINUS_DM_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8482,7 +8482,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MOM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MOM_Open(10, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MOM_Open(&st, g_close, g_nPoints, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8547,7 +8547,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MULT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MULT_Open(g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_MULT_Open(&st, g_close, g_high, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8613,7 +8613,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_NATR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_NATR_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_NATR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8678,7 +8678,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_OBV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_OBV_Open(g_close, g_volume, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_OBV_Open(&st, g_close, g_volume, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8744,7 +8744,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PLUS_DI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PLUS_DI_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_PLUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8809,7 +8809,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PLUS_DM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PLUS_DM_Open(14, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_PLUS_DM_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8873,7 +8873,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PPO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PPO_Open(12, 26, 0, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_PPO_Open(&st, g_close, g_nPoints, 12, 26, 0, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8937,7 +8937,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROC_Open(10, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ROC_Open(&st, g_close, g_nPoints, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9001,7 +9001,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCP_Open(10, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ROCP_Open(&st, g_close, g_nPoints, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9065,7 +9065,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCR_Open(10, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ROCR_Open(&st, g_close, g_nPoints, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9129,7 +9129,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCR100_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCR100_Open(10, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ROCR100_Open(&st, g_close, g_nPoints, 10, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9193,7 +9193,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RSI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RSI_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_RSI_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9258,7 +9258,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SAR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SAR_Open(0.020000000000000, 0.200000000000000, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SAR_Open(&st, g_high, g_low, g_nPoints, 0.020000000000000, 0.200000000000000, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9323,7 +9323,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SAREXT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SAREXT_Open(0.000000000000000, 0.000000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, g_high, g_low, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SAREXT_Open(&st, g_high, g_low, g_nPoints, 0.000000000000000, 0.000000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9387,7 +9387,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SIN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SIN_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SIN_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9451,7 +9451,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SINH_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SINH_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SINH_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9515,7 +9515,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9579,7 +9579,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SQRT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SQRT_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SQRT_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9643,7 +9643,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_STDDEV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STDDEV_Open(5, 1.000000000000000, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_STDDEV_Open(&st, g_close, g_nPoints, 5, 1.000000000000000, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9711,7 +9711,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCH_Open(5, 3, 0, 3, 0, g_high, g_low, g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_STOCH_Open(&st, g_high, g_low, g_close, g_nPoints, 5, 3, 0, 3, 0, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9782,7 +9782,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCHF_Open(5, 3, 0, g_high, g_low, g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_STOCHF_Open(&st, g_high, g_low, g_close, g_nPoints, 5, 3, 0, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9851,7 +9851,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCHRSI_Open(14, 5, 3, 0, g_close, g_nPoints, &st, &v0, &v1);
+        TA_RetCode orc = TA_STOCHRSI_Open(&st, g_close, g_nPoints, 14, 5, 3, 0, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9919,7 +9919,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SUB_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SUB_Open(g_close, g_high, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SUB_Open(&st, g_close, g_high, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9983,7 +9983,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SUM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SUM_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_SUM_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10047,7 +10047,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_T3_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_T3_Open(5, 0.700000000000000, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_T3_Open(&st, g_close, g_nPoints, 5, 0.700000000000000, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10111,7 +10111,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TAN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TAN_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TAN_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10175,7 +10175,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TANH_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TANH_Open(g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TANH_Open(&st, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10239,7 +10239,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TEMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TEMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TEMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10305,7 +10305,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TRANGE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TRANGE_Open(g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TRANGE_Open(&st, g_high, g_low, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10369,7 +10369,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TRIMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TRIMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TRIMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10433,7 +10433,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TRIX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TRIX_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TRIX_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10497,7 +10497,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TSF_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TSF_Open(14, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TSF_Open(&st, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10563,7 +10563,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TYPPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TYPPRICE_Open(g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_TYPPRICE_Open(&st, g_high, g_low, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10629,7 +10629,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ULTOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ULTOSC_Open(7, 14, 28, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_ULTOSC_Open(&st, g_high, g_low, g_close, g_nPoints, 7, 14, 28, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10693,7 +10693,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_VAR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_VAR_Open(5, 1.000000000000000, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_VAR_Open(&st, g_close, g_nPoints, 5, 1.000000000000000, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10759,7 +10759,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_WCLPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_WCLPRICE_Open(g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_WCLPRICE_Open(&st, g_high, g_low, g_close, g_nPoints, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10825,7 +10825,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_WILLR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_WILLR_Open(14, g_high, g_low, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_WILLR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10889,7 +10889,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_WMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_WMA_Open(30, g_close, g_nPoints, &st, &v0);
+        TA_RetCode orc = TA_WMA_Open(&st, g_close, g_nPoints, 30, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;

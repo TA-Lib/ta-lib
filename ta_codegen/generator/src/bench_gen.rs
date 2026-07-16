@@ -366,13 +366,12 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str(&out_decls);
         s.push_str("        g_trk_reset(); g_ta_track = 1;\n");
         {
-            let mut a = Vec::new();
+            let mut a = vec!["&st".to_string()];
+            a.extend(in_arrays.iter().cloned());
+            a.push("g_nPoints".to_string());
             if !opt_csv.is_empty() {
                 a.push(opt_only.clone());
             }
-            a.extend(in_arrays.iter().cloned());
-            a.push("g_nPoints".to_string());
-            a.push("&st".to_string());
             a.push(out_addrs.clone());
             let joined = a.iter().filter(|x| !x.is_empty()).cloned().collect::<Vec<_>>().join(", ");
             s.push_str(&format!("        TA_RetCode orc = {ta}_Open({joined});\n"));

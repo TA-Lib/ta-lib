@@ -414,7 +414,7 @@ static void TA_LINEARREG_SLOPE_StepInternal( struct TA_LINEARREG_SLOPE_Stream *s
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( int optInTimePeriod, const double inReal[], int startIdx, int historyLen, struct TA_LINEARREG_SLOPE_Stream **stream, double *outReal )
+TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_LINEARREG_SLOPE_Stream *sp;
    int endIdx;
@@ -543,9 +543,9 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( int optInTimePeriod, const double in
    }
 }
 
-TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Open( int optInTimePeriod, const double inReal[], int historyLen, TA_LINEARREG_SLOPE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Open( TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_LINEARREG_SLOPE_OpenInternal( optInTimePeriod, inReal, 0, historyLen, stream, outReal );
+   return TA_LINEARREG_SLOPE_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Update( TA_LINEARREG_SLOPE_Stream *stream, double inReal, double *outReal )

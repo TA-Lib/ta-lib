@@ -2303,7 +2303,7 @@ static void TA_HT_TRENDMODE_StepInternal( struct TA_HT_TRENDMODE_Stream *sp, dou
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_TRENDMODE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_TRENDMODE_Stream **stream, int *outInteger )
+TA_RetCode TA_HT_TRENDMODE_OpenInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_HT_TRENDMODE_Stream *sp;
    double local_smoothPrice[50];
@@ -2938,9 +2938,9 @@ TA_RetCode TA_HT_TRENDMODE_OpenInternal( const double inReal[], int startIdx, in
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( const double inReal[], int historyLen, TA_HT_TRENDMODE_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( TA_HT_TRENDMODE_Stream **stream, const double inReal[], int historyLen, int *outInteger )
 {
-   return TA_HT_TRENDMODE_OpenInternal( inReal, 0, historyLen, stream, outInteger );
+   return TA_HT_TRENDMODE_OpenInternal( stream, inReal, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )

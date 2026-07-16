@@ -437,7 +437,7 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_VAR_OpenInternal( int optInTimePeriod, double optInNbDev, const double inReal[], int startIdx, int historyLen, struct TA_VAR_Stream **stream, double *outReal )
+TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
 {
    struct TA_VAR_Stream *sp;
    int endIdx;
@@ -562,9 +562,9 @@ TA_RetCode TA_VAR_OpenInternal( int optInTimePeriod, double optInNbDev, const do
    }
 }
 
-TA_LIB_API TA_RetCode TA_VAR_Open( int optInTimePeriod, double optInNbDev, const double inReal[], int historyLen, TA_VAR_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_VAR_Open( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
 {
-   return TA_VAR_OpenInternal( optInTimePeriod, optInNbDev, inReal, 0, historyLen, stream, outReal );
+   return TA_VAR_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )

@@ -1750,7 +1750,7 @@ static void TA_HT_TRENDLINE_StepInternal( struct TA_HT_TRENDLINE_Stream *sp, dou
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_HT_TRENDLINE_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_HT_TRENDLINE_Stream **stream, double *outReal )
+TA_RetCode TA_HT_TRENDLINE_OpenInternal( struct TA_HT_TRENDLINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_HT_TRENDLINE_Stream *sp;
    int endIdx;
@@ -2236,9 +2236,9 @@ TA_RetCode TA_HT_TRENDLINE_OpenInternal( const double inReal[], int startIdx, in
    }
 }
 
-TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Open( const double inReal[], int historyLen, TA_HT_TRENDLINE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Open( TA_HT_TRENDLINE_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_HT_TRENDLINE_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_HT_TRENDLINE_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal )

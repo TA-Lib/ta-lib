@@ -789,7 +789,7 @@ static void TA_MFI_StepInternal( struct TA_MFI_Stream *sp, double inHigh, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MFI_OpenInternal( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, struct TA_MFI_Stream **stream, double *outReal )
+TA_RetCode TA_MFI_OpenInternal( struct TA_MFI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_MFI_Stream *sp;
    double local_mflow_positive[50];
@@ -995,9 +995,9 @@ TA_RetCode TA_MFI_OpenInternal( int optInTimePeriod, const double inHigh[], cons
    }
 }
 
-TA_LIB_API TA_RetCode TA_MFI_Open( int optInTimePeriod, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, TA_MFI_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_MFI_Open( TA_MFI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_MFI_OpenInternal( optInTimePeriod, inHigh, inLow, inClose, inVolume, 0, historyLen, stream, outReal );
+   return TA_MFI_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )

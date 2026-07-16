@@ -579,7 +579,7 @@ static void TA_CDLCOUNTERATTACK_StepInternal( struct TA_CDLCOUNTERATTACK_Stream 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLCOUNTERATTACK_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLCOUNTERATTACK_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLCOUNTERATTACK_OpenInternal( struct TA_CDLCOUNTERATTACK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLCOUNTERATTACK_Stream *sp;
    int endIdx;
@@ -802,9 +802,9 @@ TA_RetCode TA_CDLCOUNTERATTACK_OpenInternal( const double inOpen[], const double
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLCOUNTERATTACK_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Open( TA_CDLCOUNTERATTACK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLCOUNTERATTACK_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLCOUNTERATTACK_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Update( TA_CDLCOUNTERATTACK_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

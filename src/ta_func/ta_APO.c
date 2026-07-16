@@ -367,7 +367,7 @@ static void TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_APO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int startIdx, int historyLen, struct TA_APO_Stream **stream, double *outReal )
+TA_RetCode TA_APO_OpenInternal( struct TA_APO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal )
 {
    struct TA_APO_Stream *sp;
    int endIdx;
@@ -439,7 +439,7 @@ TA_RetCode TA_APO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAT
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInFastPeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInFastPeriod, optInMAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -458,7 +458,7 @@ TA_RetCode TA_APO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAT
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInSlowPeriod, optInMAType, inReal, (startIdx), (endIdx) + 1, &sub1, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub1, inReal, (startIdx), (endIdx) + 1, optInSlowPeriod, optInMAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -502,9 +502,9 @@ TA_RetCode TA_APO_OpenInternal( int optInFastPeriod, int optInSlowPeriod, TA_MAT
    }
 }
 
-TA_LIB_API TA_RetCode TA_APO_Open( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, const double inReal[], int historyLen, TA_APO_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_APO_Open( TA_APO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal )
 {
-   return TA_APO_OpenInternal( optInFastPeriod, optInSlowPeriod, optInMAType, inReal, 0, historyLen, stream, outReal );
+   return TA_APO_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )

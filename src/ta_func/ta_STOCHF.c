@@ -931,7 +931,7 @@ static void TA_STOCHF_StepInternal( struct TA_STOCHF_Stream *sp, double inHigh, 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_STOCHF_OpenInternal( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_STOCHF_Stream **stream, double *outFastK, double *outFastD )
+TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD )
 {
    struct TA_STOCHF_Stream *sp;
    int endIdx;
@@ -1154,7 +1154,7 @@ TA_RetCode TA_STOCHF_OpenInternal( int optInFastK_Period, int optInFastD_Period,
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( optInFastD_Period, optInFastD_MAType, tempBuffer, (0), (outIdx - 1) + 1, &sub0, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInFastD_Period, optInFastD_MAType, &subOpenDummy );
          if( subRc != TA_SUCCESS )
          {
             if( bufferIsAllocated )
@@ -1253,9 +1253,9 @@ TA_RetCode TA_STOCHF_OpenInternal( int optInFastK_Period, int optInFastD_Period,
    }
 }
 
-TA_LIB_API TA_RetCode TA_STOCHF_Open( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_STOCHF_Stream **stream, double *outFastK, double *outFastD )
+TA_LIB_API TA_RetCode TA_STOCHF_Open( TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD )
 {
-   return TA_STOCHF_OpenInternal( optInFastK_Period, optInFastD_Period, optInFastD_MAType, inHigh, inLow, inClose, 0, historyLen, stream, outFastK, outFastD );
+   return TA_STOCHF_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )

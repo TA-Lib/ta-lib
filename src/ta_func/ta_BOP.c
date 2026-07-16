@@ -241,7 +241,7 @@ static void TA_BOP_StepInternal( struct TA_BOP_Stream *sp, double inOpen, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_BOP_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_BOP_Stream **stream, double *outReal )
+TA_RetCode TA_BOP_OpenInternal( struct TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_BOP_Stream *sp;
    int endIdx;
@@ -290,9 +290,9 @@ TA_RetCode TA_BOP_OpenInternal( const double inOpen[], const double inHigh[], co
    }
 }
 
-TA_LIB_API TA_RetCode TA_BOP_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_BOP_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_BOP_Open( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
 {
-   return TA_BOP_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outReal );
+   return TA_BOP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )

@@ -509,7 +509,7 @@ static void TA_CDLBELTHOLD_StepInternal( struct TA_CDLBELTHOLD_Stream *sp, doubl
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLBELTHOLD_OpenInternal( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLBELTHOLD_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLBELTHOLD_OpenInternal( struct TA_CDLBELTHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
 {
    struct TA_CDLBELTHOLD_Stream *sp;
    int endIdx;
@@ -667,9 +667,9 @@ TA_RetCode TA_CDLBELTHOLD_OpenInternal( const double inOpen[], const double inHi
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Open( const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLBELTHOLD_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Open( TA_CDLBELTHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
-   return TA_CDLBELTHOLD_OpenInternal( inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLBELTHOLD_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Update( TA_CDLBELTHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

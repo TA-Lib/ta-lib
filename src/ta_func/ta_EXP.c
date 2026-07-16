@@ -170,7 +170,7 @@ static void TA_EXP_StepInternal( struct TA_EXP_Stream *sp, double inReal, double
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_EXP_OpenInternal( const double inReal[], int startIdx, int historyLen, struct TA_EXP_Stream **stream, double *outReal )
+TA_RetCode TA_EXP_OpenInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_EXP_Stream *sp;
    int endIdx;
@@ -209,9 +209,9 @@ TA_RetCode TA_EXP_OpenInternal( const double inReal[], int startIdx, int history
    }
 }
 
-TA_LIB_API TA_RetCode TA_EXP_Open( const double inReal[], int historyLen, TA_EXP_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_EXP_Open( TA_EXP_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
-   return TA_EXP_OpenInternal( inReal, 0, historyLen, stream, outReal );
+   return TA_EXP_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, double *outReal )

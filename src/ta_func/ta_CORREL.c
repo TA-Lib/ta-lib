@@ -562,7 +562,7 @@ static void TA_CORREL_StepInternal( struct TA_CORREL_Stream *sp, double inReal0,
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CORREL_OpenInternal( int optInTimePeriod, const double inReal0[], const double inReal1[], int startIdx, int historyLen, struct TA_CORREL_Stream **stream, double *outReal )
+TA_RetCode TA_CORREL_OpenInternal( struct TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    struct TA_CORREL_Stream *sp;
    int endIdx;
@@ -718,9 +718,9 @@ TA_RetCode TA_CORREL_OpenInternal( int optInTimePeriod, const double inReal0[], 
    }
 }
 
-TA_LIB_API TA_RetCode TA_CORREL_Open( int optInTimePeriod, const double inReal0[], const double inReal1[], int historyLen, TA_CORREL_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_CORREL_Open( TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, double *outReal )
 {
-   return TA_CORREL_OpenInternal( optInTimePeriod, inReal0, inReal1, 0, historyLen, stream, outReal );
+   return TA_CORREL_OpenInternal( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal )

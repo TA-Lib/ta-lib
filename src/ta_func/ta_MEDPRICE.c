@@ -192,7 +192,7 @@ static void TA_MEDPRICE_StepInternal( struct TA_MEDPRICE_Stream *sp, double inHi
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_MEDPRICE_OpenInternal( const double inHigh[], const double inLow[], int startIdx, int historyLen, struct TA_MEDPRICE_Stream **stream, double *outReal )
+TA_RetCode TA_MEDPRICE_OpenInternal( struct TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double *outReal )
 {
    struct TA_MEDPRICE_Stream *sp;
    int endIdx;
@@ -238,9 +238,9 @@ TA_RetCode TA_MEDPRICE_OpenInternal( const double inHigh[], const double inLow[]
    }
 }
 
-TA_LIB_API TA_RetCode TA_MEDPRICE_Open( const double inHigh[], const double inLow[], int historyLen, TA_MEDPRICE_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_MEDPRICE_Open( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double *outReal )
 {
-   return TA_MEDPRICE_OpenInternal( inHigh, inLow, 0, historyLen, stream, outReal );
+   return TA_MEDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )

@@ -656,7 +656,7 @@ static void TA_CDLMATHOLD_StepInternal( struct TA_CDLMATHOLD_Stream *sp, double 
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, struct TA_CDLMATHOLD_Stream **stream, int *outInteger )
+TA_RetCode TA_CDLMATHOLD_OpenInternal( struct TA_CDLMATHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
 {
    struct TA_CDLMATHOLD_Stream *sp;
    int endIdx;
@@ -915,9 +915,9 @@ TA_RetCode TA_CDLMATHOLD_OpenInternal( double optInPenetration, const double inO
    }
 }
 
-TA_LIB_API TA_RetCode TA_CDLMATHOLD_Open( double optInPenetration, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, TA_CDLMATHOLD_Stream **stream, int *outInteger )
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_Open( TA_CDLMATHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
-   return TA_CDLMATHOLD_OpenInternal( optInPenetration, inOpen, inHigh, inLow, inClose, 0, historyLen, stream, outInteger );
+   return TA_CDLMATHOLD_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Update( TA_CDLMATHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

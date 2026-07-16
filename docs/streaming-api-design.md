@@ -39,7 +39,7 @@ This design adds **maintenance automation** to keep an official streaming API up
 
 Every stream, in every language, is the same lifecycle:
 
-1. **`open(params, history[]) → (handle, value)` — once.** Validates the params
+1. **`open(history[], params) → (handle, value)` — once.** Validates the params
    (defaults substituted and ranges checked exactly as the batch guarded entry
    does), consumes the provided history in one pass, and returns an opaque,
    typed stream **handle** plus the current value (the output for the last
@@ -87,7 +87,7 @@ Its overhead is a throw away deep-copy of the handle (on every peek).
 ### Semantic definition (the contract tests enforce)
 
 For every function F, parameters p, and series `x[0..t]`: after
-`open(p, x[0..k])` (any `k+1 >= min_history`) and
+`open(x[0..k], p)` (any `k+1 >= min_history`) and
 `update(x[k+1]) … update(x[t])`, the stream value at every bar where batch
 reports an output is **bit-identical** to
 
@@ -135,11 +135,13 @@ TA_SMA_Stream *s = NULL;
 double out;
 
 /* open: validates params, consumes warm-up history in one pass,
- * allocates the handle, writes the value at the last history bar. */
-TA_LIB_API TA_RetCode TA_SMA_Open( int            optInTimePeriod,
+ * allocates the handle, writes the value at the last history bar.
+ * The handle leads (like Update/Peek/Close); everything after it is in
+ * batch order — input, optional, output. */
+TA_LIB_API TA_RetCode TA_SMA_Open( TA_SMA_Stream **stream,     /* out */
                                    const double   history[],
                                    int            historyLen,
-                                   TA_SMA_Stream **stream,     /* out */
+                                   int            optInTimePeriod,
                                    double         *outReal );  /* out */
 
 /* update: always produces a value; cannot fail except on NULL args. */
@@ -171,7 +173,7 @@ Rust:
 
 ```rust
 let core = Core::builder().build();               // immutable settings (issue #104)
-let mut s = core.sma_open(14, &history)?;         // &self method on Core; the
+let mut s = core.sma_open(&history, 14)?;         // &self method on Core; the
                                                   // handle holds an Arc<Core>
 for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
 let provisional = s.peek(forming_bar_close);       // &self: runs the same
@@ -179,7 +181,7 @@ let provisional = s.peek(forming_bar_close);       // &self: runs the same
                                                   // copy, never commits
 ```
 
-Java/.NET: small handle objects with the same `open(params, history)` +
+Java/.NET: small handle objects with the same `open(history, params)` +
 `update`/`peek` shape. Multi-output return small structs (`(f64, f64, f64)`
 for MACD in Rust; a tiny value class in Java/.NET).
 

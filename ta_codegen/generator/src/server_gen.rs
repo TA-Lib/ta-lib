@@ -848,7 +848,7 @@ fn emit_sv_dispatch_precheck(
         .collect::<Vec<_>>()
         .join(", ");
     s.push_str(&format!(
-        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( {pre_opt_args}{pre_in_args}svN, &st, {addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
+        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
     ));
 }
 
@@ -1262,7 +1262,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("        if( rc != TA_SUCCESS || svNb <= 0 ) {\n");
         s.push_str("            int openRejects = 0;\n");
         s.push_str(&format!(
-            "            {{ TA_{name}_Stream *st = NULL; {} TA_RetCode orc = TA_{name}_Open({opt_args}{in_args}svN, &st, {});\n",
+            "            {{ TA_{name}_Stream *st = NULL; {} TA_RetCode orc = TA_{name}_Open(&st, {in_args}svN, {opt_args}{});\n",
             out_is_int
                 .iter()
                 .enumerate()
@@ -1328,7 +1328,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             .collect::<Vec<_>>()
             .join(", ");
         s.push_str(&format!(
-            "            rc = TA_{name}_Open({opt_args}{in_args}P, &st, {vout_args});\n"
+            "            rc = TA_{name}_Open(&st, {in_args}P, {opt_args}{vout_args});\n"
         ));
         s.push_str("            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }\n");
         // Compare the open value (bar P-1).
@@ -1402,7 +1402,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             }
             s.push_str(&format!("                    TA_{name}_Stream *stA = NULL;\n"));
             s.push_str(&format!(
-                "                    TA_RetCode arc = TA_{name}_OpenInternal({opt_args}{in_args}Sidx, svN, &stA, {aout});\n"
+                "                    TA_RetCode arc = TA_{name}_OpenInternal(&stA, {in_args}Sidx, svN, {opt_args}{aout});\n"
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");

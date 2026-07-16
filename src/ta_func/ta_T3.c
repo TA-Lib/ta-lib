@@ -733,7 +733,7 @@ static void TA_T3_StepInternal( struct TA_T3_Stream *sp, double inReal, double *
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const double inReal[], int startIdx, int historyLen, struct TA_T3_Stream **stream, double *outReal )
+TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
 {
    struct TA_T3_Stream *sp;
    int endIdx;
@@ -957,9 +957,9 @@ TA_RetCode TA_T3_OpenInternal( int optInTimePeriod, double optInVFactor, const d
    }
 }
 
-TA_LIB_API TA_RetCode TA_T3_Open( int optInTimePeriod, double optInVFactor, const double inReal[], int historyLen, TA_T3_Stream **stream, double *outReal )
+TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
 {
-   return TA_T3_OpenInternal( optInTimePeriod, optInVFactor, inReal, 0, historyLen, stream, outReal );
+   return TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )

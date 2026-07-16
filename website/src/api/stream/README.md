@@ -31,7 +31,7 @@ int    historyLen  = 30;   /* must be >= TA_SMA_Lookback(period) + 1 */
 
 /* Seed with warm-up history. */
 double history[30] = { /* ...your closing prices... */ };
-if( TA_SMA_Open( period, history, historyLen, &s, &sma ) != TA_SUCCESS )
+if( TA_SMA_Open( &s, history, historyLen, period, &sma ) != TA_SUCCESS )
     return; /* *s is NULL on failure */
 
 /* Each time a bar closes: */
