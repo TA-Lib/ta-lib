@@ -121,6 +121,26 @@ static int json_write_double_array(char *buf, int buf_size,
     return pos;
 }
 
+/* Lossless input transport (issue #115, shared via test_codegen.h): serialize
+ * each double as its 16-hex-char IEEE-754 bit pattern inside one JSON string,
+ * decoded byte-exactly by every server's array parser. No %.15g rounding to hide
+ * a divergence behind. Used by --xlang-hash's Java leg and by server_verify. */
+int codegen_write_hexbits_array(char *buf, int buf_size,
+                                const TA_Real *data, int count)
+{
+    int pos = 0;
+    buf[pos++] = '"';
+    for( int i = 0; i < count; i++ )
+    {
+        unsigned long long bits;
+        memcpy(&bits, &data[i], sizeof(bits));
+        pos += snprintf(buf + pos, buf_size - pos, "%016llx", bits);
+    }
+    buf[pos++] = '"';
+    buf[pos] = '\0';
+    return pos;
+}
+
 static const char *json_find_field(const char *json, const char *field, int *len)
 {
     char pattern[256];
@@ -3635,38 +3655,51 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  * --xlang-hash: cross-language BITWISE parity gate (issue #113).
  *
  * Proves the generated language servers compute BIT-IDENTICAL outputs to the
- * shipped in-process C library on seed-generated inputs, with NO tolerance
- * (contrast --codegen's CODEGEN_EPSILON_DOUBLE == 1e-9 element-wise gate). It
- * closes the two precision losses that make a %.15g cross-language comparison
- * unable to see ~1e-10 FMA drift: (a) inputs are generated in-language from
- * (shape,seed,n) — never
- * serialized, so no JSON float-parse rounding; (b) outputs are compared by a
- * full-precision FNV-1a hash of the raw bytes — never %.15g-serialized. Since
- * PR #96 every backend fuses the identical a*b+c sites (shared detector in
+ * shipped in-process C library, with NO tolerance (contrast --codegen's
+ * CODEGEN_EPSILON_DOUBLE == 1e-9 element-wise gate) — the one carve-out is
+ * Java's transcendental calls (below). It closes the two precision losses that
+ * make a %.15g cross-language comparison unable to see ~1e-10 FMA drift: (a)
+ * inputs cross full-precision — a seed both sides regenerate, or lossless
+ * hex-of-IEEE-bits — so no JSON float-parse rounding; (b) outputs are compared
+ * by a full-precision FNV-1a hash of the raw bytes — never %.15g-serialized.
+ * Since PR #96 every backend fuses the identical a*b+c sites (shared detector in
  * backends/fma.rs) and builds with -ffp-contract=off, so this gate is expected
  * GREEN; any mismatch is a real fusion-site / codegen divergence to fix.
  *
  * The C library is linked IN-PROCESS in ta_regtest, so there is no JSON-RPC
  * boundary on the C side and no precision to reconcile — it is the GOLDEN
- * reference (exactly as --fuzz-064 uses the in-process current library). The
- * seed+hash trick is applied only where a language actually crosses the
- * JSON-RPC boundary: the Rust server today, the Java server after issue #114.
- * Each such server is diffed BITWISE against the in-process C golden. There is
- * NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there are ZERO
- * tolerances, waivers, or #98/#107 carve-outs: every case is bitwise.
+ * reference (exactly as --fuzz-064 uses the in-process current library). Each
+ * language server crosses the boundary and is diffed against it, per its
+ * transport (XlangServer.usesSeed):
+ *   - Rust: the seed transport (gen_present + fuzz_in_hash self-check), diffed
+ *     BITWISE — Rust uses the system libm, so it is bit-identical to C.
+ *   - Java: no in-server fuzz_gen port (#114 is complete), so the driver sends
+ *     the exact seed-generated arrays losslessly (hex-of-IEEE-bits, the #115
+ *     server_verify transport) and requests want_hash. Non-transcendental calls
+ *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
+ *     libm, ~1 ULP) drops to a CODEGEN_JAVA_TRANSCENDENTAL_TOL (1e-9) element
+ *     compare, and HT_DCPHASE/HT_SINE on the zero-variance constant shape are
+ *     skipped outright (xlang_java_illcond — atan2 of a null signal amplifies
+ *     the ULP unboundedly; C==Rust stay bitwise there).
+ * There is NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there
+ * are none of the #98/#107 carve-outs; every case is bitwise except Java's
+ * transcendentals.
  *
  * .NET P/Invokes the C library (== C by construction) so it is not a distinct
  * cross-language check. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
 typedef struct {
-    const char        *name;      /* "c", "rust" — matches --language= tokens */
-    const char        *display;   /* "C", "Rust"                              */
+    const char        *name;      /* "rust", "java" — matches --language= tokens */
+    const char        *display;   /* "Rust", "Java"                           */
     const char *const *argv;      /* server launch command                   */
+    int                usesSeed;  /* transport: 1 = seed (gen_present + fuzz_in_hash
+                                   * self-check), 0 = lossless hex-bits inputs (no
+                                   * fuzz_gen port — Java, #114)              */
     CodegenPipe        cp;
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
-    long long          mism;      /* real bitwise mismatches                  */
+    long long          mism;      /* real bitwise/tolerance mismatches        */
     int                restarts;  /* recovered subprocess crashes             */
 } XlangServer;
 
@@ -3681,6 +3714,11 @@ typedef struct {
                                       * (non-vacuity: an empty output hashes the
                                       * same on both sides, so a healthy fraction
                                       * must be non-empty for the gate to bite)   */
+    long long    tolCases;           /* Java calls routed to the transcendental
+                                      * tolerance path (the rest are bitwise)     */
+    long long    illcondSkipped;     /* Java HT_DCPHASE/HT_SINE calls skipped on
+                                      * the zero-variance constant shape (phase of
+                                      * a null signal — see xlang_java_illcond)    */
     int          reportedThisFunc;
     int          funcsWithFailures;
     ErrorNumber  error;
@@ -3730,6 +3768,125 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
            goldHash, parsed->hash, who);
 }
 
+/* ---- Java-transcendental tolerance path (shared with server_verify, #113/#115)
+ * Which CALLS reach a transcendental C math routine (atan/sin/cos/exp/log/...) —
+ * the only ones whose Java (fdlibm) output can differ from the C libm (~1 ULP),
+ * hence the only ones --xlang-hash's Java leg and server_verify relax from
+ * bitwise to CODEGEN_JAVA_TRANSCENDENTAL_TOL. Every other function — including
+ * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
+ * languages. Source-derived from a grep of ta_codegen/input. ---- */
+static const char *const CODEGEN_TRANSCENDENTAL[] = {
+    "ACOS", "ASIN", "ATAN", "COS", "COSH", "EXP",
+    "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
+    "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
+    "SIN", "SINH", "TAN", "TANH",
+};
+
+int codegen_is_transcendental(const char *name)
+{
+    for( unsigned int i = 0;
+         i < sizeof(CODEGEN_TRANSCENDENTAL) / sizeof(CODEGEN_TRANSCENDENTAL[0]); i++ )
+        if( strcmp(CODEGEN_TRANSCENDENTAL[i], name) == 0 )
+            return 1;
+    return 0;
+}
+
+/* The MA-dispatch functions (MA, MAVP, BBANDS, MACDEXT, APO, PPO, STOCH*) route
+ * to MAMA — which uses atan — when a MAType optional parameter selects it, so
+ * transcendental-ness is a per-CALL property (TA_MAType_MAMA == 7, enums.yaml;
+ * MAType params are the only optInputs whose paramName contains "MAType"). */
+int codegen_call_is_transcendental(const TA_FuncHandle *handle,
+                                   const double optVals[], int nbOpt)
+{
+    const TA_FuncInfo *fi;
+    if( TA_GetFuncInfo(handle, &fi) != TA_SUCCESS )
+        return 0;
+    if( codegen_is_transcendental(fi->name) )
+        return 1;
+    for( unsigned int i = 0; i < fi->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(handle, i, &oi);
+        /* One optVals slot per optInput (default assumed beyond nbOpt). */
+        double val = (optVals && (int)i < nbOpt) ? optVals[i] : oi->defaultValue;
+        if( oi->paramName && strstr(oi->paramName, "MAType") &&
+            (int)val == 7 /* TA_MAType_MAMA */ )
+            return 1;
+    }
+    return 0;
+}
+
+/* Shared tolerance element-compare (the Java transcendental path). Parallels
+ * codegen_hash_compare's retCode/shape gating, then compares each output's
+ * elements: reals at `tol` (relative for |v|>1, absolute otherwise; finite-vs-
+ * NaN always fails, so the tolerance path is as NaN-discriminating as the
+ * bitwise hash of raw bytes), integers exact. Output field keys follow the raw
+ * output index (outReal/outReal1/…, outInteger/outInteger1/…); every
+ * multi-output TA function is type-homogeneous, so that equals within-type
+ * indexing. Both gates' output lengths are far under CODEGEN_TOL_MAX_OUT. */
+#define CODEGEN_TOL_MAX_OUT 512
+CTolVerdict codegen_compare_tol(const char *resp,
+                                unsigned int nbOutput, const int *outIsInteger,
+                                const void *const *outBufs,
+                                TA_RetCode goldRc, int goldBeg, int goldNb,
+                                double tol, CTolDetail *detail)
+{
+    CTolDetail local;
+    if( !detail ) detail = &local;
+    memset(detail, 0, sizeof(*detail));
+    detail->rc        = json_get_int(resp, "retCode");
+    detail->begIdx    = json_get_int(resp, "outBegIdx");
+    detail->nbElement = json_get_int(resp, "outNBElement");
+    if( detail->rc != (int)goldRc )   return CTOL_RETCODE;
+    if( goldRc != TA_SUCCESS )        return CTOL_MATCH;   /* matching error code */
+    if( detail->begIdx != goldBeg || detail->nbElement != goldNb )
+                                      return CTOL_SHAPE;
+    if( goldNb <= 0 )                 return CTOL_MATCH;
+
+    for( unsigned int o = 0; o < nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        char field[32];
+        if( outIsInteger[o] )
+        {
+            snprintf(field, sizeof(field), o == 0 ? "outInteger" : "outInteger%u", o);
+            TA_Integer srv[CODEGEN_TOL_MAX_OUT];
+            int cnt = json_get_int_array(resp, field, srv, CODEGEN_TOL_MAX_OUT);
+            if( cnt != goldNb )
+            { detail->output = (int)o; detail->isInt = 1; detail->srvCount = cnt; return CTOL_COUNT; }
+            const TA_Integer *gold = (const TA_Integer *)outBufs[o];
+            for( int j = 0; j < goldNb; j++ )
+                if( gold[j] != srv[j] )
+                {
+                    detail->output = (int)o; detail->element = j; detail->isInt = 1;
+                    detail->cInt = gold[j]; detail->sInt = srv[j];
+                    return CTOL_VALUE;
+                }
+        }
+        else
+        {
+            snprintf(field, sizeof(field), o == 0 ? "outReal" : "outReal%u", o);
+            TA_Real srv[CODEGEN_TOL_MAX_OUT];
+            int cnt = json_get_double_array(resp, field, srv, CODEGEN_TOL_MAX_OUT);
+            if( cnt != goldNb )
+            { detail->output = (int)o; detail->isInt = 0; detail->srvCount = cnt; return CTOL_COUNT; }
+            const TA_Real *gold = (const TA_Real *)outBufs[o];
+            for( int j = 0; j < goldNb; j++ )
+            {
+                double c = gold[j], sv = srv[j];
+                double diff = fabs(c - sv);
+                double t = (fabs(c) > 1.0) ? tol * fabs(c) : tol;
+                if( (isnan(c) != isnan(sv)) || diff > t )
+                {
+                    detail->output = (int)o; detail->element = j; detail->isInt = 0;
+                    detail->cReal = c; detail->sReal = sv;
+                    return CTOL_VALUE;
+                }
+            }
+        }
+    }
+    return CTOL_MATCH;
+}
+
 /* Send req to one server; reopen once if it died (a dead server that cannot be
  * recovered marks itself closed so the run fails loudly — never a false green). */
 static int xlang_call(XlangServer *s, const char *req, char *resp)
@@ -3756,10 +3913,12 @@ static unsigned long long xlang_in_hash_local(int shape, int seed, int n)
     return fuzz_hash_fin(h);
 }
 
-/* Phase 1: prove every server's ported fuzz_gen reproduces the C inputs exactly.
- * A divergence here would surface below as an output mismatch, but reporting it
- * as an INPUT mismatch isolates a generator-port bug from a real indicator bug.
- * Returns the number of input-port mismatches (0 = all ports bit-identical). */
+/* Phase 1: prove every SEED-transport server's ported fuzz_gen reproduces the C
+ * inputs exactly. A divergence here would surface below as an output mismatch,
+ * but reporting it as an INPUT mismatch isolates a generator-port bug from a real
+ * indicator bug. Hex-transport servers (Java) receive the driver's exact arrays,
+ * so they have no fuzz_gen port to self-check — they are skipped here. Returns
+ * the number of input-port mismatches (0 = all seed ports bit-identical). */
 static int xlang_selfcheck_inputs(XlangCtx *ctx)
 {
     static const int sizes[] = {40, 120, 240};
@@ -3778,7 +3937,7 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
         for( int s = 0; s < ctx->nsv; s++ )
         {
             XlangServer *sv = &ctx->sv[s];
-            if( !sv->open ) continue;
+            if( !sv->open || !sv->usesSeed ) continue;   /* hex servers send inputs */
             if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
             {
                 printf("  INPUT PIPE FAIL [%s] shape=%d seed=%d n=%d\n",
@@ -3803,8 +3962,104 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
             }
         }
     }
-    if( !fails ) printf("  input-port parity: OK (all servers reproduce fuzz_gen bit-for-bit)\n");
+    if( !fails ) printf("  input-port parity: OK (all seed servers reproduce fuzz_gen bit-for-bit)\n");
     return fails;
+}
+
+/* HT_DCPHASE and HT_SINE derive their output from atan2 of the Hilbert
+ * transform's in-phase/quadrature components. On a zero-variance signal
+ * (FUZZ_CONSTANT: flat O=H=L=C) those components are floating-point noise (~0),
+ * so the phase is atan2(≈0,≈0) — chaotically sensitive to the last bit of every
+ * transcendental step. C and Rust share the system libm and stay BIT-IDENTICAL
+ * there (0 mismatches), but Java's fdlibm differs by ~1 ULP and this
+ * ill-conditioning amplifies that to whole degrees. It is not a codegen
+ * divergence — every non-degenerate shape agrees within the 1e-9 tolerance, and
+ * atan2 of a null signal is mathematically undefined — so no fixed tolerance can
+ * separate it from fdlibm noise. The Java leg skips exactly these two functions
+ * on exactly the constant shape (reported as a skip count for transparency);
+ * every other shape, function, and language stays fully gated. */
+static int xlang_java_illcond(const char *name, int shape)
+{
+    return shape == FUZZ_CONSTANT &&
+           (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0);
+}
+
+/* Build a per-function TA_<name> request with LOSSLESS hex-bits inputs (the
+ * server_verify transport, #115) for servers without a fuzz_gen port (Java,
+ * #114): the driver already holds the exact seed-generated arrays, so it
+ * serializes them directly rather than asking the server to regenerate. When
+ * wantHash, the request carries want_hash so the server returns out_hash for the
+ * bitwise path; otherwise it returns %.15g arrays (the Java-transcendental
+ * tolerance path). Inputs map exactly as setup_inputs / build_json_request:
+ * single or real0 = close, real1 = volume, price = OHLCV per flags. */
+static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
+                                    const TA_History *hist, int nbBars,
+                                    int s, int e, const double *optVals,
+                                    int wantHash)
+{
+    int pos = snprintf(buf, JSON_BUF_SIZE,
+        "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
+        fi->name, s, e);
+
+    int totalRealInputs = 0;
+    for( unsigned int i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Real ) totalRealInputs++;
+    }
+
+    int realCount = 0;
+    for( unsigned int i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Price )
+        {
+            const struct { TA_InputFlags flag; const char *key; const TA_Real *data; } comp[] = {
+                { TA_IN_PRICE_OPEN,         "inOpen",         hist->open },
+                { TA_IN_PRICE_HIGH,         "inHigh",         hist->high },
+                { TA_IN_PRICE_LOW,          "inLow",          hist->low },
+                { TA_IN_PRICE_CLOSE,        "inClose",        hist->close },
+                { TA_IN_PRICE_VOLUME,       "inVolume",       hist->volume },
+                { TA_IN_PRICE_OPENINTEREST, "inOpenInterest", hist->openInterest },
+            };
+            for( int c = 0; c < 6; c++ )
+                if( ii->flags & comp[c].flag )
+                {
+                    pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":", comp[c].key);
+                    pos += codegen_write_hexbits_array(buf + pos, JSON_BUF_SIZE - pos,
+                                                       comp[c].data, nbBars);
+                }
+        }
+        else if( ii->type == TA_Input_Real )
+        {
+            const TA_Real *data = (realCount == 0) ? hist->close
+                                : (realCount == 1) ? hist->volume : hist->close;
+            if( totalRealInputs == 1 )
+                pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"inReal\":");
+            else
+                pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"inReal%d\":", realCount);
+            pos += codegen_write_hexbits_array(buf + pos, JSON_BUF_SIZE - pos, data, nbBars);
+            realCount++;
+        }
+    }
+
+    for( unsigned int i = 0; i < fi->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+        else
+            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
+    }
+
+    if( fi->flags & TA_FUNC_FLG_UNST_PER )
+        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"unstablePeriod\":0");
+    if( wantHash )
+        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"want_hash\":1");
+    snprintf(buf + pos, JSON_BUF_SIZE - pos, "}}");
 }
 
 /* Per-function bitwise comparison: golden in-process C vs each server. */
@@ -3915,13 +4170,41 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
                 if( curRc == TA_SUCCESS && curNb > 0 ) ctx->nonEmpty++;
 
-                fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
+                /* C golden output buffers in logical order — the tolerance path
+                 * (Java transcendentals) element-compares against these; the
+                 * bitwise path compares curHash. */
+                const void *goldBufs[MAX_OUTPUTS];
+                for( unsigned int o = 0; o < funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+                    goldBufs[o] = p.outputIsInteger[o] ? (const void *)p.outIntBufs[o]
+                                                       : (const void *)p.outRealBufs[o];
+
                 ctx->comparisons++;
 
                 for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
                 {
                     XlangServer *sv = &ctx->sv[sIdx];
                     if( !sv->open ) continue;
+
+                    /* Each server's request follows its transport. Seed servers
+                     * (Rust) regenerate inputs from (shape,seed,n) via
+                     * gen_present; hex servers (Java, no fuzz_gen port) get the
+                     * driver's exact arrays losslessly. A hex call is bitwise
+                     * (want_hash) unless it reaches a transcendental (fdlibm !=
+                     * the C libm), which drops to the tolerance element-compare. */
+                    int tolPath = 0;
+                    if( sv->usesSeed )
+                        fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
+                    else
+                    {
+                        tolPath = codegen_call_is_transcendental(funcInfo->handle, vec[k],
+                                                                 (int)funcInfo->nbOptInput);
+                        /* Chaotic phase of a null signal — not comparable across
+                         * libms; C==Rust bitwise, all other shapes gated. */
+                        if( tolPath && xlang_java_illcond(funcInfo->name, shape) )
+                        { ctx->illcondSkipped++; continue; }
+                        xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k], !tolPath);
+                    }
+
                     if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
                     {
                         if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
@@ -3929,32 +4212,74 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         continue;
                     }
                     sv->cases++;
-                    XHashParsed hp;
-                    XHashVerdict v = codegen_hash_compare(ctx->respBuf, curRc, curBeg,
-                                                          curNb, curHash, &hp);
-                    if( v == XHASH_NO_HASH )
+                    if( tolPath ) ctx->tolCases++;
+
+                    if( tolPath )
                     {
-                        printf("  XLANG PROTOCOL MISSING [%s] TA_%s: response has no out_hash "
-                               "(server lacks gen_present support?)\n", sv->display, funcInfo->name);
-                        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
-                    }
-                    if( v != XHASH_MATCH )
-                    {
-                        sv->mism++;
-                        if( ctx->reportedThisFunc < 3 )
+                        CTolDetail d;
+                        CTolVerdict cv = codegen_compare_tol(ctx->respBuf, funcInfo->nbOutput,
+                                                             p.outputIsInteger, goldBufs,
+                                                             curRc, curBeg, curNb,
+                                                             CODEGEN_JAVA_TRANSCENDENTAL_TOL, &d);
+                        if( cv != CTOL_MATCH )
                         {
-                            ctx->reportedThisFunc++;
-                            printf("  XLANG MISMATCH TA_%s  C(golden) vs %s  "
-                                   "shape=%d seed=%d n=%d range=[%d,%d]  params:",
-                                   funcInfo->name, sv->display, shape, seeds[si], n, s, e);
-                            for( unsigned int q = 0; q < funcInfo->nbOptInput; q++ )
+                            sv->mism++;
+                            if( ctx->reportedThisFunc < 3 )
                             {
-                                const TA_OptInputParameterInfo *oi;
-                                TA_GetOptInputParameterInfo(funcInfo->handle, q, &oi);
-                                printf(" %s=%.15g", oi->paramName, vec[k][q]);
+                                ctx->reportedThisFunc++;
+                                printf("  XLANG TOL MISMATCH TA_%s  C(golden) vs %s  "
+                                       "shape=%d seed=%d n=%d range=[%d,%d]  params:",
+                                       funcInfo->name, sv->display, shape, seeds[si], n, s, e);
+                                for( unsigned int q = 0; q < funcInfo->nbOptInput; q++ )
+                                {
+                                    const TA_OptInputParameterInfo *oi;
+                                    TA_GetOptInputParameterInfo(funcInfo->handle, q, &oi);
+                                    printf(" %s=%.15g", oi->paramName, vec[k][q]);
+                                }
+                                printf("\n    retCode %d/%d  begIdx %d/%d  nbElem %d/%d",
+                                       (int)curRc, d.rc, curBeg, d.begIdx, curNb, d.nbElement);
+                                if( cv == CTOL_VALUE && !d.isInt )
+                                    printf("  out%d[%d] C=%.17g server=%.17g diff=%.3g (tol %g)",
+                                           d.output, d.element, d.cReal, d.sReal,
+                                           fabs(d.cReal - d.sReal), CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+                                else if( cv == CTOL_VALUE )
+                                    printf("  int out%d[%d] C=%d server=%d",
+                                           d.output, d.element, d.cInt, d.sInt);
+                                else if( cv == CTOL_COUNT )
+                                    printf("  out%d count %d/%d", d.output, curNb, d.srvCount);
+                                printf("\n");
                             }
-                            printf("\n");
-                            codegen_hash_report(sv->display, curRc, curBeg, curNb, curHash, &hp);
+                        }
+                    }
+                    else
+                    {
+                        XHashParsed hp;
+                        XHashVerdict v = codegen_hash_compare(ctx->respBuf, curRc, curBeg,
+                                                              curNb, curHash, &hp);
+                        if( v == XHASH_NO_HASH )
+                        {
+                            printf("  XLANG PROTOCOL MISSING [%s] TA_%s: response has no out_hash "
+                                   "(server lacks gen_present/want_hash support?)\n", sv->display, funcInfo->name);
+                            if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                        }
+                        if( v != XHASH_MATCH )
+                        {
+                            sv->mism++;
+                            if( ctx->reportedThisFunc < 3 )
+                            {
+                                ctx->reportedThisFunc++;
+                                printf("  XLANG MISMATCH TA_%s  C(golden) vs %s  "
+                                       "shape=%d seed=%d n=%d range=[%d,%d]  params:",
+                                       funcInfo->name, sv->display, shape, seeds[si], n, s, e);
+                                for( unsigned int q = 0; q < funcInfo->nbOptInput; q++ )
+                                {
+                                    const TA_OptInputParameterInfo *oi;
+                                    TA_GetOptInputParameterInfo(funcInfo->handle, q, &oi);
+                                    printf(" %s=%.15g", oi->paramName, vec[k][q]);
+                                }
+                                printf("\n");
+                                codegen_hash_report(sv->display, curRc, curBeg, curNb, curHash, &hp);
+                            }
                         }
                     }
                 }
@@ -3976,11 +4301,15 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     printf("Cross-language BITWISE parity gate (--xlang-hash)\n");
     printf("=============================================\n");
 
-    /* Protocol-capable servers (they answer abstract_call+gen_present with
-     * out_hash and fuzz_in_hash), each diffed against the in-process C golden.
-     * C is the golden, not a server row. Java joins after issue #114. */
+    /* Each generated language server, diffed against the in-process C golden (C
+     * is the golden, not a server row). Rust uses the seed transport
+     * (gen_present + fuzz_in_hash); Java uses the lossless hex-bits transport
+     * (usesSeed=0 — its server has no fuzz_gen port, #114) and relaxes its
+     * transcendental-using calls to a tolerance (fdlibm != the C libm). .NET
+     * P/Invokes the C library (== C by construction), so it is not a row. */
     static XlangServer servers[] = {
-        {"rust", "Rust", argv_rust, {0,0,0}, 0, 0, 0, 0},
+        {"rust", "Rust", argv_rust, 1, {0}, 0, 0, 0, 0},
+        {"java", "Java", argv_java, 0, {0}, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
@@ -4016,8 +4345,8 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 
     if( nrequested == 0 )
     {
-        printf("FAIL — no protocol-capable server matched --language=%s "
-               "(valid: rust; C is the in-process golden, java pending #114).\n",
+        printf("FAIL — no language server matched --language=%s "
+               "(valid: rust, java; C is the in-process golden, .NET == C).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         return TA_CODEGEN_OUTPUT_MISMATCH;
@@ -4029,7 +4358,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 
     if( inFails == 0 && ctx.error == TA_TEST_PASS )
     {
-        printf("\nOutput bitwise gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
+        printf("\nOutput parity gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
                161);
         TA_ForEachFunc(xlang_one_function, &ctx);
     }
@@ -4050,13 +4379,20 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         if( servers[s].cases == 0 && !servers[s].open && !languageFilter ) continue;
         if( servers[s].cases == 0 && languageFilter
             && !language_matches_filter(languageFilter, servers[s].name) ) continue;
-        printf("%-4s: %lld cases, %lld bitwise mismatch(es)%s\n",
+        printf("%-4s: %lld cases, %lld mismatch(es)%s\n",
                servers[s].display, servers[s].cases, servers[s].mism,
                servers[s].restarts ? " (server restarted)" : "");
         totalMism += servers[s].mism;
         totalCases += servers[s].cases;
         totalRestarts += servers[s].restarts;
     }
+    if( ctx.tolCases > 0 )
+        printf("  (%lld Java call(s) compared at the transcendental tolerance %g; "
+               "every other call is bitwise)\n", ctx.tolCases, CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+    if( ctx.illcondSkipped > 0 )
+        printf("  (%lld Java HT_DCPHASE/HT_SINE call(s) skipped on the constant "
+               "shape: atan2 phase of a null signal, ill-conditioned across libms "
+               "— C==Rust bitwise there)\n", ctx.illcondSkipped);
 
     free(ctx.reqBuf); free(ctx.respBuf);
 
@@ -4076,11 +4412,13 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     }
     if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
     {
-        printf("PASS — every server is BIT-IDENTICAL to the in-process C library "
-               "(no tolerance; current-vs-current, all shapes, period>=2).\n");
+        printf("PASS — every server matches the in-process C library: BIT-IDENTICAL "
+               "(zero tolerance), Java transcendentals within %g "
+               "(current-vs-current, all shapes, period>=2).\n",
+               CODEGEN_JAVA_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }
-    printf("FAIL — %lld bitwise mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
+    printf("FAIL — %lld output mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
            totalMism, inFails, ctx.funcsWithFailures);
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }

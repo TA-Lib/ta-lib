@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
-    PREREQS_CMAKE, PREREQS_GCC,
+    PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
 )
 
 BUILD_DIR_NAME = "cmake-build"
@@ -110,9 +110,11 @@ def show_help():
                         frozen released v0.6.4 (opt-in; builds ta_064_serve then
                         runs ta_regtest --fuzz-064). C-only; needs the v0.6.4 tag.
     xlang-hash          Cross-language BITWISE parity gate (opt-in; issue #113):
-                        builds the Rust server + ta_regtest, then runs
+                        builds the Rust + Java servers + ta_regtest, then runs
                         ta_regtest --xlang-hash — diffs each language server vs the
-                        in-process C library on seed inputs with no tolerance.
+                        in-process C library (Rust via seed inputs, Java via
+                        lossless hex inputs) with no tolerance (except Java's
+                        transcendental calls: fdlibm != libm). Needs the JDK.
     talib-rs-server     Build the third-party talib-rs benchmark server (opt-in;
                         then: ta_bench --language=cref,c,talib_rs --function=...)
 
@@ -176,17 +178,18 @@ def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
                           cwd=os.path.join(root_dir, "bin")).returncode
 
 def build_xlanghash(root_dir: str, build_dir: str, jobs: int) -> int:
-    """Cross-language BITWISE parity gate (issue #113). Diffs each protocol-capable
-    language server against the shipped in-process C library on seed-generated
-    inputs, comparing full-precision output hashes with NO tolerance. Builds the
-    Rust server + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns
-    ta_regtest's exit code (non-zero on any bitwise divergence). Only Rust is
-    required today (Java joins after #114; .NET P/Invokes C == C by construction),
-    so — unlike `servers` — this needs neither the JDK nor the .NET SDK.
+    """Cross-language BITWISE parity gate (issue #113). Diffs each generated
+    language server against the shipped in-process C library, comparing
+    full-precision output hashes with NO tolerance. Builds the Rust + Java servers
+    + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns ta_regtest's exit
+    code (non-zero on any divergence). Rust crosses the JSON boundary with a seed
+    (gen_present); Java crosses it with lossless hex-bits inputs (#114) and relaxes
+    its transcendental-using calls to a tolerance (fdlibm != the C libm). Needs the
+    JDK for the Java server; .NET P/Invokes C == C by construction, so no .NET SDK.
     """
-    # 1. Generate + compile the protocol-capable language server(s) into bin/.
-    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust')
-    run_codegen(root_dir, 'run', '--release', '--', 'build', '--backend=rust')
+    # 1. Generate + compile the language servers into bin/ (Rust + Java).
+    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust,java')
+    run_codegen(root_dir, 'run', '--release', '--', 'build', '--backend=rust,java')
     # 2. The C test runner links the in-process C golden; stage it into bin/.
     cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
     # 3. Run the gate (server argv is relative "./", so cwd must be bin/).
@@ -302,7 +305,7 @@ TARGET_PREREQS = {
     'regtest':      PREREQS_BUILD_SERVERS,
     'regtest-only': PREREQS_BUILD_SERVERS,
     'fuzz-064':     [PREREQS_CMAKE, PREREQS_GCC],
-    'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC],
+    'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA],
 }
 
 def main():

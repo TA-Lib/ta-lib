@@ -338,13 +338,15 @@ jobs:
         run: python3 scripts/build.py fuzz-064
 
   # Cross-language BITWISE parity gate (issue #113): the generated language
-  # servers must compute BIT-IDENTICAL outputs to the shipped in-process C
-  # library on seed-generated inputs (no tolerance — the seed+hash design routes
-  # around the JSON-RPC float-serialization limit that forces --codegen's 1e-6).
-  # Rust today; Java joins after #114. cmake+gcc+cargo are preinstalled on
-  # ubuntu-latest (no JDK/.NET needed — only the Rust server is driven).
+  # servers must compute BIT-IDENTICAL outputs to the shipped in-process C library
+  # (no tolerance — the seed/hex + hash design routes around the JSON-RPC
+  # float-serialization limit that forces --codegen's 1e-6). Rust crosses the
+  # boundary with a seed (gen_present); Java with lossless hex inputs (#114), its
+  # transcendental-using calls relaxed to a tolerance (fdlibm != the C libm).
+  # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
+  # JDK (no .NET — it P/Invokes C == C by construction).
   xlang-hash:
-    name: xlang matching (seed+hash)
+    name: xlang matching (C vs Rust + Java, seed/hex+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -359,6 +361,12 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
+
+      - name: Install JDK
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y openjdk-21-jdk
 
       - name: Bitwise-diff each language server vs the in-process C library
         shell: bash
