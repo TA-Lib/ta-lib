@@ -2933,6 +2933,30 @@
 /* Generated */                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
 /* Generated */                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_PVO_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+/* Generated */ {
+/* Generated */    return TA_PVO(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inPrice.volume, /* inVolume */
+/* Generated */                params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+/* Generated */                params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+/* Generated */                (TA_MAType)params->optIn[2].data.optInInteger, /* optInMAType*/
+/* Generated */                outBegIdx, 
+/* Generated */                outNBElement, 
+/* Generated */                params->out[0].data.outReal /*  outReal */
+/* Generated */                );
+/* Generated */ }
+/* Generated */ unsigned int TA_PVO_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_PVO_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+/* Generated */                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+/* Generated */                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

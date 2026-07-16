@@ -5361,13 +5361,17 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MW       Michael Williamson
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY    Description
      *  -------------------------------------------------------------------
-     *  122006 MW   Initial Version
+     *  122006 MW    Initial Version
+     *  071626 MF,CC Fix reversed inReal0/inReal1 roles in the algorithm
+     *               description: inReal0 holds the index prices and inReal1
+     *               the stock prices (SourceForge bug 98).
      */
 
        public int betaLookback( int optInTimePeriod )
@@ -5438,8 +5442,8 @@ class Core {
           /* the 'x' value, which is the last change between values in inReal0 */
           /* the 'y' value, which is the last change between values in inReal1 */
           /* DESCRIPTION OF ALGORITHM:
-           *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The stock prices
-           *   are given in inReal0 and the index prices are give in inReal1. The size of these vectors
+           *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The index prices
+           *   are given in inReal0 and the stock prices are given in inReal1. The size of these vectors
            *   should be equal. The algorithm is to calculate the change between prices in both vectors
            *   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
            *   is market return and the y value is the security return. The beta value is the slope of a
@@ -52375,6 +52379,252 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  071626 MF,CC  Template creation.
+     */
+
+       public int pvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+       {
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return -1;
+          }
+          /* Lookback is driven by the slowest MA. */
+          return movingAverageLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
+
+       }
+       public RetCode pvo( int startIdx,
+                           int endIdx,
+                           double inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MAType optInMAType,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          double[] tempBuffer;
+          RetCode retCode;
+          double tempReal = 0;
+          int tempInteger = 0;
+          MInteger fastBeg = new MInteger();
+          MInteger fastNb = new MInteger();
+          int offset = 0;
+          int i = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          /* Allocate an intermediate buffer. */
+          tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+          /* Make sure slow is really slower than
+           * the fast period! if not, swap...
+           */
+          if( optInSlowPeriod < optInFastPeriod ) {
+             /* swap */
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          /* Calculate the fast MA into the tempBuffer. */
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          /* Calculate the slow MA into the output. */
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+           * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+           * outReal[i], with a non-negative index. An empty slow MA skips the loop.
+           */
+          offset = fastNb.value - outNBElement.value;
+          /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             tempReal = outReal[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+             } else {
+                outReal[i] = 0.0;
+             }
+          }
+          return RetCode.Success ;
+       }
+       public RetCode pvoUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inVolume[],
+                                    int optInFastPeriod,
+                                    int optInSlowPeriod,
+                                    MAType optInMAType,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          double[] tempBuffer;
+          RetCode retCode;
+          double tempReal = 0;
+          int tempInteger = 0;
+          MInteger fastBeg = new MInteger();
+          MInteger fastNb = new MInteger();
+          int offset = 0;
+          int i = 0;
+          tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          offset = fastNb.value - outNBElement.value;
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             tempReal = outReal[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+             } else {
+                outReal[i] = 0.0;
+             }
+          }
+          return RetCode.Success ;
+       }
+       public RetCode pvo( int startIdx,
+                           int endIdx,
+                           float inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MAType optInMAType,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          double[] tempBuffer;
+          RetCode retCode;
+          double tempReal = 0;
+          int tempInteger = 0;
+          MInteger fastBeg = new MInteger();
+          MInteger fastNb = new MInteger();
+          int offset = 0;
+          int i = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          offset = fastNb.value - outNBElement.value;
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             tempReal = outReal[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+             } else {
+                outReal[i] = 0.0;
+             }
+          }
+          return RetCode.Success ;
+       }
+       public RetCode pvoUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inVolume[],
+                                    int optInFastPeriod,
+                                    int optInSlowPeriod,
+                                    MAType optInMAType,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          double[] tempBuffer;
+          RetCode retCode;
+          double tempReal = 0;
+          int tempInteger = 0;
+          MInteger fastBeg = new MInteger();
+          MInteger fastNb = new MInteger();
+          int offset = 0;
+          int i = 0;
+          tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          retCode = movingAverageUnguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             return retCode ;
+          }
+          offset = fastNb.value - outNBElement.value;
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             tempReal = outReal[i];
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+             } else {
+                outReal[i] = 0.0;
+             }
+          }
+          return RetCode.Success ;
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -64367,6 +64617,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", "Pvo", 0,
+            new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", "Roc", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -64571,8 +64825,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 187318;
-    static final long ABSTRACT_XML_CHECKSUM = 15012822L;
+    static final int ABSTRACT_XML_LENGTH = 189038;
+    static final long ABSTRACT_XML_CHECKSUM = 15151619L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -64724,6 +64978,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_PLUS_DI\"")) return handle_PLUS_DI(json);
         else if (json.contains("\"TA_PLUS_DM\"")) return handle_PLUS_DM(json);
         else if (json.contains("\"TA_PPO\"")) return handle_PPO(json);
+        else if (json.contains("\"TA_PVO\"")) return handle_PVO(json);
         else if (json.contains("\"TA_ROC\"")) return handle_ROC(json);
         else if (json.contains("\"TA_ROCP\"")) return handle_ROCP(json);
         else if (json.contains("\"TA_ROCR\"")) return handle_ROCR(json);
@@ -65016,6 +65271,8 @@ public class TaCodegenServe {
             sb.append("\"TA_PLUS_DM\"");
             sb.append(",");
             sb.append("\"TA_PPO\"");
+            sb.append(",");
+            sb.append("\"TA_PVO\"");
             sb.append(",");
             sb.append("\"TA_ROC\"");
             sb.append(",");
@@ -73549,6 +73806,67 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_PVO(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+        int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        long startNs = System.nanoTime();
+        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        rc = core.pvo(
+            startIdx, endIdx,
+            inVolume,
+            optInFastPeriod,
+            optInSlowPeriod,
+            optInMAType,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        long startNsUng = System.nanoTime();
+        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        rc = core.pvoUnguarded(
+            startIdx, endIdx,
+            inVolume,
+            optInFastPeriod,
+            optInSlowPeriod,
+            optInMAType,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_ROC(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -75870,6 +76188,12 @@ public class TaCodegenServe {
             MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
             return core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         }
+        case "PVO": {
+            int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+            int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+            MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+            return core.pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
         case "ROC": {
             int optInTimePeriod = jsonInt(json, "optInTimePeriod");
             return core.rocLookback(optInTimePeriod);
@@ -76145,6 +76469,7 @@ public class TaCodegenServe {
         case "PLUS_DI": resp = handle_PLUS_DI(json); break;
         case "PLUS_DM": resp = handle_PLUS_DM(json); break;
         case "PPO": resp = handle_PPO(json); break;
+        case "PVO": resp = handle_PVO(json); break;
         case "ROC": resp = handle_ROC(json); break;
         case "ROCP": resp = handle_ROCP(json); break;
         case "ROCR": resp = handle_ROCR(json); break;

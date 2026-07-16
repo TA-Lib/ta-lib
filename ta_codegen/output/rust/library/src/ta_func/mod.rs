@@ -136,6 +136,7 @@ mod obv;
 mod plus_di;
 mod plus_dm;
 mod ppo;
+mod pvo;
 mod roc;
 mod rocp;
 mod rocr;

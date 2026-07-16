@@ -1,0 +1,32 @@
+name: PVO
+camel_case: Pvo
+group: Volume Indicators
+hint: Percentage Volume Oscillator
+inputs:
+  - name: inPriceV
+    type: price
+    price_components: [volume]
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Number of period for the fast MA
+    range: [2, 100000]
+    default: 12
+    suggested: [4, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Number of period for the slow MA
+    range: [2, 100000]
+    default: 26
+    suggested: [4, 200, 1]
+  - name: optInMAType
+    type: enum:MAType
+    display_name: MA Type
+    hint: Type of Moving Average
+    default: 1
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

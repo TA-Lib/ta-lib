@@ -401,6 +401,9 @@
     <ClCompile Include="..\..\..\..\src\ta_func\ta_PPO.c">
       <Filter>src\ta_func</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_PVO.c">
+      <Filter>src\ta_func</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\..\src\ta_func\ta_ROC.c">
       <Filter>src\ta_func</Filter>
     </ClCompile>

@@ -11,6 +11,9 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import serve_version
+
 REF_TAG = "v0.6.4"
 
 
@@ -159,6 +162,17 @@ def build(root, bin_dir, lib_a):
     src = src.replace('#include <stdio.h>',
                       '#include <stdio.h>\n#include "ta_func.h"\n'
                       '#include "ta_memory.h"\n#include "ta_utility.h"\n')
+    # Functions added since v0.6.4 are absent from the frozen lib: drop them from
+    # list_functions (--fuzz-064's subset gate skips them) and stub their symbols
+    # so the current transport links against the frozen library. See serve_version.
+    version_root = os.path.join(os.path.dirname(root), "ta-lib-064")
+    post_funcs = serve_version.post_version_funcs(root, version_root)
+    if post_funcs:
+        print(f"  post-0.6.4 functions (skipped by the subset gate): {', '.join(post_funcs)}")
+        src = serve_version.filter_list_functions(src, post_funcs)
+        stubs = serve_version.stub_definitions(
+            post_funcs, os.path.join(root, "include", "ta_func.h"))
+        src = src.replace('int main(void) {', stubs + 'int main(void) {', 1)
     src = src.replace('int main(void) {',
                       'int main(void) { TA_Initialize(); '
                       'TA_RestoreCandleDefaultSettings(TA_AllCandleSettings);')

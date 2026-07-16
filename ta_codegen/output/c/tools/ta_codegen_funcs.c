@@ -135,6 +135,7 @@
 #include "ta_PLUS_DI.c"
 #include "ta_PLUS_DM.c"
 #include "ta_PPO.c"
+#include "ta_PVO.c"
 #include "ta_ROC.c"
 #include "ta_ROCP.c"
 #include "ta_ROCR.c"

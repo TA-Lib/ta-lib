@@ -39,6 +39,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import check_prerequisites, PREREQS_BUILD_SERVERS
+import serve_version
 
 OUR_FLAGS = {
     "--no-build", "--no-generate", "--no-generate-indicators", "--no-generate-servers",
@@ -99,11 +100,16 @@ def _ta_ref_serve_paths(src_root, build_dir):
     )
 
 
-def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir):
+def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir, post_funcs=()):
     """Turn the generated C server source into the reference server: strip the
     generated indicator + ta_common .c includes (libta-lib.a provides those),
     add the reference headers + TA_Initialize, and link against lib_a. Returns
-    the cc exit code."""
+    the cc exit code.
+
+    `post_funcs` are functions the current tree has but the frozen reference lib
+    does not (see serve_version): they are dropped from list_functions and their
+    symbols aliased to a stub so this current-transport serve links against the
+    frozen library. See serve_version for the rationale."""
     import re
     with open(serve_src) as f:
         src_text = f.read()
@@ -116,6 +122,11 @@ def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir):
         '#include "ta_memory.h"\n'
         '#include "ta_utility.h"\n'
     )
+    if post_funcs:
+        src_text = serve_version.filter_list_functions(src_text, post_funcs)
+        stubs = serve_version.stub_definitions(post_funcs,
+                                               serve_version.header_path(include_dirs))
+        src_text = src_text.replace('int main(void) {', stubs + 'int main(void) {', 1)
     src_text = src_text.replace(
         'int main(void) {',
         'int main(void) { TA_Initialize(); TA_RestoreCandleDefaultSettings(TA_AllCandleSettings);'
@@ -187,7 +198,13 @@ def ensure_reference_serve(root, bin_dir):
                 and os.path.getmtime(bin_serve) >= os.path.getmtime(serve_src)):
             print("  ta_ref_serve: up to date (frozen reference unchanged)")
             return
-        rc = _compile_ta_ref_serve(serve_src, lib_a, includes, bin_dir)
+        # Functions added since the pinned tag are absent from the frozen lib;
+        # drop them from list_functions + stub their symbols so the current
+        # transport links (the codegen sweep's subset gate skips them).
+        post_funcs = serve_version.post_version_funcs(root, ref_root)
+        if post_funcs:
+            print(f"  post-reference functions (skipped by the subset gate): {', '.join(post_funcs)}")
+        rc = _compile_ta_ref_serve(serve_src, lib_a, includes, bin_dir, post_funcs)
         print("  ta_ref_serve:",
               "OK (from pinned-tag worktree)" if rc == 0 else f"FAILED (exit {rc})")
         if rc != 0:

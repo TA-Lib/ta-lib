@@ -748,6 +748,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_PPO.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_PVO.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_ROC.c
 # End Source File
 # Begin Source File

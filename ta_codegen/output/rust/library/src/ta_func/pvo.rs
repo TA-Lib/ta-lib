@@ -44,19 +44,13 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *  AA       Andrew Atkinson
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF     Template creation.
- *  052603 MF     Adapt code to compile with .NET Managed C++
- *  020605 AA     Fix #1117666 Lookback bug.
- *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
- *                offset index (offset = fastNb - *outNBElement). Bit-identical,
- *                streamable, and index-safe; the TA_IS_ZERO guard is unchanged.
+ *  071626 MF,CC  Template creation.
  */
 
 // Import types from parent module
@@ -69,20 +63,20 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ppo`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::pvo`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
     ///
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
-    /// * `optInMAType` — Moving average type used for both MAs (default 0 = SMA, values: 0=SMA,
+    /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn ppo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn pvo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -96,29 +90,33 @@ impl Core {
         // Lookback is driven by the slowest MA.
         return self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
     }
-    /// Percentage Price Oscillator: the difference between a fast and slow moving average expressed
-    /// as a percentage of the slow MA. A normalized (scale-invariant) variant of APO. Positive when
-    /// the fast MA is above the slow MA (upward momentum), negative otherwise; magnitude is the %
-    /// deviation.
+    /// Percentage Volume Oscillator: a variation of the \[Percentage Price
+    /// Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the **volume** series
+    /// instead of price. It is the difference between a fast and slow moving average of volume,
+    /// expressed as a percentage of the slow MA. Positive when short-term volume is above its
+    /// longer-term average (rising participation), negative when below. The default periods (12,
+    /// 26) match MACD and PPO.
     ///
     /// # Formula
     ///
     /// ```text
-    /// PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
+    /// PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
+    ///
+    /// The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
     /// ```
     ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Input data series.
+    /// * `inVolume` — Volume series.
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
-    /// * `optInMAType` — Moving average type used for both MAs (default 0 = SMA, values: 0=SMA,
+    /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — PPO value in percent.
+    /// * `outReal` — PVO value in percent.
     ///
     /// Integer parameters accept `i32::MIN` to select their default value.
     ///
@@ -138,15 +136,15 @@ impl Core {
     /// ```
     /// use ta_lib::{Core, RetCode};
     ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
     ///
     /// let core = Core::new();
     /// let mut out_beg = 0;
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ppo(
-    ///     0, data.len() - 1, &data, 12, 26, 0,
+    /// let ret = core.pvo(
+    ///     0, volume.len() - 1, &volume, 12, 26, 1,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -155,22 +153,24 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::apo`] · [`Core::macd`] · [`Core::ma`]
+    /// [`Core::ppo`] · [`Core::obv`] · [`Core::macd`]
     ///
     /// # References
     ///
-    /// * Gerald Appel, creator of the PPO and MACD (MACD introduced 1979 in his *Systems and
-    ///   Forecasts* newsletter). The PPO is the MACD expressed as a percentage of the slow moving
-    ///   average. Appel's original definition uses **exponential** moving averages (periods 12,
-    ///   26).
+    /// * PVO has no separately documented originator; it applies the PPO/MACD oscillator (Gerald
+    ///   Appel) to the volume series.
+    /// * Formula and standard (12, 26, 9) parameters: \[Percentage Volume Oscillator
+    ///   (PVO)](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/percentage-volume-oscillator-pvo),
+    ///   StockCharts ChartSchool; also documented by
+    ///   \[TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
     ///
-    /// Further reading: [ta-lib.org/functions/ppo](https://ta-lib.org/functions/ppo/)
-    #[doc(alias = "PercentagePriceOscillator")]
-    pub fn ppo(
+    /// Further reading: [ta-lib.org/functions/pvo](https://ta-lib.org/functions/pvo/)
+    #[doc(alias = "PercentageVolumeOscillator")]
+    pub fn pvo(
         &self,
         startIdx: usize,
         endIdx: usize,
-        inReal: &[f64],
+        inVolume: &[f64],
         mut optInFastPeriod: i32,
         mut optInSlowPeriod: i32,
         mut optInMAType: i32,
@@ -211,12 +211,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -238,18 +238,18 @@ impl Core {
         }
         return RetCode::Success;
     }
-    /// Unguarded variant of [`Core::ppo`], used for internal cross-indicator calls.
+    /// Unguarded variant of [`Core::pvo`], used for internal cross-indicator calls.
     ///
     /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::ppo`]; an out-of-range parameter, an input slice not covering
+    /// documented on [`Core::pvo`]; an out-of-range parameter, an input slice not covering
     /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::ppo`].
+    /// [`Core::pvo`].
     #[inline]
-    pub fn ppo_unguarded(
+    pub fn pvo_unguarded(
         &self,
         mut startIdx: usize,
         endIdx: usize,
-        inReal: &[f64],
+        inVolume: &[f64],
         mut optInFastPeriod: i32,
         mut optInSlowPeriod: i32,
         mut optInMAType: i32,
@@ -265,8 +265,8 @@ impl Core {
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
         let mut i: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        assert!(endIdx < inVolume.len());
+        let _assertLb = self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
@@ -275,11 +275,11 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
         }
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }

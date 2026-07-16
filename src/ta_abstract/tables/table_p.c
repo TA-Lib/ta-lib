@@ -118,6 +118,48 @@ DEF_FUNCTION( PPO,
              );
 /* PPO END */
 
+/* PVO BEGIN */
+const TA_OptInputParameterInfo TA_DEF_UI_D_PVO_MAType =
+{
+   TA_OptInput_IntegerList,
+   "optInMAType",
+   0,
+
+   "MA Type",
+   (const void *)&TA_MA_TypeList,
+   1,
+   "Type of Moving Average",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_PVO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_V,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PVO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PVO_OptInputs[] =
+{ &TA_DEF_UI_Fast_Period,
+  &TA_DEF_UI_Slow_Period,
+  &TA_DEF_UI_D_PVO_MAType,
+  NULL
+};
+
+DEF_FUNCTION( PVO,
+              TA_GroupId_VolumeIndicators,
+              "Percentage Volume Oscillator",
+              "Pvo",
+              0
+             );
+/* PVO END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -127,6 +169,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
    ADD_TO_TABLE(PPO),
+   ADD_TO_TABLE(PVO),
    NULL
 };
 

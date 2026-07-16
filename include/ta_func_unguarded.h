@@ -281,6 +281,8 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Unguarded(int startIdx, int endIdx, const doubl
 extern TA_RetCode TA_S_PLUS_DM_Unguarded(int startIdx, int endIdx, const float inHigh[], const float inLow[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_PPO_Unguarded(int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_PPO_Unguarded(int startIdx, int endIdx, const float inReal[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[]);
+TA_LIB_API TA_RetCode TA_PVO_Unguarded(int startIdx, int endIdx, const double inVolume[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[]);
+extern TA_RetCode TA_S_PVO_Unguarded(int startIdx, int endIdx, const float inVolume[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_ROC_Unguarded(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_ROC_Unguarded(int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_ROCP_Unguarded(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);

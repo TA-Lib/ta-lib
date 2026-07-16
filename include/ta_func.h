@@ -6794,6 +6794,49 @@ TA_LIB_API TA_RetCode TA_PPO_Peek( const TA_PPO_Stream *stream, double inReal, d
 TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream );
 
 /*
+ * TA_PVO - Percentage Volume Oscillator
+ * 
+ * Input  = Volume
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastPeriod:(From 2 to 100000)
+ *    Number of period for the fast MA
+ * 
+ * optInSlowPeriod:(From 2 to 100000)
+ *    Number of period for the slow MA
+ * 
+ * optInMAType:
+ *    Type of Moving Average
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
+                              int    endIdx,
+                                         const double inVolume[],
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType,
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_PVO( int    startIdx,
+                                int    endIdx,
+                                           const float  inVolume[],
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           TA_MAType     optInMAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_PVO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType );
+
+/*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
  * 
  * Input  = double

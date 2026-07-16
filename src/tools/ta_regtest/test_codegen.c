@@ -1194,6 +1194,9 @@ typedef struct {
     const char       *functionFilter;
     CodegenPipe      *cp;
     CodegenPipe      *refCp;       /* ta_ref_serve oracle (shared across languages) */
+    const char       *refFuncList; /* ta_ref_serve list_functions payload (subset
+                                    * gate: skip functions the frozen reference
+                                    * lacks — post-tag additions have no baseline) */
     char             *requestBuf;
     char             *responseBuf;
     ErrorNumber       error;
@@ -1223,6 +1226,19 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* Apply function filter */
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) )
         return;
+
+    /* Subset gate: the comparison baseline is the FROZEN ta_ref_serve, so a
+     * function added after the pinned reference tag has no baseline there
+     * (ta_ref_serve omits it from list_functions and stubs its symbol — see
+     * scripts/serve_version.py). Skip it rather than hard-fail on the missing
+     * baseline; it stays covered by server_verify, --xlang-hash and its
+     * hard-coded tests. Mirrors the --fuzz-064 subset gate. */
+    if( ctx->refFuncList )
+    {
+        char needle[80];
+        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
+        if( !strstr(ctx->refFuncList, needle) ) { ctx->skipped++; return; }
+    }
 
     /* Skip functions with integer inputs (very rare, no test data) */
     unsigned int hasIntegerInput = 0;
@@ -1731,6 +1747,15 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     if( funcInfo->nbOptInput == 0 || funcInfo->nbOptInput > SWEEP_MAX_OPT )
         return;
+
+    /* Subset gate: this sweep diffs against the FROZEN ta_ref_serve too, so skip
+     * functions the reference lacks (post-tag additions — see test_one_function). */
+    if( ctx->refFuncList )
+    {
+        char needle[80];
+        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
+        if( !strstr(ctx->refFuncList, needle) ) return;
+    }
 
     /* Skip functions with integer inputs (same rule as the main pass). */
     for( i = 0; i < funcInfo->nbInput; i++ )
@@ -2475,6 +2500,22 @@ static ErrorNumber test_codegen_for_language(
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
 
+    /* Cache the frozen reference's supported-function set for the subset gate:
+     * functions added after the pinned tag have no ta_ref_serve baseline and are
+     * skipped (see test_one_function / sweep_one_function). Mirrors --fuzz-064. */
+    char *refFuncList = NULL;
+    if( refCp )
+    {
+        refFuncList = malloc(JSON_BUF_SIZE);
+        if( refFuncList
+            && codegen_pipe_call(refCp, "{\"method\":\"list_functions\",\"params\":{}}",
+                                 refFuncList, JSON_BUF_SIZE) == TA_TEST_PASS
+            && strstr(refFuncList, "\"functions\"") )
+            ctx.refFuncList = refFuncList;
+        else
+            printf("  (warning: ta_ref_serve list_functions failed — subset gate disabled)\n");
+    }
+
     TA_ForEachFunc(test_one_function, &ctx);
 
     /* Cross-language boolean-builtin parity (IS_ZERO family) vs the in-process
@@ -2538,6 +2579,7 @@ static ErrorNumber test_codegen_for_language(
 
     free(requestBuf);
     free(responseBuf);
+    free(refFuncList);
     codegen_pipe_close(&cp);
 
     if( ctx.error != TA_TEST_PASS )
@@ -4359,7 +4401,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( inFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("\nOutput parity gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
-               161);
+               162);
         TA_ForEachFunc(xlang_one_function, &ctx);
     }
     else if( inFails > 0 )

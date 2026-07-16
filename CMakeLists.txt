@@ -368,6 +368,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PLUS_DI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PLUS_DM.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PPO.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROCP.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROCR.c"
@@ -553,6 +554,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_trange.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_period_boundary.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_s_overflow.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite.c"
 
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/codegen_pipe.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_codegen.c"

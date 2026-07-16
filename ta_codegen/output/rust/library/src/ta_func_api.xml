@@ -5623,6 +5623,64 @@
 	</FinancialFunction>
 
 
+	<!-- PVO -->
+	<FinancialFunction>
+		<Abbreviation>PVO</Abbreviation>
+		<CamelCaseName>Pvo</CamelCaseName>
+		<ShortDescription>Percentage Volume Oscillator</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Fast Period</Name>
+				<ShortDescription>Number of period for the fast MA</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>100000</SuggestedStart>
+					<SuggestedEnd>100000</SuggestedEnd>
+					<SuggestedIncrement>100000</SuggestedIncrement>
+				</Range>
+				<DefaultValue>12</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Slow Period</Name>
+				<ShortDescription>Number of period for the slow MA</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>100000</SuggestedStart>
+					<SuggestedEnd>100000</SuggestedEnd>
+					<SuggestedIncrement>100000</SuggestedIncrement>
+				</Range>
+				<DefaultValue>26</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>MA Type</Name>
+				<ShortDescription>Type of Moving Average</ShortDescription>
+				<Type>MA Type</Type>
+				<DefaultValue>1</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- ROC -->
 	<FinancialFunction>
 		<Abbreviation>ROC</Abbreviation>

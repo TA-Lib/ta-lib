@@ -354,6 +354,7 @@
     <ClCompile Include="..\..\..\..\src\ta_func\ta_PLUS_DI.c" />
     <ClCompile Include="..\..\..\..\src\ta_func\ta_PLUS_DM.c" />
     <ClCompile Include="..\..\..\..\src\ta_func\ta_PPO.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_PVO.c" />
     <ClCompile Include="..\..\..\..\src\ta_func\ta_ROC.c" />
     <ClCompile Include="..\..\..\..\src\ta_func\ta_ROCP.c" />
     <ClCompile Include="..\..\..\..\src\ta_func\ta_ROCR.c" />

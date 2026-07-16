@@ -162,6 +162,7 @@ pub enum FuncId {
     PlusDi,
     PlusDm,
     Ppo,
+    Pvo,
     Roc,
     Rocp,
     Rocr,
@@ -197,7 +198,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 161;
+    pub const COUNT: usize = 162;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -371,7 +372,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 161] = [
+pub static FUNCS: [FuncInfo; 162] = [
     FuncInfo {
         id: FuncId::Accbands,
         name: "ACCBANDS",
@@ -1933,6 +1934,18 @@ pub static FUNCS: [FuncInfo; 161] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::Pvo,
+        name: "PVO",
+        camel_case_name: "Pvo",
+        group: Group::VolumeIndicators,
+        hint: "Percentage Volume Oscillator",
+        flags: FuncFlags(0x00000000),
+        inputs: &[InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Number of period for the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Number of period for the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 1 } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::Roc,
         name: "ROC",
         camel_case_name: "Roc",
@@ -2442,6 +2455,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "PLUS_DI" => FuncId::PlusDi,
         "PLUS_DM" => FuncId::PlusDm,
         "PPO" => FuncId::Ppo,
+        "PVO" => FuncId::Pvo,
         "ROC" => FuncId::Roc,
         "ROCP" => FuncId::Rocp,
         "ROCR" => FuncId::Rocr,

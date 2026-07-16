@@ -7366,6 +7366,102 @@ public RetCode ppo(
 ); }
 
 
+public int pvoLookback(
+        int optInFastPeriod,
+        int optInSlowPeriod,
+        MAType optInMAType) {
+    return super.pvoLookback(
+        optInFastPeriod,
+        optInSlowPeriod,
+        optInMAType); }
+
+@FuncInfo(
+        name  = "PVO",
+        group = "Volume Indicators",
+        flags = 0,
+        nbInput    = 1,
+        nbOptInput = 3,
+        nbOutput   = 1
+)
+public RetCode pvo(
+            int startIdx,
+            int endIdx,
+            @InputParameterInfo(
+                paramName = "inPriceV",
+                flags     = 16,
+                type = InputParameterType.TA_Input_Price
+            )
+            double inVolume [],
+            @OptInputParameterInfo(
+                paramName    = "optInFastPeriod",
+                displayName  = "Fast Period",
+                flags        = 0,
+                type    = OptInputParameterType.TA_OptInput_IntegerRange,
+                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerRange.class
+            )
+            @IntegerRange(
+                    paramName    = "optInFastPeriod",
+                    defaultValue = 12,
+                    min          = 2,
+                    max          = 100000,
+                    suggested_start     = 4,
+                    suggested_end       = 200,
+                    suggested_increment = 1
+            )
+            int optInFastPeriod,
+            @OptInputParameterInfo(
+                paramName    = "optInSlowPeriod",
+                displayName  = "Slow Period",
+                flags        = 0,
+                type    = OptInputParameterType.TA_OptInput_IntegerRange,
+                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerRange.class
+            )
+            @IntegerRange(
+                    paramName    = "optInSlowPeriod",
+                    defaultValue = 26,
+                    min          = 2,
+                    max          = 100000,
+                    suggested_start     = 4,
+                    suggested_end       = 200,
+                    suggested_increment = 1
+            )
+            int optInSlowPeriod,
+            @OptInputParameterInfo(
+                paramName    = "optInMAType",
+                displayName  = "MA Type",
+                flags        = 0,
+                type    = OptInputParameterType.TA_OptInput_IntegerList,
+                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerList.class
+            )
+            @IntegerList(
+                    paramName    = "optInMAType",
+                    defaultValue = 1,
+                    value  = { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
+                    string = { "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3" }
+            )
+            MAType optInMAType,
+            MInteger     outBegIdx,
+            MInteger     outNBElement,
+            @OutputParameterInfo(
+                paramName = "outReal",
+                flags     = 1,
+                type = OutputParameterType.TA_Output_Real
+            )
+            double outReal[]
+) {
+    return super.pvo (
+        startIdx,
+        endIdx,
+        inVolume ,
+        optInFastPeriod,
+        optInSlowPeriod,
+        optInMAType,
+        outBegIdx,
+        outNBElement,
+        outReal
+); }
+
+
 public int rocLookback(
         int optInTimePeriod) {
     return super.rocLookback(

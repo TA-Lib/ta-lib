@@ -76,6 +76,7 @@
 		3A48BFAB05E25FE600B42EE0 /* ta_PLUS_DI.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1205E25FE300B42EE0 /* ta_PLUS_DI.c */; };
 		3A48BFAC05E25FE600B42EE0 /* ta_PLUS_DM.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1305E25FE300B42EE0 /* ta_PLUS_DM.c */; };
 		3A48BFAD05E25FE600B42EE0 /* ta_PPO.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1405E25FE300B42EE0 /* ta_PPO.c */; };
+		3A48BFAD05E25FE600B42FF0 /* ta_PVO.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1405E25FE300B42FF0 /* ta_PVO.c */; };
 		3A48BFAF05E25FE600B42EE0 /* ta_ROC.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1605E25FE300B42EE0 /* ta_ROC.c */; };
 		3A48BFB005E25FE600B42EE0 /* ta_ROCP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1705E25FE300B42EE0 /* ta_ROCP.c */; };
 		3A48BFB105E25FE600B42EE0 /* ta_ROCR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB1805E25FE300B42EE0 /* ta_ROCR.c */; };
@@ -328,6 +329,7 @@
 		3A48BB1205E25FE300B42EE0 /* ta_PLUS_DI.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_PLUS_DI.c; sourceTree = "<group>"; };
 		3A48BB1305E25FE300B42EE0 /* ta_PLUS_DM.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_PLUS_DM.c; sourceTree = "<group>"; };
 		3A48BB1405E25FE300B42EE0 /* ta_PPO.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_PPO.c; sourceTree = "<group>"; };
+		3A48BB1405E25FE300B42FF0 /* ta_PVO.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_PVO.c; sourceTree = "<group>"; };
 		3A48BB1605E25FE300B42EE0 /* ta_ROC.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ROC.c; sourceTree = "<group>"; };
 		3A48BB1705E25FE300B42EE0 /* ta_ROCP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ROCP.c; sourceTree = "<group>"; };
 		3A48BB1805E25FE300B42EE0 /* ta_ROCR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ROCR.c; sourceTree = "<group>"; };
@@ -760,6 +762,7 @@
 				3A48BB1205E25FE300B42EE0 /* ta_PLUS_DI.c */,
 				3A48BB1305E25FE300B42EE0 /* ta_PLUS_DM.c */,
 				3A48BB1405E25FE300B42EE0 /* ta_PPO.c */,
+				3A48BB1405E25FE300B42FF0 /* ta_PVO.c */,
 				3A48BB1605E25FE300B42EE0 /* ta_ROC.c */,
 				3A48BB1705E25FE300B42EE0 /* ta_ROCP.c */,
 				3A48BB1805E25FE300B42EE0 /* ta_ROCR.c */,
@@ -1047,6 +1050,7 @@
 				3A48BFAB05E25FE600B42EE0 /* ta_PLUS_DI.c in Sources */,
 				3A48BFAC05E25FE600B42EE0 /* ta_PLUS_DM.c in Sources */,
 				3A48BFAD05E25FE600B42EE0 /* ta_PPO.c in Sources */,
+				3A48BFAD05E25FE600B42FF0 /* ta_PVO.c in Sources */,
 				3A48BFAF05E25FE600B42EE0 /* ta_ROC.c in Sources */,
 				3A48BFB005E25FE600B42EE0 /* ta_ROCP.c in Sources */,
 				3A48BFB105E25FE600B42EE0 /* ta_ROCR.c in Sources */,
