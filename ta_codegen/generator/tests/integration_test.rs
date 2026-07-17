@@ -135,7 +135,7 @@ fn test_parse_sma_yaml() {
     );
     assert_eq!(
         func.optional_inputs[0].hint.as_deref(),
-        Some("Number of period")
+        Some("Time period")
     );
     assert!(func.outputs[0].flags.contains(&"line".to_string()));
     assert_eq!(func.optional_inputs[0].suggested, Some((1.0, 200.0, 1.0)));

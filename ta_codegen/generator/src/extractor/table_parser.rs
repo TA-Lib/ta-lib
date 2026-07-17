@@ -952,7 +952,7 @@ mod tests {
         assert_eq!(tp30.name, "optInTimePeriod");
         assert_eq!(tp30.display_name, "Time Period");
         assert_eq!(tp30.default_value, 30.0);
-        assert_eq!(tp30.hint, "Number of period");
+        assert_eq!(tp30.hint, "Time period");
         assert_eq!(tp30.dataset_ref, "TA_DEF_TimePeriod_Positive_Minimum2");
 
         // MA method (IntegerList)
@@ -994,7 +994,7 @@ mod tests {
         assert_eq!(opt.name, "optInTimePeriod");
         assert_eq!(opt.param_type, "integer");
         assert_eq!(opt.display_name, "Time Period");
-        assert_eq!(opt.hint, "Number of period");
+        assert_eq!(opt.hint, "Time period");
         // Period 1 = "no smoothing" is allowed since 0.6.5 (issues #48/#59).
         assert_eq!(opt.range, Some((1.0, 100_000.0)));
         assert_eq!(opt.default, Some(30.0));

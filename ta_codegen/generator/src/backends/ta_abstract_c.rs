@@ -491,7 +491,7 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
             "Time Period",
             "TA_DEF_TimePeriod_Positive_Minimum2",
             *default,
-            "Number of period",
+            "Time period",
         );
     }
 
@@ -502,7 +502,7 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
         "Time Period",
         "TA_DEF_TimePeriod_Positive_Minimum5",
         14,
-        "Number of period",
+        "Time period",
     );
 
     for (name, default) in &[
@@ -518,7 +518,7 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
             "Time Period",
             "TA_DEF_TimePeriod_Positive",
             *default,
-            "Number of period",
+            "Time period",
         );
     }
 
@@ -579,12 +579,12 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     emit_opt_input_int_const(
         &mut o, "TA_DEF_UI_Fast_Period", "optInFastPeriod",
         "Fast Period", "TA_DEF_TimePeriod_Positive_Minimum2", 12,
-        "Number of period for the fast MA",
+        "Period of the fast MA",
     );
     emit_opt_input_int_const(
         &mut o, "TA_DEF_UI_Slow_Period", "optInSlowPeriod",
         "Slow Period", "TA_DEF_TimePeriod_Positive_Minimum2", 26,
-        "Number of period for the slow MA",
+        "Period of the slow MA",
     );
 
     o

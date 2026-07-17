@@ -158,7 +158,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ADOSC_FastPeriod =
    "Fast Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    3,
-   "Number of period for the fast MA",
+   "Period of the fast MA",
 
    NULL
 };
@@ -172,7 +172,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ADOSC_SlowPeriod =
    "Slow Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    10,
-   "Number of period for the slow MA",
+   "Period of the slow MA",
 
    NULL
 };

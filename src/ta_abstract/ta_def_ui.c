@@ -241,7 +241,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    30,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -255,7 +255,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_20_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    20,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -269,7 +269,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_21_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    21,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -283,7 +283,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    14,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -297,7 +297,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    10,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -311,7 +311,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5_MINIMUM2 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    5,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -325,7 +325,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum5,
    14,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -339,7 +339,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    30,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -353,7 +353,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    14,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -367,7 +367,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    10,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -381,7 +381,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5 =
    "Time Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    5,
-   "Number of period",
+   "Time period",
 
    NULL
 };
@@ -498,7 +498,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Fast_Period =
    "Fast Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    12,
-   "Number of period for the fast MA",
+   "Period of the fast MA",
 
    NULL
 };
@@ -512,7 +512,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Slow_Period =
    "Slow Period",
    (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
    26,
-   "Number of period for the slow MA",
+   "Period of the slow MA",
 
    NULL
 };

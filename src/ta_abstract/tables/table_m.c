@@ -75,7 +75,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACD_SignalPeriod =
    "Signal Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    9,
-   "Smoothing for the signal line (nb of period)",
+   "Smoothing for the signal line (period length)",
 
    NULL
 };
@@ -156,7 +156,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDEXT_SignalPeriod =
    "Signal Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    9,
-   "Smoothing for the signal line (nb of period)",
+   "Smoothing for the signal line (period length)",
 
    NULL
 };
@@ -226,7 +226,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDFIX_SignalPeriod =
    "Signal Period",
    (const void *)&TA_DEF_TimePeriod_Positive,
    9,
-   "Smoothing for the signal line (nb of period)",
+   "Smoothing for the signal line (period length)",
 
    NULL
 };

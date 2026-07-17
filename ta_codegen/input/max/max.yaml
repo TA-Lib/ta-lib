@@ -10,7 +10,7 @@ optional_inputs:
   - name: optInTimePeriod
     type: integer
     display_name: Time Period
-    hint: Number of period
+    hint: Time period
     range: [2, 100000]
     default: 30
     suggested: [4, 200, 1]

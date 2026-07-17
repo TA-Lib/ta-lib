@@ -62,7 +62,7 @@ extern "C" {
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -262,10 +262,10 @@ TA_LIB_API TA_RetCode TA_ADD_Close( TA_ADD_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * 
  */
@@ -326,7 +326,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Close( TA_ADOSC_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -382,7 +382,7 @@ TA_LIB_API TA_RetCode TA_ADX_Close( TA_ADX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -438,10 +438,10 @@ TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * optInMAType:
  *    Type of Moving Average
@@ -501,7 +501,7 @@ TA_LIB_API TA_RetCode TA_APO_Close( TA_APO_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -557,7 +557,7 @@ TA_LIB_API TA_RetCode TA_AROON_Close( TA_AROON_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -699,7 +699,7 @@ TA_LIB_API TA_RetCode TA_ATAN_Close( TA_ATAN_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -755,7 +755,7 @@ TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -857,7 +857,7 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Close( TA_AVGPRICE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInNbDevUp:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Deviation multiplier for upper band
@@ -930,7 +930,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -1034,7 +1034,7 @@ TA_LIB_API TA_RetCode TA_BOP_Close( TA_BOP_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4240,7 +4240,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Close( TA_CEIL_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4292,7 +4292,7 @@ TA_LIB_API TA_RetCode TA_CMO_Close( TA_CMO_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4434,7 +4434,7 @@ TA_LIB_API TA_RetCode TA_COSH_Close( TA_COSH_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4532,7 +4532,7 @@ TA_LIB_API TA_RetCode TA_DIV_Close( TA_DIV_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4588,7 +4588,7 @@ TA_LIB_API TA_RetCode TA_DX_Close( TA_DX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -4996,7 +4996,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5050,7 +5050,7 @@ TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5102,7 +5102,7 @@ TA_LIB_API TA_RetCode TA_KAMA_Close( TA_KAMA_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5154,7 +5154,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Close( TA_LINEARREG_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5206,7 +5206,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Close( TA_LINEARREG_ANGLE_Stream *strea
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5258,7 +5258,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Close( TA_LINEARREG_INTERCEPT_Strea
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5398,7 +5398,7 @@ TA_LIB_API TA_RetCode TA_LOG10_Close( TA_LOG10_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInMAType:
  *    Type of Moving Average
@@ -5459,13 +5459,13 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * optInSignalPeriod:(From 1 to 100000)
- *    Smoothing for the signal line (nb of period)
+ *    Smoothing for the signal line (period length)
  * 
  * 
  */
@@ -5527,19 +5527,19 @@ TA_LIB_API TA_RetCode TA_MACD_Close( TA_MACD_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInFastMAType:
  *    Type of Moving Average for fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * optInSlowMAType:
  *    Type of Moving Average for slow MA
  * 
  * optInSignalPeriod:(From 1 to 100000)
- *    Smoothing for the signal line (nb of period)
+ *    Smoothing for the signal line (period length)
  * 
  * optInSignalMAType:
  *    Type of Moving Average for signal line
@@ -5612,7 +5612,7 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInSignalPeriod:(From 1 to 100000)
- *    Smoothing for the signal line (nb of period)
+ *    Smoothing for the signal line (period length)
  * 
  * 
  */
@@ -5793,7 +5793,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5845,7 +5845,7 @@ TA_LIB_API TA_RetCode TA_MAX_Close( TA_MAX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -5943,7 +5943,7 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Close( TA_MEDPRICE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6001,7 +6001,7 @@ TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6053,7 +6053,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Close( TA_MIDPOINT_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6107,7 +6107,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6159,7 +6159,7 @@ TA_LIB_API TA_RetCode TA_MIN_Close( TA_MIN_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6211,7 +6211,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6265,7 +6265,7 @@ TA_LIB_API TA_RetCode TA_MINMAX_Close( TA_MINMAX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6319,7 +6319,7 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Close( TA_MINMAXINDEX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6375,7 +6375,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Close( TA_MINUS_DI_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6429,7 +6429,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Close( TA_MINUS_DM_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6527,7 +6527,7 @@ TA_LIB_API TA_RetCode TA_MULT_Close( TA_MULT_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6629,7 +6629,7 @@ TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6685,7 +6685,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DI_Close( TA_PLUS_DI_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6739,10 +6739,10 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Close( TA_PLUS_DM_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * optInMAType:
  *    Type of Moving Average
@@ -6802,10 +6802,10 @@ TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInFastPeriod:(From 2 to 100000)
- *    Number of period for the fast MA
+ *    Period of the fast MA
  * 
  * optInSlowPeriod:(From 2 to 100000)
- *    Number of period for the slow MA
+ *    Period of the slow MA
  * 
  * optInMAType:
  *    Type of Moving Average
@@ -6845,7 +6845,7 @@ TA_LIB_API int TA_PVO_Lookback( int           optInFastPeriod, /* From 2 to 1000
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6897,7 +6897,7 @@ TA_LIB_API TA_RetCode TA_ROC_Close( TA_ROC_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -6949,7 +6949,7 @@ TA_LIB_API TA_RetCode TA_ROCP_Close( TA_ROCP_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -7001,7 +7001,7 @@ TA_LIB_API TA_RetCode TA_ROCR_Close( TA_ROCR_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -7053,7 +7053,7 @@ TA_LIB_API TA_RetCode TA_ROCR100_Close( TA_ROCR100_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -7349,7 +7349,7 @@ TA_LIB_API TA_RetCode TA_SINH_Close( TA_SINH_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -7445,7 +7445,7 @@ TA_LIB_API TA_RetCode TA_SQRT_Close( TA_SQRT_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInNbDev:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Nb of deviations
@@ -7653,7 +7653,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInFastK_Period:(From 1 to 100000)
  *    Time period for building the Fast-K line
@@ -7770,7 +7770,7 @@ TA_LIB_API TA_RetCode TA_SUB_Close( TA_SUB_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -7822,7 +7822,7 @@ TA_LIB_API TA_RetCode TA_SUM_Close( TA_SUM_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInVFactor:(From 0 to 1)
  *    Volume Factor
@@ -7968,7 +7968,7 @@ TA_LIB_API TA_RetCode TA_TANH_Close( TA_TANH_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -8068,7 +8068,7 @@ TA_LIB_API TA_RetCode TA_TRANGE_Close( TA_TRANGE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -8120,7 +8120,7 @@ TA_LIB_API TA_RetCode TA_TRIMA_Close( TA_TRIMA_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -8172,7 +8172,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Close( TA_TRIX_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -8340,7 +8340,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Close( TA_ULTOSC_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * optInNbDev:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Nb of deviations
@@ -8446,7 +8446,7 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Close( TA_WCLPRICE_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 2 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */
@@ -8502,7 +8502,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream );
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of period
+ *    Time period
  * 
  * 
  */

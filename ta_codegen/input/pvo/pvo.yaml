@@ -10,14 +10,14 @@ optional_inputs:
   - name: optInFastPeriod
     type: integer
     display_name: Fast Period
-    hint: Number of period for the fast MA
+    hint: Period of the fast MA
     range: [2, 100000]
     default: 12
     suggested: [4, 200, 1]
   - name: optInSlowPeriod
     type: integer
     display_name: Slow Period
-    hint: Number of period for the slow MA
+    hint: Period of the slow MA
     range: [2, 100000]
     default: 26
     suggested: [4, 200, 1]

@@ -62,7 +62,7 @@ pub enum FuncUnstId {
 pub struct CandleSetting {
     /// Range type: 0 = RealBody, 1 = HighLow, 2 = Shadows.
     pub range_type: i32,
-    /// Number of periods for averaging.
+    /// Period length for averaging.
     pub avg_period: i32,
     /// Scaling factor.
     pub factor: f64,
