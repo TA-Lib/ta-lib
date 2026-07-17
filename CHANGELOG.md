@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
 - New TA Functions:
   - PVO: Percentage Volume Oscillator (#119)
+  - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX
