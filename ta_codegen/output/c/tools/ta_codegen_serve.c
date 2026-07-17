@@ -101,6 +101,7 @@
 #include "ta_func/ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_func/ta_CEIL.c"
 #include "ta_func/ta_CMO.c"
+#include "ta_func/ta_CMOU.c"
 #include "ta_func/ta_CORREL.c"
 #include "ta_func/ta_COS.c"
 #include "ta_func/ta_COSH.c"
@@ -6609,6 +6610,74 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
         }
         TA_SetUnstablePeriod(3, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
+        return;
+    }
+    else if( fnLen == 7 && strncmp(fn, "TA_CMOU", 7) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int pref[4]; int pc[4];
+        rc = TA_CMOU(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_CMOU_Lookback(optInTimePeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_CMOU_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CMOU_Open(&st, sv_c, svN, optInTimePeriod, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CMOU_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_CMOU_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            rc = TA_CMOU_Open(&st, sv_c, P, optInTimePeriod, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_CMOU_Peek(st, sv_c[t], &pk0);
+                TA_CMOU_Update(st, sv_c[t], &v0);
+                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            }
+            if( st ) TA_CMOU_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_CMOU(Sidx, svN - 1, sv_c, optInTimePeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_CMOU_Stream *stA = NULL;
+                    TA_RetCode arc = TA_CMOU_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( stA ) TA_CMOU_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         pos += snprintf(resp + pos, resp_size - pos, ",\"ok\":%d,\"peek_ok\":%d}", allOk, peekAll);
         return;
@@ -19230,6 +19299,78 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
         pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
+    else if ( methodLen == 7 && strncmp(method, "TA_CMOU", 7) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = get_nanotime();
+        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        rc = TA_CMOU(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+#ifndef TA_REF_SERVE
+        long _t0_ung = get_nanotime();
+        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        rc = TA_CMOU_Unguarded(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+        }
+        long elapsed_ns_ung = (get_nanotime() - _t0_ung) / bench_iters;
+#else
+        long elapsed_ns_ung = 0;
+#endif /* TA_REF_SERVE */
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_CMOU(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+            rc = TA_S_CMOU_Unguarded(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                &outBegIdx, &outNBElement, g_outBuf0);
+#endif /* TA_REF_SERVE */
+        }
+        int pos = snprintf(resp, resp_size,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
+        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
+        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+    }
     else if ( methodLen == 9 && strncmp(method, "TA_CORREL", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -25774,6 +25915,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
+    else if ( methodLen == 16 && strncmp(method, "TA_CMOU_Lookback", 16) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int lookback = TA_CMOU_Lookback(optInTimePeriod);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
     else if ( methodLen == 18 && strncmp(method, "TA_CORREL_Lookback", 18) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_CORREL_Lookback(optInTimePeriod);
@@ -26350,6 +26497,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLXSIDEGAP3METHODS\"");
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CEIL\"");
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CMO\"");
+        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CMOU\"");
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CORREL\"");
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_COS\"");
         pos += snprintf(resp + pos, resp_size - pos, ",\"TA_COSH\"");

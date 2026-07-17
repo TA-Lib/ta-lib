@@ -640,6 +640,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
    DO_TEST( test_func_composite, "PVO,COMPOSITE" );
+   DO_TEST( test_func_cmou,      "CMOU" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

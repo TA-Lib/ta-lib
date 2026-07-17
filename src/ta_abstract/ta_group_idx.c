@@ -122,6 +122,7 @@ extern const TA_FuncDef TA_DEF_CDLUPSIDEGAP2CROWS;
 extern const TA_FuncDef TA_DEF_CDLXSIDEGAP3METHODS;
 extern const TA_FuncDef TA_DEF_CEIL;
 extern const TA_FuncDef TA_DEF_CMO;
+extern const TA_FuncDef TA_DEF_CMOU;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_COS;
 extern const TA_FuncDef TA_DEF_COSH;
@@ -275,6 +276,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_BOP,
 &TA_DEF_CCI,
 &TA_DEF_CMO,
+&TA_DEF_CMOU,
 &TA_DEF_DX,
 &TA_DEF_IMI,
 &TA_DEF_MACD,

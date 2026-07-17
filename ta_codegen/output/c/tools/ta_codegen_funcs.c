@@ -88,6 +88,7 @@
 #include "ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_CEIL.c"
 #include "ta_CMO.c"
+#include "ta_CMOU.c"
 #include "ta_CORREL.c"
 #include "ta_COS.c"
 #include "ta_COSH.c"

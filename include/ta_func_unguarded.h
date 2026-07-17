@@ -185,6 +185,8 @@ TA_LIB_API TA_RetCode TA_CEIL_Unguarded(int startIdx, int endIdx, const double i
 extern TA_RetCode TA_S_CEIL_Unguarded(int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_CMO_Unguarded(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_CMO_Unguarded(int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
+TA_LIB_API TA_RetCode TA_CMOU_Unguarded(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
+extern TA_RetCode TA_S_CMOU_Unguarded(int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_CORREL_Unguarded(int startIdx, int endIdx, const double inReal0[], const double inReal1[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_CORREL_Unguarded(int startIdx, int endIdx, const float inReal0[], const float inReal1[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_COS_Unguarded(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
@@ -433,6 +435,7 @@ struct TA_CDLUPSIDEGAP2CROWS_Stream;
 struct TA_CDLXSIDEGAP3METHODS_Stream;
 struct TA_CEIL_Stream;
 struct TA_CMO_Stream;
+struct TA_CMOU_Stream;
 struct TA_CORREL_Stream;
 struct TA_COS_Stream;
 struct TA_COSH_Stream;
@@ -594,6 +597,7 @@ TA_RetCode TA_CDLUPSIDEGAP2CROWS_OpenInternal( struct TA_CDLUPSIDEGAP2CROWS_Stre
 TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( struct TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger );
 TA_RetCode TA_CEIL_OpenInternal( struct TA_CEIL_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_CMOU_OpenInternal( struct TA_CMOU_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_CORREL_OpenInternal( struct TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_COS_OpenInternal( struct TA_COS_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_COSH_OpenInternal( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );

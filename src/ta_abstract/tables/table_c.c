@@ -1592,6 +1592,32 @@ DEF_FUNCTION( CMO,
              );
 /* CMO END */
 
+/* CMOU BEGIN */
+static const TA_InputParameterInfo    *TA_CMOU_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CMOU_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CMOU_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( CMOU,
+              TA_GroupId_MomentumIndicators,
+              "Chande Momentum Oscillator (Unsmoothed)",
+              "Cmou",
+              TA_FUNC_FLG_STREAM
+             );
+/* CMOU END */
+
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
@@ -1737,6 +1763,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS),
    ADD_TO_TABLE(CEIL),
    ADD_TO_TABLE(CMO),
+   ADD_TO_TABLE(CMOU),
    ADD_TO_TABLE(CORREL),
    ADD_TO_TABLE(COS),
    ADD_TO_TABLE(COSH),

@@ -88,6 +88,7 @@ mod cdlupsidegap2crows;
 mod cdlxsidegap3methods;
 mod ceil;
 mod cmo;
+mod cmou;
 mod correl;
 mod cos;
 mod cosh;

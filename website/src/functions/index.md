@@ -57,6 +57,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [BOP](/functions/bop) — Balance Of Power
 - [CCI](/functions/cci) — Commodity Channel Index
 - [CMO](/functions/cmo) — Chande Momentum Oscillator
+- [CMOU](/functions/cmou) — Chande Momentum Oscillator (Unsmoothed)
 - [DX](/functions/dx) — Directional Movement Index
 - [IMI](/functions/imi) — Intraday Momentum Index
 - [MACD](/functions/macd) — Moving Average Convergence/Divergence

@@ -27,5 +27,6 @@ ErrorNumber test_func_imi     ( TA_History *history );
 ErrorNumber test_func_period_boundary( TA_History *history );
 ErrorNumber test_func_s_overflow( TA_History *history );
 ErrorNumber test_func_composite( TA_History *history );
+ErrorNumber test_func_cmou    ( TA_History *history );
 
 #endif

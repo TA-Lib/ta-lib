@@ -85,6 +85,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_CDLXSIDEGAP3METHODS.c \
 	ta_CEIL.c \
 	ta_CMO.c \
+	ta_CMOU.c \
 	ta_CORREL.c \
 	ta_COS.c \
 	ta_COSH.c \

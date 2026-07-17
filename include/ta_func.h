@@ -4284,6 +4284,58 @@ TA_LIB_API TA_RetCode TA_CMO_Peek( const TA_CMO_Stream *stream, double inReal, d
 TA_LIB_API TA_RetCode TA_CMO_Close( TA_CMO_Stream *stream );
 
 /*
+ * TA_CMOU - Chande Momentum Oscillator (Unsmoothed)
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CMOU( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_CMOU_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CMOU — incremental per-bar evaluation.
+ * Open consumes the warm-up history; Update commits one closed bar;
+ * Peek evaluates a forming bar without committing; Close frees the handle.
+ * A handle is single-writer: driving one handle from two threads
+ * concurrently — Update or Peek, despite the latter's const — is
+ * undefined behavior. Distinct handles are fully independent.
+ * See docs/streaming-api-proposal.md.
+ */
+typedef struct TA_CMOU_Stream TA_CMOU_Stream;
+
+TA_LIB_API TA_RetCode TA_CMOU_Open( TA_CMOU_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMOU_Update( TA_CMOU_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMOU_Close( TA_CMOU_Stream *stream );
+
+/*
  * TA_CORREL - Pearson's Correlation Coefficient (r)
  * 
  * Input  = double, double

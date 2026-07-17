@@ -1915,6 +1915,26 @@
 /* Generated */ {
 /* Generated */    return TA_CMO_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_CMOU_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+/* Generated */ {
+/* Generated */    return TA_CMOU(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inReal, /* inReal */
+/* Generated */                params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                outBegIdx, 
+/* Generated */                outNBElement, 
+/* Generated */                params->out[0].data.outReal /*  outReal */
+/* Generated */                );
+/* Generated */ }
+/* Generated */ unsigned int TA_CMOU_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_CMOU_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
