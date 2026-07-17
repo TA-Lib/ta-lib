@@ -467,6 +467,120 @@ TA_LIB_API TA_RetCode TA_ROCR_Open( TA_ROCR_Stream **stream, const double inReal
    return TA_ROCR_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_ROCR_OpenAndFill( TA_ROCR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_ROCR_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 10;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int inIdx;
+      int outIdx;
+      int trailingIdx;
+      double tempReal;
+      /* The interpretation of the rate of change varies widely depending
+       * which software and/or books you are refering to.
+       *
+       * The following is the table of Rate-Of-Change implemented in TA-LIB:
+       *       MOM     = (price - prevPrice)         [Momentum]
+       *       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
+       *       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
+       *       ROCR    = (price/prevPrice)           [Rate of change ratio]
+       *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
+       *
+       * Here are the equivalent function in other software:
+       *       TA-Lib  |   Tradestation   |    Metastock
+       *       =================================================
+       *       MOM     |   Momentum       |    ROC (Point)
+       *       ROC     |   ROC            |    ROC (Percent)
+       *       ROCP    |   PercentChange  |    -
+       *       ROCR    |   -              |    -
+       *       ROCR100 |   -              |    MO
+       *
+       * The MOM function is the only one who is not normalized, and thus
+       * should be avoided for comparing different time serie of prices.
+       *
+       * ROC and ROCP are centered at zero and can have positive and negative
+       * value. Here are some equivalence:
+       *    ROC = ROCP/100
+       *        = ((price-prevPrice)/prevPrice)/100
+       *        = ((price/prevPrice)-1)*100
+       *
+       * ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
+       * always positive values.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < optInTimePeriod )
+      {
+         startIdx = optInTimePeriod;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Calculate Rate of change Ratio: (price / prevPrice) */
+      outIdx = 0;
+      inIdx = startIdx;
+      trailingIdx = startIdx - optInTimePeriod;
+      while( inIdx <= endIdx )
+      {
+         tempReal = inReal[trailingIdx++];
+         if( tempReal != 0.0 )
+         {
+            outReal[outIdx++] = inReal[inIdx] / tempReal;
+         } else 
+         {
+            outReal[outIdx++] = 0.0;
+         }
+         inIdx += 1;
+      }
+      /* Set output limits. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ROCR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ROCR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_ROCR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_ROCR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_ROCR_Update( TA_ROCR_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

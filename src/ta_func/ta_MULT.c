@@ -242,6 +242,49 @@ TA_LIB_API TA_RetCode TA_MULT_Open( TA_MULT_Stream **stream, const double inReal
    return TA_MULT_OpenInternal( stream, inReal0, inReal1, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_MULT_OpenAndFill( TA_MULT_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MULT_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      outIdx = 0;
+      i = startIdx;
+      while( i <= endIdx )
+      {
+         outReal[outIdx] = inReal0[i] * inReal1[i];
+         outIdx += 1;
+         i += 1;
+      }
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MULT_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

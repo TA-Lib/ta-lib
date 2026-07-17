@@ -622,6 +622,77 @@ TA_LIB_API TA_RetCode TA_MAVP_Open( TA_MAVP_Stream **stream, const double inReal
    return TA_MAVP_OpenInternal( stream, inReal, inPeriods, 0, historyLen, optInMinPeriod, optInMaxPeriod, optInMAType, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MAVP_Stream *sp;
+   int k, cp, lookbackTotal, t;
+   TA_RetCode retCode;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inPeriods || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
+   if( (int)optInMinPeriod == (int)0x80000000 )
+      optInMinPeriod = 2;
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMaxPeriod == (int)0x80000000 )
+      optInMaxPeriod = 30;
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == (int)0x80000000 )
+      optInMAType = 0;
+   if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
+   lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
+   if( historyLen < lookbackTotal + 1 ) return TA_BAD_PARAM;
+
+   sp = (struct TA_MAVP_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   memset( sp, 0, sizeof(*sp) );
+   sp->optInMinPeriod = optInMinPeriod;
+   sp->optInMaxPeriod = optInMaxPeriod;
+   sp->optInMAType = optInMAType;
+   sp->nBank = optInMaxPeriod - optInMinPeriod + 1;
+   sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
+   if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
+   memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
+   sp->scratch = (double *)TA_Malloc( sizeof(double) * (size_t)sp->nBank );
+   if( !sp->scratch ) { TA_Free( sp->bank ); TA_Free( sp ); return TA_ALLOC_ERR; }
+
+   for( k = 0; k < sp->nBank; k++ )
+   {
+      retCode = TA_MA_OpenInternal( &sp->bank[k], inReal, lookbackTotal, lookbackTotal + 1, optInMinPeriod + k, optInMAType, &sp->scratch[k] );
+      if( retCode != TA_SUCCESS )
+      {
+         int j;
+         for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );
+         TA_Free( sp->scratch ); TA_Free( sp->bank ); TA_Free( sp );
+         return retCode;
+      }
+   }
+
+   cp = (int)(inPeriods[lookbackTotal]);
+   if( cp < optInMinPeriod ) cp = optInMinPeriod;
+   else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+   outReal[0] = sp->scratch[cp - optInMinPeriod];
+
+   for( t = lookbackTotal + 1; t < historyLen; t++ )
+   {
+      for( k = 0; k < sp->nBank; k++ )
+         TA_MA_Update( sp->bank[k], inReal[t], &sp->scratch[k] );
+      cp = (int)(inPeriods[t]);
+      if( cp < optInMinPeriod ) cp = optInMinPeriod;
+      else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+      outReal[t - lookbackTotal] = sp->scratch[cp - optInMinPeriod];
+   }
+
+   *outBegIdx = lookbackTotal;
+   *outNBElement = historyLen - lookbackTotal;
+   *stream = sp;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
 {
    int k, cp;

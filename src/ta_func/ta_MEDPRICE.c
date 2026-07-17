@@ -243,6 +243,52 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Open( TA_MEDPRICE_Stream **stream, const doubl
    return TA_MEDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_MEDPRICE_OpenAndFill( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MEDPRICE_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      /* MEDPRICE = (High + Low ) / 2
+       * This is the high and low of the same price bar.
+       *
+       * See MIDPRICE to use instead the highest high and lowest
+       * low over multiple price bar.
+       */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
+      }
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_MEDPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

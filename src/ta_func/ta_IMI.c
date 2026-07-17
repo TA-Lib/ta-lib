@@ -467,6 +467,96 @@ TA_LIB_API TA_RetCode TA_IMI_Open( TA_IMI_Stream **stream, const double inOpen[]
    return TA_IMI_OpenInternal( stream, inOpen, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_IMI_OpenAndFill( TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_IMI_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int lookback;
+      int outIdx = 0;
+      lookback = TA_IMI_Lookback(optInTimePeriod);
+      if( startIdx < lookback )
+      {
+         startIdx = lookback;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      *outBegIdx= startIdx;
+      while( startIdx <= endIdx )
+      {
+         double upsum = 0.0;
+         double downsum = 0.0;
+         int i;
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
+         {
+            double close = inClose[i];
+            double open = inOpen[i];
+            if( close > open )
+            {
+               upsum += close - open;
+            } else 
+            {
+               downsum += open - close;
+            }
+            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+             * oscillator, so no up/down bias returns its neutral center, 50.0.
+             */
+            outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+         }
+         startIdx += 1;
+         outIdx += 1;
+      }
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_IMI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->winCap_i = (int)(optInTimePeriod - 1 + 1);
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inOpen ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inOpen ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inOpen, inOpen + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inClose ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inClose ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->winPos_i = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

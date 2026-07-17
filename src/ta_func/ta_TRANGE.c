@@ -460,6 +460,99 @@ TA_LIB_API TA_RetCode TA_TRANGE_Open( TA_TRANGE_Stream **stream, const double in
    return TA_TRANGE_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_TRANGE_OpenAndFill( TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_TRANGE_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int today;
+      int outIdx;
+      double val2;
+      double val3 = 0.0;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      /* True Range is the greatest of the following:
+       *
+       *  val1 = distance from today's high to today's low.
+       *  val2 = distance from yesterday's close to today's high.
+       *  val3 = distance from yesterday's close to today's low.
+       *
+       * Some books and software makes the first TR value to be
+       * the (high - low) of the first bar. This function instead
+       * ignore the first price bar, and only output starting at the
+       * second price bar are valid. This is done for avoiding
+       * inconsistency.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       * Always one price bar gets consumed.
+       */
+      if( startIdx < 1 )
+      {
+         startIdx = 1;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         outReal[outIdx++] = greatest;
+         today += 1;
+      }
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TRANGE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->val3 = val3;
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

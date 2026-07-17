@@ -507,6 +507,146 @@ TA_LIB_API TA_RetCode TA_APO_Open( TA_APO_Stream **stream, const double inReal[]
    return TA_APO_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_APO_OpenAndFill( TA_APO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_APO_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outReal;
+   TA_MA_Stream *sub0;
+   TA_MA_Stream *sub1;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInFastPeriod == (int)0x80000000 )
+      optInFastPeriod = 12;
+   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowPeriod == (int)0x80000000 )
+      optInSlowPeriod = 26;
+   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == (int)0x80000000 )
+      optInMAType = 1;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   sub1 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+
+   {
+      double *tempBuffer;
+      TA_RetCode retCode;
+      int tempInteger;
+      int fastBeg;
+      int fastNb;
+      int offset;
+      int i;
+      /* Allocate an intermediate buffer. */
+      tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
+      if( !tempBuffer )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         return TA_ALLOC_ERR;
+      }
+      if( !tempBuffer )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         return TA_ALLOC_ERR;
+      }
+      /* Make sure slow is really slower than
+       * the fast period! if not, swap...
+       */
+      if( optInSlowPeriod < optInFastPeriod )
+      {
+         /* swap */
+         tempInteger = optInSlowPeriod;
+         optInSlowPeriod = optInFastPeriod;
+         optInFastPeriod = tempInteger;
+      }
+      /* Calculate the fast MA into the tempBuffer. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_MA_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInFastPeriod, optInMAType, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(tempBuffer);
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+      if( retCode != TA_SUCCESS )
+      {
+         free(tempBuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         return retCode;
+      }
+      /* Calculate the slow MA into the output. */
+      /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_MA_OpenInternal( &sub1, inReal, (startIdx), (endIdx) + 1, optInSlowPeriod, optInMAType, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(tempBuffer);
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      if( retCode != TA_SUCCESS )
+      {
+         free(tempBuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         return retCode;
+      }
+      /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+       * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+       * outReal[i], with a non-negative index. An empty slow MA skips the loop.
+       */
+      offset = fastNb - dummyNBElement;
+      /* Calculate (fast MA)-(slow MA) in the output. */
+      for( i = 0; i < (int)dummyNBElement; i += 1 )
+      {
+         sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
+      }
+      free(tempBuffer);
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      sp = (struct TA_APO_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInFastPeriod = optInFastPeriod;
+      sp->optInSlowPeriod = optInSlowPeriod;
+      sp->optInMAType = optInMAType;
+      sp->sub0 = sub0;
+      sp->sub1 = sub1;
+      *outBegIdx = dummyBegIdx;
+      *outNBElement = dummyNBElement;
+      memcpy( outReal, sc_outReal, sizeof(double) * (size_t)dummyNBElement );
+      TA_Free( sc_outReal );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

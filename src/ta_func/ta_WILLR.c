@@ -819,6 +819,179 @@ TA_LIB_API TA_RetCode TA_WILLR_Open( TA_WILLR_Stream **stream, const double inHi
    return TA_WILLR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_WILLR_OpenAndFill( TA_WILLR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_WILLR_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double lowest = 0.0;
+      double highest = 0.0;
+      double tmp;
+      double diff = 0.0;
+      int outIdx;
+      int nbInitialElementNeeded;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int today = 0;
+      int i = 0;
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Initialize 'diff', just to avoid warning. */
+      diff = 0.0;
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      lowestIdx = highestIdx;
+      lowest = 0.0;
+      highest = lowest;
+      diff = highest;
+      while( today <= endIdx )
+      {
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = inLow[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmp = inHigh[i];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         if( diff != 0.0 )
+         {
+            outReal[outIdx++] = (highest - inClose[today]) / diff;
+         } else 
+         {
+            outReal[outIdx++] = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_WILLR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lowest = lowest;
+      sp->highest = highest;
+      sp->diff = diff;
+      sp->trailingIdx = trailingIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->highestIdx = highestIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_WILLR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inHigh ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inHigh ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inLow ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inLow ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inClose ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inClose ) { TA_WILLR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inHigh[fillJ % sp->xCap] = inHigh[fillJ];
+           sp->x_inLow[fillJ % sp->xCap] = inLow[fillJ];
+           sp->x_inClose[fillJ % sp->xCap] = inClose[fillJ];
+        }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_WILLR_Update( TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

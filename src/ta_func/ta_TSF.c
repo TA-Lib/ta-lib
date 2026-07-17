@@ -586,6 +586,141 @@ TA_LIB_API TA_RetCode TA_TSF_Open( TA_TSF_Stream **stream, const double inReal[]
    return TA_TSF_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_TSF_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int today;
+      int lookbackTotal;
+      int trailingIdx;
+      double SumX = 0.0;
+      double SumXY = 0.0;
+      double SumY = 0.0;
+      double SumXSqr;
+      double Divisor = 0.0;
+      double m;
+      double b;
+      int i;
+      double tempValue1;
+      double trailingValue;
+      /* Linear Regression is a concept also known as the
+       * "least squares method" or "best fit." Linear
+       * Regression attempts to fit a straight line between
+       * several data points in such a way that distance
+       * between each data point and the line is minimized.
+       *
+       * For each point, a straight line over the specified
+       * previous bar period is determined in terms
+       * of y = b + m*x:
+       *
+       * TA_LINEARREG          : Returns b+m*(period-1)
+       * TA_LINEARREG_SLOPE    : Returns 'm'
+       * TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+       * TA_LINEARREG_INTERCEPT: Returns 'b'
+       * TA_TSF                : Returns b+m*(period)
+       */
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = TA_TSF_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      today = startIdx;
+      trailingIdx = startIdx - lookbackTotal;
+      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+      /* Prime the two data-dependent window sums for the first output with a
+       * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+       * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+       * 0..period-1 position).
+       */
+      SumXY = 0;
+      SumY = 0;
+      for( i = optInTimePeriod; i-- != 0;  )
+      {
+         tempValue1 = inReal[today - i];
+         SumY += tempValue1;
+         SumXY += (double)i * tempValue1;
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
+      today += 1;
+      /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+       * the window raises every retained value's weight by 1 (adds SumY) and drops
+       * the departing value at full weight (subtracts period*trailingValue). Same
+       * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+       * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       */
+      while( today <= endIdx )
+      {
+         trailingValue = inReal[trailingIdx++];
+         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         SumY = SumY - trailingValue + inReal[today];
+         m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         b = (SumY - m * SumX) / (double)optInTimePeriod;
+         outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
+         today += 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TSF_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->SumX = SumX;
+      sp->SumXY = SumXY;
+      sp->SumY = SumY;
+      sp->Divisor = Divisor;
+      sp->ringCap_trailingIdx = (int)(today - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TSF_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_TSF_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_TSF_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

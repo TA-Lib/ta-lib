@@ -817,6 +817,180 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Open( TA_ACCBANDS_Stream **stream, const doubl
    return TA_ACCBANDS_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
+TA_LIB_API TA_RetCode TA_ACCBANDS_OpenAndFill( TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   struct TA_ACCBANDS_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outRealUpperBand == (const void *)inHigh || (const void *)outRealUpperBand == (const void *)inLow || (const void *)outRealUpperBand == (const void *)inClose || (const void *)outRealMiddleBand == (const void *)inHigh || (const void *)outRealMiddleBand == (const void *)inLow || (const void *)outRealMiddleBand == (const void *)inClose || (const void *)outRealLowerBand == (const void *)inHigh || (const void *)outRealLowerBand == (const void *)inLow || (const void *)outRealLowerBand == (const void *)inClose || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double periodTotalUpper = 0.0;
+      double periodTotalMiddle = 0.0;
+      double periodTotalLower = 0.0;
+      double tempUpper = 0.0;
+      double tempMiddle = 0.0;
+      double tempLower = 0.0;
+      double tempReal;
+      int i;
+      int outIdx;
+      int trailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_SMA_Lookback(optInTimePeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Each band is a simple moving average maintained as a running sum over a
+       * shared trailing window (all three share optInTimePeriod, so one trailing
+       * index walks all three windows in lockstep):
+       *    middle = SMA( close )
+       *    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+       *    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+       * When high+low is zero the upper/lower map degenerates to high/low.
+       * Fusing the three moving averages into one loop is bit-identical to the
+       * former "two scratch buffers + three sma() calls": each accumulator's
+       * add/record/subtract order is unchanged, and the High/Low map is a pure
+       * function recomputed from the raw trailing bar.
+       */
+      periodTotalUpper = 0.0;
+      periodTotalMiddle = 0.0;
+      periodTotalLower = 0.0;
+      trailingIdx = startIdx - lookbackTotal;
+      /* Warm up the running sums with the initial period,
+       * except for the last value.
+       */
+      i = trailingIdx;
+      while( i < startIdx )
+      {
+         tempReal = inHigh[i] + inLow[i];
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+            periodTotalUpper += inHigh[i] * (1 + tempReal);
+            periodTotalLower += inLow[i] * (1 - tempReal);
+         } else 
+         {
+            periodTotalUpper += inHigh[i];
+            periodTotalLower += inLow[i];
+         }
+         periodTotalMiddle += inClose[i];
+         i = i + 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and output to be the
+       * same buffer: every trailing bar is read before any output is written.
+       */
+      outIdx = 0;
+      while( i <= endIdx )
+      {
+         /* Add the incoming bar to each running sum. */
+         tempReal = inHigh[i] + inLow[i];
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+            periodTotalUpper += inHigh[i] * (1 + tempReal);
+            periodTotalLower += inLow[i] * (1 - tempReal);
+         } else 
+         {
+            periodTotalUpper += inHigh[i];
+            periodTotalLower += inLow[i];
+         }
+         periodTotalMiddle += inClose[i];
+         i = i + 1;
+         /* Record the current window sums. */
+         tempUpper = periodTotalUpper;
+         tempMiddle = periodTotalMiddle;
+         tempLower = periodTotalLower;
+         /* Remove the trailing bar from each running sum. */
+         tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+            periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
+            periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
+         } else 
+         {
+            periodTotalUpper -= inHigh[trailingIdx];
+            periodTotalLower -= inLow[trailingIdx];
+         }
+         periodTotalMiddle -= inClose[trailingIdx];
+         trailingIdx = trailingIdx + 1;
+         /* Write the three bands. */
+         outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
+         outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
+         outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
+         outIdx = outIdx + 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ACCBANDS_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->periodTotalUpper = periodTotalUpper;
+      sp->periodTotalMiddle = periodTotalMiddle;
+      sp->periodTotalLower = periodTotalLower;
+      sp->tempUpper = tempUpper;
+      sp->tempMiddle = tempMiddle;
+      sp->tempLower = tempLower;
+      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+        sp->ring_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inLow, inLow + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+        sp->ring_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inClose, inClose + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;

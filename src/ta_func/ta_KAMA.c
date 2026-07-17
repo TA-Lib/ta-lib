@@ -1021,6 +1021,264 @@ TA_LIB_API TA_RetCode TA_KAMA_Open( TA_KAMA_Stream **stream, const double inReal
    return TA_KAMA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_KAMA_OpenAndFill( TA_KAMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_KAMA_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_KAMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_KAMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdx = 0;
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_KAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_KAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
+      }
+      sp->ringPos_trailingIdx = 0;
+      {
+         int fillLb = TA_KAMA_Lookback( optInTimePeriod );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
+   {
+      double constMax = 2.0 / (30.0 + 1.0);
+      double constDiff = 2.0 / (2.0 + 1.0) - constMax;
+      double tempReal;
+      double tempReal2;
+      double sumROC1 = 0.0;
+      double periodROC;
+      double prevKAMA = 0.0;
+      int i;
+      int today;
+      int outIdx;
+      int lookbackTotal;
+      int trailingIdx;
+      double trailingValue = 0.0;
+      /* Default return values */
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). The unstable period
+       * still delays the first output for API consistency.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         lookbackTotal = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_KAMA,Kama);
+         if( startIdx < lookbackTotal )
+         {
+            startIdx = lookbackTotal;
+         }
+         if( startIdx > endIdx )
+         {
+            return TA_BAD_PARAM;
+         }
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            outReal[outIdx++] = inReal[today++];
+         }
+         *outNBElement= outIdx;
+         return TA_BAD_PARAM;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_KAMA,Kama);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Initialize the variables by going through
+       * the lookback period.
+       */
+      sumROC1 = 0.0;
+      today = startIdx - lookbackTotal;
+      trailingIdx = today;
+      i = optInTimePeriod;
+      while( i-- > 0 )
+      {
+         tempReal = inReal[today++];
+         tempReal -= inReal[today];
+         sumROC1 += fabs(tempReal);
+      }
+      /* At this point sumROC1 represent the
+       * summation of the 1-day price difference
+       * over the (optInTimePeriod-1)
+       */
+      /* Calculate the first KAMA */
+      /* The yesterday price is used here as the previous KAMA. */
+      prevKAMA = inReal[today - 1];
+      tempReal = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
+      periodROC = tempReal - tempReal2;
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
+      /* Calculate the efficiency ratio */
+      if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
+      {
+         tempReal = 1.0;
+      } else 
+      {
+         tempReal = fabs(periodROC / sumROC1);
+      }
+      /* Calculate the smoothing constant */
+      tempReal = fma(tempReal, constDiff, constMax);
+      tempReal *= tempReal;
+      /* Calculate the KAMA like an EMA, using the
+       * smoothing constant as the adaptive factor.
+       */
+      prevKAMA = fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+      /* 'today' keep track of where the processing is within the
+       * input.
+       */
+      /* Skip the unstable period. Do the whole processing
+       * needed for KAMA, but do not write it in the output.
+       */
+      while( today <= startIdx )
+      {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= fabs(trailingValue - tempReal2);
+         sumROC1 += fabs(tempReal - inReal[today - 1]);
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
+         {
+            tempReal = 1.0;
+         } else 
+         {
+            tempReal = fabs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = fma(tempReal, constDiff, constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+      }
+      /* Write the first value. */
+      outReal[0] = prevKAMA;
+      outIdx = 1;
+      *outBegIdx= today - 1;
+      /* Do the KAMA calculation for the requested range. */
+      while( today <= endIdx )
+      {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= fabs(trailingValue - tempReal2);
+         sumROC1 += fabs(tempReal - inReal[today - 1]);
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
+         {
+            tempReal = 1.0;
+         } else 
+         {
+            tempReal = fabs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = fma(tempReal, constDiff, constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+         outReal[outIdx++] = prevKAMA;
+      }
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_KAMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->constMax = constMax;
+      sp->constDiff = constDiff;
+      sp->sumROC1 = sumROC1;
+      sp->prevKAMA = prevKAMA;
+      sp->trailingValue = trailingValue;
+      sp->ringCap_trailingIdx = (int)(today - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_KAMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_KAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_KAMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      sp->lag1_inReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_KAMA_Update( TA_KAMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

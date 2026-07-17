@@ -214,6 +214,45 @@ TA_LIB_API TA_RetCode TA_LOG10_Open( TA_LOG10_Stream **stream, const double inRe
    return TA_LOG10_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_LOG10_OpenAndFill( TA_LOG10_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_LOG10_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int outIdx;
+      int i;
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+      {
+         outReal[outIdx] = log10(inReal[i]);
+      }
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_LOG10_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

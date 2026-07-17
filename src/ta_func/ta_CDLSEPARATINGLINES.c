@@ -851,6 +851,226 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Open( TA_CDLSEPARATINGLINES_Stream *
    return TA_CDLSEPARATINGLINES_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_OpenAndFill( TA_CDLSEPARATINGLINES_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDLSEPARATINGLINES_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
+      int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
+      double ShadowVeryShortPeriodTotal = 0.0;
+      double BodyLongPeriodTotal = 0.0;
+      double EqualPeriodTotal = 0.0;
+      int i;
+      int outIdx;
+      int ShadowVeryShortTrailingIdx;
+      int BodyLongTrailingIdx;
+      int EqualTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLSEPARATINGLINES_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      ShadowVeryShortPeriodTotal = 0;
+      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+      BodyLongPeriodTotal = 0;
+      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+      EqualPeriodTotal = 0;
+      EqualTrailingIdx = startIdx - Equal_avgPeriod;
+      i = ShadowVeryShortTrailingIdx;
+      while( i < startIdx )
+      {
+         ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i);
+         i += 1;
+      }
+      i = BodyLongTrailingIdx;
+      while( i < startIdx )
+      {
+         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i);
+         i += 1;
+      }
+      i = EqualTrailingIdx;
+      while( i < startIdx )
+      {
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle: black (white) candle
+       * - second candle: bullish (bearish) belt hold with the same open as the prior candle
+       * The meaning of "long body" and "very short shadow" of the belt hold is specified with TA_SetCandleSettings
+       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+       * the user should consider that separating lines is significant when coming in a trend and the belt hold has
+       * the same direction of the trend, while this function does not consider it
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* opposite candles */
+             inOpen[i] <= inOpen[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* same open */
+             inOpen[i] >= inOpen[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) &&
+             fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && /* belt hold: long body */
+             (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) ) /* with no lower shadow if bullish with no upper shadow if bearish */
+         {
+            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         } else 
+         {
+            outInteger[outIdx++] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx);
+         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx);
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+         i += 1;
+         ShadowVeryShortTrailingIdx += 1;
+         BodyLongTrailingIdx += 1;
+         EqualTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLSEPARATINGLINES_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+      sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+      sp->EqualPeriodTotal = EqualPeriodTotal;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+        sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+        sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_BodyLongTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyLongTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyLongTrailingIdx );
+      }
+      sp->ringPos_BodyLongTrailingIdx = 0;
+      sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
+      sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+        sp->ring_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inOpen[fillJ % sp->ringCap_EqualTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inHigh[fillJ % sp->ringCap_EqualTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inLow[fillJ % sp->ringCap_EqualTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inClose[fillJ % sp->ringCap_EqualTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
+      sp->ringCap_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
+      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+        sp->ring_ShadowVeryShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inOpen ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_ShadowVeryShortTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowVeryShortTrailingIdx );
+        sp->ring_ShadowVeryShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inHigh ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_ShadowVeryShortTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowVeryShortTrailingIdx );
+        sp->ring_ShadowVeryShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inLow ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_ShadowVeryShortTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowVeryShortTrailingIdx );
+        sp->ring_ShadowVeryShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inClose ) { TA_CDLSEPARATINGLINES_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_ShadowVeryShortTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx), sizeof(double) * (size_t)sp->ringCap_ShadowVeryShortTrailingIdx );
+      }
+      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Update( TA_CDLSEPARATINGLINES_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

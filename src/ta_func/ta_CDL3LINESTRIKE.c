@@ -697,6 +697,191 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Open( TA_CDL3LINESTRIKE_Stream **stream,
    return TA_CDL3LINESTRIKE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
+TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_OpenAndFill( TA_CDL3LINESTRIKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDL3LINESTRIKE_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+      double NearPeriodTotal[4] = {0};
+      int i;
+      int outIdx;
+      int totIdx = 0;
+      int NearTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDL3LINESTRIKE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal[3] = 0;
+      NearPeriodTotal[2] = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE(Near,i - 3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+       * each opening within or near the previous real body
+       * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+       * the first candle's open
+       * The meaning of "near" is specified with TA_SetCandleSettings;
+       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+       * the user should consider that 3-line strike is significant when it appears in a trend in the same direction of
+       * the first three candles, while this function does not consider it
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) && /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) &&
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 4th opposite color */
+             inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
+             inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) &&
+             inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
+             inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) &&
+             (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+         {
+            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         } else 
+         {
+            outInteger[outIdx++] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+         {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
+         }
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDL3LINESTRIKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->totIdx = totIdx;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inOpen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inOpen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inOpen[fillJ % sp->ringCap_NearTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inHigh ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inHigh ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inHigh[fillJ % sp->ringCap_NearTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inLow ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inLow ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inLow[fillJ % sp->ringCap_NearTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inClose ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inClose ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inClose[fillJ % sp->ringCap_NearTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->winCap_totIdx = (int)(4);
+      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inOpen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inOpen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inOpen, inOpen + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inHigh ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inHigh ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inHigh, inHigh + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inLow ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inLow ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inLow, inLow + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inClose ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inClose ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inClose, inClose + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->winPos_totIdx = 0;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag3_inOpen = inOpen[historyLen - 3];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->lag3_inClose = inClose[historyLen - 3];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Update( TA_CDL3LINESTRIKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

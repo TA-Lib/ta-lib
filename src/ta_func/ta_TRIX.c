@@ -811,6 +811,188 @@ TA_LIB_API TA_RetCode TA_TRIX_Open( TA_TRIX_Stream **stream, const double inReal
    return TA_TRIX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_TRIX_OpenAndFill( TA_TRIX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_TRIX_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double prevEMA1 = 0.0;
+      double prevEMA2 = 0.0;
+      double prevEMA3 = 0.0;
+      double tempReal;
+      double optInK_1 = 0.0;
+      int i;
+      int today;
+      int outIdx;
+      int lookbackEMA;
+      int lookbackTotal;
+      /* TRIX = 1-day percent rate-of-change of a triple EMA. */
+      /* Will change only on success. */
+      *outNBElement= 0;
+      *outBegIdx= 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + TA_ROCR_Lookback(1);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_BAD_PARAM;
+      }
+      /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+       * roc() of consecutive EMA3 values. Output element j is the TRIX
+       * of bar startIdx+j (fix #98). The arithmetic order below is the
+       * bit-exactness contract — do not reorder or fuse operations; the
+       * seed sums accumulate from 0.0 in production order (0.0+x is not
+       * x for x=-0.0). In-place safe: outReal[outIdx] is written after
+       * inReal[startIdx+outIdx] was read.
+       */
+      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - (lookbackEMA * 2 + 1) )
+         {
+            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
+         tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
+      } else 
+      {
+         /* Metastock/Tradestation: seed EMA1 from the first price
+          * bar, EMA2 from the first EMA1 value.
+          */
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - (lookbackEMA * 2 + 1) )
+         {
+            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         }
+         prevEMA2 = prevEMA1;
+      }
+      /* Advance EMA1 and EMA2 in lockstep through the unstable
+       * period of EMA2, up to the bar where EMA3 seeding begins.
+       */
+      while( today <= startIdx - (lookbackEMA + 1) )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      }
+      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
+         tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+            prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
+      } else 
+      {
+         /* Metastock/Tradestation: seed EMA3 from the first EMA2
+          * value.
+          */
+         prevEMA3 = prevEMA2;
+      }
+      /* Advance all three EMA in lockstep through the unstable
+       * period of EMA3, up to the bar before the first output.
+       */
+      while( today <= startIdx - 1 )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      }
+      /* Stable zone: keep advancing the three EMA in lockstep and
+       * write the 1-day rate-of-change of EMA3 into the output.
+       */
+      outIdx = 0;
+      while( today <= endIdx )
+      {
+         tempReal = prevEMA3;
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         if( tempReal != 0.0 )
+         {
+            outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
+         } else 
+         {
+            outReal[outIdx++] = 0.0;
+         }
+      }
+      /* Succeed. Indicate where the output starts relative to
+       * the caller input.
+       */
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_TRIX_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevEMA1 = prevEMA1;
+      sp->prevEMA2 = prevEMA2;
+      sp->prevEMA3 = prevEMA3;
+      sp->optInK_1 = optInK_1;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

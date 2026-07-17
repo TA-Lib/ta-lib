@@ -1224,6 +1224,7 @@ typedef struct {
     int               streamLegs;
     int               streamSkipped;
     int               streamRejectArms;
+    int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
 } ForEachFuncContext;
 
 static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -2222,6 +2223,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int vecIsEnum[STREAM_MAX_VEC];
     int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
+    int fillChecked = 0;   /* set once any leg reports OpenAndFill was verified */
     int isUnstable;
 
     if( ctx->error != TA_TEST_PASS ) return;
@@ -2325,6 +2327,25 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 ctx->error = TA_CODEGEN_STREAM_MISMATCH;
                 return;
             }
+            /* OpenAndFill leg (loop tier today): the whole filled array ==
+             * batch(0,n-1) bitwise. Checked before the generic ok flag so a
+             * fill-only regression reports its own message; folded into ok
+             * server-side too, so it fails even if this check regresses. */
+            if( stream_flag(ctx->responseBuf, "\"fill_checked\":") == 1 )
+            {
+                fillChecked = 1;
+                if( stream_flag(ctx->responseBuf, "\"fill_ok\":") != 1 )
+                {
+                    printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d compat=%d "
+                           "(OpenAndFill array != batch(0,n-1))\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
             if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
                 stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
             {
@@ -2360,6 +2381,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamFunctions++;
     ctx->streamLegs += legs;
     ctx->streamRejectArms += rejArms;
+    if( fillChecked ) ctx->streamFillFunctions++;
 }
 
 /* ---- Test orchestration (Task 9) ---- */
@@ -2568,15 +2590,33 @@ static ErrorNumber test_codegen_for_language(
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
         if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
         {
-            ctx.streamFunctions   = 0;
-            ctx.streamLegs        = 0;
-            ctx.streamSkipped     = 0;
-            ctx.streamRejectArms  = 0;
+            ctx.streamFunctions     = 0;
+            ctx.streamLegs          = 0;
+            ctx.streamSkipped       = 0;
+            ctx.streamRejectArms    = 0;
+            ctx.streamFillFunctions = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
-                   "%d expected-reject probes, %d without a stream\n",
+                   "%d expected-reject probes, %d without a stream\n"
+                   "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
-                   ctx.streamSkipped);
+                   ctx.streamSkipped, ctx.streamFillFunctions);
+            /* Coverage ratchet: every function with a server stream must ALSO
+             * verify OpenAndFill (the emit side and this verify side both gate on
+             * the same has_open_and_fill, so they cannot desync silently — but if
+             * a future tier stops emitting OpenAndFill, that function still streams
+             * and passes the legs floor while emitting no fill leg. This floor
+             * fails loudly the moment fill coverage drops below stream coverage,
+             * the OpenAndFill analogue of the legs<=0 STREAM VACUOUS floor. */
+            if( ctx.error == TA_TEST_PASS &&
+                ctx.streamFillFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM FILL VACUOUS: only %d of %d streaming functions "
+                       "verified OpenAndFill — every streamable function must also "
+                       "gate-verify its fill array\n",
+                       ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
         }
         else if( probeErr == TA_TEST_PASS )
         {

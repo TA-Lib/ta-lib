@@ -385,6 +385,81 @@ TA_LIB_API TA_RetCode TA_AD_Open( TA_AD_Stream **stream, const double inHigh[], 
    return TA_AD_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_AD_OpenAndFill( TA_AD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_AD_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int nbBar;
+      int currentBar;
+      int outIdx;
+      double high;
+      double low;
+      double close;
+      double tmp;
+      double ad = 0.0;
+      /* Note: Results from this function might vary slightly
+       *       from Metastock outputs. The reason being that
+       *       Metastock use float instead of double and this
+       *       cause a different floating-point precision to
+       *       be used.
+       *
+       *       For most function, this is not an apparent difference
+       *       but for function using large cummulative values (like
+       *       this AD function), minor imprecision adds up and becomes
+       *       significative.
+       *
+       *       For better precision, TA-Lib use double in all its
+       *       its calculations.
+       */
+      /* Default return values */
+      nbBar = endIdx - startIdx + 1;
+      *outNBElement= nbBar;
+      *outBegIdx= startIdx;
+      currentBar = startIdx;
+      outIdx = 0;
+      ad = 0.0;
+      while( nbBar != 0 )
+      {
+         high = inHigh[currentBar];
+         low = inLow[currentBar];
+         tmp = high - low;
+         close = inClose[currentBar];
+         if( tmp > 0.0 )
+         {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
+         }
+         outReal[outIdx++] = ad;
+         currentBar += 1;
+         nbBar -= 1;
+      }
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->ad = ad;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -1024,6 +1024,282 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Open( TA_MACDEXT_Stream **stream, const double 
    return TA_MACDEXT_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outMACD, outMACDSignal, outMACDHist );
 }
 
+TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   struct TA_MACDEXT_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outMACD;
+   double *sc_outMACDSignal;
+   double *sc_outMACDHist;
+   TA_MA_Stream *sub0;
+   TA_MA_Stream *sub1;
+   TA_MA_Stream *sub2;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
+   if( (int)optInFastPeriod == (int)0x80000000 )
+      optInFastPeriod = 12;
+   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInFastMAType == (int)0x80000000 )
+      optInFastMAType = 0;
+   if( (int)optInSlowPeriod == (int)0x80000000 )
+      optInSlowPeriod = 26;
+   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowMAType == (int)0x80000000 )
+      optInSlowMAType = 0;
+   if( (int)optInSignalPeriod == (int)0x80000000 )
+      optInSignalPeriod = 9;
+   else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSignalMAType == (int)0x80000000 )
+      optInSignalMAType = 0;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   sub1 = NULL;
+   sub2 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outMACD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outMACD ) { return TA_ALLOC_ERR; }
+   sc_outMACDSignal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outMACDSignal ) { TA_Free( sc_outMACD ); return TA_ALLOC_ERR; }
+   sc_outMACDHist = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outMACDHist ) { TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); return TA_ALLOC_ERR; }
+
+   {
+      double *slowMABuffer;
+      double *fastMABuffer;
+      TA_RetCode retCode;
+      int tempInteger;
+      int outBegIdx1;
+      int outNbElement1;
+      int outBegIdx2;
+      int outNbElement2;
+      int lookbackTotal;
+      int lookbackSignal;
+      int lookbackLargest;
+      int i;
+      int tempMAType;
+      /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+       * to its single-pass implementation. Period 1 stays on the generic
+       * path: ma() copies the input for it instead of running an EMA
+       * recursion.
+       */
+      /* Make sure slow is really slower than
+       * the fast period! if not, swap...
+       */
+      if( optInSlowPeriod < optInFastPeriod )
+      {
+         /* swap period */
+         tempInteger = optInSlowPeriod;
+         optInSlowPeriod = optInFastPeriod;
+         optInFastPeriod = tempInteger;
+         /* swap type */
+         tempMAType = optInSlowMAType;
+         optInSlowMAType = optInFastMAType;
+         optInFastMAType = tempMAType;
+      }
+      /* Find the MA with the largest lookback */
+      lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
+      tempInteger = TA_MA_Lookback(optInSlowPeriod,optInSlowMAType);
+      if( tempInteger > lookbackLargest )
+      {
+         lookbackLargest = tempInteger;
+      }
+      /* Add the lookback needed for the signal line */
+      lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+      lookbackTotal = lookbackSignal + lookbackLargest;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_BAD_PARAM;
+      }
+      /* Allocate intermediate buffer for fast/slow MA. */
+      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
+      fastMABuffer = malloc(tempInteger * sizeof(double));
+      if( !fastMABuffer )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_ALLOC_ERR;
+      }
+      if( !fastMABuffer )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_ALLOC_ERR;
+      }
+      slowMABuffer = malloc(tempInteger * sizeof(double));
+      if( !slowMABuffer )
+      {
+         free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_ALLOC_ERR;
+      }
+      if( !slowMABuffer )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         free(fastMABuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_ALLOC_ERR;
+      }
+      /* Calculate the slow MA.
+       *
+       * Move back the startIdx to get enough data
+       * for the signal period. That way, once the
+       * signal calculation is done, all the output
+       * will start at the requested 'startIdx'.
+       */
+      tempInteger = startIdx - lookbackSignal;
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_MA_OpenInternal( &sub0, inReal, (tempInteger), (endIdx) + 1, optInSlowPeriod, optInSlowMAType, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(fastMABuffer);
+            free(slowMABuffer);
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(tempInteger,endIdx,inReal,optInSlowPeriod,optInSlowMAType,&outBegIdx1,&outNbElement1,slowMABuffer);
+      if( retCode != TA_SUCCESS )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         free(fastMABuffer);
+         free(slowMABuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return retCode;
+      }
+      /* Calculate the fast MA. */
+      /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_MA_OpenInternal( &sub1, inReal, (tempInteger), (endIdx) + 1, optInFastPeriod, optInFastMAType, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(fastMABuffer);
+            free(slowMABuffer);
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(tempInteger,endIdx,inReal,optInFastPeriod,optInFastMAType,&outBegIdx2,&outNbElement2,fastMABuffer);
+      if( retCode != TA_SUCCESS )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         free(fastMABuffer);
+         free(slowMABuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return retCode;
+      }
+      /* Parano tests. Will be removed eventually. */
+      if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         free(fastMABuffer);
+         free(slowMABuffer);
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return TA_BAD_PARAM;
+      }
+      /* Calculate (fast MA) - (slow MA). */
+      for( i = 0; i < outNbElement1; i += 1 )
+      {
+         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
+      }
+      /* Copy the result into the output for the caller. */
+      /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
+      memmove(sc_outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+      /* Calculate the signal/trigger line. */
+      /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_MA_OpenInternal( &sub2, fastMABuffer, (0), (outNbElement1 - 1) + 1, optInSignalPeriod, optInSignalMAType, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(fastMABuffer);
+            free(slowMABuffer);
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            return subRc;
+         }
+      }
+      retCode = TA_MA_Unguarded(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,sc_outMACDSignal);
+      free(fastMABuffer);
+      free(slowMABuffer);
+      if( retCode != TA_SUCCESS )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         return retCode;
+      }
+      /* Calculate the histogram. */
+      for( i = 0; i < outNbElement2; i += 1 )
+      {
+         sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
+      }
+      /* All done! Indicate the output limits and return success. */
+      dummyBegIdx = startIdx;
+      dummyNBElement = outNbElement2;
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist ); return TA_BAD_PARAM; }
+      sp = (struct TA_MACDEXT_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInFastPeriod = optInFastPeriod;
+      sp->optInFastMAType = optInFastMAType;
+      sp->optInSlowPeriod = optInSlowPeriod;
+      sp->optInSlowMAType = optInSlowMAType;
+      sp->optInSignalPeriod = optInSignalPeriod;
+      sp->optInSignalMAType = optInSignalMAType;
+      sp->sub0 = sub0;
+      sp->sub1 = sub1;
+      sp->sub2 = sub2;
+      *outBegIdx = dummyBegIdx;
+      *outNBElement = dummyNBElement;
+      memcpy( outMACD, sc_outMACD, sizeof(double) * (size_t)dummyNBElement );
+      memcpy( outMACDSignal, sc_outMACDSignal, sizeof(double) * (size_t)dummyNBElement );
+      memcpy( outMACDHist, sc_outMACDHist, sizeof(double) * (size_t)dummyNBElement );
+      TA_Free( sc_outMACD );
+      TA_Free( sc_outMACDSignal );
+      TA_Free( sc_outMACDHist );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;

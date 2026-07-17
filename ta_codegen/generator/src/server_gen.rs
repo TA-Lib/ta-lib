@@ -847,8 +847,34 @@ fn emit_sv_dispatch_precheck(
         .map(|i| format!("&v{i}"))
         .collect::<Vec<_>>()
         .join(", ");
+    // An unsupported arm (MAMA) must reject at OpenAndFill too, not just Open —
+    // otherwise a regression could return SUCCESS with an unwritten output array
+    // (silent garbage) on the exact param the header documents as rejected.
+    // Every streamable function has an OpenAndFill, so this is unconditional.
+    let fill_block = {
+        let (mut ri, mut ii) = (0usize, 0usize);
+        let fill_bufs: String = func
+            .outputs
+            .iter()
+            .map(|ou| {
+                if ou.param_type == ParamType::Integer {
+                    let e = format!("sv_if{ii}");
+                    ii += 1;
+                    e
+                } else {
+                    let e = format!("sv_f{ri}");
+                    ri += 1;
+                    e
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!(
+            "            {{ TA_{name}_Stream *stf = NULL; int fBeg = 0, fNb = 0;\n              TA_RetCode frc = TA_{name}_OpenAndFill( &stf, {pre_in_args}svN, {pre_opt_args}&fBeg, &fNb, {fill_bufs} );\n              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;\n              if( stf ) TA_{name}_Close( stf ); }}\n"
+        )
+    };
     s.push_str(&format!(
-        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
+        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n{fill_block}            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
     ));
 }
 
@@ -1098,6 +1124,10 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
     s.push_str("static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];\n");
     s.push_str("static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];\n");
+    // OpenAndFill scratch: the whole-history arrays it fills, compared bitwise
+    // against the batch buffers above (sv_b*/sv_ib*).
+    s.push_str("static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN];\n");
+    s.push_str("static int sv_if0[SV_MAXN], sv_if1[SV_MAXN];\n");
     s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n");
     // Candle-settings variation for CDL streams: rounds 1/2 re-run the
     // batch-vs-stream comparison with every setting's avgPeriod bumped (+3)
@@ -1186,6 +1216,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         let candle = func.flags.iter().any(|f| f == "candlestick");
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
+        s.push_str("        int fillOk = 1, fillChecked = 0;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
         if candle {
             // Candle functions honor "candleLegs": re-run the whole sweep
@@ -1282,6 +1313,108 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             s.push_str(&format!("            TA_SetUnstablePeriod({id}, 0);\n"));
         }
         emit_sv_batch_fail_tail(&mut s, candle);
+
+        // OpenAndFill leg: the whole filled array must equal batch(0, svN-1)
+        // bit-for-bit, and its begIdx/nb must match batch. Same seeded inputs +
+        // same algorithm => same bits — an INVARIANT check (batch's numeric
+        // correctness is owned by the reference-oracle tests, not re-checked
+        // here). Runs where bbuf still holds batch(0,svN-1) at the current
+        // K/compat/(candle round) settings. Every streamable function has an
+        // OpenAndFill, so the leg is unconditional (the driver's fill-coverage
+        // floor asserts every streaming function reaches here).
+        {
+            let fbuf: Vec<String> = {
+                let (mut ri, mut ii) = (0usize, 0usize);
+                out_is_int
+                    .iter()
+                    .map(|is_int| {
+                        if *is_int {
+                            let e = format!("sv_if{ii}");
+                            ii += 1;
+                            e
+                        } else {
+                            let e = format!("sv_f{ri}");
+                            ri += 1;
+                            e
+                        }
+                    })
+                    .collect()
+            };
+            let fill_arrays = fbuf.join(", ");
+            s.push_str("        {\n");
+            s.push_str("            int fBeg = 0, fNb = 0, ft;\n");
+            s.push_str(&format!("            TA_{name}_Stream *stf = NULL;\n"));
+            s.push_str(&format!(
+                "            TA_RetCode frc = TA_{name}_OpenAndFill(&stf, {in_args}svN, {opt_args}&fBeg, &fNb, {fill_arrays});\n"
+            ));
+            s.push_str("            fillChecked = 1;\n");
+            s.push_str("            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;\n");
+            s.push_str("            else for( ft = 0; fillOk && ft < svNb; ft++ ) {\n");
+            for (i, is_int) in out_is_int.iter().enumerate() {
+                if *is_int {
+                    s.push_str(&format!(
+                        "                if( {}[ft] != {}[ft] ) fillOk = 0;\n",
+                        fbuf[i], bbuf[i]
+                    ));
+                } else {
+                    s.push_str(&format!(
+                        "                if( sv_bitne({}[ft], {}[ft]) ) fillOk = 0;\n",
+                        fbuf[i], bbuf[i]
+                    ));
+                }
+            }
+            s.push_str("            }\n");
+            s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
+            s.push_str("        }\n");
+
+            // Aliasing-guard probe: an OpenAndFill output that aliases an input
+            // MUST reject (out==in is forbidden — stricter than batch — because
+            // the capture epilogue re-reads the input tail; a dropped guard would
+            // silently corrupt). The gate's normal leg passes distinct buffers,
+            // so without this the guard is unverified. Only when output 0 is
+            // real: an integer output cannot alias a double input, and there is
+            // no integer input to alias against.
+            if !out_is_int.first().copied().unwrap_or(true) && !input_arrays.is_empty() {
+                let alias_out: Vec<String> = fbuf
+                    .iter()
+                    .enumerate()
+                    .map(|(i, b)| if i == 0 { input_arrays[0].to_string() } else { b.clone() })
+                    .collect::<Vec<_>>();
+                let alias_args = alias_out.join(", ");
+                s.push_str("        {\n");
+                s.push_str("            int alB = 0, alN = 0;\n");
+                s.push_str(&format!("            TA_{name}_Stream *sal = NULL;\n"));
+                s.push_str(&format!(
+                    "            TA_RetCode alrc = TA_{name}_OpenAndFill(&sal, {in_args}svN, {opt_args}&alB, &alN, {alias_args});\n"
+                ));
+                s.push_str("            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;\n");
+                s.push_str(&format!("            if( sal ) TA_{name}_Close(sal);\n"));
+                s.push_str("        }\n");
+            }
+            // Output-output aliasing probe (multi-output funcs): two outputs
+            // sharing a buffer must reject (#108 class). Covers the mutual-
+            // distinctness guard the input-output probe above never touches, and
+            // exercises the integer-output multi-out funcs (MINMAXINDEX) whose
+            // guard the input-output probe skips. Outputs are homogeneously typed,
+            // so aliasing output 1 onto output 0's buffer is type-consistent.
+            if n_outs >= 2 {
+                let aa_out: Vec<String> = fbuf
+                    .iter()
+                    .enumerate()
+                    .map(|(i, b)| if i == 1 { fbuf[0].clone() } else { b.clone() })
+                    .collect::<Vec<_>>();
+                let aa_args = aa_out.join(", ");
+                s.push_str("        {\n");
+                s.push_str("            int aaB = 0, aaN = 0;\n");
+                s.push_str(&format!("            TA_{name}_Stream *saa = NULL;\n"));
+                s.push_str(&format!(
+                    "            TA_RetCode aarc = TA_{name}_OpenAndFill(&saa, {in_args}svN, {opt_args}&aaB, &aaN, {aa_args});\n"
+                ));
+                s.push_str("            if( !( aarc == TA_BAD_PARAM && !saa ) ) fillOk = 0;\n");
+                s.push_str(&format!("            if( saa ) TA_{name}_Close(saa);\n"));
+                s.push_str("        }\n");
+            }
+        }
 
         // Prefix sweep candidates (dedup, clamped to [lb+1, svN-1]).
         // Seed-boundary functions (RSI/CMO under Metastock) honestly reject
@@ -1418,10 +1551,14 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
             s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
         }
         s.push_str("        TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
+        // Fold fill into ok as a safety net (the driver also checks fill_ok
+        // explicitly for a clearer message), so a fill regression fails the run
+        // even if the driver's fill check ever regresses.
+        s.push_str("        if( fillChecked && !fillOk ) allOk = 0;\n");
         if candle {
-            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, allOk, peekAll);\n");
+            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);\n");
         } else {
-            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", allOk, peekAll);\n");
+            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", fillChecked, fillOk, allOk, peekAll);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");

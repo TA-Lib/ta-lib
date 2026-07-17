@@ -315,6 +315,62 @@ TA_LIB_API TA_RetCode TA_OBV_Open( TA_OBV_Stream **stream, const double inReal[]
    return TA_OBV_OpenInternal( stream, inReal, inVolume, 0, historyLen, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_OBV_OpenAndFill( TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_OBV_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inVolume || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      double prevReal = 0.0;
+      double tempReal;
+      double prevOBV = 0.0;
+      prevOBV = inVolume[startIdx];
+      prevReal = inReal[startIdx];
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 )
+      {
+         tempReal = inReal[i];
+         if( tempReal > prevReal )
+         {
+            prevOBV += inVolume[i];
+         } else if( tempReal < prevReal )
+         {
+            prevOBV -= inVolume[i];
+         }
+         outReal[outIdx++] = prevOBV;
+         prevReal = tempReal;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_OBV_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->prevReal = prevReal;
+      sp->prevOBV = prevOBV;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

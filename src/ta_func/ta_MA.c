@@ -538,6 +538,120 @@ TA_LIB_API TA_RetCode TA_MA_Open( TA_MA_Stream **stream, const double inReal[], 
    return TA_MA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInMAType, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MA_Stream *sp;
+   TA_RetCode retCode;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == (int)0x80000000 )
+      optInMAType = 0;
+
+   sp = (struct TA_MA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   memset( sp, 0, sizeof(*sp) );
+   sp->optInTimePeriod = optInTimePeriod;
+   sp->optInMAType = optInMAType;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
+      {
+         int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
+   retCode = TA_BAD_PARAM;
+   switch( optInMAType )
+   {
+   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+      {
+         TA_SMA_Stream *sub = NULL;
+         retCode = TA_SMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+      {
+         TA_EMA_Stream *sub = NULL;
+         retCode = TA_EMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+      {
+         TA_WMA_Stream *sub = NULL;
+         retCode = TA_WMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+      {
+         TA_DEMA_Stream *sub = NULL;
+         retCode = TA_DEMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+      {
+         TA_TEMA_Stream *sub = NULL;
+         retCode = TA_TEMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+      {
+         TA_TRIMA_Stream *sub = NULL;
+         retCode = TA_TRIMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+      {
+         TA_KAMA_Stream *sub = NULL;
+         retCode = TA_KAMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+      {
+         TA_T3_Stream *sub = NULL;
+         retCode = TA_T3_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */
+   default:
+      retCode = TA_BAD_PARAM;
+      break;
+   }
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( sp );
+      return retCode;
+   }
+   *stream = sp;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

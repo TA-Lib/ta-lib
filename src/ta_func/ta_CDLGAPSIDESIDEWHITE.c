@@ -742,6 +742,207 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Open( TA_CDLGAPSIDESIDEWHITE_Stream
    return TA_CDLGAPSIDESIDEWHITE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenAndFill( TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDLGAPSIDESIDEWHITE_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+      double NearPeriodTotal = 0.0;
+      double EqualPeriodTotal = 0.0;
+      int i;
+      int outIdx;
+      int NearTrailingIdx;
+      int EqualTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLGAPSIDESIDEWHITE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      EqualPeriodTotal = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      EqualTrailingIdx = startIdx - Equal_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal += TA_CANDLERANGE(Near,i - 1);
+         i += 1;
+      }
+      i = EqualTrailingIdx;
+      while( i < startIdx )
+      {
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - upside or downside gap (between the bodies)
+       * - first candle after the window: white candlestick
+       * - second candle after the window: white candlestick with similar size (near the same) and about the same
+       *   open (equal) of the previous candle
+       * - the second candle does not close the window
+       * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
+       * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
+       * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
+       * does not consider the trend
+       */
+      outIdx = 0;
+      do
+      {
+         if( (((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((min(inOpen[i],inClose[i]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) || ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((max(inOpen[i],inClose[i]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && /* 2nd: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&         /* 3rd: white */
+             fabs(inClose[i] - inOpen[i]) >= fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) && /* same size 2 and 3 */
+             fabs(inClose[i] - inOpen[i]) <= fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) &&
+             inOpen[i] >= inOpen[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* same open 2 and 3 */
+             inOpen[i] <= inOpen[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
+         {
+            outInteger[outIdx++] = ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ? 100 : 0 - 100;
+         } else 
+         {
+            outInteger[outIdx++] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += TA_CANDLERANGE(Near,i - 1) - TA_CANDLERANGE(Near,NearTrailingIdx - 1);
+         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+         i += 1;
+         NearTrailingIdx += 1;
+         EqualTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLGAPSIDESIDEWHITE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->EqualPeriodTotal = EqualPeriodTotal;
+      sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
+      sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+        sp->ring_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inOpen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inOpen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inOpen[fillJ % sp->ringCap_EqualTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inHigh ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inHigh ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inHigh[fillJ % sp->ringCap_EqualTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inLow ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inLow ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inLow[fillJ % sp->ringCap_EqualTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inClose ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inClose ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inClose[fillJ % sp->ringCap_EqualTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inOpen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inOpen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inOpen[fillJ % sp->ringCap_NearTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inHigh ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inHigh ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inHigh[fillJ % sp->ringCap_NearTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inLow ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inLow ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inLow[fillJ % sp->ringCap_NearTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_inClose ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_NearTrailingIdx_inClose ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_inClose[fillJ % sp->ringCap_NearTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Update( TA_CDLGAPSIDESIDEWHITE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

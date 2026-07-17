@@ -852,6 +852,199 @@ TA_LIB_API TA_RetCode TA_ATR_Open( TA_ATR_Stream **stream, const double inHigh[]
    return TA_ATR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_ATR_OpenAndFill( TA_ATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_ATR_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      int today;
+      int lookbackTotal;
+      int nbATR;
+      double prevATR = 0.0;
+      double periodTotal;
+      double val2;
+      double val3 = 0.0;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      /* Average True Range is the greatest of the following:
+       *
+       *  val1 = distance from today's high to today's low.
+       *  val2 = distance from yesterday's close to today's high.
+       *  val3 = distance from yesterday's close to today's low.
+       *
+       * These value are averaged for the specified period using
+       * Wilder method. This method have an unstable period comparable
+       * to and Exponential Moving Average (EMA).
+       */
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = TA_ATR_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_BAD_PARAM;
+      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
+       * so the single general path handles every period >= 1.
+       */
+      /* The True Range of each bar is computed inline in a single
+       * pass. No temporary buffer is needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - True Range: start from high-low, then compare/replace
+       *    with the two previous-close distances, in that order.
+       *  - Seed: the first 'period' True Range values are summed,
+       *    accumulated from 0.0 in input order, then divided by
+       *    the period.
+       *  - Wilder smoothing: multiply by period-1, add the True
+       *    Range, divide by period, as three separate statements.
+       *
+       * In-place (outReal being one of the input arrays) is
+       * supported: each output is written only after every input
+       * read at or before its bar, and the output index is always
+       * smaller than the bar index of any remaining read.
+       */
+      /* The first True Range needs the two price bars at
+       * startIdx-lookbackTotal+1 (a previous close is consumed).
+       */
+      today = startIdx - lookbackTotal + 1;
+      /* Seed the ATR with a simple average of the True Range
+       * for the first 'period' bars.
+       */
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
+      }
+      prevATR = periodTotal / optInTimePeriod;
+      /* Subsequent value are smoothed using the
+       * previous ATR value (Wilder's approach).
+       *  1) Multiply the previous ATR by 'period-1'.
+       *  2) Add today TR value.
+       *  3) Divide by 'period'.
+       */
+      /* Skip the unstable period. */
+      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+      while( i != 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
+      }
+      /* Now start to write the final ATR in the caller
+       * provided outReal.
+       */
+      outIdx = 1;
+      outReal[0] = prevATR;
+      /* Now do the number of requested ATR. */
+      nbATR = endIdx - startIdx + 1;
+      while( --nbATR != 0 )
+      {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         outReal[outIdx++] = prevATR;
+         today += 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ATR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->prevATR = prevATR;
+      sp->val3 = val3;
+      sp->lag1_inClose = inClose[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

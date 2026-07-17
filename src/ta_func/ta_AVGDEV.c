@@ -424,6 +424,89 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Open( TA_AVGDEV_Stream **stream, const double in
    return TA_AVGDEV_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_AVGDEV_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int today;
+      int outIdx;
+      int lookback;
+      lookback = optInTimePeriod - 1;
+      if( startIdx < lookback )
+      {
+         startIdx = lookback;
+      }
+      today = startIdx;
+      /* Make sure there is still something to evaluate. */
+      if( today > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Process the initial DM and TR */
+      *outBegIdx= today;
+      outIdx = 0;
+      while( today <= endIdx )
+      {
+         double todaySum;
+         double todayDev;
+         int i;
+         todaySum = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 )
+         {
+            todaySum += inReal[today - i];
+         }
+         todayDev = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 )
+         {
+            todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+         }
+         outReal[outIdx] = todayDev / optInTimePeriod;
+         outIdx += 1;
+         today += 1;
+      }
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_AVGDEV_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->winCap_i = (int)(optInTimePeriod);
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
+      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
+      sp->winPos_i = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

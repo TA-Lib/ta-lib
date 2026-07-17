@@ -777,6 +777,177 @@ TA_LIB_API TA_RetCode TA_ADOSC_Open( TA_ADOSC_Stream **stream, const double inHi
    return TA_ADOSC_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_ADOSC_OpenAndFill( TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_ADOSC_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   if( (int)optInFastPeriod == (int)0x80000000 )
+      optInFastPeriod = 3;
+   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowPeriod == (int)0x80000000 )
+      optInSlowPeriod = 10;
+   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int today;
+      int outIdx;
+      int lookbackTotal;
+      int slowestPeriod;
+      double high;
+      double low;
+      double close;
+      double tmp;
+      double slowEMA = 0.0;
+      double slowk = 0.0;
+      double one_minus_slowk = 0.0;
+      double fastEMA = 0.0;
+      double fastk = 0.0;
+      double one_minus_fastk = 0.0;
+      double ad = 0.0;
+      /* Implementation Note:
+       *     The fastEMA varaible is not neceseraly the
+       *     fastest EMA.
+       *     In the same way, slowEMA is not neceseraly the
+       *     slowest EMA.
+       *
+       *     The ADOSC is always the (fastEMA - slowEMA) regardless
+       *     of the period specified. In other word:
+       *
+       *     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
+       *
+       *        while
+       *
+       *     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
+       *
+       *     In the first case the EMA(3) is truly a faster EMA,
+       *     while in the second case, the EMA(10) is still call
+       *     fastEMA in the algorithm, even if it is in fact slower.
+       *
+       *     This gives more flexibility to the user if they want to
+       *     experiment with unusual parameter settings.
+       */
+      /* Identify the slowest period.
+       * This infomration is used soleley to bootstrap
+       * the algorithm (skip the lookback period).
+       */
+      if( optInFastPeriod < optInSlowPeriod )
+      {
+         slowestPeriod = optInSlowPeriod;
+      } else 
+      {
+         slowestPeriod = optInFastPeriod;
+      }
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = TA_EMA_Lookback(slowestPeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      *outBegIdx= startIdx;
+      today = startIdx - lookbackTotal;
+      /* The following variables are used to
+       * calculate the "ad".
+       */
+      ad = 0.0;
+      /* Constants for EMA */
+      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
+      one_minus_fastk = 1.0 - fastk;
+      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
+      one_minus_slowk = 1.0 - slowk;
+      /* Initialize the two EMA
+       *
+       * Use the same range of initialization inputs for
+       * both EMA and simply seed with the first A/D value.
+       *
+       * Note: Metastock do the same.
+       */
+      high = inHigh[today];
+      low = inLow[today];
+      tmp = high - low;
+      close = inClose[today];
+      if( tmp > 0.0 )
+      {
+         ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+      }
+      today += 1;
+      fastEMA = ad;
+      slowEMA = ad;
+      /* Initialize the EMA and skip the unstable period. */
+      while( today < startIdx )
+      {
+         high = inHigh[today];
+         low = inLow[today];
+         tmp = high - low;
+         close = inClose[today];
+         if( tmp > 0.0 )
+         {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+         }
+         today += 1;
+         fastEMA = fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = fma(one_minus_slowk, slowEMA, slowk * ad);
+      }
+      /* Perform the calculation for the requested range */
+      outIdx = 0;
+      while( today <= endIdx )
+      {
+         high = inHigh[today];
+         low = inLow[today];
+         tmp = high - low;
+         close = inClose[today];
+         if( tmp > 0.0 )
+         {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+         }
+         today += 1;
+         fastEMA = fma(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = fma(one_minus_slowk, slowEMA, slowk * ad);
+         outReal[outIdx++] = fastEMA - slowEMA;
+      }
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ADOSC_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInFastPeriod = optInFastPeriod;
+      sp->optInSlowPeriod = optInSlowPeriod;
+      sp->slowEMA = slowEMA;
+      sp->slowk = slowk;
+      sp->one_minus_slowk = one_minus_slowk;
+      sp->fastEMA = fastEMA;
+      sp->fastk = fastk;
+      sp->one_minus_fastk = one_minus_fastk;
+      sp->ad = ad;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

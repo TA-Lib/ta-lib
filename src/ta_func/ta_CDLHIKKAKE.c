@@ -636,6 +636,142 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Open( TA_CDLHIKKAKE_Stream **stream, const d
    return TA_CDLHIKKAKE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_OpenAndFill( TA_CDLHIKKAKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDLHIKKAKE_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int i;
+      int outIdx;
+      int lookbackTotal;
+      int patternResult = 0;
+      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+       * state carried without an absolute bar index.
+       */
+      int cd = 0;
+      double savedHigh = 0.0;
+      double savedLow = 0.0;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLHIKKAKE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      cd = 0;
+      patternResult = 0;
+      i = startIdx - 3;
+      while( i < startIdx )
+      {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cd = 0;
+         }
+         if( cd > 0 )
+         {
+            cd -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
+       * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
+       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 2nd candle
+       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
+       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
+       * overwrites the confirmation of the old hikkake)
+       */
+      outIdx = 0;
+      do
+      {
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+            outInteger[outIdx++] = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else 
+         {
+            outInteger[outIdx++] = 0;
+         }
+         if( cd > 0 )
+         {
+            cd -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHIKKAKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->patternResult = patternResult;
+      sp->cd = cd;
+      sp->savedHigh = savedHigh;
+      sp->savedLow = savedLow;
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

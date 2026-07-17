@@ -567,6 +567,131 @@ TA_LIB_API TA_RetCode TA_VAR_Open( TA_VAR_Stream **stream, const double inReal[]
    return TA_VAR_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_VAR_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 5;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( optInNbDev == -4e37 )
+      optInNbDev = 1;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double tempReal;
+      double periodTotal1 = 0.0;
+      double periodTotal2 = 0.0;
+      double meanValue1 = 0.0;
+      double meanValue2 = 0.0;
+      int i;
+      int outIdx;
+      int trailingIdx;
+      int nbInitialElementNeeded;
+      /* Validate the calculation method type and
+       * identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the MA calculation using tight loops. */
+      /* Add-up the initial periods, except for the last value. */
+      periodTotal1 = 0;
+      periodTotal2 = 0;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      i = trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( i < startIdx )
+         {
+            tempReal = inReal[i++];
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the inReal and
+       * outReal to be the same buffer.
+       */
+      outIdx = 0;
+      do
+      {
+         tempReal = inReal[i++];
+         /* Square and add all the deviation over
+          * the same periods.
+          */
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         /* Square and add all the deviation over
+          * the same period.
+          */
+         meanValue1 = periodTotal1 / optInTimePeriod;
+         meanValue2 = periodTotal2 / optInTimePeriod;
+         tempReal = inReal[trailingIdx++];
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_VAR_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->optInNbDev = optInNbDev;
+      sp->periodTotal1 = periodTotal1;
+      sp->periodTotal2 = periodTotal2;
+      sp->meanValue1 = meanValue1;
+      sp->meanValue2 = meanValue2;
+      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

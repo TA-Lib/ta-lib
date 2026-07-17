@@ -889,6 +889,251 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Open( TA_CDLIDENTICAL3CROWS_Stream *
    return TA_CDLIDENTICAL3CROWS_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_OpenAndFill( TA_CDLIDENTICAL3CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDLIDENTICAL3CROWS_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
+      double ShadowVeryShortPeriodTotal[3] = {0};
+      double EqualPeriodTotal[3] = {0};
+      int i;
+      int outIdx;
+      int totIdx = 0;
+      int ShadowVeryShortTrailingIdx;
+      int EqualTrailingIdx;
+      int lookbackTotal;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = TA_CDLIDENTICAL3CROWS_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      ShadowVeryShortPeriodTotal[2] = 0;
+      ShadowVeryShortPeriodTotal[1] = 0;
+      ShadowVeryShortPeriodTotal[0] = 0;
+      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+      EqualPeriodTotal[2] = 0;
+      EqualPeriodTotal[1] = 0;
+      EqualPeriodTotal[0] = 0;
+      EqualTrailingIdx = startIdx - Equal_avgPeriod;
+      i = ShadowVeryShortTrailingIdx;
+      while( i < startIdx )
+      {
+         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + TA_CANDLERANGE(ShadowVeryShort,i - 2);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + TA_CANDLERANGE(ShadowVeryShort,i - 1);
+         ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + TA_CANDLERANGE(ShadowVeryShort,i);
+         i += 1;
+      }
+      i = EqualTrailingIdx;
+      while( i < startIdx )
+      {
+         EqualPeriodTotal[2] = EqualPeriodTotal[2] + TA_CANDLERANGE(Equal,i - 2);
+         EqualPeriodTotal[1] = EqualPeriodTotal[1] + TA_CANDLERANGE(Equal,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - three consecutive and declining black candlesticks
+       * - each candle must have no or very short lower shadow
+       * - each candle after the first must open at or very close to the prior candle's close
+       * The meaning of "very short" is specified with TA_SetCandleSettings;
+       * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
+       * outInteger is negative (-1 to -100): identical three crows is always bearish;
+       * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
+       * while this function does not consider it
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[2],i - 2) && /* very short lower shadow */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
+             (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],i - 1) && /* very short lower shadow */
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 3rd black */
+             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) && /* very short lower shadow */
+             inClose[i - 2] > inClose[i - 1] &&                          /* three declining */
+             inClose[i - 1] > inClose[i] &&
+             inOpen[i - 1] <= inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal[2],i - 2) && /* 2nd black opens very close to 1st close */
+             inOpen[i - 1] >= inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal[2],i - 2) &&
+             inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal[1],i - 1) && /* 3rd black opens very close to 2nd close */
+             inOpen[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal[1],i - 1) )
+         {
+            outInteger[outIdx++] = 0 - 100;
+         } else 
+         {
+            outInteger[outIdx++] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
+         {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowVeryShort,i - totIdx) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx - totIdx));
+         }
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
+         {
+            EqualPeriodTotal[totIdx] = EqualPeriodTotal[totIdx] + (TA_CANDLERANGE(Equal,i - totIdx) - TA_CANDLERANGE(Equal,EqualTrailingIdx - totIdx));
+         }
+         i += 1;
+         ShadowVeryShortTrailingIdx += 1;
+         EqualTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLIDENTICAL3CROWS_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
+      memcpy( sp->EqualPeriodTotal, EqualPeriodTotal, sizeof( sp->EqualPeriodTotal ) );
+      sp->totIdx = totIdx;
+      sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
+      sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 3;
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+        sp->ring_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inOpen[fillJ % sp->ringCap_EqualTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inHigh[fillJ % sp->ringCap_EqualTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inLow[fillJ % sp->ringCap_EqualTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_EqualTrailingIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_EqualTrailingIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_EqualTrailingIdx_inClose[fillJ % sp->ringCap_EqualTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
+      sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
+      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 3;
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+        sp->ring_ShadowVeryShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_ShadowVeryShortTrailingIdx_inOpen[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = inOpen[fillJ];
+        }
+        sp->ring_ShadowVeryShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_ShadowVeryShortTrailingIdx_inHigh[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = inHigh[fillJ];
+        }
+        sp->ring_ShadowVeryShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_ShadowVeryShortTrailingIdx_inLow[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = inLow[fillJ];
+        }
+        sp->ring_ShadowVeryShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_ShadowVeryShortTrailingIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_ShadowVeryShortTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_ShadowVeryShortTrailingIdx_inClose[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = inClose[fillJ];
+        }
+      }
+      sp->ringPos_ShadowVeryShortTrailingIdx = historyLen % sp->ringCap_ShadowVeryShortTrailingIdx;
+      sp->winCap_totIdx = (int)(3);
+      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->win_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inOpen, inOpen + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inHigh, inHigh + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inLow ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inLow, inLow + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->win_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->win_totIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->winMirror_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
+      if( !sp->winMirror_totIdx_inClose ) { TA_CDLIDENTICAL3CROWS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->win_totIdx_inClose, inClose + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
+      sp->winPos_totIdx = 0;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Update( TA_CDLIDENTICAL3CROWS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

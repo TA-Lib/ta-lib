@@ -597,6 +597,175 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Open( TA_STOCHRSI_Stream **stream, const doubl
    return TA_STOCHRSI_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD );
 }
 
+TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] )
+{
+   struct TA_STOCHRSI_Stream *sp;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   TA_RetCode subRc;
+   double subOpenDummy;
+   double *sc_outFastK;
+   double *sc_outFastD;
+   TA_RSI_Stream *sub0;
+   TA_STOCHF_Stream *sub1;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outFastK || !outFastD || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outFastK == (const void *)inReal || (const void *)outFastD == (const void *)inReal || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInFastK_Period == (int)0x80000000 )
+      optInFastK_Period = 5;
+   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInFastD_Period == (int)0x80000000 )
+      optInFastD_Period = 3;
+   else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInFastD_MAType == (int)0x80000000 )
+      optInFastD_MAType = 0;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   subRc = TA_SUCCESS;
+   subOpenDummy = 0.0;
+   sub0 = NULL;
+   sub1 = NULL;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   sc_outFastK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outFastK ) { return TA_ALLOC_ERR; }
+   sc_outFastD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+   if( !sc_outFastD ) { TA_Free( sc_outFastK ); return TA_ALLOC_ERR; }
+
+   {
+      double *tempRSIBuffer;
+      TA_RetCode retCode;
+      int lookbackTotal;
+      int lookbackSTOCHF;
+      int tempArraySize;
+      int outBegIdx1;
+      int outBegIdx2;
+      int outNbElement1;
+      /* Stochastic RSI
+       *
+       * Reference: "Stochastic RSI and Dynamic Momentum Index"
+       *            by Tushar Chande and Stanley Kroll
+       *            Stock&Commodities V.11:5 (189-199)
+       *
+       * The TA-Lib version offer flexibility beyond what is explain
+       * in the Stock&Commodities article.
+       *
+       * To calculate the "Unsmoothed stochastic RSI" with symetry like
+       * explain in the article, keep the optInTimePeriod and optInFastK_Period
+       * equal. Example:
+       *
+       *    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
+       *                              optInFastK_Period = 14
+       *                              optInFastD_Period = 'x'
+       *
+       * The outFastK is the unsmoothed RSI discuss in the article.
+       *
+       * You can set the optInFastD_Period to smooth the RSI. The smooth
+       * version will be found in outFastD. The outFastK will still contain
+       * the unsmoothed stoch RSI. If you do not care about the smoothing of
+       * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
+       */
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackSTOCHF = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+      lookbackTotal = TA_RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return TA_BAD_PARAM;
+      }
+      dummyBegIdx = startIdx;
+      tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
+      tempRSIBuffer = malloc(tempArraySize * sizeof(double));
+      if( !tempRSIBuffer )
+      {
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return TA_ALLOC_ERR;
+      }
+      /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_RSI_OpenInternal( &sub0, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, optInTimePeriod, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(tempRSIBuffer);
+            TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+            return subRc;
+         }
+      }
+      retCode = TA_RSI_Unguarded(startIdx - lookbackSTOCHF,endIdx,inReal,optInTimePeriod,&outBegIdx1,&outNbElement1,tempRSIBuffer);
+      if( retCode != TA_SUCCESS || outNbElement1 == 0 )
+      {
+         free(tempRSIBuffer);
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return retCode;
+      }
+      /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      {
+         subRc = TA_STOCHF_OpenInternal( &sub1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &subOpenDummy, &subOpenDummy );
+         if( subRc != TA_SUCCESS )
+         {
+            free(tempRSIBuffer);
+            TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+            return subRc;
+         }
+      }
+      retCode = TA_STOCHF_Unguarded(0,tempArraySize - 1,tempRSIBuffer,tempRSIBuffer,tempRSIBuffer,optInFastK_Period,optInFastD_Period,optInFastD_MAType,&outBegIdx2,&dummyNBElement,sc_outFastK,sc_outFastD);
+      free(tempRSIBuffer);
+      if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return retCode;
+      }
+
+      /* Capture the live producer state + sub handles. */
+      if( dummyNBElement < 1 ) { TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD ); return TA_BAD_PARAM; }
+      sp = (struct TA_STOCHRSI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->optInFastK_Period = optInFastK_Period;
+      sp->optInFastD_Period = optInFastD_Period;
+      sp->optInFastD_MAType = optInFastD_MAType;
+      sp->sub0 = sub0;
+      sp->sub1 = sub1;
+      *outBegIdx = dummyBegIdx;
+      *outNBElement = dummyNBElement;
+      memcpy( outFastK, sc_outFastK, sizeof(double) * (size_t)dummyNBElement );
+      memcpy( outFastD, sc_outFastD, sizeof(double) * (size_t)dummyNBElement );
+      TA_Free( sc_outFastK );
+      TA_Free( sc_outFastD );
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )
 {
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
