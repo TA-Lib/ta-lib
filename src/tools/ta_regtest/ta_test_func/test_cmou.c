@@ -183,7 +183,7 @@ static ErrorNumber test_cmou_oracle( const TA_History *history )
       double got  = out[idx];
       double rel  = fabs( got - want ) / fabs( want );  /* every golden |value| >> 0 */
 
-      if( rel > CMOU_ORACLE_TOL )
+      if( isnan( got ) || rel > CMOU_ORACLE_TOL )  /* NaN > tol is false -> guard explicitly */
       {
          printf( "CMOU oracle Fail at out[%d]: got %.17g expected %.17g (rel=%.3e > %.3e)\n",
                  idx, got, want, rel, CMOU_ORACLE_TOL );
