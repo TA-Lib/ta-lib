@@ -84,6 +84,55 @@ bit-identical, guaranteed by construction: it is the same generated code as
 
 Its overhead is a throw away deep-copy of the handle (on every peek).
 
+### Full-history output at open (`OpenAndFill`)
+
+`open` returns only the value at the last history bar — yet it already computes the
+whole batch output internally and throws it away, keeping just that last value and the
+warmed-up state. So the common "compute over all of history, then go live" bootstrap
+pays for two passes — `batch(0, n-1)` then `open(history)` — when one already runs
+inside `open`. `OpenAndFill` keeps the discarded output:
+
+- **`open_and_fill(history[], params) → (handle, filled_outputs)` — once.** Does
+  everything `open` does *and* writes the full-history output arrays, bit-identical to
+  `batch(startIdx=0, endIdx=historyLen-1)`, in `open`'s single pass. One call gives you
+  the whole historical series *and* a live handle.
+
+It is a **separate** entry point; `open` is byte-for-byte unchanged. The signature is
+`open`'s input head followed by `batch`'s output tail — one array per output plus
+`outBegIdx`/`outNBElement` (both required). There is no `startIdx`: pinning bar 0 is
+exactly what makes the fill bit-exact (see *Semantic definition*). Because the fill
+writes the outputs and *then* reads the input tail to seed the ring, the output arrays
+must not alias the input or each other (the batch-tier aliasing rule, #108).
+
+Rejection is `open`'s, not `batch`'s: too-short history — or the `MAMA` MAType arm on
+functions that take an `MAType` — returns `TA_BAD_PARAM` and produces no handle (a
+handle needs a defined value, so short history is an error here, not batch's
+success-with-empty-output).
+
+```c
+TA_SMA_Stream *s = NULL;
+double warmup[N];                  /* one array per output, caller-sized */
+int begIdx, nbElement;
+
+/* Fills warmup[] == batch(0, N-1) AND returns the live handle, in one pass. */
+TA_RetCode rc = TA_SMA_OpenAndFill( &s, history, N, 14,
+                                    &begIdx, &nbElement, warmup );
+/* ... plot warmup[begIdx .. begIdx+nbElement-1] ... */
+
+for (int i = 0; i < newBars; i++)      /* go live from the same handle */
+    TA_SMA_Update( s, bar[i], &out );
+TA_SMA_Close( s );
+```
+
+**When it helps.** Any "backfill then stream" startup. The saving is one-time warm-up
+work — roughly half of `open`'s cost for the scalar/ring tiers, less for composed — so
+at a few thousand history bars it is microseconds. The real wins are ergonomics, one
+fewer full-history allocation, and closing the two-pass footgun; not steady-state
+throughput.
+
+**Availability.** C first (every streamable function has `OpenAndFill` wherever it has
+`Open` — same `TA_FUNC_FLG_STREAM` gate); Rust/Java/.NET follow their `open` emitters.
+
 ### Semantic definition (the contract tests enforce)
 
 For every function F, parameters p, and series `x[0..t]`: after
