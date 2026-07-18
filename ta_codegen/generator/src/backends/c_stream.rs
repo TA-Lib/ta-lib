@@ -1525,6 +1525,7 @@ fn emit_dispatch_open_and_fill(
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
+#[allow(clippy::too_many_lines)]
 fn emit_dispatch(
     o: &mut String,
     func: &FuncDef,

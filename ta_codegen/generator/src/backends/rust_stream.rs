@@ -1596,13 +1596,12 @@ fn stream_doctest(func: &FuncDef, sn: &str) -> Option<Vec<String>> {
     }
     for opt in &func.optional_inputs {
         let default = opt.default.unwrap_or(0.0);
-        match opt.param_type {
-            ParamType::Real => args.push(format!("{default:?}")),
-            _ => {
-                #[allow(clippy::cast_possible_truncation)]
-                let v = default as i64;
-                args.push(format!("{v}"));
-            }
+        if opt.param_type == ParamType::Real {
+            args.push(format!("{default:?}"));
+        } else {
+            #[allow(clippy::cast_possible_truncation)]
+            let v = default as i64;
+            args.push(format!("{v}"));
         }
     }
     lines.push(String::new());
@@ -2014,7 +2013,6 @@ fn emit_dispatch(
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let bar_args = inputs.join(", ");
-    let out_args = outputs.join(", ");
     let ctx = plan_ctx(func);
     let params_join = func
         .optional_inputs
@@ -2631,23 +2629,19 @@ fn composed_step_ctx(
     typing: &Typing,
     cur_scalars: &[String],
 ) -> RustRenderCtx {
-    let mut ctx = match &cp.producer {
-        Some(model) => build_step_ctx(func, model, typing),
-        None => {
-            let mut c = typing.ctx.clone();
-            for p in &func.optional_inputs {
-                match p.param_type {
-                    ParamType::Real => {
-                        c.real_vars.insert(format!("sp.{}", p.name));
-                    }
-                    _ => {}
-                }
+    let mut ctx = if let Some(model) = &cp.producer {
+        build_step_ctx(func, model, typing)
+    } else {
+        let mut c = typing.ctx.clone();
+        for p in &func.optional_inputs {
+            if p.param_type == ParamType::Real {
+                c.real_vars.insert(format!("sp.{}", p.name));
             }
-            for bar in streaming::input_array_names(func) {
-                c.real_vars.insert(bar);
-            }
-            c
         }
+        for bar in streaming::input_array_names(func) {
+            c.real_vars.insert(bar);
+        }
+        c
     };
     for name in cur_scalars {
         ctx.real_vars.insert(format!("cur_{name}"));
@@ -2677,7 +2671,7 @@ fn composed_step_ctx(
 /// then the batch-tail pipeline through the owned sub handles, combine maps
 /// per bar, lag-ring pushes, and the output writes. No peek flag: peek is the
 /// universal clone-of-the-whole-tree.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_composed_step(
     o: &mut String,
     func: &FuncDef,
@@ -2983,7 +2977,7 @@ fn emit_composed_open(
 
     let combined: Vec<Statement> = region_stmts
         .into_iter()
-        .chain(tail_stmts.into_iter())
+        .chain(tail_stmts)
         .collect();
     emit_composed_region(
         o, func, typing, &combined, enums, registry, helpers, counter, &inserts,
@@ -3024,28 +3018,25 @@ fn emit_composed_open(
         let _ = writeln!(extra, "            lagRingCap_{sr}: lagCap_{sr},");
         let _ = writeln!(extra, "            lagRing_{sr},");
     }
-    match &cp.producer {
-        Some(model) => {
-            emit_capture(
-                o, func, model, &model.state, typing, registry, helpers, counter,
-                // The producer's own outputs never redirect to lastValue_ in the
-                // composed transcription; Scalar semantics for out_feedback do
-                // not arise (composed producers have none).
-                OutMode::Fill, &extra,
-            );
+    if let Some(model) = &cp.producer {
+        emit_capture(
+            o, func, model, &model.state, typing, registry, helpers, counter,
+            // The producer's own outputs never redirect to lastValue_ in the
+            // composed transcription; Scalar semantics for out_feedback do
+            // not arise (composed producers have none).
+            OutMode::Fill, &extra,
+        );
+    } else {
+        // Loopless pipeline: params + extras + subs/rings only.
+        let _ = writeln!(o, "        let state = {state} {{");
+        for p in &func.optional_inputs {
+            let _ = writeln!(o, "            {},", p.name);
         }
-        None => {
-            // Loopless pipeline: params + extras + subs/rings only.
-            let _ = writeln!(o, "        let state = {state} {{");
-            for p in &func.optional_inputs {
-                let _ = writeln!(o, "            {},", p.name);
-            }
-            for (name, _) in &func.private_extra_params {
-                let _ = writeln!(o, "            {name},");
-            }
-            o.push_str(&extra);
-            let _ = writeln!(o, "        }};");
+        for (name, _) in &func.private_extra_params {
+            let _ = writeln!(o, "            {name},");
         }
+        o.push_str(&extra);
+        let _ = writeln!(o, "        }};");
     }
     match mode {
         OutMode::Scalar => {
@@ -3215,26 +3206,25 @@ fn emit_composed(
 
     // --- handle + state struct ---------------------------------------------
     emit_handle_struct(o, func);
-    let mut fields: Vec<(String, String, String)> = match &cp.producer {
-        Some(model) => state_fields(func, model, &typing),
-        None => {
-            let mut f: Vec<(String, String, String)> = Vec::new();
-            for p in &func.optional_inputs {
-                f.push((
-                    p.name.clone(),
-                    opt_param_rust_type(&p.param_type).to_string(),
-                    p.name.clone(),
-                ));
-            }
-            for (name, c_type) in &func.private_extra_params {
-                f.push((
-                    name.clone(),
-                    extra_param_rust_type(c_type).to_string(),
-                    name.clone(),
-                ));
-            }
-            f
+    let mut fields: Vec<(String, String, String)> = if let Some(model) = &cp.producer {
+        state_fields(func, model, &typing)
+    } else {
+        let mut f: Vec<(String, String, String)> = Vec::new();
+        for p in &func.optional_inputs {
+            f.push((
+                p.name.clone(),
+                opt_param_rust_type(&p.param_type).to_string(),
+                p.name.clone(),
+            ));
         }
+        for (name, c_type) in &func.private_extra_params {
+            f.push((
+                name.clone(),
+                extra_param_rust_type(c_type).to_string(),
+                name.clone(),
+            ));
+        }
+        f
     };
     for (si, sub) in cp.subs.iter().enumerate() {
         fields.push((
