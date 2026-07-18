@@ -98274,6 +98274,9 @@ public class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       if( optInTimePeriod == 1 ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
@@ -98360,6 +98363,9 @@ public class Core {
       }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
@@ -105197,6 +105203,9 @@ public class Core {
       /* An inverted [min, max] period window is invalid (batch rejects). */
       if( optInMinPeriod > optInMaxPeriod ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
        * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee

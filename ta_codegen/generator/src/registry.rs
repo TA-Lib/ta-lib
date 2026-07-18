@@ -27,8 +27,8 @@ pub struct Registry {
     /// Per-indicator signature facts for the streaming dispatch/composed
     /// analysis (stream flag + input/opt/output counts), from the YAML.
     callee_sigs: HashMap<String, crate::streaming::CalleeSig>,
-    /// Per-indicator output names in signature order (`ma` -> ["outReal"],
-    /// `mama` -> ["outMAMA", "outFAMA"]) — the Java stream emitter routes
+    /// Per-indicator output names in signature order (`ma` -> `["outReal"]`,
+    /// `mama` -> `["outMAMA", "outFAMA"]`) — the Java stream emitter routes
     /// dispatch OutSlots through named `cur_*` fields / `Value` members.
     callee_out_names: HashMap<String, Vec<String>>,
 }

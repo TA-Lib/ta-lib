@@ -4363,7 +4363,9 @@ fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 }
 
 /// One `sv_<NAME>` verify method for a function with an emitted Java stream.
-#[allow(clippy::too_many_lines)]
+// Integer optional-param defaults are integer-valued `f64` in the IR; the
+// `as i64` casts for literal emission are exact, not truncating.
+#[allow(clippy::too_many_lines, clippy::cast_possible_truncation, clippy::cognitive_complexity)]
 fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
     use std::fmt::Write as _;
     let base = crate::backends::java::to_java_method_name(&func.name, func.camel_case.as_deref());
@@ -4770,22 +4772,14 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
         let mut expl_args: Vec<String> = Vec::new();
         for p in &func.optional_inputs {
             match &p.param_type {
-                crate::ir::ParamType::Real => {
-                    sent_args.push(p.name.clone());
-                    expl_args.push(p.name.clone());
-                }
-                crate::ir::ParamType::Enum(_) => {
-                    sent_args.push(p.name.clone());
-                    expl_args.push(p.name.clone());
+                crate::ir::ParamType::Integer if p.default.is_some() => {
+                    let d = p.default.unwrap_or(0.0) as i64;
+                    sent_args.push("Integer.MIN_VALUE".to_string());
+                    expl_args.push(format!("{d}"));
                 }
                 _ => {
-                    if let Some(d) = p.default {
-                        sent_args.push("Integer.MIN_VALUE".to_string());
-                        expl_args.push(format!("{}", d as i64));
-                    } else {
-                        sent_args.push(p.name.clone());
-                        expl_args.push(p.name.clone());
-                    }
+                    sent_args.push(p.name.clone());
+                    expl_args.push(p.name.clone());
                 }
             }
         }

@@ -526,6 +526,9 @@
       if( optInMinPeriod > optInMaxPeriod ) {
          return RetCode.BadParam;
       }
+      if( historyLen < movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
        * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
        * with that same start for every period. Seeding each sub at its own

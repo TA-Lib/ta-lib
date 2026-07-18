@@ -269,6 +269,7 @@ fn state_fields(func: &FuncDef, model: &StreamModel, step_settings: &BTreeSet<St
 
 /// [`state_fields`] with the carried-scalar set supplied by the caller
 /// (dual-mode: the union of both modes' scalars).
+#[allow(clippy::too_many_lines)]
 fn state_fields_from(
     func: &FuncDef,
     model: &StreamModel,
@@ -834,7 +835,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
 #[allow(clippy::too_many_arguments)]
 fn emit_step_body(
     o: &mut String,
-    func: &FuncDef,
+    _func: &FuncDef,
     model: &StreamModel,
     step_settings: &BTreeSet<String>,
     stream_fma: &FmaVarSets,
@@ -2076,7 +2077,7 @@ fn emit_dispatch(
                             .map(|slot| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
                                 streaming::OutSlot::Discard => {
-                                    format!("new double[historyLen]")
+                                    "new double[historyLen]".to_string()
                                 }
                             })
                             .collect::<Vec<_>>()
@@ -2122,6 +2123,7 @@ fn emit_dispatch(
 // selected per bar by the clamped variable period.
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::too_many_lines)]
 fn emit_period_bank(
     o: &mut String,
     func: &FuncDef,
@@ -2775,24 +2777,21 @@ fn emit_composed_open(
         let _ = writeln!(extra, "      sp.lagRingCap_{sr} = lagCap_{sr};");
         let _ = writeln!(extra, "      sp.lagRing_{sr} = lagRing_{sr};");
     }
-    match &cp.producer {
-        Some(model) => {
-            // The producer's own "output" is the intermediate series, so its
-            // cur seeding is suppressed; the real outputs seed from sc_ below.
-            emit_capture(
-                o, func, model, &model.state, step_settings, registry, helpers, stream_fma,
-                counter, OutMode::Fill, None, &extra,
-            );
+    if let Some(model) = &cp.producer {
+        // The producer's own "output" is the intermediate series, so its
+        // cur seeding is suppressed; the real outputs seed from sc_ below.
+        emit_capture(
+            o, func, model, &model.state, step_settings, registry, helpers, stream_fma,
+            counter, OutMode::Fill, None, &extra,
+        );
+    } else {
+        for p in &func.optional_inputs {
+            let _ = writeln!(o, "      sp.{0} = {0};", p.name);
         }
-        None => {
-            for p in &func.optional_inputs {
-                let _ = writeln!(o, "      sp.{0} = {0};", p.name);
-            }
-            for (name, _) in &func.private_extra_params {
-                let _ = writeln!(o, "      sp.{name} = {name};");
-            }
-            o.push_str(&extra);
+        for (name, _) in &func.private_extra_params {
+            let _ = writeln!(o, "      sp.{name} = {name};");
         }
+        o.push_str(&extra);
     }
     emit_cur_capture(o, func, outputs, CurSource::Scratch);
     if mode == OutMode::Fill {

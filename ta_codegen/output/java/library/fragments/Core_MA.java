@@ -487,6 +487,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       if( optInTimePeriod == 1 ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
@@ -573,6 +576,9 @@
       }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {

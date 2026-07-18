@@ -98154,6 +98154,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           if( optInTimePeriod == 1 ) {
              if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
                 return RetCode.OutOfRangeEndIndex;
@@ -98240,6 +98243,9 @@ class Core {
           }
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           if( optInTimePeriod == 1 ) {
              if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
@@ -105077,6 +105083,9 @@ class Core {
           /* An inverted [min, max] period window is invalid (batch rejects). */
           if( optInMinPeriod > optInMaxPeriod ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
            * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
@@ -149805,6 +149814,7 @@ public class TaCodegenServe {
             return "{\"status\":\"ok\",\"n\":" + refN + "}";
         }
         else if (json.contains("\"stream_verify\"")) return handle_stream_verify(json);
+        else if (json.contains("\"fuzz_in_hash\"")) return handle_fuzz_in_hash(json);
         else if (json.contains("\"TA_ACCBANDS\"")) return handle_ACCBANDS(json);
         else if (json.contains("\"TA_ACOS\"")) return handle_ACOS(json);
         else if (json.contains("\"TA_AD\"")) return handle_AD(json);
@@ -178813,6 +178823,26 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + diag + "}";
     }
 
+    static String handle_fuzz_in_hash(String json) {
+        int shape = jsonInt(json, "gen_shape");
+        int seed = jsonInt(json, "gen_seed");
+        int n = jsonInt(json, "gen_n");
+        if (n < 1) n = 1;
+        if (n > MAX_ARRAY_SIZE) n = MAX_ARRAY_SIZE;
+        double[] fo = new double[n]; double[] fh = new double[n]; double[] fl = new double[n];
+        double[] fc = new double[n]; double[] fv = new double[n]; double[] foi = new double[n];
+        FuzzData.fuzzGen(shape, seed, n, fo, fh, fl, fc, fv, foi);
+        long hh = svHashInit();
+        hh = svHashF64(hh, fo, n);
+        hh = svHashF64(hh, fh, n);
+        hh = svHashF64(hh, fl, n);
+        hh = svHashF64(hh, fc, n);
+        hh = svHashF64(hh, fv, n);
+        hh = svHashF64(hh, foi, n);
+        hh = svHashFin(hh);
+        return "{\"in_hash\":\"" + String.format("%016x", hh) + "\"}";
+    }
+
     static String handle_stream_verify(String json) {
         String fn = jsonString(json, "funcName");
         switch (fn) {
@@ -178996,9 +179026,15 @@ public class TaCodegenServe {
     }
 }
 
+/* Default-package twin of the shipped
+ * com.tictactec.ta.lib.InsufficientHistoryException (the hand-written library
+ * scaffolding is the canonical copy — keep the two in sync). */
 class InsufficientHistoryException extends IllegalArgumentException {
-    private static final long serialVersionUID = 1L;
-    public InsufficientHistoryException(String message) { super(message); }
+   private static final long serialVersionUID = 1L;
+
+   public InsufficientHistoryException(String message) {
+      super(message);
+   }
 }
 
 // FuzzData.java — bit-exact port of src/tools/ta_regtest/fuzz_data.h.
