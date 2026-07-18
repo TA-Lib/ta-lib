@@ -159,9 +159,8 @@ fn test_java_ma_dispatch() {
     // The copy constructor and the step switch derive from the SAME arm table
     // (design-review obligation): all 9 MATypes appear in both.
     for label in ["Sma", "Ema", "Wma", "Dema", "Tema", "Trima", "Kama", "Mama", "T3"] {
-        assert_eq!(
+        assert!(
             s.matches(&format!("case {label}:")).count() >= 2,
-            true,
             "arm {label} must appear in both the copy constructor and dispatch switches"
         );
     }
