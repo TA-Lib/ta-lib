@@ -3931,39 +3931,6 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
         }
 "#;
 
-#[cfg(test)]
-mod predicate_form_tests {
-    use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
-
-    /// Pin the exact per-backend form of the boolean near-zero builtins. These are
-    /// the single source shared by the indicator code path AND the eval_predicate
-    /// server handler, so any drift here is caught fast (and the runtime
-    /// cross-language predicate-parity test in ta_regtest re-verifies equivalence).
-    #[test]
-    fn predicate_forms_are_stable() {
-        let v = &["v".to_string()];
-        let vs = &["v".to_string(), "s".to_string()];
-
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZero, v), "TA_IS_ZERO(v)");
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "TA_IS_ZERO_SCALED(v, s)");
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "TA_IS_ZERO_OR_NEG(v)");
-
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZero, v), "(v).abs() < 1e-14");
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "((v).abs() <= 1e-14 * (s))");
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v) < 1e-14");
-
-        assert_eq!(
-            java_predicate_expr(SpecialBuiltin::IsZero, v),
-            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
-        );
-        assert_eq!(
-            java_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
-            "(Math.abs(v) <= 0.00000000000001 * (s))"
-        );
-        assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Rust stream_verify (mirror of generate_c_stream_verify for the Rust server):
 // per streamable function, run the Rust batch and the Rust stream trajectory
@@ -4044,21 +4011,19 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // defaults keep hand-driven requests working).
     for p in &func.optional_inputs {
         let name = &p.name;
-        match p.param_type {
-            crate::ir::ParamType::Real => {
-                let d = p.default.unwrap_or(0.0);
-                let _ = writeln!(
-                    s,
-                    "    let {name} = params[\"{name}\"].as_f64().unwrap_or({d:?});"
-                );
-            }
-            _ => {
-                let d = p.default.unwrap_or(0.0) as i64;
-                let _ = writeln!(
-                    s,
-                    "    let {name} = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
-                );
-            }
+        if p.param_type == crate::ir::ParamType::Real {
+            let d = p.default.unwrap_or(0.0);
+            let _ = writeln!(
+                s,
+                "    let {name} = params[\"{name}\"].as_f64().unwrap_or({d:?});"
+            );
+        } else {
+            #[allow(clippy::cast_possible_truncation)]
+            let d = p.default.unwrap_or(0.0) as i64;
+            let _ = writeln!(
+                s,
+                "    let {name} = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
+            );
         }
     }
     // Seeded inputs.
@@ -4240,10 +4205,10 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     // update loop
     s.push_str("                    for t in p..svN {\n");
-    let bars = bar_args("", "t");
+    let t_args = bar_args("", "t");
     let _ = writeln!(s, "                        if t % 7 == 0 {{");
-    let _ = writeln!(s, "                            let pk = st.peek({bars});");
-    let _ = writeln!(s, "                            let up = st.update({bars});");
+    let _ = writeln!(s, "                            let pk = st.peek({t_args});");
+    let _ = writeln!(s, "                            let up = st.update({t_args});");
     let pk_parts = destructure("pk");
     let up_parts = destructure("up");
     for (i, (pk, up)) in pk_parts.iter().zip(up_parts.iter()).enumerate() {
@@ -4261,7 +4226,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         }
     }
     s.push_str("                        } else {\n");
-    let _ = writeln!(s, "                            let up = st.update({bars});");
+    let _ = writeln!(s, "                            let up = st.update({t_args});");
     for (i, up) in up_parts.iter().enumerate() {
         if out_is_int[i] {
             let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
@@ -4333,4 +4298,37 @@ pub(crate) fn generate_rust_stream_verify(
     }
     s.push_str("        _ => \"{\\\"error\\\":\\\"not_streamable\\\"}\".to_string(),\n    }\n}\n\n");
     s
+}
+
+#[cfg(test)]
+mod predicate_form_tests {
+    use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
+
+    /// Pin the exact per-backend form of the boolean near-zero builtins. These are
+    /// the single source shared by the indicator code path AND the eval_predicate
+    /// server handler, so any drift here is caught fast (and the runtime
+    /// cross-language predicate-parity test in ta_regtest re-verifies equivalence).
+    #[test]
+    fn predicate_forms_are_stable() {
+        let v = &["v".to_string()];
+        let vs = &["v".to_string(), "s".to_string()];
+
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZero, v), "TA_IS_ZERO(v)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "TA_IS_ZERO_SCALED(v, s)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "TA_IS_ZERO_OR_NEG(v)");
+
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZero, v), "(v).abs() < 1e-14");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "((v).abs() <= 1e-14 * (s))");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v) < 1e-14");
+
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZero, v),
+            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
+        );
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
+            "(Math.abs(v) <= 0.00000000000001 * (s))"
+        );
+        assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
+    }
 }
