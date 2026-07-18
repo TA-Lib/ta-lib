@@ -405,7 +405,7 @@ fn emit_output_annotation(o: &mut String, output: &Output, last: bool) {
 
 /// `TA_FuncFlags` numeric value (OR of matched bits; `stream` =
 /// TA_FUNC_FLG_STREAM).
-fn func_flags_value(flags: &[String]) -> u32 {
+pub(crate) fn func_flags_value(flags: &[String]) -> u32 {
     let mut v = 0;
     for f in flags {
         v |= match f.as_str() {
@@ -421,7 +421,7 @@ fn func_flags_value(flags: &[String]) -> u32 {
 }
 
 /// `TA_OptInputFlags` numeric value.
-fn opt_input_flags_value(flags: &[String]) -> u32 {
+pub(crate) fn opt_input_flags_value(flags: &[String]) -> u32 {
     let mut v = 0;
     for f in flags {
         v |= match f.as_str() {
@@ -436,7 +436,7 @@ fn opt_input_flags_value(flags: &[String]) -> u32 {
 }
 
 /// `TA_OutputFlags` numeric value.
-fn output_flags_value(flags: &[String]) -> u32 {
+pub(crate) fn output_flags_value(flags: &[String]) -> u32 {
     let mut v = 0;
     for f in flags {
         v |= match f.as_str() {

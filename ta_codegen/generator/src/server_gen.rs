@@ -2289,6 +2289,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            return \"{\\\"status\\\":\\\"ok\\\",\\\"n\\\":\" + refN + \"}\";\n");
     s.push_str("        }\n");
 
+    // stream_verify MUST dispatch before the per-function chain: its funcName
+    // is TA_-prefixed, so the contains("\"TA_<NAME>\"") probes below would
+    // misroute it to handle_<NAME> (the C server orders the same way).
+    s.push_str("        else if (json.contains(\"\\\"stream_verify\\\"\")) return handle_stream_verify(json);\n");
+
     // Thin dispatch: each indicator delegates to its own static handle_XXX method.
     // This keeps handleRequest small enough for HotSpot C2 to JIT-compile it.
     for func in funcs {
@@ -2623,6 +2628,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        return \"{\\\"lookback\\\":\" + lb + \",\" + resp.substring(1);\n");
     s.push_str("    }\n\n");
 
+    // stream_verify: Java stream vs Java batch, bitwise (drives the ta_regtest
+    // stream pass the moment the capability probe sees "not_streamable").
+    s.push_str(&generate_java_stream_verify(funcs, enums));
+
     // Main method
     s.push_str("    public static void main(String[] args) throws Exception {\n");
     s.push_str(
@@ -2635,7 +2644,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            System.out.flush();\n");
     s.push_str("        }\n");
     s.push_str("    }\n");
-    s.push_str("}\n");
+    s.push_str("}\n\n");
+
+    // Stream scaffolding: the verified FuzzData port + the typed open-reject
+    // exception (top-level classes after the server class).
+    s.push_str(&java_server_stream_scaffolding());
 
     s
 }
@@ -4332,5 +4345,571 @@ pub(crate) fn generate_rust_stream_verify(
         );
     }
     s.push_str("        _ => \"{\\\"error\\\":\\\"not_streamable\\\"}\".to_string(),\n    }\n}\n\n");
+    s
+}
+
+// ---------------------------------------------------------------------------
+// Java stream_verify (mirror of generate_rust_stream_verify for the Java
+// server): per streamable function, run the Java batch and the Java stream
+// trajectory in-process on identical seeded inputs (FuzzData port of
+// fuzz_data.h), compare BITWISE per bar (doubleToRawLongBits), spot-assert
+// peek == update AND value() == update, verify OpenAndFill against the batch
+// arrays plus the aliasing rejection, drive a mid-stream copy() independence
+// leg, check the Integer.MIN_VALUE default sentinel, and answer the same flat
+// JSON contract the ta_regtest driver reads. Differences from C/Rust, by
+// design:
+// - Open rejects are exceptions: ONLY IllegalArgumentException (and its
+//   InsufficientHistoryException subclass) counts as an expected reject — an
+//   NPE/AIOOBE escapes and fails the run loudly instead of masquerading as
+//   reject-parity.
+// - An out-of-list enum request value is unrepresentable in the type-safe
+//   Java surface (MAType.values()[x] would throw); the sv_ answers the
+//   batch-fail reject-parity shape directly — type safety IS the rejection.
+// - Settings sweeps configure a FRESH per-round Core instance (per-instance
+//   settings; streams snapshot candle settings at open).
+// ---------------------------------------------------------------------------
+
+/// The per-input expanded fuzz array variable in the generated Java handler
+/// (same mapping as the C/Rust servers: price components by name, generic
+/// real0 -> close, real1 -> volume).
+fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
+    match name {
+        "inOpen" => "fz_o",
+        "inHigh" => "fz_h",
+        "inLow" => "fz_l",
+        "inClose" => "fz_c",
+        "inVolume" => "fz_v",
+        "inOpenInterest" => "fz_oi",
+        _ => {
+            let arr = if *generic_idx == 0 { "fz_c" } else { "fz_v" };
+            *generic_idx += 1;
+            arr
+        }
+    }
+}
+
+/// One `sv_<NAME>` verify method for a function with an emitted Java stream.
+#[allow(clippy::too_many_lines)]
+fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
+    use std::fmt::Write as _;
+    let base = crate::backends::java::to_java_method_name(&func.name, func.camel_case.as_deref());
+    let class = crate::backends::java_stream::stream_class_name(func);
+    let candle = func.name.starts_with("CDL");
+    let inputs = crate::streaming::input_array_names(func);
+    let mut gi = 0usize;
+    let arrays: Vec<&'static str> = inputs
+        .iter()
+        .map(|i| sv_java_input_array(i, &mut gi))
+        .collect();
+    let n_out = func.outputs.len();
+    let multi = n_out > 1;
+    let out_is_int: Vec<bool> = func
+        .outputs
+        .iter()
+        .map(|o| o.param_type == crate::ir::ParamType::Integer)
+        .collect();
+    let vfield: Vec<String> = func
+        .outputs
+        .iter()
+        .map(|o| crate::backends::java_stream::value_field_name(&o.name))
+        .collect();
+
+    let mut s = String::new();
+    let _ = writeln!(s, "    static String sv_{}(String json) {{", func.name);
+    s.push_str("        int svShape = jsonInt(json, \"gen_shape\");\n");
+    s.push_str("        int svSeed = jsonInt(json, \"gen_seed\");\n");
+    s.push_str("        int svN = jsonInt(json, \"gen_n\");\n");
+    s.push_str("        if (svN < 2) svN = 2;\n        if (svN > 256) svN = 256;\n");
+    s.push_str("        int svK = jsonInt(json, \"unstablePeriod\");\n");
+    s.push_str("        int svCompat = jsonInt(json, \"compatibility\");\n");
+    if candle {
+        s.push_str("        int candleLegs = jsonInt(json, \"candleLegs\");\n");
+    }
+    // Optional params with YAML defaults; enum params parse as raw ints first
+    // (out-of-list detection), everything else straight to its Java type.
+    let mut has_int_default = false;
+    for p in &func.optional_inputs {
+        let name = &p.name;
+        match &p.param_type {
+            crate::ir::ParamType::Real => {
+                let d = p.default.unwrap_or(0.0);
+                let _ = writeln!(
+                    s,
+                    "        double {name} = json.contains(\"\\\"{name}\\\"\") ? jsonDouble(json, \"{name}\") : {d:e};"
+                );
+            }
+            crate::ir::ParamType::Enum(en) => {
+                let d = p.default.unwrap_or(0.0) as i64;
+                let _ = writeln!(
+                    s,
+                    "        int _raw_{name} = json.contains(\"\\\"{name}\\\"\") ? jsonInt(json, \"{name}\") : {d};"
+                );
+                let _ = writeln!(
+                    s,
+                    "        if (_raw_{name} < 0 || _raw_{name} >= {en}.values().length) {{"
+                );
+                s.push_str("            /* Out-of-list enum: unrepresentable in the type-safe Java surface —\n             * batch and stream both reject at the type level (reject parity). */\n");
+                s.push_str("            return \"{\\\"retCode\\\":2,\\\"legs\\\":0,\\\"nb\\\":0,\\\"openRejects\\\":1,\\\"ok\\\":1,\\\"peek_ok\\\":1}\";\n");
+                s.push_str("        }\n");
+                let _ = writeln!(s, "        {en} {name} = {en}.values()[_raw_{name}];");
+            }
+            _ => {
+                let d = p.default.unwrap_or(0.0) as i64;
+                if p.default.is_some() {
+                    has_int_default = true;
+                }
+                let _ = writeln!(
+                    s,
+                    "        int {name} = json.contains(\"\\\"{name}\\\"\") ? jsonInt(json, \"{name}\") : {d};"
+                );
+            }
+        }
+    }
+    // Seeded inputs.
+    s.push_str("        double[] fz_o = new double[svN];\n        double[] fz_h = new double[svN];\n        double[] fz_l = new double[svN];\n        double[] fz_c = new double[svN];\n        double[] fz_v = new double[svN];\n        double[] fz_oi = new double[svN];\n");
+    s.push_str("        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);\n");
+
+    // Period-bank ramp (see the C/Rust emitters): span [min-1, max+1] so every
+    // bank slot and both clamp directions are exercised.
+    {
+        let lookup = crate::streaming::FuncsLookup(funcs);
+        if let Ok(crate::streaming::StreamPlan::PeriodBank(pb)) =
+            crate::streaming::validate_streamable(func, &lookup)
+        {
+            if let Some(idx) = inputs.iter().position(|i| *i == pb.period_input) {
+                let arr = arrays[idx];
+                let _ = writeln!(
+                    s,
+                    "        for (int _pi = 0; _pi < svN; _pi++) {{ {arr}[_pi] = {min} + (_pi % ({max} - {min} + 3)) - 1; }}",
+                    min = pb.min_param,
+                    max = pb.max_param
+                );
+            }
+        }
+    }
+
+    let full_ins = arrays.join(", ");
+    let pfx_ins = |p: &str| -> String {
+        arrays
+            .iter()
+            .map(|a| format!("java.util.Arrays.copyOf({a}, {p})"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let opts = func
+        .optional_inputs
+        .iter()
+        .map(|p| p.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let opts_lead = if opts.is_empty() { String::new() } else { format!("{opts}, ") };
+    let opts_tail = if opts.is_empty() { String::new() } else { format!(", {opts}") };
+    let bar_args = |t: &str| -> String {
+        arrays
+            .iter()
+            .map(|a| format!("{a}[{t}]"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let bars_t = bar_args("t");
+
+    // Batch + fill output buffers.
+    let mut bdecls = String::new();
+    let mut bargs = String::new();
+    let mut fdecls = String::new();
+    let mut fargs = String::new();
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let _ = writeln!(bdecls, "        {ty}[] b{i} = new {ty}[svN];");
+        let _ = write!(bargs, ", b{i}");
+        let _ = writeln!(fdecls, "            {ty}[] f{i} = new {ty}[svN];");
+        let _ = write!(fargs, ", f{i}");
+    }
+    s.push_str(&bdecls);
+
+    s.push_str("        long legs = 0;\n        boolean allOk = true;\n        boolean peekAll = true;\n        int fillChecked = 0;\n        boolean fillOk = true;\n        MInteger beg = new MInteger();\n        MInteger nb = new MInteger();\n        String diag = \"\";\n");
+    if candle {
+        s.push_str("        int rounds = (candleLegs != 0) ? 4 : 1;\n");
+    } else {
+        s.push_str("        int rounds = 1;\n");
+    }
+    s.push_str("        for (int rd = 0; rd < rounds; rd++) {\n");
+
+    // Fresh, pinned, configured Core for this round (per-instance settings).
+    s.push_str("            Core c2 = new Core();\n");
+    s.push_str("            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;\n");
+    for id in collect_pin_ids(func, funcs) {
+        let _ = writeln!(s, "            c2.unstablePeriod[{id}] = svK;");
+    }
+    if candle {
+        s.push_str("            svApplyCandleRound(c2, rd);\n");
+    }
+
+    // Expected-reject precheck (dispatch/period-bank arms without a stream) —
+    // currently generates for zero functions (all arms stream post-#125); the
+    // machinery regenerates automatically if an arm ever loses its stream. The
+    // guard compares raw enum ints, so substitute C constants with values.
+    if let Some(guard) = sv_reject_condition(func, funcs, None) {
+        // Rewrite enum param names to their raw-int locals for the guard.
+        let mut guard_java = guard.clone();
+        for p in &func.optional_inputs {
+            if matches!(p.param_type, crate::ir::ParamType::Enum(_)) {
+                guard_java = guard_java.replace(&p.name, &format!("_raw_{}", p.name));
+            }
+        }
+        let _ = writeln!(s, "            if ({guard_java}) {{");
+        s.push_str("                boolean r1;\n");
+        let _ = writeln!(
+            s,
+            "                try {{ c2.{base}Open({full_ins}{opts_tail}); r1 = false; }} catch (IllegalArgumentException _e) {{ r1 = true; }}"
+        );
+        s.push_str(&fdecls.replace("            ", "                "));
+        s.push_str("                MInteger fBegR = new MInteger();\n                MInteger fNbR = new MInteger();\n");
+        s.push_str("                boolean r2;\n");
+        let _ = writeln!(
+            s,
+            "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}, fBegR, fNbR{fargs}); r2 = false; }} catch (IllegalArgumentException _e) {{ r2 = true; }}"
+        );
+        s.push_str("                boolean okr = r1 && r2;\n");
+        s.push_str("                return \"{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":\" + (okr ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
+        s.push_str("            }\n");
+    }
+
+    // Batch leg.
+    let _ = writeln!(
+        s,
+        "            RetCode rc = c2.{base}(0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs});"
+    );
+    let _ = writeln!(s, "            int lb = c2.{base}Lookback({opts});");
+    s.push_str("            if (rc != RetCode.Success || nb.value == 0) {\n");
+    s.push_str("                boolean openRejects;\n");
+    let _ = writeln!(
+        s,
+        "                try {{ c2.{base}Open({full_ins}{opts_tail}); openRejects = false; }} catch (IllegalArgumentException _e) {{ openRejects = true; }}"
+    );
+    if candle {
+        s.push_str("                if (!openRejects) allOk = false;\n");
+        s.push_str("                if (rd + 1 < rounds) continue;\n");
+        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \"}\";\n");
+    } else {
+        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":0,\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (openRejects ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
+    }
+    s.push_str("            }\n");
+
+    // OpenAndFill leg (fill == batch arrays, bitwise) + aliasing probes.
+    s.push_str("            fillChecked = 1;\n            try {\n");
+    s.push_str(&fdecls.replace("            ", "                "));
+    s.push_str("                MInteger fBeg = new MInteger();\n                MInteger fNb = new MInteger();\n");
+    let _ = writeln!(
+        s,
+        "                Core.{class} _fh = c2.{base}OpenAndFill({full_ins}{opts_tail}, fBeg, fNb{fargs});"
+    );
+    s.push_str("                if (fBeg.value != beg.value || fNb.value != nb.value) fillOk = false;\n                else {\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        if *is_int {
+            let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (f{i}[i] != b{i}[i]) fillOk = false;");
+        } else {
+            let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (svBne(f{i}[i], b{i}[i])) fillOk = false;");
+        }
+    }
+    s.push_str("                }\n");
+    // Aliasing probes (Java arrays make out==in expressible; the guards must
+    // reject with IAE and mint no handle).
+    if !out_is_int[0] {
+        let alias_args = {
+            let mut fa = String::new();
+            for (i, is_int) in out_is_int.iter().enumerate() {
+                if i == 0 {
+                    let _ = write!(fa, ", {}", arrays[0]);
+                } else {
+                    let _ = write!(fa, ", f{i}");
+                }
+                let _ = is_int;
+            }
+            fa
+        };
+        let _ = writeln!(
+            s,
+            "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}, fBeg, fNb{alias_args}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases input */ }}"
+        );
+        if multi && !out_is_int[1] {
+            let alias_args2 = {
+                let mut fa = String::new();
+                for (i, _) in out_is_int.iter().enumerate() {
+                    if i == 1 {
+                        let _ = write!(fa, ", f0");
+                    } else {
+                        let _ = write!(fa, ", f{i}");
+                    }
+                }
+                fa
+            };
+            let _ = writeln!(
+                s,
+                "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}, fBeg, fNb{alias_args2}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases output */ }}"
+            );
+        }
+    }
+    s.push_str("            } catch (IllegalArgumentException _e) { fillOk = false; }\n");
+
+    // Prefix sweep.
+    if func_has_seed_boundary(func, funcs) {
+        s.push_str("            int seedShift = (svCompat == 1) ? 1 : 0;\n");
+    } else {
+        s.push_str("            int seedShift = 0;\n");
+    }
+    s.push_str("            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };\n");
+    s.push_str("            java.util.Arrays.sort(pcs);\n");
+    s.push_str("            int prevP = -1;\n");
+    s.push_str("            for (int pi = 0; pi < pcs.length; pi++) {\n");
+    s.push_str("                int p = pcs[pi];\n");
+    s.push_str("                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;\n");
+    s.push_str("                prevP = p;\n");
+    let _ = writeln!(s, "                Core.{class} st;");
+    let _ = writeln!(
+        s,
+        "                try {{ st = c2.{base}Open({}{opts_tail}); }}",
+        pfx_ins("p")
+    );
+    s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"openRejectP\\\":\" + p; continue; }\n");
+    s.push_str("                legs++;\n");
+    // Open-value compare through value() (load-bearing: Java open returns only
+    // the handle, so the anchor compare IS the value() verification).
+    if multi {
+        let _ = writeln!(s, "                Core.{class}.Value v0 = st.value();");
+        for (i, f) in vfield.iter().enumerate() {
+            if out_is_int[i] {
+                let _ = writeln!(s, "                if (v0.{f} != b{i}[p - 1 - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
+            } else {
+                let _ = writeln!(s, "                if (svBne(v0.{f}, b{i}[p - 1 - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
+            }
+        }
+    } else if out_is_int[0] {
+        s.push_str("                if (st.value() != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
+    } else {
+        s.push_str("                if (svBne(st.value(), b0[p - 1 - beg.value])) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
+    }
+    // Update loop with peek-every-7 + value()==update.
+    s.push_str("                for (int t = p; t < svN; t++) {\n");
+    let (up_ty, up_decl) = if multi {
+        (format!("Core.{class}.Value"), "up")
+    } else if out_is_int[0] {
+        ("int".to_string(), "up")
+    } else {
+        ("double".to_string(), "up")
+    };
+    s.push_str("                    if (t % 7 == 0) {\n");
+    let _ = writeln!(s, "                        {up_ty} pk = st.peek({bars_t});");
+    let _ = writeln!(s, "                        {up_ty} {up_decl} = st.update({bars_t});");
+    if multi {
+        for (i, f) in vfield.iter().enumerate() {
+            if out_is_int[i] {
+                let _ = writeln!(s, "                        if (pk.{f} != up.{f}) peekAll = false;");
+            } else {
+                let _ = writeln!(s, "                        if (svBne(pk.{f}, up.{f})) peekAll = false;");
+            }
+        }
+        s.push_str("                        if (st.value() != up) allOk = false; /* cached Value identity */\n");
+    } else if out_is_int[0] {
+        s.push_str("                        if (pk != up) peekAll = false;\n");
+        s.push_str("                        if (st.value() != up) allOk = false;\n");
+    } else {
+        s.push_str("                        if (svBne(pk, up)) peekAll = false;\n");
+        s.push_str("                        if (svBne(st.value(), up)) allOk = false;\n");
+    }
+    let emit_up_compares = |s: &mut String, pad: &str| {
+        if multi {
+            for (i, f) in vfield.iter().enumerate() {
+                if out_is_int[i] {
+                    let _ = writeln!(s, "{pad}if (up.{f} != b{i}[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":{i},\\\"batchv\\\":\\\"\" + b{i}[t - beg.value] + \"\\\",\\\"streamv\\\":\\\"\" + up.{f} + \"\\\"\"; }}");
+                } else {
+                    let _ = writeln!(s, "{pad}if (svBne(up.{f}, b{i}[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":{i},\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b{i}[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up.{f})) + \"\\\"\"; }}");
+                }
+            }
+        } else if out_is_int[0] {
+            let _ = writeln!(s, "{pad}if (up != b0[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":0,\\\"batchv\\\":\\\"\" + b0[t - beg.value] + \"\\\",\\\"streamv\\\":\\\"\" + up + \"\\\"\"; }}");
+        } else {
+            let _ = writeln!(s, "{pad}if (svBne(up, b0[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":0,\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b0[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up)) + \"\\\"\"; }}");
+        }
+    };
+    emit_up_compares(&mut s, "                        ");
+    s.push_str("                    } else {\n");
+    let _ = writeln!(s, "                        {up_ty} {up_decl} = st.update({bars_t});");
+    emit_up_compares(&mut s, "                        ");
+    s.push_str("                    }\n");
+    s.push_str("                }\n");
+    s.push_str("            }\n");
+
+    // copy() independence leg: open at the earliest prefix, advance to mid,
+    // copy, drive both to the end — both must match batch bitwise (a shallow
+    // sub-handle/bank/ring copy diverges here).
+    s.push_str("            {\n");
+    s.push_str("                int p0 = lb + 1 + seedShift;\n");
+    s.push_str("                if (p0 <= svN - 1) {\n");
+    s.push_str("                    try {\n");
+    let _ = writeln!(
+        s,
+        "                        Core.{class} sA = c2.{base}Open({}{opts_tail});",
+        pfx_ins("p0")
+    );
+    s.push_str("                        int mid = (p0 + svN) / 2;\n");
+    let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
+    let _ = writeln!(s, "                        Core.{class} sB = sA.copy();");
+    s.push_str("                        for (int t = mid; t < svN; t++) {\n");
+    let _ = writeln!(s, "                            {up_ty} uA = sA.update({bars_t});");
+    let _ = writeln!(s, "                            {up_ty} uB = sB.update({bars_t});");
+    if multi {
+        for (i, f) in vfield.iter().enumerate() {
+            if out_is_int[i] {
+                let _ = writeln!(s, "                            if (uA.{f} != uB.{f} || uA.{f} != b{i}[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
+            } else {
+                let _ = writeln!(s, "                            if (svBne(uA.{f}, uB.{f}) || svBne(uA.{f}, b{i}[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
+            }
+        }
+    } else if out_is_int[0] {
+        s.push_str("                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
+    } else {
+        s.push_str("                            if (svBne(uA, uB) || svBne(uA, b0[t - beg.value])) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
+    }
+    s.push_str("                        }\n");
+    s.push_str("                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
+    s.push_str("                }\n");
+    s.push_str("            }\n");
+
+    // Short-history reject leg: at `lb` bars no output is defined for ANY
+    // configuration, so open must reject (with the typed exception).
+    s.push_str("            if (lb >= 1 && lb < svN) {\n");
+    let _ = writeln!(
+        s,
+        "                try {{ c2.{base}Open({}{opts_tail}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
+        pfx_ins("lb")
+    );
+    s.push_str("                catch (InsufficientHistoryException _e) { /* expected, typed */ }\n");
+    s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryWrongType\\\":1\"; }\n");
+    s.push_str("            }\n");
+
+    // Integer.MIN_VALUE default-sentinel leg: open(MIN_VALUE) must equal
+    // open(explicit YAML default) bitwise (the batch guard transcribes into
+    // the stream open, so defaulting can never silently diverge).
+    if has_int_default {
+        let mut sent_args: Vec<String> = Vec::new();
+        let mut expl_args: Vec<String> = Vec::new();
+        for p in &func.optional_inputs {
+            match &p.param_type {
+                crate::ir::ParamType::Real => {
+                    sent_args.push(p.name.clone());
+                    expl_args.push(p.name.clone());
+                }
+                crate::ir::ParamType::Enum(_) => {
+                    sent_args.push(p.name.clone());
+                    expl_args.push(p.name.clone());
+                }
+                _ => {
+                    if let Some(d) = p.default {
+                        sent_args.push("Integer.MIN_VALUE".to_string());
+                        expl_args.push(format!("{}", d as i64));
+                    } else {
+                        sent_args.push(p.name.clone());
+                        expl_args.push(p.name.clone());
+                    }
+                }
+            }
+        }
+        s.push_str("            try {\n");
+        let _ = writeln!(
+            s,
+            "                Core.{class} sD = c2.{base}Open({full_ins}, {});",
+            sent_args.join(", ")
+        );
+        let _ = writeln!(
+            s,
+            "                Core.{class} sE = c2.{base}Open({full_ins}, {});",
+            expl_args.join(", ")
+        );
+        if multi {
+            for (i, f) in vfield.iter().enumerate() {
+                if out_is_int[i] {
+                    let _ = writeln!(s, "                if (sD.value().{f} != sE.value().{f}) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
+                } else {
+                    let _ = writeln!(s, "                if (svBne(sD.value().{f}, sE.value().{f})) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
+                }
+            }
+        } else if out_is_int[0] {
+            s.push_str("                if (sD.value() != sE.value()) { allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }\n");
+        } else {
+            s.push_str("                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }\n");
+        }
+        s.push_str("            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }\n");
+    }
+
+    s.push_str("        }\n");
+    // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + diag + \"}\";\n");
+    s.push_str("    }\n\n");
+    s
+}
+
+/// The whole Java `stream_verify` section: bit-compare + candle-round helpers,
+/// one `sv_<NAME>` per function with an emitted Java stream, and the
+/// dispatcher (unknown names — including TA_STREAM_PROBE — answer
+/// "not_streamable", the driver's capability probe contract).
+pub(crate) fn generate_java_stream_verify(
+    funcs: &[FuncDef],
+    _enums: &HashMap<String, EnumDef>,
+) -> String {
+    use std::fmt::Write as _;
+    let mut s = String::new();
+    s.push_str("    // ---- stream_verify: Java stream vs Java batch, bitwise ----\n\n");
+    s.push_str("    static boolean svBne(double a, double b) {\n        return Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b);\n    }\n\n");
+    // Candle-settings rounds (mirror the C/Rust sweep): defaults / avgPeriod+3
+    // / avgPeriod=0 (instant candle) / rangeType=Shadows.
+    s.push_str("    static void svApplyCandleRound(Core c, int rd) {\n");
+    s.push_str("        for (CandleSetting cs : c.candleSettings) {\n");
+    s.push_str("            if (rd == 1) cs.avgPeriod += 3;\n");
+    s.push_str("            else if (rd == 2) cs.avgPeriod = 0;\n");
+    s.push_str("            else if (rd == 3) cs.rangeType = RangeType.Shadows;\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    let emitted: Vec<&FuncDef> = funcs
+        .iter()
+        .filter(|f| crate::backends::java_stream::emits_stream(f, &lookup))
+        .collect();
+    for f in &emitted {
+        s.push_str(&emit_java_sv_func(f, funcs));
+    }
+
+    s.push_str("    static String handle_stream_verify(String json) {\n");
+    s.push_str("        String fn = jsonString(json, \"funcName\");\n");
+    s.push_str("        switch (fn) {\n");
+    for f in &emitted {
+        let _ = writeln!(
+            s,
+            "        case \"TA_{}\": return sv_{}(json);",
+            f.name.to_uppercase(),
+            f.name
+        );
+    }
+    s.push_str("        default: return \"{\\\"error\\\":\\\"not_streamable\\\"}\";\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s
+}
+
+/// The Java port of `fuzz_data.h` (byte-identical input generation, verified
+/// bit-for-bit against the C original by a differential harness at port time).
+const JAVA_FUZZ: &str = include_str!("../templates/java/FuzzData.java");
+
+/// The scaffolding classes appended after the server's main class: the fuzz
+/// generator and the streaming open-reject exception (mirrors the shipped
+/// library's hand-written `InsufficientHistoryException`).
+pub(crate) fn java_server_stream_scaffolding() -> String {
+    let mut s = String::new();
+    s.push_str("class InsufficientHistoryException extends IllegalArgumentException {\n");
+    s.push_str("    private static final long serialVersionUID = 1L;\n");
+    s.push_str("    public InsufficientHistoryException(String message) { super(message); }\n");
+    s.push_str("}\n\n");
+    s.push_str(JAVA_FUZZ);
     s
 }

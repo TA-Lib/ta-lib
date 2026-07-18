@@ -14,6 +14,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - Rust streaming API: every indicator gains `<name>_open` / `<name>_open_and_fill` on `Core` plus an owned
   handle with infallible `update`/`peek` (drop = close), bit-identical to batch and verified by the same
   stream gate as C.
+- Java streaming API: every indicator gains `xxxOpen` / `xxxOpenAndFill` on `Core` returning a nested
+  handle class (`Core.SmaStream`) with `update`/`peek`/`value()`/`copy()` (no close — GC suffices),
+  bit-identical to batch and verified by the same stream gate as C and Rust. Too little history throws
+  the new `InsufficientHistoryException`.
 - New TA Functions:
   - PVO: Percentage Volume Oscillator (#119)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)

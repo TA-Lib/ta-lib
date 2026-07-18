@@ -1,6 +1,6 @@
 # Generated Streaming (Incremental) API for ta_codegen
 
-Status: C tier complete (all 161 functions, bit-exact CI gate); Rust/Java/.NET emitters remaining. Planned for release 0.8.1.
+Status: C, Rust, and Java tiers complete (all 165 functions each, bit-exact CI gates); the managed .NET emitter is the sole remaining streaming work. Planned for release 0.8.1.
 
 ## Design
 
@@ -236,6 +236,46 @@ Java/.NET: small handle objects with the same `open(history, params)` +
 `update`/`peek` shape. Multi-output return small structs (`(f64, f64, f64)`
 for MACD in Rust; a tiny value class in Java/.NET).
 
+Java (shipped shape — design-panel reviewed):
+
+```java
+Core core = new Core();
+Core.SmaStream s = core.smaOpen(history, 14);   // throws on reject; value() = last-bar value
+double v = s.update(bar);                       // one value per closed bar; never throws
+double p = s.peek(formingBarClose);             // forming bar, non-committing (deep copy)
+Core.SmaStream t = s.copy();                    // independent stream fork
+Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
+Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
+Core.SmaStream s2 = core.smaOpenAndFill(history, 14, beg, nb, warmup);
+```
+
+- Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),
+  named from the Java base method (`movingAverage` → `MovingAverageStream`) — they
+  ride the existing per-function fragment splice into both the shipped `Core.java`
+  and the JSON-RPC server with zero new build plumbing.
+- Open rejections are unchecked exceptions: `InsufficientHistoryException`
+  (an `IllegalArgumentException` subclass — the one routine, data-dependent
+  condition, catchable separately) for `historyLen < lookback + 1`, plain
+  `IllegalArgumentException` for out-of-range parameters and `OpenAndFill`
+  aliasing, `IllegalStateException` for capture invariants. Messages carry the
+  stable prefix `"TA_<NAME> open:"`. `update`/`peek` never throw post-open.
+- `value()` re-reads the last committed value(s) without recomputing (seeded by
+  open, refreshed by `update`, untouched by `peek`); multi-output `update`
+  caches the immutable `Value` it returns, so `value()` is allocation-free.
+- `peek`/`copy()` are the universal deep copy (arrays cloned, sub-handles
+  copied recursively, the `Core` reference shared) — the Java rendering of
+  Rust's clone-peek; `copy()` is named to avoid `ForkJoinTask.fork()`'s
+  async connotation and Java's broken `clone()`.
+- `OpenAndFill` rejects output↔input and output↔output aliasing by reference
+  equality (complete in Java: arrays are identical or disjoint) — Java is the
+  one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
+  the guard is load-bearing (the planned managed .NET emitter must mirror it).
+- `Integer.MIN_VALUE` keeps its batch meaning (use the documented default) in
+  streaming opens; the stream gate asserts `open(MIN_VALUE) == open(default)`
+  bitwise.
+- Handles are deliberately **not serializable**: the sanctioned checkpoint
+  story is retaining history and re-opening (bit-identical by contract).
+
 **Java/.NET handle lifecycle.** Generated Java is pure Java — a stream handle
 is ordinary heap state, so "close" is literally nothing: no `AutoCloseable`,
 no finalizer; GC suffices. The same holds for .NET **provided the .NET stream
@@ -282,9 +322,14 @@ The Rust guarantees above rest on one rule that holds in every language, each
 enforcing it its own way:
 
 > **A stream's value-affecting settings (compatibility, candle settings) must
-> not change over its lifetime.** Nothing is copied into the handle — settings
-> remain the shared, effectively-static data they already are, so a user
-> maintaining thousands of streams pays zero per-stream settings overhead.
+> not change over its lifetime.** In C nothing is copied into the handle —
+> settings remain the shared, effectively-static data they already are. The
+> managed tiers freeze instead of sharing where that is free or safer: Rust
+> handles embed the (immutable) `Core` by value, and Java handles snapshot the
+> few candle-setting primitives a CDL step reads per bar (~10 ints/doubles on
+> the 61 candle handles only) — so a mid-stream `SetCandleSettings` cannot
+> produce torn per-bar reads there. Under the rule, all three behaviors are
+> observationally identical.
 
 - **Rust.** Enforced by construction: settings live in the immutable `Core`
   (issue #104) the stream was opened from; they cannot change, so a violation
@@ -301,10 +346,16 @@ enforcing it its own way:
   `&mut`).
 - **Java / .NET.** Settings live per-`Core`-instance, so there is no
   process-global hazard; the same documented rule applies per instance: don't
-  mutate a `Core`'s settings while streams opened from it are live.
-  Single-writer per handle; no synchronization in the generated code (safe
-  publication when handing a handle between threads is the caller's usual
-  memory-model responsibility).
+  mutate a `Core`'s settings while streams opened from it are live (candle
+  settings are additionally snapshotted into CDL handles at open — see above).
+  Single-writer per handle — `update`, and `peek`/`value()`/`copy()` count as
+  accesses under that rule; with no concurrent `update`, `peek`/`value()`/
+  `copy()` never write the handle and are safe to call concurrently after safe
+  publication (a stronger guarantee than C documents for `const` peek). No
+  synchronization in the generated code; safe publication when handing a
+  handle between threads is the caller's usual memory-model responsibility.
+  A returned multi-output `Value` is immutable with final fields — safely
+  publishable even through a data race (JLS 17.5).
 
 ### Python (future consumer — exploration, not in scope)
 
@@ -781,6 +832,7 @@ claim in *Motivation* gets measured, not asserted).
    normalizations (a carried-parity recognizer and an in-loop output-gate
    strip); MAVP streams via the period-bank tier — a bank of `maxP-minP+1` MA
    sub-streams advanced in lockstep.
-8. **Rust emitter** (re-applying the now-complete C model), then Java/.NET
-   (managed C# emitter, not P/Invoke — see lifecycle section) — the sole
-   remaining streaming work.
+8. **Rust emitter** (re-applying the now-complete C model) — DONE; **Java
+   emitter** (nested handle classes over the same shared transition machinery,
+   verified by the same stream gate) — DONE; .NET (managed C# emitter, not
+   P/Invoke — see lifecycle section) — the sole remaining streaming work.

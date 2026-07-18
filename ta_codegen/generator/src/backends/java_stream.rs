@@ -122,7 +122,7 @@ fn has_value_class(func: &FuncDef) -> bool {
 
 /// The `Value` field name for an output: `outMACDSignal` → `macdSignal`,
 /// `outSlowK` → `slowK`, `outInteger` → `integer`, `outAroonDown` → `aroonDown`.
-fn value_field_name(out_name: &str) -> String {
+pub(crate) fn value_field_name(out_name: &str) -> String {
     let stripped = out_name.strip_prefix("out").unwrap_or(out_name);
     let chars: Vec<char> = stripped.chars().collect();
     if chars.is_empty() {
