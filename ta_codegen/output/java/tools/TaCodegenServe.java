@@ -51045,6 +51045,178 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  MF,CC    Mario Fortier, Claude Code
+     *
+     * Change history:
+     *
+     *  MMDDYY BY   Description
+     *  -------------------------------------------------------------------
+     *  120802 MF   Template creation.
+     *  071726 MF,CC Implement Negative Volume Index (#126).
+     */
+
+       public int nviLookback( )
+       {
+          /* This function have no lookback needed. */
+          return 0 ;
+
+       }
+       public RetCode nvi( int startIdx,
+                           int endIdx,
+                           double inClose[],
+                           double inVolume[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevNVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* The index is a running cumulative value seeded at 1000, updated only on
+           * bars whose volume decreased versus the prior bar (Negative Volume).
+           */
+          prevNVI = 1000.0;
+          prevClose = inClose[startIdx];
+          prevVolume = inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = inClose[i];
+             tempVolume = inVolume[i];
+             /* prevClose != 0 guards the percentage-change division: a zero previous
+              * close is a degenerate input that would otherwise emit NaN/Inf; carry
+              * the index forward unchanged instead. Never triggers on real prices.
+              */
+             if( tempVolume < prevVolume && prevClose != 0.0 ) {
+                prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+             }
+             outReal[outIdx++] = prevNVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode nviUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inClose[],
+                                    double inVolume[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevNVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          prevNVI = 1000.0;
+          prevClose = inClose[startIdx];
+          prevVolume = inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = inClose[i];
+             tempVolume = inVolume[i];
+             if( tempVolume < prevVolume && prevClose != 0.0 ) {
+                prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+             }
+             outReal[outIdx++] = prevNVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode nvi( int startIdx,
+                           int endIdx,
+                           float inClose[],
+                           float inVolume[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevNVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          prevNVI = 1000.0;
+          prevClose = (double)inClose[startIdx];
+          prevVolume = (double)inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = (double)inClose[i];
+             tempVolume = (double)inVolume[i];
+             if( tempVolume < prevVolume && prevClose != 0.0 ) {
+                prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+             }
+             outReal[outIdx++] = prevNVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode nviUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inClose[],
+                                    float inVolume[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevNVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          prevNVI = 1000.0;
+          prevClose = (double)inClose[startIdx];
+          prevVolume = (double)inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = (double)inClose[i];
+             tempVolume = (double)inVolume[i];
+             if( tempVolume < prevVolume && prevClose != 0.0 ) {
+                prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+             }
+             outReal[outIdx++] = prevNVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *  AC       Angelo Ciceri
      *
      *
@@ -52942,6 +53114,178 @@ class Core {
                 outReal[i] = 0.0;
              }
           }
+          return RetCode.Success ;
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  MF,CC    Mario Fortier, Claude Code
+     *
+     * Change history:
+     *
+     *  MMDDYY BY   Description
+     *  -------------------------------------------------------------------
+     *  120802 MF   Template creation.
+     *  071726 MF,CC Implement Positive Volume Index (#126).
+     */
+
+       public int pviLookback( )
+       {
+          /* This function have no lookback needed. */
+          return 0 ;
+
+       }
+       public RetCode pvi( int startIdx,
+                           int endIdx,
+                           double inClose[],
+                           double inVolume[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevPVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* The index is a running cumulative value seeded at 1000, updated only on
+           * bars whose volume increased versus the prior bar (Positive Volume).
+           */
+          prevPVI = 1000.0;
+          prevClose = inClose[startIdx];
+          prevVolume = inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = inClose[i];
+             tempVolume = inVolume[i];
+             /* prevClose != 0 guards the percentage-change division: a zero previous
+              * close is a degenerate input that would otherwise emit NaN/Inf; carry
+              * the index forward unchanged instead. Never triggers on real prices.
+              */
+             if( tempVolume > prevVolume && prevClose != 0.0 ) {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+             }
+             outReal[outIdx++] = prevPVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode pviUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inClose[],
+                                    double inVolume[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevPVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          prevPVI = 1000.0;
+          prevClose = inClose[startIdx];
+          prevVolume = inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = inClose[i];
+             tempVolume = inVolume[i];
+             if( tempVolume > prevVolume && prevClose != 0.0 ) {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+             }
+             outReal[outIdx++] = prevPVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode pvi( int startIdx,
+                           int endIdx,
+                           float inClose[],
+                           float inVolume[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevPVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          prevPVI = 1000.0;
+          prevClose = (double)inClose[startIdx];
+          prevVolume = (double)inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = (double)inClose[i];
+             tempVolume = (double)inVolume[i];
+             if( tempVolume > prevVolume && prevClose != 0.0 ) {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+             }
+             outReal[outIdx++] = prevPVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode pviUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inClose[],
+                                    float inVolume[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          double prevPVI = 0;
+          double prevClose = 0;
+          double prevVolume = 0;
+          double tempClose = 0;
+          double tempVolume = 0;
+          prevPVI = 1000.0;
+          prevClose = (double)inClose[startIdx];
+          prevVolume = (double)inVolume[startIdx];
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             tempClose = (double)inClose[i];
+             tempVolume = (double)inVolume[i];
+             if( tempVolume > prevVolume && prevClose != 0.0 ) {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+             }
+             outReal[outIdx++] = prevPVI;
+             prevClose = tempClose;
+             prevVolume = tempVolume;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
           return RetCode.Success ;
        }
     /* List of contributors:
@@ -65317,6 +65661,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", "Nvi", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("OBV", new AbsFunc("OBV", "Volume Indicators", "On Balance Volume", "Obv", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
             new AbsOpt[]{  },
@@ -65332,6 +65680,10 @@ public class TaCodegenServe {
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", "Ppo", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", "Pvi", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
+            new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", "Pvo", 0,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
@@ -65541,8 +65893,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 189763;
-    static final long ABSTRACT_XML_CHECKSUM = 15205450L;
+    static final int ABSTRACT_XML_LENGTH = 191207;
+    static final long ABSTRACT_XML_CHECKSUM = 15322188L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -65691,10 +66043,12 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_MOM\"")) return handle_MOM(json);
         else if (json.contains("\"TA_MULT\"")) return handle_MULT(json);
         else if (json.contains("\"TA_NATR\"")) return handle_NATR(json);
+        else if (json.contains("\"TA_NVI\"")) return handle_NVI(json);
         else if (json.contains("\"TA_OBV\"")) return handle_OBV(json);
         else if (json.contains("\"TA_PLUS_DI\"")) return handle_PLUS_DI(json);
         else if (json.contains("\"TA_PLUS_DM\"")) return handle_PLUS_DM(json);
         else if (json.contains("\"TA_PPO\"")) return handle_PPO(json);
+        else if (json.contains("\"TA_PVI\"")) return handle_PVI(json);
         else if (json.contains("\"TA_PVO\"")) return handle_PVO(json);
         else if (json.contains("\"TA_ROC\"")) return handle_ROC(json);
         else if (json.contains("\"TA_ROCP\"")) return handle_ROCP(json);
@@ -65983,6 +66337,8 @@ public class TaCodegenServe {
             sb.append(",");
             sb.append("\"TA_NATR\"");
             sb.append(",");
+            sb.append("\"TA_NVI\"");
+            sb.append(",");
             sb.append("\"TA_OBV\"");
             sb.append(",");
             sb.append("\"TA_PLUS_DI\"");
@@ -65990,6 +66346,8 @@ public class TaCodegenServe {
             sb.append("\"TA_PLUS_DM\"");
             sb.append(",");
             sb.append("\"TA_PPO\"");
+            sb.append(",");
+            sb.append("\"TA_PVI\"");
             sb.append(",");
             sb.append("\"TA_PVO\"");
             sb.append(",");
@@ -74331,6 +74689,64 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_NVI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        long startNs = System.nanoTime();
+        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        rc = core.nvi(
+            startIdx, endIdx,
+            inClose,
+            inVolume,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        long startNsUng = System.nanoTime();
+        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        rc = core.nviUnguarded(
+            startIdx, endIdx,
+            inClose,
+            inVolume,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_OBV(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -74566,6 +74982,64 @@ public class TaCodegenServe {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_PVI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        long startNs = System.nanoTime();
+        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        rc = core.pvi(
+            startIdx, endIdx,
+            inClose,
+            inVolume,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        long startNsUng = System.nanoTime();
+        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        rc = core.pviUnguarded(
+            startIdx, endIdx,
+            inClose,
+            inVolume,
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
@@ -76949,6 +77423,9 @@ public class TaCodegenServe {
             int optInTimePeriod = jsonInt(json, "optInTimePeriod");
             return core.natrLookback(optInTimePeriod);
         }
+        case "NVI": {
+            return core.nviLookback();
+        }
         case "OBV": {
             return core.obvLookback();
         }
@@ -76965,6 +77442,9 @@ public class TaCodegenServe {
             int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
             MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
             return core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "PVI": {
+            return core.pviLookback();
         }
         case "PVO": {
             int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -77244,10 +77724,12 @@ public class TaCodegenServe {
         case "MOM": resp = handle_MOM(json); break;
         case "MULT": resp = handle_MULT(json); break;
         case "NATR": resp = handle_NATR(json); break;
+        case "NVI": resp = handle_NVI(json); break;
         case "OBV": resp = handle_OBV(json); break;
         case "PLUS_DI": resp = handle_PLUS_DI(json); break;
         case "PLUS_DM": resp = handle_PLUS_DM(json); break;
         case "PPO": resp = handle_PPO(json); break;
+        case "PVI": resp = handle_PVI(json); break;
         case "PVO": resp = handle_PVO(json); break;
         case "ROC": resp = handle_ROC(json); break;
         case "ROCP": resp = handle_ROCP(json); break;

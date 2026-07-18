@@ -1028,7 +1028,7 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
      * startIdx and path-dependent state machines cannot converge.
      * Tolerances mirror the hand-written tests (test_adx.c, test_1in_*.c),
      * extended to the whole Wilder family for sampling robustness. */
-    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "SAR", "SAREXT" };
+    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "NVI", "PVI", "SAR", "SAREXT" };
     static const struct { const char *name; unsigned int tol; } perFuncTol[] = {
         { "MINUS_DI", 2 }, { "PLUS_DI", 2 }, { "DX", 2 },
         { "ADX", 2 }, { "ADXR", 2 },
@@ -1073,7 +1073,8 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
 {
     /* SKIP is NOT maintained as a second list here: it is exactly the set that
      * get_integer_tolerance() marks TA_DO_NOT_COMPARE (accumulations seeded at
-     * startIdx and path-dependent state machines -- AD, ADOSC, OBV, SAR, SAREXT).
+     * startIdx and path-dependent state machines -- AD, ADOSC, OBV, NVI, PVI,
+     * SAR, SAREXT).
      * Deriving it from that single source guarantees the real-output skip (this
      * class, via dataWithinReasonableRange) and the integer-output skip
      * (doRangeTestFixSize, keyed on the same DO_NOT_COMPARE) can never drift

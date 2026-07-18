@@ -132,6 +132,30 @@ DEF_FUNCTION( PPO,
              );
 /* PPO END */
 
+/* PVI BEGIN */
+static const TA_InputParameterInfo    *TA_PVI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PVI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PVI_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( PVI,
+              TA_GroupId_VolumeIndicators,
+              "Positive Volume Index",
+              "Pvi",
+              TA_FUNC_FLG_STREAM
+             );
+/* PVI END */
+
 /* PVO BEGIN */
 const TA_OptInputParameterInfo TA_DEF_UI_D_PVO_MAType =
 {
@@ -183,6 +207,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
    ADD_TO_TABLE(PPO),
+   ADD_TO_TABLE(PVI),
    ADD_TO_TABLE(PVO),
    NULL
 };

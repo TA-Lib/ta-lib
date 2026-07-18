@@ -125,10 +125,12 @@ MINUS_DM            Minus Directional Movement
 MOM                 Momentum
 MULT                Vector Arithmetic Mult
 NATR                Normalized Average True Range
+NVI                 Negative Volume Index
 OBV                 On Balance Volume
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator
+PVI                 Positive Volume Index
 PVO                 Percentage Volume Oscillator
 ROC                 Rate of change : ((price/prevPrice)-1)*100
 ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice

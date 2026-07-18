@@ -1,0 +1,13 @@
+name: NVI
+camel_case: Nvi
+group: Volume Indicators
+hint: Negative Volume Index
+flags: [stream]
+inputs:
+  - name: inPriceCV
+    type: price
+    price_components: [close, volume]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

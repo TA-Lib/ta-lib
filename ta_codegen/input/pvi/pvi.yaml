@@ -1,0 +1,13 @@
+name: PVI
+camel_case: Pvi
+group: Volume Indicators
+hint: Positive Volume Index
+flags: [stream]
+inputs:
+  - name: inPriceCV
+    type: price
+    price_components: [close, volume]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

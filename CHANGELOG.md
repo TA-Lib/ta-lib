@@ -14,6 +14,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New TA Functions:
   - PVO: Percentage Volume Oscillator (#119)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
+  - NVI: Negative Volume Index (#126)
+  - PVI: Positive Volume Index (#126)
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX

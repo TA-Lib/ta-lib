@@ -6881,6 +6881,54 @@ TA_LIB_API TA_RetCode TA_NATR_Close( TA_NATR_Stream *stream );
 TA_LIB_API TA_RetCode TA_NATR_OpenAndFill( TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_NVI - Negative Volume Index
+ * 
+ * Input  = Close, Volume
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_NVI( int    startIdx,
+                              int    endIdx,
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_NVI( int    startIdx,
+                                int    endIdx,
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_NVI_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_NVI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_NVI_Stream TA_NVI_Stream;
+
+TA_LIB_API TA_RetCode TA_NVI_Open( TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_NVI_Close( TA_NVI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_NVI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_NVI_OpenAndFill( TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_OBV - On Balance Volume
  * 
  * Input  = double, Volume
@@ -7106,6 +7154,54 @@ TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * TA_PVI - Positive Volume Index
+ * 
+ * Input  = Close, Volume
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_PVI( int    startIdx,
+                              int    endIdx,
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_PVI( int    startIdx,
+                                int    endIdx,
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_PVI_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_PVI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_PVI_Stream TA_PVI_Stream;
+
+TA_LIB_API TA_RetCode TA_PVI_Open( TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVI_Update( TA_PVI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVI_Peek( const TA_PVI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVI_Close( TA_PVI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_PVI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_PVI_OpenAndFill( TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
  * TA_PVO - Percentage Volume Oscillator

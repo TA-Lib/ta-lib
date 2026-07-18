@@ -197,5 +197,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 - [AD](/functions/ad) — Chaikin A/D Line
 - [ADOSC](/functions/adosc) — Chaikin A/D Oscillator
+- [NVI](/functions/nvi) — Negative Volume Index
 - [OBV](/functions/obv) — On Balance Volume
+- [PVI](/functions/pvi) — Positive Volume Index
 - [PVO](/functions/pvo) — Percentage Volume Oscillator

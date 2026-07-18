@@ -2428,6 +2428,22 @@ public class TaCodegenServe {
         out int outBegIdx, out int outNBElement,
         double[] outArr0);
 
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_NVI")]
+    static extern int TA_NVI(
+        int startIdx, int endIdx,
+        double[] inClose,
+        double[] inVolume,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_NVI_Unguarded")]
+    static extern int TA_NVI_Unguarded(
+        int startIdx, int endIdx,
+        double[] inClose,
+        double[] inVolume,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
     [DllImport("ta_codegen_funcs", EntryPoint = "TA_OBV")]
     static extern int TA_OBV(
         int startIdx, int endIdx,
@@ -2499,6 +2515,22 @@ public class TaCodegenServe {
         int optInFastPeriod,
         int optInSlowPeriod,
         int optInMAType,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_PVI")]
+    static extern int TA_PVI(
+        int startIdx, int endIdx,
+        double[] inClose,
+        double[] inVolume,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_PVI_Unguarded")]
+    static extern int TA_PVI_Unguarded(
+        int startIdx, int endIdx,
+        double[] inClose,
+        double[] inVolume,
         out int outBegIdx, out int outNBElement,
         double[] outArr0);
 
@@ -9014,6 +9046,49 @@ public class TaCodegenServe {
                 sb.Append("}");
                 return sb.ToString();
             }
+            else if (method == "TA_NVI") {
+                int use_preloaded = p.TryGetProperty("use_preloaded", out var _upre) ? _upre.GetInt32() : 0;
+                int bench_iters = p.TryGetProperty("iters", out var _iters) ? _iters.GetInt32() : 1;
+                if (bench_iters < 1) bench_iters = 1;
+                double[] inClose = Array.Empty<double>();
+                double[] inVolume = Array.Empty<double>();
+                if (use_preloaded != 0 && refN > 0) {
+                    inClose = new double[refN]; Array.Copy(refClose, inClose, refN);
+                    inVolume = new double[refN]; Array.Copy(refVolume, inVolume, refN);
+                } else {
+                    inClose = GetDoubleArray(p, "inClose");
+                    inVolume = GetDoubleArray(p, "inVolume");
+                }
+                double[] outArr0 = new double[n];
+                int rc = 0;
+                int outBegIdx = 0, outNBElement = 0;
+                long _t0 = GetNanoTime();
+                for (int _bi = 0; _bi < bench_iters; _bi++) {
+                rc = TA_NVI(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
+                long _t0u = GetNanoTime();
+                for (int _biu = 0; _biu < bench_iters; _biu++) {
+                rc = TA_NVI_Unguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
+                var sb = new System.Text.StringBuilder();
+                sb.Append($"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+                sb.Append($",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+                sb.Append($",\"timing_ns\":{elapsedNs}");
+                sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
+                sb.Append("}");
+                return sb.ToString();
+            }
             else if (method == "TA_OBV") {
                 int use_preloaded = p.TryGetProperty("use_preloaded", out var _upre) ? _upre.GetInt32() : 0;
                 int bench_iters = p.TryGetProperty("iters", out var _iters) ? _iters.GetInt32() : 1;
@@ -9185,6 +9260,49 @@ public class TaCodegenServe {
                 long _t0u = GetNanoTime();
                 for (int _biu = 0; _biu < bench_iters; _biu++) {
                 rc = TA_PPO_Unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
+                var sb = new System.Text.StringBuilder();
+                sb.Append($"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+                sb.Append($",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+                sb.Append($",\"timing_ns\":{elapsedNs}");
+                sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
+                sb.Append("}");
+                return sb.ToString();
+            }
+            else if (method == "TA_PVI") {
+                int use_preloaded = p.TryGetProperty("use_preloaded", out var _upre) ? _upre.GetInt32() : 0;
+                int bench_iters = p.TryGetProperty("iters", out var _iters) ? _iters.GetInt32() : 1;
+                if (bench_iters < 1) bench_iters = 1;
+                double[] inClose = Array.Empty<double>();
+                double[] inVolume = Array.Empty<double>();
+                if (use_preloaded != 0 && refN > 0) {
+                    inClose = new double[refN]; Array.Copy(refClose, inClose, refN);
+                    inVolume = new double[refN]; Array.Copy(refVolume, inVolume, refN);
+                } else {
+                    inClose = GetDoubleArray(p, "inClose");
+                    inVolume = GetDoubleArray(p, "inVolume");
+                }
+                double[] outArr0 = new double[n];
+                int rc = 0;
+                int outBegIdx = 0, outNBElement = 0;
+                long _t0 = GetNanoTime();
+                for (int _bi = 0; _bi < bench_iters; _bi++) {
+                rc = TA_PVI(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
+                long _t0u = GetNanoTime();
+                for (int _biu = 0; _biu < bench_iters; _biu++) {
+                rc = TA_PVI_Unguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
                 }
                 long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
                 var sb = new System.Text.StringBuilder();
@@ -10844,6 +10962,8 @@ public class TaCodegenServe {
                 sb.Append(",");
                 sb.Append("\"TA_NATR\"");
                 sb.Append(",");
+                sb.Append("\"TA_NVI\"");
+                sb.Append(",");
                 sb.Append("\"TA_OBV\"");
                 sb.Append(",");
                 sb.Append("\"TA_PLUS_DI\"");
@@ -10851,6 +10971,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_PLUS_DM\"");
                 sb.Append(",");
                 sb.Append("\"TA_PPO\"");
+                sb.Append(",");
+                sb.Append("\"TA_PVI\"");
                 sb.Append(",");
                 sb.Append("\"TA_PVO\"");
                 sb.Append(",");

@@ -64,6 +64,30 @@ DEF_FUNCTION( NATR,
              );
 /* NATR END */
 
+/* NVI BEGIN */
+static const TA_InputParameterInfo    *TA_NVI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_NVI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_NVI_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( NVI,
+              TA_GroupId_VolumeIndicators,
+              "Negative Volume Index",
+              "Nvi",
+              TA_FUNC_FLG_STREAM
+             );
+/* NVI END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -71,6 +95,7 @@ DEF_FUNCTION( NATR,
 const TA_FuncDef *TA_DEF_TableN[] =
 {
    ADD_TO_TABLE(NATR),
+   ADD_TO_TABLE(NVI),
    NULL
 };
 

@@ -159,10 +159,12 @@ pub enum FuncId {
     Mom,
     Mult,
     Natr,
+    Nvi,
     Obv,
     PlusDi,
     PlusDm,
     Ppo,
+    Pvi,
     Pvo,
     Roc,
     Rocp,
@@ -199,7 +201,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 163;
+    pub const COUNT: usize = 165;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -373,7 +375,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 163] = [
+pub static FUNCS: [FuncInfo; 165] = [
     FuncInfo {
         id: FuncId::Accbands,
         name: "ACCBANDS",
@@ -1899,6 +1901,18 @@ pub static FUNCS: [FuncInfo; 163] = [
         unst_id: Some(FuncUnstId::Natr),
     },
     FuncInfo {
+        id: FuncId::Nvi,
+        name: "NVI",
+        camel_case_name: "Nvi",
+        group: Group::VolumeIndicators,
+        hint: "Negative Volume Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::Obv,
         name: "OBV",
         camel_case_name: "Obv",
@@ -1943,6 +1957,18 @@ pub static FUNCS: [FuncInfo; 163] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 1 } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::Pvi,
+        name: "PVI",
+        camel_case_name: "Pvi",
+        group: Group::VolumeIndicators,
+        hint: "Positive Volume Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
+        opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2465,10 +2491,12 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "MOM" => FuncId::Mom,
         "MULT" => FuncId::Mult,
         "NATR" => FuncId::Natr,
+        "NVI" => FuncId::Nvi,
         "OBV" => FuncId::Obv,
         "PLUS_DI" => FuncId::PlusDi,
         "PLUS_DM" => FuncId::PlusDm,
         "PPO" => FuncId::Ppo,
+        "PVI" => FuncId::Pvi,
         "PVO" => FuncId::Pvo,
         "ROC" => FuncId::Roc,
         "ROCP" => FuncId::Rocp,

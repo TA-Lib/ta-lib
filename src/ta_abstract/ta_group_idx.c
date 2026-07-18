@@ -167,10 +167,12 @@ extern const TA_FuncDef TA_DEF_MINUS_DM;
 extern const TA_FuncDef TA_DEF_MOM;
 extern const TA_FuncDef TA_DEF_MULT;
 extern const TA_FuncDef TA_DEF_NATR;
+extern const TA_FuncDef TA_DEF_NVI;
 extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_PLUS_DI;
 extern const TA_FuncDef TA_DEF_PLUS_DM;
 extern const TA_FuncDef TA_DEF_PPO;
+extern const TA_FuncDef TA_DEF_PVI;
 extern const TA_FuncDef TA_DEF_PVO;
 extern const TA_FuncDef TA_DEF_ROC;
 extern const TA_FuncDef TA_DEF_ROCP;
@@ -315,7 +317,9 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_AD,
 &TA_DEF_ADOSC,
+&TA_DEF_NVI,
 &TA_DEF_OBV,
+&TA_DEF_PVI,
 &TA_DEF_PVO,
 NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)

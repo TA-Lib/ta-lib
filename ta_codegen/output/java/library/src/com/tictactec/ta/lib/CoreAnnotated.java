@@ -7157,6 +7157,49 @@ public RetCode natr(
 ); }
 
 
+public int nviLookback(
+) {
+    return super.nviLookback(
+); }
+
+@FuncInfo(
+        name  = "NVI",
+        group = "Volume Indicators",
+        flags = 33554432,
+        nbInput    = 1,
+        nbOptInput = 0,
+        nbOutput   = 1
+)
+public RetCode nvi(
+            int startIdx,
+            int endIdx,
+            @InputParameterInfo(
+                paramName = "inPriceCV",
+                flags     = 24,
+                type = InputParameterType.TA_Input_Price
+            )
+            double inClose [],
+            double inVolume [],
+            MInteger     outBegIdx,
+            MInteger     outNBElement,
+            @OutputParameterInfo(
+                paramName = "outReal",
+                flags     = 1,
+                type = OutputParameterType.TA_Output_Real
+            )
+            double outReal[]
+) {
+    return super.nvi (
+        startIdx,
+        endIdx,
+        inClose ,
+        inVolume ,
+        outBegIdx,
+        outNBElement,
+        outReal
+); }
+
+
 public int obvLookback(
 ) {
     return super.obvLookback(
@@ -7419,6 +7462,49 @@ public RetCode ppo(
         optInFastPeriod,
         optInSlowPeriod,
         optInMAType,
+        outBegIdx,
+        outNBElement,
+        outReal
+); }
+
+
+public int pviLookback(
+) {
+    return super.pviLookback(
+); }
+
+@FuncInfo(
+        name  = "PVI",
+        group = "Volume Indicators",
+        flags = 33554432,
+        nbInput    = 1,
+        nbOptInput = 0,
+        nbOutput   = 1
+)
+public RetCode pvi(
+            int startIdx,
+            int endIdx,
+            @InputParameterInfo(
+                paramName = "inPriceCV",
+                flags     = 24,
+                type = InputParameterType.TA_Input_Price
+            )
+            double inClose [],
+            double inVolume [],
+            MInteger     outBegIdx,
+            MInteger     outNBElement,
+            @OutputParameterInfo(
+                paramName = "outReal",
+                flags     = 1,
+                type = OutputParameterType.TA_Output_Real
+            )
+            double outReal[]
+) {
+    return super.pvi (
+        startIdx,
+        endIdx,
+        inClose ,
+        inVolume ,
         outBegIdx,
         outNBElement,
         outReal

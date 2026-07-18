@@ -17,6 +17,7 @@ ErrorNumber test_func_per_ema ( TA_History *history );
 ErrorNumber test_func_per_hl  ( TA_History *history );
 ErrorNumber test_func_per_hlc ( TA_History *history );
 ErrorNumber test_func_per_hlcv( TA_History *history );
+ErrorNumber test_func_per_cv  ( TA_History *history );
 ErrorNumber test_func_per_ohlc( TA_History *history );
 ErrorNumber test_func_per     ( TA_History *history );
 ErrorNumber test_func_sar     ( TA_History *history );

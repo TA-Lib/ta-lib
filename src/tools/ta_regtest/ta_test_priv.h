@@ -232,8 +232,8 @@ typedef enum
                           * (e.g. EMA, RSI, ADX, ATR, T3, HT_*). */
    TA_STABLE_SKIP        /* Non-converging accumulation seeded at startIdx or a
                           * path-dependent state machine -> cross-range
-                          * comparison is meaningless (AD, ADOSC, OBV, SAR,
-                          * SAREXT). */
+                          * comparison is meaningless (AD, ADOSC, OBV, NVI,
+                          * PVI, SAR, SAREXT). */
 } TA_RangeStability;
 
 ErrorNumber doRangeTest( RangeTestFunction testFunction,

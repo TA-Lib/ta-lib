@@ -5475,6 +5475,37 @@
 	</FinancialFunction>
 
 
+	<!-- NVI -->
+	<FinancialFunction>
+		<Abbreviation>NVI</Abbreviation>
+		<CamelCaseName>Nvi</CamelCaseName>
+		<ShortDescription>Negative Volume Index</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- OBV -->
 	<FinancialFunction>
 		<Abbreviation>OBV</Abbreviation>
@@ -5653,6 +5684,37 @@
 				<DefaultValue>1</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- PVI -->
+	<FinancialFunction>
+		<Abbreviation>PVI</Abbreviation>
+		<CamelCaseName>Pvi</CamelCaseName>
+		<ShortDescription>Positive Volume Index</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
 		<OutputArguments>
 			<OutputArgument>
 				<Type>Double Array</Type>
