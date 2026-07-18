@@ -186,6 +186,16 @@ typedef int TA_FuncFlags;
                                           * unstable period. See Documentation.
                                           */
 #define TA_FUNC_FLG_CANDLESTICK 0x10000000 /* Output shall be a candlestick */
+#define TA_FUNC_FLG_START_DEP 0x20000000 /* Output value is start-dependent: it
+                                          * depends on the requested startIdx and
+                                          * never converges across ranges (a
+                                          * running accumulation seeded at the
+                                          * first bar, or a path-dependent state
+                                          * machine), so the same bar computed
+                                          * from a different startIdx can differ.
+                                          * e.g. AD, ADOSC, OBV, NVI, PVI, SAR,
+                                          * SAREXT.
+                                          */
 
 typedef struct TA_FuncInfo
 {

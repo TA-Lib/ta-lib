@@ -232,8 +232,10 @@ typedef enum
                           * (e.g. EMA, RSI, ADX, ATR, T3, HT_*). */
    TA_STABLE_SKIP        /* Non-converging accumulation seeded at startIdx or a
                           * path-dependent state machine -> cross-range
-                          * comparison is meaningless (AD, ADOSC, OBV, NVI,
-                          * PVI, SAR, SAREXT). */
+                          * comparison is meaningless. This set is the functions
+                          * carrying the `start_dependent` YAML flag, surfaced
+                          * through ta_abstract as TA_FUNC_FLG_START_DEP (issue
+                          * #127; e.g. AD, OBV, SAR). */
 } TA_RangeStability;
 
 ErrorNumber doRangeTest( RangeTestFunction testFunction,

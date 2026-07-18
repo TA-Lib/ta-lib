@@ -2,7 +2,7 @@ name: AD
 camel_case: Ad
 group: Volume Indicators
 hint: Chaikin A/D Line
-flags: [stream]
+flags: [stream, start_dependent]
 inputs:
   - name: inPriceHLCV
     type: price

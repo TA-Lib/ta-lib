@@ -65156,7 +65156,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("AD", new AbsFunc("AD", "Volume Indicators", "Chaikin A/D Line", "Ad", 33554432,
+        ABSTRACT.put("AD", new AbsFunc("AD", "Volume Indicators", "Chaikin A/D Line", "Ad", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -65164,7 +65164,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", "AdOsc", 33554432,
+        ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", "AdOsc", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",3.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -65656,11 +65656,11 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", "Nvi", 33554432,
+        ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", "Nvi", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("OBV", new AbsFunc("OBV", "Volume Indicators", "On Balance Volume", "Obv", 33554432,
+        ABSTRACT.put("OBV", new AbsFunc("OBV", "Volume Indicators", "On Balance Volume", "Obv", 570425344,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -65676,7 +65676,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", "Pvi", 33554432,
+        ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", "Pvi", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -65704,11 +65704,11 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("SAR", new AbsFunc("SAR", "Overlap Studies", "Parabolic SAR", "Sar", 50331648,
+        ABSTRACT.put("SAR", new AbsFunc("SAR", "Overlap Studies", "Parabolic SAR", "Sar", 587202560,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(0,"optInAcceleration",0,"Acceleration Factor",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInMaximum",0,"AF Maximum",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("SAREXT", new AbsFunc("SAREXT", "Overlap Studies", "Parabolic SAR - Extended", "SarExt", 50331648,
+        ABSTRACT.put("SAREXT", new AbsFunc("SAREXT", "Overlap Studies", "Parabolic SAR - Extended", "SarExt", 587202560,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(0,"optInStartValue",0,"Start Value",0.0, -3e37,3e37,4,0.0,0.0,0.0, 0,0,0,0,0, null), new AbsOpt(0,"optInOffsetOnReverse",0,"Offset on Reverse",0.0, 0.0,3e37,4,0.01,0.15,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitLong",0,"AF Init Long",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationLong",0,"AF Long",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxLong",0,"AF Max Long",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitShort",0,"AF Init Short",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationShort",0,"AF Short",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxShort",0,"AF Max Short",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -65888,8 +65888,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 191281;
-    static final long ABSTRACT_XML_CHECKSUM = 15327460L;
+    static final int ABSTRACT_XML_LENGTH = 191505;
+    static final long ABSTRACT_XML_CHECKSUM = 15345387L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }

@@ -119,7 +119,7 @@ DEF_FUNCTION( AD,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Line",
               "Ad",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
              );
 /* AD END */
 
@@ -199,7 +199,7 @@ DEF_FUNCTION( ADOSC,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Oscillator",
               "AdOsc",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
              );
 /* ADOSC END */
 

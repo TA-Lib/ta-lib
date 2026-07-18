@@ -2,7 +2,7 @@ name: PVI
 camel_case: Pvi
 group: Volume Indicators
 hint: Positive Volume Index
-flags: [stream]
+flags: [stream, start_dependent]
 inputs:
   - name: inPriceCV
     type: price

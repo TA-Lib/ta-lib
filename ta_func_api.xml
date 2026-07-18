@@ -100,6 +100,7 @@
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -170,6 +171,7 @@
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5484,6 +5486,7 @@
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5515,6 +5518,7 @@
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5705,6 +5709,7 @@
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6009,6 +6014,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6071,6 +6077,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Start Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

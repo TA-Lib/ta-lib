@@ -127,10 +127,18 @@ Each backend renders enums appropriately:
 | `unstable_period` | Has an initial unstable calculation period | `TA_FUNC_FLG_UNST_PER` |
 | `volume` | Output is based on volume data | `TA_FUNC_FLG_VOLUME` |
 | `candlestick` | Output is a candlestick pattern signal | `TA_FUNC_FLG_CANDLESTICK` |
+| `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
+| `start_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_START_DEP` |
 
 ```yaml
 flags: [overlap, unstable_period]
 ```
+
+`start_dependent` is public `ta_abstract` metadata (issue #127): a wrapper reads
+it from `TA_FuncInfo.flags`, and the `ta_regtest` range sweep reads the same bit
+to decide it cannot cross-compare the function's values across ranges. Dropping
+it is fail-safe — the sweep then value-compares the function and fails loudly if
+it is genuinely start-dependent (issue #98).
 
 ### Optional Input Flags
 

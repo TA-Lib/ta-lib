@@ -1028,7 +1028,11 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
      * startIdx and path-dependent state machines cannot converge.
      * Tolerances mirror the hand-written tests (test_adx.c, test_1in_*.c),
      * extended to the whole Wilder family for sampling robustness. */
-    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "NVI", "PVI", "SAR", "SAREXT" };
+    /* The start-dependent set is declared at the function definition site by the
+     * `start_dependent` YAML flag (issue #127), surfaced through ta_abstract as
+     * TA_FUNC_FLG_START_DEP — a single source of truth read here from the same
+     * flags every ta_abstract consumer sees, no hand-edited second list for each
+     * new cumulative / seed-anchored indicator. */
     static const struct { const char *name; unsigned int tol; } perFuncTol[] = {
         { "MINUS_DI", 2 }, { "PLUS_DI", 2 }, { "DX", 2 },
         { "ADX", 2 }, { "ADXR", 2 },
@@ -1037,11 +1041,8 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
         { "HT_DCPHASE", 360 },
         { "HT_SINE", 10 },
     };
-    for( unsigned int i = 0; i < sizeof(rangeDependent)/sizeof(rangeDependent[0]); i++ )
-    {
-        if( strcmp(funcInfo->name, rangeDependent[i]) == 0 )
-            return TA_DO_NOT_COMPARE;
-    }
+    if( funcInfo->flags & TA_FUNC_FLG_START_DEP )
+        return TA_DO_NOT_COMPARE;
     for( unsigned int i = 0; i < sizeof(perFuncTol)/sizeof(perFuncTol[0]); i++ )
     {
         if( strcmp(funcInfo->name, perFuncTol[i].name) == 0 )
@@ -1072,9 +1073,10 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
 static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
 {
     /* SKIP is NOT maintained as a second list here: it is exactly the set that
-     * get_integer_tolerance() marks TA_DO_NOT_COMPARE (accumulations seeded at
-     * startIdx and path-dependent state machines -- AD, ADOSC, OBV, NVI, PVI,
-     * SAR, SAREXT).
+     * get_integer_tolerance() marks TA_DO_NOT_COMPARE -- the functions carrying
+     * the `start_dependent` YAML flag (accumulations seeded at startIdx and
+     * path-dependent state machines), surfaced through ta_abstract as
+     * TA_FUNC_FLG_START_DEP (issue #127).
      * Deriving it from that single source guarantees the real-output skip (this
      * class, via dataWithinReasonableRange) and the integer-output skip
      * (doRangeTestFixSize, keyed on the same DO_NOT_COMPARE) can never drift

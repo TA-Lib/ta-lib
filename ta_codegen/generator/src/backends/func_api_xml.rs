@@ -72,6 +72,7 @@ const FUNC_FLAGS: &[(&str, &str)] = &[
     ("candlestick", "Candlestick"),
     ("unstable_period", "Unstable Period"),
     ("stream", "Streaming"),
+    ("start_dependent", "Start Dependent"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {

@@ -152,7 +152,7 @@ DEF_FUNCTION( PVI,
               TA_GroupId_VolumeIndicators,
               "Positive Volume Index",
               "Pvi",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
              );
 /* PVI END */
 

@@ -414,6 +414,7 @@ fn func_flags_value(flags: &[String]) -> u32 {
             "volume" => 0x0400_0000,
             "unstable_period" => 0x0800_0000,
             "candlestick" => 0x1000_0000,
+            "start_dependent" => 0x2000_0000, // TA_FUNC_FLG_START_DEP
             _ => 0,
         };
     }

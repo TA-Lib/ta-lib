@@ -1538,6 +1538,7 @@ fn func_flags_string(flags: &[String]) -> String {
             "volume" => Some("TA_FUNC_FLG_VOLUME"),
             "unstable_period" => Some("TA_FUNC_FLG_UNST_PER"),
             "candlestick" => Some("TA_FUNC_FLG_CANDLESTICK"),
+            "start_dependent" => Some("TA_FUNC_FLG_START_DEP"),
             _ => None,
         })
         .collect();

@@ -84,7 +84,7 @@ DEF_FUNCTION( NVI,
               TA_GroupId_VolumeIndicators,
               "Negative Volume Index",
               "Nvi",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
              );
 /* NVI END */
 

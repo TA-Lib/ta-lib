@@ -2,7 +2,7 @@ name: OBV
 camel_case: Obv
 group: Volume Indicators
 hint: On Balance Volume
-flags: [stream]
+flags: [stream, start_dependent]
 inputs:
   - name: inReal
     type: real

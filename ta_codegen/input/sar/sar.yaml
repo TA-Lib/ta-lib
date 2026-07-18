@@ -2,7 +2,7 @@ name: SAR
 camel_case: Sar
 group: Overlap Studies
 hint: Parabolic SAR
-flags: [overlap, stream]
+flags: [overlap, stream, start_dependent]
 inputs:
   - name: inPriceHL
     type: price

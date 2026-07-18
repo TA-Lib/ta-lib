@@ -186,7 +186,7 @@ public int adLookback(
 @FuncInfo(
         name  = "AD",
         group = "Volume Indicators",
-        flags = 33554432,
+        flags = 570425344,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -283,7 +283,7 @@ public int adOscLookback(
 @FuncInfo(
         name  = "ADOSC",
         group = "Volume Indicators",
-        flags = 33554432,
+        flags = 570425344,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -7165,7 +7165,7 @@ public int nviLookback(
 @FuncInfo(
         name  = "NVI",
         group = "Volume Indicators",
-        flags = 33554432,
+        flags = 570425344,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -7208,7 +7208,7 @@ public int obvLookback(
 @FuncInfo(
         name  = "OBV",
         group = "Volume Indicators",
-        flags = 33554432,
+        flags = 570425344,
         nbInput    = 2,
         nbOptInput = 0,
         nbOutput   = 1
@@ -7476,7 +7476,7 @@ public int pviLookback(
 @FuncInfo(
         name  = "PVI",
         group = "Volume Indicators",
-        flags = 33554432,
+        flags = 570425344,
         nbInput    = 1,
         nbOptInput = 0,
         nbOutput   = 1
@@ -7912,7 +7912,7 @@ public int sarLookback(
 @FuncInfo(
         name  = "SAR",
         group = "Overlap Studies",
-        flags = 50331648,
+        flags = 587202560,
         nbInput    = 1,
         nbOptInput = 2,
         nbOutput   = 1
@@ -8007,7 +8007,7 @@ public int sarExtLookback(
 @FuncInfo(
         name  = "SAREXT",
         group = "Overlap Studies",
-        flags = 50331648,
+        flags = 587202560,
         nbInput    = 1,
         nbOptInput = 8,
         nbOutput   = 1

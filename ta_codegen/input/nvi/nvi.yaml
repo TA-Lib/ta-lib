@@ -2,7 +2,7 @@ name: NVI
 camel_case: Nvi
 group: Volume Indicators
 hint: Negative Volume Index
-flags: [stream]
+flags: [stream, start_dependent]
 inputs:
   - name: inPriceCV
     type: price

@@ -20,6 +20,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)
 - (#125) Optional (nullable) outputs: an output can be skipped by passing `NULL`, advertised by the new `TA_OUT_NULLABLE` flag in `ta_abstract`. MAMA's FAMA line is the first — `TA_MAMA(..., outMAMA, NULL)` computes only the MAMA line, and `MAType=MAMA` now works inside `MA`/`BBANDS`/`STOCH`/`MACDEXT`/`APO`/`PPO`/`MAVP` without an internal scratch buffer.
+- (#127) New `TA_FUNC_FLG_START_DEP` flag in `ta_abstract` marks the functions whose output is *start-dependent* — its absolute value depends on the requested start index and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT.
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX

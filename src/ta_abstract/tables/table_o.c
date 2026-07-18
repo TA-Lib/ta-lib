@@ -59,7 +59,7 @@ DEF_FUNCTION( OBV,
               TA_GroupId_VolumeIndicators,
               "On Balance Volume",
               "Obv",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
              );
 /* OBV END */
 
