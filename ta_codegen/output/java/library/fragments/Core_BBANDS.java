@@ -857,3 +857,407 @@
       }
       return RetCode.Success ;
    }
+/**** Streaming API *****/
+
+   /**
+    * A live BBANDS stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#bbands} over the same series.
+    * Open with {@link Core#bbandsOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code copy} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code copy} never write the handle and may be called
+    * concurrently after safe publication. Independent handles (including
+    * {@code copy()} results) are fully independent. Do not mutate the owning
+    * {@link Core}'s settings while streams opened from it are live.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class BbandsStream {
+      final Core core;
+      int optInTimePeriod;
+      double optInNbDevUp;
+      double optInNbDevDn;
+      MAType optInMAType;
+      double cur_outRealUpperBand;
+      double cur_outRealMiddleBand;
+      double cur_outRealLowerBand;
+      Value cachedValue;
+      MovingAverageStream sub0;
+      StdDevStream sub1;
+
+      BbandsStream( Core core ) { this.core = core; }
+
+      BbandsStream( BbandsStream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDevUp = other.optInNbDevUp;
+         this.optInNbDevDn = other.optInNbDevDn;
+         this.optInMAType = other.optInMAType;
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.cachedValue = other.cachedValue;
+         this.sub0 = new MovingAverageStream(other.sub0);
+         this.sub1 = new StdDevStream(other.sub1);
+      }
+
+      /** One output set, in batch output order. Immutable. */
+      public static final class Value {
+         public final double realUpperBand;
+         public final double realMiddleBand;
+         public final double realLowerBand;
+         Value( double realUpperBand, double realMiddleBand, double realLowerBand ) {
+            this.realUpperBand = realUpperBand;
+            this.realMiddleBand = realMiddleBand;
+            this.realLowerBand = realLowerBand;
+         }
+         @Override public String toString() {
+            return "Value[" + "realUpperBand=" + realUpperBand + ", " + "realMiddleBand=" + realMiddleBand + ", " + "realLowerBand=" + realLowerBand + "]";
+         }
+         @Override public boolean equals( Object o ) {
+            if( !(o instanceof Value) ) return false;
+            Value v = (Value) o;
+            return Double.doubleToLongBits(this.realUpperBand) == Double.doubleToLongBits(v.realUpperBand) && Double.doubleToLongBits(this.realMiddleBand) == Double.doubleToLongBits(v.realMiddleBand) && Double.doubleToLongBits(this.realLowerBand) == Double.doubleToLongBits(v.realLowerBand);
+         }
+         @Override public int hashCode() {
+            int h = 17;
+            h = 31 * h + Double.hashCode(realUpperBand);
+            h = 31 * h + Double.hashCode(realMiddleBand);
+            h = 31 * h + Double.hashCode(realLowerBand);
+            return h;
+         }
+      }
+
+      /**
+       * Commit one closed bar; always produces the new current value.
+       * Never throws after a successful open; never allocates handle state.
+       */
+      public Value update( double inReal ) {
+         core.bbandsStreamStep(this, inReal);
+         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+         return this.cachedValue;
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would return (it is the same
+       * generated code, run on a throwaway copy). Deep-copies the handle state
+       * on every call: O(period) for windowed indicators — for hot loops,
+       * prefer {@code update} on a {@code copy()}.
+       */
+      public Value peek( double inReal ) {
+         BbandsStream scratch = new BbandsStream(this);
+         core.bbandsStreamStep(scratch, inReal);
+         return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+      }
+
+      /**
+       * The value at the most recently committed bar — the last history bar
+       * right after open, then whatever the latest {@code update} returned.
+       * A pure field read; {@code peek} does not change it.
+       */
+      public Value value() {
+         return this.cachedValue;
+      }
+
+      /**
+       * An independent deep copy of this stream: both evolve separately from
+       * here on (the Java rendering of the Rust handle's {@code Clone}).
+       */
+      public BbandsStream copy() {
+         return new BbandsStream(this);
+      }
+   }
+   void bbandsStreamStep( BbandsStream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double cur_tempBuffer1 = 0.0;
+      double cur_tempBuffer2 = 0.0;
+      double cur_outRealUpperBand = 0.0;
+      double cur_outRealLowerBand = 0.0;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_tempBuffer1 = sp.sub0.update(inReal);
+      cur_tempBuffer2 = sp.sub1.update(inReal);
+      /* Combine map (batch tail, per bar). */
+      if( sp.optInNbDevUp == sp.optInNbDevDn ) {
+         tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+         tempReal2 = cur_tempBuffer1;
+         cur_outRealUpperBand = tempReal2 + tempReal;
+         cur_outRealLowerBand = tempReal2 - tempReal;
+      } else {
+         tempReal2 = cur_tempBuffer1;
+         cur_outRealUpperBand = Math.fma(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
+         cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
+      }
+      sp.cur_outRealUpperBand = cur_outRealUpperBand;
+      sp.cur_outRealMiddleBand = cur_tempBuffer1;
+      sp.cur_outRealLowerBand = cur_outRealLowerBand;
+   }
+   private RetCode bbandsOpenBody( BbandsStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      RetCode retCode;
+      int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double[] tempBuffer1;
+      double[] tempBuffer2;
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int historyLen = inReal.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDevUp == -4e37 ) {
+         optInNbDevUp = 2e0;
+      }
+      if( optInNbDevDn == -4e37 ) {
+         optInNbDevDn = 2e0;
+      }
+      double[] sc_outRealUpperBand = new double[historyLen];
+      double[] sc_outRealMiddleBand = new double[historyLen];
+      double[] sc_outRealLowerBand = new double[historyLen];
+      /* General path (every MA type other than SMA): the middle band is the moving
+       * average and the deviation is the standard deviation of the input, combined
+       * at the same bar. Two intermediate buffers are allocated so the input may
+       * safely alias an output (it is only read here).
+       */
+      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      /* Calculate the middle band moving average. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+         outNBElement.value = 0;
+         return retCode ;
+      }
+      /* Remember where the moving average begins, to realign it below. */
+      maBegIdx = (int)outBegIdx.value;
+      /* Calculate the Standard Deviation into tempBuffer2. */
+      /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
+      retCode = stdDevUnguarded((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      if( retCode != RetCode.Success ) {
+         outNBElement.value = 0;
+         return retCode ;
+      }
+      /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+       * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+       * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+       * at the earlier maBegIdx. Copy it forward from that shift into the middle
+       * band so each band value pairs the moving average and standard deviation of
+       * the same bar. The guarded subtraction keeps shiftIdx non-negative even when
+       * the standard deviation produced no output (an empty range leaves *outBegIdx
+       * at 0), which the unconditional copy below then handles as a zero-length move.
+       */
+      if( (int)outBegIdx.value > maBegIdx ) {
+         shiftIdx = (int)outBegIdx.value - maBegIdx;
+      } else {
+         shiftIdx = 0;
+      }
+      System.arraycopy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement.value * 1);
+      /* Now do a tight loop to calculate the upper/lower band at the same time. */
+      if( optInNbDevUp == optInNbDevDn ) {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal = tempBuffer2[i] * optInNbDevUp;
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = tempReal2 + tempReal;
+            sc_outRealLowerBand[i] = tempReal2 - tempReal;
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
+            sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
+         }
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement.value < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInNbDevUp = optInNbDevUp;
+      sp.optInNbDevDn = optInNbDevDn;
+      sp.optInMAType = optInMAType;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
+      sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
+      sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
+      sp.cachedValue = new BbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      return RetCode.Success;
+   }
+   private RetCode bbandsOpenAndFillBody( BbandsStream sp, double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   {
+      RetCode retCode;
+      int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double[] tempBuffer1;
+      double[] tempBuffer2;
+      int historyLen = inReal.length;
+      int endIdx = historyLen - 1;
+      int startIdx = 0;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDevUp == -4e37 ) {
+         optInNbDevUp = 2e0;
+      }
+      if( optInNbDevDn == -4e37 ) {
+         optInNbDevDn = 2e0;
+      }
+      if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
+         return RetCode.BadParam;
+      }
+      double[] sc_outRealUpperBand = new double[historyLen];
+      double[] sc_outRealMiddleBand = new double[historyLen];
+      double[] sc_outRealLowerBand = new double[historyLen];
+      /* General path (every MA type other than SMA): the middle band is the moving
+       * average and the deviation is the standard deviation of the input, combined
+       * at the same bar. Two intermediate buffers are allocated so the input may
+       * safely alias an output (it is only read here).
+       */
+      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      /* Calculate the middle band moving average. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
+      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+         outNBElement.value = 0;
+         return retCode ;
+      }
+      /* Remember where the moving average begins, to realign it below. */
+      maBegIdx = (int)outBegIdx.value;
+      /* Calculate the Standard Deviation into tempBuffer2. */
+      /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
+      retCode = stdDevUnguarded((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      if( retCode != RetCode.Success ) {
+         outNBElement.value = 0;
+         return retCode ;
+      }
+      /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+       * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+       * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+       * at the earlier maBegIdx. Copy it forward from that shift into the middle
+       * band so each band value pairs the moving average and standard deviation of
+       * the same bar. The guarded subtraction keeps shiftIdx non-negative even when
+       * the standard deviation produced no output (an empty range leaves *outBegIdx
+       * at 0), which the unconditional copy below then handles as a zero-length move.
+       */
+      if( (int)outBegIdx.value > maBegIdx ) {
+         shiftIdx = (int)outBegIdx.value - maBegIdx;
+      } else {
+         shiftIdx = 0;
+      }
+      System.arraycopy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement.value * 1);
+      /* Now do a tight loop to calculate the upper/lower band at the same time. */
+      if( optInNbDevUp == optInNbDevDn ) {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal = tempBuffer2[i] * optInNbDevUp;
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = tempReal2 + tempReal;
+            sc_outRealLowerBand[i] = tempReal2 - tempReal;
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
+            sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
+         }
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement.value < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInNbDevUp = optInNbDevUp;
+      sp.optInNbDevDn = optInNbDevDn;
+      sp.optInMAType = optInMAType;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
+      sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
+      sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
+      sp.cachedValue = new BbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      System.arraycopy(sc_outRealUpperBand, 0, outRealUpperBand, 0, outNBElement.value);
+      System.arraycopy(sc_outRealMiddleBand, 0, outRealMiddleBand, 0, outNBElement.value);
+      System.arraycopy(sc_outRealLowerBand, 0, outRealLowerBand, 0, outNBElement.value);
+      return RetCode.Success;
+   }
+   /* Internal startIdx-anchored open behind bbandsOpen (composition seam). */
+   BbandsStream bbandsOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      BbandsStream sp = new BbandsStream(this);
+      RetCode retCode = bbandsOpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TA_BBANDS open: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TA_BBANDS open: internal error");
+      }
+      throw new IllegalArgumentException("TA_BBANDS open: " + retCode);
+   }
+   /**
+    * Open a live BBANDS stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#bbands} at that bar.
+    * <p>The history must hold at least {@code bbandsLookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+    * default, as in the batch API).
+    */
+   public BbandsStream bbandsOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      return bbandsOpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+   }
+   /**
+    * {@link Core#bbandsOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#bbands} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values.
+    */
+   public BbandsStream bbandsOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   {
+      BbandsStream sp = new BbandsStream(this);
+      RetCode retCode = bbandsOpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TA_BBANDS openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TA_BBANDS openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TA_BBANDS openAndFill: " + retCode);
+   }
