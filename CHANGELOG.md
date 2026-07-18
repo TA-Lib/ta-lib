@@ -21,13 +21,14 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - ~8x faster: MACD and MACDFIX
   - ~8x faster: MACDEXT when all three MA types are EMA.
   - ~2.4x faster: ACCBANDS
+  - ~20% faster: VAR, STDDEV, BBANDS
   - ~10% faster: ATR and NATR
 
 ### Changed
-- (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. This changes the default output; pass `TA_MAType_SMA` explicitly to keep the previous behavior.
-- (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences from all previous versions — an intentional modernization.
+- (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
+- (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
 - API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
-- (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use CMake (generates IDE solutions on demand) and vcpkg — these hand-maintained projects drifted every few releases and had no way to be tested.
+- (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 
 ### Fixed
 - (#118) VAR, STDDEV and BBANDS more precise and faster.
@@ -39,7 +40,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#107) MFI and STOCHRSI could return a wrong value when floating-point rounding left a near-zero result that was then compared exactly against zero. Thanks @Caleblgx, @trufanov-nok and @mrjbq7 !
 - (#4,#14) MFI and IMI are no longer flagged as having an unstable period. Thanks @mw66 and @wony-zheng !
 - (#99) BBANDS with `TA_MAType_MAMA` and a period >= 34 returned a misaligned middle band.
-- (#77) The CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
+- (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns the neutral 50.0.
 
