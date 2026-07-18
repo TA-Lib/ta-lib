@@ -368,6 +368,7 @@ enum MaSub {
     Tema(TemaStream),
     Trima(TrimaStream),
     Kama(KamaStream),
+    Mama(MamaStream),
     T3(T3Stream),
 }
 
@@ -407,6 +408,10 @@ impl Core {
             }
             MaSub::Kama(sub) => {
                 (*outReal) = sub.update(inReal);
+            }
+            MaSub::Mama(sub) => {
+                let subValue = sub.update(inReal);
+                (*outReal) = subValue.0;
             }
             MaSub::T3(sub) => {
                 (*outReal) = sub.update(inReal);
@@ -466,8 +471,10 @@ impl Core {
                 let (sub, subValue) = self.kama_open_internal(inReal, startIdx, optInTimePeriod)?;
                 (MaSub::Kama(sub), subValue)
             }
-            /* no mama stream */
-            7 => return Err(RetCode::BadParam),
+            7 => {
+                let (sub, subValue) = self.mama_open_internal(inReal, startIdx, 0.5, 0.05)?;
+                (MaSub::Mama(sub), subValue.0)
+            }
             8 => {
                 let (sub, subValue) = self.t3_open_internal(inReal, startIdx, optInTimePeriod, 0.7)?;
                 (MaSub::T3(sub), subValue)
@@ -557,8 +564,9 @@ impl Core {
             6 => MaSub::Kama(
                 self.kama_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            /* no mama stream */
-            7 => return Err(RetCode::BadParam),
+            7 => MaSub::Mama(
+                self.mama_open_and_fill(inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
+            ),
             8 => MaSub::T3(
                 self.t3_open_and_fill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),

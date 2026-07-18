@@ -2078,12 +2078,20 @@ fn emit_dispatch(
     }
     for arm in dp.arms.iter().filter(|a| a.supported) {
         let _ = writeln!(o, "            {sub_enum}::{}(sub) => {{", callee_variant(&arm.callee));
-        if outputs.len() == 1 {
-            let _ = writeln!(o, "                (*{}) = sub.update({bar_args});", outputs[0]);
+        // Route callee output slots through the arm's OutSlot map: Forward(k)
+        // lands in the dispatch func's output k, Discard drops the slot (the
+        // nullable FAMA when MA routes only the MAMA line, #125).
+        if arm.out_map.len() == 1 {
+            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
+                panic!("single-output arm cannot discard its only slot");
+            };
+            let _ = writeln!(o, "                (*{}) = sub.update({bar_args});", outputs[k]);
         } else {
             let _ = writeln!(o, "                let subValue = sub.update({bar_args});");
-            for (i, out) in outputs.iter().enumerate() {
-                let _ = writeln!(o, "                (*{out}) = subValue.{i};");
+            for (i, slot) in arm.out_map.iter().enumerate() {
+                if let streaming::OutSlot::Forward(k) = slot {
+                    let _ = writeln!(o, "                (*{}) = subValue.{i};", outputs[*k]);
+                }
             }
         }
         let _ = writeln!(o, "            }}");
@@ -2143,9 +2151,30 @@ fn emit_dispatch(
                 "                let (sub, subValue) = self.{}_open_internal({bar_args}, startIdx{opts})?;",
                 arm.callee
             );
+            // Select the forwarded callee slot(s) in dispatch output order
+            // (a multi-output callee's open value is a tuple; Discard slots
+            // — MAMA's FAMA — are dropped, #125).
+            let value_expr = if arm.out_map.len() == 1 {
+                "subValue".to_string()
+            } else {
+                let mut parts: Vec<String> = Vec::new();
+                for k in 0..outputs.len() {
+                    let i = arm
+                        .out_map
+                        .iter()
+                        .position(|slot| matches!(slot, streaming::OutSlot::Forward(f) if *f == k))
+                        .expect("every dispatch output has a forwarded callee slot");
+                    parts.push(format!("subValue.{i}"));
+                }
+                if parts.len() == 1 {
+                    parts.remove(0)
+                } else {
+                    format!("({})", parts.join(", "))
+                }
+            };
             let _ = writeln!(
                 o,
-                "                ({sub_enum}::{}(sub), subValue)",
+                "                ({sub_enum}::{}(sub), {value_expr})",
                 callee_variant(&arm.callee)
             );
             let _ = writeln!(o, "            }}");
@@ -2206,9 +2235,25 @@ fn emit_dispatch(
                 format!("{}, ", opts.join(", "))
             };
             let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
+            // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
+            // own array, Discard materializes a throwaway buffer (the Rust
+            // rendering of C's NULL for a nullable output — same inline-Vec
+            // idiom the batch dispatch uses, #125).
+            let fill_outs: String = arm
+                .out_map
+                .iter()
+                .map(|slot| match slot {
+                    streaming::OutSlot::Forward(k) => outputs[*k].clone(),
+                    streaming::OutSlot::Discard => format!(
+                        "&mut vec![0.0_f64; {}.len()][..]",
+                        inputs[0]
+                    ),
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
             let _ = writeln!(
                 o,
-                "                self.{}_open_and_fill({bar_args}, {opts}outBegIdx, outNBElement, {out_args})?,",
+                "                self.{}_open_and_fill({bar_args}, {opts}outBegIdx, outNBElement, {fill_outs})?,",
                 arm.callee
             );
             let _ = writeln!(o, "            ),");

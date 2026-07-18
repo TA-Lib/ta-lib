@@ -1106,8 +1106,10 @@ impl Core {
         sp.mama = (1_f64 - sp.tempReal as f64).mul_add(sp.mama, sp.tempReal * todayValue);
         sp.tempReal *= 0.5;
         sp.fama = (1_f64 - sp.tempReal as f64).mul_add(sp.fama, sp.tempReal * sp.mama);
-        (*outMAMA) = sp.mama;
+        // FAMA is nullable (issue #125): its write carries no outIdx advance so
+        // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
         (*outFAMA) = sp.fama;
+        (*outMAMA) = sp.mama;
         // Adjust the period for next price bar
         sp.Re = (0.8 as f64).mul_add(sp.Re, 0.2 * ((sp.I2 as f64).mul_add(sp.prevI2, sp.Q2 * sp.prevQ2)));
         sp.Im = (0.8 as f64).mul_add(sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
@@ -1479,8 +1481,10 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                lastValue_outMAMA = mama;
+                // FAMA is nullable (issue #125): its write carries no outIdx advance so
+                // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
                 lastValue_outFAMA = fama;
+                lastValue_outMAMA = mama;
             }
             // Adjust the period for next price bar
             Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
@@ -1951,8 +1955,10 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                outMAMA[outIdx] = mama;
+                // FAMA is nullable (issue #125): its write carries no outIdx advance so
+                // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
                 outFAMA[outIdx] = fama;
+                outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
             // Adjust the period for next price bar
