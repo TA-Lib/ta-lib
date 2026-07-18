@@ -20,22 +20,22 @@ use super::stmt_walk::StatementEmitter;
 /// them as `FuncCall` nodes lets the `&&`-split optimisation preserve
 /// short-circuit evaluation — hoisted switch blocks would be evaluated
 /// unconditionally before the `if`.
-const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
+pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
 /// Per-render state for the Java backend, mirroring `RustRenderCtx`/`CRenderCtx`.
 /// Bundles the loose per-render state (precision flag, address-of variable sets,
 /// float input params, and the inline-helper counter) threaded through the
 /// recursive renderer. Services (enums/registry/helpers) stay as separate params.
-struct JavaRenderCtx<'a> {
-    single_precision: bool,
-    address_of_vars: &'a HashSet<String>,
-    double_address_of_vars: &'a HashSet<String>,
-    float_input_params: &'a HashSet<String>,
-    inline_counter: &'a Cell<usize>,
+pub(crate) struct JavaRenderCtx<'a> {
+    pub(crate) single_precision: bool,
+    pub(crate) address_of_vars: &'a HashSet<String>,
+    pub(crate) double_address_of_vars: &'a HashSet<String>,
+    pub(crate) float_input_params: &'a HashSet<String>,
+    pub(crate) inline_counter: &'a Cell<usize>,
     /// FMA fusion name-sets for the body being rendered (`None` disables fusion).
     /// Populated by [`build_fma_var_sets`] so Java's `binop` emits `Math.fma(a,b,c)`
     /// at exactly the sites C/Rust fuse (cross-language bit-parity).
-    fma: Option<&'a FmaVarSets>,
+    pub(crate) fma: Option<&'a FmaVarSets>,
 }
 
 /// Check if an expression renders to a boolean result in Java.
@@ -43,7 +43,7 @@ struct JavaRenderCtx<'a> {
 /// Must mirror what the expression renderer actually emits: `cond ? 1 : 0`
 /// prettifies to the bare (boolean) condition, and a single-return helper call
 /// renders as its inlined return expression.
-fn is_boolean_expr(expr: &Expr, helpers: &HelperRegistry) -> bool {
+pub(crate) fn is_boolean_expr(expr: &Expr, helpers: &HelperRegistry) -> bool {
     match expr {
         Expr::BinOp(_, op, _) => matches!(
             op,
@@ -111,7 +111,7 @@ fn bool_ternary_collapse(then_expr: &Expr, else_expr: &Expr) -> Option<BoolTerna
 /// `Class` is one array per struct field named `<id>_<field>` (matching the `CIRCBUF_REF`
 /// access flatten). Returns `(array_name, element_type)` pairs. Java arrays are always
 /// heap-allocated via `new[]` (no stack form).
-fn circbuf_arrays(id: &str, layout: &CircBufLayout) -> Vec<(String, VarType)> {
+pub(crate) fn circbuf_arrays(id: &str, layout: &CircBufLayout) -> Vec<(String, VarType)> {
     match layout {
         CircBufLayout::Plain(t) => vec![(id.to_string(), t.clone())],
         CircBufLayout::Class(fields) => fields
@@ -132,7 +132,7 @@ fn java_circbuf_elem(t: &VarType) -> &'static str {
 
 /// Collect all variable names used in `AddressOf(Var(name))` contexts.
 /// These variables need to be declared as `MInteger` instead of `int` in Java.
-fn collect_address_of_vars(stmts: &[Statement]) -> HashSet<String> {
+pub(crate) fn collect_address_of_vars(stmts: &[Statement]) -> HashSet<String> {
     let mut vars = HashSet::new();
     collect_address_of_vars_stmts(stmts, &mut vars);
     vars
@@ -253,7 +253,7 @@ fn scan_expr_for_address_of(expr: &Expr, vars: &mut HashSet<String>) {
 ///
 /// Scans the function body for `Assign { target: Var(local), value: Var(param) }`
 /// where `param` is a known MAType parameter name.
-fn collect_matype_vars(stmts: &[Statement], matype_params: &HashSet<String>) -> HashSet<String> {
+pub(crate) fn collect_matype_vars(stmts: &[Statement], matype_params: &HashSet<String>) -> HashSet<String> {
     let mut vars = HashSet::new();
     if matype_params.is_empty() {
         return vars;
@@ -316,7 +316,7 @@ fn collect_matype_vars_stmts(
 
 /// Collect Real-typed variables that appear in AddressOf contexts.
 /// These need `double[]` wrapping instead of MInteger wrapping in Java.
-fn collect_double_address_of_vars(
+pub(crate) fn collect_double_address_of_vars(
     stmts: &[Statement],
     address_of_vars: &HashSet<String>,
 ) -> HashSet<String> {
@@ -358,6 +358,10 @@ pub fn generate(
     out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double-precision logic (unguarded)
     out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
     out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic (unguarded)
+    // Streaming API section (only for YAML-declared streamable functions).
+    if func.streaming {
+        out.push_str(&super::java_stream::generate(func, enums, registry, helpers));
+    }
     out
 }
 
@@ -366,7 +370,7 @@ pub fn generate(
 /// Array types map to their array type name here, but call sites that need a
 /// size-dependent initializer (`new double[N]`) match `RealArray`/`IntArray`
 /// explicitly before falling through to this helper.
-fn java_type_str(var_type: &VarType) -> &'static str {
+pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
     match var_type {
         VarType::Real => "double",
         VarType::Integer | VarType::Index => "int",
@@ -385,7 +389,7 @@ fn java_type_str(var_type: &VarType) -> &'static str {
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
-fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
+pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
         match &opt.param_type {
@@ -866,7 +870,7 @@ fn render_forc_part(
 }
 
 /// Render hoisted block-inline helpers as Java code (temp var decl + body).
-fn render_hoisted_blocks(
+pub(crate) fn render_hoisted_blocks(
     hoisted: &[(String, VarType, Vec<Statement>)],
     indent: usize,
     ctx: &JavaRenderCtx,
@@ -1425,7 +1429,7 @@ impl StatementEmitter for JavaStmt<'_> {
     }
 }
 
-fn render_statement_ctx(
+pub(crate) fn render_statement_ctx(
     stmt: &Statement,
     indent: usize,
     ctx: &JavaRenderCtx,
@@ -1436,7 +1440,7 @@ fn render_statement_ctx(
     JavaStmt { ctx, enums, registry, helpers }.walk_stmt(stmt, indent)
 }
 
-fn render_java_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
+pub(crate) fn render_java_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
     if let Some((_enum_name, variant)) = lookup_variant(label, enums) {
         // Enum switch case labels must be UNQUALIFIED ("case Sma:", not
         // "case MAType.Sma:"): qualified enum case labels are Java 21+
@@ -1723,7 +1727,7 @@ impl ExprEmitter for JavaExpr<'_> {
     }
 }
 
-fn render_expr(
+pub(crate) fn render_expr(
     expr: &Expr,
     ctx: &JavaRenderCtx,
     registry: &Registry,

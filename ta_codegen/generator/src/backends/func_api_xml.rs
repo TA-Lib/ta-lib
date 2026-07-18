@@ -66,7 +66,7 @@ fn write_function(out: &mut String, func: &FuncDef) {
 // --- Function flags ---
 
 /// Canonical function flag order (matches gen_code).
-const FUNC_FLAGS: &[(&str, &str)] = &[
+pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("overlap", "Overlap"),
     ("volume", "Volume"),
     ("candlestick", "Candlestick"),
@@ -156,7 +156,7 @@ fn write_inputs(out: &mut String, func: &FuncDef) {
 // --- Optional inputs ---
 
 /// Canonical optional-input flag order (matches gen_code).
-const OPT_INPUT_FLAGS: &[(&str, &str)] = &[
+pub(crate) const OPT_INPUT_FLAGS: &[(&str, &str)] = &[
     ("percent", "Percent"),
     ("degree", "Degree"),
     ("currency", "Currency"),
@@ -318,7 +318,7 @@ fn write_enum_opt(
 // --- Outputs ---
 
 /// Canonical output flag order (matches gen_code).
-const OUTPUT_FLAGS: &[(&str, &str)] = &[
+pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("line", "Line"),
     ("dot_line", "Dotted Line"),
     ("dash_line", "Dashed Line"),

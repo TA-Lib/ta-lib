@@ -27,6 +27,10 @@ pub struct Registry {
     /// Per-indicator signature facts for the streaming dispatch/composed
     /// analysis (stream flag + input/opt/output counts), from the YAML.
     callee_sigs: HashMap<String, crate::streaming::CalleeSig>,
+    /// Per-indicator output names in signature order (`ma` -> `["outReal"]`,
+    /// `mama` -> `["outMAMA", "outFAMA"]`) — the Java stream emitter routes
+    /// dispatch OutSlots through named `cur_*` fields / `Value` members.
+    callee_out_names: HashMap<String, Vec<String>>,
 }
 
 impl Registry {
@@ -35,6 +39,7 @@ impl Registry {
         let mut indicators = Vec::new();
         let mut java_names = HashMap::new();
         let mut callee_sigs = HashMap::new();
+        let mut callee_out_names = HashMap::new();
 
         if let Ok(entries) = std::fs::read_dir(base_dir) {
             for entry in entries.filter_map(std::result::Result::ok) {
@@ -57,6 +62,10 @@ impl Registry {
                         dir_name.clone(),
                         crate::streaming::callee_sig_of(&fd),
                     );
+                    callee_out_names.insert(
+                        dir_name.clone(),
+                        fd.outputs.iter().map(|o| o.name.clone()).collect(),
+                    );
                     indicators.push(dir_name);
                 }
             }
@@ -65,7 +74,7 @@ impl Registry {
         // Sort by descending length so longest-match wins (e.g. "stochrsi" before "stoch")
         indicators.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
 
-        Registry { indicators, java_names, callee_sigs }
+        Registry { indicators, java_names, callee_sigs, callee_out_names }
     }
 
     /// Create an empty registry (for rendering self-contained expressions that
@@ -76,12 +85,18 @@ impl Registry {
             indicators: Vec::new(),
             java_names: HashMap::new(),
             callee_sigs: HashMap::new(),
+            callee_out_names: HashMap::new(),
         }
+    }
+
+    /// The output names of an indicator in signature order (empty if unknown).
+    pub(crate) fn callee_outputs(&self, key: &str) -> &[String] {
+        self.callee_out_names.get(key).map_or(&[][..], Vec::as_slice)
     }
 
     /// The Java camelCase base method name for an indicator dir-name, falling back
     /// to a naive camel-case conversion if the indicator carries no `camel_case`.
-    fn java_base(&self, key: &str) -> String {
+    pub(crate) fn java_base(&self, key: &str) -> String {
         self.java_names
             .get(key)
             .cloned()

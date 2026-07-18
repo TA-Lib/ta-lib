@@ -11,6 +11,7 @@ pub mod func_api_xml;
 pub mod func_list;
 pub mod java;
 pub mod java_abstract;
+pub mod java_stream;
 pub mod java_enums;
 pub mod java_shipped;
 pub mod makefile_am;

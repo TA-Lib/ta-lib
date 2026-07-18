@@ -125,10 +125,12 @@ pub fn build_fma_var_sets(
 /// diverging ~1 ULP from the fused batch — e.g. BBANDS's `cur_tempBuffer2 *
 /// sp->optInNbDevUp` with unequal deviations). A no-op for batch names.
 fn stream_base(name: &str) -> &str {
-    name.strip_prefix("sp->")
-        .or_else(|| name.strip_prefix("sp.")) // Rust stream state prefix
-        .or_else(|| name.strip_prefix("cur_"))
-        .unwrap_or(name)
+    let n = name
+        .strip_prefix("sp->")
+        .or_else(|| name.strip_prefix("sp.")) // Rust/Java stream state prefix
+        .unwrap_or(name);
+    // Java stream output fields are `sp.cur_<out>` — both prefixes at once.
+    n.strip_prefix("cur_").unwrap_or(n)
 }
 
 /// True when `expr` is provably integer-typed (an index/counter, a sentinel, or

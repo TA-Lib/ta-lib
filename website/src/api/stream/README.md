@@ -124,3 +124,41 @@ Multi-output functions return tuples in batch output order
 `i32`. Handles are `Send + Sync + Clone` — cloning forks an independent
 stream, and `update(&mut self)` makes the single-writer rule a compile-time
 guarantee. Settings are captured from the immutable `Core` at open.
+
+## Java
+
+The Java library exposes the same lifecycle as small handle classes nested in
+`Core` (unrelated to `java.util.stream`). `xxxOpen` returns the handle — its
+`value()` starts at the last history bar's value; `update` never throws after
+a successful open; `peek` runs the same generated code on a throwaway deep
+copy (never commits); `copy()` forks an independent stream; there is no
+close — unreferenced handles are simply garbage-collected. Every value is
+bit-identical to the batch method over the same series.
+
+```java
+Core core = new Core();
+Core.SmaStream s = core.smaOpen(history, 14);   // value() == batch at the last bar
+for (double bar : newBars) {
+    double v = s.update(bar);                   // one value per closed bar
+}
+double provisional = s.peek(formingBarClose);   // forming bar, non-committing
+
+// Or get the whole history output AND the live handle in one pass:
+MInteger beg = new MInteger(), nb = new MInteger();
+double[] warmup = new double[history.length];
+Core.SmaStream s2 = core.smaOpenAndFill(history, 14, beg, nb, warmup);
+```
+
+Too little history throws `InsufficientHistoryException` (an
+`IllegalArgumentException` subclass — catch it to accumulate more bars and
+retry); out-of-range parameters throw plain `IllegalArgumentException`, and
+`Integer.MIN_VALUE` still selects an integer parameter's documented default,
+as in the batch API. Multi-output functions return a small immutable `Value`
+class with one final field per output in batch output order
+(`core.macdOpen(...)` → `MacdStream`, whose `update` returns
+`MacdStream.Value` with `macd` / `macdSignal` / `macdHist`); candlestick
+patterns return `int`. A handle is single-writer (`peek`/`value()`/`copy()`
+count as reads: safe concurrently only while no `update` races them), and
+mutating the owning `Core`'s settings while its streams are live is
+unsupported. Handles are not serializable — to checkpoint, retain the history
+and re-open.
