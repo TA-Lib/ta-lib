@@ -408,8 +408,11 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+             */
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
@@ -726,8 +729,8 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -1060,8 +1063,8 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -1375,8 +1378,8 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));

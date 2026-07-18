@@ -3897,6 +3897,15 @@ fn render_cross_indicator_arg(
             let rendered = render_expr(inner, ctx, opt_real_params, registry, helpers);
             format!("&mut {rendered}")
         }
+        // NULL in an output position: a nullable output the caller discards (MA
+        // passes NULL for MAMA's FAMA — issue #125). Rust slices aren't nullable,
+        // so materialize a throwaway buffer spanning the output range; the callee
+        // fills it and it drops at end of statement. Real outputs only (the sole
+        // use); mirrors the discard buffer the C source used before nullable
+        // outputs landed.
+        Expr::Var(name) if is_output_position && name == "NULL" => {
+            "&mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]".to_string()
+        }
         // Vec<T> local variables: &name for input position, &mut name[..] for output position
         Expr::Var(name) if ctx.vec_vars.contains(name) || is_vec_local_var(name) => {
             if is_output_position {

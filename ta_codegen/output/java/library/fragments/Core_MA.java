@@ -73,7 +73,6 @@
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -123,11 +122,10 @@
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         /* The optInTimePeriod is ignored and the FAMA output of the MAMA
-          * is ignored.
+         /* The optInTimePeriod is ignored. FAMA is a nullable output
+          * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -147,7 +145,6 @@
                                           MInteger outNBElement,
                                           double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -185,8 +182,7 @@
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -206,7 +202,6 @@
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -255,8 +250,7 @@
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -276,7 +270,6 @@
                                           MInteger outNBElement,
                                           double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -314,8 +307,7 @@
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);

@@ -511,8 +511,10 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                outMAMA[outIdx] = mama;
+                // FAMA is nullable (issue #125): its write carries no outIdx advance so
+                // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
                 outFAMA[outIdx] = fama;
+                outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
             // Adjust the period for next price bar
@@ -845,8 +847,8 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                outMAMA[outIdx] = mama;
                 outFAMA[outIdx] = fama;
+                outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
             Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));

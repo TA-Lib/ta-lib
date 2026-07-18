@@ -453,6 +453,7 @@ fn output_flags_value(flags: &[String]) -> u32 {
             "zero" => 0x0000_0400,
             "upper_limit" => 0x0000_0800,
             "lower_limit" => 0x0000_1000,
+            "nullable" => 0x0000_2000,
             _ => 0,
         };
     }

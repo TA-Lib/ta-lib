@@ -374,8 +374,10 @@ TA_RetCode mama(int startIdx, int endIdx,
       fama = (tempReal*mama)+((1-tempReal)*fama);
       if( today >= startIdx )
       {
-         outMAMA[outIdx] = mama;
-         outFAMA[outIdx++] = fama;
+         /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+          * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++. */
+         outFAMA[outIdx] = fama;
+         outMAMA[outIdx++] = mama;
       }
 
       /* Adjust the period for next price bar */

@@ -5694,10 +5694,6 @@ TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 10000
 /*
  * Streaming API for TA_MA — incremental per-bar evaluation.
  * See docs/streaming-api-design.md.
- * Note: optInMAType values whose underlying function has no stream yet
- * (TA_MAType_MAMA) are rejected at Open with TA_BAD_PARAM; they gain
- * streams automatically when the underlying function does.
- * The optInTimePeriod == 1 identity path streams for every optInMAType value.
  */
 typedef struct TA_MA_Stream TA_MA_Stream;
 

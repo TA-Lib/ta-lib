@@ -1253,7 +1253,7 @@ fn c_for_loop_multi_init_comma_separated() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
-    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, &registry, &helpers, &inline_counter);
+    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, &registry, &helpers, &inline_counter, &[]);
 
     // Should produce: for( j = 0, i = startIdx; ... ; i = i + 1, j = j + 1 )
     // NOT: for( j = 0;\ni = startIdx; ... )
@@ -4468,7 +4468,7 @@ fn render_c_stmt(stmt: &ir::Statement) -> String {
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
     backends::c::render_statement(
-        stmt, 3, false, &enums, &registry, &helpers, &inline_counter,
+        stmt, 3, false, &enums, &registry, &helpers, &inline_counter, &[],
     )
 }
 
@@ -6390,8 +6390,9 @@ fn java_array_access() {
 // ---------------------------------------------------------------------------
 
 /// Pin the generated MA dispatch stream section: tagged handle over the
-/// callees' PUBLIC streams, batch-order ENUM_CASE arms, identity fast path,
-/// the one remaining unsupported arm (MAMA) rejecting at Open.
+/// callees' PUBLIC streams, batch-order ENUM_CASE arms, identity fast path, and
+/// the MAMA arm forwarding the MAMA line while discarding FAMA as NULL (the
+/// nullable-output delegation from issue #125 — no reject arm remains).
 #[test]
 fn test_c_ma_dispatch_stream_section() {
     let (mut func, enums) = load_indicator("ma");
@@ -6419,6 +6420,7 @@ fn test_c_ma_dispatch_stream_section() {
         ("Kama", "TA_KAMA"),
         ("T3", "TA_T3"),
         ("Trima", "TA_TRIMA"), // dual-mode stream (M6c): auto-promoted from reject
+        ("Mama", "TA_MAMA"),   // nullable FAMA (#125): auto-promoted from reject
     ] {
         assert!(
             c.contains(&format!("case ENUM_CASE(MAType, TA_MAType_{}, {label}):", label.to_uppercase())),
@@ -6435,14 +6437,26 @@ fn test_c_ma_dispatch_stream_section() {
         c.contains("TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7"),
         "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
-    // MAMA is the only remaining unsupported arm — it rejects at Open and never
-    // opens a sub-stream (TRIMA gained a dual-mode stream in M6c and is now a
-    // supported arm above).
+    // MAMA is now a supported arm: FAMA is a nullable output (issue #125), so
+    // MA's arm forwards the MAMA line to outReal and passes NULL for FAMA in
+    // every verb (Open / OpenAndFill / Update / Peek). No reject arm remains.
     assert!(
-        c.contains("case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */"),
-        "MAMA reject arm"
+        c.contains(
+            "TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL )"
+        ),
+        "MAMA arm forwards outReal + discards FAMA as NULL at Open"
     );
-    assert!(!c.contains("TA_MAMA_Open"), "no MAMA sub open");
+    assert!(
+        c.contains("TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL )"),
+        "MAMA Update forwards outReal + NULL"
+    );
+    assert!(
+        c.contains(
+            "TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL )"
+        ),
+        "MAMA OpenAndFill forwards outReal + NULL"
+    );
+    assert!(!c.contains("/* no mama stream */"), "no MAMA reject arm remains");
     // Update/Peek identity short-circuit reads the handle's params.
     assert!(
         c.contains("if( stream->optInTimePeriod == 1 )"),
@@ -6452,6 +6466,51 @@ fn test_c_ma_dispatch_stream_section() {
     assert!(
         c.contains("(const TA_SMA_Stream *)stream->sub"),
         "const sub cast in Peek"
+    );
+}
+
+/// FAMA is a nullable output (issue #125). In the BATCH C: `Output::is_nullable`
+/// is set from the `nullable` flag, the guarded function skips its NULL-check but
+/// keeps outMAMA's, the distinctness check guards the nullable operand, and every
+/// body write is NULL-guarded while the `outIdx` advance rides the non-nullable
+/// outMAMA. MA's batch arm collapses to a clean NULL delegation (no malloc).
+#[test]
+fn test_c_mama_nullable_fama_batch() {
+    let (func, enums) = load_indicator("mama");
+    let fama = func.outputs.iter().find(|o| o.name == "outFAMA").unwrap();
+    let mama_out = func.outputs.iter().find(|o| o.name == "outMAMA").unwrap();
+    assert!(fama.is_nullable(), "outFAMA carries the nullable flag");
+    assert!(!mama_out.is_nullable(), "outMAMA is not nullable");
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    // Guarded validation: outMAMA required, outFAMA optional.
+    assert!(c.contains("if( !outMAMA )"), "outMAMA still NULL-checked");
+    assert!(!c.contains("if( !outFAMA )"), "outFAMA NULL-check skipped (nullable)");
+    assert!(
+        c.contains("if( outFAMA != NULL && outMAMA == outFAMA )"),
+        "distinctness guards the nullable operand (a NULL FAMA aliases nothing)"
+    );
+    // Body: FAMA store NULL-guarded; outIdx advance on the non-nullable outMAMA.
+    assert!(
+        c.contains("if( outFAMA != NULL )") && c.contains("outFAMA[outIdx] = fama;"),
+        "FAMA store NULL-guarded (no side effect inside the guard)"
+    );
+    assert!(c.contains("outMAMA[outIdx++] = mama;"), "outIdx advance rides outMAMA");
+
+    // MA's batch arm: clean NULL delegation, no unchecked discard buffer.
+    let (ma, ma_enums) = load_indicator("ma");
+    let mac = backends::c::generate(&ma, &ma_enums, &registry, &helpers);
+    assert!(
+        mac.contains(
+            "TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL)"
+        ),
+        "MA batch MAMA arm passes NULL for FAMA"
+    );
+    assert!(
+        !mac.contains("dummyBuffer") && !mac.contains("malloc"),
+        "the pre-#125 discard malloc is gone"
     );
 }
 
@@ -6668,11 +6727,10 @@ fn test_c_ht_trendmode_full_union() {
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 
-/// Pin MAMA — the last MAType function to stream (empties the every-MAType ratchet
-/// blocklist). It is an ordinary HT function (WMA ring + parity) with two real
-/// optional params and two coupled outputs (mama/fama) written in a top-level gate.
-/// (MA's *dispatch* still rejects MAType_MAMA at Open — a two-output callee cannot
-/// be a 1:1 delegation into MA's single output; pinned by ma_derives_dispatch_plan.)
+/// Pin MAMA — an ordinary HT function (WMA ring + parity) with two real optional
+/// params and two coupled outputs (mama/fama) written in a top-level gate. FAMA
+/// is a nullable output (issue #125): its per-bar write is NULL-guarded so a
+/// caller (MA's dispatch) can discard it — see `test_c_ma_dispatch_stream_section`.
 #[test]
 fn test_c_mama_two_outputs_and_params() {
     let s = ht_stream_section("mama");
@@ -6681,7 +6739,13 @@ fn test_c_mama_two_outputs_and_params() {
     let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
     let step = &step[..step.find("TA_MAMA_OpenInternal").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
-    assert!(step.contains("*outMAMA= sp->mama;") && step.contains("*outFAMA= sp->fama;"), "both outputs written unconditionally (gate stripped)");
+    // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
+    // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
+    assert!(step.contains("*outMAMA= sp->mama;"), "MAMA line written unconditionally");
+    assert!(
+        step.contains("if( outFAMA != NULL )") && step.contains("*outFAMA= sp->fama;"),
+        "FAMA is nullable (#125): its write is NULL-guarded"
+    );
     assert!(step.contains("sp->optInFastLimit") && step.contains("sp->optInSlowLimit"), "params drive the adaptive alpha");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }

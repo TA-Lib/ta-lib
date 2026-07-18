@@ -180,9 +180,7 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
-   if( !outFAMA )
-      return TA_BAD_PARAM;
-   if( outMAMA == outFAMA )
+   if( outFAMA != NULL && outMAMA == outFAMA )
       return TA_BAD_PARAM;
 
    a = 0.0962;
@@ -471,8 +469,12 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       fama = fma(1 - tempReal, fama, tempReal * mama);
       if( today >= startIdx )
       {
-         outMAMA[outIdx] = mama;
-         outFAMA[outIdx++] = fama;
+         /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+          * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+          */
+         if( outFAMA != NULL )
+            outFAMA[outIdx] = fama;
+         outMAMA[outIdx++] = mama;
       }
       /* Adjust the period for next price bar */
       Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
@@ -813,8 +815,9 @@ TA_LIB_API TA_RetCode TA_MAMA_Unguarded( int    startIdx,
       fama = fma(1 - tempReal, fama, tempReal * mama);
       if( today >= startIdx )
       {
-         outMAMA[outIdx] = mama;
-         outFAMA[outIdx++] = fama;
+         if( outFAMA != NULL )
+            outFAMA[outIdx] = fama;
+         outMAMA[outIdx++] = mama;
       }
       Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
       Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -938,9 +941,7 @@ TA_RetCode TA_S_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
-   if( !outFAMA )
-      return TA_BAD_PARAM;
-   if( outMAMA == outFAMA )
+   if( outFAMA != NULL && outMAMA == outFAMA )
       return TA_BAD_PARAM;
 
    a = 0.0962;
@@ -1174,8 +1175,9 @@ TA_RetCode TA_S_MAMA( int    startIdx,
       fama = fma(1 - tempReal, fama, tempReal * mama);
       if( today >= startIdx )
       {
-         outMAMA[outIdx] = mama;
-         outFAMA[outIdx++] = fama;
+         if( outFAMA != NULL )
+            outFAMA[outIdx] = fama;
+         outMAMA[outIdx++] = mama;
       }
       Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
       Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -1513,8 +1515,9 @@ TA_RetCode TA_S_MAMA_Unguarded( int    startIdx,
       fama = fma(1 - tempReal, fama, tempReal * mama);
       if( today >= startIdx )
       {
-         outMAMA[outIdx] = mama;
-         outFAMA[outIdx++] = fama;
+         if( outFAMA != NULL )
+            outFAMA[outIdx] = fama;
+         outMAMA[outIdx++] = mama;
       }
       Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
       Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -1783,8 +1786,12 @@ static void TA_MAMA_StepInternal( struct TA_MAMA_Stream *sp, double inReal, doub
    sp->mama = fma(1 - sp->tempReal, sp->mama, sp->tempReal * todayValue);
    sp->tempReal *= 0.5;
    sp->fama = fma(1 - sp->tempReal, sp->fama, sp->tempReal * sp->mama);
+   /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+    * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+    */
+   if( outFAMA != NULL )
+      *outFAMA= sp->fama;
    *outMAMA= sp->mama;
-   *outFAMA= sp->fama;
    /* Adjust the period for next price bar */
    sp->Re = fma(0.8, sp->Re, 0.2 * (fma(sp->I2, sp->prevI2, sp->Q2 * sp->prevQ2)));
    sp->Im = fma(0.8, sp->Im, 0.2 * (sp->I2 * sp->prevQ2 - sp->Q2 * sp->prevI2));
@@ -1835,7 +1842,7 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inReal || !outMAMA || !outFAMA ) return TA_BAD_PARAM;
+   if( !inReal || !outMAMA ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( optInFastLimit == -4e37 )
       optInFastLimit = 0.5;
@@ -2198,8 +2205,11 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
          fama = fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx )
          {
-            lastValue_outMAMA = mama;
+            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+             */
             lastValue_outFAMA = fama;
+            lastValue_outMAMA = mama;
          }
          /* Adjust the period for next price bar */
          Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
@@ -2306,7 +2316,7 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
       }
       sp->ringPos_trailingWMAIdx = 0;
       *outMAMA = lastValue_outMAMA;
-      *outFAMA = lastValue_outFAMA;
+      if( outFAMA != NULL ) *outFAMA = lastValue_outFAMA;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -2327,7 +2337,7 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inReal || !outMAMA || !outFAMA || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( !inReal || !outMAMA || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( (const void *)outMAMA == (const void *)inReal || (const void *)outFAMA == (const void *)inReal || (const void *)outMAMA == (const void *)outFAMA ) return TA_BAD_PARAM;
    if( optInFastLimit == -4e37 )
@@ -2690,8 +2700,12 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
          fama = fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx )
          {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+             */
+            if( outFAMA != NULL )
+               outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
          Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
@@ -2804,7 +2818,7 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
 
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )
 {
-   if( !stream || !outMAMA || !outFAMA ) return TA_BAD_PARAM;
+   if( !stream || !outMAMA ) return TA_BAD_PARAM;
    TA_MAMA_StepInternal( stream, inReal, outMAMA, outFAMA );
    return TA_SUCCESS;
 }
@@ -2813,7 +2827,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
 {
    struct TA_MAMA_Stream scratch;
 
-   if( !stream || !outMAMA || !outFAMA ) return TA_BAD_PARAM;
+   if( !stream || !outMAMA ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );

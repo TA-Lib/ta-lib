@@ -441,6 +441,7 @@ pub(crate) fn output_flag_bits(flags: &[String]) -> u32 {
             "zero" => b |= 0x0000_0400,
             "upper_limit" => b |= 0x0000_0800,
             "lower_limit" => b |= 0x0000_1000,
+            "nullable" => b |= 0x0000_2000,
             _ => {}
         }
     }
@@ -679,6 +680,7 @@ flag_newtype!(OutputFlags {
     ZERO = 0x0000_0400,
     UPPER_LIMIT = 0x0000_0800,
     LOWER_LIMIT = 0x0000_1000,
+    NULLABLE = 0x0000_2000,
 });
 
 /// A required input parameter.

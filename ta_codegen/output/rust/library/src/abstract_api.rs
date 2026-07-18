@@ -315,6 +315,7 @@ flag_newtype!(OutputFlags {
     ZERO = 0x0000_0400,
     UPPER_LIMIT = 0x0000_0800,
     LOWER_LIMIT = 0x0000_1000,
+    NULLABLE = 0x0000_2000,
 });
 
 /// A required input parameter.
@@ -1705,7 +1706,7 @@ pub static FUNCS: [FuncInfo; 165] = [
         flags: FuncFlags(0x0b000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastLimit", display_name: "Fast Limit", hint: "Upper limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.5, suggested: (0.21, 0.8, 0.01) } }, OptInputInfo { param_name: "optInSlowLimit", display_name: "Slow Limit", hint: "Lower limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.05, suggested: (0.01, 0.6, 0.01) } }, ],
-        outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00002004) }, ],
         unst_id: Some(FuncUnstId::Mama),
     },
     FuncInfo {

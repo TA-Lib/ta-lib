@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)
+- (#125) Optional (nullable) outputs: an output can be skipped by passing `NULL`, advertised by the new `TA_OUT_NULLABLE` flag in `ta_abstract`. MAMA's FAMA line is the first — `TA_MAMA(..., outMAMA, NULL)` computes only the MAMA line, and `MAType=MAMA` now works inside `MA`/`BBANDS`/`STOCH`/`MACDEXT`/`APO`/`PPO`/`MAVP` without an internal scratch buffer.
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX

@@ -41584,7 +41584,6 @@ public class Core {
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -41634,11 +41633,10 @@ public class Core {
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         /* The optInTimePeriod is ignored and the FAMA output of the MAMA
-          * is ignored.
+         /* The optInTimePeriod is ignored. FAMA is a nullable output
+          * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -41658,7 +41656,6 @@ public class Core {
                                           MInteger outNBElement,
                                           double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -41696,8 +41693,7 @@ public class Core {
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -41717,7 +41713,6 @@ public class Core {
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -41766,8 +41761,7 @@ public class Core {
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -41787,7 +41781,6 @@ public class Core {
                                           MInteger outNBElement,
                                           double outReal[] )
    {
-      double[] dummyBuffer;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -41825,8 +41818,7 @@ public class Core {
          retCode = kamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         dummyBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, dummyBuffer);
+         retCode = mamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -43969,8 +43961,11 @@ public class Core {
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+             */
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
@@ -44287,8 +44282,8 @@ public class Core {
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -44621,8 +44616,8 @@ public class Core {
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
@@ -44936,8 +44931,8 @@ public class Core {
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outMAMA[outIdx] = mama;
-            outFAMA[outIdx++] = fama;
+            outFAMA[outIdx] = fama;
+            outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
          Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));

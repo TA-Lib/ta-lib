@@ -6142,7 +6142,7 @@ public RetCode mama(
             double outMAMA[],
             @OutputParameterInfo(
                 paramName = "outFAMA",
-                flags     = 4,
+                flags     = 8196,
                 type = OutputParameterType.TA_Output_Real
             )
             double outFAMA[]

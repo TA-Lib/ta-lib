@@ -372,6 +372,9 @@ typedef int TA_OutputFlags;
 #define TA_OUT_ZERO              0x00000400 /* Output can be zero */
 #define TA_OUT_UPPER_LIMIT       0x00000800 /* Indicates that the values represent an upper limit. */
 #define TA_OUT_LOWER_LIMIT       0x00001000 /* Indicates that the values represent a lower limit. */
+#define TA_OUT_NULLABLE          0x00002000 /* The output pointer may be NULL: the caller can discard
+                                             * this output (it is computed but not written). E.g. MAMA's
+                                             * FAMA line when only the MAMA line is wanted. */
 
 
 /* The following 3 structures will exist for each input, optional
