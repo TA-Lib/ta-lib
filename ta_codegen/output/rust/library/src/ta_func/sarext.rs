@@ -674,6 +674,848 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live SAREXT stream: one value per closed bar, bit-identical to [`Core::sarext`]
+/// over the same series. Open with [`Core::sarext_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_SAREXT_Stream")]
+pub struct SarextStream {
+    core: Core,
+    state: SarextStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct SarextStreamState {
+    optInStartValue: f64,
+    optInOffsetOnReverse: f64,
+    optInAccelerationInitLong: f64,
+    optInAccelerationLong: f64,
+    optInAccelerationMaxLong: f64,
+    optInAccelerationInitShort: f64,
+    optInAccelerationShort: f64,
+    optInAccelerationMaxShort: f64,
+    isLong: usize,
+    newHigh: f64,
+    newLow: f64,
+    afLong: f64,
+    afShort: f64,
+    ep: f64,
+    sar: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn sarext_step_internal(&self, sp: &mut SarextStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        prevLow = sp.newLow;
+        prevHigh = sp.newHigh;
+        sp.newLow = inLow;
+        sp.newHigh = inHigh;
+        if sp.isLong == 1 {
+            // Switch to short if the low penetrates the SAR value.
+            if sp.newLow <= sp.sar {
+                // Switch and Overide the SAR with the ep
+                sp.isLong = 0;
+                sp.sar = sp.ep;
+                // Make sure the overide SAR is within
+                // yesterday's and today's range.
+                if sp.sar < prevHigh {
+                    sp.sar = prevHigh;
+                }
+                if sp.sar < sp.newHigh {
+                    sp.sar = sp.newHigh;
+                }
+                // Output the overide SAR
+                if sp.optInOffsetOnReverse != 0.0 {
+                    sp.sar += sp.sar * sp.optInOffsetOnReverse;
+                }
+                (*outReal) = 0_f64 - sp.sar;
+                // Adjust afShort and ep
+                sp.afShort = sp.optInAccelerationInitShort;
+                sp.ep = sp.newLow;
+                // Calculate the new SAR
+                sp.sar = (sp.afShort as f64).mul_add(sp.ep - sp.sar, sp.sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sp.sar < prevHigh {
+                    sp.sar = prevHigh;
+                }
+                if sp.sar < sp.newHigh {
+                    sp.sar = sp.newHigh;
+                }
+            } else {
+                // No switch
+                // Output the SAR (was calculated in the previous iteration)
+                (*outReal) = sp.sar;
+                // Adjust afLong and ep.
+                if sp.newHigh > sp.ep {
+                    sp.ep = sp.newHigh;
+                    sp.afLong += sp.optInAccelerationLong;
+                    if sp.afLong > sp.optInAccelerationMaxLong {
+                        sp.afLong = sp.optInAccelerationMaxLong;
+                    }
+                }
+                // Calculate the new SAR
+                sp.sar = (sp.afLong as f64).mul_add(sp.ep - sp.sar, sp.sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sp.sar > prevLow {
+                    sp.sar = prevLow;
+                }
+                if sp.sar > sp.newLow {
+                    sp.sar = sp.newLow;
+                }
+            }
+        // Switch to long if the high penetrates the SAR value.
+        } else if sp.newHigh >= sp.sar {
+            // Switch and Overide the SAR with the ep
+            sp.isLong = 1;
+            sp.sar = sp.ep;
+            // Make sure the overide SAR is within
+            // yesterday's and today's range.
+            if sp.sar > prevLow {
+                sp.sar = prevLow;
+            }
+            if sp.sar > sp.newLow {
+                sp.sar = sp.newLow;
+            }
+            // Output the overide SAR
+            if sp.optInOffsetOnReverse != 0.0 {
+                sp.sar -= sp.sar * sp.optInOffsetOnReverse;
+            }
+            (*outReal) = sp.sar;
+            // Adjust afLong and ep
+            sp.afLong = sp.optInAccelerationInitLong;
+            sp.ep = sp.newHigh;
+            // Calculate the new SAR
+            sp.sar = (sp.afLong as f64).mul_add(sp.ep - sp.sar, sp.sar);
+            // Make sure the new SAR is within
+            // yesterday's and today's range.
+            if sp.sar > prevLow {
+                sp.sar = prevLow;
+            }
+            if sp.sar > sp.newLow {
+                sp.sar = sp.newLow;
+            }
+        } else {
+            // No switch
+            // Output the SAR (was calculated in the previous iteration)
+            (*outReal) = 0_f64 - sp.sar;
+            // Adjust afShort and ep.
+            if sp.newLow < sp.ep {
+                sp.ep = sp.newLow;
+                sp.afShort += sp.optInAccelerationShort;
+                if sp.afShort > sp.optInAccelerationMaxShort {
+                    sp.afShort = sp.optInAccelerationMaxShort;
+                }
+            }
+            // Calculate the new SAR
+            sp.sar = (sp.afShort as f64).mul_add(sp.ep - sp.sar, sp.sar);
+            // Make sure the new SAR is within
+            // yesterday's and today's range.
+            if sp.sar < prevHigh {
+                sp.sar = prevHigh;
+            }
+            if sp.sar < sp.newHigh {
+                sp.sar = sp.newHigh;
+            }
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::sarext_open`] (composition seam).
+    pub(crate) fn sarext_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64,
+    ) -> Result<(SarextStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut retCode: RetCode = RetCode::Success;
+        let mut isLong: usize = 0_usize;
+        let mut todayIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut tempInt: usize = 0_usize;
+        let mut newHigh: f64 = 0.0_f64;
+        let mut newLow: f64 = 0.0_f64;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut afLong: f64 = 0.0_f64;
+        let mut afShort: f64 = 0.0_f64;
+        let mut ep: f64 = 0.0_f64;
+        let mut sar: f64 = 0.0_f64;
+        let mut ep_temp: [f64; 1 as usize] = [0.0_f64; 1 as usize];
+        // > 0 indicates long. == 0 indicates short
+        // This function is the same as TA_SAR, except that the caller has
+        // greater control on the SAR dynamic and initial state.
+        //
+        // In additon, the TA_SAREXT returns negative values when the position
+        // is short. This allow to distinguish when the SAR do actually reverse.
+        // Implementation of the SAR has been a little bit open to interpretation
+        // since Wilder (the original author) did not define a precise algorithm
+        // on how to bootstrap the algorithm. Take any existing software application
+        // and you will see slight variation on how the algorithm was adapted.
+        //
+        // What is the initial trade direction? Long or short?
+        // ===================================================
+        // The interpretation of what should be the initial SAR values is
+        // open to interpretation, particularly since the caller to the function
+        // does not specify the initial direction of the trade.
+        //
+        // In TA-Lib, the following default logic is used:
+        //  - Calculate +DM and -DM between the first and
+        //    second bar. The highest directional indication will
+        //    indicate the assumed direction of the trade for the second
+        //    price bar.
+        //  - In the case of a tie between +DM and -DM,
+        //    the direction is LONG by default.
+        //
+        // What is the initial "extreme point" and thus SAR?
+        // =================================================
+        // The following shows how different people took different approach:
+        //  - Metastock use the first price bar high/low depending of
+        //    the direction. No SAR is calculated for the first price
+        //    bar.
+        //  - Tradestation use the closing price of the second bar. No
+        //    SAR are calculated for the first price bar.
+        //  - Wilder (the original author) use the SIP from the
+        //    previous trade (cannot be implement here since the
+        //    direction and length of the previous trade is unknonw).
+        //  - The Magazine TASC seems to follow Wilder approach which
+        //    is not practical here.
+        //
+        // TA-Lib "consume" the first price bar and use its high/low as the
+        // initial SAR of the second price bar. I found that approach to be
+        // the closest to Wilders idea of having the first entry day use
+        // the previous extreme point, except that here the extreme point is
+        // derived solely from the first price bar. I found the same approach
+        // to be used by Metastock.
+        //
+        //
+        // Can I force the initial SAR?
+        // ============================
+        // Yes. Using the optInStartValue_0 parameter:
+        //  optInStartValue_0 >  0 : SAR is long at optInStartValue_0.
+        //  optInStartValue_0 <  0 : SAR is short at fabs(optInStartValue_0).
+        //
+        // And when optInStartValue_0 == 0, the logic is the same as for TA_SAR
+        // (See previous two sections).
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        //
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < 1 {
+            startIdx = 1;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Check if the acceleration factors are being defined by the user.
+        // Make sure the acceleration and maximum are coherent.
+        // If not, correct the acceleration.
+        // Default afLong = 0.02
+        // Default afShort = 0.02
+        afLong = optInAccelerationInitLong;
+        afShort = optInAccelerationInitShort;
+        if afLong > optInAccelerationMaxLong {
+            optInAccelerationInitLong = optInAccelerationMaxLong;
+            afLong = optInAccelerationInitLong;
+        }
+        if optInAccelerationLong > optInAccelerationMaxLong {
+            optInAccelerationLong = optInAccelerationMaxLong;
+        }
+        if afShort > optInAccelerationMaxShort {
+            optInAccelerationInitShort = optInAccelerationMaxShort;
+            afShort = optInAccelerationInitShort;
+        }
+        if optInAccelerationShort > optInAccelerationMaxShort {
+            optInAccelerationShort = optInAccelerationMaxShort;
+        }
+        // Initialise SAR calculations
+        if optInStartValue == 0_f64 {
+            // Default action
+            // Identify if the initial direction is long or short.
+            // (ep is just used as a temp buffer here, the name
+            //  of the parameter is not significant).
+            let mut _dup_out: usize = 0_usize;
+            retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            if ep_temp[0] > 0_f64 {
+                isLong = 0;
+            } else {
+                isLong = 1;
+            }
+            if retCode != RetCode::Success {
+                dummyBegIdx = 0;
+                dummyNBElement = 0;
+                return Err(retCode);
+            }
+        } else if optInStartValue > 0_f64 {
+            // Start Long
+            isLong = 1;
+        } else {
+            // optInStartValue_0 < 0 => Start Short
+            isLong = 0;
+        }
+        dummyBegIdx = startIdx;
+        outIdx = 0;
+        // Write the first SAR.
+        todayIdx = startIdx;
+        newHigh = inHigh[todayIdx - 1];
+        newLow = inLow[todayIdx - 1];
+        if optInStartValue == 0_f64 {
+            // Default action
+            if isLong == 1 {
+                ep = inHigh[todayIdx];
+                sar = newLow;
+            } else {
+                ep = inLow[todayIdx];
+                sar = newHigh;
+            }
+        } else if optInStartValue > 0_f64 {
+            // Start Long at specified value.
+            ep = inHigh[todayIdx];
+            sar = optInStartValue;
+        } else {
+            // if optInStartValue < 0 => Start Short at specified value.
+            ep = inLow[todayIdx];
+            sar = (optInStartValue).abs();
+        }
+        // Cheat on the newLow and newHigh for the
+        // first iteration.
+        newLow = inLow[todayIdx];
+        newHigh = inHigh[todayIdx];
+        while todayIdx <= endIdx {
+            prevLow = newLow;
+            prevHigh = newHigh;
+            newLow = inLow[todayIdx];
+            newHigh = inHigh[todayIdx];
+            todayIdx += 1;
+            if isLong == 1 {
+                // Switch to short if the low penetrates the SAR value.
+                if newLow <= sar {
+                    // Switch and Overide the SAR with the ep
+                    isLong = 0;
+                    sar = ep;
+                    // Make sure the overide SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                    // Output the overide SAR
+                    if optInOffsetOnReverse != 0.0 {
+                        sar += sar * optInOffsetOnReverse;
+                    }
+                    lastValue_outReal = 0_f64 - sar;
+                    // Adjust afShort and ep
+                    afShort = optInAccelerationInitShort;
+                    ep = newLow;
+                    // Calculate the new SAR
+                    sar = (afShort as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                } else {
+                    // No switch
+                    // Output the SAR (was calculated in the previous iteration)
+                    lastValue_outReal = sar;
+                    // Adjust afLong and ep.
+                    if newHigh > ep {
+                        ep = newHigh;
+                        afLong += optInAccelerationLong;
+                        if afLong > optInAccelerationMaxLong {
+                            afLong = optInAccelerationMaxLong;
+                        }
+                    }
+                    // Calculate the new SAR
+                    sar = (afLong as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar > prevLow {
+                        sar = prevLow;
+                    }
+                    if sar > newLow {
+                        sar = newLow;
+                    }
+                }
+            // Switch to long if the high penetrates the SAR value.
+            } else if newHigh >= sar {
+                // Switch and Overide the SAR with the ep
+                isLong = 1;
+                sar = ep;
+                // Make sure the overide SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+                // Output the overide SAR
+                if optInOffsetOnReverse != 0.0 {
+                    sar -= sar * optInOffsetOnReverse;
+                }
+                lastValue_outReal = sar;
+                // Adjust afLong and ep
+                afLong = optInAccelerationInitLong;
+                ep = newHigh;
+                // Calculate the new SAR
+                sar = (afLong as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+            } else {
+                // No switch
+                // Output the SAR (was calculated in the previous iteration)
+                lastValue_outReal = 0_f64 - sar;
+                // Adjust afShort and ep.
+                if newLow < ep {
+                    ep = newLow;
+                    afShort += optInAccelerationShort;
+                    if afShort > optInAccelerationMaxShort {
+                        afShort = optInAccelerationMaxShort;
+                    }
+                }
+                // Calculate the new SAR
+                sar = (afShort as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar < prevHigh {
+                    sar = prevHigh;
+                }
+                if sar < newHigh {
+                    sar = newHigh;
+                }
+            }
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = SarextStreamState {
+            optInStartValue,
+            optInOffsetOnReverse,
+            optInAccelerationInitLong,
+            optInAccelerationLong,
+            optInAccelerationMaxLong,
+            optInAccelerationInitShort,
+            optInAccelerationShort,
+            optInAccelerationMaxShort,
+            isLong,
+            newHigh,
+            newLow,
+            afLong,
+            afShort,
+            ep,
+            sar,
+        };
+        Ok((SarextStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live SAREXT stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::sarext`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.sarext_open(&high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1);
+    /// let updated = s.update(101.4, 99.1);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_SAREXT_Open")]
+    pub fn sarext_open(&self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<(SarextStream, f64), RetCode> {
+        self.sarext_open_internal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
+    }
+
+    /// [`Core::sarext_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::sarext`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_SAREXT_OpenAndFill")]
+    pub fn sarext_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<SarextStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut retCode: RetCode = RetCode::Success;
+        let mut isLong: usize = 0_usize;
+        let mut todayIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut tempInt: usize = 0_usize;
+        let mut newHigh: f64 = 0.0_f64;
+        let mut newLow: f64 = 0.0_f64;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut afLong: f64 = 0.0_f64;
+        let mut afShort: f64 = 0.0_f64;
+        let mut ep: f64 = 0.0_f64;
+        let mut sar: f64 = 0.0_f64;
+        let mut ep_temp: [f64; 1 as usize] = [0.0_f64; 1 as usize];
+        // > 0 indicates long. == 0 indicates short
+        // This function is the same as TA_SAR, except that the caller has
+        // greater control on the SAR dynamic and initial state.
+        //
+        // In additon, the TA_SAREXT returns negative values when the position
+        // is short. This allow to distinguish when the SAR do actually reverse.
+        // Implementation of the SAR has been a little bit open to interpretation
+        // since Wilder (the original author) did not define a precise algorithm
+        // on how to bootstrap the algorithm. Take any existing software application
+        // and you will see slight variation on how the algorithm was adapted.
+        //
+        // What is the initial trade direction? Long or short?
+        // ===================================================
+        // The interpretation of what should be the initial SAR values is
+        // open to interpretation, particularly since the caller to the function
+        // does not specify the initial direction of the trade.
+        //
+        // In TA-Lib, the following default logic is used:
+        //  - Calculate +DM and -DM between the first and
+        //    second bar. The highest directional indication will
+        //    indicate the assumed direction of the trade for the second
+        //    price bar.
+        //  - In the case of a tie between +DM and -DM,
+        //    the direction is LONG by default.
+        //
+        // What is the initial "extreme point" and thus SAR?
+        // =================================================
+        // The following shows how different people took different approach:
+        //  - Metastock use the first price bar high/low depending of
+        //    the direction. No SAR is calculated for the first price
+        //    bar.
+        //  - Tradestation use the closing price of the second bar. No
+        //    SAR are calculated for the first price bar.
+        //  - Wilder (the original author) use the SIP from the
+        //    previous trade (cannot be implement here since the
+        //    direction and length of the previous trade is unknonw).
+        //  - The Magazine TASC seems to follow Wilder approach which
+        //    is not practical here.
+        //
+        // TA-Lib "consume" the first price bar and use its high/low as the
+        // initial SAR of the second price bar. I found that approach to be
+        // the closest to Wilders idea of having the first entry day use
+        // the previous extreme point, except that here the extreme point is
+        // derived solely from the first price bar. I found the same approach
+        // to be used by Metastock.
+        //
+        //
+        // Can I force the initial SAR?
+        // ============================
+        // Yes. Using the optInStartValue_0 parameter:
+        //  optInStartValue_0 >  0 : SAR is long at optInStartValue_0.
+        //  optInStartValue_0 <  0 : SAR is short at fabs(optInStartValue_0).
+        //
+        // And when optInStartValue_0 == 0, the logic is the same as for TA_SAR
+        // (See previous two sections).
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        //
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < 1 {
+            startIdx = 1;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Check if the acceleration factors are being defined by the user.
+        // Make sure the acceleration and maximum are coherent.
+        // If not, correct the acceleration.
+        // Default afLong = 0.02
+        // Default afShort = 0.02
+        afLong = optInAccelerationInitLong;
+        afShort = optInAccelerationInitShort;
+        if afLong > optInAccelerationMaxLong {
+            optInAccelerationInitLong = optInAccelerationMaxLong;
+            afLong = optInAccelerationInitLong;
+        }
+        if optInAccelerationLong > optInAccelerationMaxLong {
+            optInAccelerationLong = optInAccelerationMaxLong;
+        }
+        if afShort > optInAccelerationMaxShort {
+            optInAccelerationInitShort = optInAccelerationMaxShort;
+            afShort = optInAccelerationInitShort;
+        }
+        if optInAccelerationShort > optInAccelerationMaxShort {
+            optInAccelerationShort = optInAccelerationMaxShort;
+        }
+        // Initialise SAR calculations
+        if optInStartValue == 0_f64 {
+            // Default action
+            // Identify if the initial direction is long or short.
+            // (ep is just used as a temp buffer here, the name
+            //  of the parameter is not significant).
+            let mut _dup_out: usize = 0_usize;
+            retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            if ep_temp[0] > 0_f64 {
+                isLong = 0;
+            } else {
+                isLong = 1;
+            }
+            if retCode != RetCode::Success {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(retCode);
+            }
+        } else if optInStartValue > 0_f64 {
+            // Start Long
+            isLong = 1;
+        } else {
+            // optInStartValue_0 < 0 => Start Short
+            isLong = 0;
+        }
+        (*outBegIdx) = startIdx;
+        outIdx = 0;
+        // Write the first SAR.
+        todayIdx = startIdx;
+        newHigh = inHigh[todayIdx - 1];
+        newLow = inLow[todayIdx - 1];
+        if optInStartValue == 0_f64 {
+            // Default action
+            if isLong == 1 {
+                ep = inHigh[todayIdx];
+                sar = newLow;
+            } else {
+                ep = inLow[todayIdx];
+                sar = newHigh;
+            }
+        } else if optInStartValue > 0_f64 {
+            // Start Long at specified value.
+            ep = inHigh[todayIdx];
+            sar = optInStartValue;
+        } else {
+            // if optInStartValue < 0 => Start Short at specified value.
+            ep = inLow[todayIdx];
+            sar = (optInStartValue).abs();
+        }
+        // Cheat on the newLow and newHigh for the
+        // first iteration.
+        newLow = inLow[todayIdx];
+        newHigh = inHigh[todayIdx];
+        while todayIdx <= endIdx {
+            prevLow = newLow;
+            prevHigh = newHigh;
+            newLow = inLow[todayIdx];
+            newHigh = inHigh[todayIdx];
+            todayIdx += 1;
+            if isLong == 1 {
+                // Switch to short if the low penetrates the SAR value.
+                if newLow <= sar {
+                    // Switch and Overide the SAR with the ep
+                    isLong = 0;
+                    sar = ep;
+                    // Make sure the overide SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                    // Output the overide SAR
+                    if optInOffsetOnReverse != 0.0 {
+                        sar += sar * optInOffsetOnReverse;
+                    }
+                    outReal[outIdx] = 0_f64 - sar;
+                    outIdx += 1;
+                    // Adjust afShort and ep
+                    afShort = optInAccelerationInitShort;
+                    ep = newLow;
+                    // Calculate the new SAR
+                    sar = (afShort as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                } else {
+                    // No switch
+                    // Output the SAR (was calculated in the previous iteration)
+                    outReal[outIdx] = sar;
+                    outIdx += 1;
+                    // Adjust afLong and ep.
+                    if newHigh > ep {
+                        ep = newHigh;
+                        afLong += optInAccelerationLong;
+                        if afLong > optInAccelerationMaxLong {
+                            afLong = optInAccelerationMaxLong;
+                        }
+                    }
+                    // Calculate the new SAR
+                    sar = (afLong as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar > prevLow {
+                        sar = prevLow;
+                    }
+                    if sar > newLow {
+                        sar = newLow;
+                    }
+                }
+            // Switch to long if the high penetrates the SAR value.
+            } else if newHigh >= sar {
+                // Switch and Overide the SAR with the ep
+                isLong = 1;
+                sar = ep;
+                // Make sure the overide SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+                // Output the overide SAR
+                if optInOffsetOnReverse != 0.0 {
+                    sar -= sar * optInOffsetOnReverse;
+                }
+                outReal[outIdx] = sar;
+                outIdx += 1;
+                // Adjust afLong and ep
+                afLong = optInAccelerationInitLong;
+                ep = newHigh;
+                // Calculate the new SAR
+                sar = (afLong as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+            } else {
+                // No switch
+                // Output the SAR (was calculated in the previous iteration)
+                outReal[outIdx] = 0_f64 - sar;
+                outIdx += 1;
+                // Adjust afShort and ep.
+                if newLow < ep {
+                    ep = newLow;
+                    afShort += optInAccelerationShort;
+                    if afShort > optInAccelerationMaxShort {
+                        afShort = optInAccelerationMaxShort;
+                    }
+                }
+                // Calculate the new SAR
+                sar = (afShort as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar < prevHigh {
+                    sar = prevHigh;
+                }
+                if sar < newHigh {
+                    sar = newHigh;
+                }
+            }
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = SarextStreamState {
+            optInStartValue,
+            optInOffsetOnReverse,
+            optInAccelerationInitLong,
+            optInAccelerationLong,
+            optInAccelerationMaxLong,
+            optInAccelerationInitShort,
+            optInAccelerationShort,
+            optInAccelerationMaxShort,
+            isLong,
+            newHigh,
+            newLow,
+            afLong,
+            afShort,
+            ep,
+            sar,
+        };
+        Ok(SarextStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl SarextStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_SAREXT_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.sarext_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_SAREXT_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<SarextStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

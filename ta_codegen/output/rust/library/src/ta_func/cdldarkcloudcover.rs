@@ -403,6 +403,547 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLDARKCLOUDCOVER stream: one value per closed bar, bit-identical to [`Core::cdldarkcloudcover`]
+/// over the same series. Open with [`Core::cdldarkcloudcover_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLDARKCLOUDCOVER_Stream")]
+pub struct CdldarkcloudcoverStream {
+    core: Core,
+    state: CdldarkcloudcoverStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CdldarkcloudcoverStreamState {
+    optInPenetration: f64,
+    BodyLongPeriodTotal: f64,
+    lag1_inOpen: f64,
+    lag1_inHigh: f64,
+    lag1_inLow: f64,
+    lag1_inClose: f64,
+    ringPos_BodyLongTrailingIdx: usize,
+    ringCap_BodyLongTrailingIdx: usize,
+    ringLag_BodyLongTrailingIdx: usize,
+    ring_BodyLongTrailingIdx_inOpen: Vec<f64>,
+    ring_BodyLongTrailingIdx_inHigh: Vec<f64>,
+    ring_BodyLongTrailingIdx_inLow: Vec<f64>,
+    ring_BodyLongTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdldarkcloudcover_step_internal(&self, sp: &mut CdldarkcloudcoverStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
+        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
+        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
+        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
+        if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
+           (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), _ => (sp.lag1_inHigh) - (sp.lag1_inLow) - ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
+           ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 &&    // 2nd: black
+           inOpen > sp.lag1_inHigh &&                                          // open above prior high
+           inClose > sp.lag1_inOpen &&                                         // close within prior body
+           inClose < sp.lag1_inClose - (sp.lag1_inClose - sp.lag1_inOpen).abs() * sp.optInPenetration
+        {
+            (*outInteger) = (0 - 100) as i32;
+        } else {
+            (*outInteger) = 0;
+        }
+        // add the current range and subtract the first range: this is done after the pattern recognition
+        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        let mut _candlerange_0: f64;
+        match BodyLong_rangeType {
+            0 => {
+                _candlerange_0 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow;
+            }
+            2 => {
+                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow - (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        let mut _candlerange_1: f64;
+        match BodyLong_rangeType {
+            0 => {
+                _candlerange_1 = (sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize]).abs();
+            }
+            1 => {
+                _candlerange_1 = sp.ring_BodyLongTrailingIdx_inHigh[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inLow[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize];
+            }
+            2 => {
+                _candlerange_1 = sp.ring_BodyLongTrailingIdx_inHigh[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inLow[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - (sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize]).abs();
+            }
+            _ => {
+                _candlerange_1 = 0.0;
+            }
+        }
+        sp.BodyLongPeriodTotal += _candlerange_0 - _candlerange_1;
+        sp.lag1_inOpen = inOpen;
+        sp.lag1_inHigh = inHigh;
+        sp.lag1_inLow = inLow;
+        sp.lag1_inClose = inClose;
+        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
+        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
+        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
+        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
+        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
+        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            sp.ringPos_BodyLongTrailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdldarkcloudcover_open`] (composition seam).
+    pub(crate) fn cdldarkcloudcover_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
+    ) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut BodyLongTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdldarkcloudcover_lookback(optInPenetration);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        BodyLongPeriodTotal = 0.0;
+        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        i = BodyLongTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_2: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_2 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_2;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: long white candle
+        // - second candle: black candle that opens above previous day high and closes within previous day real body;
+        // Greg Morris wants the close to be below the midpoint of the previous real body
+        // The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
+        // with optInPenetration
+        // outInteger is negative (-1 to -100): dark cloud cover is always bearish
+        // the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
+        // this function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+               (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
+               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+               inOpen[i] > inHigh[i - 1] &&                                           // open above prior high
+               inClose[i] > inOpen[i - 1] &&                                          // close within prior body
+               inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
+            {
+                lastValue_outInteger = (0 - 100) as i32;
+            } else {
+                lastValue_outInteger = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_3: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_3 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_3 = 0.0;
+                }
+            }
+            let mut _candlerange_4: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_4 = (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
+                }
+                1 => {
+                    _candlerange_4 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1];
+                }
+                2 => {
+                    _candlerange_4 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1] - (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
+                }
+                _ => {
+                    _candlerange_4 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_3 - _candlerange_4;
+            i += 1;
+            BodyLongTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capLag_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
+        let cap_BodyLongTrailingIdx: i64 = capLag_BodyLongTrailingIdx + 2;
+        if capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
+        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx as usize] = inOpen[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx as usize] = inHigh[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx as usize] = inLow[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = CdldarkcloudcoverStreamState {
+            optInPenetration,
+            BodyLongPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag1_inLow: inLow[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+            ringPos_BodyLongTrailingIdx: historyLen % cap_BodyLongTrailingIdx as usize,
+            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
+            ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
+            ring_BodyLongTrailingIdx_inOpen,
+            ring_BodyLongTrailingIdx_inHigh,
+            ring_BodyLongTrailingIdx_inLow,
+            ring_BodyLongTrailingIdx_inClose,
+        };
+        Ok((CdldarkcloudcoverStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLDARKCLOUDCOVER stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdldarkcloudcover`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdldarkcloudcover_open(&open, &high, &low, &close, 0.5).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER_Open")]
+    pub fn cdldarkcloudcover_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
+        self.cdldarkcloudcover_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    }
+
+    /// [`Core::cdldarkcloudcover_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdldarkcloudcover`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER_OpenAndFill")]
+    pub fn cdldarkcloudcover_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdldarkcloudcoverStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut BodyLongTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdldarkcloudcover_lookback(optInPenetration);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        BodyLongPeriodTotal = 0.0;
+        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        i = BodyLongTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_5: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_5 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_5 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_5;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: long white candle
+        // - second candle: black candle that opens above previous day high and closes within previous day real body;
+        // Greg Morris wants the close to be below the midpoint of the previous real body
+        // The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
+        // with optInPenetration
+        // outInteger is negative (-1 to -100): dark cloud cover is always bearish
+        // the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
+        // this function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+               (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
+               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+               inOpen[i] > inHigh[i - 1] &&                                           // open above prior high
+               inClose[i] > inOpen[i - 1] &&                                          // close within prior body
+               inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
+            {
+                outInteger[outIdx] = (0 - 100) as i32;
+                outIdx += 1;
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_6: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_6 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_6 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_6 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_6 = 0.0;
+                }
+            }
+            let mut _candlerange_7: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_7 = (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
+                }
+                1 => {
+                    _candlerange_7 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1];
+                }
+                2 => {
+                    _candlerange_7 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1] - (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
+                }
+                _ => {
+                    _candlerange_7 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_6 - _candlerange_7;
+            i += 1;
+            BodyLongTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capLag_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
+        let cap_BodyLongTrailingIdx: i64 = capLag_BodyLongTrailingIdx + 2;
+        if capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
+        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx as usize] = inOpen[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx as usize] = inHigh[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx as usize] = inLow[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = CdldarkcloudcoverStreamState {
+            optInPenetration,
+            BodyLongPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag1_inLow: inLow[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+            ringPos_BodyLongTrailingIdx: historyLen % cap_BodyLongTrailingIdx as usize,
+            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
+            ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
+            ring_BodyLongTrailingIdx_inOpen,
+            ring_BodyLongTrailingIdx_inHigh,
+            ring_BodyLongTrailingIdx_inLow,
+            ring_BodyLongTrailingIdx_inClose,
+        };
+        Ok(CdldarkcloudcoverStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CdldarkcloudcoverStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdldarkcloudcover_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CdldarkcloudcoverStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

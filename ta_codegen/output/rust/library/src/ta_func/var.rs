@@ -395,6 +395,510 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live VAR stream: one value per closed bar, bit-identical to [`Core::var`]
+/// over the same series. Open with [`Core::var_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_VAR_Stream")]
+pub struct VarStream {
+    core: Core,
+    state: VarStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct VarStreamState {
+    optInTimePeriod: i32,
+    optInNbDev: f64,
+    shift: f64,
+    periodTotal1: f64,
+    periodTotal2: f64,
+    meanValue1: f64,
+    variance: f64,
+    invPeriod: f64,
+    j: i32,
+    trailingIdx: i32,
+    windowStart: i32,
+    nbInitialElementNeeded: usize,
+    barsSinceReseed: usize,
+    i: i32,
+    xCap: i32,
+    x_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn var_step_internal(&self, sp: &mut VarStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        if sp.i >= 1073741824 {
+            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            sp.i -= rebaseShift;
+            sp.trailingIdx -= rebaseShift;
+            sp.j -= rebaseShift;
+            sp.windowStart -= rebaseShift;
+        }
+        sp.x_inReal[(sp.i % sp.xCap) as usize] = inReal;
+        // Add the incoming value, measured against the shift.
+        tempReal = sp.x_inReal[(sp.i % sp.xCap) as usize] - sp.shift;
+        sp.periodTotal1 += tempReal;
+        tempReal *= tempReal;
+        sp.periodTotal2 += tempReal;
+        sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
+        sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+        // Remove the trailing value (prepares the next window).
+        tempReal = sp.x_inReal[(sp.trailingIdx % sp.xCap) as usize] - sp.shift;
+        sp.periodTotal1 -= tempReal;
+        tempReal *= tempReal;
+        sp.periodTotal2 -= tempReal;
+        sp.trailingIdx += 1;
+        // Re-anchor the shift and rebuild the running sums with a fresh two-pass
+        // when the shift is stale enough that the subtraction loses digits - i.e.
+        // the variance has shrunk below 1e-6 of the mean squared deviation it is
+        // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+        // 2e-10, so partial cancellation, not just total collapse, is caught); OR
+        // when the value just removed sat so far from the shift that its squared term
+        // (tempReal) dwarfs the surviving sum (a large outlier passing through the
+        // window buries the small terms below its ulp, and the residual left when it
+        // leaves is cancellation garbage); OR at least every 32 windows so a slow
+        // drift stays bounded regardless of the series length. The strict `<` also
+        // leaves an exactly-constant window (variance 0, scale 0) alone instead of
+        // reseeding it every bar. Guarantees a non-negative output.
+        sp.barsSinceReseed -= 1;
+        if sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 {
+            sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+            sp.windowStart = sp.i - (sp.nbInitialElementNeeded) as i32;
+            tempReal = 0.0;
+            // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
+            sp.j = sp.windowStart;
+            while sp.j <= sp.i {
+                tempReal += sp.x_inReal[(sp.j % sp.xCap) as usize];
+                sp.j += 1;
+            }
+            sp.shift = tempReal * sp.invPeriod;
+            sp.periodTotal1 = 0.0;
+            sp.periodTotal2 = 0.0;
+            // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
+            sp.j = sp.windowStart;
+            while sp.j <= sp.i {
+                tempReal = sp.x_inReal[(sp.j % sp.xCap) as usize] - sp.shift;
+                sp.periodTotal1 += tempReal;
+                tempReal *= tempReal;
+                sp.periodTotal2 += tempReal;
+                sp.j += 1;
+            }
+            sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
+            sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+            // Re-remove the trailing value under the new shift so the carried state
+            // matches the non-reseed path.
+            tempReal = sp.x_inReal[(sp.windowStart % sp.xCap) as usize] - sp.shift;
+            sp.periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            sp.periodTotal2 -= tempReal;
+        }
+        (*outReal) = sp.variance;
+        sp.i += 1;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::var_open`] (composition seam).
+    pub(crate) fn var_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
+    ) -> Result<(VarStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 5;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut shift: f64 = 0.0_f64;
+        let mut periodTotal1: f64 = 0.0_f64;
+        let mut periodTotal2: f64 = 0.0_f64;
+        let mut meanValue1: f64 = 0.0_f64;
+        let mut variance: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut windowStart: usize = 0_usize;
+        let mut nbInitialElementNeeded: usize = 0_usize;
+        let mut barsSinceReseed: usize = 0_usize;
+        // Identify the minimum number of price bar needed to calculate
+        // at least one output.
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not enough initial data.
+        if startIdx < nbInitialElementNeeded {
+            startIdx = nbInitialElementNeeded;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        invPeriod = 1.0 / (optInTimePeriod as f64);
+        // Measure deviations against a shift near the window: the running sums
+        // periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+        // stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+        // subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+        // (also gives an exact 0 for period 1, with no division by period-1).
+        trailingIdx = startIdx - nbInitialElementNeeded;
+        shift = inReal[trailingIdx];
+        periodTotal1 = 0.0;
+        periodTotal2 = 0.0;
+        // for( j = trailingIdx; j < startIdx; j += 1 )
+        j = trailingIdx;
+        while j < startIdx {
+            tempReal = inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+            j += 1;
+        }
+        // inReal and outReal may be the same buffer: each trailing value is consumed
+        // before its slot is overwritten by the output.
+        i = startIdx;
+        outIdx = 0;
+        barsSinceReseed = (32 * optInTimePeriod) as usize;
+        loop {
+            // Add the incoming value, measured against the shift.
+            tempReal = inReal[i] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            // Remove the trailing value (prepares the next window).
+            tempReal = inReal[trailingIdx] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+            trailingIdx += 1;
+            // Re-anchor the shift and rebuild the running sums with a fresh two-pass
+            // when the shift is stale enough that the subtraction loses digits - i.e.
+            // the variance has shrunk below 1e-6 of the mean squared deviation it is
+            // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+            // 2e-10, so partial cancellation, not just total collapse, is caught); OR
+            // when the value just removed sat so far from the shift that its squared term
+            // (tempReal) dwarfs the surviving sum (a large outlier passing through the
+            // window buries the small terms below its ulp, and the residual left when it
+            // leaves is cancellation garbage); OR at least every 32 windows so a slow
+            // drift stays bounded regardless of the series length. The strict `<` also
+            // leaves an exactly-constant window (variance 0, scale 0) alone instead of
+            // reseeding it every bar. Guarantees a non-negative output.
+            barsSinceReseed -= 1;
+            if variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
+                barsSinceReseed = (32 * optInTimePeriod) as usize;
+                windowStart = i - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for j in (windowStart as usize)..(i as usize) + 1 {
+                    tempReal += inReal[j];
+                }
+                j = (i as usize) + 1;
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for j in (windowStart as usize)..(i as usize) + 1 {
+                    tempReal = inReal[j] - shift;
+                    periodTotal1 += tempReal;
+                    tempReal *= tempReal;
+                    periodTotal2 += tempReal;
+                }
+                j = (i as usize) + 1;
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                // Re-remove the trailing value under the new shift so the carried state
+                // matches the non-reseed path.
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+            }
+            lastValue_outReal = variance;
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = VarStreamState {
+            optInTimePeriod,
+            optInNbDev,
+            shift,
+            periodTotal1,
+            periodTotal2,
+            meanValue1,
+            variance,
+            invPeriod,
+            j: (j) as i32,
+            trailingIdx: (trailingIdx) as i32,
+            windowStart: (windowStart) as i32,
+            nbInitialElementNeeded,
+            barsSinceReseed,
+            i: (i) as i32,
+            xCap: capX as i32,
+            x_inReal,
+        };
+        Ok((VarStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live VAR stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::var`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.var_open(&data, 5, 1.0).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_VAR_Open")]
+    pub fn var_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VarStream, f64), RetCode> {
+        self.var_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
+    }
+
+    /// [`Core::var_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::var`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_VAR_OpenAndFill")]
+    pub fn var_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<VarStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 5;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut shift: f64 = 0.0_f64;
+        let mut periodTotal1: f64 = 0.0_f64;
+        let mut periodTotal2: f64 = 0.0_f64;
+        let mut meanValue1: f64 = 0.0_f64;
+        let mut variance: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut windowStart: usize = 0_usize;
+        let mut nbInitialElementNeeded: usize = 0_usize;
+        let mut barsSinceReseed: usize = 0_usize;
+        // Identify the minimum number of price bar needed to calculate
+        // at least one output.
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not enough initial data.
+        if startIdx < nbInitialElementNeeded {
+            startIdx = nbInitialElementNeeded;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        invPeriod = 1.0 / (optInTimePeriod as f64);
+        // Measure deviations against a shift near the window: the running sums
+        // periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+        // stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+        // subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+        // (also gives an exact 0 for period 1, with no division by period-1).
+        trailingIdx = startIdx - nbInitialElementNeeded;
+        shift = inReal[trailingIdx];
+        periodTotal1 = 0.0;
+        periodTotal2 = 0.0;
+        // for( j = trailingIdx; j < startIdx; j += 1 )
+        j = trailingIdx;
+        while j < startIdx {
+            tempReal = inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+            j += 1;
+        }
+        // inReal and outReal may be the same buffer: each trailing value is consumed
+        // before its slot is overwritten by the output.
+        i = startIdx;
+        outIdx = 0;
+        barsSinceReseed = (32 * optInTimePeriod) as usize;
+        loop {
+            // Add the incoming value, measured against the shift.
+            tempReal = inReal[i] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            // Remove the trailing value (prepares the next window).
+            tempReal = inReal[trailingIdx] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+            trailingIdx += 1;
+            // Re-anchor the shift and rebuild the running sums with a fresh two-pass
+            // when the shift is stale enough that the subtraction loses digits - i.e.
+            // the variance has shrunk below 1e-6 of the mean squared deviation it is
+            // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+            // 2e-10, so partial cancellation, not just total collapse, is caught); OR
+            // when the value just removed sat so far from the shift that its squared term
+            // (tempReal) dwarfs the surviving sum (a large outlier passing through the
+            // window buries the small terms below its ulp, and the residual left when it
+            // leaves is cancellation garbage); OR at least every 32 windows so a slow
+            // drift stays bounded regardless of the series length. The strict `<` also
+            // leaves an exactly-constant window (variance 0, scale 0) alone instead of
+            // reseeding it every bar. Guarantees a non-negative output.
+            barsSinceReseed -= 1;
+            if variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
+                barsSinceReseed = (32 * optInTimePeriod) as usize;
+                windowStart = i - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for j in (windowStart as usize)..(i as usize) + 1 {
+                    tempReal += inReal[j];
+                }
+                j = (i as usize) + 1;
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for j in (windowStart as usize)..(i as usize) + 1 {
+                    tempReal = inReal[j] - shift;
+                    periodTotal1 += tempReal;
+                    tempReal *= tempReal;
+                    periodTotal2 += tempReal;
+                }
+                j = (i as usize) + 1;
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                // Re-remove the trailing value under the new shift so the carried state
+                // matches the non-reseed path.
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+            }
+            outReal[outIdx] = variance;
+            outIdx += 1;
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = VarStreamState {
+            optInTimePeriod,
+            optInNbDev,
+            shift,
+            periodTotal1,
+            periodTotal2,
+            meanValue1,
+            variance,
+            invPeriod,
+            j: (j) as i32,
+            trailingIdx: (trailingIdx) as i32,
+            windowStart: (windowStart) as i32,
+            nbInitialElementNeeded,
+            barsSinceReseed,
+            i: (i) as i32,
+            xCap: capX as i32,
+            x_inReal,
+        };
+        Ok(VarStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl VarStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_VAR_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.var_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_VAR_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<VarStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -540,6 +540,583 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live RSI stream: one value per closed bar, bit-identical to [`Core::rsi`]
+/// over the same series. Open with [`Core::rsi_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_RSI_Stream")]
+pub struct RsiStream {
+    core: Core,
+    state: RsiStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct RsiStreamState {
+    optInTimePeriod: i32,
+    prevGain: f64,
+    prevLoss: f64,
+    prevValue: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn rsi_step_internal(&self, sp: &mut RsiStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
+        tempValue1 = inReal as f64;
+        tempValue2 = tempValue1 - sp.prevValue;
+        sp.prevValue = tempValue1;
+        sp.prevLoss *= (sp.optInTimePeriod - 1) as f64;
+        sp.prevGain *= (sp.optInTimePeriod - 1) as f64;
+        if tempValue2 < 0.0 {
+            sp.prevLoss -= tempValue2;
+        } else {
+            sp.prevGain += tempValue2;
+        }
+        sp.prevLoss /= sp.optInTimePeriod as f64;
+        sp.prevGain /= sp.optInTimePeriod as f64;
+        tempValue1 = sp.prevGain + sp.prevLoss;
+        if !((tempValue1).abs() < 1e-14) {
+            (*outReal) = 100.0 * (sp.prevGain / tempValue1);
+        } else {
+            (*outReal) = 0.0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::rsi_open`] (composition seam).
+    pub(crate) fn rsi_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(RsiStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.rsi_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = RsiStreamState {
+                optInTimePeriod: optInTimePeriod,
+                prevGain: 0.0_f64,
+                prevLoss: 0.0_f64,
+                prevValue: 0.0_f64,
+            };
+            return Ok((RsiStream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut unstablePeriod: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut prevGain: f64 = 0.0_f64;
+        let mut prevLoss: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
+        let mut savePrevValue: f64 = 0.0_f64;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        // The following algorithm is base on the original
+        // work from Wilder's and shall represent the
+        // original idea behind the classic RSI.
+        //
+        // Metastock is starting the calculation one price
+        // bar earlier. To make this possible, they assume
+        // that the very first bar will be identical to the
+        // previous one (no gain or loss).
+        // If changing this function, please check also CMO
+        // which is mostly identical (just different in one step
+        // of calculation).
+        dummyBegIdx = 0;
+        dummyNBElement = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = (self.rsi_lookback(optInTimePeriod) as usize) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        // Trap special case where the period is '1'.
+        // In that case, just copy the input into the
+        // output for the requested range (as-is !)
+        // Accumulate Wilder's "Average Gain" and "Average Loss"
+        // among the initial period.
+        today = startIdx - lookbackTotal;
+        prevValue = inReal[today] as f64;
+        unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        // If there is no unstable period,
+        // calculate the 'additional' initial
+        // price bar who is particuliar to
+        // metastock.
+        // If there is an unstable period,
+        // no need to calculate since this
+        // first value will be surely skip.
+        if unstablePeriod == 0 && self.compatibility == Compatibility::Metastock {
+            // Preserve prevValue because it may get
+            // overwritten by the output.
+            // (because output ptr could be the same as input ptr).
+            savePrevValue = prevValue;
+            // No unstable period, so must calculate first output
+            // particular to Metastock.
+            // (Metastock re-use the first price bar, so there
+            //  is no loss/gain at first. Beats me why they
+            //  are doing all this).
+            prevGain = 0.0;
+            prevLoss = 0.0;
+            // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+            i = (optInTimePeriod) as usize;
+            while i > 0 {
+                tempValue1 = inReal[today] as f64;
+                today = today + 1;
+                tempValue2 = tempValue1 - prevValue;
+                prevValue = tempValue1;
+                if tempValue2 < 0.0 {
+                    prevLoss -= tempValue2;
+                } else {
+                    prevGain += tempValue2;
+                }
+                i -= 1;
+            }
+            tempValue1 = prevLoss / (optInTimePeriod as f64);
+            tempValue2 = prevGain / (optInTimePeriod as f64);
+            // Write the output.
+            tempValue1 = tempValue2 + tempValue1;
+            if !((tempValue1).abs() < 1e-14) {
+                lastValue_outReal = 100.0 * (tempValue2 / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                lastValue_outReal = 0.0;
+                outIdx = outIdx + 1;
+            }
+            // Are we done?
+            if today > endIdx {
+                dummyBegIdx = startIdx;
+                dummyNBElement = outIdx;
+                return Err(RetCode::BadParam);
+            }
+            // Start over for the next price bar.
+            today = today - (optInTimePeriod as usize);
+            prevValue = savePrevValue;
+        }
+        // Remaining of the processing is identical
+        // for both Classic calculation and Metastock.
+        prevGain = 0.0;
+        prevLoss = 0.0;
+        today = today + 1;
+        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+        i = (optInTimePeriod) as usize;
+        while i > 0 {
+            tempValue1 = inReal[today] as f64;
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            if tempValue2 < 0.0 {
+                prevLoss -= tempValue2;
+            } else {
+                prevGain += tempValue2;
+            }
+            i -= 1;
+        }
+        // Subsequent prevLoss and prevGain are smoothed
+        // using the previous values (Wilder's approach).
+        //  1) Multiply the previous by 'period-1'.
+        //  2) Add today value.
+        //  3) Divide by 'period'.
+        prevLoss /= optInTimePeriod as f64;
+        prevGain /= optInTimePeriod as f64;
+        // Often documentation present the RSI calculation as follow:
+        //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
+        //
+        // The following is equivalent:
+        //    RSI = 100 * (prevGain/(prevGain+prevLoss))
+        //
+        // The second equation is used here for speed optimization.
+        if today > startIdx {
+            tempValue1 = prevGain + prevLoss;
+            if !((tempValue1).abs() < 1e-14) {
+                lastValue_outReal = 100.0 * (prevGain / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                lastValue_outReal = 0.0;
+                outIdx = outIdx + 1;
+            }
+        } else {
+            // Skip the unstable period. Do the processing
+            // but do not write it in the output.
+            while today < startIdx {
+                tempValue1 = inReal[today] as f64;
+                tempValue2 = tempValue1 - prevValue;
+                prevValue = tempValue1;
+                prevLoss *= (optInTimePeriod - 1) as f64;
+                prevGain *= (optInTimePeriod - 1) as f64;
+                if tempValue2 < 0.0 {
+                    prevLoss -= tempValue2;
+                } else {
+                    prevGain += tempValue2;
+                }
+                prevLoss /= optInTimePeriod as f64;
+                prevGain /= optInTimePeriod as f64;
+                today = today + 1;
+            }
+        }
+        // Unstable period skipped... now continue
+        // processing if needed.
+        while today <= endIdx {
+            tempValue1 = inReal[today] as f64;
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (optInTimePeriod - 1) as f64;
+            prevGain *= (optInTimePeriod - 1) as f64;
+            if tempValue2 < 0.0 {
+                prevLoss -= tempValue2;
+            } else {
+                prevGain += tempValue2;
+            }
+            prevLoss /= optInTimePeriod as f64;
+            prevGain /= optInTimePeriod as f64;
+            tempValue1 = prevGain + prevLoss;
+            if !((tempValue1).abs() < 1e-14) {
+                lastValue_outReal = 100.0 * (prevGain / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                lastValue_outReal = 0.0;
+                outIdx = outIdx + 1;
+            }
+        }
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = RsiStreamState {
+            optInTimePeriod,
+            prevGain,
+            prevLoss,
+            prevValue,
+        };
+        Ok((RsiStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live RSI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::rsi`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.rsi_open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_RSI_Open")]
+    pub fn rsi_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(RsiStream, f64), RetCode> {
+        self.rsi_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::rsi_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::rsi`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_RSI_OpenAndFill")]
+    pub fn rsi_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<RsiStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.rsi_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = RsiStreamState {
+                optInTimePeriod: optInTimePeriod,
+                prevGain: 0.0_f64,
+                prevLoss: 0.0_f64,
+                prevValue: 0.0_f64,
+            };
+            let fillLb: usize = self.rsi_lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(RsiStream { core: self.clone(), state });
+        }
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut unstablePeriod: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut prevGain: f64 = 0.0_f64;
+        let mut prevLoss: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
+        let mut savePrevValue: f64 = 0.0_f64;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        // The following algorithm is base on the original
+        // work from Wilder's and shall represent the
+        // original idea behind the classic RSI.
+        //
+        // Metastock is starting the calculation one price
+        // bar earlier. To make this possible, they assume
+        // that the very first bar will be identical to the
+        // previous one (no gain or loss).
+        // If changing this function, please check also CMO
+        // which is mostly identical (just different in one step
+        // of calculation).
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = (self.rsi_lookback(optInTimePeriod) as usize) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        // Trap special case where the period is '1'.
+        // In that case, just copy the input into the
+        // output for the requested range (as-is !)
+        // Accumulate Wilder's "Average Gain" and "Average Loss"
+        // among the initial period.
+        today = startIdx - lookbackTotal;
+        prevValue = inReal[today] as f64;
+        unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        // If there is no unstable period,
+        // calculate the 'additional' initial
+        // price bar who is particuliar to
+        // metastock.
+        // If there is an unstable period,
+        // no need to calculate since this
+        // first value will be surely skip.
+        if unstablePeriod == 0 && self.compatibility == Compatibility::Metastock {
+            // Preserve prevValue because it may get
+            // overwritten by the output.
+            // (because output ptr could be the same as input ptr).
+            savePrevValue = prevValue;
+            // No unstable period, so must calculate first output
+            // particular to Metastock.
+            // (Metastock re-use the first price bar, so there
+            //  is no loss/gain at first. Beats me why they
+            //  are doing all this).
+            prevGain = 0.0;
+            prevLoss = 0.0;
+            // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+            i = (optInTimePeriod) as usize;
+            while i > 0 {
+                tempValue1 = inReal[today] as f64;
+                today = today + 1;
+                tempValue2 = tempValue1 - prevValue;
+                prevValue = tempValue1;
+                if tempValue2 < 0.0 {
+                    prevLoss -= tempValue2;
+                } else {
+                    prevGain += tempValue2;
+                }
+                i -= 1;
+            }
+            tempValue1 = prevLoss / (optInTimePeriod as f64);
+            tempValue2 = prevGain / (optInTimePeriod as f64);
+            // Write the output.
+            tempValue1 = tempValue2 + tempValue1;
+            if !((tempValue1).abs() < 1e-14) {
+                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx = outIdx + 1;
+            }
+            // Are we done?
+            if today > endIdx {
+                (*outBegIdx) = startIdx;
+                (*outNBElement) = outIdx;
+                return Err(RetCode::BadParam);
+            }
+            // Start over for the next price bar.
+            today = today - (optInTimePeriod as usize);
+            prevValue = savePrevValue;
+        }
+        // Remaining of the processing is identical
+        // for both Classic calculation and Metastock.
+        prevGain = 0.0;
+        prevLoss = 0.0;
+        today = today + 1;
+        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+        i = (optInTimePeriod) as usize;
+        while i > 0 {
+            tempValue1 = inReal[today] as f64;
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            if tempValue2 < 0.0 {
+                prevLoss -= tempValue2;
+            } else {
+                prevGain += tempValue2;
+            }
+            i -= 1;
+        }
+        // Subsequent prevLoss and prevGain are smoothed
+        // using the previous values (Wilder's approach).
+        //  1) Multiply the previous by 'period-1'.
+        //  2) Add today value.
+        //  3) Divide by 'period'.
+        prevLoss /= optInTimePeriod as f64;
+        prevGain /= optInTimePeriod as f64;
+        // Often documentation present the RSI calculation as follow:
+        //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
+        //
+        // The following is equivalent:
+        //    RSI = 100 * (prevGain/(prevGain+prevLoss))
+        //
+        // The second equation is used here for speed optimization.
+        if today > startIdx {
+            tempValue1 = prevGain + prevLoss;
+            if !((tempValue1).abs() < 1e-14) {
+                outReal[outIdx] = 100.0 * (prevGain / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx = outIdx + 1;
+            }
+        } else {
+            // Skip the unstable period. Do the processing
+            // but do not write it in the output.
+            while today < startIdx {
+                tempValue1 = inReal[today] as f64;
+                tempValue2 = tempValue1 - prevValue;
+                prevValue = tempValue1;
+                prevLoss *= (optInTimePeriod - 1) as f64;
+                prevGain *= (optInTimePeriod - 1) as f64;
+                if tempValue2 < 0.0 {
+                    prevLoss -= tempValue2;
+                } else {
+                    prevGain += tempValue2;
+                }
+                prevLoss /= optInTimePeriod as f64;
+                prevGain /= optInTimePeriod as f64;
+                today = today + 1;
+            }
+        }
+        // Unstable period skipped... now continue
+        // processing if needed.
+        while today <= endIdx {
+            tempValue1 = inReal[today] as f64;
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (optInTimePeriod - 1) as f64;
+            prevGain *= (optInTimePeriod - 1) as f64;
+            if tempValue2 < 0.0 {
+                prevLoss -= tempValue2;
+            } else {
+                prevGain += tempValue2;
+            }
+            prevLoss /= optInTimePeriod as f64;
+            prevGain /= optInTimePeriod as f64;
+            tempValue1 = prevGain + prevLoss;
+            if !((tempValue1).abs() < 1e-14) {
+                outReal[outIdx] = 100.0 * (prevGain / tempValue1);
+                outIdx = outIdx + 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx = outIdx + 1;
+            }
+        }
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = RsiStreamState {
+            optInTimePeriod,
+            prevGain,
+            prevLoss,
+            prevValue,
+        };
+        Ok(RsiStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl RsiStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_RSI_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.rsi_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_RSI_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<RsiStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

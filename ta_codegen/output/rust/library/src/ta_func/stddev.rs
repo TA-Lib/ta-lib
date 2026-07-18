@@ -268,6 +268,269 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::stddev`]
+/// over the same series. Open with [`Core::stddev_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_STDDEV_Stream")]
+pub struct StddevStream {
+    core: Core,
+    state: StddevStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct StddevStreamState {
+    optInTimePeriod: i32,
+    optInNbDev: f64,
+    sub0: VarStream,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn stddev_step_internal(&self, sp: &mut StddevStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut cur_outReal: f64 = 0.0_f64;
+
+        // Pipeline the new bar through the sub-streams (batch tail order).
+        cur_outReal = sp.sub0.update(inReal);
+        // Combine map (batch tail, per bar).
+        if sp.optInNbDev != 1.0 {
+            tempReal = cur_outReal;
+            if !((tempReal) < 1e-14) {
+                cur_outReal = (tempReal).sqrt() * sp.optInNbDev;
+            } else {
+                cur_outReal = 0.0 as f64;
+            }
+        } else {
+            tempReal = cur_outReal;
+            if !((tempReal) < 1e-14) {
+                cur_outReal = (tempReal).sqrt();
+            } else {
+                cur_outReal = 0.0 as f64;
+            }
+        }
+        (*outReal) = cur_outReal;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::stddev_open`] (composition seam).
+    pub(crate) fn stddev_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
+    ) -> Result<(StddevStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 5;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut _begStore: usize = 0;
+        let mut _nbStore: usize = 0;
+        let outBegIdx: &mut usize = &mut _begStore;
+        let outNBElement: &mut usize = &mut _nbStore;
+        let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut i: usize = 0_usize;
+        let mut retCode: RetCode = RetCode::Success;
+        let mut tempReal: f64 = 0.0_f64;
+        // Calculate the variance.
+        // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
+        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        if retCode != RetCode::Success {
+            return Err(retCode);
+        }
+        // Calculate the square root of each variance, this
+        // is the standard deviation.
+        //
+        // Multiply also by the ratio specified.
+        if optInNbDev != 1.0 {
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                tempReal = sc_outReal[i];
+                if !((tempReal) < 1e-14) {
+                    sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
+                } else {
+                    sc_outReal[i] = 0.0 as f64;
+                }
+                i += 1;
+            }
+        } else {
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                tempReal = sc_outReal[i];
+                if !((tempReal) < 1e-14) {
+                    sc_outReal[i] = (tempReal).sqrt();
+                } else {
+                    sc_outReal[i] = 0.0 as f64;
+                }
+                i += 1;
+            }
+        }
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let state = StddevStreamState {
+            optInTimePeriod,
+            optInNbDev,
+            sub0,
+        };
+        Ok((StddevStream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+    }
+
+    /// Open a live STDDEV stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::stddev`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.stddev_open(&data, 5, 1.0).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_STDDEV_Open")]
+    pub fn stddev_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(StddevStream, f64), RetCode> {
+        self.stddev_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
+    }
+
+    /// [`Core::stddev_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stddev`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_STDDEV_OpenAndFill")]
+    pub fn stddev_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<StddevStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 5;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut i: usize = 0_usize;
+        let mut retCode: RetCode = RetCode::Success;
+        let mut tempReal: f64 = 0.0_f64;
+        // Calculate the variance.
+        // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
+        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        if retCode != RetCode::Success {
+            return Err(retCode);
+        }
+        // Calculate the square root of each variance, this
+        // is the standard deviation.
+        //
+        // Multiply also by the ratio specified.
+        if optInNbDev != 1.0 {
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                tempReal = sc_outReal[i];
+                if !((tempReal) < 1e-14) {
+                    sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
+                } else {
+                    sc_outReal[i] = 0.0 as f64;
+                }
+                i += 1;
+            }
+        } else {
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                tempReal = sc_outReal[i];
+                if !((tempReal) < 1e-14) {
+                    sc_outReal[i] = (tempReal).sqrt();
+                } else {
+                    sc_outReal[i] = 0.0 as f64;
+                }
+                i += 1;
+            }
+        }
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let state = StddevStreamState {
+            optInTimePeriod,
+            optInNbDev,
+            sub0,
+        };
+        outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
+        Ok(StddevStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl StddevStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_STDDEV_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.stddev_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_STDDEV_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<StddevStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

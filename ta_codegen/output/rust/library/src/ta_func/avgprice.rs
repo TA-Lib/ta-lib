@@ -199,6 +199,160 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live AVGPRICE stream: one value per closed bar, bit-identical to [`Core::avgprice`]
+/// over the same series. Open with [`Core::avgprice_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_AVGPRICE_Stream")]
+pub struct AvgpriceStream {
+    core: Core,
+    state: AvgpriceStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AvgpriceStreamState {
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn avgprice_step_internal(&self, sp: &mut AvgpriceStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::avgprice_open`] (composition seam).
+    pub(crate) fn avgprice_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(AvgpriceStream, f64), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // Average price = (High + Low + Open + Close) / 4
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64;
+        }
+        i = (endIdx as usize) + 1;
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AvgpriceStreamState {
+        };
+        Ok((AvgpriceStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live AVGPRICE stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::avgprice`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.avgprice_open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_AVGPRICE_Open")]
+    pub fn avgprice_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(AvgpriceStream, f64), RetCode> {
+        self.avgprice_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::avgprice_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::avgprice`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_AVGPRICE_OpenAndFill")]
+    pub fn avgprice_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AvgpriceStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // Average price = (High + Low + Open + Close) / 4
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64) as f64);
+            outIdx += 1;
+        }
+        i = (endIdx as usize) + 1;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AvgpriceStreamState {
+        };
+        Ok(AvgpriceStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AvgpriceStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_AVGPRICE_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.avgprice_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_AVGPRICE_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AvgpriceStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

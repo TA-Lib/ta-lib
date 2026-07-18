@@ -3106,7 +3106,8 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use serde_json::{self, Value};\n");
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
-    s.push_str("use ta_lib::{Core, RetCode, FuncUnstId, Compatibility};\n");
+    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, Compatibility};\n");
+    s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptDomain};\n\n");
 
     // Seed-based fuzz input generator + FNV output hasher — a bit-exact port of
@@ -3672,6 +3673,10 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            format!(\"{{\\\"in_hash\\\":\\\"{:016x}\\\"}}\", h)\n");
     s.push_str("        }\n");
 
+    // Stream verify: Rust stream vs Rust batch, in-process bitwise (the same
+    // driver pass the C server answers; see generate_rust_stream_verify).
+    s.push_str("        \"stream_verify\" => handle_stream_verify(core, params),\n");
+
     // Abstract/introspection metadata handlers (mirror ta_abstract_serve.c),
     // backed by the generated abstract_api registry. Used by ta_regtest to lock
     // Rust introspection metadata parity against the C reference.
@@ -3757,6 +3762,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        stdout.flush().ok();\n");
     s.push_str("    }\n");
     s.push_str("}\n");
+
+    // Stream verify section (sv_<name> per streamable function + dispatcher).
+    s.push_str(&generate_rust_stream_verify(funcs, enums));
 
     s
 }
@@ -3954,4 +3962,375 @@ mod predicate_form_tests {
         );
         assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
     }
+}
+
+// ---------------------------------------------------------------------------
+// Rust stream_verify (mirror of generate_c_stream_verify for the Rust server):
+// per streamable function, run the Rust batch and the Rust stream trajectory
+// in-process on identical seeded inputs, compare BITWISE per bar (to_bits),
+// spot-assert peek == update, verify the OpenAndFill fill against the batch
+// arrays, and answer the same flat JSON contract the ta_regtest driver reads
+// (ok / peek_ok / legs / fill_checked / fill_ok / unsupportedArm /
+// "not_streamable"). Differences from the C gate, by design:
+// - No startIdx-anchored OpenInternal leg: `<f>_open_internal` is pub(crate)
+//   (the anchor seam is a bit-exactness footgun, not a public API); anchored
+//   opens are exercised transitively through composed functions' own legs.
+// - No aliasing probes: `&mut` exclusivity makes #108 unexpressible in the
+//   safe public API (the driver never reads the probes directly).
+// - Settings sweeps rebuild an immutable Core via the builder instead of
+//   mutating globals.
+// ---------------------------------------------------------------------------
+
+/// Substitute C enum constants (`TA_MAType_MAMA`) with their integer values so
+/// a `sv_reject_condition` guard renders as valid Rust.
+fn sv_guard_to_rust(guard: &str, enums: &HashMap<String, EnumDef>) -> String {
+    let mut out = guard.to_string();
+    for e in enums.values() {
+        for v in &e.variants {
+            out = out.replace(&v.c_name, &v.value.to_string());
+        }
+    }
+    out
+}
+
+/// The per-input expanded fuzz array variable in the generated Rust handler.
+fn sv_rust_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
+    match name {
+        "inOpen" => "fz_o",
+        "inHigh" => "fz_h",
+        "inLow" => "fz_l",
+        "inClose" => "fz_c",
+        "inVolume" => "fz_v",
+        "inOpenInterest" => "fz_oi",
+        _ => {
+            let arr = if *generic_idx == 0 { "fz_c" } else { "fz_v" };
+            *generic_idx += 1;
+            arr
+        }
+    }
+}
+
+/// One `sv_<name>` verify function for a function with an emitted Rust stream.
+#[allow(clippy::too_many_lines)]
+fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+    use std::fmt::Write as _;
+    let sn = func.name.to_lowercase();
+    let candle = func.name.starts_with("CDL");
+    let inputs = crate::streaming::input_array_names(func);
+    let mut gi = 0usize;
+    let arrays: Vec<&'static str> = inputs
+        .iter()
+        .map(|i| sv_rust_input_array(i, &mut gi))
+        .collect();
+    let n_out = func.outputs.len();
+    let out_is_int: Vec<bool> = func
+        .outputs
+        .iter()
+        .map(|o| o.param_type == crate::ir::ParamType::Integer)
+        .collect();
+
+    let mut s = String::new();
+    let _ = writeln!(s, "fn sv_{sn}(core: &Core, params: &Value) -> String {{");
+    s.push_str("    let svShape = params[\"gen_shape\"].as_i64().unwrap_or(0) as i32;\n");
+    s.push_str("    let svSeed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
+    s.push_str("    let mut svN = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
+    s.push_str("    if svN < 2 { svN = 2; }\n    if svN > 256 { svN = 256; }\n");
+    s.push_str("    let svK = params[\"unstablePeriod\"].as_i64().unwrap_or(0) as i32;\n");
+    s.push_str("    let svCompat = params[\"compatibility\"].as_i64().unwrap_or(0) as i32;\n");
+    if candle {
+        s.push_str("    let candleLegs = params[\"candleLegs\"].as_i64().unwrap_or(0);\n");
+    }
+    // Optional params with YAML defaults (the driver always sends them, but the
+    // defaults keep hand-driven requests working).
+    for p in &func.optional_inputs {
+        let name = &p.name;
+        match p.param_type {
+            crate::ir::ParamType::Real => {
+                let d = p.default.unwrap_or(0.0);
+                let _ = writeln!(
+                    s,
+                    "    let {name} = params[\"{name}\"].as_f64().unwrap_or({d:?});"
+                );
+            }
+            _ => {
+                let d = p.default.unwrap_or(0.0) as i64;
+                let _ = writeln!(
+                    s,
+                    "    let {name} = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
+                );
+            }
+        }
+    }
+    // Seeded inputs.
+    s.push_str("    let mut fz_o = vec![0.0f64; svN];\n    let mut fz_h = vec![0.0f64; svN];\n    let mut fz_l = vec![0.0f64; svN];\n    let mut fz_c = vec![0.0f64; svN];\n    let mut fz_v = vec![0.0f64; svN];\n    let mut fz_oi = vec![0.0f64; svN];\n");
+    s.push_str("    fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);\n");
+
+    // Period-bank ramp: the fuzz period-selector series would clamp to
+    // maxPeriod at every bar (vacuous slots) — overwrite with a ramp spanning
+    // [min-1, max+1] fed identically to batch and stream.
+    {
+        let lookup = crate::streaming::FuncsLookup(funcs);
+        if let Ok(crate::streaming::StreamPlan::PeriodBank(pb)) =
+            crate::streaming::validate_streamable(func, &lookup)
+        {
+            if let Some(idx) = inputs.iter().position(|i| *i == pb.period_input) {
+                let arr = arrays[idx];
+                let _ = writeln!(
+                    s,
+                    "    for _pi in 0..svN {{ {arr}[_pi] = ({min} + ((_pi as i32) % ({max} - {min} + 3)) - 1) as f64; }}",
+                    min = pb.min_param,
+                    max = pb.max_param
+                );
+            }
+        }
+    }
+
+    // Convenience strings for calls.
+    let full_ins = arrays
+        .iter()
+        .map(|a| format!("&{a}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let pfx_ins = arrays
+        .iter()
+        .map(|a| format!("&{a}[..p]"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let opts = func
+        .optional_inputs
+        .iter()
+        .map(|p| p.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let opts_lead = if opts.is_empty() { String::new() } else { format!("{opts}, ") };
+    let opts_tail = if opts.is_empty() { String::new() } else { format!(", {opts}") };
+    let bar_args = |pad: &str, t: &str| -> String {
+        let _ = pad;
+        arrays
+            .iter()
+            .map(|a| format!("{a}[{t}]"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    // Batch output buffers.
+    let mut bdecls = String::new();
+    let mut bargs = String::new();
+    let mut fdecls = String::new();
+    let mut fargs = String::new();
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let (ty, z) = if *is_int { ("i32", "0i32") } else { ("f64", "0.0f64") };
+        let _ = writeln!(bdecls, "    let mut b{i}: Vec<{ty}> = vec![{z}; svN];");
+        let _ = write!(bargs, ", &mut b{i}");
+        let _ = writeln!(fdecls, "        let mut f{i}: Vec<{ty}> = vec![{z}; svN];");
+        let _ = write!(fargs, ", &mut f{i}");
+    }
+    s.push_str(&bdecls);
+
+    s.push_str("    let mut legs = 0i64;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
+    let rounds = if candle {
+        "    let rounds = if candleLegs != 0 { 4 } else { 1 };\n"
+    } else {
+        "    let rounds = 1;\n"
+    };
+    s.push_str(rounds);
+    s.push_str("    for rd in 0..rounds {\n        let _ = rd;\n");
+
+    // Pinned + configured core for this round.
+    s.push_str("        let mut cb = core.to_builder();\n");
+    s.push_str("        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });\n");
+    for id in collect_pin_ids(func, funcs) {
+        let _ = writeln!(
+            s,
+            "        if let Some(id) = func_unst_id_from_int({id}usize) {{ cb = cb.unstable_period(id, svK); }}"
+        );
+    }
+    if candle {
+        s.push_str("        cb = sv_apply_candles(cb, &sv_candle_settings(rd));\n");
+    }
+    s.push_str("        let c2 = cb.build();\n");
+
+    // Expected-reject precheck (dispatch / period-bank arms without a stream).
+    if let Some(guard) = sv_reject_condition(func, funcs, None) {
+        let guard = sv_guard_to_rust(&guard, enums);
+        let _ = writeln!(s, "        if {guard} {{");
+        let _ = writeln!(
+            s,
+            "            let r1 = c2.{sn}_open({full_ins}{opts_tail}).is_err();"
+        );
+        s.push_str(&fdecls.replace("        ", "            "));
+        s.push_str("            let mut fBeg = 0usize;\n            let mut fNb = 0usize;\n");
+        let _ = writeln!(
+            s,
+            "            let r2 = c2.{sn}_open_and_fill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}).is_err();"
+        );
+        s.push_str("            let okr = r1 && r2;\n");
+        s.push_str("            return format!(\"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", i32::from(okr));\n");
+        s.push_str("        }\n");
+    }
+
+    // Batch leg.
+    let _ = writeln!(
+        s,
+        "        let rc = c2.{sn}(0, svN - 1, {full_ins}, {opts_lead}&mut beg, &mut nb{bargs});"
+    );
+    let _ = writeln!(s, "        let lb = c2.{sn}_lookback({opts});");
+    s.push_str("        if rc != RetCode::Success || nb == 0 {\n");
+    let _ = writeln!(
+        s,
+        "            let open_rejects = c2.{sn}_open({full_ins}{opts_tail}).is_err();"
+    );
+    if candle {
+        s.push_str("            if !open_rejects { all_ok = false; }\n");
+        s.push_str("            if rd + 1 < rounds { continue; }\n");
+        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":{},\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{}}}\", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all));\n");
+    } else {
+        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":0,\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));\n");
+    }
+    s.push_str("        }\n");
+
+    // OpenAndFill leg (fill == batch arrays, bitwise).
+    s.push_str("        fill_checked = 1;\n        {\n");
+    s.push_str(&fdecls);
+    s.push_str("        let mut fBeg = 0usize;\n        let mut fNb = 0usize;\n");
+    let _ = writeln!(
+        s,
+        "        match c2.{sn}_open_and_fill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}) {{"
+    );
+    s.push_str("            Err(_) => { fill_ok = false; }\n");
+    s.push_str("            Ok(_h) => {\n                if fBeg != beg || fNb != nb { fill_ok = false; }\n                else {\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        if *is_int {
+            let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");
+        } else {
+            let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i].to_bits() != b{i}[i].to_bits() {{ fill_ok = false; }} }}");
+        }
+    }
+    s.push_str("                }\n            }\n        }\n        }\n");
+
+    // Prefix sweep.
+    let seed_boundary = func_has_seed_boundary(func, funcs);
+    let shift = if seed_boundary {
+        "        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };\n"
+    } else {
+        "        let seed_shift: usize = 0;\n"
+    };
+    s.push_str(shift);
+    s.push_str("        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];\n");
+    s.push_str("        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);\n");
+    s.push_str("        pcs.sort_unstable();\n        pcs.dedup();\n");
+    s.push_str("        for &p in &pcs {\n");
+    let _ = writeln!(s, "            match c2.{sn}_open({pfx_ins}{opts_tail}) {{");
+    s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(\",\\\"openRejectP\\\":{}\", p); } }\n");
+    s.push_str("                Ok((mut st, v0)) => {\n                    legs += 1;\n");
+    // open-value compare
+    let destructure = |var: &str| -> Vec<String> {
+        if n_out == 1 {
+            vec![var.to_string()]
+        } else {
+            (0..n_out).map(|i| format!("{var}.{i}")).collect()
+        }
+    };
+    for (i, part) in destructure("v0").iter().enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                    if {part} != b{i}[p - 1 - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
+        } else {
+            let _ = writeln!(s, "                    if {part}.to_bits() != b{i}[p - 1 - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
+        }
+    }
+    // update loop
+    s.push_str("                    for t in p..svN {\n");
+    let bars = bar_args("", "t");
+    let _ = writeln!(s, "                        if t % 7 == 0 {{");
+    let _ = writeln!(s, "                            let pk = st.peek({bars});");
+    let _ = writeln!(s, "                            let up = st.update({bars});");
+    let pk_parts = destructure("pk");
+    let up_parts = destructure("up");
+    for (i, (pk, up)) in pk_parts.iter().zip(up_parts.iter()).enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                            if {pk} != {up} {{ peek_all = false; }}");
+        } else {
+            let _ = writeln!(s, "                            if {pk}.to_bits() != {up}.to_bits() {{ peek_all = false; }}");
+        }
+    }
+    for (i, up) in up_parts.iter().enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
+        } else {
+            let _ = writeln!(s, "                            if {up}.to_bits() != b{i}[t - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
+        }
+    }
+    s.push_str("                        } else {\n");
+    let _ = writeln!(s, "                            let up = st.update({bars});");
+    for (i, up) in up_parts.iter().enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
+        } else {
+            let _ = writeln!(s, "                            if {up}.to_bits() != b{i}[t - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
+        }
+    }
+    s.push_str("                        }\n");
+    s.push_str("                    }\n                }\n            }\n        }\n");
+
+    // Short-history reject leg: at `lb` bars no output is defined for ANY
+    // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
+    // asserted either way — under an unstable period the skip can absorb the
+    // Metastock seed, making it legitimately acceptable; the C gate only
+    // shifts its first prefix.)
+    s.push_str("        if lb >= 1 && lb < svN {\n");
+    let short_ins = arrays
+        .iter()
+        .map(|a| format!("&{a}[..lb]"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let _ = writeln!(
+        s,
+        "            if c2.{sn}_open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
+    );
+    s.push_str("        }\n");
+
+    s.push_str("    }\n");
+    // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
+    // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)\n");
+    s.push_str("}\n\n");
+    s
+}
+
+/// The whole Rust `stream_verify` section: candle-settings helpers, one
+/// `sv_<name>` per function with an emitted Rust stream, and the dispatcher.
+pub(crate) fn generate_rust_stream_verify(
+    funcs: &[FuncDef],
+    enums: &HashMap<String, EnumDef>,
+) -> String {
+    use std::fmt::Write as _;
+    let mut s = String::new();
+    s.push_str("// ---- stream_verify: Rust stream vs Rust batch, bitwise ----\n\n");
+    // Candle-settings rounds (mirror the C sweep): defaults / avgPeriod+3 /
+    // avgPeriod=0 (instant candle) / rangeType=Shadows.
+    s.push_str("fn sv_candle_settings(rd: i32) -> CandleSettings {\n    let mut s = CandleSettings::default_settings();\n    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {\n        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,\n                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,\n                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {\n            f(cs);\n        }\n    };\n    match rd {\n        1 => all(&mut s, &|c| c.avg_period += 3),\n        2 => all(&mut s, &|c| c.avg_period = 0),\n        3 => all(&mut s, &|c| c.range_type = 2),\n        _ => {}\n    }\n    s\n}\n\n");
+    s.push_str("fn sv_apply_candles(b: CoreBuilder, s: &CandleSettings) -> CoreBuilder {\n    b.candle_setting(CandleSettingType::BodyLong, s.body_long)\n     .candle_setting(CandleSettingType::BodyVeryLong, s.body_very_long)\n     .candle_setting(CandleSettingType::BodyShort, s.body_short)\n     .candle_setting(CandleSettingType::BodyDoji, s.body_doji)\n     .candle_setting(CandleSettingType::ShadowLong, s.shadow_long)\n     .candle_setting(CandleSettingType::ShadowVeryLong, s.shadow_very_long)\n     .candle_setting(CandleSettingType::ShadowShort, s.shadow_short)\n     .candle_setting(CandleSettingType::ShadowVeryShort, s.shadow_very_short)\n     .candle_setting(CandleSettingType::Near, s.near)\n     .candle_setting(CandleSettingType::Far, s.far)\n     .candle_setting(CandleSettingType::Equal, s.equal)\n}\n\n");
+
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    let emitted: Vec<&FuncDef> = funcs
+        .iter()
+        .filter(|f| crate::backends::rust_stream::emits_stream(f, &lookup))
+        .collect();
+    for f in &emitted {
+        s.push_str(&emit_rust_sv_func(f, funcs, enums));
+    }
+
+    s.push_str("fn handle_stream_verify(core: &Core, params: &Value) -> String {\n");
+    s.push_str("    let func_name = params[\"funcName\"].as_str().unwrap_or(\"\");\n");
+    s.push_str("    match func_name {\n");
+    for f in &emitted {
+        let _ = writeln!(
+            s,
+            "        \"TA_{}\" => sv_{}(core, params),",
+            f.name.to_uppercase(),
+            f.name.to_lowercase()
+        );
+    }
+    s.push_str("        _ => \"{\\\"error\\\":\\\"not_streamable\\\"}\".to_string(),\n    }\n}\n\n");
+    s
 }

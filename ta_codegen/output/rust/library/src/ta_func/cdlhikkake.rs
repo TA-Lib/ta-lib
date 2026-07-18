@@ -328,6 +328,363 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLHIKKAKE stream: one value per closed bar, bit-identical to [`Core::cdlhikkake`]
+/// over the same series. Open with [`Core::cdlhikkake_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLHIKKAKE_Stream")]
+pub struct CdlhikkakeStream {
+    core: Core,
+    state: CdlhikkakeStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CdlhikkakeStreamState {
+    patternResult: i32,
+    cd: usize,
+    savedHigh: f64,
+    savedLow: f64,
+    lag1_inHigh: f64,
+    lag2_inHigh: f64,
+    lag1_inLow: f64,
+    lag2_inLow: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdlhikkake_step_internal(&self, sp: &mut CdlhikkakeStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        if sp.lag1_inHigh < sp.lag2_inHigh &&
+           sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
+           (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+        {
+            sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+            sp.savedHigh = sp.lag1_inHigh;
+            sp.savedLow = sp.lag1_inLow;
+            sp.cd = 4;
+            (*outInteger) = (sp.patternResult) as i32;
+        } else if sp.cd > 0 &&
+           (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+        {
+            (*outInteger) = (sp.patternResult + (100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+            sp.cd = 0;
+        } else {
+            (*outInteger) = 0;
+        }
+        if sp.cd > 0 {
+            sp.cd -= 1;
+        }
+        sp.lag2_inHigh = sp.lag1_inHigh;
+        sp.lag1_inHigh = inHigh;
+        sp.lag2_inLow = sp.lag1_inLow;
+        sp.lag1_inLow = inLow;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdlhikkake_open`] (composition seam).
+    pub(crate) fn cdlhikkake_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CdlhikkakeStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut patternResult: i32 = 0_i32;
+        let mut cd: usize = 0_usize;
+        let mut savedHigh: f64 = 0.0_f64;
+        let mut savedLow: f64 = 0.0_f64;
+        // Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+        // state carried without an absolute bar index.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlhikkake_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        cd = 0;
+        patternResult = 0;
+        i = startIdx - 3;
+        while i < startIdx {
+            // copy here the pattern recognition code below
+            if inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
+               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            {
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            {
+                cd = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
+            }
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first and second candle: inside bar (2nd has lower high and higher low than 1st)
+        // - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
+        // outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
+        // Confirmation could come in the next 3 days with:
+        // - a day that closes higher than the high (lower than the low) of the 2nd candle
+        // outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
+        // Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
+        // overwrites the confirmation of the old hikkake)
+        outIdx = 0;
+        loop {
+            if inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
+               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            {
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+                lastValue_outInteger = (patternResult) as i32;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            {
+                lastValue_outInteger = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                cd = 0;
+            } else {
+                lastValue_outInteger = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
+            }
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CdlhikkakeStreamState {
+            patternResult,
+            cd,
+            savedHigh,
+            savedLow,
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag2_inHigh: inHigh[historyLen - 2],
+            lag1_inLow: inLow[historyLen - 1],
+            lag2_inLow: inLow[historyLen - 2],
+        };
+        Ok((CdlhikkakeStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLHIKKAKE stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdlhikkake`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdlhikkake_open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLHIKKAKE_Open")]
+    pub fn cdlhikkake_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhikkakeStream, i32), RetCode> {
+        self.cdlhikkake_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::cdlhikkake_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlhikkake`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLHIKKAKE_OpenAndFill")]
+    pub fn cdlhikkake_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlhikkakeStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut patternResult: i32 = 0_i32;
+        let mut cd: usize = 0_usize;
+        let mut savedHigh: f64 = 0.0_f64;
+        let mut savedLow: f64 = 0.0_f64;
+        // Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+        // state carried without an absolute bar index.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlhikkake_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        cd = 0;
+        patternResult = 0;
+        i = startIdx - 3;
+        while i < startIdx {
+            // copy here the pattern recognition code below
+            if inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
+               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            {
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            {
+                cd = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
+            }
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first and second candle: inside bar (2nd has lower high and higher low than 1st)
+        // - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
+        // outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
+        // Confirmation could come in the next 3 days with:
+        // - a day that closes higher than the high (lower than the low) of the 2nd candle
+        // outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
+        // Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
+        // overwrites the confirmation of the old hikkake)
+        outIdx = 0;
+        loop {
+            if inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
+               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            {
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                savedHigh = inHigh[i - 1];
+                savedLow = inLow[i - 1];
+                cd = 4;
+                outInteger[outIdx] = (patternResult) as i32;
+                outIdx += 1;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            {
+                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outIdx += 1;
+                cd = 0;
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            if cd > 0 {
+                cd -= 1;
+            }
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CdlhikkakeStreamState {
+            patternResult,
+            cd,
+            savedHigh,
+            savedLow,
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag2_inHigh: inHigh[historyLen - 2],
+            lag1_inLow: inLow[historyLen - 1],
+            lag2_inLow: inLow[historyLen - 2],
+        };
+        Ok(CdlhikkakeStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CdlhikkakeStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLHIKKAKE_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdlhikkake_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLHIKKAKE_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CdlhikkakeStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

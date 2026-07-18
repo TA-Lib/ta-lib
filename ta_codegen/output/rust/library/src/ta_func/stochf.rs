@@ -541,6 +541,702 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::stochf`]
+/// over the same series. Open with [`Core::stochf_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_STOCHF_Stream")]
+pub struct StochfStream {
+    core: Core,
+    state: StochfStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct StochfStreamState {
+    optInFastK_Period: i32,
+    optInFastD_Period: i32,
+    optInFastD_MAType: i32,
+    lowest: f64,
+    highest: f64,
+    diff: f64,
+    lowestIdx: i32,
+    highestIdx: i32,
+    trailingIdx: i32,
+    i: i32,
+    today: i32,
+    xCap: i32,
+    x_inHigh: Vec<f64>,
+    x_inLow: Vec<f64>,
+    x_inClose: Vec<f64>,
+    sub0: MaStream,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn stochf_step_internal(&self, sp: &mut StochfStreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) {
+        let mut tmp: f64 = 0.0_f64;
+        let mut cur_tempBuffer: f64 = 0.0_f64;
+        let mut cur_outFastD: f64 = 0.0_f64;
+        if sp.today >= 1073741824 {
+            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            sp.today -= rebaseShift;
+            sp.trailingIdx -= rebaseShift;
+            sp.highestIdx -= rebaseShift;
+            sp.i -= rebaseShift;
+            sp.lowestIdx -= rebaseShift;
+        }
+        sp.x_inHigh[(sp.today % sp.xCap) as usize] = inHigh;
+        sp.x_inLow[(sp.today % sp.xCap) as usize] = inLow;
+        sp.x_inClose[(sp.today % sp.xCap) as usize] = inClose;
+        // Set the lowest low
+        tmp = sp.x_inLow[(sp.today % sp.xCap) as usize];
+        if sp.lowestIdx < sp.trailingIdx {
+            sp.lowestIdx = sp.trailingIdx;
+            sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
+            sp.i = sp.lowestIdx;
+            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+                tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
+                if tmp < sp.lowest {
+                    sp.lowestIdx = sp.i;
+                    sp.lowest = tmp;
+                }
+            }
+            sp.diff = (sp.highest - sp.lowest) / 100.0;
+        } else if tmp <= sp.lowest {
+            sp.lowestIdx = sp.today;
+            sp.lowest = tmp;
+            sp.diff = (sp.highest - sp.lowest) / 100.0;
+        }
+        // Set the highest high
+        tmp = sp.x_inHigh[(sp.today % sp.xCap) as usize];
+        if sp.highestIdx < sp.trailingIdx {
+            sp.highestIdx = sp.trailingIdx;
+            sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
+            sp.i = sp.highestIdx;
+            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+                tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
+                if tmp > sp.highest {
+                    sp.highestIdx = sp.i;
+                    sp.highest = tmp;
+                }
+            }
+            sp.diff = (sp.highest - sp.lowest) / 100.0;
+        } else if tmp >= sp.highest {
+            sp.highestIdx = sp.today;
+            sp.highest = tmp;
+            sp.diff = (sp.highest - sp.lowest) / 100.0;
+        }
+        // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+        // a machine-flat window leaves a sub-epsilon residue that an exact check
+        // would divide into [0,100] noise (issue #107 / STOCHRSI).
+        if !((sp.diff).abs() < 1e-14) {
+            cur_tempBuffer = (sp.x_inClose[(sp.today % sp.xCap) as usize] - sp.lowest) / sp.diff;
+        } else {
+            cur_tempBuffer = 0.0;
+        }
+        sp.trailingIdx += 1;
+        sp.today += 1;
+
+        // Pipeline the new bar through the sub-streams (batch tail order).
+        cur_outFastD = sp.sub0.update(cur_tempBuffer);
+        (*outFastK) = cur_tempBuffer;
+        (*outFastD) = cur_outFastD;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::stochf_open`] (composition seam).
+    pub(crate) fn stochf_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32,
+    ) -> Result<(StochfStream, (f64, f64)), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastK_Period) as i32) == (i32::MIN) {
+            optInFastK_Period = 5;
+        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastD_Period) as i32) == (i32::MIN) {
+            optInFastD_Period = 3;
+        } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outFastK: f64 = 0.0_f64;
+        let mut lastValue_outFastD: f64 = 0.0_f64;
+        let mut _begStore: usize = 0;
+        let mut _nbStore: usize = 0;
+        let outBegIdx: &mut usize = &mut _begStore;
+        let outNBElement: &mut usize = &mut _nbStore;
+        let mut sc_outFastK: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut sc_outFastD: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut retCode: RetCode = RetCode::Success;
+        let mut lowest: f64 = 0.0_f64;
+        let mut highest: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut diff: f64 = 0.0_f64;
+        let mut tempBuffer: Vec<f64> = Vec::new();
+        let mut outIdx: usize = 0_usize;
+        let mut lowestIdx: i32 = 0_i32;
+        let mut highestIdx: i32 = 0_i32;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackK: usize = 0_usize;
+        let mut lookbackFastD: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut bufferIsAllocated: usize = 0_usize;
+        // With stochastic, there is a total of 4 different lines that
+        // are defined: FASTK, FASTD, SLOWK and SLOWD.
+        //
+        // The D is the signal line usually drawn over its
+        // corresponding K function.
+        //
+        //                    (Today's Close - LowestLow)
+        //  FASTK(Kperiod) =  --------------------------- * 100
+        //                     (HighestHigh - LowestLow)
+        //
+        //  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
+        //
+        //  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
+        //
+        //  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
+        //
+        // The HighestHigh and LowestLow are the extreme values among the
+        // last 'Kperiod'.
+        //
+        // SLOWK and FASTD are equivalent when using the same period.
+        //
+        // The following shows how these four lines are made available in TA-LIB:
+        //
+        //  TA_STOCH  : Returns the SLOWK and SLOWD
+        //  TA_STOCHF : Returns the FASTK and FASTD
+        //
+        // The TA_STOCH function correspond to the more widely implemented version
+        // found in many software/charting package. The TA_STOCHF is more rarely
+        // used because its higher volatility cause often whipsaws.
+        // Identify the lookback needed.
+        lookbackK = (optInFastK_Period - 1) as usize;
+        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackTotal = lookbackK + lookbackFastD;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            // Succeed... but no data in the output.
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the K calculation:
+        //
+        //    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
+        //
+        // Kt is today stochastic
+        // Ct is today closing price.
+        // Lt is the lowest price of the last K Period (including today)
+        // Ht is the highest price of the last K Period (including today)
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and
+        // output to be the same buffer.
+        outIdx = 0;
+        // Calculate just enough K for ending up with the caller
+        // requested range. (The range of k must consider all
+        // the lookback involve with the smoothing).
+        trailingIdx = startIdx - lookbackTotal;
+        today = trailingIdx + lookbackK;
+        highestIdx = 0 - 1;
+        lowestIdx = highestIdx;
+        lowest = 0.0;
+        highest = lowest;
+        diff = highest;
+        // Allocate a temporary buffer large enough to
+        // store the K.
+        //
+        // If the output is the same as the input, great
+        // we just save ourself one memory allocation.
+        bufferIsAllocated = 0;
+        if sc_outFastK.as_ptr() == inHigh.as_ptr() || sc_outFastK.as_ptr() == inLow.as_ptr() || sc_outFastK.as_ptr() == inClose.as_ptr() {
+            tempBuffer = sc_outFastK.to_vec();
+        } else if sc_outFastD.as_ptr() == inHigh.as_ptr() || sc_outFastD.as_ptr() == inLow.as_ptr() || sc_outFastD.as_ptr() == inClose.as_ptr() {
+            tempBuffer = sc_outFastD.to_vec();
+        } else {
+            bufferIsAllocated = 1;
+            tempBuffer = vec![0.0_f64; ((endIdx - today + 1) * 1) as usize];
+        }
+        // Do the K calculation
+        while today <= endIdx {
+            // Set the lowest low
+            tmp = inLow[today];
+            if lowestIdx < (trailingIdx) as i32 {
+                lowestIdx = (trailingIdx) as i32;
+                lowest = inLow[(lowestIdx) as usize];
+                i = (lowestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inLow[i];
+                    if tmp < lowest {
+                        lowestIdx = (i) as i32;
+                        lowest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp <= lowest {
+                lowestIdx = (today) as i32;
+                lowest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Set the highest high
+            tmp = inHigh[today];
+            if highestIdx < (trailingIdx) as i32 {
+                highestIdx = (trailingIdx) as i32;
+                highest = inHigh[(highestIdx) as usize];
+                i = (highestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inHigh[i];
+                    if tmp > highest {
+                        highestIdx = (i) as i32;
+                        highest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp >= highest {
+                highestIdx = (today) as i32;
+                highest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+            // a machine-flat window leaves a sub-epsilon residue that an exact check
+            // would divide into [0,100] noise (issue #107 / STOCHRSI).
+            if !((diff).abs() < 1e-14) {
+                tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
+                outIdx += 1;
+            } else {
+                tempBuffer[outIdx] = 0.0;
+                outIdx += 1;
+            }
+            trailingIdx += 1;
+            today += 1;
+        }
+        // Fast-K calculation completed. This K calculation is returned
+        // to the caller. It is smoothed to become Fast-D.
+        // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            if bufferIsAllocated != 0 {
+            }
+            // Something wrong happen? No further data?
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Copy tempBuffer into the caller buffer.
+        // (Calculation could not be done directly in the
+        //  caller buffer because more input data then the
+        //  requested range was needed for doing %D).
+        // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+        // reused as scratch, so source and destination overlap (issue #94).
+        {
+            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (lookbackFastD) as usize;
+            sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
+        };
+        // Don't need K anymore, free it if it was allocated here.
+        if bufferIsAllocated != 0 {
+        }
+        if retCode != RetCode::Success {
+            // Something wrong happen while processing %D?
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Note: Keep the outBegIdx relative to the
+        //       caller input before returning.
+        (*outBegIdx) = startIdx;
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inHigh: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut x_inLow: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut x_inClose: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inHigh[fillJ % capX as usize] = inHigh[fillJ];
+                x_inLow[fillJ % capX as usize] = inLow[fillJ];
+                x_inClose[fillJ % capX as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = StochfStreamState {
+            optInFastK_Period,
+            optInFastD_Period,
+            optInFastD_MAType,
+            lowest,
+            highest,
+            diff,
+            lowestIdx: (lowestIdx) as i32,
+            highestIdx: (highestIdx) as i32,
+            trailingIdx: (trailingIdx) as i32,
+            i: (i) as i32,
+            today: (today) as i32,
+            xCap: capX as i32,
+            x_inHigh,
+            x_inLow,
+            x_inClose,
+            sub0,
+        };
+        Ok((StochfStream { core: self.clone(), state }, (sc_outFastK[*outNBElement - 1], sc_outFastD[*outNBElement - 1])))
+    }
+
+    /// Open a live STOCHF stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::stochf`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.stochf_open(&high, &low, &close, 5, 3, 0).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
+    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
+    /// ```
+    #[doc(alias = "TA_STOCHF_Open")]
+    pub fn stochf_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(StochfStream, (f64, f64)), RetCode> {
+        self.stochf_open_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+    }
+
+    /// [`Core::stochf_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stochf`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_STOCHF_OpenAndFill")]
+    pub fn stochf_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
+    ) -> Result<StochfStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if outFastK.as_ptr() == outFastD.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastK_Period) as i32) == (i32::MIN) {
+            optInFastK_Period = 5;
+        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastD_Period) as i32) == (i32::MIN) {
+            optInFastD_Period = 3;
+        } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sc_outFastK: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut sc_outFastD: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut retCode: RetCode = RetCode::Success;
+        let mut lowest: f64 = 0.0_f64;
+        let mut highest: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut diff: f64 = 0.0_f64;
+        let mut tempBuffer: Vec<f64> = Vec::new();
+        let mut outIdx: usize = 0_usize;
+        let mut lowestIdx: i32 = 0_i32;
+        let mut highestIdx: i32 = 0_i32;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackK: usize = 0_usize;
+        let mut lookbackFastD: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut bufferIsAllocated: usize = 0_usize;
+        // With stochastic, there is a total of 4 different lines that
+        // are defined: FASTK, FASTD, SLOWK and SLOWD.
+        //
+        // The D is the signal line usually drawn over its
+        // corresponding K function.
+        //
+        //                    (Today's Close - LowestLow)
+        //  FASTK(Kperiod) =  --------------------------- * 100
+        //                     (HighestHigh - LowestLow)
+        //
+        //  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
+        //
+        //  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
+        //
+        //  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
+        //
+        // The HighestHigh and LowestLow are the extreme values among the
+        // last 'Kperiod'.
+        //
+        // SLOWK and FASTD are equivalent when using the same period.
+        //
+        // The following shows how these four lines are made available in TA-LIB:
+        //
+        //  TA_STOCH  : Returns the SLOWK and SLOWD
+        //  TA_STOCHF : Returns the FASTK and FASTD
+        //
+        // The TA_STOCH function correspond to the more widely implemented version
+        // found in many software/charting package. The TA_STOCHF is more rarely
+        // used because its higher volatility cause often whipsaws.
+        // Identify the lookback needed.
+        lookbackK = (optInFastK_Period - 1) as usize;
+        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackTotal = lookbackK + lookbackFastD;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            // Succeed... but no data in the output.
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the K calculation:
+        //
+        //    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
+        //
+        // Kt is today stochastic
+        // Ct is today closing price.
+        // Lt is the lowest price of the last K Period (including today)
+        // Ht is the highest price of the last K Period (including today)
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and
+        // output to be the same buffer.
+        outIdx = 0;
+        // Calculate just enough K for ending up with the caller
+        // requested range. (The range of k must consider all
+        // the lookback involve with the smoothing).
+        trailingIdx = startIdx - lookbackTotal;
+        today = trailingIdx + lookbackK;
+        highestIdx = 0 - 1;
+        lowestIdx = highestIdx;
+        lowest = 0.0;
+        highest = lowest;
+        diff = highest;
+        // Allocate a temporary buffer large enough to
+        // store the K.
+        //
+        // If the output is the same as the input, great
+        // we just save ourself one memory allocation.
+        bufferIsAllocated = 0;
+        if sc_outFastK.as_ptr() == inHigh.as_ptr() || sc_outFastK.as_ptr() == inLow.as_ptr() || sc_outFastK.as_ptr() == inClose.as_ptr() {
+            tempBuffer = sc_outFastK.to_vec();
+        } else if sc_outFastD.as_ptr() == inHigh.as_ptr() || sc_outFastD.as_ptr() == inLow.as_ptr() || sc_outFastD.as_ptr() == inClose.as_ptr() {
+            tempBuffer = sc_outFastD.to_vec();
+        } else {
+            bufferIsAllocated = 1;
+            tempBuffer = vec![0.0_f64; ((endIdx - today + 1) * 1) as usize];
+        }
+        // Do the K calculation
+        while today <= endIdx {
+            // Set the lowest low
+            tmp = inLow[today];
+            if lowestIdx < (trailingIdx) as i32 {
+                lowestIdx = (trailingIdx) as i32;
+                lowest = inLow[(lowestIdx) as usize];
+                i = (lowestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inLow[i];
+                    if tmp < lowest {
+                        lowestIdx = (i) as i32;
+                        lowest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp <= lowest {
+                lowestIdx = (today) as i32;
+                lowest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Set the highest high
+            tmp = inHigh[today];
+            if highestIdx < (trailingIdx) as i32 {
+                highestIdx = (trailingIdx) as i32;
+                highest = inHigh[(highestIdx) as usize];
+                i = (highestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inHigh[i];
+                    if tmp > highest {
+                        highestIdx = (i) as i32;
+                        highest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp >= highest {
+                highestIdx = (today) as i32;
+                highest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+            // a machine-flat window leaves a sub-epsilon residue that an exact check
+            // would divide into [0,100] noise (issue #107 / STOCHRSI).
+            if !((diff).abs() < 1e-14) {
+                tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
+                outIdx += 1;
+            } else {
+                tempBuffer[outIdx] = 0.0;
+                outIdx += 1;
+            }
+            trailingIdx += 1;
+            today += 1;
+        }
+        // Fast-K calculation completed. This K calculation is returned
+        // to the caller. It is smoothed to become Fast-D.
+        // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            if bufferIsAllocated != 0 {
+            }
+            // Something wrong happen? No further data?
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Copy tempBuffer into the caller buffer.
+        // (Calculation could not be done directly in the
+        //  caller buffer because more input data then the
+        //  requested range was needed for doing %D).
+        // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
+        // reused as scratch, so source and destination overlap (issue #94).
+        {
+            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (lookbackFastD) as usize;
+            sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
+        };
+        // Don't need K anymore, free it if it was allocated here.
+        if bufferIsAllocated != 0 {
+        }
+        if retCode != RetCode::Success {
+            // Something wrong happen while processing %D?
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Note: Keep the outBegIdx relative to the
+        //       caller input before returning.
+        (*outBegIdx) = startIdx;
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inHigh: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut x_inLow: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut x_inClose: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inHigh[fillJ % capX as usize] = inHigh[fillJ];
+                x_inLow[fillJ % capX as usize] = inLow[fillJ];
+                x_inClose[fillJ % capX as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = StochfStreamState {
+            optInFastK_Period,
+            optInFastD_Period,
+            optInFastD_MAType,
+            lowest,
+            highest,
+            diff,
+            lowestIdx: (lowestIdx) as i32,
+            highestIdx: (highestIdx) as i32,
+            trailingIdx: (trailingIdx) as i32,
+            i: (i) as i32,
+            today: (today) as i32,
+            xCap: capX as i32,
+            x_inHigh,
+            x_inLow,
+            x_inClose,
+            sub0,
+        };
+        outFastK[..*outNBElement].copy_from_slice(&sc_outFastK[..*outNBElement]);
+        outFastD[..*outNBElement].copy_from_slice(&sc_outFastD[..*outNBElement]);
+        Ok(StochfStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl StochfStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_STOCHF_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64) {
+        let mut outFastK: f64 = 0.0_f64;
+        let mut outFastD: f64 = 0.0_f64;
+        self.core.stochf_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD);
+        (outFastK, outFastD)
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_STOCHF_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64) {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<StochfStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

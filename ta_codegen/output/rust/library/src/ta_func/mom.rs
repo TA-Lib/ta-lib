@@ -260,6 +260,295 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live MOM stream: one value per closed bar, bit-identical to [`Core::mom`]
+/// over the same series. Open with [`Core::mom_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_MOM_Stream")]
+pub struct MomStream {
+    core: Core,
+    state: MomStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MomStreamState {
+    optInTimePeriod: i32,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn mom_step_internal(&self, sp: &mut MomStreamState, inReal: f64, outReal: &mut f64) {
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal[0] = inReal;
+        }
+        (*outReal) = inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::mom_open`] (composition seam).
+    pub(crate) fn mom_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MomStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 10;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut inIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        // The interpretation of the rate of change varies widely depending
+        // which software and/or books you are refering to.
+        //
+        // The following is the table of Rate-Of-Change implemented in TA-LIB:
+        //       MOM     = (price - prevPrice)         [Momentum]
+        //       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
+        //       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
+        //       ROCR    = (price/prevPrice)           [Rate of change ratio]
+        //       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
+        //
+        // Here are the equivalent function in other software:
+        //       TA-Lib  |   Tradestation   |    Metastock
+        //       =================================================
+        //       MOM     |   Momentum       |    ROC (Point)
+        //       ROC     |   ROC            |    ROC (Percent)
+        //       ROCP    |   PercentChange  |    -
+        //       ROCR    |   -              |    -
+        //       ROCR100 |   -              |    MO
+        //
+        // The MOM function is the only one who is not normalized, and thus
+        // should be avoided for comparing different time serie of prices.
+        //
+        // ROC and ROCP are centered at zero and can have positive and negative
+        // value. Here are some equivalence:
+        //    ROC = ROCP/100
+        //        = ((price-prevPrice)/prevPrice)/100
+        //        = ((price/prevPrice)-1)*100
+        //
+        // ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
+        // always positive values.
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < (optInTimePeriod) as usize {
+            startIdx = (optInTimePeriod) as usize;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Calculate Momentum:
+        //    Just substract the value from 'period' ago from
+        //    current value.
+        outIdx = 0;
+        inIdx = startIdx;
+        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        while inIdx <= endIdx {
+            lastValue_outReal = inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+        }
+        // Set output limits.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = MomStreamState {
+            optInTimePeriod,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok((MomStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live MOM stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::mom`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.mom_open(&data, 10).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_MOM_Open")]
+    pub fn mom_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MomStream, f64), RetCode> {
+        self.mom_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::mom_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mom`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MOM_OpenAndFill")]
+    pub fn mom_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MomStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 10;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut inIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        // The interpretation of the rate of change varies widely depending
+        // which software and/or books you are refering to.
+        //
+        // The following is the table of Rate-Of-Change implemented in TA-LIB:
+        //       MOM     = (price - prevPrice)         [Momentum]
+        //       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
+        //       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
+        //       ROCR    = (price/prevPrice)           [Rate of change ratio]
+        //       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
+        //
+        // Here are the equivalent function in other software:
+        //       TA-Lib  |   Tradestation   |    Metastock
+        //       =================================================
+        //       MOM     |   Momentum       |    ROC (Point)
+        //       ROC     |   ROC            |    ROC (Percent)
+        //       ROCP    |   PercentChange  |    -
+        //       ROCR    |   -              |    -
+        //       ROCR100 |   -              |    MO
+        //
+        // The MOM function is the only one who is not normalized, and thus
+        // should be avoided for comparing different time serie of prices.
+        //
+        // ROC and ROCP are centered at zero and can have positive and negative
+        // value. Here are some equivalence:
+        //    ROC = ROCP/100
+        //        = ((price-prevPrice)/prevPrice)/100
+        //        = ((price/prevPrice)-1)*100
+        //
+        // ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
+        // always positive values.
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < (optInTimePeriod) as usize {
+            startIdx = (optInTimePeriod) as usize;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Calculate Momentum:
+        //    Just substract the value from 'period' ago from
+        //    current value.
+        outIdx = 0;
+        inIdx = startIdx;
+        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        while inIdx <= endIdx {
+            outReal[outIdx] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }]) as f64);
+            outIdx += 1;
+        }
+        // Set output limits.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = MomStreamState {
+            optInTimePeriod,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok(MomStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl MomStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_MOM_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.mom_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_MOM_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<MomStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

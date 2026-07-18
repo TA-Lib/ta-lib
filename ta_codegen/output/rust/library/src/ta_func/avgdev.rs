@@ -261,6 +261,272 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live AVGDEV stream: one value per closed bar, bit-identical to [`Core::avgdev`]
+/// over the same series. Open with [`Core::avgdev_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_AVGDEV_Stream")]
+pub struct AvgdevStream {
+    core: Core,
+    state: AvgdevStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AvgdevStreamState {
+    optInTimePeriod: i32,
+    winPos_i: usize,
+    winCap_i: usize,
+    win_i_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn avgdev_step_internal(&self, sp: &mut AvgdevStreamState, inReal: f64, outReal: &mut f64) {
+        let mut todaySum: f64 = 0.0_f64;
+        let mut todayDev: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        sp.win_i_inReal[sp.winPos_i] = inReal;
+        todaySum = 0.0;
+        // for( i = 0; i < (sp.optInTimePeriod) as usize; i += 1 )
+        i = 0;
+        while i < (sp.optInTimePeriod) as usize {
+            todaySum += sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+            i += 1;
+        }
+        todayDev = 0.0;
+        // for( i = 0; i < (sp.optInTimePeriod) as usize; i += 1 )
+        i = 0;
+        while i < (sp.optInTimePeriod) as usize {
+            todayDev += (sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - todaySum / ((sp.optInTimePeriod) as f64)).abs();
+            i += 1;
+        }
+        (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
+        sp.winPos_i = sp.winPos_i + 1;
+        if sp.winPos_i >= sp.winCap_i {
+            sp.winPos_i = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::avgdev_open`] (composition seam).
+    pub(crate) fn avgdev_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(AvgdevStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookback: usize = 0_usize;
+        lookback = (optInTimePeriod - 1) as usize;
+        if startIdx < lookback {
+            startIdx = lookback;
+        }
+        today = startIdx;
+        // Make sure there is still something to evaluate.
+        if today > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Process the initial DM and TR
+        dummyBegIdx = today;
+        outIdx = 0;
+        while today <= endIdx {
+            let mut todaySum: f64 = 0.0_f64;
+            let mut todayDev: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            todaySum = 0.0;
+            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            i = 0;
+            while i < (optInTimePeriod) as usize {
+                todaySum += inReal[today - i];
+                i += 1;
+            }
+            todayDev = 0.0;
+            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            i = 0;
+            while i < (optInTimePeriod) as usize {
+                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
+                i += 1;
+            }
+            lastValue_outReal = todayDev / ((optInTimePeriod) as f64);
+            outIdx += 1;
+            today += 1;
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_i: i64 = (optInTimePeriod) as i64;
+        if cap_i < 1 || cap_i > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
+        win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
+        let state = AvgdevStreamState {
+            optInTimePeriod,
+            winPos_i: 0_usize,
+            winCap_i: cap_i as usize,
+            win_i_inReal,
+        };
+        Ok((AvgdevStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live AVGDEV stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::avgdev`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.avgdev_open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_AVGDEV_Open")]
+    pub fn avgdev_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(AvgdevStream, f64), RetCode> {
+        self.avgdev_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::avgdev_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::avgdev`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_AVGDEV_OpenAndFill")]
+    pub fn avgdev_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AvgdevStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookback: usize = 0_usize;
+        lookback = (optInTimePeriod - 1) as usize;
+        if startIdx < lookback {
+            startIdx = lookback;
+        }
+        today = startIdx;
+        // Make sure there is still something to evaluate.
+        if today > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Process the initial DM and TR
+        (*outBegIdx) = today;
+        outIdx = 0;
+        while today <= endIdx {
+            let mut todaySum: f64 = 0.0_f64;
+            let mut todayDev: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            todaySum = 0.0;
+            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            i = 0;
+            while i < (optInTimePeriod) as usize {
+                todaySum += inReal[today - i];
+                i += 1;
+            }
+            todayDev = 0.0;
+            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            i = 0;
+            while i < (optInTimePeriod) as usize {
+                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
+                i += 1;
+            }
+            outReal[outIdx] = todayDev / ((optInTimePeriod) as f64);
+            outIdx += 1;
+            today += 1;
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_i: i64 = (optInTimePeriod) as i64;
+        if cap_i < 1 || cap_i > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
+        win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
+        let state = AvgdevStreamState {
+            optInTimePeriod,
+            winPos_i: 0_usize,
+            winCap_i: cap_i as usize,
+            win_i_inReal,
+        };
+        Ok(AvgdevStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AvgdevStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_AVGDEV_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.avgdev_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_AVGDEV_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AvgdevStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

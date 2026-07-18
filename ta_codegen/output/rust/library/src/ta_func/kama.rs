@@ -466,6 +466,538 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live KAMA stream: one value per closed bar, bit-identical to [`Core::kama`]
+/// over the same series. Open with [`Core::kama_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_KAMA_Stream")]
+pub struct KamaStream {
+    core: Core,
+    state: KamaStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct KamaStreamState {
+    optInTimePeriod: i32,
+    constMax: f64,
+    constDiff: f64,
+    sumROC1: f64,
+    prevKAMA: f64,
+    trailingValue: f64,
+    lag1_inReal: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn kama_step_internal(&self, sp: &mut KamaStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut periodROC: f64 = 0.0_f64;
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal[0] = inReal;
+        }
+        tempReal = inReal;
+        tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        periodROC = tempReal - tempReal2;
+        // Adjust sumROC1:
+        //  - Remove trailing ROC1
+        //  - Add new ROC1
+        sp.sumROC1 -= (sp.trailingValue - tempReal2).abs();
+        sp.sumROC1 += (tempReal - sp.lag1_inReal).abs();
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        sp.trailingValue = tempReal2;
+        // Calculate the efficiency ratio
+        if sp.sumROC1 <= periodROC || (sp.sumROC1).abs() < 1e-14 {
+            tempReal = 1.0;
+        } else {
+            tempReal = (periodROC / sp.sumROC1).abs();
+        }
+        // Calculate the smoothing constant
+        tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+        tempReal *= tempReal;
+        // Calculate the KAMA like an EMA, using the
+        // smoothing constant as the adaptive factor.
+        sp.prevKAMA = (inReal - sp.prevKAMA as f64).mul_add(tempReal, sp.prevKAMA);
+        (*outReal) = sp.prevKAMA;
+        sp.lag1_inReal = inReal;
+        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::kama_open`] (composition seam).
+    pub(crate) fn kama_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(KamaStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.kama_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = KamaStreamState {
+                optInTimePeriod: optInTimePeriod,
+                constMax: 0.0_f64,
+                constDiff: 0.0_f64,
+                sumROC1: 0.0_f64,
+                prevKAMA: 0.0_f64,
+                trailingValue: 0.0_f64,
+                lag1_inReal: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+            };
+            return Ok((KamaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
+        let mut constMax: f64 = 0.0_f64;
+        let mut constDiff: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut sumROC1: f64 = 0.0_f64;
+        let mut periodROC: f64 = 0.0_f64;
+        let mut prevKAMA: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut trailingValue: f64 = 0.0_f64;
+        constMax = 2.0 / (30.0 + 1.0);
+        constDiff = 2.0 / (2.0 + 1.0) - constMax;
+        // Default return values
+        dummyBegIdx = 0;
+        dummyNBElement = 0;
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). The unstable period
+        // still delays the first output for API consistency.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Initialize the variables by going through
+        // the lookback period.
+        sumROC1 = 0.0;
+        today = startIdx - lookbackTotal;
+        trailingIdx = today;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            tempReal -= inReal[today];
+            sumROC1 += (tempReal).abs();
+        }
+        // At this point sumROC1 represent the
+        // summation of the 1-day price difference
+        // over the (optInTimePeriod-1)
+        // Calculate the first KAMA
+        // The yesterday price is used here as the previous KAMA.
+        prevKAMA = inReal[today - 1];
+        tempReal = inReal[today];
+        tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+        periodROC = tempReal - tempReal2;
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        trailingValue = tempReal2;
+        // Calculate the efficiency ratio
+        if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+            tempReal = 1.0;
+        } else {
+            tempReal = (periodROC / sumROC1).abs();
+        }
+        // Calculate the smoothing constant
+        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal *= tempReal;
+        // Calculate the KAMA like an EMA, using the
+        // smoothing constant as the adaptive factor.
+        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        // 'today' keep track of where the processing is within the
+        // input.
+        // Skip the unstable period. Do the whole processing
+        // needed for KAMA, but do not write it in the output.
+        while today <= startIdx {
+            tempReal = inReal[today];
+            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - inReal[today - 1]).abs();
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        }
+        // Write the first value.
+        lastValue_outReal = prevKAMA;
+        outIdx = 1;
+        dummyBegIdx = today - 1;
+        // Do the KAMA calculation for the requested range.
+        while today <= endIdx {
+            tempReal = inReal[today];
+            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - inReal[today - 1]).abs();
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            lastValue_outReal = prevKAMA;
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = KamaStreamState {
+            optInTimePeriod,
+            constMax,
+            constDiff,
+            sumROC1,
+            prevKAMA,
+            trailingValue,
+            lag1_inReal: inReal[historyLen - 1],
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok((KamaStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live KAMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::kama`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.kama_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_KAMA_Open")]
+    pub fn kama_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KamaStream, f64), RetCode> {
+        self.kama_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::kama_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::kama`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_KAMA_OpenAndFill")]
+    pub fn kama_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<KamaStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.kama_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = KamaStreamState {
+                optInTimePeriod: optInTimePeriod,
+                constMax: 0.0_f64,
+                constDiff: 0.0_f64,
+                sumROC1: 0.0_f64,
+                prevKAMA: 0.0_f64,
+                trailingValue: 0.0_f64,
+                lag1_inReal: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+            };
+            let fillLb: usize = self.kama_lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(KamaStream { core: self.clone(), state });
+        }
+        let mut constMax: f64 = 0.0_f64;
+        let mut constDiff: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut sumROC1: f64 = 0.0_f64;
+        let mut periodROC: f64 = 0.0_f64;
+        let mut prevKAMA: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut trailingValue: f64 = 0.0_f64;
+        constMax = 2.0 / (30.0 + 1.0);
+        constDiff = 2.0 / (2.0 + 1.0) - constMax;
+        // Default return values
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). The unstable period
+        // still delays the first output for API consistency.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Initialize the variables by going through
+        // the lookback period.
+        sumROC1 = 0.0;
+        today = startIdx - lookbackTotal;
+        trailingIdx = today;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            tempReal -= inReal[today];
+            sumROC1 += (tempReal).abs();
+        }
+        // At this point sumROC1 represent the
+        // summation of the 1-day price difference
+        // over the (optInTimePeriod-1)
+        // Calculate the first KAMA
+        // The yesterday price is used here as the previous KAMA.
+        prevKAMA = inReal[today - 1];
+        tempReal = inReal[today];
+        tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+        periodROC = tempReal - tempReal2;
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        trailingValue = tempReal2;
+        // Calculate the efficiency ratio
+        if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+            tempReal = 1.0;
+        } else {
+            tempReal = (periodROC / sumROC1).abs();
+        }
+        // Calculate the smoothing constant
+        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal *= tempReal;
+        // Calculate the KAMA like an EMA, using the
+        // smoothing constant as the adaptive factor.
+        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        // 'today' keep track of where the processing is within the
+        // input.
+        // Skip the unstable period. Do the whole processing
+        // needed for KAMA, but do not write it in the output.
+        while today <= startIdx {
+            tempReal = inReal[today];
+            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - inReal[today - 1]).abs();
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        }
+        // Write the first value.
+        outReal[0] = prevKAMA;
+        outIdx = 1;
+        (*outBegIdx) = today - 1;
+        // Do the KAMA calculation for the requested range.
+        while today <= endIdx {
+            tempReal = inReal[today];
+            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - inReal[today - 1]).abs();
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            outReal[outIdx] = prevKAMA;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = KamaStreamState {
+            optInTimePeriod,
+            constMax,
+            constDiff,
+            sumROC1,
+            prevKAMA,
+            trailingValue,
+            lag1_inReal: inReal[historyLen - 1],
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok(KamaStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl KamaStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_KAMA_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.kama_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_KAMA_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<KamaStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

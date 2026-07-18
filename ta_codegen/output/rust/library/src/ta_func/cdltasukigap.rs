@@ -399,6 +399,578 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLTASUKIGAP stream: one value per closed bar, bit-identical to [`Core::cdltasukigap`]
+/// over the same series. Open with [`Core::cdltasukigap_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLTASUKIGAP_Stream")]
+pub struct CdltasukigapStream {
+    core: Core,
+    state: CdltasukigapStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CdltasukigapStreamState {
+    NearPeriodTotal: f64,
+    lag1_inOpen: f64,
+    lag2_inOpen: f64,
+    lag1_inHigh: f64,
+    lag1_inLow: f64,
+    lag1_inClose: f64,
+    lag2_inClose: f64,
+    ringPos_NearTrailingIdx: usize,
+    ringCap_NearTrailingIdx: usize,
+    ringLag_NearTrailingIdx: usize,
+    ring_NearTrailingIdx_inOpen: Vec<f64>,
+    ring_NearTrailingIdx_inHigh: Vec<f64>,
+    ring_NearTrailingIdx_inLow: Vec<f64>,
+    ring_NearTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdltasukigap_step_internal(&self, sp: &mut CdltasukigapStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        #[allow(non_snake_case)]
+        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        #[allow(non_snake_case)]
+        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
+        #[allow(non_snake_case)]
+        let Near_factor: f64 = self.candle_settings.near.factor;
+        sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
+        sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
+        sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
+        sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
+        if ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > (sp.lag2_inClose).max(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), _ => (sp.lag1_inHigh) - (sp.lag1_inLow) - ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < (sp.lag2_inClose).min(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), _ => (sp.lag1_inHigh) - (sp.lag1_inLow) - ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
+            // upside gap
+            // 1st: white
+            // 2nd: black
+            // that opens within the white rb
+            // and closes under the white rb
+            // inside the gap
+            // size of 2 rb near the same
+            // downside gap
+            // 1st: black
+            // 2nd: white
+            // that opens within the black rb
+            // and closes above the black rb
+            // inside the gap
+            // size of 2 rb near the same
+            (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+        } else {
+            (*outInteger) = 0;
+        }
+        // add the current range and subtract the first range: this is done after the pattern recognition
+        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        let mut _candlerange_0: f64;
+        match Near_rangeType {
+            0 => {
+                _candlerange_0 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow;
+            }
+            2 => {
+                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow - (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        let mut _candlerange_1: f64;
+        match Near_rangeType {
+            0 => {
+                _candlerange_1 = (sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize]).abs();
+            }
+            1 => {
+                _candlerange_1 = sp.ring_NearTrailingIdx_inHigh[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inLow[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize];
+            }
+            2 => {
+                _candlerange_1 = sp.ring_NearTrailingIdx_inHigh[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inLow[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize] - (sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize]).abs();
+            }
+            _ => {
+                _candlerange_1 = 0.0;
+            }
+        }
+        sp.NearPeriodTotal += _candlerange_0 - _candlerange_1;
+        sp.lag2_inOpen = sp.lag1_inOpen;
+        sp.lag1_inOpen = inOpen;
+        sp.lag1_inHigh = inHigh;
+        sp.lag1_inLow = inLow;
+        sp.lag2_inClose = sp.lag1_inClose;
+        sp.lag1_inClose = inClose;
+        sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
+        sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
+        sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
+        sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
+        sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
+        if sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
+            sp.ringPos_NearTrailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdltasukigap_open`] (composition seam).
+    pub(crate) fn cdltasukigap_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CdltasukigapStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut NearPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut NearTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        #[allow(non_snake_case)]
+        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
+        #[allow(non_snake_case)]
+        let Near_factor: f64 = self.candle_settings.near.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdltasukigap_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        NearPeriodTotal = 0.0;
+        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        i = NearTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_2: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_2 = 0.0;
+                }
+            }
+            NearPeriodTotal += _candlerange_2;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - upside (downside) gap
+        // - first candle after the window: white (black) candlestick
+        // - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+        //   the previous real body inside the gap
+        // - the size of two real bodies should be near the same
+        // The meaning of "near" is specified with TA_SetCandleSettings
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+        // the user should consider that tasuki gap is significant when it appears in a trend, while this function does
+        // not consider it
+        outIdx = 0;
+        loop {
+            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
+                // upside gap
+                // 1st: white
+                // 2nd: black
+                // that opens within the white rb
+                // and closes under the white rb
+                // inside the gap
+                // size of 2 rb near the same
+                // downside gap
+                // 1st: black
+                // 2nd: white
+                // that opens within the black rb
+                // and closes above the black rb
+                // inside the gap
+                // size of 2 rb near the same
+                lastValue_outInteger = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                lastValue_outInteger = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_3: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_3 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_3 = 0.0;
+                }
+            }
+            let mut _candlerange_4: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_4 = (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
+                }
+                1 => {
+                    _candlerange_4 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1];
+                }
+                2 => {
+                    _candlerange_4 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1] - (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
+                }
+                _ => {
+                    _candlerange_4 = 0.0;
+                }
+            }
+            NearPeriodTotal += _candlerange_3 - _candlerange_4;
+            i += 1;
+            NearTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
+        let cap_NearTrailingIdx: i64 = capLag_NearTrailingIdx + 2;
+        if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_NearTrailingIdx: usize = if cap_NearTrailingIdx > 0 { cap_NearTrailingIdx as usize } else { 1 };
+        let mut ring_NearTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx as usize] = inOpen[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx as usize] = inHigh[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx as usize] = inLow[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = CdltasukigapStreamState {
+            NearPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag1_inLow: inLow[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+            ringPos_NearTrailingIdx: historyLen % cap_NearTrailingIdx as usize,
+            ringCap_NearTrailingIdx: cap_NearTrailingIdx as usize,
+            ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
+            ring_NearTrailingIdx_inOpen,
+            ring_NearTrailingIdx_inHigh,
+            ring_NearTrailingIdx_inLow,
+            ring_NearTrailingIdx_inClose,
+        };
+        Ok((CdltasukigapStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLTASUKIGAP stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdltasukigap`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdltasukigap_open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLTASUKIGAP_Open")]
+    pub fn cdltasukigap_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdltasukigapStream, i32), RetCode> {
+        self.cdltasukigap_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::cdltasukigap_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdltasukigap`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLTASUKIGAP_OpenAndFill")]
+    pub fn cdltasukigap_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdltasukigapStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut NearPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut NearTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        #[allow(non_snake_case)]
+        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
+        #[allow(non_snake_case)]
+        let Near_factor: f64 = self.candle_settings.near.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdltasukigap_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        NearPeriodTotal = 0.0;
+        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        i = NearTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_5: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_5 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_5 = 0.0;
+                }
+            }
+            NearPeriodTotal += _candlerange_5;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - upside (downside) gap
+        // - first candle after the window: white (black) candlestick
+        // - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+        //   the previous real body inside the gap
+        // - the size of two real bodies should be near the same
+        // The meaning of "near" is specified with TA_SetCandleSettings
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+        // the user should consider that tasuki gap is significant when it appears in a trend, while this function does
+        // not consider it
+        outIdx = 0;
+        loop {
+            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
+                // upside gap
+                // 1st: white
+                // 2nd: black
+                // that opens within the white rb
+                // and closes under the white rb
+                // inside the gap
+                // size of 2 rb near the same
+                // downside gap
+                // 1st: black
+                // 2nd: white
+                // that opens within the black rb
+                // and closes above the black rb
+                // inside the gap
+                // size of 2 rb near the same
+                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
+                outIdx += 1;
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_6: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_6 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_6 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_6 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_6 = 0.0;
+                }
+            }
+            let mut _candlerange_7: f64;
+            match Near_rangeType {
+                0 => {
+                    _candlerange_7 = (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
+                }
+                1 => {
+                    _candlerange_7 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1];
+                }
+                2 => {
+                    _candlerange_7 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1] - (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
+                }
+                _ => {
+                    _candlerange_7 = 0.0;
+                }
+            }
+            NearPeriodTotal += _candlerange_6 - _candlerange_7;
+            i += 1;
+            NearTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
+        let cap_NearTrailingIdx: i64 = capLag_NearTrailingIdx + 2;
+        if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_NearTrailingIdx: usize = if cap_NearTrailingIdx > 0 { cap_NearTrailingIdx as usize } else { 1 };
+        let mut ring_NearTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx as usize] = inOpen[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx as usize] = inHigh[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx as usize] = inLow[fillJ];
+                fillJ += 1;
+            }
+        }
+        let mut ring_NearTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx as usize] = inClose[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = CdltasukigapStreamState {
+            NearPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag1_inLow: inLow[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+            ringPos_NearTrailingIdx: historyLen % cap_NearTrailingIdx as usize,
+            ringCap_NearTrailingIdx: cap_NearTrailingIdx as usize,
+            ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
+            ring_NearTrailingIdx_inOpen,
+            ring_NearTrailingIdx_inHigh,
+            ring_NearTrailingIdx_inLow,
+            ring_NearTrailingIdx_inClose,
+        };
+        Ok(CdltasukigapStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CdltasukigapStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLTASUKIGAP_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdltasukigap_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLTASUKIGAP_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CdltasukigapStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -75,7 +75,11 @@ pub fn pascal_word(s: &str) -> String {
 
 /// True if any statement is `return ALLOC_ERR;`.
 pub fn contains_alloc_err_return(stmts: &[Statement]) -> bool {
-    stmts.iter().any(|s| matches!(s, Statement::Return { value: Some(Expr::Var(name)) } if name == "ALLOC_ERR"))
+    // "Err(RetCode::AllocErr)" is the Rust stream tier's pre-mapped form of the
+    // same return (`map_return_code` runs before rendering); no batch IR ever
+    // carries it, so recognizing it is batch-invariant.
+    stmts.iter().any(|s| matches!(s, Statement::Return { value: Some(Expr::Var(name)) }
+        if name == "ALLOC_ERR" || name == "Err(RetCode::AllocErr)"))
 }
 
 /// If `expr` is (or recursively contains) a `sizeof(TYPE)`, return the type name.

@@ -126,6 +126,7 @@ pub fn build_fma_var_sets(
 /// sp->optInNbDevUp` with unequal deviations). A no-op for batch names.
 fn stream_base(name: &str) -> &str {
     name.strip_prefix("sp->")
+        .or_else(|| name.strip_prefix("sp.")) // Rust stream state prefix
         .or_else(|| name.strip_prefix("cur_"))
         .unwrap_or(name)
 }
@@ -197,6 +198,8 @@ pub(crate) fn expr_is_float_typed(expr: &Expr, ctx: Option<&FmaCtx>) -> bool {
                 || name.starts_with("_tempReal")
         }
         Expr::ArrayAccess(name, _) => {
+            // Classify by the underlying batch name (see the Var arm).
+            let name = stream_base(name);
             // Check context's real_array_vars set
             if let Some(c) = ctx {
                 if c.real_array_vars.contains(name) {
@@ -262,6 +265,7 @@ pub(crate) fn expr_is_float_typed(expr: &Expr, ctx: Option<&FmaCtx>) -> bool {
 /// from `rust_lang.rs`; also re-imported there so its existing callers are
 /// unchanged.
 pub(crate) fn is_i32_opt_in_param(name: &str) -> bool {
+    let name = stream_base(name);
     if !name.starts_with("optIn") {
         return false;
     }

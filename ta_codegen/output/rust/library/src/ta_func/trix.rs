@@ -404,6 +404,402 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live TRIX stream: one value per closed bar, bit-identical to [`Core::trix`]
+/// over the same series. Open with [`Core::trix_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_TRIX_Stream")]
+pub struct TrixStream {
+    core: Core,
+    state: TrixStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct TrixStreamState {
+    optInTimePeriod: i32,
+    prevEMA1: f64,
+    prevEMA2: f64,
+    prevEMA3: f64,
+    optInK_1: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn trix_step_internal(&self, sp: &mut TrixStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        tempReal = sp.prevEMA3;
+        sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
+        sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
+        sp.prevEMA3 = (sp.prevEMA2 - sp.prevEMA3 as f64).mul_add(sp.optInK_1, sp.prevEMA3);
+        if tempReal != 0.0 {
+            (*outReal) = (sp.prevEMA3 / tempReal - 1.0) * 100.0;
+        } else {
+            (*outReal) = 0.0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::trix_open`] (composition seam).
+    pub(crate) fn trix_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(TrixStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // TRIX = 1-day percent rate-of-change of a triple EMA.
+        // Will change only on success.
+        dummyNBElement = 0;
+        dummyBegIdx = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+        // roc() of consecutive EMA3 values. Output element j is the TRIX
+        // of bar startIdx+j (fix #98). The arithmetic order below is the
+        // bit-exactness contract — do not reorder or fuse operations; the
+        // seed sums accumulate from 0.0 in production order (0.0+x is not
+        // x for x=-0.0). In-place safe: outReal[outIdx] is written after
+        // inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA1 from the first price
+            // bar, EMA2 from the first EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            prevEMA2 = prevEMA1;
+        }
+        // Advance EMA1 and EMA2 in lockstep through the unstable
+        // period of EMA2, up to the bar where EMA3 seeding begins.
+        while today <= startIdx - (lookbackEMA + 1) {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+        }
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA3 from the first EMA2
+            // value.
+            prevEMA3 = prevEMA2;
+        }
+        // Advance all three EMA in lockstep through the unstable
+        // period of EMA3, up to the bar before the first output.
+        while today <= startIdx - 1 {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
+        }
+        // Stable zone: keep advancing the three EMA in lockstep and
+        // write the 1-day rate-of-change of EMA3 into the output.
+        outIdx = 0;
+        while today <= endIdx {
+            tempReal = prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
+            if tempReal != 0.0 {
+                lastValue_outReal = (prevEMA3 / tempReal - 1.0) * 100.0;
+            } else {
+                lastValue_outReal = 0.0;
+            }
+        }
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = TrixStreamState {
+            optInTimePeriod,
+            prevEMA1,
+            prevEMA2,
+            prevEMA3,
+            optInK_1,
+        };
+        Ok((TrixStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live TRIX stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::trix`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.trix_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_TRIX_Open")]
+    pub fn trix_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TrixStream, f64), RetCode> {
+        self.trix_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::trix_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::trix`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_TRIX_OpenAndFill")]
+    pub fn trix_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<TrixStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // TRIX = 1-day percent rate-of-change of a triple EMA.
+        // Will change only on success.
+        (*outNBElement) = 0;
+        (*outBegIdx) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+        // roc() of consecutive EMA3 values. Output element j is the TRIX
+        // of bar startIdx+j (fix #98). The arithmetic order below is the
+        // bit-exactness contract — do not reorder or fuse operations; the
+        // seed sums accumulate from 0.0 in production order (0.0+x is not
+        // x for x=-0.0). In-place safe: outReal[outIdx] is written after
+        // inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA1 from the first price
+            // bar, EMA2 from the first EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            prevEMA2 = prevEMA1;
+        }
+        // Advance EMA1 and EMA2 in lockstep through the unstable
+        // period of EMA2, up to the bar where EMA3 seeding begins.
+        while today <= startIdx - (lookbackEMA + 1) {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+        }
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA3 from the first EMA2
+            // value.
+            prevEMA3 = prevEMA2;
+        }
+        // Advance all three EMA in lockstep through the unstable
+        // period of EMA3, up to the bar before the first output.
+        while today <= startIdx - 1 {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
+        }
+        // Stable zone: keep advancing the three EMA in lockstep and
+        // write the 1-day rate-of-change of EMA3 into the output.
+        outIdx = 0;
+        while today <= endIdx {
+            tempReal = prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
+            if tempReal != 0.0 {
+                outReal[outIdx] = (prevEMA3 / tempReal - 1.0) * 100.0;
+                outIdx += 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx += 1;
+            }
+        }
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = TrixStreamState {
+            optInTimePeriod,
+            prevEMA1,
+            prevEMA2,
+            prevEMA3,
+            optInK_1,
+        };
+        Ok(TrixStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl TrixStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_TRIX_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.trix_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_TRIX_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<TrixStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

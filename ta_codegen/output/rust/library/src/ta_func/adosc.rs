@@ -416,6 +416,420 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live ADOSC stream: one value per closed bar, bit-identical to [`Core::adosc`]
+/// over the same series. Open with [`Core::adosc_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_ADOSC_Stream")]
+pub struct AdoscStream {
+    core: Core,
+    state: AdoscStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AdoscStreamState {
+    optInFastPeriod: i32,
+    optInSlowPeriod: i32,
+    slowEMA: f64,
+    slowk: f64,
+    one_minus_slowk: f64,
+    fastEMA: f64,
+    fastk: f64,
+    one_minus_fastk: f64,
+    ad: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn adosc_step_internal(&self, sp: &mut AdoscStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+        let mut high: f64 = 0.0_f64;
+        let mut low: f64 = 0.0_f64;
+        let mut close: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        high = inHigh;
+        low = inLow;
+        tmp = high - low;
+        close = inClose;
+        if tmp > 0.0 {
+            sp.ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+        }
+        sp.fastEMA = (sp.one_minus_fastk as f64).mul_add(sp.fastEMA, sp.fastk * sp.ad);
+        sp.slowEMA = (sp.one_minus_slowk as f64).mul_add(sp.slowEMA, sp.slowk * sp.ad);
+        (*outReal) = sp.fastEMA - sp.slowEMA;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::adosc_open`] (composition seam).
+    pub(crate) fn adosc_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32,
+    ) -> Result<(AdoscStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastPeriod) as i32) == (i32::MIN) {
+            optInFastPeriod = 3;
+        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+            optInSlowPeriod = 10;
+        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut slowestPeriod: usize = 0_usize;
+        let mut high: f64 = 0.0_f64;
+        let mut low: f64 = 0.0_f64;
+        let mut close: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut slowEMA: f64 = 0.0_f64;
+        let mut slowk: f64 = 0.0_f64;
+        let mut one_minus_slowk: f64 = 0.0_f64;
+        let mut fastEMA: f64 = 0.0_f64;
+        let mut fastk: f64 = 0.0_f64;
+        let mut one_minus_fastk: f64 = 0.0_f64;
+        let mut ad: f64 = 0.0_f64;
+        // Implementation Note:
+        //     The fastEMA varaible is not neceseraly the
+        //     fastest EMA.
+        //     In the same way, slowEMA is not neceseraly the
+        //     slowest EMA.
+        //
+        //     The ADOSC is always the (fastEMA - slowEMA) regardless
+        //     of the period specified. In other word:
+        //
+        //     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
+        //
+        //        while
+        //
+        //     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
+        //
+        //     In the first case the EMA(3) is truly a faster EMA,
+        //     while in the second case, the EMA(10) is still call
+        //     fastEMA in the algorithm, even if it is in fact slower.
+        //
+        //     This gives more flexibility to the user if they want to
+        //     experiment with unusual parameter settings.
+        // Identify the slowest period.
+        // This infomration is used soleley to bootstrap
+        // the algorithm (skip the lookback period).
+        if optInFastPeriod < optInSlowPeriod {
+            slowestPeriod = (optInSlowPeriod) as usize;
+        } else {
+            slowestPeriod = (optInFastPeriod) as usize;
+        }
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.ema_lookback((slowestPeriod) as i32);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        dummyBegIdx = startIdx;
+        today = startIdx - lookbackTotal;
+        // The following variables are used to
+        // calculate the "ad".
+        ad = 0.0;
+        // Constants for EMA
+        fastk = 2.0 / ((optInFastPeriod as f64) + 1.0);
+        one_minus_fastk = 1.0 - fastk;
+        slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
+        one_minus_slowk = 1.0 - slowk;
+        // Initialize the two EMA
+        //
+        // Use the same range of initialization inputs for
+        // both EMA and simply seed with the first A/D value.
+        //
+        // Note: Metastock do the same.
+        high = inHigh[today];
+        low = inLow[today];
+        tmp = high - low;
+        close = inClose[today];
+        if tmp > 0.0 {
+            ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+        }
+        today += 1;
+        fastEMA = ad;
+        slowEMA = ad;
+        // Initialize the EMA and skip the unstable period.
+        while today < startIdx {
+            high = inHigh[today];
+            low = inLow[today];
+            tmp = high - low;
+            close = inClose[today];
+            if tmp > 0.0 {
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            }
+            today += 1;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+        }
+        // Perform the calculation for the requested range
+        outIdx = 0;
+        while today <= endIdx {
+            high = inHigh[today];
+            low = inLow[today];
+            tmp = high - low;
+            close = inClose[today];
+            if tmp > 0.0 {
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            }
+            today += 1;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            lastValue_outReal = fastEMA - slowEMA;
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AdoscStreamState {
+            optInFastPeriod,
+            optInSlowPeriod,
+            slowEMA,
+            slowk,
+            one_minus_slowk,
+            fastEMA,
+            fastk,
+            one_minus_fastk,
+            ad,
+        };
+        Ok((AdoscStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live ADOSC stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::adosc`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.adosc_open(&high, &low, &close, &volume, 3, 10).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0);
+    /// let updated = s.update(101.4, 99.1, 100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ADOSC_Open")]
+    pub fn adosc_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(AdoscStream, f64), RetCode> {
+        self.adosc_open_internal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod)
+    }
+
+    /// [`Core::adosc_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::adosc`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ADOSC_OpenAndFill")]
+    pub fn adosc_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AdoscStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastPeriod) as i32) == (i32::MIN) {
+            optInFastPeriod = 3;
+        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+            optInSlowPeriod = 10;
+        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut slowestPeriod: usize = 0_usize;
+        let mut high: f64 = 0.0_f64;
+        let mut low: f64 = 0.0_f64;
+        let mut close: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut slowEMA: f64 = 0.0_f64;
+        let mut slowk: f64 = 0.0_f64;
+        let mut one_minus_slowk: f64 = 0.0_f64;
+        let mut fastEMA: f64 = 0.0_f64;
+        let mut fastk: f64 = 0.0_f64;
+        let mut one_minus_fastk: f64 = 0.0_f64;
+        let mut ad: f64 = 0.0_f64;
+        // Implementation Note:
+        //     The fastEMA varaible is not neceseraly the
+        //     fastest EMA.
+        //     In the same way, slowEMA is not neceseraly the
+        //     slowest EMA.
+        //
+        //     The ADOSC is always the (fastEMA - slowEMA) regardless
+        //     of the period specified. In other word:
+        //
+        //     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
+        //
+        //        while
+        //
+        //     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
+        //
+        //     In the first case the EMA(3) is truly a faster EMA,
+        //     while in the second case, the EMA(10) is still call
+        //     fastEMA in the algorithm, even if it is in fact slower.
+        //
+        //     This gives more flexibility to the user if they want to
+        //     experiment with unusual parameter settings.
+        // Identify the slowest period.
+        // This infomration is used soleley to bootstrap
+        // the algorithm (skip the lookback period).
+        if optInFastPeriod < optInSlowPeriod {
+            slowestPeriod = (optInSlowPeriod) as usize;
+        } else {
+            slowestPeriod = (optInFastPeriod) as usize;
+        }
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.ema_lookback((slowestPeriod) as i32);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        (*outBegIdx) = startIdx;
+        today = startIdx - lookbackTotal;
+        // The following variables are used to
+        // calculate the "ad".
+        ad = 0.0;
+        // Constants for EMA
+        fastk = 2.0 / ((optInFastPeriod as f64) + 1.0);
+        one_minus_fastk = 1.0 - fastk;
+        slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
+        one_minus_slowk = 1.0 - slowk;
+        // Initialize the two EMA
+        //
+        // Use the same range of initialization inputs for
+        // both EMA and simply seed with the first A/D value.
+        //
+        // Note: Metastock do the same.
+        high = inHigh[today];
+        low = inLow[today];
+        tmp = high - low;
+        close = inClose[today];
+        if tmp > 0.0 {
+            ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+        }
+        today += 1;
+        fastEMA = ad;
+        slowEMA = ad;
+        // Initialize the EMA and skip the unstable period.
+        while today < startIdx {
+            high = inHigh[today];
+            low = inLow[today];
+            tmp = high - low;
+            close = inClose[today];
+            if tmp > 0.0 {
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            }
+            today += 1;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+        }
+        // Perform the calculation for the requested range
+        outIdx = 0;
+        while today <= endIdx {
+            high = inHigh[today];
+            low = inLow[today];
+            tmp = high - low;
+            close = inClose[today];
+            if tmp > 0.0 {
+                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            }
+            today += 1;
+            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
+            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            outReal[outIdx] = fastEMA - slowEMA;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AdoscStreamState {
+            optInFastPeriod,
+            optInSlowPeriod,
+            slowEMA,
+            slowk,
+            one_minus_slowk,
+            fastEMA,
+            fastk,
+            one_minus_fastk,
+            ad,
+        };
+        Ok(AdoscStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AdoscStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_ADOSC_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.adosc_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_ADOSC_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose, inVolume)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AdoscStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -395,6 +395,227 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live MAVP stream: one value per closed bar, bit-identical to [`Core::mavp`]
+/// over the same series. Open with [`Core::mavp_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_MAVP_Stream")]
+pub struct MavpStream {
+    core: Core,
+    state: MavpStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MavpStreamState {
+    optInMinPeriod: i32,
+    optInMaxPeriod: i32,
+    optInMAType: i32,
+    // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
+    bank: Vec<MaStream>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn mavp_step_internal(&self, sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {
+        let mut cp: i32 = inPeriods as i32;
+        if cp < sp.optInMinPeriod {
+            cp = sp.optInMinPeriod;
+        } else if cp > sp.optInMaxPeriod {
+            cp = sp.optInMaxPeriod;
+        }
+        let slot: usize = (cp - sp.optInMinPeriod) as usize;
+        for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {
+            let subValue = sub.update(inReal);
+            if bankIdx == slot {
+                (*outReal) = subValue;
+            }
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::mavp_open`] (composition seam).
+    pub(crate) fn mavp_open_internal(
+        &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32,
+    ) -> Result<(MavpStream, f64), RetCode> {
+        if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInMinPeriod) as i32) == (i32::MIN) {
+            optInMinPeriod = 2;
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+            optInMaxPeriod = 30;
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        // An inverted [min, max] period window is invalid (batch rejects).
+        if optInMinPeriod > optInMaxPeriod {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the
+        // batch does: it clamps startIdx up to lookback(maxPeriod) and calls the
+        // callee with that same start for every period. Seeding each sub at its
+        // OWN (smaller) lookback would seed the recurrence from a different bar
+        // and diverge for every period < maxPeriod (order-1 for recursive MAs,
+        // running-sum residue for stable ones).
+        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType);
+        let subStart: usize = if startIdx < lookbackTotal { lookbackTotal } else { startIdx };
+        let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
+        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
+        let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
+        for bankIdx in 0..nBank {
+            let (sub, subValue) = self.ma_open_internal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            bank.push(sub);
+            scratch.push(subValue);
+        }
+        let mut cp: i32 = inPeriods[historyLen - 1] as i32;
+        if cp < optInMinPeriod {
+            cp = optInMinPeriod;
+        } else if cp > optInMaxPeriod {
+            cp = optInMaxPeriod;
+        }
+        let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok((MavpStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live MAVP stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::mavp`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let periods: Vec<f64> = (0..252).map(|i| 5.0 + (i % 10) as f64).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.mavp_open(&data, &periods, 2, 30, 0).expect("enough history");
+    /// let peeked = s.peek(100.9, 14.0);
+    /// let updated = s.update(100.9, 14.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_MAVP_Open")]
+    pub fn mavp_open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: i32) -> Result<(MavpStream, f64), RetCode> {
+        self.mavp_open_internal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
+    }
+
+    /// [`Core::mavp_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mavp`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MAVP_OpenAndFill")]
+    pub fn mavp_open_and_fill(
+        &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MavpStream, RetCode> {
+        if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInMinPeriod) as i32) == (i32::MIN) {
+            optInMinPeriod = 2;
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+            optInMaxPeriod = 30;
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        // An inverted [min, max] period window is invalid (batch rejects).
+        if optInMinPeriod > optInMaxPeriod {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType);
+        if historyLen < lookbackTotal + 1 {
+            return Err(RetCode::BadParam);
+        }
+        let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
+        // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
+        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
+        let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
+        for bankIdx in 0..nBank {
+            let (sub, subValue) = self.ma_open_internal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            bank.push(sub);
+            scratch.push(subValue);
+        }
+        // First output bar (lookbackTotal), then replay the remaining history.
+        let mut cp: i32 = inPeriods[lookbackTotal] as i32;
+        if cp < optInMinPeriod {
+            cp = optInMinPeriod;
+        } else if cp > optInMaxPeriod {
+            cp = optInMaxPeriod;
+        }
+        outReal[0] = scratch[(cp - optInMinPeriod) as usize];
+        let mut t: usize = lookbackTotal + 1;
+        while t < historyLen {
+            for (bankIdx, sub) in bank.iter_mut().enumerate() {
+                scratch[bankIdx] = sub.update(inReal[t]);
+            }
+            cp = inPeriods[t] as i32;
+            if cp < optInMinPeriod {
+                cp = optInMinPeriod;
+            } else if cp > optInMaxPeriod {
+                cp = optInMaxPeriod;
+            }
+            outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
+            t += 1;
+        }
+        (*outBegIdx) = lookbackTotal;
+        (*outNBElement) = historyLen - lookbackTotal;
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok(MavpStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl MavpStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_MAVP_Update")]
+    pub fn update(&mut self, inReal: f64, inPeriods: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.mavp_step_internal(&mut self.state, inReal, inPeriods, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_MAVP_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64, inPeriods: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal, inPeriods)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<MavpStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

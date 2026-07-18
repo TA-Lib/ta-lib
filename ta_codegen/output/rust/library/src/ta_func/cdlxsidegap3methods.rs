@@ -261,6 +261,272 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLXSIDEGAP3METHODS stream: one value per closed bar, bit-identical to [`Core::cdlxsidegap3methods`]
+/// over the same series. Open with [`Core::cdlxsidegap3methods_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLXSIDEGAP3METHODS_Stream")]
+pub struct Cdlxsidegap3methodsStream {
+    core: Core,
+    state: Cdlxsidegap3methodsStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct Cdlxsidegap3methodsStreamState {
+    lag1_inOpen: f64,
+    lag2_inOpen: f64,
+    lag1_inClose: f64,
+    lag2_inClose: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdlxsidegap3methods_step_internal(&self, sp: &mut Cdlxsidegap3methodsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
+           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
+           inOpen < (sp.lag1_inClose).max(sp.lag1_inOpen) &&  // 3rd opens within 2nd rb
+           inOpen > (sp.lag1_inClose).min(sp.lag1_inOpen) &&
+           inClose < (sp.lag2_inClose).max(sp.lag2_inOpen) && // 3rd closes within 1st rb
+           inClose > (sp.lag2_inClose).min(sp.lag2_inOpen) &&
+           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) || ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+        {
+            (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+        } else {
+            (*outInteger) = 0;
+        }
+        // add the current range and subtract the first range: this is done after the pattern recognition
+        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        sp.lag2_inOpen = sp.lag1_inOpen;
+        sp.lag1_inOpen = inOpen;
+        sp.lag2_inClose = sp.lag1_inClose;
+        sp.lag1_inClose = inClose;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdlxsidegap3methods_open`] (composition seam).
+    pub(crate) fn cdlxsidegap3methods_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(Cdlxsidegap3methodsStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlxsidegap3methods_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: white (black) candle
+        // - second candle: white (black) candle
+        // - upside (downside) gap between the first and the second real bodies
+        // - third candle: black (white) candle that opens within the second real body and closes within the first real body
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+        // the user should consider that up/downside gap 3 methods is significant when it appears in a trend, while this
+        // function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && // 3rd opposite color
+               inOpen[i] < (inClose[i - 1]).max(inOpen[i - 1]) &&  // 3rd opens within 2nd rb
+               inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) &&
+               inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && // 3rd closes within 1st rb
+               inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) &&
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+            {
+                lastValue_outInteger = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                lastValue_outInteger = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = Cdlxsidegap3methodsStreamState {
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+        };
+        Ok((Cdlxsidegap3methodsStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLXSIDEGAP3METHODS stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdlxsidegap3methods`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdlxsidegap3methods_open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Open")]
+    pub fn cdlxsidegap3methods_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlxsidegap3methodsStream, i32), RetCode> {
+        self.cdlxsidegap3methods_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::cdlxsidegap3methods_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlxsidegap3methods`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_OpenAndFill")]
+    pub fn cdlxsidegap3methods_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<Cdlxsidegap3methodsStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlxsidegap3methods_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: white (black) candle
+        // - second candle: white (black) candle
+        // - upside (downside) gap between the first and the second real bodies
+        // - third candle: black (white) candle that opens within the second real body and closes within the first real body
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+        // the user should consider that up/downside gap 3 methods is significant when it appears in a trend, while this
+        // function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && // 3rd opposite color
+               inOpen[i] < (inClose[i - 1]).max(inOpen[i - 1]) &&  // 3rd opens within 2nd rb
+               inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) &&
+               inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && // 3rd closes within 1st rb
+               inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) &&
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+            {
+                outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
+                outIdx += 1;
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = Cdlxsidegap3methodsStreamState {
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+        };
+        Ok(Cdlxsidegap3methodsStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl Cdlxsidegap3methodsStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdlxsidegap3methods_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<Cdlxsidegap3methodsStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

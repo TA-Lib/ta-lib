@@ -376,6 +376,397 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live DEMA stream: one value per closed bar, bit-identical to [`Core::dema`]
+/// over the same series. Open with [`Core::dema_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_DEMA_Stream")]
+pub struct DemaStream {
+    core: Core,
+    state: DemaStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct DemaStreamState {
+    optInTimePeriod: i32,
+    prevEMA1: f64,
+    prevEMA2: f64,
+    optInK_1: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn dema_step_internal(&self, sp: &mut DemaStreamState, inReal: f64, outReal: &mut f64) {
+        sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
+        sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
+        (*outReal) = 2.0 * sp.prevEMA1 - sp.prevEMA2;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::dema_open`] (composition seam).
+    pub(crate) fn dema_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(DemaStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // For an explanation of this function, please read
+        //
+        // Stocks & Commodities V. 12:1 (11-19):
+        //   Smoothing Data With Faster Moving Averages
+        // Stocks & Commodities V. 12:2 (72-80):
+        //   Smoothing Data With Less Lag
+        //
+        // Both magazine articles written by Patrick G. Mulloy
+        //
+        // Essentially, a DEMA of time serie 't' is:
+        //   EMA2 = EMA(EMA(t,period),period)
+        //   DEMA = 2*EMA(t,period)- EMA2
+        //
+        // DEMA offers a moving average with less lags then the
+        // traditional EMA.
+        //
+        // Do not confuse a DEMA with the EMA2. Both are called
+        // "Double EMA" in the litterature, but EMA2 is a simple
+        // EMA of an EMA, while DEMA is a compostie of a single
+        // EMA with EMA2.
+        //
+        // TEMA is very similar (and from the same author).
+        // Will change only on success.
+        dummyNBElement = 0;
+        dummyBegIdx = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 2;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Both EMA are computed in a single lockstep pass: each new
+        // EMA1 value is immediately fed into EMA2. No temporary
+        // buffers are needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - Default compatibility: each EMA is seeded with the sum
+        //    of its first 'period' inputs, accumulated from 0.0 in
+        //    input order (0.0+x is not x for x=-0.0), divided by
+        //    the period.
+        //  - Metastock compatibility: EMA1 is seeded from inReal[0],
+        //    EMA2 from the first EMA1 value.
+        // Output alignment is identical for all compatibility modes;
+        // only the seed values differ.
+        //
+        // In-place (inReal == outReal) is supported: outReal[outIdx]
+        // is written only after inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - lookbackEMA {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed each EMA with its first
+            // input value: EMA1 from inReal[0], EMA2 from the first
+            // EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - lookbackEMA {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            prevEMA2 = prevEMA1;
+        }
+        // Advance both EMA in lockstep through the unstable period
+        // of EMA2, up to the first output bar.
+        while today <= startIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+        }
+        // Stable zone: keep advancing both EMA in lockstep and
+        // write the DEMA into the output.
+        lastValue_outReal = 2.0 * prevEMA1 - prevEMA2;
+        outIdx = 1;
+        while today <= endIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            lastValue_outReal = 2.0 * prevEMA1 - prevEMA2;
+        }
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = DemaStreamState {
+            optInTimePeriod,
+            prevEMA1,
+            prevEMA2,
+            optInK_1,
+        };
+        Ok((DemaStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live DEMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::dema`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.dema_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_DEMA_Open")]
+    pub fn dema_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(DemaStream, f64), RetCode> {
+        self.dema_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::dema_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::dema`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_DEMA_OpenAndFill")]
+    pub fn dema_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<DemaStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // For an explanation of this function, please read
+        //
+        // Stocks & Commodities V. 12:1 (11-19):
+        //   Smoothing Data With Faster Moving Averages
+        // Stocks & Commodities V. 12:2 (72-80):
+        //   Smoothing Data With Less Lag
+        //
+        // Both magazine articles written by Patrick G. Mulloy
+        //
+        // Essentially, a DEMA of time serie 't' is:
+        //   EMA2 = EMA(EMA(t,period),period)
+        //   DEMA = 2*EMA(t,period)- EMA2
+        //
+        // DEMA offers a moving average with less lags then the
+        // traditional EMA.
+        //
+        // Do not confuse a DEMA with the EMA2. Both are called
+        // "Double EMA" in the litterature, but EMA2 is a simple
+        // EMA of an EMA, while DEMA is a compostie of a single
+        // EMA with EMA2.
+        //
+        // TEMA is very similar (and from the same author).
+        // Will change only on success.
+        (*outNBElement) = 0;
+        (*outBegIdx) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 2;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Both EMA are computed in a single lockstep pass: each new
+        // EMA1 value is immediately fed into EMA2. No temporary
+        // buffers are needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - Default compatibility: each EMA is seeded with the sum
+        //    of its first 'period' inputs, accumulated from 0.0 in
+        //    input order (0.0+x is not x for x=-0.0), divided by
+        //    the period.
+        //  - Metastock compatibility: EMA1 is seeded from inReal[0],
+        //    EMA2 from the first EMA1 value.
+        // Output alignment is identical for all compatibility modes;
+        // only the seed values differ.
+        //
+        // In-place (inReal == outReal) is supported: outReal[outIdx]
+        // is written only after inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - lookbackEMA {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed each EMA with its first
+            // input value: EMA1 from inReal[0], EMA2 from the first
+            // EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - lookbackEMA {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            }
+            prevEMA2 = prevEMA1;
+        }
+        // Advance both EMA in lockstep through the unstable period
+        // of EMA2, up to the first output bar.
+        while today <= startIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+        }
+        // Stable zone: keep advancing both EMA in lockstep and
+        // write the DEMA into the output.
+        outReal[0] = 2.0 * prevEMA1 - prevEMA2;
+        outIdx = 1;
+        while today <= endIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            outReal[outIdx] = 2.0 * prevEMA1 - prevEMA2;
+            outIdx += 1;
+        }
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = DemaStreamState {
+            optInTimePeriod,
+            prevEMA1,
+            prevEMA2,
+            optInK_1,
+        };
+        Ok(DemaStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl DemaStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_DEMA_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.dema_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_DEMA_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<DemaStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

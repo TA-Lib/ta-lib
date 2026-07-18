@@ -1758,6 +1758,27 @@ pub use types::*;
         mod_rs.push_str(&format!("mod {};\n", name));
     }
 
+    // Stream handle re-exports: modules are private, so each generated stream
+    // handle type surfaces at the crate root (`ta_lib::SmaStream`) via mod.rs.
+    let stream_lookup = ta_codegen_lib::streaming::FuncsLookup(funcs);
+    let mut stream_exports: Vec<(String, String)> = funcs
+        .iter()
+        .filter(|f| ta_codegen_lib::backends::rust_stream::emits_stream(f, &stream_lookup))
+        .map(|f| {
+            (
+                f.name.to_lowercase(),
+                ta_codegen_lib::backends::rust_stream::stream_type_name(f),
+            )
+        })
+        .collect();
+    stream_exports.sort();
+    if !stream_exports.is_empty() {
+        mod_rs.push_str("\n// Generated stream handles (one per streamable indicator):\n");
+        for (module, ty) in &stream_exports {
+            mod_rs.push_str(&format!("pub use {module}::{ty};\n"));
+        }
+    }
+
     let mod_path = ta_func_dir.join("mod.rs");
     std::fs::write(&mod_path, &mod_rs).unwrap();
     println!("  Scaffolding -> {}", mod_path.display());

@@ -211,6 +211,194 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live OBV stream: one value per closed bar, bit-identical to [`Core::obv`]
+/// over the same series. Open with [`Core::obv_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_OBV_Stream")]
+pub struct ObvStream {
+    core: Core,
+    state: ObvStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct ObvStreamState {
+    prevReal: f64,
+    prevOBV: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn obv_step_internal(&self, sp: &mut ObvStreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        tempReal = inReal;
+        if tempReal > sp.prevReal {
+            sp.prevOBV += inVolume;
+        } else if tempReal < sp.prevReal {
+            sp.prevOBV -= inVolume;
+        }
+        (*outReal) = sp.prevOBV;
+        sp.prevReal = tempReal;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::obv_open`] (composition seam).
+    pub(crate) fn obv_open_internal(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(ObvStream, f64), RetCode> {
+        if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevReal: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut prevOBV: f64 = 0.0_f64;
+        prevOBV = inVolume[startIdx];
+        prevReal = inReal[startIdx];
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            tempReal = inReal[i];
+            if tempReal > prevReal {
+                prevOBV += inVolume[i];
+            } else if tempReal < prevReal {
+                prevOBV -= inVolume[i];
+            }
+            lastValue_outReal = prevOBV;
+            prevReal = tempReal;
+        }
+        i = (endIdx as usize) + 1;
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = ObvStreamState {
+            prevReal,
+            prevOBV,
+        };
+        Ok((ObvStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live OBV stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::obv`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.obv_open(&data, &volume).expect("enough history");
+    /// let peeked = s.peek(100.9, 12_345.0);
+    /// let updated = s.update(100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_OBV_Open")]
+    pub fn obv_open(&self, inReal: &[f64], inVolume: &[f64], ) -> Result<(ObvStream, f64), RetCode> {
+        self.obv_open_internal(inReal, inVolume, 0)
+    }
+
+    /// [`Core::obv_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::obv`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_OBV_OpenAndFill")]
+    pub fn obv_open_and_fill(
+        &self, inReal: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<ObvStream, RetCode> {
+        if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevReal: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut prevOBV: f64 = 0.0_f64;
+        prevOBV = inVolume[startIdx];
+        prevReal = inReal[startIdx];
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            tempReal = inReal[i];
+            if tempReal > prevReal {
+                prevOBV += inVolume[i];
+            } else if tempReal < prevReal {
+                prevOBV -= inVolume[i];
+            }
+            outReal[outIdx] = prevOBV;
+            outIdx += 1;
+            prevReal = tempReal;
+        }
+        i = (endIdx as usize) + 1;
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = ObvStreamState {
+            prevReal,
+            prevOBV,
+        };
+        Ok(ObvStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl ObvStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_OBV_Update")]
+    pub fn update(&mut self, inReal: f64, inVolume: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.obv_step_internal(&mut self.state, inReal, inVolume, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_OBV_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64, inVolume: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal, inVolume)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<ObvStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

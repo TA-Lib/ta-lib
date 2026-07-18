@@ -234,6 +234,217 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live PVI stream: one value per closed bar, bit-identical to [`Core::pvi`]
+/// over the same series. Open with [`Core::pvi_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_PVI_Stream")]
+pub struct PviStream {
+    core: Core,
+    state: PviStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct PviStreamState {
+    prevPVI: f64,
+    prevClose: f64,
+    prevVolume: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn pvi_step_internal(&self, sp: &mut PviStreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+        let mut tempClose: f64 = 0.0_f64;
+        let mut tempVolume: f64 = 0.0_f64;
+        tempClose = inClose;
+        tempVolume = inVolume;
+        // prevClose != 0 guards the percentage-change division: a zero previous
+        // close is a degenerate input that would otherwise emit NaN/Inf; carry
+        // the index forward unchanged instead. Never triggers on real prices.
+        if tempVolume > sp.prevVolume && sp.prevClose != 0.0 {
+            sp.prevPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.prevPVI;
+        }
+        (*outReal) = sp.prevPVI;
+        sp.prevClose = tempClose;
+        sp.prevVolume = tempVolume;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::pvi_open`] (composition seam).
+    pub(crate) fn pvi_open_internal(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(PviStream, f64), RetCode> {
+        if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inClose.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inClose.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevPVI: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
+        let mut prevVolume: f64 = 0.0_f64;
+        let mut tempClose: f64 = 0.0_f64;
+        let mut tempVolume: f64 = 0.0_f64;
+        // The index is a running cumulative value seeded at 1000, updated only on
+        // bars whose volume increased versus the prior bar (Positive Volume).
+        prevPVI = 1000.0;
+        prevClose = inClose[startIdx];
+        prevVolume = inVolume[startIdx];
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            tempClose = inClose[i];
+            tempVolume = inVolume[i];
+            // prevClose != 0 guards the percentage-change division: a zero previous
+            // close is a degenerate input that would otherwise emit NaN/Inf; carry
+            // the index forward unchanged instead. Never triggers on real prices.
+            if tempVolume > prevVolume && prevClose != 0.0 {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            }
+            lastValue_outReal = prevPVI;
+            prevClose = tempClose;
+            prevVolume = tempVolume;
+        }
+        i = (endIdx as usize) + 1;
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = PviStreamState {
+            prevPVI,
+            prevClose,
+            prevVolume,
+        };
+        Ok((PviStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live PVI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::pvi`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.pvi_open(&close, &volume).expect("enough history");
+    /// let peeked = s.peek(100.9, 12_345.0);
+    /// let updated = s.update(100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_PVI_Open")]
+    pub fn pvi_open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PviStream, f64), RetCode> {
+        self.pvi_open_internal(inClose, inVolume, 0)
+    }
+
+    /// [`Core::pvi_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::pvi`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_PVI_OpenAndFill")]
+    pub fn pvi_open_and_fill(
+        &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<PviStream, RetCode> {
+        if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inClose.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inClose.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevPVI: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
+        let mut prevVolume: f64 = 0.0_f64;
+        let mut tempClose: f64 = 0.0_f64;
+        let mut tempVolume: f64 = 0.0_f64;
+        // The index is a running cumulative value seeded at 1000, updated only on
+        // bars whose volume increased versus the prior bar (Positive Volume).
+        prevPVI = 1000.0;
+        prevClose = inClose[startIdx];
+        prevVolume = inVolume[startIdx];
+        outIdx = 0;
+        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            tempClose = inClose[i];
+            tempVolume = inVolume[i];
+            // prevClose != 0 guards the percentage-change division: a zero previous
+            // close is a degenerate input that would otherwise emit NaN/Inf; carry
+            // the index forward unchanged instead. Never triggers on real prices.
+            if tempVolume > prevVolume && prevClose != 0.0 {
+                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            }
+            outReal[outIdx] = prevPVI;
+            outIdx += 1;
+            prevClose = tempClose;
+            prevVolume = tempVolume;
+        }
+        i = (endIdx as usize) + 1;
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = PviStreamState {
+            prevPVI,
+            prevClose,
+            prevVolume,
+        };
+        Ok(PviStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl PviStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_PVI_Update")]
+    pub fn update(&mut self, inClose: f64, inVolume: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.pvi_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_PVI_Peek")]
+    #[must_use]
+    pub fn peek(&self, inClose: f64, inVolume: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inClose, inVolume)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<PviStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

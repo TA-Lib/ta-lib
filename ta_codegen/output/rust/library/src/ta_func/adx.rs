@@ -748,6 +748,915 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live ADX stream: one value per closed bar, bit-identical to [`Core::adx`]
+/// over the same series. Open with [`Core::adx_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_ADX_Stream")]
+pub struct AdxStream {
+    core: Core,
+    state: AdxStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AdxStreamState {
+    optInTimePeriod: i32,
+    prevHigh: f64,
+    prevLow: f64,
+    prevClose: f64,
+    prevMinusDM: f64,
+    prevPlusDM: f64,
+    prevTR: f64,
+    tempReal: f64,
+    diffP: f64,
+    diffM: f64,
+    minusDI: f64,
+    plusDI: f64,
+    prevADX: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn adx_step_internal(&self, sp: &mut AdxStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        // Calculate the prevMinusDM and prevPlusDM
+        sp.tempReal = inHigh;
+        sp.diffP = sp.tempReal - sp.prevHigh;
+        // Plus Delta
+        sp.prevHigh = sp.tempReal;
+        sp.tempReal = inLow;
+        sp.diffM = sp.prevLow - sp.tempReal;
+        // Minus Delta
+        sp.prevLow = sp.tempReal;
+        sp.prevMinusDM -= sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
+        sp.prevPlusDM -= sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
+        if sp.diffM > 0_f64 && sp.diffP < sp.diffM {
+            // Case 2 and 4: +DM=0,-DM=diffM
+            sp.prevMinusDM += sp.diffM;
+        } else if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            // Case 1 and 3: +DM=diffP,-DM=0
+            sp.prevPlusDM += sp.diffP;
+        }
+        // Calculate the prevTR
+        let mut _true_range_0: f64;
+        let mut range_0: f64 = sp.prevHigh - sp.prevLow;
+        let mut tmp_0: f64 = (sp.prevHigh - sp.prevClose).abs();
+        if tmp_0 > range_0 {
+            range_0 = tmp_0;
+        }
+        tmp_0 = (sp.prevLow - sp.prevClose).abs();
+        if tmp_0 > range_0 {
+            range_0 = tmp_0;
+        }
+        _true_range_0 = range_0;
+        sp.tempReal = _true_range_0;
+        sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + sp.tempReal;
+        sp.prevClose = inClose;
+        if !((sp.prevTR).abs() < 1e-14) {
+            // Calculate the DX. The value is rounded (see Wilder book).
+            sp.minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
+            sp.plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
+            sp.tempReal = sp.minusDI + sp.plusDI;
+            if !((sp.tempReal).abs() < 1e-14) {
+                sp.tempReal = (100.0 * ((sp.minusDI - sp.plusDI).abs() / sp.tempReal));
+                // Calculate the ADX
+                sp.prevADX = ((sp.prevADX * (((sp.optInTimePeriod - 1)) as f64) + sp.tempReal) / ((sp.optInTimePeriod) as f64));
+            }
+        }
+        // Output the ADX
+        (*outReal) = sp.prevADX;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::adx_open`] (composition seam).
+    pub(crate) fn adx_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(AdxStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
+        let mut prevMinusDM: f64 = 0.0_f64;
+        let mut prevPlusDM: f64 = 0.0_f64;
+        let mut prevTR: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut diffP: f64 = 0.0_f64;
+        let mut diffM: f64 = 0.0_f64;
+        let mut minusDI: f64 = 0.0_f64;
+        let mut plusDI: f64 = 0.0_f64;
+        let mut sumDX: f64 = 0.0_f64;
+        let mut prevADX: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        //
+        // The DM1 (one period) is base on the largest part of
+        // today's range that is outside of yesterdays range.
+        //
+        // The following 7 cases explain how the +DM and -DM are
+        // calculated on one period:
+        //
+        // Case 1:                       Case 2:
+        //    C|                        A|
+        //     |                         | C|
+        //     | +DM1 = (C-A)           B|  | +DM1 = 0
+        //     | -DM1 = 0                   | -DM1 = (B-D)
+        // A|  |                           D|
+        //  | D|
+        // B|
+        //
+        // Case 3:                       Case 4:
+        //    C|                           C|
+        //     |                        A|  |
+        //     | +DM1 = (C-A)            |  | +DM1 = 0
+        //     | -DM1 = 0               B|  | -DM1 = (B-D)
+        // A|  |                            |
+        //  |  |                           D|
+        // B|  |
+        //    D|
+        //
+        // Case 5:                      Case 6:
+        // A|                           A| C|
+        //  | C| +DM1 = 0                |  |  +DM1 = 0
+        //  |  | -DM1 = 0                |  |  -DM1 = 0
+        //  | D|                         |  |
+        // B|                           B| D|
+        //
+        //
+        // Case 7:
+        //
+        //    C|
+        // A|  |
+        //  |  | +DM=0
+        // B|  | -DM=0
+        //    D|
+        //
+        // In case 3 and 4, the rule is that the smallest delta between
+        // (C-A) and (B-D) determine which of +DM or -DM is zero.
+        //
+        // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+        // zero.
+        //
+        // The rules remain the same when A=B and C=D (when the highs
+        // equal the lows).
+        //
+        // When calculating the DM over a period > 1, the one-period DM
+        // for the desired period are initialy sum. In other word,
+        // for a -DM14, sum the -DM1 for the first 14 days (that's
+        // 13 values because there is no DM for the first day!)
+        // Subsequent DM are calculated using the Wilder's
+        // smoothing approach:
+        //
+        //                                    Previous -DM14
+        //  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+        //                                         14
+        //
+        // (Same thing for +DM14)
+        //
+        // Calculation of a -DI14 is as follow:
+        //
+        //               -DM14
+        //     -DI14 =  --------
+        //                TR14
+        //
+        // (Same thing for +DI14)
+        //
+        // Calculation of the TR14 is:
+        //
+        //                                   Previous TR14
+        //    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+        //                                         14
+        //
+        //    The first TR14 is the summation of the first 14 TR1. See the
+        //    TA_TRANGE function on how to calculate the true range.
+        //
+        // Calculation of the DX14 is:
+        //
+        //    diffDI = ABS( (-DI14) - (+DI14) )
+        //    sumDI  = (-DI14) + (+DI14)
+        //
+        //    DX14 = 100 * (diffDI / sumDI)
+        //
+        // Calculation of the first ADX:
+        //
+        //    ADX14 = SUM of the first 14 DX
+        //
+        // Calculation of subsequent ADX:
+        //
+        //            ((Previous ADX14)*(14-1))+ Today's DX
+        //    ADX14 = -------------------------------------
+        //                             14
+        //
+        // Reference:
+        //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+        // Original implementation from Wilder's book was doing some integer
+        // rounding in its calculations.
+        //
+        // This was understandable in the context that at the time the book
+        // was written, most user were doing the calculation by hand.
+        //
+        // For a computer, rounding is unnecessary (and even problematic when inputs
+        // are close to 1).
+        //
+        // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+        // you can comment out the following #undef/#define and rebuild the library.
+        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        // Adjust startIdx to account for the lookback period.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Indicate where the next output should be put
+        // in the outReal.
+        outIdx = 0;
+        // Process the initial DM and TR
+        today = startIdx;
+        dummyBegIdx = today;
+        prevMinusDM = 0.0;
+        prevPlusDM = 0.0;
+        prevTR = 0.0;
+        today = startIdx - lookbackTotal;
+        prevHigh = inHigh[today];
+        prevLow = inLow[today];
+        prevClose = inClose[today];
+        i = (optInTimePeriod - 1) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            let mut _true_range_1: f64;
+            let mut range_1: f64 = prevHigh - prevLow;
+            let mut tmp_1: f64 = (prevHigh - prevClose).abs();
+            if tmp_1 > range_1 {
+                range_1 = tmp_1;
+            }
+            tmp_1 = (prevLow - prevClose).abs();
+            if tmp_1 > range_1 {
+                range_1 = tmp_1;
+            }
+            _true_range_1 = range_1;
+            tempReal = _true_range_1;
+            prevTR += tempReal;
+            prevClose = inClose[today];
+        }
+        // Add up all the initial DX.
+        sumDX = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_2: f64;
+            let mut range_2: f64 = prevHigh - prevLow;
+            let mut tmp_2: f64 = (prevHigh - prevClose).abs();
+            if tmp_2 > range_2 {
+                range_2 = tmp_2;
+            }
+            tmp_2 = (prevLow - prevClose).abs();
+            if tmp_2 > range_2 {
+                range_2 = tmp_2;
+            }
+            _true_range_2 = range_2;
+            tempReal = _true_range_2;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            // Calculate the DX. The value is rounded (see Wilder book).
+            if !((prevTR).abs() < 1e-14) {
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                // This loop is just to accumulate the initial DX
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    sumDX += (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                }
+            }
+        }
+        // Calculate the first ADX
+        prevADX = (sumDX / ((optInTimePeriod) as f64));
+        // Skip the unstable period
+        i = (self.unstable_period[FuncUnstId::Adx as usize]) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_3: f64;
+            let mut range_3: f64 = prevHigh - prevLow;
+            let mut tmp_3: f64 = (prevHigh - prevClose).abs();
+            if tmp_3 > range_3 {
+                range_3 = tmp_3;
+            }
+            tmp_3 = (prevLow - prevClose).abs();
+            if tmp_3 > range_3 {
+                range_3 = tmp_3;
+            }
+            _true_range_3 = range_3;
+            tempReal = _true_range_3;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            if !((prevTR).abs() < 1e-14) {
+                // Calculate the DX. The value is rounded (see Wilder book).
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    tempReal = (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                    // Calculate the ADX
+                    prevADX = ((prevADX * (((optInTimePeriod - 1)) as f64) + tempReal) / ((optInTimePeriod) as f64));
+                }
+            }
+        }
+        // Output the first ADX
+        lastValue_outReal = prevADX;
+        outIdx = 1;
+        // Calculate and output subsequent ADX
+        while today < endIdx {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_4: f64;
+            let mut range_4: f64 = prevHigh - prevLow;
+            let mut tmp_4: f64 = (prevHigh - prevClose).abs();
+            if tmp_4 > range_4 {
+                range_4 = tmp_4;
+            }
+            tmp_4 = (prevLow - prevClose).abs();
+            if tmp_4 > range_4 {
+                range_4 = tmp_4;
+            }
+            _true_range_4 = range_4;
+            tempReal = _true_range_4;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            if !((prevTR).abs() < 1e-14) {
+                // Calculate the DX. The value is rounded (see Wilder book).
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    tempReal = (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                    // Calculate the ADX
+                    prevADX = ((prevADX * (((optInTimePeriod - 1)) as f64) + tempReal) / ((optInTimePeriod) as f64));
+                }
+            }
+            // Output the ADX
+            lastValue_outReal = prevADX;
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AdxStreamState {
+            optInTimePeriod,
+            prevHigh,
+            prevLow,
+            prevClose,
+            prevMinusDM,
+            prevPlusDM,
+            prevTR,
+            tempReal,
+            diffP,
+            diffM,
+            minusDI,
+            plusDI,
+            prevADX,
+        };
+        Ok((AdxStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live ADX stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::adx`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.adx_open(&high, &low, &close, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ADX_Open")]
+    pub fn adx_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AdxStream, f64), RetCode> {
+        self.adx_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    }
+
+    /// [`Core::adx_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::adx`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ADX_OpenAndFill")]
+    pub fn adx_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AdxStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
+        let mut prevMinusDM: f64 = 0.0_f64;
+        let mut prevPlusDM: f64 = 0.0_f64;
+        let mut prevTR: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut diffP: f64 = 0.0_f64;
+        let mut diffM: f64 = 0.0_f64;
+        let mut minusDI: f64 = 0.0_f64;
+        let mut plusDI: f64 = 0.0_f64;
+        let mut sumDX: f64 = 0.0_f64;
+        let mut prevADX: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        //
+        // The DM1 (one period) is base on the largest part of
+        // today's range that is outside of yesterdays range.
+        //
+        // The following 7 cases explain how the +DM and -DM are
+        // calculated on one period:
+        //
+        // Case 1:                       Case 2:
+        //    C|                        A|
+        //     |                         | C|
+        //     | +DM1 = (C-A)           B|  | +DM1 = 0
+        //     | -DM1 = 0                   | -DM1 = (B-D)
+        // A|  |                           D|
+        //  | D|
+        // B|
+        //
+        // Case 3:                       Case 4:
+        //    C|                           C|
+        //     |                        A|  |
+        //     | +DM1 = (C-A)            |  | +DM1 = 0
+        //     | -DM1 = 0               B|  | -DM1 = (B-D)
+        // A|  |                            |
+        //  |  |                           D|
+        // B|  |
+        //    D|
+        //
+        // Case 5:                      Case 6:
+        // A|                           A| C|
+        //  | C| +DM1 = 0                |  |  +DM1 = 0
+        //  |  | -DM1 = 0                |  |  -DM1 = 0
+        //  | D|                         |  |
+        // B|                           B| D|
+        //
+        //
+        // Case 7:
+        //
+        //    C|
+        // A|  |
+        //  |  | +DM=0
+        // B|  | -DM=0
+        //    D|
+        //
+        // In case 3 and 4, the rule is that the smallest delta between
+        // (C-A) and (B-D) determine which of +DM or -DM is zero.
+        //
+        // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+        // zero.
+        //
+        // The rules remain the same when A=B and C=D (when the highs
+        // equal the lows).
+        //
+        // When calculating the DM over a period > 1, the one-period DM
+        // for the desired period are initialy sum. In other word,
+        // for a -DM14, sum the -DM1 for the first 14 days (that's
+        // 13 values because there is no DM for the first day!)
+        // Subsequent DM are calculated using the Wilder's
+        // smoothing approach:
+        //
+        //                                    Previous -DM14
+        //  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+        //                                         14
+        //
+        // (Same thing for +DM14)
+        //
+        // Calculation of a -DI14 is as follow:
+        //
+        //               -DM14
+        //     -DI14 =  --------
+        //                TR14
+        //
+        // (Same thing for +DI14)
+        //
+        // Calculation of the TR14 is:
+        //
+        //                                   Previous TR14
+        //    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+        //                                         14
+        //
+        //    The first TR14 is the summation of the first 14 TR1. See the
+        //    TA_TRANGE function on how to calculate the true range.
+        //
+        // Calculation of the DX14 is:
+        //
+        //    diffDI = ABS( (-DI14) - (+DI14) )
+        //    sumDI  = (-DI14) + (+DI14)
+        //
+        //    DX14 = 100 * (diffDI / sumDI)
+        //
+        // Calculation of the first ADX:
+        //
+        //    ADX14 = SUM of the first 14 DX
+        //
+        // Calculation of subsequent ADX:
+        //
+        //            ((Previous ADX14)*(14-1))+ Today's DX
+        //    ADX14 = -------------------------------------
+        //                             14
+        //
+        // Reference:
+        //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+        // Original implementation from Wilder's book was doing some integer
+        // rounding in its calculations.
+        //
+        // This was understandable in the context that at the time the book
+        // was written, most user were doing the calculation by hand.
+        //
+        // For a computer, rounding is unnecessary (and even problematic when inputs
+        // are close to 1).
+        //
+        // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+        // you can comment out the following #undef/#define and rebuild the library.
+        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        // Adjust startIdx to account for the lookback period.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Indicate where the next output should be put
+        // in the outReal.
+        outIdx = 0;
+        // Process the initial DM and TR
+        today = startIdx;
+        (*outBegIdx) = today;
+        prevMinusDM = 0.0;
+        prevPlusDM = 0.0;
+        prevTR = 0.0;
+        today = startIdx - lookbackTotal;
+        prevHigh = inHigh[today];
+        prevLow = inLow[today];
+        prevClose = inClose[today];
+        i = (optInTimePeriod - 1) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            let mut _true_range_5: f64;
+            let mut range_5: f64 = prevHigh - prevLow;
+            let mut tmp_5: f64 = (prevHigh - prevClose).abs();
+            if tmp_5 > range_5 {
+                range_5 = tmp_5;
+            }
+            tmp_5 = (prevLow - prevClose).abs();
+            if tmp_5 > range_5 {
+                range_5 = tmp_5;
+            }
+            _true_range_5 = range_5;
+            tempReal = _true_range_5;
+            prevTR += tempReal;
+            prevClose = inClose[today];
+        }
+        // Add up all the initial DX.
+        sumDX = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_6: f64;
+            let mut range_6: f64 = prevHigh - prevLow;
+            let mut tmp_6: f64 = (prevHigh - prevClose).abs();
+            if tmp_6 > range_6 {
+                range_6 = tmp_6;
+            }
+            tmp_6 = (prevLow - prevClose).abs();
+            if tmp_6 > range_6 {
+                range_6 = tmp_6;
+            }
+            _true_range_6 = range_6;
+            tempReal = _true_range_6;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            // Calculate the DX. The value is rounded (see Wilder book).
+            if !((prevTR).abs() < 1e-14) {
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                // This loop is just to accumulate the initial DX
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    sumDX += (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                }
+            }
+        }
+        // Calculate the first ADX
+        prevADX = (sumDX / ((optInTimePeriod) as f64));
+        // Skip the unstable period
+        i = (self.unstable_period[FuncUnstId::Adx as usize]) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_7: f64;
+            let mut range_7: f64 = prevHigh - prevLow;
+            let mut tmp_7: f64 = (prevHigh - prevClose).abs();
+            if tmp_7 > range_7 {
+                range_7 = tmp_7;
+            }
+            tmp_7 = (prevLow - prevClose).abs();
+            if tmp_7 > range_7 {
+                range_7 = tmp_7;
+            }
+            _true_range_7 = range_7;
+            tempReal = _true_range_7;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            if !((prevTR).abs() < 1e-14) {
+                // Calculate the DX. The value is rounded (see Wilder book).
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    tempReal = (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                    // Calculate the ADX
+                    prevADX = ((prevADX * (((optInTimePeriod - 1)) as f64) + tempReal) / ((optInTimePeriod) as f64));
+                }
+            }
+        }
+        // Output the first ADX
+        outReal[0] = prevADX;
+        outIdx = 1;
+        // Calculate and output subsequent ADX
+        while today < endIdx {
+            // Calculate the prevMinusDM and prevPlusDM
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            // Plus Delta
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            // Minus Delta
+            prevLow = tempReal;
+            prevMinusDM -= prevMinusDM / ((optInTimePeriod) as f64);
+            prevPlusDM -= prevPlusDM / ((optInTimePeriod) as f64);
+            if diffM > 0_f64 && diffP < diffM {
+                // Case 2 and 4: +DM=0,-DM=diffM
+                prevMinusDM += diffM;
+            } else if diffP > 0_f64 && diffP > diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                prevPlusDM += diffP;
+            }
+            // Calculate the prevTR
+            let mut _true_range_8: f64;
+            let mut range_8: f64 = prevHigh - prevLow;
+            let mut tmp_8: f64 = (prevHigh - prevClose).abs();
+            if tmp_8 > range_8 {
+                range_8 = tmp_8;
+            }
+            tmp_8 = (prevLow - prevClose).abs();
+            if tmp_8 > range_8 {
+                range_8 = tmp_8;
+            }
+            _true_range_8 = range_8;
+            tempReal = _true_range_8;
+            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevClose = inClose[today];
+            if !((prevTR).abs() < 1e-14) {
+                // Calculate the DX. The value is rounded (see Wilder book).
+                minusDI = (100.0 * (prevMinusDM / prevTR));
+                plusDI = (100.0 * (prevPlusDM / prevTR));
+                tempReal = minusDI + plusDI;
+                if !((tempReal).abs() < 1e-14) {
+                    tempReal = (100.0 * ((minusDI - plusDI).abs() / tempReal));
+                    // Calculate the ADX
+                    prevADX = ((prevADX * (((optInTimePeriod - 1)) as f64) + tempReal) / ((optInTimePeriod) as f64));
+                }
+            }
+            // Output the ADX
+            outReal[outIdx] = prevADX;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AdxStreamState {
+            optInTimePeriod,
+            prevHigh,
+            prevLow,
+            prevClose,
+            prevMinusDM,
+            prevPlusDM,
+            prevTR,
+            tempReal,
+            diffP,
+            diffM,
+            minusDI,
+            plusDI,
+            prevADX,
+        };
+        Ok(AdxStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AdxStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_ADX_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.adx_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_ADX_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AdxStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

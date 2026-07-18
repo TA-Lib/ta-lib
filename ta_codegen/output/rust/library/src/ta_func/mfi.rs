@@ -439,6 +439,451 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live MFI stream: one value per closed bar, bit-identical to [`Core::mfi`]
+/// over the same series. Open with [`Core::mfi_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_MFI_Stream")]
+pub struct MfiStream {
+    core: Core,
+    state: MfiStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MfiStreamState {
+    optInTimePeriod: i32,
+    posSumMF: f64,
+    negSumMF: f64,
+    prevValue: f64,
+    tempValue1: f64,
+    tempValue2: f64,
+    tempValue3: f64,
+    mflow_Idx: usize,
+    maxIdx_mflow: usize,
+    cbSize_mflow: usize,
+    cb_mflow_positive: Vec<f64>,
+    cb_mflow_negative: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn mfi_step_internal(&self, sp: &mut MfiStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+        sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
+        sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
+        sp.tempValue1 = (inHigh + inLow + inClose) / 3.0;
+        sp.tempValue2 = sp.tempValue1 - sp.prevValue;
+        // Dead-zone scaled to the two typical prices being compared (issue #107).
+        // Captured before prevValue/tempValue1 are repurposed below.
+        sp.tempValue3 = (sp.tempValue1).abs() + (sp.prevValue).abs();
+        sp.prevValue = sp.tempValue1;
+        sp.tempValue1 *= inVolume;
+        if ((sp.tempValue2).abs() <= 1e-14 * (sp.tempValue3)) {
+            sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
+            sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
+        } else if sp.tempValue2 < 0_f64 {
+            sp.cb_mflow_negative[sp.mflow_Idx] = sp.tempValue1;
+            sp.negSumMF += sp.tempValue1;
+            sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
+        } else {
+            sp.cb_mflow_positive[sp.mflow_Idx] = sp.tempValue1;
+            sp.posSumMF += sp.tempValue1;
+            sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
+        }
+        sp.tempValue1 = sp.posSumMF + sp.negSumMF;
+        if sp.tempValue1 < 1.0 {
+            (*outReal) = 0.0;
+        } else {
+            (*outReal) = 100.0 * (sp.posSumMF / sp.tempValue1);
+        }
+        sp.mflow_Idx = sp.mflow_Idx + 1;
+        if sp.mflow_Idx > sp.maxIdx_mflow {
+            sp.mflow_Idx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::mfi_open`] (composition seam).
+    pub(crate) fn mfi_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MfiStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut posSumMF: f64 = 0.0_f64;
+        let mut negSumMF: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        let mut tempValue3: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut mflow_positive: Vec<f64> = Vec::new();
+        let mut mflow_negative: Vec<f64> = Vec::new();
+        let mut mflow_Idx: usize = 0;
+        let mut maxIdx_mflow: usize = 49;
+        // Id, Type, Static Size
+        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
+        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
+        mflow_Idx = 0;
+        dummyBegIdx = 0;
+        dummyNBElement = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = (optInTimePeriod) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        // Accumulate the positive and negative money flow
+        // among the initial period.
+        today = startIdx - lookbackTotal;
+        prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+        posSumMF = 0.0;
+        negSumMF = 0.0;
+        today += 1;
+        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+        i = (optInTimePeriod) as usize;
+        while i > 0 {
+            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            prevValue = tempValue1;
+            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
+                mflow_negative[mflow_Idx] = tempValue1;
+                negSumMF += tempValue1;
+                mflow_positive[mflow_Idx] = 0.0;
+            } else {
+                mflow_positive[mflow_Idx] = tempValue1;
+                posSumMF += tempValue1;
+                mflow_negative[mflow_Idx] = 0.0;
+            }
+            mflow_Idx += 1;
+            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+            i -= 1;
+        }
+        // The following two equations are equivalent:
+        //    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
+        //    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
+        // The second equation is used here for speed optimization.
+        // The first full window is complete: emit its output for startIdx here,
+        // then slide the window over the remaining bars below.
+        tempValue1 = posSumMF + negSumMF;
+        if tempValue1 < 1.0 {
+            lastValue_outReal = 0.0;
+        } else {
+            lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+        }
+        // Now continue processing the remaining bars.
+        while today <= endIdx {
+            posSumMF -= mflow_positive[mflow_Idx];
+            negSumMF -= mflow_negative[mflow_Idx];
+            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            prevValue = tempValue1;
+            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
+                mflow_negative[mflow_Idx] = tempValue1;
+                negSumMF += tempValue1;
+                mflow_positive[mflow_Idx] = 0.0;
+            } else {
+                mflow_positive[mflow_Idx] = tempValue1;
+                posSumMF += tempValue1;
+                mflow_negative[mflow_Idx] = 0.0;
+            }
+            tempValue1 = posSumMF + negSumMF;
+            if tempValue1 < 1.0 {
+                lastValue_outReal = 0.0;
+            } else {
+                lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+            }
+            mflow_Idx += 1;
+            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+        }
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cbSize_mflow: usize = maxIdx_mflow + 1;
+        if cbSize_mflow > historyLen + 1 {
+            return Err(RetCode::InternalError);
+        }
+        let state = MfiStreamState {
+            optInTimePeriod,
+            posSumMF,
+            negSumMF,
+            prevValue,
+            tempValue1,
+            tempValue2,
+            tempValue3,
+            mflow_Idx,
+            maxIdx_mflow,
+            cbSize_mflow: cbSize_mflow,
+            cb_mflow_positive: mflow_positive,
+            cb_mflow_negative: mflow_negative,
+        };
+        Ok((MfiStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live MFI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::mfi`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.mfi_open(&high, &low, &close, &volume, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0);
+    /// let updated = s.update(101.4, 99.1, 100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_MFI_Open")]
+    pub fn mfi_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(MfiStream, f64), RetCode> {
+        self.mfi_open_internal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
+    }
+
+    /// [`Core::mfi_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mfi`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MFI_OpenAndFill")]
+    pub fn mfi_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MfiStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut posSumMF: f64 = 0.0_f64;
+        let mut negSumMF: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        let mut tempValue3: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut mflow_positive: Vec<f64> = Vec::new();
+        let mut mflow_negative: Vec<f64> = Vec::new();
+        let mut mflow_Idx: usize = 0;
+        let mut maxIdx_mflow: usize = 49;
+        // Id, Type, Static Size
+        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
+        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
+        mflow_Idx = 0;
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = (optInTimePeriod) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        // Accumulate the positive and negative money flow
+        // among the initial period.
+        today = startIdx - lookbackTotal;
+        prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+        posSumMF = 0.0;
+        negSumMF = 0.0;
+        today += 1;
+        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
+        i = (optInTimePeriod) as usize;
+        while i > 0 {
+            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            prevValue = tempValue1;
+            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
+                mflow_negative[mflow_Idx] = tempValue1;
+                negSumMF += tempValue1;
+                mflow_positive[mflow_Idx] = 0.0;
+            } else {
+                mflow_positive[mflow_Idx] = tempValue1;
+                posSumMF += tempValue1;
+                mflow_negative[mflow_Idx] = 0.0;
+            }
+            mflow_Idx += 1;
+            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+            i -= 1;
+        }
+        // The following two equations are equivalent:
+        //    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
+        //    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
+        // The second equation is used here for speed optimization.
+        // The first full window is complete: emit its output for startIdx here,
+        // then slide the window over the remaining bars below.
+        tempValue1 = posSumMF + negSumMF;
+        if tempValue1 < 1.0 {
+            outReal[outIdx] = 0.0;
+            outIdx += 1;
+        } else {
+            outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+            outIdx += 1;
+        }
+        // Now continue processing the remaining bars.
+        while today <= endIdx {
+            posSumMF -= mflow_positive[mflow_Idx];
+            negSumMF -= mflow_negative[mflow_Idx];
+            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            prevValue = tempValue1;
+            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
+            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
+                mflow_positive[mflow_Idx] = 0.0;
+                mflow_negative[mflow_Idx] = 0.0;
+            } else if tempValue2 < 0_f64 {
+                mflow_negative[mflow_Idx] = tempValue1;
+                negSumMF += tempValue1;
+                mflow_positive[mflow_Idx] = 0.0;
+            } else {
+                mflow_positive[mflow_Idx] = tempValue1;
+                posSumMF += tempValue1;
+                mflow_negative[mflow_Idx] = 0.0;
+            }
+            tempValue1 = posSumMF + negSumMF;
+            if tempValue1 < 1.0 {
+                outReal[outIdx] = 0.0;
+                outIdx += 1;
+            } else {
+                outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+                outIdx += 1;
+            }
+            mflow_Idx += 1;
+            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+        }
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cbSize_mflow: usize = maxIdx_mflow + 1;
+        if cbSize_mflow > historyLen + 1 {
+            return Err(RetCode::InternalError);
+        }
+        let state = MfiStreamState {
+            optInTimePeriod,
+            posSumMF,
+            negSumMF,
+            prevValue,
+            tempValue1,
+            tempValue2,
+            tempValue3,
+            mflow_Idx,
+            maxIdx_mflow,
+            cbSize_mflow: cbSize_mflow,
+            cb_mflow_positive: mflow_positive,
+            cb_mflow_negative: mflow_negative,
+        };
+        Ok(MfiStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl MfiStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_MFI_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.mfi_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_MFI_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose, inVolume)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<MfiStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

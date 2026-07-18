@@ -180,6 +180,160 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live LOG10 stream: one value per closed bar, bit-identical to [`Core::log10`]
+/// over the same series. Open with [`Core::log10_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_LOG10_Stream")]
+pub struct Log10Stream {
+    core: Core,
+    state: Log10StreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct Log10StreamState {
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn log10_step_internal(&self, sp: &mut Log10StreamState, inReal: f64, outReal: &mut f64) {
+        (*outReal) = (inReal).log10();
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::log10_open`] (composition seam).
+    pub(crate) fn log10_open_internal(
+        &self, inReal: &[f64], startIdx: usize,
+    ) -> Result<(Log10Stream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            lastValue_outReal = (inReal[i]).log10();
+            i += 1;
+            outIdx += 1;
+        }
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = Log10StreamState {
+        };
+        Ok((Log10Stream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live LOG10 stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::log10`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.log10_open(&data).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_LOG10_Open")]
+    pub fn log10_open(&self, inReal: &[f64], ) -> Result<(Log10Stream, f64), RetCode> {
+        self.log10_open_internal(inReal, 0)
+    }
+
+    /// [`Core::log10_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::log10`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_LOG10_OpenAndFill")]
+    pub fn log10_open_and_fill(
+        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<Log10Stream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            outReal[outIdx] = (((inReal[i]).log10()) as f64);
+            i += 1;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = Log10StreamState {
+        };
+        Ok(Log10Stream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl Log10Stream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_LOG10_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.log10_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_LOG10_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<Log10Stream>();
+};
+
 /***************/
 /* End of File */
 /***************/

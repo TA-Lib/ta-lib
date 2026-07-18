@@ -434,6 +434,456 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live ATR stream: one value per closed bar, bit-identical to [`Core::atr`]
+/// over the same series. Open with [`Core::atr_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_ATR_Stream")]
+pub struct AtrStream {
+    core: Core,
+    state: AtrStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AtrStreamState {
+    optInTimePeriod: i32,
+    prevATR: f64,
+    val3: f64,
+    lag1_inClose: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn atr_step_internal(&self, sp: &mut AtrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        let mut val2: f64 = 0.0_f64;
+        let mut greatest: f64 = 0.0_f64;
+        let mut tempCY: f64 = 0.0_f64;
+        let mut tempLT: f64 = 0.0_f64;
+        let mut tempHT: f64 = 0.0_f64;
+        // Find the greatest of the 3 values.
+        tempLT = inLow;
+        tempHT = inHigh;
+        tempCY = sp.lag1_inClose;
+        greatest = tempHT - tempLT;
+        // val1
+        val2 = (tempCY - tempHT).abs();
+        if val2 > greatest {
+            greatest = val2;
+        }
+        sp.val3 = (tempCY - tempLT).abs();
+        if sp.val3 > greatest {
+            greatest = sp.val3;
+        }
+        sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
+        sp.prevATR += greatest;
+        sp.prevATR /= ((sp.optInTimePeriod) as f64);
+        (*outReal) = sp.prevATR;
+        sp.lag1_inClose = inClose;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::atr_open`] (composition seam).
+    pub(crate) fn atr_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(AtrStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut nbATR: usize = 0_usize;
+        let mut prevATR: f64 = 0.0_f64;
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
+        let mut greatest: f64 = 0.0_f64;
+        let mut tempCY: f64 = 0.0_f64;
+        let mut tempLT: f64 = 0.0_f64;
+        let mut tempHT: f64 = 0.0_f64;
+        // Average True Range is the greatest of the following:
+        //
+        //  val1 = distance from today's high to today's low.
+        //  val2 = distance from yesterday's close to today's high.
+        //  val3 = distance from yesterday's close to today's low.
+        //
+        // These value are averaged for the specified period using
+        // Wilder method. This method have an unstable period comparable
+        // to and Exponential Moving Average (EMA).
+        dummyBegIdx = 0;
+        dummyNBElement = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.atr_lookback(optInTimePeriod);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Period 1 needs no smoothing: the Wilder recursion below degenerates
+        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
+        // so the single general path handles every period >= 1.
+        // The True Range of each bar is computed inline in a single
+        // pass. No temporary buffer is needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - True Range: start from high-low, then compare/replace
+        //    with the two previous-close distances, in that order.
+        //  - Seed: the first 'period' True Range values are summed,
+        //    accumulated from 0.0 in input order, then divided by
+        //    the period.
+        //  - Wilder smoothing: multiply by period-1, add the True
+        //    Range, divide by period, as three separate statements.
+        //
+        // In-place (outReal being one of the input arrays) is
+        // supported: each output is written only after every input
+        // read at or before its bar, and the output index is always
+        // smaller than the bar index of any remaining read.
+        // The first True Range needs the two price bars at
+        // startIdx-lookbackTotal+1 (a previous close is consumed).
+        today = startIdx - lookbackTotal + 1;
+        // Seed the ATR with a simple average of the True Range
+        // for the first 'period' bars.
+        periodTotal = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            periodTotal += greatest;
+            today += 1;
+        }
+        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        // Subsequent value are smoothed using the
+        // previous ATR value (Wilder's approach).
+        //  1) Multiply the previous ATR by 'period-1'.
+        //  2) Add today TR value.
+        //  3) Divide by 'period'.
+        // Skip the unstable period.
+        i = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
+        while i != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            prevATR *= ((optInTimePeriod - 1) as f64);
+            prevATR += greatest;
+            prevATR /= ((optInTimePeriod) as f64);
+            today += 1;
+            i -= 1;
+        }
+        // Now start to write the final ATR in the caller
+        // provided outReal.
+        outIdx = 1;
+        lastValue_outReal = prevATR;
+        // Now do the number of requested ATR.
+        nbATR = endIdx - startIdx + 1;
+        while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            prevATR *= ((optInTimePeriod - 1) as f64);
+            prevATR += greatest;
+            prevATR /= ((optInTimePeriod) as f64);
+            lastValue_outReal = prevATR;
+            today += 1;
+        }
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AtrStreamState {
+            optInTimePeriod,
+            prevATR,
+            val3,
+            lag1_inClose: inClose[historyLen - 1],
+        };
+        Ok((AtrStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live ATR stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::atr`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.atr_open(&high, &low, &close, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ATR_Open")]
+    pub fn atr_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AtrStream, f64), RetCode> {
+        self.atr_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    }
+
+    /// [`Core::atr_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::atr`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ATR_OpenAndFill")]
+    pub fn atr_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AtrStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut nbATR: usize = 0_usize;
+        let mut prevATR: f64 = 0.0_f64;
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
+        let mut greatest: f64 = 0.0_f64;
+        let mut tempCY: f64 = 0.0_f64;
+        let mut tempLT: f64 = 0.0_f64;
+        let mut tempHT: f64 = 0.0_f64;
+        // Average True Range is the greatest of the following:
+        //
+        //  val1 = distance from today's high to today's low.
+        //  val2 = distance from yesterday's close to today's high.
+        //  val3 = distance from yesterday's close to today's low.
+        //
+        // These value are averaged for the specified period using
+        // Wilder method. This method have an unstable period comparable
+        // to and Exponential Moving Average (EMA).
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.atr_lookback(optInTimePeriod);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            return Err(RetCode::BadParam);
+        }
+        // Period 1 needs no smoothing: the Wilder recursion below degenerates
+        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
+        // so the single general path handles every period >= 1.
+        // The True Range of each bar is computed inline in a single
+        // pass. No temporary buffer is needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - True Range: start from high-low, then compare/replace
+        //    with the two previous-close distances, in that order.
+        //  - Seed: the first 'period' True Range values are summed,
+        //    accumulated from 0.0 in input order, then divided by
+        //    the period.
+        //  - Wilder smoothing: multiply by period-1, add the True
+        //    Range, divide by period, as three separate statements.
+        //
+        // In-place (outReal being one of the input arrays) is
+        // supported: each output is written only after every input
+        // read at or before its bar, and the output index is always
+        // smaller than the bar index of any remaining read.
+        // The first True Range needs the two price bars at
+        // startIdx-lookbackTotal+1 (a previous close is consumed).
+        today = startIdx - lookbackTotal + 1;
+        // Seed the ATR with a simple average of the True Range
+        // for the first 'period' bars.
+        periodTotal = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            periodTotal += greatest;
+            today += 1;
+        }
+        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        // Subsequent value are smoothed using the
+        // previous ATR value (Wilder's approach).
+        //  1) Multiply the previous ATR by 'period-1'.
+        //  2) Add today TR value.
+        //  3) Divide by 'period'.
+        // Skip the unstable period.
+        i = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
+        while i != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            prevATR *= ((optInTimePeriod - 1) as f64);
+            prevATR += greatest;
+            prevATR /= ((optInTimePeriod) as f64);
+            today += 1;
+            i -= 1;
+        }
+        // Now start to write the final ATR in the caller
+        // provided outReal.
+        outIdx = 1;
+        outReal[0] = prevATR;
+        // Now do the number of requested ATR.
+        nbATR = endIdx - startIdx + 1;
+        while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            prevATR *= ((optInTimePeriod - 1) as f64);
+            prevATR += greatest;
+            prevATR /= ((optInTimePeriod) as f64);
+            outReal[outIdx] = prevATR;
+            outIdx += 1;
+            today += 1;
+        }
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = AtrStreamState {
+            optInTimePeriod,
+            prevATR,
+            val3,
+            lag1_inClose: inClose[historyLen - 1],
+        };
+        Ok(AtrStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AtrStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_ATR_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.atr_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_ATR_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AtrStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -188,6 +188,159 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live MULT stream: one value per closed bar, bit-identical to [`Core::mult`]
+/// over the same series. Open with [`Core::mult_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_MULT_Stream")]
+pub struct MultStream {
+    core: Core,
+    state: MultStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MultStreamState {
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn mult_step_internal(&self, sp: &mut MultStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+        (*outReal) = inReal0 * inReal1;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::mult_open`] (composition seam).
+    pub(crate) fn mult_open_internal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
+    ) -> Result<(MultStream, f64), RetCode> {
+        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal0.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal0.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        outIdx = 0;
+        i = startIdx;
+        while i <= endIdx {
+            lastValue_outReal = inReal0[i] * inReal1[i];
+            outIdx += 1;
+            i += 1;
+        }
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = MultStreamState {
+        };
+        Ok((MultStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live MULT stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::mult`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let data1: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.mult_open(&data0, &data1).expect("enough history");
+    /// let peeked = s.peek(100.9, 101.3);
+    /// let updated = s.update(100.9, 101.3);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_MULT_Open")]
+    pub fn mult_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MultStream, f64), RetCode> {
+        self.mult_open_internal(inReal0, inReal1, 0)
+    }
+
+    /// [`Core::mult_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mult`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MULT_OpenAndFill")]
+    pub fn mult_open_and_fill(
+        &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MultStream, RetCode> {
+        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal0.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal0.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        outIdx = 0;
+        i = startIdx;
+        while i <= endIdx {
+            outReal[outIdx] = ((inReal0[i] * inReal1[i]) as f64);
+            outIdx += 1;
+            i += 1;
+        }
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = MultStreamState {
+        };
+        Ok(MultStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl MultStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_MULT_Update")]
+    pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.mult_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_MULT_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal0: f64, inReal1: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal0, inReal1)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<MultStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

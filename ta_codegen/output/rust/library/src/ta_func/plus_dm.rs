@@ -495,6 +495,787 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::plus_dm`]
+/// over the same series. Open with [`Core::plus_dm_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_PLUS_DM_Stream")]
+pub struct PlusDMStream {
+    core: Core,
+    state: PlusDMStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct PlusDMStreamState {
+    optInTimePeriod: i32,
+    prevHigh: f64,
+    prevLow: f64,
+    tempReal: f64,
+    diffP: f64,
+    diffM: f64,
+    prevPlusDM: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn plus_dm_step_internal(&self, sp: &mut PlusDMStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod <= 1 {
+            sp.tempReal = inHigh;
+            sp.diffP = sp.tempReal - sp.prevHigh;
+            // Plus Delta
+            sp.prevHigh = sp.tempReal;
+            sp.tempReal = inLow;
+            sp.diffM = sp.prevLow - sp.tempReal;
+            // Minus Delta
+            sp.prevLow = sp.tempReal;
+            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                (*outReal) = sp.diffP;
+            } else {
+                (*outReal) = 0.0;
+            }
+        } else {
+            sp.tempReal = inHigh;
+            sp.diffP = sp.tempReal - sp.prevHigh;
+            // Plus Delta
+            sp.prevHigh = sp.tempReal;
+            sp.tempReal = inLow;
+            sp.diffM = sp.prevLow - sp.tempReal;
+            // Minus Delta
+            sp.prevLow = sp.tempReal;
+            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+                // Case 1 and 3: +DM=diffP,-DM=0
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + sp.diffP;
+            } else {
+                // Case 2,4,5 and 7
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
+            }
+            (*outReal) = sp.prevPlusDM;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::plus_dm_open`] (composition seam).
+    pub(crate) fn plus_dm_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(PlusDMStream, f64), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod <= 1 {
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut prevHigh: f64 = 0.0_f64;
+            let mut prevLow: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevPlusDM: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            //
+            // The DM1 (one period) is base on the largest part of
+            // today's range that is outside of yesterdays range.
+            //
+            // The following 7 cases explain how the +DM and -DM are
+            // calculated on one period:
+            //
+            // Case 1:                       Case 2:
+            //    C|                        A|
+            //     |                         | C|
+            //     | +DM1 = (C-A)           B|  | +DM1 = 0
+            //     | -DM1 = 0                   | -DM1 = (B-D)
+            // A|  |                           D|
+            //  | D|
+            // B|
+            //
+            // Case 3:                       Case 4:
+            //    C|                           C|
+            //     |                        A|  |
+            //     | +DM1 = (C-A)            |  | +DM1 = 0
+            //     | -DM1 = 0               B|  | -DM1 = (B-D)
+            // A|  |                            |
+            //  |  |                           D|
+            // B|  |
+            //    D|
+            //
+            // Case 5:                      Case 6:
+            // A|                           A| C|
+            //  | C| +DM1 = 0                |  |  +DM1 = 0
+            //  |  | -DM1 = 0                |  |  -DM1 = 0
+            //  | D|                         |  |
+            // B|                           B| D|
+            //
+            //
+            // Case 7:
+            //
+            //    C|
+            // A|  |
+            //  |  | +DM=0
+            // B|  | -DM=0
+            //    D|
+            //
+            // In case 3 and 4, the rule is that the smallest delta between
+            // (C-A) and (B-D) determine which of +DM or -DM is zero.
+            //
+            // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+            // zero.
+            //
+            // The rules remain the same when A=B and C=D (when the highs
+            // equal the lows).
+            //
+            // When calculating the DM over a period > 1, the one-period DM
+            // for the desired period are initialy sum. In other word,
+            // for a +DM14, sum the +DM1 for the first 14 days (that's
+            // 13 values because there is no DM for the first day!)
+            // Subsequent DM are calculated using the Wilder's
+            // smoothing approach:
+            //
+            //                                    Previous +DM14
+            //  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+            //                                         14
+            //
+            // Reference:
+            //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+            if optInTimePeriod > 1 {
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            } else {
+                lookbackTotal = 1;
+            }
+            // Adjust startIdx to account for the lookback period.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                dummyBegIdx = 0;
+                dummyNBElement = 0;
+                return Err(RetCode::BadParam);
+            }
+            // Indicate where the next output should be put
+            // in the outReal.
+            outIdx = 0;
+            // Trap the case where no smoothing is needed.
+            // No smoothing needed. Just do a simple DM1
+            // for each price bar.
+            dummyBegIdx = startIdx;
+            today = startIdx - 1;
+            prevHigh = inHigh[today];
+            prevLow = inLow[today];
+            while today < endIdx {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    lastValue_outReal = diffP;
+                } else {
+                    lastValue_outReal = 0.0;
+                }
+            }
+            dummyNBElement = outIdx;
+
+            // Capture the live batch state into the handle.
+            let state = PlusDMStreamState {
+                optInTimePeriod,
+                prevHigh,
+                prevLow,
+                tempReal,
+                diffP,
+                diffM,
+                prevPlusDM,
+            };
+            Ok((PlusDMStream { core: self.clone(), state }, lastValue_outReal))
+        } else {
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut prevHigh: f64 = 0.0_f64;
+            let mut prevLow: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevPlusDM: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            //
+            // The DM1 (one period) is base on the largest part of
+            // today's range that is outside of yesterdays range.
+            //
+            // The following 7 cases explain how the +DM and -DM are
+            // calculated on one period:
+            //
+            // Case 1:                       Case 2:
+            //    C|                        A|
+            //     |                         | C|
+            //     | +DM1 = (C-A)           B|  | +DM1 = 0
+            //     | -DM1 = 0                   | -DM1 = (B-D)
+            // A|  |                           D|
+            //  | D|
+            // B|
+            //
+            // Case 3:                       Case 4:
+            //    C|                           C|
+            //     |                        A|  |
+            //     | +DM1 = (C-A)            |  | +DM1 = 0
+            //     | -DM1 = 0               B|  | -DM1 = (B-D)
+            // A|  |                            |
+            //  |  |                           D|
+            // B|  |
+            //    D|
+            //
+            // Case 5:                      Case 6:
+            // A|                           A| C|
+            //  | C| +DM1 = 0                |  |  +DM1 = 0
+            //  |  | -DM1 = 0                |  |  -DM1 = 0
+            //  | D|                         |  |
+            // B|                           B| D|
+            //
+            //
+            // Case 7:
+            //
+            //    C|
+            // A|  |
+            //  |  | +DM=0
+            // B|  | -DM=0
+            //    D|
+            //
+            // In case 3 and 4, the rule is that the smallest delta between
+            // (C-A) and (B-D) determine which of +DM or -DM is zero.
+            //
+            // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+            // zero.
+            //
+            // The rules remain the same when A=B and C=D (when the highs
+            // equal the lows).
+            //
+            // When calculating the DM over a period > 1, the one-period DM
+            // for the desired period are initialy sum. In other word,
+            // for a +DM14, sum the +DM1 for the first 14 days (that's
+            // 13 values because there is no DM for the first day!)
+            // Subsequent DM are calculated using the Wilder's
+            // smoothing approach:
+            //
+            //                                    Previous +DM14
+            //  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+            //                                         14
+            //
+            // Reference:
+            //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+            if optInTimePeriod > 1 {
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            } else {
+                lookbackTotal = 1;
+            }
+            // Adjust startIdx to account for the lookback period.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                dummyBegIdx = 0;
+                dummyNBElement = 0;
+                return Err(RetCode::BadParam);
+            }
+            // Indicate where the next output should be put
+            // in the outReal.
+            outIdx = 0;
+            // Trap the case where no smoothing is needed.
+            // Process the initial DM
+            dummyBegIdx = startIdx;
+            prevPlusDM = 0.0;
+            today = startIdx - lookbackTotal;
+            prevHigh = inHigh[today];
+            prevLow = inLow[today];
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM += diffP;
+                }
+            }
+            // Process subsequent DM
+            // Skip the unstable period.
+            i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
+                } else {
+                    // Case 2,4,5 and 7
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
+                }
+            }
+            // Now start to write the output in
+            // the caller provided outReal.
+            lastValue_outReal = prevPlusDM;
+            outIdx = 1;
+            while today < endIdx {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
+                } else {
+                    // Case 2,4,5 and 7
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
+                }
+                lastValue_outReal = prevPlusDM;
+            }
+            dummyNBElement = outIdx;
+
+            // Capture the live batch state into the handle.
+            let state = PlusDMStreamState {
+                optInTimePeriod,
+                prevHigh,
+                prevLow,
+                tempReal,
+                diffP,
+                diffM,
+                prevPlusDM,
+            };
+            Ok((PlusDMStream { core: self.clone(), state }, lastValue_outReal))
+        }
+    }
+
+    /// Open a live PLUS_DM stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::plus_dm`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.plus_dm_open(&high, &low, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1);
+    /// let updated = s.update(101.4, 99.1);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_PLUS_DM_Open")]
+    pub fn plus_dm_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(PlusDMStream, f64), RetCode> {
+        self.plus_dm_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    }
+
+    /// [`Core::plus_dm_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::plus_dm`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_PLUS_DM_OpenAndFill")]
+    pub fn plus_dm_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<PlusDMStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        if optInTimePeriod <= 1 {
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut prevHigh: f64 = 0.0_f64;
+            let mut prevLow: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevPlusDM: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            //
+            // The DM1 (one period) is base on the largest part of
+            // today's range that is outside of yesterdays range.
+            //
+            // The following 7 cases explain how the +DM and -DM are
+            // calculated on one period:
+            //
+            // Case 1:                       Case 2:
+            //    C|                        A|
+            //     |                         | C|
+            //     | +DM1 = (C-A)           B|  | +DM1 = 0
+            //     | -DM1 = 0                   | -DM1 = (B-D)
+            // A|  |                           D|
+            //  | D|
+            // B|
+            //
+            // Case 3:                       Case 4:
+            //    C|                           C|
+            //     |                        A|  |
+            //     | +DM1 = (C-A)            |  | +DM1 = 0
+            //     | -DM1 = 0               B|  | -DM1 = (B-D)
+            // A|  |                            |
+            //  |  |                           D|
+            // B|  |
+            //    D|
+            //
+            // Case 5:                      Case 6:
+            // A|                           A| C|
+            //  | C| +DM1 = 0                |  |  +DM1 = 0
+            //  |  | -DM1 = 0                |  |  -DM1 = 0
+            //  | D|                         |  |
+            // B|                           B| D|
+            //
+            //
+            // Case 7:
+            //
+            //    C|
+            // A|  |
+            //  |  | +DM=0
+            // B|  | -DM=0
+            //    D|
+            //
+            // In case 3 and 4, the rule is that the smallest delta between
+            // (C-A) and (B-D) determine which of +DM or -DM is zero.
+            //
+            // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+            // zero.
+            //
+            // The rules remain the same when A=B and C=D (when the highs
+            // equal the lows).
+            //
+            // When calculating the DM over a period > 1, the one-period DM
+            // for the desired period are initialy sum. In other word,
+            // for a +DM14, sum the +DM1 for the first 14 days (that's
+            // 13 values because there is no DM for the first day!)
+            // Subsequent DM are calculated using the Wilder's
+            // smoothing approach:
+            //
+            //                                    Previous +DM14
+            //  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+            //                                         14
+            //
+            // Reference:
+            //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+            if optInTimePeriod > 1 {
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            } else {
+                lookbackTotal = 1;
+            }
+            // Adjust startIdx to account for the lookback period.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::BadParam);
+            }
+            // Indicate where the next output should be put
+            // in the outReal.
+            outIdx = 0;
+            // Trap the case where no smoothing is needed.
+            // No smoothing needed. Just do a simple DM1
+            // for each price bar.
+            (*outBegIdx) = startIdx;
+            today = startIdx - 1;
+            prevHigh = inHigh[today];
+            prevLow = inLow[today];
+            while today < endIdx {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    outReal[outIdx] = diffP;
+                    outIdx += 1;
+                } else {
+                    outReal[outIdx] = 0.0;
+                    outIdx += 1;
+                }
+            }
+            (*outNBElement) = outIdx;
+
+            // Capture the live batch state into the handle.
+            let state = PlusDMStreamState {
+                optInTimePeriod,
+                prevHigh,
+                prevLow,
+                tempReal,
+                diffP,
+                diffM,
+                prevPlusDM,
+            };
+            Ok(PlusDMStream { core: self.clone(), state })
+        } else {
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut prevHigh: f64 = 0.0_f64;
+            let mut prevLow: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevPlusDM: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            //
+            // The DM1 (one period) is base on the largest part of
+            // today's range that is outside of yesterdays range.
+            //
+            // The following 7 cases explain how the +DM and -DM are
+            // calculated on one period:
+            //
+            // Case 1:                       Case 2:
+            //    C|                        A|
+            //     |                         | C|
+            //     | +DM1 = (C-A)           B|  | +DM1 = 0
+            //     | -DM1 = 0                   | -DM1 = (B-D)
+            // A|  |                           D|
+            //  | D|
+            // B|
+            //
+            // Case 3:                       Case 4:
+            //    C|                           C|
+            //     |                        A|  |
+            //     | +DM1 = (C-A)            |  | +DM1 = 0
+            //     | -DM1 = 0               B|  | -DM1 = (B-D)
+            // A|  |                            |
+            //  |  |                           D|
+            // B|  |
+            //    D|
+            //
+            // Case 5:                      Case 6:
+            // A|                           A| C|
+            //  | C| +DM1 = 0                |  |  +DM1 = 0
+            //  |  | -DM1 = 0                |  |  -DM1 = 0
+            //  | D|                         |  |
+            // B|                           B| D|
+            //
+            //
+            // Case 7:
+            //
+            //    C|
+            // A|  |
+            //  |  | +DM=0
+            // B|  | -DM=0
+            //    D|
+            //
+            // In case 3 and 4, the rule is that the smallest delta between
+            // (C-A) and (B-D) determine which of +DM or -DM is zero.
+            //
+            // In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+            // zero.
+            //
+            // The rules remain the same when A=B and C=D (when the highs
+            // equal the lows).
+            //
+            // When calculating the DM over a period > 1, the one-period DM
+            // for the desired period are initialy sum. In other word,
+            // for a +DM14, sum the +DM1 for the first 14 days (that's
+            // 13 values because there is no DM for the first day!)
+            // Subsequent DM are calculated using the Wilder's
+            // smoothing approach:
+            //
+            //                                    Previous +DM14
+            //  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+            //                                         14
+            //
+            // Reference:
+            //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+            if optInTimePeriod > 1 {
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            } else {
+                lookbackTotal = 1;
+            }
+            // Adjust startIdx to account for the lookback period.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::BadParam);
+            }
+            // Indicate where the next output should be put
+            // in the outReal.
+            outIdx = 0;
+            // Trap the case where no smoothing is needed.
+            // Process the initial DM
+            (*outBegIdx) = startIdx;
+            prevPlusDM = 0.0;
+            today = startIdx - lookbackTotal;
+            prevHigh = inHigh[today];
+            prevLow = inLow[today];
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM += diffP;
+                }
+            }
+            // Process subsequent DM
+            // Skip the unstable period.
+            i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
+                } else {
+                    // Case 2,4,5 and 7
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
+                }
+            }
+            // Now start to write the output in
+            // the caller provided outReal.
+            outReal[0] = prevPlusDM;
+            outIdx = 1;
+            while today < endIdx {
+                today += 1;
+                tempReal = inHigh[today];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow[today];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
+                } else {
+                    // Case 2,4,5 and 7
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
+                }
+                outReal[outIdx] = prevPlusDM;
+                outIdx += 1;
+            }
+            (*outNBElement) = outIdx;
+
+            // Capture the live batch state into the handle.
+            let state = PlusDMStreamState {
+                optInTimePeriod,
+                prevHigh,
+                prevLow,
+                tempReal,
+                diffP,
+                diffM,
+                prevPlusDM,
+            };
+            Ok(PlusDMStream { core: self.clone(), state })
+        }
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl PlusDMStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_PLUS_DM_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.plus_dm_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_PLUS_DM_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<PlusDMStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

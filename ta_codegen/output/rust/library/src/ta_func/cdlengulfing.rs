@@ -267,6 +267,258 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLENGULFING stream: one value per closed bar, bit-identical to [`Core::cdlengulfing`]
+/// over the same series. Open with [`Core::cdlengulfing_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLENGULFING_Stream")]
+pub struct CdlengulfingStream {
+    core: Core,
+    state: CdlengulfingStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CdlengulfingStreamState {
+    lag1_inOpen: f64,
+    lag1_inClose: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdlengulfing_step_internal(&self, sp: &mut CdlengulfingStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) {
+            // white engulfs black
+            // black engulfs white
+            if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
+                (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 80) as i32;
+            }
+        } else {
+            (*outInteger) = 0;
+        }
+        sp.lag1_inOpen = inOpen;
+        sp.lag1_inClose = inClose;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdlengulfing_open`] (composition seam).
+    pub(crate) fn cdlengulfing_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CdlengulfingStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlengulfing_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first: black (white) real body
+        // - second: white (black) real body that engulfs the prior real body
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
+        // - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
+        // - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
+        //   "Candlestick charting explained")
+        // The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
+        // while this function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) {
+                // white engulfs black
+                // black engulfs white
+                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
+                    lastValue_outInteger = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                } else {
+                    lastValue_outInteger = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
+                }
+            } else {
+                lastValue_outInteger = 0;
+            }
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CdlengulfingStreamState {
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+        };
+        Ok((CdlengulfingStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLENGULFING stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdlengulfing`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdlengulfing_open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLENGULFING_Open")]
+    pub fn cdlengulfing_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlengulfingStream, i32), RetCode> {
+        self.cdlengulfing_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::cdlengulfing_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlengulfing`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLENGULFING_OpenAndFill")]
+    pub fn cdlengulfing_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlengulfingStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlengulfing_lookback();
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first: black (white) real body
+        // - second: white (black) real body that engulfs the prior real body
+        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
+        // - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
+        // - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
+        //   "Candlestick charting explained")
+        // The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
+        // while this function does not consider it
+        outIdx = 0;
+        loop {
+            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) {
+                // white engulfs black
+                // black engulfs white
+                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                    outIdx += 1;
+                } else {
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
+                    outIdx += 1;
+                }
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            i += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CdlengulfingStreamState {
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+        };
+        Ok(CdlengulfingStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CdlengulfingStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLENGULFING_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdlengulfing_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLENGULFING_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CdlengulfingStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

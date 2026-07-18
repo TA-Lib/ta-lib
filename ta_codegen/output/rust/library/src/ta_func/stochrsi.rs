@@ -343,6 +343,350 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live STOCHRSI stream: one value per closed bar, bit-identical to [`Core::stochrsi`]
+/// over the same series. Open with [`Core::stochrsi_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_STOCHRSI_Stream")]
+pub struct StochRsiStream {
+    core: Core,
+    state: StochRsiStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct StochRsiStreamState {
+    optInTimePeriod: i32,
+    optInFastK_Period: i32,
+    optInFastD_Period: i32,
+    optInFastD_MAType: i32,
+    sub0: RsiStream,
+    sub1: StochfStream,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn stochrsi_step_internal(&self, sp: &mut StochRsiStreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) {
+        let mut cur_tempRSIBuffer: f64 = 0.0_f64;
+        let mut cur_outFastK: f64 = 0.0_f64;
+        let mut cur_outFastD: f64 = 0.0_f64;
+
+        // Pipeline the new bar through the sub-streams (batch tail order).
+        cur_tempRSIBuffer = sp.sub0.update(inReal);
+        {
+            let _sub_out = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+            cur_outFastK = _sub_out.0;
+            cur_outFastD = _sub_out.1;
+        }
+        (*outFastK) = cur_outFastK;
+        (*outFastD) = cur_outFastD;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::stochrsi_open`] (composition seam).
+    pub(crate) fn stochrsi_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32,
+    ) -> Result<(StochRsiStream, (f64, f64)), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastK_Period) as i32) == (i32::MIN) {
+            optInFastK_Period = 5;
+        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastD_Period) as i32) == (i32::MIN) {
+            optInFastD_Period = 3;
+        } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outFastK: f64 = 0.0_f64;
+        let mut lastValue_outFastD: f64 = 0.0_f64;
+        let mut _begStore: usize = 0;
+        let mut _nbStore: usize = 0;
+        let outBegIdx: &mut usize = &mut _begStore;
+        let outNBElement: &mut usize = &mut _nbStore;
+        let mut sc_outFastK: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut sc_outFastD: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut tempRSIBuffer: Vec<f64> = Vec::new();
+        let mut retCode: RetCode = RetCode::Success;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackSTOCHF: usize = 0_usize;
+        let mut tempArraySize: usize = 0_usize;
+        let mut outBegIdx1: usize = 0_usize;
+        let mut outBegIdx2: usize = 0_usize;
+        let mut outNbElement1: usize = 0_usize;
+        // Stochastic RSI
+        //
+        // Reference: "Stochastic RSI and Dynamic Momentum Index"
+        //            by Tushar Chande and Stanley Kroll
+        //            Stock&Commodities V.11:5 (189-199)
+        //
+        // The TA-Lib version offer flexibility beyond what is explain
+        // in the Stock&Commodities article.
+        //
+        // To calculate the "Unsmoothed stochastic RSI" with symetry like
+        // explain in the article, keep the optInTimePeriod and optInFastK_Period
+        // equal. Example:
+        //
+        //    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
+        //                              optInFastK_Period = 14
+        //                              optInFastD_Period = 'x'
+        //
+        // The outFastK is the unsmoothed RSI discuss in the article.
+        //
+        // You can set the optInFastD_Period to smooth the RSI. The smooth
+        // version will be found in outFastD. The outFastK will still contain
+        // the unsmoothed stoch RSI. If you do not care about the smoothing of
+        // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        lookbackTotal = self.rsi_lookback(optInTimePeriod) + lookbackSTOCHF;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        (*outBegIdx) = startIdx;
+        tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
+        tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
+        // Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.rsi_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod)?;
+        retCode = self.rsi_unguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..]);
+        if retCode != RetCode::Success || outNbElement1 == 0 {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub1, _) = self.stochf_open_internal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.stochf_unguarded(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let state = StochRsiStreamState {
+            optInTimePeriod,
+            optInFastK_Period,
+            optInFastD_Period,
+            optInFastD_MAType,
+            sub0,
+            sub1,
+        };
+        Ok((StochRsiStream { core: self.clone(), state }, (sc_outFastK[*outNBElement - 1], sc_outFastD[*outNBElement - 1])))
+    }
+
+    /// Open a live STOCHRSI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::stochrsi`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.stochrsi_open(&data, 14, 5, 3, 0).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
+    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
+    /// ```
+    #[doc(alias = "TA_STOCHRSI_Open")]
+    pub fn stochrsi_open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(StochRsiStream, (f64, f64)), RetCode> {
+        self.stochrsi_open_internal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+    }
+
+    /// [`Core::stochrsi_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stochrsi`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_STOCHRSI_OpenAndFill")]
+    pub fn stochrsi_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
+    ) -> Result<StochRsiStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if outFastK.as_ptr() == outFastD.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastK_Period) as i32) == (i32::MIN) {
+            optInFastK_Period = 5;
+        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInFastD_Period) as i32) == (i32::MIN) {
+            optInFastD_Period = 3;
+        } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sc_outFastK: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut sc_outFastD: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut tempRSIBuffer: Vec<f64> = Vec::new();
+        let mut retCode: RetCode = RetCode::Success;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackSTOCHF: usize = 0_usize;
+        let mut tempArraySize: usize = 0_usize;
+        let mut outBegIdx1: usize = 0_usize;
+        let mut outBegIdx2: usize = 0_usize;
+        let mut outNbElement1: usize = 0_usize;
+        // Stochastic RSI
+        //
+        // Reference: "Stochastic RSI and Dynamic Momentum Index"
+        //            by Tushar Chande and Stanley Kroll
+        //            Stock&Commodities V.11:5 (189-199)
+        //
+        // The TA-Lib version offer flexibility beyond what is explain
+        // in the Stock&Commodities article.
+        //
+        // To calculate the "Unsmoothed stochastic RSI" with symetry like
+        // explain in the article, keep the optInTimePeriod and optInFastK_Period
+        // equal. Example:
+        //
+        //    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
+        //                              optInFastK_Period = 14
+        //                              optInFastD_Period = 'x'
+        //
+        // The outFastK is the unsmoothed RSI discuss in the article.
+        //
+        // You can set the optInFastD_Period to smooth the RSI. The smooth
+        // version will be found in outFastD. The outFastK will still contain
+        // the unsmoothed stoch RSI. If you do not care about the smoothing of
+        // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        lookbackTotal = self.rsi_lookback(optInTimePeriod) + lookbackSTOCHF;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        (*outBegIdx) = startIdx;
+        tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
+        tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
+        // Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub0, _) = self.rsi_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod)?;
+        retCode = self.rsi_unguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..]);
+        if retCode != RetCode::Success || outNbElement1 == 0 {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+        // Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
+        // sub-call's own startIdx (the seeding point).
+        let (sub1, _) = self.stochf_open_internal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.stochf_unguarded(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..]);
+        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
+
+        // Capture the live producer state + sub handles.
+        if *outNBElement < 1 {
+            return Err(RetCode::BadParam);
+        }
+        let state = StochRsiStreamState {
+            optInTimePeriod,
+            optInFastK_Period,
+            optInFastD_Period,
+            optInFastD_MAType,
+            sub0,
+            sub1,
+        };
+        outFastK[..*outNBElement].copy_from_slice(&sc_outFastK[..*outNBElement]);
+        outFastD[..*outNBElement].copy_from_slice(&sc_outFastD[..*outNBElement]);
+        Ok(StochRsiStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl StochRsiStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_STOCHRSI_Update")]
+    pub fn update(&mut self, inReal: f64) -> (f64, f64) {
+        let mut outFastK: f64 = 0.0_f64;
+        let mut outFastD: f64 = 0.0_f64;
+        self.core.stochrsi_step_internal(&mut self.state, inReal, &mut outFastK, &mut outFastD);
+        (outFastK, outFastD)
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_STOCHRSI_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> (f64, f64) {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<StochRsiStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

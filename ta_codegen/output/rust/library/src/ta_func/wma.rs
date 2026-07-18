@@ -350,6 +350,436 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live WMA stream: one value per closed bar, bit-identical to [`Core::wma`]
+/// over the same series. Open with [`Core::wma_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_WMA_Stream")]
+pub struct WmaStream {
+    core: Core,
+    state: WmaStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct WmaStreamState {
+    optInTimePeriod: i32,
+    divider: usize,
+    periodSum: f64,
+    periodSub: f64,
+    trailingValue: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn wma_step_internal(&self, sp: &mut WmaStreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal[0] = inReal;
+        }
+        // Add the current price bar to the sum
+        // who are carried through the iterations.
+        tempReal = inReal;
+        sp.periodSub += tempReal;
+        sp.periodSub -= sp.trailingValue;
+        sp.periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+        // Save the trailing value for being substract at
+        // the next iteration.
+        // (must be saved here just in case outReal and
+        //  inReal are the same buffer).
+        sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        // Calculate the WMA for this price bar.
+        (*outReal) = sp.periodSum / ((sp.divider) as f64);
+        // Prepare the periodSum for the next iteration.
+        sp.periodSum -= sp.periodSub;
+        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::wma_open`] (composition seam).
+    pub(crate) fn wma_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(WmaStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.wma_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = WmaStreamState {
+                optInTimePeriod: optInTimePeriod,
+                divider: 0_usize,
+                periodSum: 0.0_f64,
+                periodSub: 0.0_f64,
+                trailingValue: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+            };
+            return Ok((WmaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
+        let mut inIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut divider: usize = 0_usize;
+        let mut periodSum: f64 = 0.0_f64;
+        let mut periodSub: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        lookbackTotal = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // To make the rest more efficient, handle exception
+        // case where the user is asking for a period of '1'.
+        // In that case outputs equals inputs for the requested
+        // range.
+        // Calculate the divider (always an integer value).
+        // By induction: 1+2+3+4+'n' = n(n+1)/2
+        // '>>1' is usually faster than '/2' for unsigned.
+        divider = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+        // The algo used here use a very basic property of
+        // multiplication/addition: (x*2) = x+x
+        //
+        // As an example, a 3 period weighted can be
+        // interpreted in two way:
+        //  (x1*1)+(x2*2)+(x3*3)
+        //      OR
+        //  x1+x2+x2+x3+x3+x3 (this is the periodSum)
+        //
+        // When you move forward in the time serie
+        // you can quickly adjust the periodSum for the
+        // period by substracting:
+        //   x1+x2+x3 (This is the periodSub)
+        // Making the new periodSum equals to:
+        //   x2+x3+x3
+        //
+        // You can then add the new price bar
+        // which is x4+x4+x4 giving:
+        //   x2+x3+x3+x4+x4+x4
+        //
+        // At this point one iteration is completed and you can
+        // see that we are back to the step 1 of this example.
+        //
+        // Why making it so un-intuitive? The number of memory
+        // access and floating point operations are kept to a
+        // minimum with this algo.
+        outIdx = 0;
+        trailingIdx = startIdx - lookbackTotal;
+        // Evaluate the initial periodSum/periodSub and trailingValue.
+        periodSub = 0.0 as f64;
+        periodSum = periodSub;
+        inIdx = trailingIdx;
+        i = 1;
+        while inIdx < startIdx {
+            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
+            periodSub += tempReal;
+            periodSum += tempReal * ((i) as f64);
+            i += 1;
+        }
+        trailingValue = 0.0;
+        // Tight loop for the requested range.
+        while inIdx <= endIdx {
+            // Add the current price bar to the sum
+            // who are carried through the iterations.
+            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
+            periodSub += tempReal;
+            periodSub -= trailingValue;
+            periodSum += tempReal * ((optInTimePeriod) as f64);
+            // Save the trailing value for being substract at
+            // the next iteration.
+            // (must be saved here just in case outReal and
+            //  inReal are the same buffer).
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            // Calculate the WMA for this price bar.
+            lastValue_outReal = periodSum / ((divider) as f64);
+            // Prepare the periodSum for the next iteration.
+            periodSum -= periodSub;
+        }
+        // Set output limits.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = WmaStreamState {
+            optInTimePeriod,
+            divider,
+            periodSum,
+            periodSub,
+            trailingValue,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok((WmaStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live WMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::wma`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.wma_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_WMA_Open")]
+    pub fn wma_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(WmaStream, f64), RetCode> {
+        self.wma_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::wma_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::wma`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_WMA_OpenAndFill")]
+    pub fn wma_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<WmaStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.wma_lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = WmaStreamState {
+                optInTimePeriod: optInTimePeriod,
+                divider: 0_usize,
+                periodSum: 0.0_f64,
+                periodSub: 0.0_f64,
+                trailingValue: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+            };
+            let fillLb: usize = self.wma_lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(WmaStream { core: self.clone(), state });
+        }
+        let mut inIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut divider: usize = 0_usize;
+        let mut periodSum: f64 = 0.0_f64;
+        let mut periodSub: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        lookbackTotal = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // To make the rest more efficient, handle exception
+        // case where the user is asking for a period of '1'.
+        // In that case outputs equals inputs for the requested
+        // range.
+        // Calculate the divider (always an integer value).
+        // By induction: 1+2+3+4+'n' = n(n+1)/2
+        // '>>1' is usually faster than '/2' for unsigned.
+        divider = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+        // The algo used here use a very basic property of
+        // multiplication/addition: (x*2) = x+x
+        //
+        // As an example, a 3 period weighted can be
+        // interpreted in two way:
+        //  (x1*1)+(x2*2)+(x3*3)
+        //      OR
+        //  x1+x2+x2+x3+x3+x3 (this is the periodSum)
+        //
+        // When you move forward in the time serie
+        // you can quickly adjust the periodSum for the
+        // period by substracting:
+        //   x1+x2+x3 (This is the periodSub)
+        // Making the new periodSum equals to:
+        //   x2+x3+x3
+        //
+        // You can then add the new price bar
+        // which is x4+x4+x4 giving:
+        //   x2+x3+x3+x4+x4+x4
+        //
+        // At this point one iteration is completed and you can
+        // see that we are back to the step 1 of this example.
+        //
+        // Why making it so un-intuitive? The number of memory
+        // access and floating point operations are kept to a
+        // minimum with this algo.
+        outIdx = 0;
+        trailingIdx = startIdx - lookbackTotal;
+        // Evaluate the initial periodSum/periodSub and trailingValue.
+        periodSub = 0.0 as f64;
+        periodSum = periodSub;
+        inIdx = trailingIdx;
+        i = 1;
+        while inIdx < startIdx {
+            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
+            periodSub += tempReal;
+            periodSum += tempReal * ((i) as f64);
+            i += 1;
+        }
+        trailingValue = 0.0;
+        // Tight loop for the requested range.
+        while inIdx <= endIdx {
+            // Add the current price bar to the sum
+            // who are carried through the iterations.
+            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
+            periodSub += tempReal;
+            periodSub -= trailingValue;
+            periodSum += tempReal * ((optInTimePeriod) as f64);
+            // Save the trailing value for being substract at
+            // the next iteration.
+            // (must be saved here just in case outReal and
+            //  inReal are the same buffer).
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            // Calculate the WMA for this price bar.
+            outReal[outIdx] = periodSum / ((divider) as f64);
+            outIdx += 1;
+            // Prepare the periodSum for the next iteration.
+            periodSum -= periodSub;
+        }
+        // Set output limits.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = WmaStreamState {
+            optInTimePeriod,
+            divider,
+            periodSum,
+            periodSub,
+            trailingValue,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok(WmaStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl WmaStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_WMA_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.wma_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_WMA_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<WmaStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -294,6 +294,307 @@ impl Core {
         return self.ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
     }
 }
+/**** Streaming API *****/
+
+/// Live EMA stream: one value per closed bar, bit-identical to [`Core::ema`]
+/// over the same series. Open with [`Core::ema_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_EMA_Stream")]
+pub struct EmaStream {
+    core: Core,
+    state: EmaStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct EmaStreamState {
+    optInTimePeriod: i32,
+    optInK_1: f64,
+    prevMA: f64,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn ema_step_internal(&self, sp: &mut EmaStreamState, inReal: f64, outReal: &mut f64) {
+        sp.prevMA = (inReal - sp.prevMA) * ((sp.optInK_1) as f64) + sp.prevMA;
+        (*outReal) = sp.prevMA;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ema_open`] (composition seam).
+    pub(crate) fn ema_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(EmaStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
+        let mut tempReal: f64 = 0.0_f64;
+        let mut prevMA: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Internal implementation can be called from any other TA function.
+        //
+        // Faster because there is no parameter check, but it is a double
+        // edge sword.
+        //
+        // The optInK_1 and optInTimePeriod are usually tightly coupled:
+        //
+        //    optInK_1  = 2 / (optInTimePeriod + 1).
+        //
+        // These values are going to be related by this equation 99.9% of the
+        // time... but there is some exception, this is why both must be provided.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.ema_lookback(optInTimePeriod);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        dummyBegIdx = startIdx;
+        // Do the EMA calculation using tight loops.
+        // The first EMA is calculated differently. It
+        // then become the seed for subsequent EMA.
+        //
+        // The algorithm for this seed vary widely.
+        // Only 3 are implemented here:
+        //
+        // TA_MA_CLASSIC:
+        //    Use a simple MA of the first 'period'.
+        //    This is the approach most widely documented.
+        //
+        // TA_MA_METASTOCK:
+        //    Use first price bar value as a seed
+        //    from the begining of all the available
+        //    data.
+        //
+        // TA_MA_TRADESTATION:
+        //    Use 4th price bar as a seed, except when
+        //    period is 1 who use 2th price bar or something
+        //    like that... (not an obvious one...).
+        if self.compatibility == Compatibility::Default {
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevMA = inReal[0];
+            today = 1;
+        }
+        while today <= startIdx {
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+        }
+        lastValue_outReal = prevMA;
+        outIdx = 1;
+        while today <= endIdx {
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            lastValue_outReal = prevMA;
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = EmaStreamState {
+            optInTimePeriod,
+            optInK_1,
+            prevMA,
+        };
+        Ok((EmaStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live EMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::ema`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.ema_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_EMA_Open")]
+    pub fn ema_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(EmaStream, f64), RetCode> {
+        self.ema_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::ema_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ema`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_EMA_OpenAndFill")]
+    pub fn ema_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<EmaStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
+        let mut tempReal: f64 = 0.0_f64;
+        let mut prevMA: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Internal implementation can be called from any other TA function.
+        //
+        // Faster because there is no parameter check, but it is a double
+        // edge sword.
+        //
+        // The optInK_1 and optInTimePeriod are usually tightly coupled:
+        //
+        //    optInK_1  = 2 / (optInTimePeriod + 1).
+        //
+        // These values are going to be related by this equation 99.9% of the
+        // time... but there is some exception, this is why both must be provided.
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.ema_lookback(optInTimePeriod);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        (*outBegIdx) = startIdx;
+        // Do the EMA calculation using tight loops.
+        // The first EMA is calculated differently. It
+        // then become the seed for subsequent EMA.
+        //
+        // The algorithm for this seed vary widely.
+        // Only 3 are implemented here:
+        //
+        // TA_MA_CLASSIC:
+        //    Use a simple MA of the first 'period'.
+        //    This is the approach most widely documented.
+        //
+        // TA_MA_METASTOCK:
+        //    Use first price bar value as a seed
+        //    from the begining of all the available
+        //    data.
+        //
+        // TA_MA_TRADESTATION:
+        //    Use 4th price bar as a seed, except when
+        //    period is 1 who use 2th price bar or something
+        //    like that... (not an obvious one...).
+        if self.compatibility == Compatibility::Default {
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevMA = inReal[0];
+            today = 1;
+        }
+        while today <= startIdx {
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+        }
+        outReal[0] = prevMA;
+        outIdx = 1;
+        while today <= endIdx {
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            outReal[outIdx] = prevMA;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let state = EmaStreamState {
+            optInTimePeriod,
+            optInK_1,
+            prevMA,
+        };
+        Ok(EmaStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl EmaStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_EMA_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.ema_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_EMA_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<EmaStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

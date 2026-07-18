@@ -181,6 +181,160 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live COS stream: one value per closed bar, bit-identical to [`Core::cos`]
+/// over the same series. Open with [`Core::cos_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_COS_Stream")]
+pub struct CosStream {
+    core: Core,
+    state: CosStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CosStreamState {
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cos_step_internal(&self, sp: &mut CosStreamState, inReal: f64, outReal: &mut f64) {
+        (*outReal) = (inReal).cos();
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cos_open`] (composition seam).
+    pub(crate) fn cos_open_internal(
+        &self, inReal: &[f64], startIdx: usize,
+    ) -> Result<(CosStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            lastValue_outReal = (inReal[i]).cos();
+            i += 1;
+            outIdx += 1;
+        }
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CosStreamState {
+        };
+        Ok((CosStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live COS stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cos`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cos_open(&data).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_COS_Open")]
+    pub fn cos_open(&self, inReal: &[f64], ) -> Result<(CosStream, f64), RetCode> {
+        self.cos_open_internal(inReal, 0)
+    }
+
+    /// [`Core::cos_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cos`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_COS_OpenAndFill")]
+    pub fn cos_open_and_fill(
+        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CosStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            outReal[outIdx] = (((inReal[i]).cos()) as f64);
+            i += 1;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CosStreamState {
+        };
+        Ok(CosStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CosStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_COS_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.cos_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_COS_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CosStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

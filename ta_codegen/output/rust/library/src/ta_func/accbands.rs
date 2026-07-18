@@ -388,6 +388,463 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live ACCBANDS stream: one value per closed bar, bit-identical to [`Core::accbands`]
+/// over the same series. Open with [`Core::accbands_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_ACCBANDS_Stream")]
+pub struct AccbandsStream {
+    core: Core,
+    state: AccbandsStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct AccbandsStreamState {
+    optInTimePeriod: i32,
+    periodTotalUpper: f64,
+    periodTotalMiddle: f64,
+    periodTotalLower: f64,
+    tempUpper: f64,
+    tempMiddle: f64,
+    tempLower: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inHigh: Vec<f64>,
+    ring_trailingIdx_inLow: Vec<f64>,
+    ring_trailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn accbands_step_internal(&self, sp: &mut AccbandsStreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inHigh[0] = inHigh;
+            sp.ring_trailingIdx_inLow[0] = inLow;
+            sp.ring_trailingIdx_inClose[0] = inClose;
+        }
+        // Add the incoming bar to each running sum.
+        tempReal = inHigh + inLow;
+        if !((tempReal).abs() < 1e-14) {
+            tempReal = 4_f64 * (inHigh - inLow) / tempReal;
+            sp.periodTotalUpper += inHigh * (1_f64 + tempReal);
+            sp.periodTotalLower += inLow * (1_f64 - tempReal);
+        } else {
+            sp.periodTotalUpper += inHigh;
+            sp.periodTotalLower += inLow;
+        }
+        sp.periodTotalMiddle += inClose;
+        // Record the current window sums.
+        sp.tempUpper = sp.periodTotalUpper;
+        sp.tempMiddle = sp.periodTotalMiddle;
+        sp.tempLower = sp.periodTotalLower;
+        // Remove the trailing bar from each running sum.
+        tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+        if !((tempReal).abs() < 1e-14) {
+            tempReal = 4_f64 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
+            sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1_f64 + tempReal);
+            sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1_f64 - tempReal);
+        } else {
+            sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx];
+            sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+        }
+        sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
+        // Write the three bands.
+        (*outRealUpperBand) = sp.tempUpper / (sp.optInTimePeriod as f64);
+        (*outRealMiddleBand) = sp.tempMiddle / (sp.optInTimePeriod as f64);
+        (*outRealLowerBand) = sp.tempLower / (sp.optInTimePeriod as f64);
+        sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
+        sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
+        sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::accbands_open`] (composition seam).
+    pub(crate) fn accbands_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(AccbandsStream, (f64, f64, f64)), RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outRealUpperBand: f64 = 0.0_f64;
+        let mut lastValue_outRealMiddleBand: f64 = 0.0_f64;
+        let mut lastValue_outRealLowerBand: f64 = 0.0_f64;
+        let mut periodTotalUpper: f64 = 0.0_f64;
+        let mut periodTotalMiddle: f64 = 0.0_f64;
+        let mut periodTotalLower: f64 = 0.0_f64;
+        let mut tempUpper: f64 = 0.0_f64;
+        let mut tempMiddle: f64 = 0.0_f64;
+        let mut tempLower: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.sma_lookback(optInTimePeriod);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Each band is a simple moving average maintained as a running sum over a
+        // shared trailing window (all three share optInTimePeriod, so one trailing
+        // index walks all three windows in lockstep):
+        //    middle = SMA( close )
+        //    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+        //    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+        // When high+low is zero the upper/lower map degenerates to high/low.
+        // Fusing the three moving averages into one loop is bit-identical to the
+        // former "two scratch buffers + three sma() calls": each accumulator's
+        // add/record/subtract order is unchanged, and the High/Low map is a pure
+        // function recomputed from the raw trailing bar.
+        periodTotalUpper = 0.0;
+        periodTotalMiddle = 0.0;
+        periodTotalLower = 0.0;
+        trailingIdx = startIdx - lookbackTotal;
+        // Warm up the running sums with the initial period,
+        // except for the last value.
+        i = trailingIdx;
+        while i < startIdx {
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+        }
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and output to be the
+        // same buffer: every trailing bar is read before any output is written.
+        outIdx = 0;
+        while i <= endIdx {
+            // Add the incoming bar to each running sum.
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+            // Record the current window sums.
+            tempUpper = periodTotalUpper;
+            tempMiddle = periodTotalMiddle;
+            tempLower = periodTotalLower;
+            // Remove the trailing bar from each running sum.
+            tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+            }
+            periodTotalMiddle -= inClose[trailingIdx];
+            trailingIdx = trailingIdx + 1;
+            // Write the three bands.
+            lastValue_outRealUpperBand = tempUpper / (optInTimePeriod as f64);
+            lastValue_outRealMiddleBand = tempMiddle / (optInTimePeriod as f64);
+            lastValue_outRealLowerBand = tempLower / (optInTimePeriod as f64);
+            outIdx = outIdx + 1;
+        }
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inHigh[..cap_trailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inLow[..cap_trailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inClose[..cap_trailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_trailingIdx as usize..]);
+        let state = AccbandsStreamState {
+            optInTimePeriod,
+            periodTotalUpper,
+            periodTotalMiddle,
+            periodTotalLower,
+            tempUpper,
+            tempMiddle,
+            tempLower,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inHigh,
+            ring_trailingIdx_inLow,
+            ring_trailingIdx_inClose,
+        };
+        Ok((AccbandsStream { core: self.clone(), state }, (lastValue_outRealUpperBand, lastValue_outRealMiddleBand, lastValue_outRealLowerBand)))
+    }
+
+    /// Open a live ACCBANDS stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::accbands`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.accbands_open(&high, &low, &close, 20).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
+    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
+    /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
+    /// ```
+    #[doc(alias = "TA_ACCBANDS_Open")]
+    pub fn accbands_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AccbandsStream, (f64, f64, f64)), RetCode> {
+        self.accbands_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    }
+
+    /// [`Core::accbands_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::accbands`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ACCBANDS_OpenAndFill")]
+    pub fn accbands_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+    ) -> Result<AccbandsStream, RetCode> {
+        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut periodTotalUpper: f64 = 0.0_f64;
+        let mut periodTotalMiddle: f64 = 0.0_f64;
+        let mut periodTotalLower: f64 = 0.0_f64;
+        let mut tempUpper: f64 = 0.0_f64;
+        let mut tempMiddle: f64 = 0.0_f64;
+        let mut tempLower: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.sma_lookback(optInTimePeriod);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Each band is a simple moving average maintained as a running sum over a
+        // shared trailing window (all three share optInTimePeriod, so one trailing
+        // index walks all three windows in lockstep):
+        //    middle = SMA( close )
+        //    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+        //    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+        // When high+low is zero the upper/lower map degenerates to high/low.
+        // Fusing the three moving averages into one loop is bit-identical to the
+        // former "two scratch buffers + three sma() calls": each accumulator's
+        // add/record/subtract order is unchanged, and the High/Low map is a pure
+        // function recomputed from the raw trailing bar.
+        periodTotalUpper = 0.0;
+        periodTotalMiddle = 0.0;
+        periodTotalLower = 0.0;
+        trailingIdx = startIdx - lookbackTotal;
+        // Warm up the running sums with the initial period,
+        // except for the last value.
+        i = trailingIdx;
+        while i < startIdx {
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+        }
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and output to be the
+        // same buffer: every trailing bar is read before any output is written.
+        outIdx = 0;
+        while i <= endIdx {
+            // Add the incoming bar to each running sum.
+            tempReal = inHigh[i] + inLow[i];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
+                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
+                periodTotalLower += inLow[i] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper += inHigh[i];
+                periodTotalLower += inLow[i];
+            }
+            periodTotalMiddle += inClose[i];
+            i = i + 1;
+            // Record the current window sums.
+            tempUpper = periodTotalUpper;
+            tempMiddle = periodTotalMiddle;
+            tempLower = periodTotalLower;
+            // Remove the trailing bar from each running sum.
+            tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+            if !((tempReal).abs() < 1e-14) {
+                tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+                periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
+                periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
+            } else {
+                periodTotalUpper -= inHigh[trailingIdx];
+                periodTotalLower -= inLow[trailingIdx];
+            }
+            periodTotalMiddle -= inClose[trailingIdx];
+            trailingIdx = trailingIdx + 1;
+            // Write the three bands.
+            outRealUpperBand[outIdx] = tempUpper / (optInTimePeriod as f64);
+            outRealMiddleBand[outIdx] = tempMiddle / (optInTimePeriod as f64);
+            outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
+            outIdx = outIdx + 1;
+        }
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inHigh[..cap_trailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inLow[..cap_trailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inClose[..cap_trailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_trailingIdx as usize..]);
+        let state = AccbandsStreamState {
+            optInTimePeriod,
+            periodTotalUpper,
+            periodTotalMiddle,
+            periodTotalLower,
+            tempUpper,
+            tempMiddle,
+            tempLower,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inHigh,
+            ring_trailingIdx_inLow,
+            ring_trailingIdx_inClose,
+        };
+        Ok(AccbandsStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl AccbandsStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_ACCBANDS_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64, f64) {
+        let mut outRealUpperBand: f64 = 0.0_f64;
+        let mut outRealMiddleBand: f64 = 0.0_f64;
+        let mut outRealLowerBand: f64 = 0.0_f64;
+        self.core.accbands_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+        (outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_ACCBANDS_Peek")]
+    #[must_use]
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64, f64) {
+        let mut scratch = self.clone();
+        scratch.update(inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<AccbandsStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

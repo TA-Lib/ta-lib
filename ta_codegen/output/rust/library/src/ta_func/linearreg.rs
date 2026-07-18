@@ -319,6 +319,364 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live LINEARREG stream: one value per closed bar, bit-identical to [`Core::linearreg`]
+/// over the same series. Open with [`Core::linearreg_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_LINEARREG_Stream")]
+pub struct LinearregStream {
+    core: Core,
+    state: LinearregStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct LinearregStreamState {
+    optInTimePeriod: i32,
+    SumX: f64,
+    SumXY: f64,
+    SumY: f64,
+    Divisor: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn linearreg_step_internal(&self, sp: &mut LinearregStreamState, inReal: f64, outReal: &mut f64) {
+        let mut m: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal[0] = inReal;
+        }
+        trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        sp.SumXY = sp.SumXY + sp.SumY - (sp.optInTimePeriod as f64) * trailingValue;
+        sp.SumY = sp.SumY - trailingValue + inReal;
+        m = (((sp.optInTimePeriod) as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+        b = (sp.SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
+        (*outReal) = (m as f64).mul_add((sp.optInTimePeriod - 1) as f64, b);
+        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::linearreg_open`] (composition seam).
+    pub(crate) fn linearreg_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(LinearregStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut SumX: f64 = 0.0_f64;
+        let mut SumXY: f64 = 0.0_f64;
+        let mut SumY: f64 = 0.0_f64;
+        let mut SumXSqr: f64 = 0.0_f64;
+        let mut Divisor: f64 = 0.0_f64;
+        let mut m: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
+        // Linear Regression is a concept also known as the
+        // "least squares method" or "best fit." Linear
+        // Regression attempts to fit a straight line between
+        // several data points in such a way that distance
+        // between each data point and the line is minimized.
+        //
+        // For each point, a straight line over the specified
+        // previous bar period is determined in terms
+        // of y = b + m*x:
+        //
+        // TA_LINEARREG          : Returns b+m*(period-1)
+        // TA_LINEARREG_SLOPE    : Returns 'm'
+        // TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+        // TA_LINEARREG_INTERCEPT: Returns 'b'
+        // TA_TSF                : Returns b+m*(period)
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.linearreg_lookback(optInTimePeriod);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
+        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        // Prime the two data-dependent window sums for the first output with a
+        // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+        // SumY = sum of the window, SumXY = sum of i*value (i the reversed
+        // 0..period-1 position).
+        SumXY = 0.0;
+        SumY = 0.0;
+        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+            tempValue1 = inReal[today - i];
+            SumY += tempValue1;
+            SumXY += (i as f64) * tempValue1;
+        }
+        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        b = (SumY - m * SumX) / (optInTimePeriod as f64);
+        lastValue_outReal = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+        today += 1;
+        // Slide the window one bar at a time, keeping both sums in O(1): advancing
+        // the window raises every retained value's weight by 1 (adds SumY) and drops
+        // the departing value at full weight (subtracts period*trailingValue). Same
+        // incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+        // (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+        while today <= endIdx {
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
+            SumY = SumY - trailingValue + inReal[today];
+            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            b = (SumY - m * SumX) / (optInTimePeriod as f64);
+            lastValue_outReal = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            today += 1;
+        }
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = LinearregStreamState {
+            optInTimePeriod,
+            SumX,
+            SumXY,
+            SumY,
+            Divisor,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok((LinearregStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live LINEARREG stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::linearreg`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.linearreg_open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_LINEARREG_Open")]
+    pub fn linearreg_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LinearregStream, f64), RetCode> {
+        self.linearreg_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::linearreg_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::linearreg`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_LINEARREG_OpenAndFill")]
+    pub fn linearreg_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<LinearregStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 14;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut SumX: f64 = 0.0_f64;
+        let mut SumXY: f64 = 0.0_f64;
+        let mut SumY: f64 = 0.0_f64;
+        let mut SumXSqr: f64 = 0.0_f64;
+        let mut Divisor: f64 = 0.0_f64;
+        let mut m: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut trailingValue: f64 = 0.0_f64;
+        // Linear Regression is a concept also known as the
+        // "least squares method" or "best fit." Linear
+        // Regression attempts to fit a straight line between
+        // several data points in such a way that distance
+        // between each data point and the line is minimized.
+        //
+        // For each point, a straight line over the specified
+        // previous bar period is determined in terms
+        // of y = b + m*x:
+        //
+        // TA_LINEARREG          : Returns b+m*(period-1)
+        // TA_LINEARREG_SLOPE    : Returns 'm'
+        // TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+        // TA_LINEARREG_INTERCEPT: Returns 'b'
+        // TA_TSF                : Returns b+m*(period)
+        // Adjust startIdx to account for the lookback period.
+        lookbackTotal = self.linearreg_lookback(optInTimePeriod);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        outIdx = 0;
+        // Index into the output.
+        today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
+        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        // Prime the two data-dependent window sums for the first output with a
+        // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+        // SumY = sum of the window, SumXY = sum of i*value (i the reversed
+        // 0..period-1 position).
+        SumXY = 0.0;
+        SumY = 0.0;
+        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+            tempValue1 = inReal[today - i];
+            SumY += tempValue1;
+            SumXY += (i as f64) * tempValue1;
+        }
+        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        b = (SumY - m * SumX) / (optInTimePeriod as f64);
+        outReal[outIdx] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+        outIdx += 1;
+        today += 1;
+        // Slide the window one bar at a time, keeping both sums in O(1): advancing
+        // the window raises every retained value's weight by 1 (adds SumY) and drops
+        // the departing value at full weight (subtracts period*trailingValue). Same
+        // incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+        // (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+        while today <= endIdx {
+            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
+            SumY = SumY - trailingValue + inReal[today];
+            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            b = (SumY - m * SumX) / (optInTimePeriod as f64);
+            outReal[outIdx] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            outIdx += 1;
+            today += 1;
+        }
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let state = LinearregStreamState {
+            optInTimePeriod,
+            SumX,
+            SumXY,
+            SumY,
+            Divisor,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+        };
+        Ok(LinearregStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl LinearregStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_LINEARREG_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.linearreg_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_LINEARREG_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<LinearregStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

@@ -16,6 +16,7 @@ use super::fma::{self, is_i32_opt_in_param, is_integer_returning_helper, FmaCtx}
 use super::stmt_walk::StatementEmitter;
 
 /// Controls how the Rust renderer emits code.
+#[derive(Clone)]
 pub struct RustRenderCtx {
     /// If true, emit a pre-loop bounds-assert preamble at the top of the body (the
     /// `_unguarded`/`_private` variants). The asserts give LLVM the proof it needs to
@@ -46,6 +47,10 @@ pub struct RustRenderCtx {
     /// These are declared as `i32` instead of `usize` to preserve sentinel semantics.
     /// When used as array indices, they get `as usize` casts.
     pub sentinel_vars: std::collections::HashSet<String>,
+    /// If true, renderer-generated error returns (CIRCBUF init guard) emit
+    /// `return Err(RetCode::X);` — the stream tier's `Result` shape — instead
+    /// of the batch tier's bare `return RetCode::X;`.
+    pub result_error_returns: bool,
 }
 
 impl RustRenderCtx {
@@ -72,6 +77,7 @@ impl RustRenderCtx {
             int_vec_vars: std::collections::HashSet::new(),
             is_lookback: true,
             sentinel_vars: std::collections::HashSet::new(),
+            result_error_returns: false,
         }
     }
 }
@@ -100,6 +106,10 @@ pub fn generate(
     }
     out.push_str(&gen_imports());
     out.push_str(&gen_impl_block(func, enums, registry, helpers));
+    // Streaming API section (only for YAML-declared streamable functions).
+    if func.streaming {
+        out.push_str(&super::rust_stream::generate(func, enums, registry, helpers));
+    }
     out.push_str(&gen_footer());
     out
 }
@@ -216,6 +226,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         int_vec_vars,
         is_lookback: false,
         sentinel_vars,
+        result_error_returns: false,
     };
 
     // For functions with explicit _private:
@@ -399,6 +410,7 @@ fn gen_guarded_func(
             int_vec_vars: g_int_vec_vars,
             is_lookback: false,
             sentinel_vars: g_sentinel_vars,
+            result_error_returns: false,
         };
         let g_for_loop_vars = collect_for_loop_vars(&func.body);
         let g_var_inits: std::collections::HashMap<String, &Expr> = func
@@ -490,6 +502,7 @@ fn gen_guarded_func(
             int_vec_vars: g_int_vec_vars,
             is_lookback: false,
             sentinel_vars: g_sentinel_vars,
+            result_error_returns: false,
         };
 
         // Use the same full rendering as gen_unguarded_func
@@ -957,6 +970,18 @@ fn gen_generic_output_params(func: &FuncDef) -> String {
 
 /// Generate optional parameter validation code.
 fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool) -> String {
+    let err_return = if is_lookback {
+        "return usize::MAX;"
+    } else {
+        "return RetCode::BadParam;"
+    };
+    gen_opt_param_validation_with(opt, pad, err_return)
+}
+
+/// Core of the optional-parameter default-substitution + range check, with the
+/// failure statement supplied by the caller (batch returns a bare `RetCode`,
+/// the stream tier returns `Err(RetCode::BadParam)`).
+pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_return: &str) -> String {
     let mut out = String::new();
     let name = &opt.name;
 
@@ -968,11 +993,6 @@ fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool) -> Str
             out.push_str(&format!("{pad}    {name} = {default_i64};\n"));
 
             if let Some((lo, hi)) = opt.range {
-                let err_return = if is_lookback {
-                    "return usize::MAX;"
-                } else {
-                    "return RetCode::BadParam;"
-                };
                 out.push_str(&format!(
                     "{pad}}} else if ((({name}) as i32) < {lo}) || ((({name}) as i32) > {hi}) {{\n"
                 ));
@@ -1005,7 +1025,7 @@ fn circbuf_storage(id: &str, layout: &CircBufLayout) -> Vec<(String, VarType)> {
 /// field-split storage, the `usize` rotation index, and the `usize` bound. The bound
 /// is seeded to `static_size - 1` (NOT 0) so the `INIT_LOCAL_ONLY` path (HT functions)
 /// sizes its buffer correctly before any `INIT` runs. Indent is the 8-space body level.
-fn emit_circbuf_prolog_rust(id: &str, layout: &CircBufLayout, static_size: i64) -> String {
+pub(crate) fn emit_circbuf_prolog_rust(id: &str, layout: &CircBufLayout, static_size: i64) -> String {
     let mut s = String::new();
     for (storage, t) in circbuf_storage(id, layout) {
         let vt = if matches!(t, VarType::Integer) {
@@ -1264,7 +1284,7 @@ pub(crate) fn collect_sentinel_vars(
 }
 
 /// Count how many times a variable is assigned in the body (including `VarDecl` inits).
-fn count_assignments(name: &str, body: &[Statement]) -> usize {
+pub(crate) fn count_assignments(name: &str, body: &[Statement]) -> usize {
     count_assignments_inner(name, body, false)
 }
 
@@ -1365,7 +1385,7 @@ fn count_assignments_inner(name: &str, body: &[Statement], in_loop: bool) -> usi
     count
 }
 
-fn collect_for_loop_vars(body: &[Statement]) -> Vec<String> {
+pub(crate) fn collect_for_loop_vars(body: &[Statement]) -> Vec<String> {
     let mut vars = Vec::new();
     let decls: std::collections::HashMap<String, &Expr> = body
         .iter()
@@ -1527,7 +1547,7 @@ fn is_simple_decrement(stmt: &Statement, var_name: &str) -> bool {
 
 /// Render hoisted block-inline helpers as Rust code (temp var decl + body).
 #[allow(clippy::too_many_arguments)]
-fn render_hoisted_blocks(
+pub(crate) fn render_hoisted_blocks(
     hoisted: &[(String, VarType, Vec<Statement>)],
     indent: usize,
     ctx: &RustRenderCtx,
@@ -1720,8 +1740,13 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 let mut s = String::new();
                 // Parity with the reference CIRCBUF_INIT guard (ta_memory.h _RUST branch);
                 // also prevents the `(sz as usize) - 1` underflow on the unguarded path.
+                let alloc_fail = if self.ctx.result_error_returns {
+                    "return Err(RetCode::AllocErr);"
+                } else {
+                    "return RetCode::AllocErr;"
+                };
                 s.push_str(&format!(
-                    "{pad}if {sz} < 1 {{ return RetCode::AllocErr; }}\n"
+                    "{pad}if {sz} < 1 {{ {alloc_fail} }}\n"
                 ));
                 for (storage, t) in circbuf_storage(id, layout) {
                     let zero = if matches!(t, VarType::Integer) {
@@ -1946,9 +1971,26 @@ impl StatementEmitter for RustStmt<'_, '_> {
         } else {
             false
         };
+        // An integer-output target (int array in batch; the stream tier's
+        // `(*outInteger)` step write / `lastValue_outInteger` scalar sink).
+        // Computed early: it excludes such targets from the usize casts below
+        // (`lastValue_outMaxIdx` would otherwise match the `*Idx` heuristics).
+        let int_target = match target {
+            Expr::ArrayAccess(name, _) => {
+                self.ctx.int_output_names.contains(name) || is_int_array_or_vec(name, self.ctx)
+            }
+            Expr::PointerDeref(name) => {
+                self.ctx.int_output_names.contains(strip_state_prefix(name))
+            }
+            Expr::Var(name) => name
+                .strip_prefix("lastValue_")
+                .is_some_and(|base| self.ctx.int_output_names.contains(base)),
+            _ => false,
+        };
         // Sentinel var used as value: cast i32 sentinel to usize when assigning to usize target
         let needs_sentinel_usize_cast = if let Expr::Var(tname) = target {
-            !self.ctx.sentinel_vars.contains(tname)
+            !int_target
+                && !self.ctx.sentinel_vars.contains(tname)
                 && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
                 && expr_is_i32_typed_ctx(&new_value, self.ctx)
                 && !expr_is_i32_typed(&new_value)
@@ -1963,7 +2005,8 @@ impl StatementEmitter for RustStmt<'_, '_> {
             || matches!(new_value, Expr::Var(ref v) if is_i32_opt_in_param(v) || v.ends_with("_avgPeriod") || v.ends_with("_rangeType"))
             || matches!(&new_value, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, self.ctx));
         let needs_usize_cast = if let Expr::Var(tname) = target {
-            !self.output_names.iter().any(|n| n == tname)
+            !int_target
+                && !self.output_names.iter().any(|n| n == tname)
                 && !is_i32_opt_in_param(tname)
                 && !tname.ends_with("_avgPeriod")
                 && !tname.ends_with("_rangeType")
@@ -1987,16 +2030,12 @@ impl StatementEmitter for RustStmt<'_, '_> {
         // Check if target is an integer output/local array (e.g., outInteger[idx] = usize_val,
         // sortedPeriods[i] = longestPeriod, localPeriodArray[i] = tempInt)
         // Values assigned to i32 arrays need `as i32` cast when usize-typed
-        let needs_int_output_cast = if let Expr::ArrayAccess(name, _) = target {
-            (self.ctx.int_output_names.contains(name) || is_int_array_or_vec(name, self.ctx))
-                && !expr_is_i32_typed(&new_value)
-                && !matches!(new_value, Expr::IntLiteral(_))
-                && (expr_is_known_usize_ctx(&new_value, self.ctx)
-                    || matches!(&new_value, Expr::Var(v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v))
-                    || matches!(&new_value, Expr::BinOp(_, _, _)))
-        } else {
-            false
-        };
+        let needs_int_output_cast = int_target
+            && !expr_is_i32_typed(&new_value)
+            && !matches!(new_value, Expr::IntLiteral(_))
+            && (expr_is_known_usize_ctx(&new_value, self.ctx)
+                || matches!(&new_value, Expr::Var(v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v))
+                || matches!(&new_value, Expr::BinOp(_, _, _)));
         // Cast integer values to f64 when assigned to f64-typed variables
         let needs_f64_wrap = if let Expr::Var(tname) = target {
             // Require the target to be positively identified as Real (f64)
@@ -2031,7 +2070,14 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let needs_to_vec = if let Expr::Var(tname) = target {
             if self.ctx.vec_vars.contains(tname) || is_vec_local_var(tname) {
                 if let Expr::Var(vname) = &new_value {
-                    self.output_names.contains(vname) || vname.starts_with("in")
+                    self.output_names.contains(vname)
+                        || vname.starts_with("in")
+                        // Stream tier: the composed open renames output arrays
+                        // to `sc_*` scratch Vecs; the batch's pointer-alias
+                        // assignment becomes the same `.to_vec()` copy the
+                        // batch text uses for the un-renamed output param.
+                        // Batch-invariant: no batch name starts with `sc_`.
+                        || (vname.starts_with("sc_") && self.ctx.vec_vars.contains(vname))
                 } else {
                     false
                 }
@@ -2257,7 +2303,11 @@ impl StatementEmitter for RustStmt<'_, '_> {
         // but generates suboptimal cinc+double-compare for inclusive ranges.
         if let Expr::BinOp(cond_left, BinOp::LessEq, cond_right) = condition {
             if let Expr::Var(iter_name) = cond_left.as_ref() {
-                if let Some(start_expr) = extract_init_value(init, iter_name) {
+                // A dotted iter var (stream-state field, `sp.j`) is not a valid
+                // `for` pattern binding — those loops take the generic fallback.
+                if let Some(start_expr) =
+                    (!iter_name.contains('.')).then(|| extract_init_value(init, iter_name)).flatten()
+                {
                     if is_simple_increment(update, iter_name) {
                         let start_str = render_expr(start_expr, self.ctx, self.opt_real_params, self.registry, self.helpers);
                         let end_str = render_expr(cond_right, self.ctx, self.opt_real_params, self.registry, self.helpers);
@@ -2299,6 +2349,16 @@ impl StatementEmitter for RustStmt<'_, '_> {
                                     "{pad}// for( {iter_name} = {start_str}; \
                                      {iter_name} >= {bound_str}; {iter_name} -= 1 )\n"
                                 );
+                                // A usize iterator seeded from an i32-typed
+                                // start (stream transitions: `sp.optInX - 1`)
+                                // needs the same cast the assign ladder inserts.
+                                let start_str = if expr_is_i32_typed(start_expr)
+                                    && !self.ctx.sentinel_vars.contains(&iter_name)
+                                {
+                                    format!("({start_str}) as usize")
+                                } else {
+                                    start_str
+                                };
                                 out.push_str(&format!("{pad}{iter_name} = {start_str};\n"));
                                 out.push_str(&format!("{pad}loop {{\n"));
                                 for s in for_body {
@@ -3012,7 +3072,7 @@ fn render_ternary(
     )
 }
 
-fn render_expr(
+pub(crate) fn render_expr(
     expr: &Expr,
     ctx: &RustRenderCtx,
     opt_real_params: &[String],
@@ -3137,7 +3197,7 @@ fn contains_sentinel_expr(expr: &Expr, ctx: &RustRenderCtx) -> bool {
 
 /// Check if an expression produces an untyped integer (IntLiteral, ternary with int branches, etc.)
 /// These need wrapping with `T::ta_from_i32()` when used in a T-typed context.
-fn expr_is_untyped_integer(expr: &Expr) -> bool {
+pub(crate) fn expr_is_untyped_integer(expr: &Expr) -> bool {
     match expr {
         Expr::IntLiteral(_) => true,
         Expr::Ternary(_, then_expr, else_expr) => {
@@ -3364,7 +3424,7 @@ fn render_lookback_code(
     out
 }
 
-fn to_pascal_case(s: &str) -> String {
+pub(crate) fn to_pascal_case(s: &str) -> String {
     // Direct mapping for known FuncUnstId names
     match s {
         "HT_DCPERIOD" => return "HtDcPeriod".to_string(),
@@ -3499,7 +3559,7 @@ fn render_func_call(
             .iter()
             .map(|a| {
                 // Real optIn params stay as f64 in lookback calls (no T-wrapping, no i32 cast)
-                let is_opt_real = matches!(a, Expr::Var(n) if !is_i32_opt_in_param(n) && n.starts_with("optIn"));
+                let is_opt_real = matches!(a, Expr::Var(n) if !is_i32_opt_in_param(n) && strip_state_prefix(n).starts_with("optIn"));
                 if is_opt_real {
                     // Render without T-wrapping
                     let empty_opt: Vec<String> = Vec::new();
@@ -3525,7 +3585,7 @@ fn render_func_call(
             .iter()
             .map(|a| {
                 // Real optIn params stay as f64 in lookback calls (no T-wrapping, no i32 cast)
-                let is_opt_real = matches!(a, Expr::Var(n) if !is_i32_opt_in_param(n) && n.starts_with("optIn"));
+                let is_opt_real = matches!(a, Expr::Var(n) if !is_i32_opt_in_param(n) && strip_state_prefix(n).starts_with("optIn"));
                 if is_opt_real {
                     let empty_opt: Vec<String> = Vec::new();
                     return render_expr(a, ctx, &empty_opt, registry, helpers);
@@ -4020,8 +4080,15 @@ fn expr_returns_usize(expr: &Expr) -> bool {
 
 /// Check if a variable name is an IntArray (i32 element array).
 /// These should NOT be wrapped with T::ta_from_i32() when assigned to.
+/// Strip the stream-state field prefix so name-keyed inference helpers see the
+/// batch-local name (`sp.optInTimePeriod` types exactly like `optInTimePeriod`).
+/// A no-op for every batch name (none contain a dot).
+pub(crate) fn strip_state_prefix(name: &str) -> &str {
+    name.strip_prefix("sp.").unwrap_or(name)
+}
+
 fn is_int_array_var(name: &str) -> bool {
-    matches!(name,
+    matches!(strip_state_prefix(name),
         "periods" | "usedFlag" | "sortedPeriods"
     )
 }
@@ -4030,6 +4097,7 @@ fn is_int_array_var(name: &str) -> bool {
 /// These must NOT be treated as float-typed by `expr_is_float_typed`.
 /// Check if a variable name is likely an index/counter (usize) rather than a Real (T) variable.
 fn is_likely_index_var(name: &str) -> bool {
+    let name = strip_state_prefix(name);
     // Never match optIn params — they are i32 in the function signature
     if name.starts_with("optIn") {
         return false;

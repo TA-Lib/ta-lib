@@ -292,6 +292,334 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live MININDEX stream: one value per closed bar, bit-identical to [`Core::minindex`]
+/// over the same series. Open with [`Core::minindex_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_MININDEX_Stream")]
+pub struct MinindexStream {
+    core: Core,
+    state: MinindexStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MinindexStreamState {
+    optInTimePeriod: i32,
+    lowest: f64,
+    trailingIdx: i32,
+    lowestIdx: i32,
+    i: i32,
+    today: i32,
+    xCap: i32,
+    x_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn minindex_step_internal(&self, sp: &mut MinindexStreamState, inReal: f64, outInteger: &mut i32) {
+        let mut tmp: f64 = 0.0_f64;
+        if sp.today >= 1073741824 {
+            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            sp.today -= rebaseShift;
+            sp.trailingIdx -= rebaseShift;
+            sp.i -= rebaseShift;
+            sp.lowestIdx -= rebaseShift;
+        }
+        sp.x_inReal[(sp.today % sp.xCap) as usize] = inReal;
+        tmp = sp.x_inReal[(sp.today % sp.xCap) as usize];
+        if sp.lowestIdx < sp.trailingIdx {
+            sp.lowestIdx = sp.trailingIdx;
+            sp.lowest = sp.x_inReal[(sp.lowestIdx % sp.xCap) as usize];
+            sp.i = sp.lowestIdx;
+            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+                tmp = sp.x_inReal[(sp.i % sp.xCap) as usize];
+                if tmp < sp.lowest {
+                    sp.lowestIdx = sp.i;
+                    sp.lowest = tmp;
+                }
+            }
+        } else if tmp <= sp.lowest {
+            sp.lowestIdx = sp.today;
+            sp.lowest = tmp;
+        }
+        (*outInteger) = (sp.lowestIdx) as i32;
+        sp.trailingIdx += 1;
+        sp.today += 1;
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::minindex_open`] (composition seam).
+    pub(crate) fn minindex_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MinindexStream, i32), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut lowest: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut nbInitialElementNeeded: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lowestIdx: i32 = 0_i32;
+        let mut today: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to identify at least one output over the specified
+        // period.
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < nbInitialElementNeeded {
+            startIdx = nbInitialElementNeeded;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and
+        // output to be the same buffer.
+        outIdx = 0;
+        today = startIdx;
+        trailingIdx = startIdx - nbInitialElementNeeded;
+        lowestIdx = 0 - 1;
+        lowest = 0.0;
+        while today <= endIdx {
+            tmp = inReal[today];
+            if lowestIdx < (trailingIdx) as i32 {
+                lowestIdx = (trailingIdx) as i32;
+                lowest = inReal[(lowestIdx) as usize];
+                i = (lowestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inReal[i];
+                    if tmp < lowest {
+                        lowestIdx = (i) as i32;
+                        lowest = tmp;
+                    }
+                }
+            } else if tmp <= lowest {
+                lowestIdx = (today) as i32;
+                lowest = tmp;
+            }
+            lastValue_outInteger = (lowestIdx) as i32;
+            trailingIdx += 1;
+            today += 1;
+        }
+        // Keep the outBegIdx relative to the
+        // caller input before returning.
+        dummyBegIdx = startIdx;
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = MinindexStreamState {
+            optInTimePeriod,
+            lowest,
+            trailingIdx: (trailingIdx) as i32,
+            lowestIdx: (lowestIdx) as i32,
+            i: (i) as i32,
+            today: (today) as i32,
+            xCap: capX as i32,
+            x_inReal,
+        };
+        Ok((MinindexStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live MININDEX stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::minindex`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.minindex_open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_MININDEX_Open")]
+    pub fn minindex_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MinindexStream, i32), RetCode> {
+        self.minindex_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::minindex_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::minindex`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MININDEX_OpenAndFill")]
+    pub fn minindex_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<MinindexStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lowest: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut nbInitialElementNeeded: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lowestIdx: i32 = 0_i32;
+        let mut today: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to identify at least one output over the specified
+        // period.
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < nbInitialElementNeeded {
+            startIdx = nbInitialElementNeeded;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and
+        // output to be the same buffer.
+        outIdx = 0;
+        today = startIdx;
+        trailingIdx = startIdx - nbInitialElementNeeded;
+        lowestIdx = 0 - 1;
+        lowest = 0.0;
+        while today <= endIdx {
+            tmp = inReal[today];
+            if lowestIdx < (trailingIdx) as i32 {
+                lowestIdx = (trailingIdx) as i32;
+                lowest = inReal[(lowestIdx) as usize];
+                i = (lowestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmp = inReal[i];
+                    if tmp < lowest {
+                        lowestIdx = (i) as i32;
+                        lowest = tmp;
+                    }
+                }
+            } else if tmp <= lowest {
+                lowestIdx = (today) as i32;
+                lowest = tmp;
+            }
+            outInteger[outIdx] = (lowestIdx) as i32;
+            outIdx += 1;
+            trailingIdx += 1;
+            today += 1;
+        }
+        // Keep the outBegIdx relative to the
+        // caller input before returning.
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = MinindexStreamState {
+            optInTimePeriod,
+            lowest,
+            trailingIdx: (trailingIdx) as i32,
+            lowestIdx: (lowestIdx) as i32,
+            i: (i) as i32,
+            today: (today) as i32,
+            xCap: capX as i32,
+            x_inReal,
+        };
+        Ok(MinindexStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl MinindexStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_MININDEX_Update")]
+    pub fn update(&mut self, inReal: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.minindex_step_internal(&mut self.state, inReal, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_MININDEX_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<MinindexStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

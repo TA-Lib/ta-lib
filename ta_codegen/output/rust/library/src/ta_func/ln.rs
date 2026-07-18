@@ -181,6 +181,160 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live LN stream: one value per closed bar, bit-identical to [`Core::ln`]
+/// over the same series. Open with [`Core::ln_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_LN_Stream")]
+pub struct LnStream {
+    core: Core,
+    state: LnStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct LnStreamState {
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn ln_step_internal(&self, sp: &mut LnStreamState, inReal: f64, outReal: &mut f64) {
+        (*outReal) = (inReal).ln();
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ln_open`] (composition seam).
+    pub(crate) fn ln_open_internal(
+        &self, inReal: &[f64], startIdx: usize,
+    ) -> Result<(LnStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            lastValue_outReal = (inReal[i]).ln();
+            i += 1;
+            outIdx += 1;
+        }
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = LnStreamState {
+        };
+        Ok((LnStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live LN stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::ln`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.ln_open(&data).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_LN_Open")]
+    pub fn ln_open(&self, inReal: &[f64], ) -> Result<(LnStream, f64), RetCode> {
+        self.ln_open_internal(inReal, 0)
+    }
+
+    /// [`Core::ln_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ln`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_LN_OpenAndFill")]
+    pub fn ln_open_and_fill(
+        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<LnStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut outIdx: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        i = startIdx;
+        outIdx = 0;
+        while i <= endIdx {
+            outReal[outIdx] = (((inReal[i]).ln()) as f64);
+            i += 1;
+            outIdx += 1;
+        }
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = LnStreamState {
+        };
+        Ok(LnStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl LnStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_LN_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.ln_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_LN_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<LnStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

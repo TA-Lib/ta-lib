@@ -364,6 +364,420 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CORREL stream: one value per closed bar, bit-identical to [`Core::correl`]
+/// over the same series. Open with [`Core::correl_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CORREL_Stream")]
+pub struct CorrelStream {
+    core: Core,
+    state: CorrelStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CorrelStreamState {
+    optInTimePeriod: i32,
+    sumXY: f64,
+    sumX: f64,
+    sumY: f64,
+    sumX2: f64,
+    sumY2: f64,
+    x: f64,
+    y: f64,
+    trailingX: f64,
+    trailingY: f64,
+    tempReal: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal0: Vec<f64>,
+    ring_trailingIdx_inReal1: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn correl_step_internal(&self, sp: &mut CorrelStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal0[0] = inReal0;
+            sp.ring_trailingIdx_inReal1[0] = inReal1;
+        }
+        // Remove trailing values
+        sp.sumX -= sp.trailingX;
+        sp.sumX2 -= sp.trailingX * sp.trailingX;
+        sp.sumXY -= sp.trailingX * sp.trailingY;
+        sp.sumY -= sp.trailingY;
+        sp.sumY2 -= sp.trailingY * sp.trailingY;
+        // Add new values
+        sp.x = inReal0;
+        sp.sumX += sp.x;
+        sp.sumX2 += sp.x * sp.x;
+        sp.y = inReal1;
+        sp.sumXY += sp.x * sp.y;
+        sp.sumY += sp.y;
+        sp.sumY2 += sp.y * sp.y;
+        // Output new coefficient.
+        // Save first the trailing values since the input
+        // and output might be the same array,
+        sp.trailingX = sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx];
+        sp.trailingY = sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx];
+        sp.tempReal = (sp.sumX2 - sp.sumX * sp.sumX / ((sp.optInTimePeriod) as f64)) * (sp.sumY2 - sp.sumY * sp.sumY / ((sp.optInTimePeriod) as f64));
+        if !((sp.tempReal) < 1e-14) {
+            (*outReal) = (sp.sumXY - sp.sumX * sp.sumY / ((sp.optInTimePeriod) as f64)) / (sp.tempReal).sqrt();
+        } else {
+            (*outReal) = 0.0;
+        }
+        sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx] = inReal0;
+        sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx] = inReal1;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::correl_open`] (composition seam).
+    pub(crate) fn correl_open_internal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(CorrelStream, f64), RetCode> {
+        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal0.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal0.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        let mut sumXY: f64 = 0.0_f64;
+        let mut sumX: f64 = 0.0_f64;
+        let mut sumY: f64 = 0.0_f64;
+        let mut sumX2: f64 = 0.0_f64;
+        let mut sumY2: f64 = 0.0_f64;
+        let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut trailingX: f64 = 0.0_f64;
+        let mut trailingY: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        lookbackTotal = (optInTimePeriod - 1) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        dummyBegIdx = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
+        // Calculate the initial values.
+        sumY2 = 0.0;
+        sumX2 = sumY2;
+        sumY = sumX2;
+        sumX = sumY;
+        sumXY = sumX;
+        for today in (trailingIdx as usize)..(startIdx as usize) + 1 {
+            x = inReal0[today];
+            sumX += x;
+            sumX2 += x * x;
+            y = inReal1[today];
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+        }
+        today = (startIdx as usize) + 1;
+        // Write the first output.
+        // Save first the trailing values since the input
+        // and output might be the same array,
+        trailingX = inReal0[trailingIdx];
+        trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+        tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
+        if !((tempReal) < 1e-14) {
+            lastValue_outReal = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+        } else {
+            lastValue_outReal = 0.0;
+        }
+        // Tight loop to do subsequent values.
+        outIdx = 1;
+        while today <= endIdx {
+            // Remove trailing values
+            sumX -= trailingX;
+            sumX2 -= trailingX * trailingX;
+            sumXY -= trailingX * trailingY;
+            sumY -= trailingY;
+            sumY2 -= trailingY * trailingY;
+            // Add new values
+            x = inReal0[today];
+            sumX += x;
+            sumX2 += x * x;
+            y = inReal1[{ let _v = today; today += 1; _v }];
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+            // Output new coefficient.
+            // Save first the trailing values since the input
+            // and output might be the same array,
+            trailingX = inReal0[trailingIdx];
+            trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
+            if !((tempReal) < 1e-14) {
+                lastValue_outReal = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+            } else {
+                lastValue_outReal = 0.0;
+            }
+        }
+        dummyNBElement = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal0: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal0[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal0[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
+        let state = CorrelStreamState {
+            optInTimePeriod,
+            sumXY,
+            sumX,
+            sumY,
+            sumX2,
+            sumY2,
+            x,
+            y,
+            trailingX,
+            trailingY,
+            tempReal,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal0,
+            ring_trailingIdx_inReal1,
+        };
+        Ok((CorrelStream { core: self.clone(), state }, lastValue_outReal))
+    }
+
+    /// Open a live CORREL stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::correl`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let data1: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.correl_open(&data0, &data1, 30).expect("enough history");
+    /// let peeked = s.peek(100.9, 101.3);
+    /// let updated = s.update(100.9, 101.3);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_CORREL_Open")]
+    pub fn correl_open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(CorrelStream, f64), RetCode> {
+        self.correl_open_internal(inReal0, inReal1, 0, optInTimePeriod)
+    }
+
+    /// [`Core::correl_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::correl`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CORREL_OpenAndFill")]
+    pub fn correl_open_and_fill(
+        &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CorrelStream, RetCode> {
+        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal0.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal0.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sumXY: f64 = 0.0_f64;
+        let mut sumX: f64 = 0.0_f64;
+        let mut sumY: f64 = 0.0_f64;
+        let mut sumX2: f64 = 0.0_f64;
+        let mut sumY2: f64 = 0.0_f64;
+        let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut trailingX: f64 = 0.0_f64;
+        let mut trailingY: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut lookbackTotal: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        lookbackTotal = (optInTimePeriod - 1) as usize;
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        (*outBegIdx) = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
+        // Calculate the initial values.
+        sumY2 = 0.0;
+        sumX2 = sumY2;
+        sumY = sumX2;
+        sumX = sumY;
+        sumXY = sumX;
+        for today in (trailingIdx as usize)..(startIdx as usize) + 1 {
+            x = inReal0[today];
+            sumX += x;
+            sumX2 += x * x;
+            y = inReal1[today];
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+        }
+        today = (startIdx as usize) + 1;
+        // Write the first output.
+        // Save first the trailing values since the input
+        // and output might be the same array,
+        trailingX = inReal0[trailingIdx];
+        trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+        tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
+        if !((tempReal) < 1e-14) {
+            outReal[0] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+        } else {
+            outReal[0] = 0.0;
+        }
+        // Tight loop to do subsequent values.
+        outIdx = 1;
+        while today <= endIdx {
+            // Remove trailing values
+            sumX -= trailingX;
+            sumX2 -= trailingX * trailingX;
+            sumXY -= trailingX * trailingY;
+            sumY -= trailingY;
+            sumY2 -= trailingY * trailingY;
+            // Add new values
+            x = inReal0[today];
+            sumX += x;
+            sumX2 += x * x;
+            y = inReal1[{ let _v = today; today += 1; _v }];
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+            // Output new coefficient.
+            // Save first the trailing values since the input
+            // and output might be the same array,
+            trailingX = inReal0[trailingIdx];
+            trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
+            tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
+            if !((tempReal) < 1e-14) {
+                outReal[outIdx] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+                outIdx += 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx += 1;
+            }
+        }
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal0: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal0[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal0[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
+        let state = CorrelStreamState {
+            optInTimePeriod,
+            sumXY,
+            sumX,
+            sumY,
+            sumX2,
+            sumY2,
+            x,
+            y,
+            trailingX,
+            trailingY,
+            tempReal,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal0,
+            ring_trailingIdx_inReal1,
+        };
+        Ok(CorrelStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CorrelStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CORREL_Update")]
+    pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.correl_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CORREL_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal0: f64, inReal1: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal0, inReal1)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CorrelStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

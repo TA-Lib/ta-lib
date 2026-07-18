@@ -665,6 +665,982 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live CDLABANDONEDBABY stream: one value per closed bar, bit-identical to [`Core::cdlabandonedbaby`]
+/// over the same series. Open with [`Core::cdlabandonedbaby_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_CDLABANDONEDBABY_Stream")]
+pub struct CdlabandonedbabyStream {
+    core: Core,
+    state: CdlabandonedbabyStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct CdlabandonedbabyStreamState {
+    optInPenetration: f64,
+    BodyDojiPeriodTotal: f64,
+    BodyLongPeriodTotal: f64,
+    BodyShortPeriodTotal: f64,
+    lag1_inOpen: f64,
+    lag2_inOpen: f64,
+    lag1_inHigh: f64,
+    lag2_inHigh: f64,
+    lag1_inLow: f64,
+    lag2_inLow: f64,
+    lag1_inClose: f64,
+    lag2_inClose: f64,
+    ringPos_BodyDojiTrailingIdx: usize,
+    ringCap_BodyDojiTrailingIdx: usize,
+    ring_BodyDojiTrailingIdx_inOpen: Vec<f64>,
+    ring_BodyDojiTrailingIdx_inHigh: Vec<f64>,
+    ring_BodyDojiTrailingIdx_inLow: Vec<f64>,
+    ring_BodyDojiTrailingIdx_inClose: Vec<f64>,
+    ringPos_BodyLongTrailingIdx: usize,
+    ringCap_BodyLongTrailingIdx: usize,
+    ring_BodyLongTrailingIdx_inOpen: Vec<f64>,
+    ring_BodyLongTrailingIdx_inHigh: Vec<f64>,
+    ring_BodyLongTrailingIdx_inLow: Vec<f64>,
+    ring_BodyLongTrailingIdx_inClose: Vec<f64>,
+    ringPos_BodyShortTrailingIdx: usize,
+    ringCap_BodyShortTrailingIdx: usize,
+    ring_BodyShortTrailingIdx_inOpen: Vec<f64>,
+    ring_BodyShortTrailingIdx_inHigh: Vec<f64>,
+    ring_BodyShortTrailingIdx_inLow: Vec<f64>,
+    ring_BodyShortTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn cdlabandonedbaby_step_internal(&self, sp: &mut CdlabandonedbabyStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        #[allow(non_snake_case)]
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        #[allow(non_snake_case)]
+        let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
+        #[allow(non_snake_case)]
+        let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        #[allow(non_snake_case)]
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        #[allow(non_snake_case)]
+        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
+        #[allow(non_snake_case)]
+        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
+        if sp.ringCap_BodyDojiTrailingIdx == 0 {
+            sp.ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
+            sp.ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
+            sp.ring_BodyDojiTrailingIdx_inLow[0] = inLow;
+            sp.ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+        }
+        if sp.ringCap_BodyLongTrailingIdx == 0 {
+            sp.ring_BodyLongTrailingIdx_inOpen[0] = inOpen;
+            sp.ring_BodyLongTrailingIdx_inHigh[0] = inHigh;
+            sp.ring_BodyLongTrailingIdx_inLow[0] = inLow;
+            sp.ring_BodyLongTrailingIdx_inClose[0] = inClose;
+        }
+        if sp.ringCap_BodyShortTrailingIdx == 0 {
+            sp.ring_BodyShortTrailingIdx_inOpen[0] = inOpen;
+            sp.ring_BodyShortTrailingIdx_inHigh[0] = inHigh;
+            sp.ring_BodyShortTrailingIdx_inLow[0] = inLow;
+            sp.ring_BodyShortTrailingIdx_inClose[0] = inClose;
+        }
+        if (sp.lag2_inClose - sp.lag2_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), _ => (sp.lag2_inHigh) - (sp.lag2_inLow) - ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long
+           (sp.lag1_inClose - sp.lag1_inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), _ => (sp.lag1_inHigh) - (sp.lag1_inLow) - ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs() } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: doji
+           (inClose - inOpen).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => (inClose - inOpen).abs(), 1 => (inHigh) - (inLow), _ => (inHigh) - (inLow) - ((inClose) - (inOpen)).abs() } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd: longer than short
+           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inClose < sp.lag2_inClose - (sp.lag2_inClose - sp.lag2_inOpen).abs() * sp.optInPenetration && ((if sp.lag1_inLow > sp.lag2_inHigh { 1 } else { 0 }) != 0) && ((if inHigh < sp.lag1_inLow { 1 } else { 0 }) != 0) || ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && inClose > ((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64).mul_add(sp.optInPenetration, sp.lag2_inClose) && ((if sp.lag1_inHigh < sp.lag2_inLow { 1 } else { 0 }) != 0) && ((if inLow > sp.lag1_inHigh { 1 } else { 0 }) != 0)) // 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd
+        {
+            (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+        } else {
+            (*outInteger) = 0;
+        }
+        // add the current range and subtract the first range: this is done after the pattern recognition
+        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        let mut _candlerange_0: f64;
+        match BodyLong_rangeType {
+            0 => {
+                _candlerange_0 = (sp.lag2_inClose - sp.lag2_inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = sp.lag2_inHigh - sp.lag2_inLow;
+            }
+            2 => {
+                _candlerange_0 = sp.lag2_inHigh - sp.lag2_inLow - (sp.lag2_inClose - sp.lag2_inOpen).abs();
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        let mut _candlerange_1: f64;
+        match BodyLong_rangeType {
+            0 => {
+                _candlerange_1 = (sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx]).abs();
+            }
+            1 => {
+                _candlerange_1 = sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx];
+            }
+            2 => {
+                _candlerange_1 = sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] - (sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx]).abs();
+            }
+            _ => {
+                _candlerange_1 = 0.0;
+            }
+        }
+        sp.BodyLongPeriodTotal += _candlerange_0 - _candlerange_1;
+        let mut _candlerange_2: f64;
+        match BodyDoji_rangeType {
+            0 => {
+                _candlerange_2 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            1 => {
+                _candlerange_2 = sp.lag1_inHigh - sp.lag1_inLow;
+            }
+            2 => {
+                _candlerange_2 = sp.lag1_inHigh - sp.lag1_inLow - (sp.lag1_inClose - sp.lag1_inOpen).abs();
+            }
+            _ => {
+                _candlerange_2 = 0.0;
+            }
+        }
+        let mut _candlerange_3: f64;
+        match BodyDoji_rangeType {
+            0 => {
+                _candlerange_3 = (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]).abs();
+            }
+            1 => {
+                _candlerange_3 = sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx];
+            }
+            2 => {
+                _candlerange_3 = sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] - (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]).abs();
+            }
+            _ => {
+                _candlerange_3 = 0.0;
+            }
+        }
+        sp.BodyDojiPeriodTotal += _candlerange_2 - _candlerange_3;
+        let mut _candlerange_4: f64;
+        match BodyShort_rangeType {
+            0 => {
+                _candlerange_4 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_4 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_4 = inHigh - inLow - (inClose - inOpen).abs();
+            }
+            _ => {
+                _candlerange_4 = 0.0;
+            }
+        }
+        let mut _candlerange_5: f64;
+        match BodyShort_rangeType {
+            0 => {
+                _candlerange_5 = (sp.ring_BodyShortTrailingIdx_inClose[sp.ringPos_BodyShortTrailingIdx] - sp.ring_BodyShortTrailingIdx_inOpen[sp.ringPos_BodyShortTrailingIdx]).abs();
+            }
+            1 => {
+                _candlerange_5 = sp.ring_BodyShortTrailingIdx_inHigh[sp.ringPos_BodyShortTrailingIdx] - sp.ring_BodyShortTrailingIdx_inLow[sp.ringPos_BodyShortTrailingIdx];
+            }
+            2 => {
+                _candlerange_5 = sp.ring_BodyShortTrailingIdx_inHigh[sp.ringPos_BodyShortTrailingIdx] - sp.ring_BodyShortTrailingIdx_inLow[sp.ringPos_BodyShortTrailingIdx] - (sp.ring_BodyShortTrailingIdx_inClose[sp.ringPos_BodyShortTrailingIdx] - sp.ring_BodyShortTrailingIdx_inOpen[sp.ringPos_BodyShortTrailingIdx]).abs();
+            }
+            _ => {
+                _candlerange_5 = 0.0;
+            }
+        }
+        sp.BodyShortPeriodTotal += _candlerange_4 - _candlerange_5;
+        sp.lag2_inOpen = sp.lag1_inOpen;
+        sp.lag1_inOpen = inOpen;
+        sp.lag2_inHigh = sp.lag1_inHigh;
+        sp.lag1_inHigh = inHigh;
+        sp.lag2_inLow = sp.lag1_inLow;
+        sp.lag1_inLow = inLow;
+        sp.lag2_inClose = sp.lag1_inClose;
+        sp.lag1_inClose = inClose;
+        sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] = inOpen;
+        sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] = inHigh;
+        sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] = inLow;
+        sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] = inClose;
+        sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
+        if sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
+            sp.ringPos_BodyDojiTrailingIdx = 0;
+        }
+        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
+        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
+        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
+        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
+        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
+        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            sp.ringPos_BodyLongTrailingIdx = 0;
+        }
+        sp.ring_BodyShortTrailingIdx_inOpen[sp.ringPos_BodyShortTrailingIdx] = inOpen;
+        sp.ring_BodyShortTrailingIdx_inHigh[sp.ringPos_BodyShortTrailingIdx] = inHigh;
+        sp.ring_BodyShortTrailingIdx_inLow[sp.ringPos_BodyShortTrailingIdx] = inLow;
+        sp.ring_BodyShortTrailingIdx_inClose[sp.ringPos_BodyShortTrailingIdx] = inClose;
+        sp.ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx + 1;
+        if sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
+            sp.ringPos_BodyShortTrailingIdx = 0;
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::cdlabandonedbaby_open`] (composition seam).
+    pub(crate) fn cdlabandonedbaby_open_internal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
+    ) -> Result<(CdlabandonedbabyStream, i32), RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outInteger: i32 = 0_i32;
+        let mut BodyDojiPeriodTotal: f64 = 0.0_f64;
+        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
+        let mut BodyShortPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut BodyDojiTrailingIdx: usize = 0_usize;
+        let mut BodyLongTrailingIdx: usize = 0_usize;
+        let mut BodyShortTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        #[allow(non_snake_case)]
+        let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
+        #[allow(non_snake_case)]
+        let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        #[allow(non_snake_case)]
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        #[allow(non_snake_case)]
+        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
+        #[allow(non_snake_case)]
+        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlabandonedbaby_lookback(optInPenetration);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            dummyBegIdx = 0;
+            dummyNBElement = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        BodyLongPeriodTotal = 0.0;
+        BodyDojiPeriodTotal = 0.0;
+        BodyShortPeriodTotal = 0.0;
+        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - 1 - (BodyDoji_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        i = BodyLongTrailingIdx;
+        while i < startIdx - 2 {
+            let mut _candlerange_6: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_6 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_6 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_6 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_6 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_6;
+            i += 1;
+        }
+        i = BodyDojiTrailingIdx;
+        while i < startIdx - 1 {
+            let mut _candlerange_7: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_7 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_7 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_7 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_7 = 0.0;
+                }
+            }
+            BodyDojiPeriodTotal += _candlerange_7;
+            i += 1;
+        }
+        i = BodyShortTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_8: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_8 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_8 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_8 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_8 = 0.0;
+                }
+            }
+            BodyShortPeriodTotal += _candlerange_8;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: long white (black) real body
+        // - second candle: doji
+        // - third candle: black (white) real body that moves well within the first candle's real body
+        // - upside (downside) gap between the first candle and the doji (the shadows of the two candles don't touch)
+        // - downside (upside) gap between the doji and the third candle (the shadows of the two candles don't touch)
+        // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
+        // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
+        // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
+        // it to be relatively long
+        // outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
+        // an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
+        // an uptrend or downtrend, while this function does not consider the trend
+        outIdx = 0;
+        loop {
+            if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long
+               (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: doji
+               (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd: longer than short
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration && ((if inLow[i - 1] > inHigh[i - 2] { 1 } else { 0 }) != 0) && ((if inHigh[i] < inLow[i - 1] { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inClose[i] > ((inClose[i - 2] - inOpen[i - 2]).abs() as f64).mul_add(optInPenetration, inClose[i - 2]) && ((if inHigh[i - 1] < inLow[i - 2] { 1 } else { 0 }) != 0) && ((if inLow[i] > inHigh[i - 1] { 1 } else { 0 }) != 0)) // 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd
+            {
+                lastValue_outInteger = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                lastValue_outInteger = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_9: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_9 = (inClose[i - 2] - inOpen[i - 2]).abs();
+                }
+                1 => {
+                    _candlerange_9 = inHigh[i - 2] - inLow[i - 2];
+                }
+                2 => {
+                    _candlerange_9 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
+                }
+                _ => {
+                    _candlerange_9 = 0.0;
+                }
+            }
+            let mut _candlerange_10: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_10 = (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_10 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx];
+                }
+                2 => {
+                    _candlerange_10 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx] - (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_10 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_9 - _candlerange_10;
+            let mut _candlerange_11: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_11 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_11 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_11 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_11 = 0.0;
+                }
+            }
+            let mut _candlerange_12: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_12 = (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_12 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
+                }
+                2 => {
+                    _candlerange_12 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx] - (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_12 = 0.0;
+                }
+            }
+            BodyDojiPeriodTotal += _candlerange_11 - _candlerange_12;
+            let mut _candlerange_13: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_13 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_13 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_13 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_13 = 0.0;
+                }
+            }
+            let mut _candlerange_14: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_14 = (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_14 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx];
+                }
+                2 => {
+                    _candlerange_14 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx] - (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_14 = 0.0;
+                }
+            }
+            BodyShortPeriodTotal += _candlerange_13 - _candlerange_14;
+            i += 1;
+            BodyLongTrailingIdx += 1;
+            BodyDojiTrailingIdx += 1;
+            BodyShortTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        dummyNBElement = outIdx;
+        dummyBegIdx = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_BodyDojiTrailingIdx: i64 = (i as i64) - (BodyDojiTrailingIdx as i64);
+        if cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyDojiTrailingIdx: usize = if cap_BodyDojiTrailingIdx > 0 { cap_BodyDojiTrailingIdx as usize } else { 1 };
+        let mut ring_BodyDojiTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inOpen[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inHigh[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inLow[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inClose[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let cap_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
+        if cap_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
+        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inOpen[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inHigh[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inLow[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let cap_BodyShortTrailingIdx: i64 = (i as i64) - (BodyShortTrailingIdx as i64);
+        if cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyShortTrailingIdx: usize = if cap_BodyShortTrailingIdx > 0 { cap_BodyShortTrailingIdx as usize } else { 1 };
+        let mut ring_BodyShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inOpen[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inHigh[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inLow[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let state = CdlabandonedbabyStreamState {
+            optInPenetration,
+            BodyDojiPeriodTotal,
+            BodyLongPeriodTotal,
+            BodyShortPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag2_inHigh: inHigh[historyLen - 2],
+            lag1_inLow: inLow[historyLen - 1],
+            lag2_inLow: inLow[historyLen - 2],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+            ringPos_BodyDojiTrailingIdx: 0_usize,
+            ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
+            ring_BodyDojiTrailingIdx_inOpen,
+            ring_BodyDojiTrailingIdx_inHigh,
+            ring_BodyDojiTrailingIdx_inLow,
+            ring_BodyDojiTrailingIdx_inClose,
+            ringPos_BodyLongTrailingIdx: 0_usize,
+            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
+            ring_BodyLongTrailingIdx_inOpen,
+            ring_BodyLongTrailingIdx_inHigh,
+            ring_BodyLongTrailingIdx_inLow,
+            ring_BodyLongTrailingIdx_inClose,
+            ringPos_BodyShortTrailingIdx: 0_usize,
+            ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
+            ring_BodyShortTrailingIdx_inOpen,
+            ring_BodyShortTrailingIdx_inHigh,
+            ring_BodyShortTrailingIdx_inLow,
+            ring_BodyShortTrailingIdx_inClose,
+        };
+        Ok((CdlabandonedbabyStream { core: self.clone(), state }, lastValue_outInteger))
+    }
+
+    /// Open a live CDLABANDONEDBABY stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::cdlabandonedbaby`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()).collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.cdlabandonedbaby_open(&open, &high, &low, &close, 0.3).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLABANDONEDBABY_Open")]
+    pub fn cdlabandonedbaby_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdlabandonedbabyStream, i32), RetCode> {
+        self.cdlabandonedbaby_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    }
+
+    /// [`Core::cdlabandonedbaby_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlabandonedbaby`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLABANDONEDBABY_OpenAndFill")]
+    pub fn cdlabandonedbaby_open_and_fill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlabandonedbabyStream, RetCode> {
+        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
+            return Err(RetCode::BadParam);
+        }
+        if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut BodyDojiPeriodTotal: f64 = 0.0_f64;
+        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
+        let mut BodyShortPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut BodyDojiTrailingIdx: usize = 0_usize;
+        let mut BodyLongTrailingIdx: usize = 0_usize;
+        let mut BodyShortTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        #[allow(non_snake_case)]
+        let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
+        #[allow(non_snake_case)]
+        let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
+        #[allow(non_snake_case)]
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        #[allow(non_snake_case)]
+        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        #[allow(non_snake_case)]
+        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        #[allow(non_snake_case)]
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        #[allow(non_snake_case)]
+        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
+        #[allow(non_snake_case)]
+        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlabandonedbaby_lookback(optInPenetration);
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        BodyLongPeriodTotal = 0.0;
+        BodyDojiPeriodTotal = 0.0;
+        BodyShortPeriodTotal = 0.0;
+        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - 1 - (BodyDoji_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        i = BodyLongTrailingIdx;
+        while i < startIdx - 2 {
+            let mut _candlerange_15: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_15 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_15 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_15 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_15 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_15;
+            i += 1;
+        }
+        i = BodyDojiTrailingIdx;
+        while i < startIdx - 1 {
+            let mut _candlerange_16: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_16 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_16 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_16 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_16 = 0.0;
+                }
+            }
+            BodyDojiPeriodTotal += _candlerange_16;
+            i += 1;
+        }
+        i = BodyShortTrailingIdx;
+        while i < startIdx {
+            let mut _candlerange_17: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_17 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_17 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_17 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_17 = 0.0;
+                }
+            }
+            BodyShortPeriodTotal += _candlerange_17;
+            i += 1;
+        }
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: long white (black) real body
+        // - second candle: doji
+        // - third candle: black (white) real body that moves well within the first candle's real body
+        // - upside (downside) gap between the first candle and the doji (the shadows of the two candles don't touch)
+        // - downside (upside) gap between the doji and the third candle (the shadows of the two candles don't touch)
+        // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
+        // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
+        // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
+        // it to be relatively long
+        // outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
+        // an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
+        // an uptrend or downtrend, while this function does not consider the trend
+        outIdx = 0;
+        loop {
+            if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long
+               (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: doji
+               (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd: longer than short
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration && ((if inLow[i - 1] > inHigh[i - 2] { 1 } else { 0 }) != 0) && ((if inHigh[i] < inLow[i - 1] { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inClose[i] > ((inClose[i - 2] - inOpen[i - 2]).abs() as f64).mul_add(optInPenetration, inClose[i - 2]) && ((if inHigh[i - 1] < inLow[i - 2] { 1 } else { 0 }) != 0) && ((if inLow[i] > inHigh[i - 1] { 1 } else { 0 }) != 0)) // 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd
+            {
+                outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                outIdx += 1;
+            } else {
+                outInteger[outIdx] = 0;
+                outIdx += 1;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            let mut _candlerange_18: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_18 = (inClose[i - 2] - inOpen[i - 2]).abs();
+                }
+                1 => {
+                    _candlerange_18 = inHigh[i - 2] - inLow[i - 2];
+                }
+                2 => {
+                    _candlerange_18 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
+                }
+                _ => {
+                    _candlerange_18 = 0.0;
+                }
+            }
+            let mut _candlerange_19: f64;
+            match BodyLong_rangeType {
+                0 => {
+                    _candlerange_19 = (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_19 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx];
+                }
+                2 => {
+                    _candlerange_19 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx] - (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_19 = 0.0;
+                }
+            }
+            BodyLongPeriodTotal += _candlerange_18 - _candlerange_19;
+            let mut _candlerange_20: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_20 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                1 => {
+                    _candlerange_20 = inHigh[i - 1] - inLow[i - 1];
+                }
+                2 => {
+                    _candlerange_20 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
+                }
+                _ => {
+                    _candlerange_20 = 0.0;
+                }
+            }
+            let mut _candlerange_21: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_21 = (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_21 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
+                }
+                2 => {
+                    _candlerange_21 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx] - (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_21 = 0.0;
+                }
+            }
+            BodyDojiPeriodTotal += _candlerange_20 - _candlerange_21;
+            let mut _candlerange_22: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_22 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_22 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_22 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                }
+                _ => {
+                    _candlerange_22 = 0.0;
+                }
+            }
+            let mut _candlerange_23: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_23 = (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_23 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx];
+                }
+                2 => {
+                    _candlerange_23 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx] - (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
+                }
+                _ => {
+                    _candlerange_23 = 0.0;
+                }
+            }
+            BodyShortPeriodTotal += _candlerange_22 - _candlerange_23;
+            i += 1;
+            BodyLongTrailingIdx += 1;
+            BodyDojiTrailingIdx += 1;
+            BodyShortTrailingIdx += 1;
+            if !(i <= endIdx) { break; }
+        }
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let cap_BodyDojiTrailingIdx: i64 = (i as i64) - (BodyDojiTrailingIdx as i64);
+        if cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyDojiTrailingIdx: usize = if cap_BodyDojiTrailingIdx > 0 { cap_BodyDojiTrailingIdx as usize } else { 1 };
+        let mut ring_BodyDojiTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inOpen[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inHigh[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inLow[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        ring_BodyDojiTrailingIdx_inClose[..cap_BodyDojiTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let cap_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
+        if cap_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
+        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inOpen[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inHigh[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inLow[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
+        let cap_BodyShortTrailingIdx: i64 = (i as i64) - (BodyShortTrailingIdx as i64);
+        if cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let allocN_BodyShortTrailingIdx: usize = if cap_BodyShortTrailingIdx > 0 { cap_BodyShortTrailingIdx as usize } else { 1 };
+        let mut ring_BodyShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inOpen[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inOpen[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inHigh[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inHigh[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inLow[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inLow[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
+        ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
+            .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
+        let state = CdlabandonedbabyStreamState {
+            optInPenetration,
+            BodyDojiPeriodTotal,
+            BodyLongPeriodTotal,
+            BodyShortPeriodTotal,
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inHigh: inHigh[historyLen - 1],
+            lag2_inHigh: inHigh[historyLen - 2],
+            lag1_inLow: inLow[historyLen - 1],
+            lag2_inLow: inLow[historyLen - 2],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+            ringPos_BodyDojiTrailingIdx: 0_usize,
+            ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
+            ring_BodyDojiTrailingIdx_inOpen,
+            ring_BodyDojiTrailingIdx_inHigh,
+            ring_BodyDojiTrailingIdx_inLow,
+            ring_BodyDojiTrailingIdx_inClose,
+            ringPos_BodyLongTrailingIdx: 0_usize,
+            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
+            ring_BodyLongTrailingIdx_inOpen,
+            ring_BodyLongTrailingIdx_inHigh,
+            ring_BodyLongTrailingIdx_inLow,
+            ring_BodyLongTrailingIdx_inClose,
+            ringPos_BodyShortTrailingIdx: 0_usize,
+            ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
+            ring_BodyShortTrailingIdx_inOpen,
+            ring_BodyShortTrailingIdx_inHigh,
+            ring_BodyShortTrailingIdx_inLow,
+            ring_BodyShortTrailingIdx_inClose,
+        };
+        Ok(CdlabandonedbabyStream { core: self.clone(), state })
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl CdlabandonedbabyStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_CDLABANDONEDBABY_Update")]
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut outInteger: i32 = 0_i32;
+        self.core.cdlabandonedbaby_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        outInteger
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_CDLABANDONEDBABY_Peek")]
+    #[must_use]
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<CdlabandonedbabyStream>();
+};
+
 /***************/
 /* End of File */
 /***************/
