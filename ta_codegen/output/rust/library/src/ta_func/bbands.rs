@@ -64,6 +64,8 @@
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
  *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
  *                average and standard deviation into a single pass. Bit-identical.
+ *  071726 MF,CC  #118 SMA-path deviation now uses the cancellation-free variance
+ *                (var.c); two recurrences in one pass. Bit-identical.
  */
 
 // Import types from parent module
@@ -219,10 +221,9 @@ impl Core {
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
         if (optInMAType) as usize == 0 {
-            // SMA fast path (issue #117): the middle band moving average is also the
-            // mean the standard deviation is measured against, so both come from one
-            // pass below. Bit-identical to the general MA + STDDEV path (which the
-            // stream composes for every MA type).
+            // SMA fast path: the middle band (SMA) and the standard deviation share one
+            // pass over the window below. Bit-identical to the general MA + STDDEV path
+            // (which the stream composes for every MA type).
             //
             // Identify TWO temporary buffers among the outputs so the calculation
             // needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -245,18 +246,26 @@ impl Core {
             if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
                 return RetCode::BadParam;
             }
-            // One pass: running sum (mean -> tempBuffer1) and sum of squares
-            // (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
-            // and sqrt inline. tempBuffer1/2 never alias inReal (checked above).
-            let mut periodTotal1: f64 = 0.0_f64;
-            let mut periodTotal2: f64 = 0.0_f64;
+            // One pass with two independent recurrences: the SMA running sum (maTotal,
+            // mean -> tempBuffer1, bit-identical to TA_MA(SMA)) and the shifted-data
+            // variance (-> tempBuffer2, bit-identical to TA_STDDEV/TA_VAR - see var.c).
+            // The variance carries its own shift and reseed; the SMA sum is untouched by
+            // it. tempBuffer1/2 never alias inReal (checked above).
+            let mut maTotal: f64 = 0.0_f64;
+            let mut shift: f64 = 0.0_f64;
+            let mut varTotal1: f64 = 0.0_f64;
+            let mut varTotal2: f64 = 0.0_f64;
             let mut meanValue1: f64 = 0.0_f64;
-            let mut meanValue2: f64 = 0.0_f64;
+            let mut variance: f64 = 0.0_f64;
+            let mut _invPeriod: f64 = 0.0_f64;
             let mut _tempReal: f64 = 0.0_f64;
             let mut _i: usize = 0_usize;
+            let mut _j: usize = 0_usize;
             let mut _outIdx: usize = 0_usize;
             let mut _trailingIdx: usize = 0_usize;
+            let mut _windowStart: usize = 0_usize;
             let mut _lookbackTotal: usize = 0_usize;
+            let mut _barsSinceReseed: usize = 0_usize;
             _lookbackTotal = (optInTimePeriod - 1) as usize;
             if startIdx < _lookbackTotal {
                 startIdx = _lookbackTotal;
@@ -266,38 +275,73 @@ impl Core {
                 (*outNBElement) = 0;
                 return RetCode::Success;
             }
-            periodTotal1 = 0.0;
-            periodTotal2 = 0.0;
+            _invPeriod = 1.0 / (optInTimePeriod as f64);
             _trailingIdx = startIdx - _lookbackTotal;
-            _i = _trailingIdx;
-            if optInTimePeriod > 1 {
-                while _i < startIdx {
-                    _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
-                    periodTotal1 += _tempReal;
-                    _tempReal *= _tempReal;
-                    periodTotal2 += _tempReal;
-                }
+            shift = inReal[_trailingIdx];
+            maTotal = 0.0;
+            varTotal1 = 0.0;
+            varTotal2 = 0.0;
+            // for( _j = _trailingIdx; _j < startIdx; _j += 1 )
+            _j = _trailingIdx;
+            while _j < startIdx {
+                maTotal += inReal[_j];
+                _tempReal = inReal[_j] - shift;
+                varTotal1 += _tempReal;
+                _tempReal *= _tempReal;
+                varTotal2 += _tempReal;
+                _j += 1;
             }
+            _i = startIdx;
             _outIdx = 0;
+            _barsSinceReseed = (32 * optInTimePeriod) as usize;
             loop {
-                _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
-                periodTotal1 += _tempReal;
+                maTotal += inReal[_i];
+                _tempReal = inReal[_i] - shift;
+                varTotal1 += _tempReal;
                 _tempReal *= _tempReal;
-                periodTotal2 += _tempReal;
-                meanValue1 = periodTotal1 / ((optInTimePeriod) as f64);
-                meanValue2 = periodTotal2 / ((optInTimePeriod) as f64);
-                _tempReal = inReal[{ let _v = _trailingIdx; _trailingIdx += 1; _v }];
-                periodTotal1 -= _tempReal;
+                varTotal2 += _tempReal;
+                meanValue1 = varTotal1 * _invPeriod;
+                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                tempBuffer1[_outIdx] = maTotal / ((optInTimePeriod) as f64);
+                maTotal -= inReal[_trailingIdx];
+                _tempReal = inReal[_trailingIdx] - shift;
+                varTotal1 -= _tempReal;
                 _tempReal *= _tempReal;
-                periodTotal2 -= _tempReal;
-                tempBuffer1[_outIdx] = meanValue1;
-                meanValue2 -= meanValue1 * meanValue1;
-                if !((meanValue2) < 1e-14) {
-                    tempBuffer2[_outIdx] = (meanValue2).sqrt();
+                varTotal2 -= _tempReal;
+                _trailingIdx += 1;
+                _barsSinceReseed -= 1;
+                if variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 {
+                    _barsSinceReseed = (32 * optInTimePeriod) as usize;
+                    _windowStart = _i - _lookbackTotal;
+                    _tempReal = 0.0;
+                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
+                        _tempReal += inReal[_j];
+                    }
+                    _j = (_i as usize) + 1;
+                    shift = _tempReal * _invPeriod;
+                    varTotal1 = 0.0;
+                    varTotal2 = 0.0;
+                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
+                        _tempReal = inReal[_j] - shift;
+                        varTotal1 += _tempReal;
+                        _tempReal *= _tempReal;
+                        varTotal2 += _tempReal;
+                    }
+                    _j = (_i as usize) + 1;
+                    meanValue1 = varTotal1 * _invPeriod;
+                    variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                    _tempReal = inReal[_windowStart] - shift;
+                    varTotal1 -= _tempReal;
+                    _tempReal *= _tempReal;
+                    varTotal2 -= _tempReal;
+                }
+                if !((variance) < 1e-14) {
+                    tempBuffer2[_outIdx] = (variance).sqrt();
                 } else {
                     tempBuffer2[_outIdx] = 0.0;
                 }
                 _outIdx += 1;
+                _i += 1;
                 if !(_i <= endIdx) { break; }
             }
             (*outNBElement) = _outIdx;
@@ -451,15 +495,21 @@ impl Core {
             if tempBuffer1.as_ptr() == inReal.as_ptr() || tempBuffer2.as_ptr() == inReal.as_ptr() {
                 return RetCode::BadParam;
             }
-            let mut periodTotal1: f64 = 0.0_f64;
-            let mut periodTotal2: f64 = 0.0_f64;
+            let mut maTotal: f64 = 0.0_f64;
+            let mut shift: f64 = 0.0_f64;
+            let mut varTotal1: f64 = 0.0_f64;
+            let mut varTotal2: f64 = 0.0_f64;
             let mut meanValue1: f64 = 0.0_f64;
-            let mut meanValue2: f64 = 0.0_f64;
+            let mut variance: f64 = 0.0_f64;
+            let mut _invPeriod: f64 = 0.0_f64;
             let mut _tempReal: f64 = 0.0_f64;
             let mut _i: usize = 0_usize;
+            let mut _j: usize = 0_usize;
             let mut _outIdx: usize = 0_usize;
             let mut _trailingIdx: usize = 0_usize;
+            let mut _windowStart: usize = 0_usize;
             let mut _lookbackTotal: usize = 0_usize;
+            let mut _barsSinceReseed: usize = 0_usize;
             _lookbackTotal = (optInTimePeriod - 1) as usize;
             if startIdx < _lookbackTotal {
                 startIdx = _lookbackTotal;
@@ -469,38 +519,73 @@ impl Core {
                 (*outNBElement) = 0;
                 return RetCode::Success;
             }
-            periodTotal1 = 0.0;
-            periodTotal2 = 0.0;
+            _invPeriod = 1.0 / (optInTimePeriod as f64);
             _trailingIdx = startIdx - _lookbackTotal;
-            _i = _trailingIdx;
-            if optInTimePeriod > 1 {
-                while _i < startIdx {
-                    _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
-                    periodTotal1 += _tempReal;
-                    _tempReal *= _tempReal;
-                    periodTotal2 += _tempReal;
-                }
+            shift = inReal[_trailingIdx];
+            maTotal = 0.0;
+            varTotal1 = 0.0;
+            varTotal2 = 0.0;
+            // for( _j = _trailingIdx; _j < startIdx; _j += 1 )
+            _j = _trailingIdx;
+            while _j < startIdx {
+                maTotal += inReal[_j];
+                _tempReal = inReal[_j] - shift;
+                varTotal1 += _tempReal;
+                _tempReal *= _tempReal;
+                varTotal2 += _tempReal;
+                _j += 1;
             }
+            _i = startIdx;
             _outIdx = 0;
+            _barsSinceReseed = (32 * optInTimePeriod) as usize;
             loop {
-                _tempReal = inReal[{ let _v = _i; _i += 1; _v }];
-                periodTotal1 += _tempReal;
+                maTotal += inReal[_i];
+                _tempReal = inReal[_i] - shift;
+                varTotal1 += _tempReal;
                 _tempReal *= _tempReal;
-                periodTotal2 += _tempReal;
-                meanValue1 = periodTotal1 / ((optInTimePeriod) as f64);
-                meanValue2 = periodTotal2 / ((optInTimePeriod) as f64);
-                _tempReal = inReal[{ let _v = _trailingIdx; _trailingIdx += 1; _v }];
-                periodTotal1 -= _tempReal;
+                varTotal2 += _tempReal;
+                meanValue1 = varTotal1 * _invPeriod;
+                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                tempBuffer1[_outIdx] = maTotal / ((optInTimePeriod) as f64);
+                maTotal -= inReal[_trailingIdx];
+                _tempReal = inReal[_trailingIdx] - shift;
+                varTotal1 -= _tempReal;
                 _tempReal *= _tempReal;
-                periodTotal2 -= _tempReal;
-                tempBuffer1[_outIdx] = meanValue1;
-                meanValue2 -= meanValue1 * meanValue1;
-                if !((meanValue2) < 1e-14) {
-                    tempBuffer2[_outIdx] = (meanValue2).sqrt();
+                varTotal2 -= _tempReal;
+                _trailingIdx += 1;
+                _barsSinceReseed -= 1;
+                if variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 {
+                    _barsSinceReseed = (32 * optInTimePeriod) as usize;
+                    _windowStart = _i - _lookbackTotal;
+                    _tempReal = 0.0;
+                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
+                        _tempReal += inReal[_j];
+                    }
+                    _j = (_i as usize) + 1;
+                    shift = _tempReal * _invPeriod;
+                    varTotal1 = 0.0;
+                    varTotal2 = 0.0;
+                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
+                        _tempReal = inReal[_j] - shift;
+                        varTotal1 += _tempReal;
+                        _tempReal *= _tempReal;
+                        varTotal2 += _tempReal;
+                    }
+                    _j = (_i as usize) + 1;
+                    meanValue1 = varTotal1 * _invPeriod;
+                    variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                    _tempReal = inReal[_windowStart] - shift;
+                    varTotal1 -= _tempReal;
+                    _tempReal *= _tempReal;
+                    varTotal2 -= _tempReal;
+                }
+                if !((variance) < 1e-14) {
+                    tempBuffer2[_outIdx] = (variance).sqrt();
                 } else {
                     tempBuffer2[_outIdx] = 0.0;
                 }
                 _outIdx += 1;
+                _i += 1;
                 if !(_i <= endIdx) { break; }
             }
             (*outNBElement) = _outIdx;

@@ -23,6 +23,8 @@
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
  *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
  *                average and standard deviation into a single pass. Bit-identical.
+ *  071726 MF,CC  #118 SMA-path deviation now uses the cancellation-free variance
+ *                (var.c); two recurrences in one pass. Bit-identical.
  *
  */
 
@@ -62,10 +64,9 @@ TA_RetCode bbands(int startIdx, int endIdx,
 
    if( optInMAType == TA_MAType_SMA )
    {
-      /* SMA fast path (issue #117): the middle band moving average is also the
-       * mean the standard deviation is measured against, so both come from one
-       * pass below. Bit-identical to the general MA + STDDEV path (which the
-       * stream composes for every MA type).
+      /* SMA fast path: the middle band (SMA) and the standard deviation share one
+       * pass over the window below. Bit-identical to the general MA + STDDEV path
+       * (which the stream composes for every MA type).
        *
        * Identify TWO temporary buffers among the outputs so the calculation
        * needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -97,12 +98,14 @@ TA_RetCode bbands(int startIdx, int endIdx,
       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
          return TA_BAD_PARAM;
 
-      /* One pass: running sum (mean -> tempBuffer1) and sum of squares
-       * (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
-       * and sqrt inline. tempBuffer1/2 never alias inReal (checked above). */
+      /* One pass with two independent recurrences: the SMA running sum (maTotal,
+       * mean -> tempBuffer1, bit-identical to TA_MA(SMA)) and the shifted-data
+       * variance (-> tempBuffer2, bit-identical to TA_STDDEV/TA_VAR - see var.c).
+       * The variance carries its own shift and reseed; the SMA sum is untouched by
+       * it. tempBuffer1/2 never alias inReal (checked above). */
       {
-         double periodTotal1, periodTotal2, meanValue1, meanValue2, _tempReal;
-         int _i, _outIdx, _trailingIdx, _lookbackTotal;
+         double maTotal, shift, varTotal1, varTotal2, meanValue1, variance, _invPeriod, _tempReal;
+         int _i, _j, _outIdx, _trailingIdx, _windowStart, _lookbackTotal, _barsSinceReseed;
 
          _lookbackTotal = optInTimePeriod - 1;
          if( startIdx < _lookbackTotal )
@@ -115,46 +118,76 @@ TA_RetCode bbands(int startIdx, int endIdx,
             return TA_SUCCESS;
          }
 
-         periodTotal1 = 0;
-         periodTotal2 = 0;
+         _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
+         shift = inReal[_trailingIdx];
 
-         _i = _trailingIdx;
-         if( optInTimePeriod > 1 )
+         maTotal = 0.0;
+         varTotal1 = 0.0;
+         varTotal2 = 0.0;
+         for( _j=_trailingIdx; _j < startIdx; _j++ )
          {
-            while( _i < startIdx )
-            {
-               _tempReal = inReal[_i++];
-               periodTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               periodTotal2 += _tempReal;
-            }
+            maTotal += inReal[_j];
+            _tempReal = inReal[_j] - shift;
+            varTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            varTotal2 += _tempReal;
          }
 
+         _i = startIdx;
          _outIdx = 0;
+         _barsSinceReseed = 32 * optInTimePeriod;
          do
          {
-            _tempReal = inReal[_i++];
-            periodTotal1 += _tempReal;
+            maTotal += inReal[_i];
+            _tempReal = inReal[_i] - shift;
+            varTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 += _tempReal;
+            varTotal2 += _tempReal;
 
-            meanValue1 = periodTotal1 / optInTimePeriod;
-            meanValue2 = periodTotal2 / optInTimePeriod;
+            meanValue1 = varTotal1 * _invPeriod;
+            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
 
-            _tempReal = inReal[_trailingIdx++];
-            periodTotal1 -= _tempReal;
+            maTotal -= inReal[_trailingIdx];
+            _tempReal = inReal[_trailingIdx] - shift;
+            varTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 -= _tempReal;
+            varTotal2 -= _tempReal;
+            _trailingIdx++;
 
-            tempBuffer1[_outIdx] = meanValue1;
+            _barsSinceReseed--;
+            if( variance < 0.000001 * ( varTotal2 * _invPeriod ) || _barsSinceReseed <= 0 )
+            {
+               _barsSinceReseed = 32 * optInTimePeriod;
+               _windowStart = _i - _lookbackTotal;
+               _tempReal = 0.0;
+               for( _j=_windowStart; _j <= _i; _j++ )
+                  _tempReal += inReal[_j];
+               shift = _tempReal * _invPeriod;
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j=_windowStart; _j <= _i; _j++ )
+               {
+                  _tempReal = inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               _tempReal = inReal[_windowStart] - shift;
+               varTotal1 -= _tempReal;
+               _tempReal *= _tempReal;
+               varTotal2 -= _tempReal;
+            }
 
-            meanValue2 -= meanValue1 * meanValue1;
-            if( !TA_IS_ZERO_OR_NEG(meanValue2) )
-               tempBuffer2[_outIdx] = sqrt(meanValue2);
+            if( !TA_IS_ZERO_OR_NEG(variance) )
+               tempBuffer2[_outIdx] = sqrt(variance);
             else
                tempBuffer2[_outIdx] = 0.0;
             _outIdx++;
+            _i++;
          } while( _i <= endIdx );
 
          *outNBElement = _outIdx;

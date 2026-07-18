@@ -3041,6 +3041,7 @@ typedef struct {
     long long    fmaTol;      /* cases tolerated by the one-time FMA re-baselining gate (PR #96) */
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
+    long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
     int          serverRestarts;
@@ -3480,6 +3481,17 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * (STOCH/STOCHF on raw OHLC do NOT diverge and stay strictly compared.) */
     if( strcmp(funcInfo->name, "STOCHRSI") == 0 ) { ctx->stochRsiSkipped++; return; }
 
+    /* VAR/STDDEV/BBANDS intentionally diverge from 0.6.4 (issue #118): their
+     * variance moved from the catastrophically-cancelling E[x^2]-mean^2 to a
+     * cancellation-free shifted-data form, so on ill-conditioned windows 0.6.4
+     * (which collapsed - SourceForge bug 90) is the wrong oracle. Excluded from the
+     * differential fuzz; the new behaviour is pinned by test_stddev.c and the
+     * BBANDS stable-variance test, and stays bitwise cross-language (--xlang-hash)
+     * and batch==stream (stream_verify). */
+    if( strcmp(funcInfo->name, "VAR") == 0 ||
+        strcmp(funcInfo->name, "STDDEV") == 0 ||
+        strcmp(funcInfo->name, "BBANDS") == 0 ) { ctx->varianceSkipped++; return; }
+
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
         const TA_InputParameterInfo *ii;
@@ -3726,6 +3738,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
+    if( ctx.varianceSkipped > 0 )
+        printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) — cancellation-free variance re-baseline (issue #118); pinned by test_stddev.c + BBANDS stable-variance test\n",
+               ctx.varianceSkipped);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )

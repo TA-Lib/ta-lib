@@ -48,14 +48,16 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JV       Jesus Viver <324122@cienz.unizar.es>
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  100502 JV   Speed optimization of the algorithm
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  100502 JV     Speed optimization of the algorithm
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
  */
 
 TA_LIB_API int TA_VAR_Lookback( int optInTimePeriod, double optInNbDev )
@@ -79,14 +81,19 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
                               double        outReal[] )
 {
    double tempReal;
+   double shift;
    double periodTotal1;
    double periodTotal2;
    double meanValue1;
-   double meanValue2;
+   double variance;
+   double invPeriod;
    int i;
+   int j;
    int outIdx;
    int trailingIdx;
+   int windowStart;
    int nbInitialElementNeeded;
+   int barsSinceReseed;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -104,14 +111,11 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Validate the calculation method type and
-    * identify the minimum number of price bar needed
-    * to calculate at least one output.
+   /* Identify the minimum number of price bar needed to calculate
+    * at least one output.
     */
    nbInitialElementNeeded = optInTimePeriod - 1;
-   /* Move up the start index if there is not
-    * enough initial data.
-    */
+   /* Move up the start index if there is not enough initial data. */
    if( startIdx < nbInitialElementNeeded )
    {
       startIdx = nbInitialElementNeeded;
@@ -123,46 +127,87 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* Do the MA calculation using tight loops. */
-   /* Add-up the initial periods, except for the last value. */
-   periodTotal1 = 0;
-   periodTotal2 = 0;
-   trailingIdx = startIdx - nbInitialElementNeeded;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         tempReal = inReal[i++];
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-   }
-   /* Proceed with the calculation for the requested range.
-    * Note that this algorithm allows the inReal and
-    * outReal to be the same buffer.
+   invPeriod = 1.0 / (double)optInTimePeriod;
+   /* Measure deviations against a shift near the window: the running sums
+    * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+    * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+    * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+    * (also gives an exact 0 for period 1, with no division by period-1).
     */
-   outIdx = 0;
-   do
+   trailingIdx = startIdx - nbInitialElementNeeded;
+   shift = inReal[trailingIdx];
+   periodTotal1 = 0.0;
+   periodTotal2 = 0.0;
+   for( j = trailingIdx; j < startIdx; j += 1 )
    {
-      tempReal = inReal[i++];
-      /* Square and add all the deviation over
-       * the same periods.
-       */
+      tempReal = inReal[j] - shift;
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
-      /* Square and add all the deviation over
-       * the same period.
-       */
-      meanValue1 = periodTotal1 / optInTimePeriod;
-      meanValue2 = periodTotal2 / optInTimePeriod;
-      tempReal = inReal[trailingIdx++];
+   }
+   /* inReal and outReal may be the same buffer: each trailing value is consumed
+    * before its slot is overwritten by the output.
+    */
+   i = startIdx;
+   outIdx = 0;
+   barsSinceReseed = 32 * optInTimePeriod;
+   do
+   {
+      /* Add the incoming value, measured against the shift. */
+      tempReal = inReal[i] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      /* Remove the trailing value (prepares the next window). */
+      tempReal = inReal[trailingIdx] - shift;
       periodTotal1 -= tempReal;
       tempReal *= tempReal;
       periodTotal2 -= tempReal;
-      outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+      trailingIdx += 1;
+      /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+       * when the shift is stale enough that the subtraction loses digits - i.e.
+       * the variance has shrunk below 1e-6 of the mean squared deviation it is
+       * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+       * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
+       * at least every 32 windows so a slow drift stays bounded regardless of the
+       * series length. The strict `<` also leaves an exactly-constant window
+       * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
+       * non-negative output (any negative variance trips the same test).
+       */
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += inReal[j];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* Re-remove the trailing value under the new shift so the carried state
+          * matches the non-reseed path.
+          */
+         tempReal = inReal[windowStart] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[outIdx++] = variance;
+      i += 1;
    } while( i <= endIdx );
    /* All done. Indicate the output limits and return. */
    *outNBElement= outIdx;
@@ -180,14 +225,19 @@ TA_LIB_API TA_RetCode TA_VAR_Unguarded( int    startIdx,
                                         double        outReal[] )
 {
    double tempReal;
+   double shift;
    double periodTotal1;
    double periodTotal2;
    double meanValue1;
-   double meanValue2;
+   double variance;
+   double invPeriod;
    int i;
+   int j;
    int outIdx;
    int trailingIdx;
+   int windowStart;
    int nbInitialElementNeeded;
+   int barsSinceReseed;
 
    nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )
@@ -200,34 +250,63 @@ TA_LIB_API TA_RetCode TA_VAR_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   periodTotal1 = 0;
-   periodTotal2 = 0;
+   invPeriod = 1.0 / (double)optInTimePeriod;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
+   shift = inReal[trailingIdx];
+   periodTotal1 = 0.0;
+   periodTotal2 = 0.0;
+   for( j = trailingIdx; j < startIdx; j += 1 )
    {
-      while( i < startIdx )
-      {
-         tempReal = inReal[i++];
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      tempReal = inReal[i++];
+      tempReal = inReal[j] - shift;
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
-      meanValue1 = periodTotal1 / optInTimePeriod;
-      meanValue2 = periodTotal2 / optInTimePeriod;
-      tempReal = inReal[trailingIdx++];
+   }
+   i = startIdx;
+   outIdx = 0;
+   barsSinceReseed = 32 * optInTimePeriod;
+   do
+   {
+      tempReal = inReal[i] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      tempReal = inReal[trailingIdx] - shift;
       periodTotal1 -= tempReal;
       tempReal *= tempReal;
       periodTotal2 -= tempReal;
-      outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+      trailingIdx += 1;
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += inReal[j];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = inReal[windowStart] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[outIdx++] = variance;
+      i += 1;
    } while( i <= endIdx );
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -244,14 +323,19 @@ TA_RetCode TA_S_VAR( int    startIdx,
                      double        outReal[] )
 {
    double tempReal;
+   double shift;
    double periodTotal1;
    double periodTotal2;
    double meanValue1;
-   double meanValue2;
+   double variance;
+   double invPeriod;
    int i;
+   int j;
    int outIdx;
    int trailingIdx;
+   int windowStart;
    int nbInitialElementNeeded;
+   int barsSinceReseed;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -280,34 +364,63 @@ TA_RetCode TA_S_VAR( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   periodTotal1 = 0;
-   periodTotal2 = 0;
+   invPeriod = 1.0 / (double)optInTimePeriod;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
+   shift = (double)inReal[trailingIdx];
+   periodTotal1 = 0.0;
+   periodTotal2 = 0.0;
+   for( j = trailingIdx; j < startIdx; j += 1 )
    {
-      while( i < startIdx )
-      {
-         tempReal = (double)inReal[i++];
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      tempReal = (double)inReal[i++];
+      tempReal = (double)inReal[j] - shift;
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
-      meanValue1 = periodTotal1 / optInTimePeriod;
-      meanValue2 = periodTotal2 / optInTimePeriod;
-      tempReal = (double)inReal[trailingIdx++];
+   }
+   i = startIdx;
+   outIdx = 0;
+   barsSinceReseed = 32 * optInTimePeriod;
+   do
+   {
+      tempReal = (double)inReal[i] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      tempReal = (double)inReal[trailingIdx] - shift;
       periodTotal1 -= tempReal;
       tempReal *= tempReal;
       periodTotal2 -= tempReal;
-      outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+      trailingIdx += 1;
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += (double)inReal[j];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = (double)inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = (double)inReal[windowStart] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[outIdx++] = variance;
+      i += 1;
    } while( i <= endIdx );
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -324,14 +437,19 @@ TA_RetCode TA_S_VAR_Unguarded( int    startIdx,
                                double        outReal[] )
 {
    double tempReal;
+   double shift;
    double periodTotal1;
    double periodTotal2;
    double meanValue1;
-   double meanValue2;
+   double variance;
+   double invPeriod;
    int i;
+   int j;
    int outIdx;
    int trailingIdx;
+   int windowStart;
    int nbInitialElementNeeded;
+   int barsSinceReseed;
 
    nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )
@@ -344,34 +462,63 @@ TA_RetCode TA_S_VAR_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   periodTotal1 = 0;
-   periodTotal2 = 0;
+   invPeriod = 1.0 / (double)optInTimePeriod;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
+   shift = (double)inReal[trailingIdx];
+   periodTotal1 = 0.0;
+   periodTotal2 = 0.0;
+   for( j = trailingIdx; j < startIdx; j += 1 )
    {
-      while( i < startIdx )
-      {
-         tempReal = (double)inReal[i++];
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      tempReal = (double)inReal[i++];
+      tempReal = (double)inReal[j] - shift;
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
-      meanValue1 = periodTotal1 / optInTimePeriod;
-      meanValue2 = periodTotal2 / optInTimePeriod;
-      tempReal = (double)inReal[trailingIdx++];
+   }
+   i = startIdx;
+   outIdx = 0;
+   barsSinceReseed = 32 * optInTimePeriod;
+   do
+   {
+      tempReal = (double)inReal[i] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      tempReal = (double)inReal[trailingIdx] - shift;
       periodTotal1 -= tempReal;
       tempReal *= tempReal;
       periodTotal2 -= tempReal;
-      outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+      trailingIdx += 1;
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += (double)inReal[j];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = (double)inReal[j] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = (double)inReal[windowStart] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[outIdx++] = variance;
+      i += 1;
    } while( i <= endIdx );
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -383,22 +530,29 @@ TA_RetCode TA_S_VAR_Unguarded( int    startIdx,
 struct TA_VAR_Stream {
    int optInTimePeriod;
    double optInNbDev;
+   double shift;
    double periodTotal1;
    double periodTotal2;
    double meanValue1;
-   double meanValue2;
-   int ringPos_trailingIdx;
-   int ringCap_trailingIdx;
-   double *ring_trailingIdx_inReal;
-   double *ringMirror_trailingIdx_inReal;
+   double variance;
+   double invPeriod;
+   int j;
+   int trailingIdx;
+   int windowStart;
+   int nbInitialElementNeeded;
+   int barsSinceReseed;
+   int i;
+   int xCap;
+   double *x_inReal;
+   double *xMirror_inReal;
 };
 
 /* Private function, not in public API. */
 static void TA_VAR_ReleaseInternal( struct TA_VAR_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
-   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
+   if( sp->x_inReal ) TA_Free( sp->x_inReal );
+   if( sp->xMirror_inReal ) TA_Free( sp->xMirror_inReal );
    TA_Free( sp );
 }
 
@@ -407,33 +561,70 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
 {
    double tempReal;
 
-   if( sp->ringCap_trailingIdx == 0 )
+   if( sp->i >= 1073741824 )
    {
-      sp->ring_trailingIdx_inReal[0] = inReal;
+      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      sp->i -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->j -= rebaseShift;
+      sp->windowStart -= rebaseShift;
    }
-   tempReal = inReal;
-   /* Square and add all the deviation over
-    * the same periods.
-    */
+   sp->x_inReal[sp->i % sp->xCap] = inReal;
+   /* Add the incoming value, measured against the shift. */
+   tempReal = sp->x_inReal[sp->i % sp->xCap] - sp->shift;
    sp->periodTotal1 += tempReal;
    tempReal *= tempReal;
    sp->periodTotal2 += tempReal;
-   /* Square and add all the deviation over
-    * the same period.
-    */
-   sp->meanValue1 = sp->periodTotal1 / sp->optInTimePeriod;
-   sp->meanValue2 = sp->periodTotal2 / sp->optInTimePeriod;
-   tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
+   sp->meanValue1 = sp->periodTotal1 * sp->invPeriod;
+   sp->variance = sp->periodTotal2 * sp->invPeriod - sp->meanValue1 * sp->meanValue1;
+   /* Remove the trailing value (prepares the next window). */
+   tempReal = sp->x_inReal[sp->trailingIdx % sp->xCap] - sp->shift;
    sp->periodTotal1 -= tempReal;
    tempReal *= tempReal;
    sp->periodTotal2 -= tempReal;
-   *outReal= sp->meanValue2 - sp->meanValue1 * sp->meanValue1;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   sp->trailingIdx += 1;
+   /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+    * when the shift is stale enough that the subtraction loses digits - i.e.
+    * the variance has shrunk below 1e-6 of the mean squared deviation it is
+    * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+    * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
+    * at least every 32 windows so a slow drift stays bounded regardless of the
+    * series length. The strict `<` also leaves an exactly-constant window
+    * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
+    * non-negative output (any negative variance trips the same test).
+    */
+   sp->barsSinceReseed -= 1;
+   if( sp->variance < 0.000001 * (sp->periodTotal2 * sp->invPeriod) || sp->barsSinceReseed <= 0 )
    {
-      sp->ringPos_trailingIdx = 0;
+      sp->barsSinceReseed = 32 * sp->optInTimePeriod;
+      sp->windowStart = sp->i - sp->nbInitialElementNeeded;
+      tempReal = 0.0;
+      for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
+      {
+         tempReal += sp->x_inReal[sp->j % sp->xCap];
+      }
+      sp->shift = tempReal * sp->invPeriod;
+      sp->periodTotal1 = 0.0;
+      sp->periodTotal2 = 0.0;
+      for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
+      {
+         tempReal = sp->x_inReal[sp->j % sp->xCap] - sp->shift;
+         sp->periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         sp->periodTotal2 += tempReal;
+      }
+      sp->meanValue1 = sp->periodTotal1 * sp->invPeriod;
+      sp->variance = sp->periodTotal2 * sp->invPeriod - sp->meanValue1 * sp->meanValue1;
+      /* Re-remove the trailing value under the new shift so the carried state
+       * matches the non-reseed path.
+       */
+      tempReal = sp->x_inReal[sp->windowStart % sp->xCap] - sp->shift;
+      sp->periodTotal1 -= tempReal;
+      tempReal *= tempReal;
+      sp->periodTotal2 -= tempReal;
    }
+   *outReal= sp->variance;
+   sp->i += 1;
 }
 
 /* Private function, not in public API. */
@@ -464,22 +655,24 @@ TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inRe
 
    {
       double tempReal;
+      double shift = 0.0;
       double periodTotal1 = 0.0;
       double periodTotal2 = 0.0;
       double meanValue1 = 0.0;
-      double meanValue2 = 0.0;
-      int i;
+      double variance = 0.0;
+      double invPeriod = 0.0;
+      int i = 0;
+      int j = 0;
       int outIdx;
-      int trailingIdx;
-      int nbInitialElementNeeded;
-      /* Validate the calculation method type and
-       * identify the minimum number of price bar needed
-       * to calculate at least one output.
+      int trailingIdx = 0;
+      int windowStart = 0;
+      int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
+      /* Identify the minimum number of price bar needed to calculate
+       * at least one output.
        */
       nbInitialElementNeeded = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
+      /* Move up the start index if there is not enough initial data. */
       if( startIdx < nbInitialElementNeeded )
       {
          startIdx = nbInitialElementNeeded;
@@ -491,46 +684,87 @@ TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inRe
          dummyNBElement = 0;
          return TA_BAD_PARAM;
       }
-      /* Do the MA calculation using tight loops. */
-      /* Add-up the initial periods, except for the last value. */
-      periodTotal1 = 0;
-      periodTotal2 = 0;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 )
-      {
-         while( i < startIdx )
-         {
-            tempReal = inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the inReal and
-       * outReal to be the same buffer.
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      /* Measure deviations against a shift near the window: the running sums
+       * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+       * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+       * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+       * (also gives an exact 0 for period 1, with no division by period-1).
        */
-      outIdx = 0;
-      do
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      shift = inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 )
       {
-         tempReal = inReal[i++];
-         /* Square and add all the deviation over
-          * the same periods.
-          */
+         tempReal = inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         /* Square and add all the deviation over
-          * the same period.
-          */
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+      }
+      /* inReal and outReal may be the same buffer: each trailing value is consumed
+       * before its slot is overwritten by the output.
+       */
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do
+      {
+         /* Add the incoming value, measured against the shift. */
+         tempReal = inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* Remove the trailing value (prepares the next window). */
+         tempReal = inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         lastValue_outReal = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+          * when the shift is stale enough that the subtraction loses digits - i.e.
+          * the variance has shrunk below 1e-6 of the mean squared deviation it is
+          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+          * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
+          * at least every 32 windows so a slow drift stays bounded regardless of the
+          * series length. The strict `<` also leaves an exactly-constant window
+          * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
+          * non-negative output (any negative variance trips the same test).
+          */
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+         {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal += inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* Re-remove the trailing value under the new shift so the carried state
+             * matches the non-reseed path.
+             */
+            tempReal = inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         lastValue_outReal = variance;
+         i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
       dummyNBElement = outIdx;
@@ -542,20 +776,30 @@ TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inRe
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInNbDev = optInNbDev;
+      sp->shift = shift;
       sp->periodTotal1 = periodTotal1;
       sp->periodTotal2 = periodTotal2;
       sp->meanValue1 = meanValue1;
-      sp->meanValue2 = meanValue2;
-      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
-        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      sp->variance = variance;
+      sp->invPeriod = invPeriod;
+      sp->j = j;
+      sp->trailingIdx = trailingIdx;
+      sp->windowStart = windowStart;
+      sp->nbInitialElementNeeded = nbInitialElementNeeded;
+      sp->barsSinceReseed = barsSinceReseed;
+      sp->i = i;
+      sp->xCap = (int)(i - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+        }
       }
-      sp->ringPos_trailingIdx = 0;
       *outReal = lastValue_outReal;
       *stream = sp;
       return TA_SUCCESS;
@@ -595,22 +839,24 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
 
    {
       double tempReal;
+      double shift = 0.0;
       double periodTotal1 = 0.0;
       double periodTotal2 = 0.0;
       double meanValue1 = 0.0;
-      double meanValue2 = 0.0;
-      int i;
+      double variance = 0.0;
+      double invPeriod = 0.0;
+      int i = 0;
+      int j = 0;
       int outIdx;
-      int trailingIdx;
-      int nbInitialElementNeeded;
-      /* Validate the calculation method type and
-       * identify the minimum number of price bar needed
-       * to calculate at least one output.
+      int trailingIdx = 0;
+      int windowStart = 0;
+      int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
+      /* Identify the minimum number of price bar needed to calculate
+       * at least one output.
        */
       nbInitialElementNeeded = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
+      /* Move up the start index if there is not enough initial data. */
       if( startIdx < nbInitialElementNeeded )
       {
          startIdx = nbInitialElementNeeded;
@@ -622,46 +868,87 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
          *outNBElement= 0;
          return TA_BAD_PARAM;
       }
-      /* Do the MA calculation using tight loops. */
-      /* Add-up the initial periods, except for the last value. */
-      periodTotal1 = 0;
-      periodTotal2 = 0;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 )
-      {
-         while( i < startIdx )
-         {
-            tempReal = inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the inReal and
-       * outReal to be the same buffer.
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      /* Measure deviations against a shift near the window: the running sums
+       * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+       * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+       * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+       * (also gives an exact 0 for period 1, with no division by period-1).
        */
-      outIdx = 0;
-      do
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      shift = inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 )
       {
-         tempReal = inReal[i++];
-         /* Square and add all the deviation over
-          * the same periods.
-          */
+         tempReal = inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         /* Square and add all the deviation over
-          * the same period.
-          */
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+      }
+      /* inReal and outReal may be the same buffer: each trailing value is consumed
+       * before its slot is overwritten by the output.
+       */
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do
+      {
+         /* Add the incoming value, measured against the shift. */
+         tempReal = inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* Remove the trailing value (prepares the next window). */
+         tempReal = inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+          * when the shift is stale enough that the subtraction loses digits - i.e.
+          * the variance has shrunk below 1e-6 of the mean squared deviation it is
+          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+          * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
+          * at least every 32 windows so a slow drift stays bounded regardless of the
+          * series length. The strict `<` also leaves an exactly-constant window
+          * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
+          * non-negative output (any negative variance trips the same test).
+          */
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 )
+         {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal += inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* Re-remove the trailing value under the new shift so the carried state
+             * matches the non-reseed path.
+             */
+            tempReal = inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++] = variance;
+         i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
       *outNBElement= outIdx;
@@ -673,20 +960,30 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInNbDev = optInNbDev;
+      sp->shift = shift;
       sp->periodTotal1 = periodTotal1;
       sp->periodTotal2 = periodTotal2;
       sp->meanValue1 = meanValue1;
-      sp->meanValue2 = meanValue2;
-      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
-        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
+      sp->variance = variance;
+      sp->invPeriod = invPeriod;
+      sp->j = j;
+      sp->trailingIdx = trailingIdx;
+      sp->windowStart = windowStart;
+      sp->nbInitialElementNeeded = nbInitialElementNeeded;
+      sp->barsSinceReseed = barsSinceReseed;
+      sp->i = i;
+      sp->xCap = (int)(i - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->x_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      if( !sp->xMirror_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+        }
       }
-      sp->ringPos_trailingIdx = 0;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -705,8 +1002,8 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
-   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
+   scratch.x_inReal = stream->xMirror_inReal;
+   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
    TA_VAR_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }

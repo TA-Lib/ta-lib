@@ -4789,6 +4789,8 @@ public class Core {
  *                composition of the TA_MA and TA_STDDEV streams. Bit-identical.
  *  071626 MF,CC  #117 speed optimization: fuse the SMA fast path's moving
  *                average and standard deviation into a single pass. Bit-identical.
+ *  071726 MF,CC  #118 SMA-path deviation now uses the cancellation-free variance
+ *                (var.c); two recurrences in one pass. Bit-identical.
  */
 
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -4856,10 +4858,9 @@ public class Core {
          return RetCode.BadParam ;
       }
       if( optInMAType == MAType.Sma ) {
-         /* SMA fast path (issue #117): the middle band moving average is also the
-          * mean the standard deviation is measured against, so both come from one
-          * pass below. Bit-identical to the general MA + STDDEV path (which the
-          * stream composes for every MA type).
+         /* SMA fast path: the middle band (SMA) and the standard deviation share one
+          * pass over the window below. Bit-identical to the general MA + STDDEV path
+          * (which the stream composes for every MA type).
           *
           * Identify TWO temporary buffers among the outputs so the calculation
           * needs no memory allocation; whenever possible make tempBuffer1 be the
@@ -4884,19 +4885,27 @@ public class Core {
          if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
             return RetCode.BadParam ;
          }
-         /* One pass: running sum (mean -> tempBuffer1) and sum of squares
-          * (deviation -> tempBuffer2), TA_VAR's recurrence with the mean emitted
-          * and sqrt inline. tempBuffer1/2 never alias inReal (checked above).
+         /* One pass with two independent recurrences: the SMA running sum (maTotal,
+          * mean -> tempBuffer1, bit-identical to TA_MA(SMA)) and the shifted-data
+          * variance (-> tempBuffer2, bit-identical to TA_STDDEV/TA_VAR - see var.c).
+          * The variance carries its own shift and reseed; the SMA sum is untouched by
+          * it. tempBuffer1/2 never alias inReal (checked above).
           */
-         double periodTotal1;
-         double periodTotal2;
+         double maTotal;
+         double shift;
+         double varTotal1;
+         double varTotal2;
          double meanValue1;
-         double meanValue2;
+         double variance;
+         double _invPeriod;
          double _tempReal;
          int _i;
+         int _j;
          int _outIdx;
          int _trailingIdx;
+         int _windowStart;
          int _lookbackTotal;
+         int _barsSinceReseed;
          _lookbackTotal = optInTimePeriod - 1;
          if( startIdx < _lookbackTotal ) {
             startIdx = _lookbackTotal;
@@ -4906,38 +4915,68 @@ public class Core {
             outNBElement.value = 0;
             return RetCode.Success ;
          }
-         periodTotal1 = 0;
-         periodTotal2 = 0;
+         _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
-         _i = _trailingIdx;
-         if( optInTimePeriod > 1 ) {
-            while( _i < startIdx ) {
-               _tempReal = inReal[_i++];
-               periodTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               periodTotal2 += _tempReal;
-            }
+         shift = inReal[_trailingIdx];
+         maTotal = 0.0;
+         varTotal1 = 0.0;
+         varTotal2 = 0.0;
+         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
+            maTotal += inReal[_j];
+            _tempReal = inReal[_j] - shift;
+            varTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            varTotal2 += _tempReal;
          }
+         _i = startIdx;
          _outIdx = 0;
+         _barsSinceReseed = 32 * optInTimePeriod;
          do {
-            _tempReal = inReal[_i++];
-            periodTotal1 += _tempReal;
+            maTotal += inReal[_i];
+            _tempReal = inReal[_i] - shift;
+            varTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 += _tempReal;
-            meanValue1 = periodTotal1 / optInTimePeriod;
-            meanValue2 = periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_trailingIdx++];
-            periodTotal1 -= _tempReal;
+            varTotal2 += _tempReal;
+            meanValue1 = varTotal1 * _invPeriod;
+            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
+            maTotal -= inReal[_trailingIdx];
+            _tempReal = inReal[_trailingIdx] - shift;
+            varTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 -= _tempReal;
-            tempBuffer1[_outIdx] = meanValue1;
-            meanValue2 -= meanValue1 * meanValue1;
-            if( !(meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
+            varTotal2 -= _tempReal;
+            _trailingIdx += 1;
+            _barsSinceReseed -= 1;
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+               _barsSinceReseed = 32 * optInTimePeriod;
+               _windowStart = _i - _lookbackTotal;
+               _tempReal = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal += inReal[_j];
+               }
+               shift = _tempReal * _invPeriod;
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal = inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               _tempReal = inReal[_windowStart] - shift;
+               varTotal1 -= _tempReal;
+               _tempReal *= _tempReal;
+               varTotal2 -= _tempReal;
+            }
+            if( !(variance < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(variance);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
             _outIdx += 1;
+            _i += 1;
          } while( _i <= endIdx );
          outNBElement.value = _outIdx;
          outBegIdx.value = startIdx;
@@ -5056,15 +5095,21 @@ public class Core {
          if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
             return RetCode.BadParam ;
          }
-         double periodTotal1;
-         double periodTotal2;
+         double maTotal;
+         double shift;
+         double varTotal1;
+         double varTotal2;
          double meanValue1;
-         double meanValue2;
+         double variance;
+         double _invPeriod;
          double _tempReal;
          int _i;
+         int _j;
          int _outIdx;
          int _trailingIdx;
+         int _windowStart;
          int _lookbackTotal;
+         int _barsSinceReseed;
          _lookbackTotal = optInTimePeriod - 1;
          if( startIdx < _lookbackTotal ) {
             startIdx = _lookbackTotal;
@@ -5074,38 +5119,68 @@ public class Core {
             outNBElement.value = 0;
             return RetCode.Success ;
          }
-         periodTotal1 = 0;
-         periodTotal2 = 0;
+         _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
-         _i = _trailingIdx;
-         if( optInTimePeriod > 1 ) {
-            while( _i < startIdx ) {
-               _tempReal = inReal[_i++];
-               periodTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               periodTotal2 += _tempReal;
-            }
+         shift = inReal[_trailingIdx];
+         maTotal = 0.0;
+         varTotal1 = 0.0;
+         varTotal2 = 0.0;
+         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
+            maTotal += inReal[_j];
+            _tempReal = inReal[_j] - shift;
+            varTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            varTotal2 += _tempReal;
          }
+         _i = startIdx;
          _outIdx = 0;
+         _barsSinceReseed = 32 * optInTimePeriod;
          do {
-            _tempReal = inReal[_i++];
-            periodTotal1 += _tempReal;
+            maTotal += inReal[_i];
+            _tempReal = inReal[_i] - shift;
+            varTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 += _tempReal;
-            meanValue1 = periodTotal1 / optInTimePeriod;
-            meanValue2 = periodTotal2 / optInTimePeriod;
-            _tempReal = inReal[_trailingIdx++];
-            periodTotal1 -= _tempReal;
+            varTotal2 += _tempReal;
+            meanValue1 = varTotal1 * _invPeriod;
+            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
+            maTotal -= inReal[_trailingIdx];
+            _tempReal = inReal[_trailingIdx] - shift;
+            varTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 -= _tempReal;
-            tempBuffer1[_outIdx] = meanValue1;
-            meanValue2 -= meanValue1 * meanValue1;
-            if( !(meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
+            varTotal2 -= _tempReal;
+            _trailingIdx += 1;
+            _barsSinceReseed -= 1;
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+               _barsSinceReseed = 32 * optInTimePeriod;
+               _windowStart = _i - _lookbackTotal;
+               _tempReal = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal += inReal[_j];
+               }
+               shift = _tempReal * _invPeriod;
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal = inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               _tempReal = inReal[_windowStart] - shift;
+               varTotal1 -= _tempReal;
+               _tempReal *= _tempReal;
+               varTotal2 -= _tempReal;
+            }
+            if( !(variance < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(variance);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
             _outIdx += 1;
+            _i += 1;
          } while( _i <= endIdx );
          outNBElement.value = _outIdx;
          outBegIdx.value = startIdx;
@@ -5222,15 +5297,21 @@ public class Core {
          if( false || false ) {
             return RetCode.BadParam ;
          }
-         double periodTotal1;
-         double periodTotal2;
+         double maTotal;
+         double shift;
+         double varTotal1;
+         double varTotal2;
          double meanValue1;
-         double meanValue2;
+         double variance;
+         double _invPeriod;
          double _tempReal;
          int _i;
+         int _j;
          int _outIdx;
          int _trailingIdx;
+         int _windowStart;
          int _lookbackTotal;
+         int _barsSinceReseed;
          _lookbackTotal = optInTimePeriod - 1;
          if( startIdx < _lookbackTotal ) {
             startIdx = _lookbackTotal;
@@ -5240,38 +5321,68 @@ public class Core {
             outNBElement.value = 0;
             return RetCode.Success ;
          }
-         periodTotal1 = 0;
-         periodTotal2 = 0;
+         _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
-         _i = _trailingIdx;
-         if( optInTimePeriod > 1 ) {
-            while( _i < startIdx ) {
-               _tempReal = (double)inReal[_i++];
-               periodTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               periodTotal2 += _tempReal;
-            }
+         shift = (double)inReal[_trailingIdx];
+         maTotal = 0.0;
+         varTotal1 = 0.0;
+         varTotal2 = 0.0;
+         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
+            maTotal += (double)inReal[_j];
+            _tempReal = (double)inReal[_j] - shift;
+            varTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            varTotal2 += _tempReal;
          }
+         _i = startIdx;
          _outIdx = 0;
+         _barsSinceReseed = 32 * optInTimePeriod;
          do {
-            _tempReal = (double)inReal[_i++];
-            periodTotal1 += _tempReal;
+            maTotal += (double)inReal[_i];
+            _tempReal = (double)inReal[_i] - shift;
+            varTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 += _tempReal;
-            meanValue1 = periodTotal1 / optInTimePeriod;
-            meanValue2 = periodTotal2 / optInTimePeriod;
-            _tempReal = (double)inReal[_trailingIdx++];
-            periodTotal1 -= _tempReal;
+            varTotal2 += _tempReal;
+            meanValue1 = varTotal1 * _invPeriod;
+            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
+            maTotal -= (double)inReal[_trailingIdx];
+            _tempReal = (double)inReal[_trailingIdx] - shift;
+            varTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 -= _tempReal;
-            tempBuffer1[_outIdx] = meanValue1;
-            meanValue2 -= meanValue1 * meanValue1;
-            if( !(meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
+            varTotal2 -= _tempReal;
+            _trailingIdx += 1;
+            _barsSinceReseed -= 1;
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+               _barsSinceReseed = 32 * optInTimePeriod;
+               _windowStart = _i - _lookbackTotal;
+               _tempReal = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal += (double)inReal[_j];
+               }
+               shift = _tempReal * _invPeriod;
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal = (double)inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               _tempReal = (double)inReal[_windowStart] - shift;
+               varTotal1 -= _tempReal;
+               _tempReal *= _tempReal;
+               varTotal2 -= _tempReal;
+            }
+            if( !(variance < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(variance);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
             _outIdx += 1;
+            _i += 1;
          } while( _i <= endIdx );
          outNBElement.value = _outIdx;
          outBegIdx.value = startIdx;
@@ -5368,15 +5479,21 @@ public class Core {
          if( false || false ) {
             return RetCode.BadParam ;
          }
-         double periodTotal1;
-         double periodTotal2;
+         double maTotal;
+         double shift;
+         double varTotal1;
+         double varTotal2;
          double meanValue1;
-         double meanValue2;
+         double variance;
+         double _invPeriod;
          double _tempReal;
          int _i;
+         int _j;
          int _outIdx;
          int _trailingIdx;
+         int _windowStart;
          int _lookbackTotal;
+         int _barsSinceReseed;
          _lookbackTotal = optInTimePeriod - 1;
          if( startIdx < _lookbackTotal ) {
             startIdx = _lookbackTotal;
@@ -5386,38 +5503,68 @@ public class Core {
             outNBElement.value = 0;
             return RetCode.Success ;
          }
-         periodTotal1 = 0;
-         periodTotal2 = 0;
+         _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
-         _i = _trailingIdx;
-         if( optInTimePeriod > 1 ) {
-            while( _i < startIdx ) {
-               _tempReal = (double)inReal[_i++];
-               periodTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               periodTotal2 += _tempReal;
-            }
+         shift = (double)inReal[_trailingIdx];
+         maTotal = 0.0;
+         varTotal1 = 0.0;
+         varTotal2 = 0.0;
+         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
+            maTotal += (double)inReal[_j];
+            _tempReal = (double)inReal[_j] - shift;
+            varTotal1 += _tempReal;
+            _tempReal *= _tempReal;
+            varTotal2 += _tempReal;
          }
+         _i = startIdx;
          _outIdx = 0;
+         _barsSinceReseed = 32 * optInTimePeriod;
          do {
-            _tempReal = (double)inReal[_i++];
-            periodTotal1 += _tempReal;
+            maTotal += (double)inReal[_i];
+            _tempReal = (double)inReal[_i] - shift;
+            varTotal1 += _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 += _tempReal;
-            meanValue1 = periodTotal1 / optInTimePeriod;
-            meanValue2 = periodTotal2 / optInTimePeriod;
-            _tempReal = (double)inReal[_trailingIdx++];
-            periodTotal1 -= _tempReal;
+            varTotal2 += _tempReal;
+            meanValue1 = varTotal1 * _invPeriod;
+            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
+            maTotal -= (double)inReal[_trailingIdx];
+            _tempReal = (double)inReal[_trailingIdx] - shift;
+            varTotal1 -= _tempReal;
             _tempReal *= _tempReal;
-            periodTotal2 -= _tempReal;
-            tempBuffer1[_outIdx] = meanValue1;
-            meanValue2 -= meanValue1 * meanValue1;
-            if( !(meanValue2 < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(meanValue2);
+            varTotal2 -= _tempReal;
+            _trailingIdx += 1;
+            _barsSinceReseed -= 1;
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+               _barsSinceReseed = 32 * optInTimePeriod;
+               _windowStart = _i - _lookbackTotal;
+               _tempReal = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal += (double)inReal[_j];
+               }
+               shift = _tempReal * _invPeriod;
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                  _tempReal = (double)inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               _tempReal = (double)inReal[_windowStart] - shift;
+               varTotal1 -= _tempReal;
+               _tempReal *= _tempReal;
+               varTotal2 -= _tempReal;
+            }
+            if( !(variance < 0.00000000000001) ) {
+               tempBuffer2[_outIdx] = Math.sqrt(variance);
             } else {
                tempBuffer2[_outIdx] = 0.0;
             }
             _outIdx += 1;
+            _i += 1;
          } while( _i <= endIdx );
          outNBElement.value = _outIdx;
          outBegIdx.value = startIdx;
@@ -63324,14 +63471,16 @@ public class Core {
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JV       Jesus Viver <324122@cienz.unizar.es>
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  100502 JV   Speed optimization of the algorithm
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  100502 JV     Speed optimization of the algorithm
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
  */
 
    public int varianceLookback( int optInTimePeriod, double optInNbDev )
@@ -63357,14 +63506,19 @@ public class Core {
                             double outReal[] )
    {
       double tempReal = 0;
+      double shift = 0;
       double periodTotal1 = 0;
       double periodTotal2 = 0;
       double meanValue1 = 0;
-      double meanValue2 = 0;
+      double variance = 0;
+      double invPeriod = 0;
       int i = 0;
+      int j = 0;
       int outIdx = 0;
       int trailingIdx = 0;
+      int windowStart = 0;
       int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -63379,14 +63533,11 @@ public class Core {
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
       }
-      /* Validate the calculation method type and
-       * identify the minimum number of price bar needed
-       * to calculate at least one output.
+      /* Identify the minimum number of price bar needed to calculate
+       * at least one output.
        */
       nbInitialElementNeeded = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
+      /* Move up the start index if there is not enough initial data. */
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
       }
@@ -63396,43 +63547,82 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      /* Do the MA calculation using tight loops. */
-      /* Add-up the initial periods, except for the last value. */
-      periodTotal1 = 0;
-      periodTotal2 = 0;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the inReal and
-       * outReal to be the same buffer.
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      /* Measure deviations against a shift near the window: the running sums
+       * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+       * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+       * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+       * (also gives an exact 0 for period 1, with no division by period-1).
        */
-      outIdx = 0;
-      do {
-         tempReal = inReal[i++];
-         /* Square and add all the deviation over
-          * the same periods.
-          */
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      shift = inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         tempReal = inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         /* Square and add all the deviation over
-          * the same period.
-          */
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+      }
+      /* inReal and outReal may be the same buffer: each trailing value is consumed
+       * before its slot is overwritten by the output.
+       */
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do {
+         /* Add the incoming value, measured against the shift. */
+         tempReal = inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* Remove the trailing value (prepares the next window). */
+         tempReal = inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+          * when the shift is stale enough that the subtraction loses digits - i.e.
+          * the variance has shrunk below 1e-6 of the mean squared deviation it is
+          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+          * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
+          * at least every 32 windows so a slow drift stays bounded regardless of the
+          * series length. The strict `<` also leaves an exactly-constant window
+          * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
+          * non-negative output (any negative variance trips the same test).
+          */
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* Re-remove the trailing value under the new shift so the carried state
+             * matches the non-reseed path.
+             */
+            tempReal = inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++] = variance;
+         i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
@@ -63449,14 +63639,19 @@ public class Core {
                                      double outReal[] )
    {
       double tempReal = 0;
+      double shift = 0;
       double periodTotal1 = 0;
       double periodTotal2 = 0;
       double meanValue1 = 0;
-      double meanValue2 = 0;
+      double variance = 0;
+      double invPeriod = 0;
       int i = 0;
+      int j = 0;
       int outIdx = 0;
       int trailingIdx = 0;
+      int windowStart = 0;
       int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -63466,31 +63661,58 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      periodTotal1 = 0;
-      periodTotal2 = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      outIdx = 0;
-      do {
-         tempReal = inReal[i++];
+      shift = inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         tempReal = inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = inReal[trailingIdx++];
+      }
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do {
+         tempReal = inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            tempReal = inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++] = variance;
+         i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -63506,14 +63728,19 @@ public class Core {
                             double outReal[] )
    {
       double tempReal = 0;
+      double shift = 0;
       double periodTotal1 = 0;
       double periodTotal2 = 0;
       double meanValue1 = 0;
-      double meanValue2 = 0;
+      double variance = 0;
+      double invPeriod = 0;
       int i = 0;
+      int j = 0;
       int outIdx = 0;
       int trailingIdx = 0;
+      int windowStart = 0;
       int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -63537,31 +63764,58 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      periodTotal1 = 0;
-      periodTotal2 = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = (double)inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      outIdx = 0;
-      do {
-         tempReal = (double)inReal[i++];
+      shift = (double)inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         tempReal = (double)inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = (double)inReal[trailingIdx++];
+      }
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do {
+         tempReal = (double)inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = (double)inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += (double)inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = (double)inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            tempReal = (double)inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++] = variance;
+         i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -63577,14 +63831,19 @@ public class Core {
                                      double outReal[] )
    {
       double tempReal = 0;
+      double shift = 0;
       double periodTotal1 = 0;
       double periodTotal2 = 0;
       double meanValue1 = 0;
-      double meanValue2 = 0;
+      double variance = 0;
+      double invPeriod = 0;
       int i = 0;
+      int j = 0;
       int outIdx = 0;
       int trailingIdx = 0;
+      int windowStart = 0;
       int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -63594,31 +63853,58 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      periodTotal1 = 0;
-      periodTotal2 = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = (double)inReal[i++];
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-      }
-      outIdx = 0;
-      do {
-         tempReal = (double)inReal[i++];
+      shift = (double)inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         tempReal = (double)inReal[j] - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 / optInTimePeriod;
-         meanValue2 = periodTotal2 / optInTimePeriod;
-         tempReal = (double)inReal[trailingIdx++];
+      }
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do {
+         tempReal = (double)inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         tempReal = (double)inReal[trailingIdx] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
          periodTotal2 -= tempReal;
-         outReal[outIdx++] = meanValue2 - meanValue1 * meanValue1;
+         trailingIdx += 1;
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += (double)inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = (double)inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            tempReal = (double)inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++] = variance;
+         i += 1;
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;

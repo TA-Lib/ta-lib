@@ -111,7 +111,7 @@ static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
 static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history );
-static ErrorNumber test_bbands_sma_reciprocal_guard( void );
+static ErrorNumber test_bbands_sma_stable_variance( void );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -313,11 +313,11 @@ ErrorNumber test_func_bbands( TA_History *history )
       return retValue;
    }
 
-   /* Guard against the rejected reciprocal-multiply optimization (#118). */
-   retValue = test_bbands_sma_reciprocal_guard();
+   /* Cancellation-free variance on an ill-conditioned window (#118). */
+   retValue = test_bbands_sma_stable_variance();
    if( retValue != TA_TEST_PASS )
    {
-      printf( "%s Failed BBANDS/SMA reciprocal-multiply guard (#118) (Code=%d)\n",
+      printf( "%s Failed BBANDS/SMA stable-variance test (#118) (Code=%d)\n",
               __FILE__, retValue );
       return retValue;
    }
@@ -949,27 +949,17 @@ done:
    return errNb;
 }
 
-/* Guard against the rejected reciprocal-multiply optimization (issue #118).
+/* Guard the cancellation-free variance (issue #118).
  *
- * The BBANDS SMA path (and the TA_VAR it must match) computes the deviation from
- * variance = E[x^2] - mean^2 using per-bar `sum / period` DIVISIONS. Replacing
- * those with a hoisted reciprocal multiply `sum * (1/period)` was measured (#117
- * discussion) to be ~2x faster but numerically unsafe: E[x^2] - mean^2
- * catastrophically cancels, so a ~1 ULP perturbation of the (huge) E[x^2] / mean^2
- * terms lands on the (tiny) variance and blows past the 1e-9 FMA tolerance for
- * low-volatility / high-magnitude inputs.
- *
- * This pins the division form on exactly such an ill-conditioned window: a large
- * offset (1e6) with a few units of variation, one single period-wide window. The
- * reference recomputes the mean and standard deviation with EXPLICIT `/ period`
- * division in the library's own accumulation order (the lone `m1 * m1` statement
- * blocks FMA contraction, matching the -ffp-contract=off library), then asserts
- * every band matches BIT-FOR-BIT. Under division this is exact; a reciprocal
- * multiply anywhere in that path shifts the bands ~1e-4 here and fails loudly.
- * If VAR is ever moved to a cancellation-free algorithm (#118) this expectation
- * changes with it.
+ * On an ill-conditioned window (large offset, a few units of variation) the old
+ * E[x^2] - mean^2 form loses most of its digits and can collapse to zero/negative
+ * (SourceForge bug 90). The shifted-data variance in var.c/the BBANDS SMA path
+ * stays accurate there. This pins the property on exactly such a window: the
+ * deviation must match a stable mean-centered two-pass to ~1e-9 and stay non-zero,
+ * and the window must be genuinely ill-conditioned (the old form measurably off),
+ * else the guard proves nothing.
  */
-static ErrorNumber test_bbands_sma_reciprocal_guard( void )
+static ErrorNumber test_bbands_sma_stable_variance( void )
 {
    enum { NB = 12 };
    const int    period = NB;          /* one period-wide window -> one output */
@@ -977,7 +967,7 @@ static ErrorNumber test_bbands_sma_reciprocal_guard( void )
    const double nbDev  = 2.0;
    double in[NB];
    double up[1], mid[1], low[1];
-   double sum = 0.0, sumSq = 0.0, m1, m2, sq, expVar, expMean, expStd, off, expUp, expLow;
+   double sum = 0.0, sumSq = 0.0, meanRef, varRef, stdRef, oldVar, dev;
    TA_Integer begIdx = 0, nbElt = 0;
    TA_RetCode rc;
    int i;
@@ -985,45 +975,87 @@ static ErrorNumber test_bbands_sma_reciprocal_guard( void )
    for( i = 0; i < NB; i++ )
       in[i] = base + (double)( ( i * 7 ) % 5 - 2 );   /* {-2..+2} around 1e6 */
 
-   /* Reference: E[x^2] - mean^2 with explicit division, same left-to-right
-    * accumulation the library uses; materialize m1*m1 so no FMA fuses it. */
-   for( i = 0; i < NB; i++ ) { double t = in[i]; sum += t; sumSq += t * t; }
-   m1      = sum   / (double)period;
-   m2      = sumSq / (double)period;
-   sq      = m1 * m1;
-   expVar  = m2 - sq;
-   expMean = m1;
-   expStd  = !TA_IS_ZERO_OR_NEG(expVar) ? sqrt(expVar) : 0.0;
-   off     = expStd * nbDev;
-   expUp   = expMean + off;
-   expLow  = expMean - off;
+   /* Reference: stable mean-centered two-pass (the accurate variance). */
+   for( i = 0; i < NB; i++ ) sum += in[i];
+   meanRef = sum / (double)period;
+   varRef  = 0.0;
+   for( i = 0; i < NB; i++ ) { double d = in[i] - meanRef; varRef += d * d; }
+   varRef /= (double)period;
+   stdRef  = sqrt(varRef);
+
+   /* The old cancelling form, for the non-vacuity check below. */
+   for( i = 0; i < NB; i++ ) sumSq += in[i] * in[i];
+   oldVar = sumSq / (double)period - meanRef * meanRef;
 
    TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
    rc = TA_BBANDS( 0, NB - 1, in, period, nbDev, nbDev, TA_MAType_SMA,
                    &begIdx, &nbElt, up, mid, low );
    if( rc != TA_SUCCESS || nbElt != 1 )
    {
-      printf( "BBANDS/SMA #118 guard: rc=%d nb=%d (expected SUCCESS,1)\n",
+      printf( "BBANDS/SMA #118: rc=%d nb=%d (expected SUCCESS,1)\n",
               (int)rc, (int)nbElt );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   /* Non-vacuity: the window must actually be ill-conditioned (small positive
-    * variance under a large mean), else the guard proves nothing. */
-   if( !( expVar > 1e-6 && expVar < 1.0e3 ) )
+   /* Non-vacuity: the window must be ill-conditioned, i.e. the old E[x^2]-mean^2
+    * form is measurably wrong here (otherwise this window proves nothing). */
+   if( !( varRef > 1e-6 && fabs( oldVar - varRef ) / varRef > 1e-6 ) )
    {
-      printf( "BBANDS/SMA #118 guard: reference variance %.6g out of the "
-              "ill-conditioned range\n", expVar );
+      printf( "BBANDS/SMA #118: window not ill-conditioned (varRef=%.6g "
+              "oldVar=%.6g)\n", varRef, oldVar );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   if( mid[0] != expMean || up[0] != expUp || low[0] != expLow )
+   /* The band deviation must match the stable variance and not collapse. */
+   dev = ( up[0] - mid[0] ) / nbDev;
+   if( dev <= 0.0 || fabs( dev - stdRef ) / stdRef > 1e-9 )
    {
-      printf( "BBANDS/SMA #118 guard: bands are not the division form "
-              "(reciprocal-multiply regression?) mid=%.17g/%.17g up=%.17g/%.17g "
-              "low=%.17g/%.17g (var=%.4g)\n",
-              mid[0], expMean, up[0], expUp, low[0], expLow, expVar );
+      printf( "BBANDS/SMA #118: deviation %.17g not the stable variance %.17g "
+              "(rel %.3g)\n", dev, stdRef, fabs( dev - stdRef ) / stdRef );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* Stale-anchor regression: a mid-series level shift leaves the shift far from
+    * the later windows, whose (small-but-not-tiny) variance is then extracted from
+    * a difference of ~1e12 quantities. A reseed that fires only on total collapse
+    * misses this partial cancellation and emits a silent, positive-but-wrong
+    * deviation. Assert every band tracks a stable two-pass across the whole series. */
+   {
+      enum { M = 200 };
+      const int p = 20;
+      double s[M], sUp[M], sMid[M], sLow[M];
+      TA_Integer sBeg, sNb;
+      int kk;
+
+      for( kk = 0; kk < M; kk++ )
+         s[kk] = ( kk < 60 ) ? 1.0e6 : ( 3.0 + (double)( ( kk * 7 ) % 11 - 5 ) * 0.1 );
+
+      rc = TA_BBANDS( 0, M - 1, s, p, nbDev, nbDev, TA_MAType_SMA,
+                      &sBeg, &sNb, sUp, sMid, sLow );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "BBANDS/SMA #118 stale-anchor: rc=%d\n", (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      for( kk = 0; kk < (int)sNb; kk++ )
+      {
+         const int bar = (int)sBeg + kk;
+         double sm = 0.0, vr = 0.0, sd, d;
+         int jj;
+         for( jj = bar - p + 1; jj <= bar; jj++ ) sm += s[jj];
+         sm /= (double)p;
+         for( jj = bar - p + 1; jj <= bar; jj++ ) { double e = s[jj] - sm; vr += e * e; }
+         vr /= (double)p;
+         sd = ( vr > 0.0 ) ? sqrt( vr ) : 0.0;
+         d  = ( sUp[kk] - sMid[kk] ) / nbDev;
+         if( sd > 0.0 && fabs( d - sd ) / sd > 1e-9 )
+         {
+            printf( "BBANDS/SMA #118 stale-anchor: bar %d dev=%.17g stable=%.17g "
+                    "(rel %.3g)\n", bar, d, sd, fabs( d - sd ) / sd );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
    }
 
    return TA_TEST_PASS;
