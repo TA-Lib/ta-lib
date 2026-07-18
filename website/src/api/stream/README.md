@@ -93,3 +93,34 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 ## Discovering streamable functions
 
 When driving TA-Lib through the [abstraction layer](/api/#abstract), streamable functions carry the `TA_FUNC_FLG_STREAM` flag in their function info.
+
+## Rust
+
+The `ta-lib` crate exposes the same lifecycle as safe, owned handles. `open`
+returns the handle **and** the value at the last history bar; `update` is
+infallible and never allocates; `peek` runs the same transition on a throwaway
+clone (never commits); dropping the handle closes the stream. Every value is
+bit-identical to the batch method over the same series.
+
+```rust
+use ta_lib::Core;
+
+let core = Core::new();
+let (mut s, last) = core.sma_open(&history, 14)?;      // handle + value at the last bar
+for &bar in new_bars {
+    let v = s.update(bar);                             // one value per closed bar
+}
+let provisional = s.peek(forming_bar_close);           // forming bar, non-committing
+// dropping `s` closes the stream
+
+// Or get the whole history output AND the live handle in one pass:
+let (mut beg, mut nb) = (0, 0);
+let mut warmup = vec![0.0; history.len()];
+let s2 = core.sma_open_and_fill(&history, 14, &mut beg, &mut nb, &mut warmup)?;
+```
+
+Multi-output functions return tuples in batch output order
+(`macd_open` → `(MacdStream, (f64, f64, f64))`); candlestick patterns return
+`i32`. Handles are `Send + Sync + Clone` — cloning forks an independent
+stream, and `update(&mut self)` makes the single-writer rule a compile-time
+guarantee. Settings are captured from the immutable `Core` at open.

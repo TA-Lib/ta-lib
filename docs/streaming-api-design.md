@@ -82,7 +82,9 @@ the surface includes:
 bit-identical, guaranteed by construction: it is the same generated code as
 `update`, run without committing.
 
-Its overhead is a throw away deep-copy of the handle (on every peek).
+Its overhead is a throw away deep-copy of the handle (on every peek). In Rust
+this is literally `self.clone()` — for windowed/composed indicators the clone
+allocates; `update` never allocates (that is the hard constraint, not peek's).
 
 ### Full-history output at open (`OpenAndFill`)
 
@@ -222,8 +224,9 @@ Rust:
 
 ```rust
 let core = Core::builder().build();               // immutable settings (issue #104)
-let mut s = core.sma_open(&history, 14)?;         // &self method on Core; the
-                                                  // handle holds an Arc<Core>
+let (mut s, _last) = core.sma_open(&history, 14)?; // &self method on Core; the
+                                                  // handle holds its own Core
+                                                  // (a cheap by-value clone)
 for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
 let provisional = s.peek(forming_bar_close);       // &self: runs the same
                                                   // transition on a throwaway
@@ -256,12 +259,15 @@ above:
   settings, unstable period). Changing a setting means building a new `Core`
   (it is small; cloning is cheap).
 - **`open` is a `&self` method on `Core`.** Compatibility is consumed during
-  seeding; for anything read per-bar (candle settings) the handle keeps a
-  reference (`Arc`) to the immutable `Core` it was opened from — nothing is
-  copied, and settings cannot change for a `Core` by design. Opening and
-  driving streams concurrently from a shared `&Core` is therefore safe.
-  (Unstable period is read once at `open` — it only sizes the required
-  history — and never consulted again.)
+  seeding; for anything read per-bar (candle settings) the handle holds its
+  own `Core` **by value** — a `&self` method cannot mint a shared `Arc`, and a
+  clone of a small, deeply immutable `Core` is observationally identical to a
+  reference while keeping handles free of lifetimes. Settings cannot change
+  for a `Core` by design, so "settings stable over a stream's lifetime" holds
+  by construction even if the original `Core` is dropped. Opening and driving
+  streams concurrently from a shared `&Core` is therefore safe. (Unstable
+  period is read once at `open` — it only sizes the required history — and
+  never consulted again.)
 - **A stream handle is `Send` but single-writer.** `update(&mut self)` makes
   concurrent updates on one handle a compile error, so the "one thread per
   stream" rule is enforced, not merely advised; being `Send`, a handle can

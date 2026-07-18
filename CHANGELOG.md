@@ -11,6 +11,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
+- Rust streaming API: every indicator gains `<name>_open` / `<name>_open_and_fill` on `Core` plus an owned
+  handle with infallible `update`/`peek` (drop = close), bit-identical to batch and verified by the same
+  stream gate as C.
 - New TA Functions:
   - PVO: Percentage Volume Oscillator (#119)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
