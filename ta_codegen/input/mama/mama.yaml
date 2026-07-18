@@ -29,4 +29,7 @@ outputs:
     flags: [line]
   - name: outFAMA
     type: real
-    flags: [dash_line]
+    # `nullable`: FAMA may be discarded (passed NULL) — MA/BBANDS/STOCH/… want
+    # only the MAMA line when optInMAType == MAMA. Surfaces as TA_OUT_NULLABLE
+    # in ta_abstract. See issue #125.
+    flags: [dash_line, nullable]

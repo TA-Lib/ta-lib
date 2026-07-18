@@ -2033,7 +2033,17 @@ fn render_func_call(
         let java_name = registry.resolve_call(fname, Lang::Java);
         let rendered: Vec<String> = args
             .iter()
-            .map(|a| render_expr(a, ctx, registry, helpers))
+            .map(|a| match a {
+                // NULL for a nullable output the caller discards (MA passing NULL
+                // for MAMA's FAMA — issue #125). Java arrays are nullable, but the
+                // callee writes into it unconditionally, so materialize a throwaway
+                // spanning the output range (mirrors the discard buffer the C
+                // source used before nullable outputs). NULL appears only here.
+                Expr::Var(n) if n == "NULL" => {
+                    "new double[(int)(endIdx - startIdx + 1)]".to_string()
+                }
+                _ => render_expr(a, ctx, registry, helpers),
+            })
             .collect();
         format!("{}({})", java_name, rendered.join(", "))
     }

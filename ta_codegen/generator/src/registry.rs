@@ -55,12 +55,7 @@ impl Registry {
                     java_names.insert(dir_name.clone(), java_name);
                     callee_sigs.insert(
                         dir_name.clone(),
-                        crate::streaming::CalleeSig {
-                            streaming: fd.streaming,
-                            n_inputs: crate::streaming::input_array_names(&fd).len(),
-                            n_opts: fd.optional_inputs.len(),
-                            n_outputs: fd.outputs.len(),
-                        },
+                        crate::streaming::callee_sig_of(&fd),
                     );
                     indicators.push(dir_name);
                 }

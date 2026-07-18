@@ -96,6 +96,34 @@ fn uname(func: &FuncDef) -> String {
     func.name.to_uppercase()
 }
 
+/// Names of `func`'s nullable outputs (see IR `Output::nullable`). Threaded into
+/// the statement renderers so a stream's per-bar write to a discarded output
+/// (`*outFAMA = …`) is NULL-guarded exactly as the batch body's write is — this
+/// is what lets a dispatch pass NULL for a sub-stream output it doesn't want.
+fn nullable_out_names(func: &FuncDef) -> Vec<String> {
+    func.outputs
+        .iter()
+        .filter(|o| o.is_nullable())
+        .map(|o| o.name.clone())
+        .collect()
+}
+
+/// The callee output-argument list for one supported dispatch arm, built from
+/// its [`streaming::OutSlot`] map: `Forward(k)` passes the dispatch func's own
+/// output `k`, `Discard` passes NULL (a nullable callee output this dispatch
+/// drops — MAMA's FAMA when MA routes only the MAMA line, issue #125). For a
+/// same-arity arm (every single-output MA) this is exactly `outputs.join(", ")`.
+fn dispatch_arm_out_args(arm: &streaming::DispatchArm, outputs: &[String]) -> String {
+    arm.out_map
+        .iter()
+        .map(|slot| match slot {
+            streaming::OutSlot::Forward(k) => outputs[*k].clone(),
+            streaming::OutSlot::Discard => "NULL".to_string(),
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 /// The optional-parameter piece of Open's signature: `int optInTimePeriod, `...
 fn opt_params_sig(func: &FuncDef) -> String {
     let mut s = String::new();
@@ -666,7 +694,7 @@ fn emit_composed_step(
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
         let mut body_c = String::new();
         for s in &transition {
-            body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
+            body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
         }
         let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
         if !step_settings.is_empty() {
@@ -718,7 +746,7 @@ fn emit_composed_step(
                 }
                 let _ = writeln!(o, "   /* Combine map (batch tail, per bar). */");
                 for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings) {
-                    o.push_str(&render_statement_stream(st, 3, enums, registry, helpers, counter));
+                    o.push_str(&render_statement_stream(st, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
                 }
             }
         }
@@ -945,7 +973,7 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "         {{");
     for sf in &cp.series_frees {
         if sf.tail_idx > sub.tail_idx {
-            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter));
+            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter, &[]));
         }
     }
     let _ = writeln!(o, "            {cleanup};");
@@ -1058,7 +1086,7 @@ fn emit_composed_open(
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
     let mut region_c = String::new();
     for s in &region_stmts {
-        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(&cp.region);
     if !open_settings.is_empty() {
@@ -1084,7 +1112,7 @@ fn emit_composed_open(
         if is_lag_ring_free(stmt, &cp.sub_lag_rings) {
             continue;
         }
-        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter));
+        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
     }
 
     // --- capture ----------------------------------------------------------------
@@ -1389,7 +1417,6 @@ fn emit_dispatch_open_and_fill(
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let bar_args: String = inputs.join(", ");
-    let out_args: String = outputs.join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
 
     let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
@@ -1465,12 +1492,13 @@ fn emit_dispatch_open_and_fill(
             let _ = write!(s, "{}, ", render_expression(e, registry, helpers, counter));
             s
         });
+        let arm_out_args = dispatch_arm_out_args(arm, &outputs);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
         let _ = writeln!(
             o,
-            "         retCode = {cp}_OpenAndFill( &sub, {bar_args}, historyLen, {opt_str}outBegIdx, outNBElement, {out_args} );",
+            "         retCode = {cp}_OpenAndFill( &sub, {bar_args}, historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} );",
         );
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
@@ -1510,7 +1538,6 @@ fn emit_dispatch(
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let bar_args: String = inputs.join(", ");
-    let out_args: String = outputs.join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
 
     // --- state struct -------------------------------------------------------
@@ -1586,12 +1613,13 @@ fn emit_dispatch(
                 let _ = write!(s, "{a}, ");
                 s
             });
+        let arm_out_args = dispatch_arm_out_args(arm, &outputs);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
         let _ = writeln!(
             o,
-            "         retCode = {cp}_OpenInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}{out_args} );",
+            "         retCode = {cp}_OpenInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}{arm_out_args} );",
         );
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
@@ -1649,10 +1677,11 @@ fn emit_dispatch(
         let _ = writeln!(o, "   {{");
         for arm in dp.arms.iter().filter(|a| a.supported) {
             let cp = callee_prefix(&arm.callee);
+            let arm_out_args = dispatch_arm_out_args(arm, &outputs);
             let _ = writeln!(o, "   case {}:", case_of(&arm.label));
             let _ = writeln!(
                 o,
-                "      return {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {out_args} );"
+                "      return {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {arm_out_args} );"
             );
         }
         let _ = writeln!(o, "   default:");
@@ -2075,7 +2104,7 @@ fn emit_step_inner(
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let mut body_c = String::new();
     for s in &transition {
-        body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter));
+        body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
     }
     // Candle settings are read where batch reads them (per step, from the
     // globals — the settings-stability rule). The TA_STREAM_CANDLE* macros
@@ -2612,7 +2641,7 @@ fn emit_open_arm(
     let open_body = build_open_body_from(model, body, mode);
     let mut open_body_c = String::new();
     for s in &open_body {
-        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
@@ -2684,8 +2713,13 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
 /// so it only publishes the handle.
 fn emit_open_tail(o: &mut String, func: &FuncDef, model: &StreamModel, mode: OutMode) {
     if mode == OutMode::Scalar {
+        let nullable = nullable_out_names(func);
         for out in &model.outputs {
-            let _ = writeln!(o, "      *{out} = lastValue_{out};");
+            if nullable.contains(out) {
+                let _ = writeln!(o, "      if( {out} != NULL ) *{out} = lastValue_{out};");
+            } else {
+                let _ = writeln!(o, "      *{out} = lastValue_{out};");
+            }
             let _ = out_c_type(func, out);
         }
     }
@@ -3021,10 +3055,19 @@ fn emit_open_validation(
 ) {
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
+    // A nullable output may be NULL (discarded) — its writes are NULL-guarded,
+    // so it is not required. The aliasing check below stays as-is: a NULL
+    // operand's partner is always non-NULL, so `NULL == ptr` never mis-fires.
+    let nullable = nullable_out_names(func);
     let mut null_checks: Vec<String> = inputs
         .iter()
         .map(|i| format!("!{i}"))
-        .chain(outputs.iter().map(|out| format!("!{out}")))
+        .chain(
+            outputs
+                .iter()
+                .filter(|out| !nullable.contains(*out))
+                .map(|out| format!("!{out}")),
+        )
         .collect();
     if mode == OutMode::Fill {
         null_checks.push("!outBegIdx".to_string());
@@ -3240,9 +3283,14 @@ fn emit_update(o: &mut String, func: &FuncDef) {
     let n = uname(func);
     let bars: Vec<String> = streaming::input_array_names(func);
     let outs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let nullable = nullable_out_names(func);
     let _ = writeln!(o, "{}\n{{", update_signature(func));
     let checks: Vec<String> = std::iter::once("!stream".to_string())
-        .chain(outs.iter().map(|x| format!("!{x}")))
+        .chain(
+            outs.iter()
+                .filter(|x| !nullable.contains(*x))
+                .map(|x| format!("!{x}")),
+        )
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
     let args: Vec<String> = bars
@@ -3258,10 +3306,15 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
     let n = uname(func);
     let bars: Vec<String> = streaming::input_array_names(func);
     let outs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let nullable = nullable_out_names(func);
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
     let checks: Vec<String> = std::iter::once("!stream".to_string())
-        .chain(outs.iter().map(|x| format!("!{x}")))
+        .chain(
+            outs.iter()
+                .filter(|x| !nullable.contains(*x))
+                .map(|x| format!("!{x}")),
+        )
         .collect();
     let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
     let _ = writeln!(o, "   scratch = *stream;");

@@ -1277,6 +1277,7 @@ fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "zero" => Some("TA_OUT_ZERO"),
         "upper_limit" => Some("TA_OUT_UPPER_LIMIT"),
         "lower_limit" => Some("TA_OUT_LOWER_LIMIT"),
+        "nullable" => Some("TA_OUT_NULLABLE"),
         _ => None,
     }
 }

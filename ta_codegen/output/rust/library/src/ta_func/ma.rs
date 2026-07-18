@@ -206,7 +206,6 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut dummyBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -249,10 +248,9 @@ impl Core {
                 retCode = self.kama_unguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             7 => {
-                // The optInTimePeriod is ignored and the FAMA output of the MAMA
-                // is ignored.
-                dummyBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-                retCode = self.mama_unguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut dummyBuffer[..]);
+                // The optInTimePeriod is ignored. FAMA is a nullable output
+                // (issue #125): pass NULL to compute only the MAMA line into outReal.
+                retCode = self.mama_unguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             8 => {
                 retCode = self.t3_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
@@ -281,7 +279,6 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        let mut dummyBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -327,8 +324,7 @@ impl Core {
                 retCode = self.kama_unguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             7 => {
-                dummyBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-                retCode = self.mama_unguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut dummyBuffer[..]);
+                retCode = self.mama_unguarded(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             8 => {
                 retCode = self.t3_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);

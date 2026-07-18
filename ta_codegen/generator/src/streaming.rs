@@ -206,6 +206,11 @@ pub struct CalleeSig {
     pub n_opts: usize,
     /// Number of outputs.
     pub n_outputs: usize,
+    /// Nullability of each output, index-aligned (`out_nullable[k]` ==
+    /// `outputs[k].is_nullable()`). A trailing-NULL dispatch delegation may
+    /// pass NULL only for a nullable callee output (MAMA's FAMA when MA routes
+    /// only the MAMA line — issue #125).
+    pub out_nullable: Vec<bool>,
 }
 
 /// Cross-function lookup for composed/dispatch analysis: maps an input-level
@@ -225,6 +230,7 @@ pub fn callee_sig_of(f: &FuncDef) -> CalleeSig {
         n_inputs: input_array_names(f).len(),
         n_opts: f.optional_inputs.len(),
         n_outputs: f.outputs.len(),
+        out_nullable: f.outputs.iter().map(crate::ir::Output::is_nullable).collect(),
     }
 }
 
@@ -240,6 +246,17 @@ impl CalleeLookup for FuncsLookup<'_> {
     }
 }
 
+/// How one callee output slot maps onto the dispatch func's outputs in a
+/// (possibly trailing-NULL) delegation. `Forward(k)` routes the callee output
+/// into the dispatch func's output `k`; `Discard` passes NULL for a nullable
+/// callee output the dispatch func doesn't want (MAMA's FAMA when MA routes
+/// only the MAMA line — issue #125).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OutSlot {
+    Forward(usize),
+    Discard,
+}
+
 /// One arm of a recognized dispatch body.
 #[derive(Debug, Clone)]
 pub struct DispatchArm {
@@ -251,9 +268,14 @@ pub struct DispatchArm {
     /// The callee's optional-input argument expressions, positionally
     /// mapped from the batch call. Meaningful only when `supported`.
     pub opt_args: Vec<Expr>,
+    /// Per callee-output-slot mapping, length == callee's output count. The
+    /// emitter forwards each `Forward(k)` slot to the dispatch output `k` and
+    /// passes NULL for each `Discard`. Empty for reject arms. Meaningful only
+    /// when `supported`.
+    pub out_map: Vec<OutSlot>,
     /// The arm delegates whole-range to a stream-flagged callee: the stream
     /// opens the callee's public stream. Unsupported arms reject at Open
-    /// with BAD_PARAM (documented capability limitation, e.g. MAType=MAMA).
+    /// with BAD_PARAM (documented capability limitation).
     pub supported: bool,
 }
 
@@ -2969,6 +2991,7 @@ fn parse_dispatch_arm(
         label: label.to_string(),
         callee: callee.to_string(),
         opt_args: Vec::new(),
+        out_map: Vec::new(),
         supported: false,
     };
     let callees = find_indicator_calls(stmts, lookup);
@@ -2979,12 +3002,14 @@ fn parse_dispatch_arm(
 
     // Strict whole-range delegation shape: exactly one statement,
     // `<retvar> = callee(startIdx, endIdx, <own inputs>, <pure opt args>,
-    //                    outBegIdx, outNBElement, <own outputs>)`.
+    //                    outBegIdx, outNBElement, <outputs / NULL for discards>)`.
+    // The callee may have MORE outputs than the dispatch func when the extras are
+    // nullable and passed NULL (MA→MAMA routes the MAMA line, drops FAMA — #125).
     let meaningful: Vec<&Statement> = stmts
         .iter()
         .filter(|s| !matches!(s, Statement::Comment(_)))
         .collect();
-    let strict: Option<Vec<Expr>> = match meaningful.as_slice() {
+    let strict: Option<(Vec<Expr>, Vec<OutSlot>)> = match meaningful.as_slice() {
         [Statement::Assign {
             target: Expr::Var(t),
             value: Expr::FuncCall(name, args),
@@ -2994,11 +3019,12 @@ fn parse_dispatch_arm(
         }
         _ => None,
     };
-    if let (Some(opt_args), true) = (strict, sig.streaming) {
+    if let (Some((opt_args, out_map)), true) = (strict, sig.streaming) {
         return Ok(DispatchArm {
             label: label.to_string(),
             callee,
             opt_args,
+            out_map,
             supported: true,
         });
     }
@@ -3008,18 +3034,13 @@ fn parse_dispatch_arm(
         .filter(|c| lookup.callee(c).is_some_and(|s| s.streaming))
         .map(String::as_str)
         .collect();
-    // A single flagged callee whose OUTPUT arity differs from this dispatch
-    // func's can never be a 1:1 whole-range delegation: MA's MAMA arm feeds
-    // mama's second (FAMA) output into a discarded scratch buffer, so it emits
-    // one output from a two-output callee. That is an honest reject arm (MA
-    // asks for batch on MAType_MAMA) even though `mama` itself streams —
-    // structurally distinct from the hidden-delegation bug below.
-    if let [only] = flagged.as_slice() {
-        let osig = lookup.callee(only).expect("flagged callee resolves");
-        if osig.n_outputs != outputs.len() {
-            return Ok(reject(only));
-        }
-    }
+    // A flagged callee reached here means `delegation_opt_args` rejected the
+    // shape above — a stream-flagged callee that is NOT a clean whole-range
+    // (or trailing-NULL) delegation. That is a hard gate error, never a silent
+    // reject the verify precheck would then bless: an arm like `trima(...);
+    // dema(...)`, or a multi-output callee whose extra outputs are discarded to
+    // a scratch buffer rather than passed NULL (the pre-#125 MAMA shape). The
+    // supported multi-output-with-NULL form is handled by `delegation_opt_args`.
     // If ANY indicator called in the arm is stream-flagged — not just the first
     // one seen — this is a hard gate error: an arm like `trima(...); dema(...)`
     // must never silently become a reject arm the verify precheck then blesses
@@ -3042,10 +3063,13 @@ fn delegation_opt_args(
     sig: &CalleeSig,
     bar_inputs: &[String],
     outputs: &[String],
-) -> Option<Vec<Expr>> {
+) -> Option<(Vec<Expr>, Vec<OutSlot>)> {
     let n = args.len();
+    // The callee must have AT LEAST as many outputs as the dispatch func; the
+    // surplus are discarded (each must be nullable and passed NULL). Arity is
+    // the callee's full TA signature.
     if sig.n_inputs != bar_inputs.len()
-        || sig.n_outputs != outputs.len()
+        || sig.n_outputs < outputs.len()
         || n != 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs
     {
         return None;
@@ -3064,10 +3088,32 @@ fn delegation_opt_args(
     if !is_var(&args[out_meta], "outBegIdx") || !is_var(&args[out_meta + 1], "outNBElement") {
         return None;
     }
-    for (k, out) in outputs.iter().enumerate() {
-        if !is_var(&args[out_meta + 2 + k], out) {
-            return None;
+    // Map each callee output slot: a dispatch output var forwards to that output;
+    // NULL discards (only where the callee output is nullable).
+    let mut out_map: Vec<OutSlot> = Vec::with_capacity(sig.n_outputs);
+    let mut written = vec![false; outputs.len()];
+    for k in 0..sig.n_outputs {
+        match &args[out_meta + 2 + k] {
+            Expr::Var(v) if v == "NULL" => {
+                if !sig.out_nullable.get(k).copied().unwrap_or(false) {
+                    return None; // discarding a non-nullable output is unsound
+                }
+                out_map.push(OutSlot::Discard);
+            }
+            Expr::Var(v) => {
+                let idx = outputs.iter().position(|o| o == v)?;
+                if written[idx] {
+                    return None; // two callee slots into one dispatch output
+                }
+                written[idx] = true;
+                out_map.push(OutSlot::Forward(idx));
+            }
+            _ => return None,
         }
+    }
+    // Every dispatch output must be produced by exactly one forwarded slot.
+    if written.iter().any(|w| !w) {
+        return None;
     }
     // Opt args must be pure over the caller's own params (or literals): they
     // are re-evaluated at Open time to open the sub-stream.
@@ -3084,7 +3130,7 @@ fn delegation_opt_args(
             return None;
         }
     }
-    Some(opt_args)
+    Some((opt_args, out_map))
 }
 
 /// The full argument list of the first `callee` invocation in `stmts` matching

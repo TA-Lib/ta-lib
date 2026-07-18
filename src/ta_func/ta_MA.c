@@ -119,7 +119,6 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
                              int          *outNBElement,
                              double        outReal[] )
 {
-   double *dummyBuffer;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -177,16 +176,10 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
       retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
-      /* The optInTimePeriod is ignored and the FAMA output of the MAMA
-       * is ignored.
+      /* The optInTimePeriod is ignored. FAMA is a nullable output
+       * (issue #125): pass NULL to compute only the MAMA line into outReal.
        */
-      dummyBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-      if( !dummyBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,dummyBuffer);
-      free(dummyBuffer);
+      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -207,7 +200,6 @@ TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
                                        int          *outNBElement,
                                        double        outReal[] )
 {
-   double *dummyBuffer;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -248,13 +240,7 @@ TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
       retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
-      dummyBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-      if( !dummyBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,dummyBuffer);
-      free(dummyBuffer);
+      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -275,7 +261,6 @@ TA_RetCode TA_S_MA( int    startIdx,
                     int          *outNBElement,
                     double        outReal[] )
 {
-   double *dummyBuffer;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -332,13 +317,7 @@ TA_RetCode TA_S_MA( int    startIdx,
       retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
-      dummyBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-      if( !dummyBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,dummyBuffer);
-      free(dummyBuffer);
+      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -359,7 +338,6 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
                               int          *outNBElement,
                               double        outReal[] )
 {
-   double *dummyBuffer;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -400,13 +378,7 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
       retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
-      dummyBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-      if( !dummyBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,dummyBuffer);
-      free(dummyBuffer);
+      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -511,6 +483,13 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          sp->sub = sub;
       }
       break;
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+      {
+         TA_MAMA_Stream *sub = NULL;
+         retCode = TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL );
+         sp->sub = sub;
+      }
+      break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       {
          TA_T3_Stream *sub = NULL;
@@ -518,7 +497,6 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -630,6 +608,13 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+      {
+         TA_MAMA_Stream *sub = NULL;
+         retCode = TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL );
+         sp->sub = sub;
+      }
+      break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       {
          TA_T3_Stream *sub = NULL;
@@ -637,7 +622,6 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama): /* no mama stream */
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -676,6 +660,8 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       return TA_TRIMA_Update( (TA_TRIMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       return TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+      return TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       return TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
    default:
@@ -708,6 +694,8 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_TRIMA_Peek( (const TA_TRIMA_Stream *)stream->sub, inReal, outReal );
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+      return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
    default:
@@ -741,6 +729,9 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break;
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       TA_KAMA_Close( (TA_KAMA_Stream *)stream->sub );
+      break;
+   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+      TA_MAMA_Close( (TA_MAMA_Stream *)stream->sub );
       break;
    case ENUM_CASE(MAType, TA_MAType_T3, T3):
       TA_T3_Close( (TA_T3_Stream *)stream->sub );

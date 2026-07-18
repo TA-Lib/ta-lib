@@ -331,6 +331,7 @@ const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("zero", "Zero"),
     ("upper_limit", "Upper Limit"),
     ("lower_limit", "Lower Limit"),
+    ("nullable", "Nullable"),
 ];
 
 fn write_outputs(out: &mut String, func: &FuncDef) {

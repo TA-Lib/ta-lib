@@ -76,7 +76,6 @@ TA_RetCode ma(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double *dummyBuffer;
    TA_RetCode retCode;
 
    int nbElement;
@@ -130,19 +129,12 @@ TA_RetCode ma(int startIdx, int endIdx,
          break;
 
       case TA_MAType_MAMA:
-         /* The optInTimePeriod is ignored and the FAMA output of the MAMA
-          * is ignored.
+         /* The optInTimePeriod is ignored. FAMA is a nullable output
+          * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         dummyBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
-
-         if( !dummyBuffer )
-            return TA_ALLOC_ERR;
-
          retCode = mama( startIdx, endIdx, inReal, 0.5, 0.05,
             outBegIdx, outNBElement,
-            outReal, dummyBuffer );
-
-         free(dummyBuffer);
+            outReal, NULL );
          break;
 
       case TA_MAType_T3:
