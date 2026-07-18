@@ -104,10 +104,9 @@ exactly what makes the fill bit-exact (see *Semantic definition*). Because the f
 writes the outputs and *then* reads the input tail to seed the ring, the output arrays
 must not alias the input or each other (the batch-tier aliasing rule, #108).
 
-Rejection is `open`'s, not `batch`'s: too-short history — or the `MAMA` MAType arm on
-functions that take an `MAType` — returns `TA_BAD_PARAM` and produces no handle (a
-handle needs a defined value, so short history is an error here, not batch's
-success-with-empty-output).
+Rejection is `open`'s, not `batch`'s: too-short history returns `TA_BAD_PARAM` and
+produces no handle (a handle needs a defined value, so short history is an error here,
+not batch's success-with-empty-output).
 
 ```c
 TA_SMA_Stream *s = NULL;
@@ -342,10 +341,14 @@ is checked here against how Python *would* wrap it:
 
 ### Non-goals / risks
 - **No behavioral change to the batch tier.** The stream tier is additive.
-- `MAType=MAMA` is the one unsupported case on functions taking an `MAType`
-  parameter — it rejects at `open` (documented), since MAMA's dispatch arm has
-  no bit-exact stream; every other MA type streams. (MAVP's per-bar variable
-  period is supported.)
+- **Every `MAType` streams**, including `MAType=MAMA`. MAMA has two outputs
+  (MAMA + FAMA); when a dispatcher (`MA`/`BBANDS`/`STOCH`/…) selects it, only
+  the MAMA line is wanted. FAMA is a **nullable output** (issue #125,
+  `TA_OUT_NULLABLE`): the dispatcher forwards the MAMA line and passes NULL for
+  FAMA — a supported trailing-NULL delegation, verified bit-exact vs batch.
+  (Historically MAMA's arm rejected at `open` because the batch discarded FAMA
+  into a throwaway malloc buffer, a shape the analyzer would not stream; the
+  malloc is gone. MAVP's per-bar variable period is supported too.)
 - **Single precision:** no `TA_S_*` stream twin; the stream tier is
   double-only.
 - Handle lifetime: the handle is valid only within the exact library version
@@ -642,7 +645,11 @@ claim in *Motivation* gets measured, not asserted).
      DERIVED from the callees' YAML stream flags at generation time —
      TRIMA's arm joins automatically the moment its stream lands; MAMA's
      arm (discarded-FAMA dummy-buffer shape) stays a documented Open
-     `TA_BAD_PARAM`. A stream-flagged callee arm that loses its strict
+     `TA_BAD_PARAM`. **(Superseded 2026-07: issue #125 made FAMA a nullable
+     output, so MA's MAMA arm now streams — it forwards the MAMA line and
+     passes NULL for FAMA. The dummy-buffer malloc is gone. The reject
+     narrative below is a dated record; see "Non-goals / risks" above.)**
+     A stream-flagged callee arm that loses its strict
      whole-range delegation shape is a hard generate error, never a silent
      reject (that would turn a generator regression into a vacuous pass).
      Verification: the driver now sweeps enum (MAType) params — one vector
