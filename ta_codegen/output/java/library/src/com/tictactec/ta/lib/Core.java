@@ -51212,7 +51212,11 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = inClose[i];
          tempVolume = inVolume[i];
-         if( tempVolume < prevVolume ) {
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
             prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
          }
          outReal[outIdx++] = prevNVI;
@@ -51245,7 +51249,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = inClose[i];
          tempVolume = inVolume[i];
-         if( tempVolume < prevVolume ) {
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
             prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
          }
          outReal[outIdx++] = prevNVI;
@@ -51284,7 +51288,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
-         if( tempVolume < prevVolume ) {
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
             prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
          }
          outReal[outIdx++] = prevNVI;
@@ -51317,7 +51321,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
-         if( tempVolume < prevVolume ) {
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
             prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
          }
          outReal[outIdx++] = prevNVI;
@@ -53284,7 +53288,11 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = inClose[i];
          tempVolume = inVolume[i];
-         if( tempVolume > prevVolume ) {
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
             prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
          }
          outReal[outIdx++] = prevPVI;
@@ -53317,7 +53325,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = inClose[i];
          tempVolume = inVolume[i];
-         if( tempVolume > prevVolume ) {
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
             prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
          }
          outReal[outIdx++] = prevPVI;
@@ -53356,7 +53364,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
-         if( tempVolume > prevVolume ) {
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
             prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
          }
          outReal[outIdx++] = prevPVI;
@@ -53389,7 +53397,7 @@ public class Core {
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
-         if( tempVolume > prevVolume ) {
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
             prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
          }
          outReal[outIdx++] = prevPVI;
