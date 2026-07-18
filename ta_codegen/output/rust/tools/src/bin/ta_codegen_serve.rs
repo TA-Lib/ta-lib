@@ -16164,15 +16164,6 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInFastPeriod == 1) && ( optInMAType == 7 ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == 7 ) ) ) {
-            let r1 = c2.apo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.apo_open_and_fill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.apo(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -16859,17 +16850,6 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInTimePeriod == 1) && ( optInMAType == 7 ) ) ) {
-            let r1 = c2.bbands_open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut f1: Vec<f64> = vec![0.0f64; svN];
-            let mut f2: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.bbands_open_and_fill(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.bbands(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -24731,15 +24711,6 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( !(optInTimePeriod == 1) && ( optInMAType == 7 ) ) {
-            let r1 = c2.ma_open(&fz_c, optInTimePeriod, optInMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.ma_open_and_fill(&fz_c, optInTimePeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.ma(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.ma_lookback(optInTimePeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -24936,17 +24907,6 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInSlowPeriod == 1) && ( optInSlowMAType == 7 ) ) || ( !(optInFastPeriod == 1) && ( optInFastMAType == 7 ) ) || ( !(optInSignalPeriod == 1) && ( optInSignalMAType == 7 ) ) ) {
-            let r1 = c2.macdext_open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut f1: Vec<f64> = vec![0.0f64; svN];
-            let mut f2: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.macdext_open_and_fill(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.macdext(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -25242,15 +25202,6 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( !(optInMaxPeriod == 1) && ( optInMAType == 7 ) ) {
-            let r1 = c2.mavp_open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.mavp_open_and_fill(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.mavp(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -26952,15 +26903,6 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInFastPeriod == 1) && ( optInMAType == 7 ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == 7 ) ) ) {
-            let r1 = c2.ppo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.ppo_open_and_fill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.ppo(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -27092,6 +27034,96 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         }
         if lb >= 1 && lb < svN {
             if c2.pvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+        }
+    }
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)
+}
+
+fn sv_pvo(core: &Core, params: &Value) -> String {
+    let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+    let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+    let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
+    if svN < 2 { svN = 2; }
+    if svN > 256 { svN = 256; }
+    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
+    let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
+    let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let mut fz_o = vec![0.0f64; svN];
+    let mut fz_h = vec![0.0f64; svN];
+    let mut fz_l = vec![0.0f64; svN];
+    let mut fz_c = vec![0.0f64; svN];
+    let mut fz_v = vec![0.0f64; svN];
+    let mut fz_oi = vec![0.0f64; svN];
+    fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
+    let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut legs = 0i64;
+    let mut all_ok = true;
+    let mut peek_all = true;
+    let mut fill_checked = 0i32;
+    let mut fill_ok = true;
+    let mut beg = 0usize;
+    let mut nb = 0usize;
+    let mut diag = String::new();
+    let rounds = 1;
+    for rd in 0..rounds {
+        let _ = rd;
+        let mut cb = core.to_builder();
+        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
+        if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
+        if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
+        if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
+        let c2 = cb.build();
+        let rc = c2.pvo(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let lb = c2.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        if rc != RetCode::Success || nb == 0 {
+            let open_rejects = c2.pvo_open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
+            return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
+        }
+        fill_checked = 1;
+        {
+        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut fBeg = 0usize;
+        let mut fNb = 0usize;
+        match c2.pvo_open_and_fill(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
+            Err(_) => { fill_ok = false; }
+            Ok(_h) => {
+                if fBeg != beg || fNb != nb { fill_ok = false; }
+                else {
+                    for i in 0..nb { if f0[i].to_bits() != b0[i].to_bits() { fill_ok = false; } }
+                }
+            }
+        }
+        }
+        let seed_shift: usize = 0;
+        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        pcs.sort_unstable();
+        pcs.dedup();
+        for &p in &pcs {
+            match c2.pvo_open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
+                Ok((mut st, v0)) => {
+                    legs += 1;
+                    if v0.to_bits() != b0[p - 1 - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
+                    for t in p..svN {
+                        if t % 7 == 0 {
+                            let pk = st.peek(fz_v[t]);
+                            let up = st.update(fz_v[t]);
+                            if pk.to_bits() != up.to_bits() { peek_all = false; }
+                            if up.to_bits() != b0[t - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
+                        } else {
+                            let up = st.update(fz_v[t]);
+                            if up.to_bits() != b0[t - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
+                        }
+                    }
+                }
+            }
+        }
+        if lb >= 1 && lb < svN {
+            if c2.pvo_open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)
@@ -28152,16 +28184,6 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInSlowK_Period == 1) && ( optInSlowK_MAType == 7 ) ) || ( !(optInSlowD_Period == 1) && ( optInSlowD_MAType == 7 ) ) ) {
-            let r1 = c2.stoch_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut f1: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.stoch_open_and_fill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.stoch(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -28259,16 +28281,6 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == 7 ) ) ) {
-            let r1 = c2.stochf_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut f1: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.stochf_open_and_fill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.stochf(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -28369,16 +28381,6 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
-        if ( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == 7 ) ) ) ) {
-            let r1 = c2.stochrsi_open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
-            let mut f0: Vec<f64> = vec![0.0f64; svN];
-            let mut f1: Vec<f64> = vec![0.0f64; svN];
-            let mut fBeg = 0usize;
-            let mut fNb = 0usize;
-            let r2 = c2.stochrsi_open_and_fill(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1).is_err();
-            let okr = r1 && r2;
-            return format!("{{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":{},\"peek_ok\":1}}", i32::from(okr));
-        }
         let rc = c2.stochrsi(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -29919,6 +29921,7 @@ fn handle_stream_verify(core: &Core, params: &Value) -> String {
         "TA_PLUS_DM" => sv_plus_dm(core, params),
         "TA_PPO" => sv_ppo(core, params),
         "TA_PVI" => sv_pvi(core, params),
+        "TA_PVO" => sv_pvo(core, params),
         "TA_ROC" => sv_roc(core, params),
         "TA_ROCP" => sv_rocp(core, params),
         "TA_ROCR" => sv_rocr(core, params),

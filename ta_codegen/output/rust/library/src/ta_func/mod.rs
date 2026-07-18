@@ -306,6 +306,7 @@ pub use plus_di::PlusDIStream;
 pub use plus_dm::PlusDMStream;
 pub use ppo::PpoStream;
 pub use pvi::PviStream;
+pub use pvo::PvoStream;
 pub use roc::RocStream;
 pub use rocp::RocpStream;
 pub use rocr::RocrStream;

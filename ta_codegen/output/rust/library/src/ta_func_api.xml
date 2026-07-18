@@ -5734,6 +5734,9 @@
 		<CamelCaseName>Pvo</CamelCaseName>
 		<ShortDescription>Percentage Volume Oscillator</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Volume</Type>

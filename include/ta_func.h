@@ -7242,6 +7242,28 @@ TA_LIB_API int TA_PVO_Lookback( int           optInFastPeriod, /* From 2 to 1000
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
 
+
+/*
+ * Streaming API for TA_PVO — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_PVO_Stream TA_PVO_Stream;
+
+TA_LIB_API TA_RetCode TA_PVO_Open( TA_PVO_Stream **stream, const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVO_Update( TA_PVO_Stream *stream, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_PVO( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+
 /*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
  * 

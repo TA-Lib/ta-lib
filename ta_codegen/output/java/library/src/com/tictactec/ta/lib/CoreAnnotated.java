@@ -7523,7 +7523,7 @@ public int pvoLookback(
 @FuncInfo(
         name  = "PVO",
         group = "Volume Indicators",
-        flags = 0,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 3,
         nbOutput   = 1

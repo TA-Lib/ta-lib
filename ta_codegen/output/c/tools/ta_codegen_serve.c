@@ -12515,6 +12515,108 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
+    else if( fnLen == 6 && strncmp(fn, "TA_PVO", 6) == 0 ) {
+        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
+        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
+        TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int fillOk = 1, fillChecked = 0;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(23, (unsigned int)svK);
+        TA_SetUnstablePeriod(14, (unsigned int)svK);
+        TA_SetUnstablePeriod(13, (unsigned int)svK);
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
+        rc = TA_PVO(0, svN - 1, sv_v, optInFastPeriod, optInSlowPeriod, optInMAType, &svBeg, &svNb, sv_b0);
+        lb = TA_PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_PVO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PVO_Open(&st, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PVO_Close(st); }
+            TA_SetUnstablePeriod(23, 0);
+            TA_SetUnstablePeriod(14, 0);
+            TA_SetUnstablePeriod(13, 0);
+            TA_SetUnstablePeriod(5, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_PVO_Stream *stf = NULL;
+            TA_RetCode frc = TA_PVO_OpenAndFill(&stf, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_bitne(sv_f0[ft], sv_b0[ft]) ) fillOk = 0;
+            }
+            if( stf ) TA_PVO_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_PVO_Stream *sal = NULL;
+            TA_RetCode alrc = TA_PVO_OpenAndFill(&sal, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &alB, &alN, sv_v);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_PVO_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_PVO_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            rc = TA_PVO_Open(&st, sv_v, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_PVO_Peek(st, sv_v[t], &pk0);
+                TA_PVO_Update(st, sv_v[t], &v0);
+                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            }
+            if( st ) TA_PVO_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_PVO(Sidx, svN - 1, sv_v, optInFastPeriod, optInSlowPeriod, optInMAType, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_PVO_Stream *stA = NULL;
+                    TA_RetCode arc = TA_PVO_OpenInternal(&stA, sv_v, Sidx, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( stA ) TA_PVO_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetUnstablePeriod(23, 0);
+        TA_SetUnstablePeriod(14, 0);
+        TA_SetUnstablePeriod(13, 0);
+        TA_SetUnstablePeriod(5, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        return;
+    }
     else if( fnLen == 6 && strncmp(fn, "TA_ROC", 6) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_RetCode rc;

@@ -2,6 +2,7 @@ name: PVO
 camel_case: Pvo
 group: Volume Indicators
 hint: Percentage Volume Oscillator
+flags: [stream]
 inputs:
   - name: inPriceV
     type: price

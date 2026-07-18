@@ -194,7 +194,7 @@ DEF_FUNCTION( PVO,
               TA_GroupId_VolumeIndicators,
               "Percentage Volume Oscillator",
               "Pvo",
-              0
+              TA_FUNC_FLG_STREAM
              );
 /* PVO END */
 
