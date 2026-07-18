@@ -727,15 +727,28 @@ fn emit_sv_compare(
 /// components map to their OHLCV series; generic reals map real0→close,
 /// real1→volume (matches abstract_call/fuzz-064 and the driver).
 fn sv_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
+    match sv_input_suffix(name, generic_idx) {
+        "o" => "sv_o",
+        "h" => "sv_h",
+        "l" => "sv_l",
+        "c" => "sv_c",
+        "v" => "sv_v",
+        _ => "sv_oi",
+    }
+}
+
+/// The bare OHLCV/OI suffix an input maps to (shared by the per-server
+/// `sv_*`/`fz_*` array-name helpers so the mapping can never drift).
+fn sv_input_suffix(name: &str, generic_idx: &mut usize) -> &'static str {
     match name {
-        "inOpen" => "sv_o",
-        "inHigh" => "sv_h",
-        "inLow" => "sv_l",
-        "inClose" => "sv_c",
-        "inVolume" => "sv_v",
-        "inOpenInterest" => "sv_oi",
+        "inOpen" => "o",
+        "inHigh" => "h",
+        "inLow" => "l",
+        "inClose" => "c",
+        "inVolume" => "v",
+        "inOpenInterest" => "oi",
         _ => {
-            let arr = if *generic_idx == 0 { "sv_c" } else { "sv_v" };
+            let arr = if *generic_idx == 0 { "c" } else { "v" };
             *generic_idx += 1;
             arr
         }
@@ -2293,6 +2306,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // is TA_-prefixed, so the contains("\"TA_<NAME>\"") probes below would
     // misroute it to handle_<NAME> (the C server orders the same way).
     s.push_str("        else if (json.contains(\"\\\"stream_verify\\\"\")) return handle_stream_verify(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"fuzz_in_hash\\\"\")) return handle_fuzz_in_hash(json);\n");
 
     // Thin dispatch: each indicator delegates to its own static handle_XXX method.
     // This keeps handleRequest small enough for HotSpot C2 to JIT-compile it.
@@ -4373,18 +4387,13 @@ pub(crate) fn generate_rust_stream_verify(
 /// (same mapping as the C/Rust servers: price components by name, generic
 /// real0 -> close, real1 -> volume).
 fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
-    match name {
-        "inOpen" => "fz_o",
-        "inHigh" => "fz_h",
-        "inLow" => "fz_l",
-        "inClose" => "fz_c",
-        "inVolume" => "fz_v",
-        "inOpenInterest" => "fz_oi",
-        _ => {
-            let arr = if *generic_idx == 0 { "fz_c" } else { "fz_v" };
-            *generic_idx += 1;
-            arr
-        }
+    match sv_input_suffix(name, generic_idx) {
+        "o" => "fz_o",
+        "h" => "fz_h",
+        "l" => "fz_l",
+        "c" => "fz_c",
+        "v" => "fz_v",
+        _ => "fz_oi",
     }
 }
 
@@ -4880,6 +4889,29 @@ pub(crate) fn generate_java_stream_verify(
         s.push_str(&emit_java_sv_func(f, funcs));
     }
 
+    // fuzz_in_hash — the same input-port self-check the Rust server answers
+    // (issue #113): proves the FuzzData port reproduces C's fuzz_gen bytes.
+    // The stream pass probes it so the port can never silently rot.
+    s.push_str("    static String handle_fuzz_in_hash(String json) {\n");
+    s.push_str("        int shape = jsonInt(json, \"gen_shape\");\n");
+    s.push_str("        int seed = jsonInt(json, \"gen_seed\");\n");
+    s.push_str("        int n = jsonInt(json, \"gen_n\");\n");
+    s.push_str("        if (n < 1) n = 1;\n");
+    s.push_str("        if (n > MAX_ARRAY_SIZE) n = MAX_ARRAY_SIZE;\n");
+    s.push_str("        double[] fo = new double[n]; double[] fh = new double[n]; double[] fl = new double[n];\n");
+    s.push_str("        double[] fc = new double[n]; double[] fv = new double[n]; double[] foi = new double[n];\n");
+    s.push_str("        FuzzData.fuzzGen(shape, seed, n, fo, fh, fl, fc, fv, foi);\n");
+    s.push_str("        long hh = svHashInit();\n");
+    s.push_str("        hh = svHashF64(hh, fo, n);\n");
+    s.push_str("        hh = svHashF64(hh, fh, n);\n");
+    s.push_str("        hh = svHashF64(hh, fl, n);\n");
+    s.push_str("        hh = svHashF64(hh, fc, n);\n");
+    s.push_str("        hh = svHashF64(hh, fv, n);\n");
+    s.push_str("        hh = svHashF64(hh, foi, n);\n");
+    s.push_str("        hh = svHashFin(hh);\n");
+    s.push_str("        return \"{\\\"in_hash\\\":\\\"\" + String.format(\"%016x\", hh) + \"\\\"}\";\n");
+    s.push_str("    }\n\n");
+
     s.push_str("    static String handle_stream_verify(String json) {\n");
     s.push_str("        String fn = jsonString(json, \"funcName\");\n");
     s.push_str("        switch (fn) {\n");
@@ -4906,10 +4938,13 @@ const JAVA_FUZZ: &str = include_str!("../templates/java/FuzzData.java");
 /// library's hand-written `InsufficientHistoryException`).
 pub(crate) fn java_server_stream_scaffolding() -> String {
     let mut s = String::new();
-    s.push_str("class InsufficientHistoryException extends IllegalArgumentException {\n");
-    s.push_str("    private static final long serialVersionUID = 1L;\n");
-    s.push_str("    public InsufficientHistoryException(String message) { super(message); }\n");
-    s.push_str("}\n\n");
+    s.push_str(JAVA_IHE);
+    s.push('\n');
     s.push_str(JAVA_FUZZ);
     s
 }
+
+/// Default-package twin of the shipped hand-written
+/// `InsufficientHistoryException` (template file, per the no-inline-scaffolding
+/// rule in CLAUDE.md).
+const JAVA_IHE: &str = include_str!("../templates/java/InsufficientHistoryException.java");

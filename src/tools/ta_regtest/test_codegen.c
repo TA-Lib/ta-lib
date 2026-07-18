@@ -2480,6 +2480,46 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
     return TA_TEST_PASS;
 }
 
+/* Fuzz-port self-check for stream-capable servers (capability-gated): a
+ * server that PORTS fuzz_gen (Java FuzzData, Rust fuzz.rs) must reproduce the
+ * driver's inputs byte-identically, or every stream leg silently exercises
+ * different data. Servers that compile fuzz_data.h directly (the C server)
+ * answer no fuzz_in_hash and are skipped. Returns the number of mismatched
+ * shapes (0 = port bit-identical or no port to check). */
+#ifndef FUZZ_MAXN
+#define FUZZ_MAXN 256   /* bars per config (kept equal to the fuzz section's define) */
+#endif
+static unsigned long long xlang_in_hash_local(int shape, int seed, int n);
+static unsigned long long xlang_parse_hash(const char *resp, const char *field, int *present);
+static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *responseBuf)
+{
+    int fuzzChecked = 0, fuzzFails = 0, shape;
+    int n = 240;
+    if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
+    for( shape = 0; shape < FUZZ_NSHAPES; shape++ )
+    {
+        int present = 0;
+        unsigned long long ih;
+        sprintf(requestBuf,
+                "{\"method\":\"fuzz_in_hash\",\"params\":{"
+                "\"gen_shape\":%d,\"gen_seed\":7,\"gen_n\":%d}}", shape, n);
+        if( codegen_pipe_call(cp, requestBuf, responseBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
+            break;
+        ih = xlang_parse_hash(responseBuf, "in_hash", &present);
+        if( !present ) break;   /* in-process fuzz (C server) — nothing to check */
+        fuzzChecked++;
+        if( ih != xlang_in_hash_local(shape, 7, n) )
+        {
+            printf("  STREAM FUZZ PORT MISMATCH shape=%d (server fuzz_gen != C)\n", shape);
+            fuzzFails++;
+        }
+    }
+    if( fuzzChecked > 0 )
+        printf("  Fuzz-port self-check: %d/%d shapes bit-identical\n",
+               fuzzChecked - fuzzFails, fuzzChecked);
+    return fuzzFails;
+}
+
 static ErrorNumber test_codegen_for_language(
     const CodegenLanguage *lang,
     int langIndex,
@@ -2591,6 +2631,8 @@ static ErrorNumber test_codegen_for_language(
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
         if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
         {
+            if( stream_fuzz_port_selfcheck(&cp, requestBuf, responseBuf) > 0 )
+                ctx.error = TA_CODEGEN_OUTPUT_MISMATCH;
             ctx.streamFunctions     = 0;
             ctx.streamLegs          = 0;
             ctx.streamSkipped       = 0;

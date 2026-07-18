@@ -37,6 +37,11 @@
 		<delete file="${file.jar}"/>
 		<jar destfile="${file.jar}" basedir="${dir.classes}"/>
 	</target>
+	<target name="stream-smoke" depends="build"
+	        description="Run the junit-free streaming smoke test (StreamSmokeTest.main).">
+		<java classname="com.tictactec.ta.lib.test.StreamSmokeTest"
+		      classpath="${dir.classes}" failonerror="true"/>
+	</target>
 	<target name="clean" description="clean up all generated files.">
 		<echo message="Cleaning up project ${ant.project.name}"/>
 		<delete dir="${dir.classes}"/>

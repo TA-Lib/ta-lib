@@ -242,6 +242,25 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
     }
 }
 
+/// The params + `cur_<out>` (+ cachedValue) fields every tier's handle carries
+/// (dispatch/period-bank/loopless-composed build on exactly this base).
+fn base_fields(func: &FuncDef) -> Vec<Field> {
+    let mut fields: Vec<Field> = Vec::new();
+    for p in &func.optional_inputs {
+        fields.push((p.name.clone(), opt_param_java_type(&p.param_type), p.name.clone()));
+    }
+    for (name, c_type) in &func.private_extra_params {
+        fields.push((name.clone(), extra_param_java_type(c_type).to_string(), name.clone()));
+    }
+    for out in &func.outputs {
+        fields.push((format!("cur_{}", out.name), out_java_type(func, &out.name).to_string(), "0".into()));
+    }
+    if has_value_class(func) {
+        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
+    }
+    fields
+}
+
 /// The full ordered field list of the handle's state (loop-tier shape).
 /// `step_settings` = candle settings the transition reads (snapshotted).
 fn state_fields(func: &FuncDef, model: &StreamModel, step_settings: &BTreeSet<String>) -> Vec<Field> {
@@ -1883,16 +1902,7 @@ fn emit_dispatch(
     let lb_call = format!("{base}Lookback({})", lb_args.join(", "));
 
     // --- handle class -------------------------------------------------------
-    let mut fields: Vec<Field> = Vec::new();
-    for p in &func.optional_inputs {
-        fields.push((p.name.clone(), opt_param_java_type(&p.param_type), p.name.clone()));
-    }
-    for out in &outputs {
-        fields.push((format!("cur_{out}"), out_java_type(func, out).to_string(), "0".into()));
-    }
-    if has_value_class(func) {
-        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
-    }
+    let fields = base_fields(func);
     let extra_members = format!(
         "      // Sub-stream, tagged by {}; null on the identity path.\n      Object sub;\n",
         dp.param
@@ -1983,6 +1993,13 @@ fn emit_dispatch(
         let first = &inputs[0];
         let _ = writeln!(o, "      int historyLen = {first}.length;");
         emit_open_validation(o, func, mode);
+        // Own-lookback precheck BEFORE delegating: the callee's open would
+        // reject too, but with ITS message prefix ("TA_SMA open:" for a TA_MA
+        // call) — the documented stable "TA_<NAME> open:" contract requires
+        // the reject to carry this function's name.
+        let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
+        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "      }}");
         if let Some(idp) = &dp.identity {
             // The identity path FIRST (batch order — it applies to every arm).
             let cond = render_predicate(&idp.condition, &ctx, registry, helpers);
@@ -2139,13 +2156,7 @@ fn emit_period_bank(
     let open_opts = opts_of(&format!("{min} + bankIdx"));
 
     // --- handle class -------------------------------------------------------
-    let mut fields: Vec<Field> = Vec::new();
-    for p in &func.optional_inputs {
-        fields.push((p.name.clone(), opt_param_java_type(&p.param_type), p.name.clone()));
-    }
-    for o_ in &func.outputs {
-        fields.push((format!("cur_{}", o_.name), out_java_type(func, &o_.name).to_string(), "0".into()));
-    }
+    let fields = base_fields(func);
     let extra_members = format!(
         "      // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      {subty}[] bank;\n",
         callee.to_uppercase()
@@ -2177,12 +2188,21 @@ fn emit_period_bank(
     let _ = writeln!(o, "   }}");
 
     // --- open body (Scalar) -------------------------------------------------
+    let own_lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let base = java_base(func);
+    let own_lb_call = format!("{base}Lookback({})", own_lb_args.join(", "));
     emit_open_body_sig(o, func, OutMode::Scalar);
     let _ = writeln!(o, "      int historyLen = {price}.length;");
     emit_open_validation(o, func, OutMode::Scalar);
     let _ = writeln!(o, "      /* An inverted [min, max] period window is invalid (batch rejects). */");
     let _ = writeln!(o, "      if( {min} > {max} ) {{");
     let _ = writeln!(o, "         return RetCode.BadParam;");
+    let _ = writeln!(o, "      }}");
+    // Own-lookback precheck BEFORE opening the bank: a bank sub's reject would
+    // carry the callee's message prefix, not this function's (stable-prefix
+    // contract; the Fill body below has the equivalent check).
+    let _ = writeln!(o, "      if( historyLen < {own_lb_call} + 1 ) {{");
+    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(
         o,
@@ -2809,22 +2829,7 @@ fn emit_composed(
     // --- handle class -------------------------------------------------------
     let mut fields: Vec<Field> = match &cp.producer {
         Some(model) => state_fields(func, model, &step_settings),
-        None => {
-            let mut f: Vec<Field> = Vec::new();
-            for p in &func.optional_inputs {
-                f.push((p.name.clone(), opt_param_java_type(&p.param_type), p.name.clone()));
-            }
-            for (name, c_type) in &func.private_extra_params {
-                f.push((name.clone(), extra_param_java_type(c_type).to_string(), name.clone()));
-            }
-            for out in &func.outputs {
-                f.push((format!("cur_{}", out.name), out_java_type(func, &out.name).to_string(), "0".into()));
-            }
-            if has_value_class(func) {
-                f.push(("cachedValue".into(), "Value".into(), "null".into()));
-            }
-            f
-        }
+        None => base_fields(func),
     };
     // Lag rings ride the field list (primitive arrays auto-clone in the copy
     // constructor); sub handles need per-callee copy constructors (copy_extra).

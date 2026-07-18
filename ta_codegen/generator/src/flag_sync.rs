@@ -25,6 +25,38 @@ mod tests {
     use std::collections::BTreeMap;
     use std::path::Path;
 
+    /// Reverse direction: every key a surface carries must still exist in the
+    /// header (catches stale entries after a flag rename/removal). The XML
+    /// tables enumerate the full key vocabulary, so driving the match-based
+    /// surfaces from them covers all five.
+    #[test]
+    fn no_stale_surface_keys() {
+        let func = header_flags("TA_FUNC_FLG_");
+        for (key, _) in crate::backends::func_api_xml::FUNC_FLAGS {
+            let c = crate::backends::ta_abstract_c::func_flag_to_c(key)
+                .unwrap_or_else(|| panic!("ta_abstract_c does not know func flag `{key}`"));
+            assert!(func.contains_key(c), "stale func flag `{key}` -> `{c}` not in header");
+            assert_ne!(crate::backends::rust_abstract::func_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::java_shipped::func_flags_value(&one(key)), 0, "stale `{key}` in java_shipped");
+        }
+        let opt = header_flags("TA_OPTIN_");
+        for (key, _) in crate::backends::func_api_xml::OPT_INPUT_FLAGS {
+            let c = crate::backends::ta_abstract_c::opt_flag_to_c(key)
+                .unwrap_or_else(|| panic!("ta_abstract_c does not know opt flag `{key}`"));
+            assert!(opt.contains_key(c), "stale opt flag `{key}` -> `{c}` not in header");
+            assert_ne!(crate::backends::rust_abstract::opt_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::java_shipped::opt_input_flags_value(&one(key)), 0, "stale `{key}` in java_shipped");
+        }
+        let out = header_flags("TA_OUT_");
+        for (key, _) in crate::backends::func_api_xml::OUTPUT_FLAGS {
+            let c = crate::backends::ta_abstract_c::output_flag_to_c(key)
+                .unwrap_or_else(|| panic!("ta_abstract_c does not know output flag `{key}`"));
+            assert!(out.contains_key(c), "stale output flag `{key}` -> `{c}` not in header");
+            assert_ne!(crate::backends::rust_abstract::output_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::java_shipped::output_flags_value(&one(key)), 0, "stale `{key}` in java_shipped");
+        }
+    }
+
     /// Header C-name → YAML flag key, including the historical irregular
     /// spellings. A NEW header constant with no entry here fails loudly with
     /// instructions (this map is test-only bookkeeping, not a sixth surface —
@@ -36,6 +68,9 @@ mod tests {
             "TA_FUNC_FLG_VOLUME" => "volume",
             "TA_FUNC_FLG_UNST_PER" => "unstable_period",
             "TA_FUNC_FLG_CANDLESTICK" => "candlestick",
+            // Landed on dev via #127 while this branch was in flight; the
+            // entry is inert until the merged header carries the constant.
+            "TA_FUNC_FLG_START_DEP" => "start_dependent",
             "TA_OPTIN_IS_PERCENT" => "percent",
             "TA_OPTIN_IS_DEGREE" => "degree",
             "TA_OPTIN_IS_CURRENCY" => "currency",
@@ -75,11 +110,18 @@ mod tests {
             if !name.starts_with(prefix) {
                 continue;
             }
-            let Some(hex) = val.strip_prefix("0x") else {
-                continue;
-            };
-            let Ok(v) = u32::from_str_radix(hex, 16) else {
-                continue;
+            // Accept `0x…` and `(0x…)`; anything else (decimal, shifts,
+            // multi-token expressions) fails LOUDLY — a silently skipped
+            // define is exactly the coverage hole this gate exists to close.
+            let bare = val.trim_start_matches('(').trim_end_matches(')');
+            let parsed = bare
+                .strip_prefix("0x")
+                .and_then(|hex| u32::from_str_radix(hex, 16).ok());
+            let Some(v) = parsed else {
+                panic!(
+                    "unparseable flag define `{name}` (value token `{val}`) in {}:                      use a plain hex literal, or teach flag_sync::header_flags the new form",
+                    header.display()
+                );
             };
             out.insert(name.to_string(), v);
         }
