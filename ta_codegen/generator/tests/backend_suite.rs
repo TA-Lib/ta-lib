@@ -1181,11 +1181,13 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA should NOT contain _unguarded_unchecked variants"
     );
 
-    // 6. Only 2 pub fn declarations (guarded + unguarded), plus lookback
+    // 6. Exactly 5 pub fn: guarded + unguarded + lookback + the stream tier's
+    // open + open_and_fill (open_internal is pub(crate), update/peek live on
+    // the handle type).
     let pub_fn_count = r.matches("pub fn sma").count();
     assert_eq!(
-        pub_fn_count, 3,
-        "Rust SMA should have exactly 3 pub fn (sma, sma_unguarded, sma_lookback), got {}",
+        pub_fn_count, 5,
+        "Rust SMA should have exactly 5 pub fn (sma, sma_unguarded, sma_lookback, sma_open, sma_open_and_fill), got {}",
         pub_fn_count
     );
 }
