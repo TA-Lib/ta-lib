@@ -28,6 +28,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use CMake (generates IDE solutions on demand) and vcpkg — these hand-maintained projects drifted every few releases and had no way to be tested.
 
 ### Fixed
+- (#118) VAR, STDDEV and BBANDS more precise and faster.
 - (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !
 - (#64) Website docs mixing up CDL3LINESTRIKE with CDL3OUTSIDE's description. Thanks @mw66 !
 - (#7) CCI returned a spurious value when all prices over the period were identical; Thanks @trufanov-nok for identifying and resolving this!
