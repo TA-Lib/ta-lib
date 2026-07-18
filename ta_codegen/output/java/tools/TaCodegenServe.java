@@ -4827,7 +4827,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -5031,7 +5031,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -5233,7 +5233,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -5415,7 +5415,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -63468,14 +63468,17 @@ class Core {
               * when the shift is stale enough that the subtraction loses digits - i.e.
               * the variance has shrunk below 1e-6 of the mean squared deviation it is
               * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-              * 2e-10, so partial cancellation, not just total collapse, is caught) - OR
-              * at least every 32 windows so a slow drift stays bounded regardless of the
-              * series length. The strict `<` also leaves an exactly-constant window
-              * (variance 0, scale 0) alone instead of reseeding it every bar. Guarantees a
-              * non-negative output (any negative variance trips the same test).
+              * 2e-10, so partial cancellation, not just total collapse, is caught); OR
+              * when the value just removed sat so far from the shift that its squared term
+              * (tempReal) dwarfs the surviving sum (a large outlier passing through the
+              * window buries the small terms below its ulp, and the residual left when it
+              * leaves is cancellation garbage); OR at least every 32 windows so a slow
+              * drift stays bounded regardless of the series length. The strict `<` also
+              * leaves an exactly-constant window (variance 0, scale 0) alone instead of
+              * reseeding it every bar. Guarantees a non-negative output.
               */
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -63568,7 +63571,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -63671,7 +63674,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -63760,7 +63763,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;

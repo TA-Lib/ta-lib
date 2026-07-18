@@ -181,7 +181,7 @@
             varTotal2 -= _tempReal;
             _trailingIdx += 1;
             _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                _barsSinceReseed = 32 * optInTimePeriod;
                _windowStart = _i - _lookbackTotal;
                _tempReal = 0.0;
@@ -385,7 +385,7 @@
             varTotal2 -= _tempReal;
             _trailingIdx += 1;
             _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                _barsSinceReseed = 32 * optInTimePeriod;
                _windowStart = _i - _lookbackTotal;
                _tempReal = 0.0;
@@ -587,7 +587,7 @@
             varTotal2 -= _tempReal;
             _trailingIdx += 1;
             _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                _barsSinceReseed = 32 * optInTimePeriod;
                _windowStart = _i - _lookbackTotal;
                _tempReal = 0.0;
@@ -769,7 +769,7 @@
             varTotal2 -= _tempReal;
             _trailingIdx += 1;
             _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
                _barsSinceReseed = 32 * optInTimePeriod;
                _windowStart = _i - _lookbackTotal;
                _tempReal = 0.0;
