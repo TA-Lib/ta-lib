@@ -584,6 +584,10 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // one page per function from its ta_codegen/input/<name>/<name>.md source.
     backends::docs_site::generate(all_funcs, &root);
 
+    // Generated regions inside otherwise hand-written website pages (e.g. the
+    // unstable-period function list, kept in step with the FuncUnstId enum).
+    backends::docs_patch::generate(&enums, &root);
+
     // Generate the Rust abstract/introspection registry from the full function set.
     if backends_to_run.contains(&"rust") {
         backends::rust_abstract::generate(all_funcs, &enums, &out_base);

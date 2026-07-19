@@ -46,7 +46,9 @@ Like the other global settings, choose the unstable period **once, from a single
 
 Pass one of these `TA_FuncUnstId` values — the enum name is `TA_FUNC_UNST_` followed by the function name, or `TA_FUNC_UNST_ALL` for all of them:
 
+<!-- ta_codegen:begin unstable-func-list -->
 `ADX`, `ADXR`, `ATR`, `CMO`, `DX`, `EMA`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE`, `KAMA`, `MAMA`, `MINUS_DI`, `MINUS_DM`, `NATR`, `PLUS_DI`, `PLUS_DM`, `RSI`, `STOCHRSI`, `T3`.
+<!-- ta_codegen:end unstable-func-list -->
 
 The unstable period also flows through to functions built on these internally (for example, indicators that use an EMA inherit `TA_FUNC_UNST_EMA`'s setting). The full enumeration is in [ta_defs.h](https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h).
 
