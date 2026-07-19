@@ -93,7 +93,8 @@ impl Fragment {
     }
 }
 
-/// The unstable-period function names, as an inline code-formatted list.
+/// The unstable-period ids, as an inline code-formatted list of the C enum
+/// constants (`TA_FUNC_UNST_ADX`, ...) exactly as a caller would spell them.
 ///
 /// Source of truth is the `FuncUnstId` enum in `ta_codegen/input/enums.yaml` — the
 /// same input that produces the enum in `include/ta_defs.h`, so the page and the
@@ -111,13 +112,13 @@ fn unstable_func_list(enums: &HashMap<String, EnumDef>) -> (usize, String) {
     let names: Vec<String> = fu
         .variants
         .iter()
-        .map(|v| {
-            v.c_name
-                .strip_prefix("TA_FUNC_UNST_")
-                .unwrap_or_else(|| panic!("FuncUnstId variant `{}` lacks the TA_FUNC_UNST_ prefix", v.c_name))
+        .filter(|v| {
+            let short = v.c_name.strip_prefix("TA_FUNC_UNST_").unwrap_or_else(|| {
+                panic!("FuncUnstId variant `{}` lacks the TA_FUNC_UNST_ prefix", v.c_name)
+            });
+            !short.starts_with("UNUSED_")
         })
-        .filter(|name| !name.starts_with("UNUSED_"))
-        .map(|name| format!("`{name}`"))
+        .map(|v| format!("`{}`", v.c_name))
         .collect();
 
     (names.len(), format!("{}.", names.join(", ")))
