@@ -37,6 +37,26 @@ body:has(.home-hero) .vp-page-title {
   background: transparent;
 }
 
+// "On this page" (TOC): the theme renders a single `.vp-toc-placeholder` and
+// repositions it by breakpoint — at >= $pc (1440px) `#toc` is absolutely placed
+// as the right-hand rail, below that it collapses into a box above the content.
+// The theme makes the placeholder `sticky` at every width, so on narrower
+// screens the collapsed box floats over the text while scrolling. Keep it static
+// there (it scrolls away with the page) and restore stickiness only at $pc,
+// where sticky is what pins the right-hand rail.
+//
+// Selector is `body`-scoped only to outrank the theme: its `toc.scss` is
+// imported by the TOC *component*, so whether it is injected before or after
+// this file differs between dev and build — equal specificity would make the
+// override order-dependent.
+body .vp-toc-placeholder {
+  position: static;
+
+  @media (min-width: hope-config.$pc) {
+    position: sticky;
+  }
+}
+
 // Anchor scroll-offset for headings inside `.credits`.
 // The theme offsets scroll targets for its fixed navbar via padding-top/negative
 // margin-top, but only on *direct* children of the content root
