@@ -2826,13 +2826,9 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \n\
          TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
          \n\
-         /* You can change slightly the behavior of the TA functions\n\
-         \x20* by requesting compatibiliy with some existing software.\n\
-         \x20*\n\
-         \x20* By default, the behavior is as close as the original \n\
-         \x20* author of the TA functions intend it to be.\n\
-         \x20*\n\
-         \x20* See ta_defs.h for the enumeration TA_Compatibility.\n\
+         /* DEPRECATED: TA_SetCompatibility is deprecated and may be removed in\n\
+         \x20* a future release. Avoid it in new code and rely on TA-Lib's default\n\
+         \x20* behavior. See ta_defs.h for the enumeration TA_Compatibility.\n\
          \x20*/\n\
          TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
          TA_LIB_API TA_Compatibility TA_GetCompatibility( void );\n\

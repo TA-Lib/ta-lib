@@ -8,11 +8,12 @@ toc: false
 
 <p><a href="#build">2.0 How to add TA-Lib to your app</a></p>
 
-<p><a href="#ta_func">3.0 Technical Analysis Functions</a></p>
+<p><a href="#ta_func">3.0 Calling into TA-Lib</a></p>
 
 <blockquote>
-<p><a href="#direct_call">3.1 Direct call to a TA Function</a><br>
-<a href="#output_size">3.2 Output Size</a><br></p>
+<p><a href="#init">3.1 Initialize and Shutdown</a><br>
+<a href="#direct_call">3.2 Batch Processing</a><br>
+<a href="#output_size">3.3 Output Size</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -27,8 +28,8 @@ toc: false
 
 <p>The <b>Core API</b> provides:</p>
 <ul>
-  <li>Initialize/Shutdown of the library (TA_Initialize / TA_Shutdown).</li>
-  <li>Setting global variables (e.g. TA_SetUnstablePeriod, TA_SetCompatibility, TA_SetCandleSettings).</li>
+  <li>Lifecycle of the library (<a href="#init">TA_Initialize / TA_Shutdown</a>).</li>
+  <li>Setting global variables (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>).</li>
   <li>Each <a href="#ta_func">TA function</a> for processing a whole array of data at once.</li>
   <li>An <a href="#abstract">abstraction layer</a> for calling these functions dynamically.</li>
 </ul>
@@ -65,18 +66,17 @@ For [homebrew](https://formulae.brew.sh/formula/ta-lib), use <b>brew --prefix ta
 For windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bits and <b>C:\Program Files (x86)\TA-Lib</b> for 32-bits.
 
 
-<h2 id="ta_func">3.0 Technical Analysis Functions</h2>
+<h2 id="ta_func">3.0 Calling into TA-Lib</h2>
 
-Make sure TA_Initialize was called once (and only once) prior to any other API functions.
+<p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">headers in include/*.h</a>.</p>
 
-All TA functions can be <a href="#direct_call">directly called</a>.
+<h3 id="init">3.1 Initialize and Shutdown</h3>
+<pre>TA_RetCode TA_Initialize( void );
+TA_RetCode TA_Shutdown( void );</pre>
+<p><b>TA_Initialize</b> must be called once (and only once), from a single thread, prior to any other API function. After it returns TA_SUCCESS, you can start processing your data in 3 different ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer.</a></p>
+<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it single-threaded, typically from the last remaining thread just before your application exits.</p>
 
-Alternatively, an app can call all TA functions using the <a href="#abstract">abstraction layer</a>. This is useful to make dynamic call without knowing at priori the function name or parameters. Example of use is to automatically integrate new functions after upgrading TA-Lib, or for "mutating" calls while strategy searching (e.g. genetic/neural network algo).
-
-<h3 id="direct_call">3.1 Direct call to a TA Function</h3>
-Direct calls could be done through the API defined in
-<a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_func.h">include/ta_func.h</a><br/>
-<br/>
+<h3 id="direct_call">3.2 Batch Processing</h3>
 All functions are simple "array processing" functions. You provides the inputs with an array, and the the output is written in a caller provided output array.<br/>
 <br/>
 The number of data written will NEVER exceed the number of elements requested to be calculated (with the startIdx and endIdx explained below).<br/>
@@ -169,7 +169,7 @@ retCode = TA_MA( <span style="background-color: #00FFFF; color: #000" lang="en-u
                  <span style="background-color: #FFFF00; color: #000">&amp;outBeg</span>, <span style="background-color: #FFFF00; color: #000">&amp;outNbElement</span>, <span style="background-color: #FFFF00; color: #000">&amp;buffer[0]</span> );</pre>
 </div>
 <p>Of course, the input is overwritten, but this capability diminish needs for temporary memory buffers. This capability is true for all TA functions.</p>
-<h3 id="output_size" align="justify">3.2 Output Size</h3>
+<h3 id="output_size" align="justify">3.3 Output Size</h3>
 <p>
 It is important that the output array is large enough. Depending of your needs, you might find one of the following method useful to determine the output allocation size. All these methods works consistently for all TA functions:</p>
 
@@ -187,28 +187,22 @@ there is a TA_SMA_Lookback.</p>
 <h2 id="advanced">4.0 Advanced Features</h2>
 
 <h3 id="abstract">4.1 Abstraction Layer</h3>
-<p>All the TA Function can be called using the interface defined in
-<a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a></p>
-<p>The abstraction layer is particularly useful for an application who wishes to support the complete list of TA functions without having to maintain new code each time a new function is added to TA-Lib. If you wish to simply integrate in your application a small number of specific functions, then you may be better to do simpler direct call (see previous section).</p>
-
-<p><b>Use Case 1:</b><br/>
-The app is a charting software. When the user select a price bar, a side list offers blindly all the TA functions that could be applied to a price bar. The user selects one of these, then a dialog open for allowing to adjust the optional parameters (TA-Lib API will tell your app which parameters are needed and the
-valid range for each). Once all parameters are set, you can dynamically call the corresponding TA function. The output can then be drawn on the chart using some hint (from TA-Lib) about data representation (overlap study, independent indicator with its own scale etc...).
-<br/><br/>
-The same "abstract" logic apply to all the TA functions. Some TA Functions works only on volume, or can work indifferently with any time series data (the open, close, another indicator...).</p>
-
-<p><b>Use Case 2:</b><br/>
-Your app is searching for "best strategies" using your own backtesting platform. You might want to automate trying various mix of "volatility" and moving average crossings using a genetic algorith, You can make your app "mutate" and switch function and parameters using the abstract interface.</p>
-
-<p><b>Use Case 3:</b><br/>
-You can generate any "glue code" or "wrapper" for a high-level language (e.g. Python, R, Java, C#) or for simply interfacing with your app. A lot of derived work are now "maintained" automatically using the abstract layer.</p>
+<p>Instead of calling each TA function by name, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>. It reports, at runtime, which inputs, optional parameters (and their valid ranges), and outputs a function takes — so you can call one without knowing it a priori.</p>
+<p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
+<ul>
+  <li>Automatically picking up new functions after a TA-Lib upgrade, with no code change.</li>
+  <li>"Mutating" the function and its parameters while searching for strategies (e.g. a genetic or neural-network algorithm).</li>
+  <li>Driving a UI that offers every function applicable to a series and adjusts its parameters from the metadata.</li>
+  <li>Generating glue code or wrappers for higher-level languages.</li>
+</ul>
+<p>If you only need a handful of specific functions, <a href="#direct_call">batch processing</a> is simpler.</p>
 
 <h3 id="unstable_period">4.2 Unstable Period</h3>
 <p>Some TA functions provides different results depending of the &quot;starting point&quot; of the data being
 involve. This is often referred as a function having memories. An example of such function is the Exponential Moving Average. It is
 possible to control the unstable period (the amount of data to strip off) with
-TA_SetUnstablePeriod and
-TA_GetUnstablePeriod.</p>
+<a href="/api/unstable-period/">TA_SetUnstablePeriod</a> and
+<a href="/api/unstable-period/">TA_GetUnstablePeriod</a>. See the <a href="/api/unstable-period/">Unstable Period</a> page for details and the list of affected functions.</p>
 <h3 id="input_type">4.3 Input Type: float vs. double</h3>
 <p>Each TA function have two implementation. One accepts input arrays of float and the other accepts double. The float version has a &quot;TA_S_&quot; suffix e.g. for TA_MA there is an equivalent TA_S_MA function.</p>
 <pre>TA_RetCode TA_MA( int     startIdx,
@@ -240,13 +234,13 @@ TA_GetUnstablePeriod.</p>
 
 <p>One important caveat is the initialization of the "global settings" must first be done from a single thread. That includes calls to:</p>
 <ul>
-  <li>TA_Initialize</li>
-  <li>TA_SetUnstablePeriod, TA_SetCompatibility</li>
-  <li>TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</li>
+  <li><a href="#init">TA_Initialize</a></li>
+  <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
+  <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>
 
 <p>After you are done with these initial calls, the application can start performing multi-thread calls with the rest of the API (including the ta_abstract.h API).</p>
 
-<p>One exception to the rule is TA_Shutdown() which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
+<p>One exception to the rule is <a href="#init">TA_Shutdown()</a> which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
 
 <p>Note: TA-Lib assumes it is link to a thread safe malloc/free runtime library, which is the default on all modern platforms (Linux,Windows,Mac). In other word, safe with any compiler supporting C11 or more recent.</p>

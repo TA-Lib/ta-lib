@@ -9059,13 +9059,9 @@ TA_LIB_API TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 
 TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
 
-/* You can change slightly the behavior of the TA functions
- * by requesting compatibiliy with some existing software.
- *
- * By default, the behavior is as close as the original 
- * author of the TA functions intend it to be.
- *
- * See ta_defs.h for the enumeration TA_Compatibility.
+/* DEPRECATED: TA_SetCompatibility is deprecated and may be removed in
+ * a future release. Avoid it in new code and rely on TA-Lib's default
+ * behavior. See ta_defs.h for the enumeration TA_Compatibility.
  */
 TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );
 TA_LIB_API TA_Compatibility TA_GetCompatibility( void );
