@@ -680,7 +680,7 @@ fn gen_func_inner(
     };
 
     // Pre-scan for local int variables that are assigned from MAType enum params.
-    // In C, `ENUM_DECLARATION(MAType) tempMAType` is parsed as VarType::Integer,
+    // In C, MAType temporaries are plain ints (parsed as VarType::Integer),
     // but in Java the variable must be declared as `MAType` to allow enum assignment.
     let matype_params: HashSet<String> = func
         .optional_inputs
@@ -1025,7 +1025,7 @@ impl StatementEmitter for JavaStmt<'_> {
             CircBuf::Init { id, layout, size } => {
                 let sz = render_expr(size, self.ctx, self.registry, self.helpers);
                 let mut s = String::new();
-                // Parity with the reference CIRCBUF_INIT guard (ta_memory.h _JAVA branch).
+                // Parity with the pre-cutover reference's CIRCBUF_INIT _JAVA guard.
                 s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.AllocErr;\n"));
                 for (arr, t) in circbuf_arrays(id, layout) {
                     s.push_str(&format!(

@@ -1,21 +1,18 @@
 #ifndef TA_MEMORY_H
 #define TA_MEMORY_H
 
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-   #ifndef TA_COMMON_H
-      #include "ta_common.h"
-   #endif
+#ifndef TA_COMMON_H
+   #include "ta_common.h"
+#endif
 
-   #include <stdlib.h>
+#include <stdlib.h>
 
-   /* Interface macros */
-   #define TA_Malloc(a)       malloc(a)
-   #define TA_Realloc(a,b)    realloc((a),(b))
-   #define TA_Free(a)         free(a)
+/* Interface macros */
+#define TA_Malloc(a)       malloc(a)
+#define TA_Realloc(a,b)    realloc((a),(b))
+#define TA_Free(a)         free(a)
 
-   #define FREE_IF_NOT_NULL(x) { if((x)!=NULL) {TA_Free((void *)(x)); (x)=NULL;} }
-
-#endif /* !defined(_MANAGED) && !defined( _JAVA ) && !defined( _RUST )*/
+#define FREE_IF_NOT_NULL(x) { if((x)!=NULL) {TA_Free((void *)(x)); (x)=NULL;} }
 
 
 /* ARRAY : Macros to manipulate arrays of value type.
@@ -25,51 +22,15 @@
  *
  * These macros allow basic operations to alloc/copy/free array of value type.
  *
- * These macros works in plain old C/C++, managed C++.and Java.
- *
  * (Use ARRAY_REF and ARRAY_INT_REF for double/integer arrays).
  */
-#if defined( _MANAGED ) && defined( USE_SUBARRAY )
-   #define ARRAY_VTYPE_REF(type,name)             SubArray<type>^ name
-   #define ARRAY_VTYPE_LOCAL(type,name,size)      SubArray<type>^ name = gcnew SubArrayFrom1D<type>(gcnew cli::array<type>(size),0)
-   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = gcnew SubArrayFrom1D<type>(gcnew cli::array<type>(size),0)
-   #define ARRAY_VTYPE_COPY(type,dest,src,size)   SubArray<type>::Copy( src, 0, dest, 0, size )
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) SubArray<type>::Copy( src, srcIdx, dest, destIdx, size )
-   #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
-#elif defined( _MANAGED )
-   #define ARRAY_VTYPE_REF(type,name)             cli::array<type>^ name
-   #define ARRAY_VTYPE_LOCAL(type,name,size)      cli::array<type>^ name = gcnew cli::array<type>(size)
-   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = gcnew cli::array<type>(size)
-   #define ARRAY_VTYPE_COPY(type,dest,src,size)   cli::array<type>::Copy( src, 0, dest, 0, size )
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) cli::array<type>::Copy( src, srcIdx, dest, destIdx, size )
-   #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
-#elif defined( _RUST )
-   #define ARRAY_VTYPE_REF(type,name)             /* not used in Rust */
-   #define ARRAY_VTYPE_LOCAL(type,name,size)       /* not used in Rust */
-   #define ARRAY_VTYPE_ALLOC(type,name,size)       /* not used in Rust */
-   #define ARRAY_VTYPE_COPY(type,dest,src,size)    { let _n = (size) as usize; dest[0.._n].copy_from_slice(&src[0.._n]); }
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) { let _n = (size) as usize; let _di = (destIdx) as usize; let _si = (srcIdx) as usize; dest[_di.._di+_n].copy_from_slice(&src[_si.._si+_n]); }
-   #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
-#elif defined( _JAVA )
-   #define ARRAY_VTYPE_REF(type,name)             type []name
-   #define ARRAY_VTYPE_LOCAL(type,name,size)      type []name = new type[size]
-   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = new type[size]
-   #define ARRAY_VTYPE_COPY(type,dest,src,size)   System.arraycopy(src,0,dest,0,size)
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) System.arraycopy(src,srcIdx,dest,destIdx,size)
-   #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
-#else
-   #define ARRAY_VTYPE_REF(type,name)             type *name
-   #define ARRAY_VTYPE_LOCAL(type,name,size)      type name[size]
-   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = (type *)TA_Malloc( sizeof(type)*(size))
-   #define ARRAY_VTYPE_COPY(type,dest,src,size)   memcpy(dest,src,sizeof(type)*(size))
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(type) )
-   #define ARRAY_VTYPE_FREE(type,name)            TA_Free(name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)  if( cond ){ TA_Free(name); }
-#endif
+#define ARRAY_VTYPE_REF(type,name)             type *name
+#define ARRAY_VTYPE_LOCAL(type,name,size)      type name[size]
+#define ARRAY_VTYPE_ALLOC(type,name,size)      name = (type *)TA_Malloc( sizeof(type)*(size))
+#define ARRAY_VTYPE_COPY(type,dest,src,size)   memcpy(dest,src,sizeof(type)*(size))
+#define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(type) )
+#define ARRAY_VTYPE_FREE(type,name)            TA_Free(name)
+#define ARRAY_VTYPE_FREE_COND(type,cond,name)  if( cond ){ TA_Free(name); }
 
 /* ARRAY : Macros to manipulate arrays of double. */
 #define ARRAY_REF(name)             ARRAY_VTYPE_REF(double,name)
@@ -92,10 +53,6 @@
 /* ARRAY: Macros to manipulate arrays of mix type.
  * This is just a loop doing an element by element copy.
  */
-#if defined(_RUST)
-#define ARRAY_MEMMOVEMIX_VAR /* no-op for Rust */
-#define ARRAY_MEMMOVEMIX(dest,destIdx,src,srcIdx,size) { let _n = (size) as usize; let _di = (destIdx) as usize; let _si = (srcIdx) as usize; for _k in 0.._n { dest[_di+_k] = src[_si+_k] as f64; } }
-#else
 #define ARRAY_MEMMOVEMIX_VAR int mmmixi, mmmixdestIdx, mmmixsrcIdx
 #define ARRAY_MEMMOVEMIX(dest,destIdx,src,srcIdx,size) { \
             for( mmmixi=0, mmmixdestIdx=destIdx, mmmixsrcIdx=srcIdx; \
@@ -105,7 +62,6 @@
                   dest[mmmixdestIdx] = src[mmmixsrcIdx]; \
               } \
             }
-#endif
 
 /* Access to "Globals"
  *
@@ -114,20 +70,12 @@
  *
  * Depending of the language/platform, the globals might be in reality
  * a private member variable of an object...
+ *
+ * The second parameter of TA_GLOBALS_UNSTABLE_PERIOD is unused in C; it is
+ * kept so the generated call sites stay stable across backends.
  */
-#if defined( _MANAGED )
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (Globals->unstablePeriod[(int)(FuncUnstId::y)])
-   #define TA_GLOBALS_COMPATIBILITY        (Globals->compatibility)
-#elif defined( _RUST )
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (self.unstable_period[FuncUnstId::y as usize])
-   #define TA_GLOBALS_COMPATIBILITY        (self.compatibility)
-#elif defined( _JAVA )
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (this.unstablePeriod[FuncUnstId.y.ordinal()])
-   #define TA_GLOBALS_COMPATIBILITY        (this.compatibility)
-#else
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (TA_Globals->unstablePeriod[x])
-   #define TA_GLOBALS_COMPATIBILITY        (TA_Globals->compatibility)
-#endif
+#define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (TA_Globals->unstablePeriod[x])
+#define TA_GLOBALS_COMPATIBILITY        (TA_Globals->compatibility)
 
 
 
@@ -146,8 +94,6 @@
  * Multiple CIRCBUF can be used within the same function. To make that
  * possible the first parameter of the MACRO is an "Id" that can be
  * any string.
- *
- * The macros offer the advantage to work in C/C++ and managed C++.
  *
  * CIRCBUF_PROLOG(Id,Type,Size);
  *          Will declare all the needed variables. 2 variables are
@@ -232,96 +178,6 @@
  * value provided in CIRCBUF_PROLOG, a buffer will
  * be dynamically allocated (and freed).
  */
-#if defined( _MANAGED )
-
-#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx = 0; \
-                                     cli::array<Type>^ Id; \
-                                     int maxIdx_##Id = (Size-1)
-
-/* Use this macro instead if the Type is a class or a struct. */
-#define CIRCBUF_PROLOG_CLASS(Id,Type,Size) int Id##_Idx = 0; \
-                                           cli::array<Type^>^ Id; \
-                                           int maxIdx_##Id = (Size-1)
-
-#define CIRCBUF_INIT(Id,Type,Size) \
-   { \
-      if( Size <= 0 ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      Id = gcnew cli::array<Type>(Size); \
-      if( !Id ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      maxIdx_##Id = (Size-1); \
-   }
-
-#define CIRCBUF_INIT_CLASS(Id,Type,Size) \
-   { \
-      if( Size <= 0 ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      Id = gcnew cli::array<Type^>(Size); \
-      for( int _##Id##_index=0; _##Id##_index<Id->Length; _##Id##_index++) \
-      { \
-         Id[_##Id##_index]=gcnew Type(); \
-      } \
-      if( !Id ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      maxIdx_##Id = (Size-1); \
-   }
-
-#define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
-   { \
-      Id = gcnew cli::array<Type>(maxIdx_##Id+1); \
-      if( !Id ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-   }
-
-#define CIRCBUF_DESTROY(Id)
-
-/* Use this macro to access the member when type is a class or a struct. */
-#define CIRCBUF_REF(x) (x)->
-
-#elif defined(_JAVA) || defined (_RUST)
-
-#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx = 0; \
-                                     Type []Id; \
-                                     int maxIdx_##Id = (Size-1)
-
-/* Use this macro instead if the Type is a class or a struct. */
-#define CIRCBUF_PROLOG_CLASS(Id,Type,Size) int Id##_Idx = 0; \
-                                           Type []Id; \
-                                           int maxIdx_##Id = (Size-1)
-
-#define CIRCBUF_INIT(Id,Type,Size) \
-   { \
-      if( Size <= 0 ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      Id = new Type[Size]; \
-      maxIdx_##Id = (Size-1); \
-   }
-
-#define CIRCBUF_INIT_CLASS(Id,Type,Size) \
-   { \
-      if( Size <= 0 ) \
-         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
-      Id = new Type[Size]; \
-      for( int _##Id##_index=0; _##Id##_index<Id.length; _##Id##_index++) \
-      { \
-         Id[_##Id##_index]=new Type(); \
-      } \
-      maxIdx_##Id = (Size-1); \
-   }
-
-#define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
-   { \
-      Id = new Type[maxIdx_##Id+1]; \
-   }
-
-#define CIRCBUF_DESTROY(Id)
-
-/* Use this macro to access the member when type is a class or a struct. */
-#define CIRCBUF_REF(x) (x).
-
-#else
-
 #define CIRCBUF_PROLOG(Id,Type,Size) Type local_##Id[Size]; \
                                   int Id##_Idx; \
                                   Type *Id; \
@@ -363,8 +219,6 @@
 
 /* Use this macro to access the member when Type is a class or a struct. */
 #define CIRCBUF_REF(x) (x).
-
-#endif
 
 #define CIRCBUF_NEXT(Id) \
    { \

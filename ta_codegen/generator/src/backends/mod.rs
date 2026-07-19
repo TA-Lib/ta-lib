@@ -5,7 +5,6 @@ pub mod cmake_lists;
 pub mod common;
 pub mod docs_patch;
 pub mod docs_site;
-pub mod dotnet;
 pub mod expr_walk;
 pub mod fma;
 pub mod func_api_xml;
@@ -248,14 +247,16 @@ impl LanguageBackend for DotNetBackend {
     fn emits_lib_files(&self) -> bool {
         false
     }
+    /// No per-indicator source is generated for .NET (see `emits_lib_files`);
+    /// the P/Invoke server in `generate_server` is the whole backend.
     fn generate(
         &self,
-        func: &FuncDef,
-        enums: &HashMap<String, EnumDef>,
-        registry: &Registry,
-        helpers: &HelperRegistry,
+        _func: &FuncDef,
+        _enums: &HashMap<String, EnumDef>,
+        _registry: &Registry,
+        _helpers: &HelperRegistry,
     ) -> String {
-        dotnet::generate(func, enums, registry, helpers)
+        String::new()
     }
     fn out_subdir(&self) -> &'static str {
         "dotnet"

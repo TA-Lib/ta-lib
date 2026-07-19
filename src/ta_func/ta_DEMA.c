@@ -162,7 +162,7 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
     * is written only after inReal[startIdx+outIdx] was read.
     */
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
@@ -267,7 +267,7 @@ TA_LIB_API TA_RetCode TA_DEMA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -364,7 +364,7 @@ TA_RetCode TA_S_DEMA( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -447,7 +447,7 @@ TA_RetCode TA_S_DEMA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -607,7 +607,7 @@ TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double in
        * is written only after inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA1 with a simple average of the first
           * 'period' price bars.
@@ -789,7 +789,7 @@ TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double
        * is written only after inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA1 with a simple average of the first
           * 'period' price bars.

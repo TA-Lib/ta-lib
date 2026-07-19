@@ -778,12 +778,12 @@ fn gen_frame_h(funcs: &[&FuncDef]) -> String {
         let name = &func.name;
         let _ = writeln!(
             o,
-            "/* Generated */ TA_RetCode TA_{name}_FramePP( const TA_ParamHolderPriv *params,\n\
-             /* Generated */                           int            startIdx,\n\
-             /* Generated */                           int            endIdx,\n\
-             /* Generated */                           int           *outBegIdx,\n\
-             /* Generated */                           int           *outNBElement )\n;\n\
-             /* Generated */ unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n;\n"
+            "TA_RetCode TA_{name}_FramePP( const TA_ParamHolderPriv *params,\n\
+             \x20                          int            startIdx,\n\
+             \x20                          int            endIdx,\n\
+             \x20                          int           *outBegIdx,\n\
+             \x20                          int           *outNBElement )\n;\n\
+             unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n;\n"
         );
     }
 
@@ -820,16 +820,16 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
     let name = &func.name;
     let _ = writeln!(
         o,
-        "/* Generated */ TA_RetCode TA_{name}_FramePP( const TA_ParamHolderPriv *params,\n\
-         /* Generated */                           int            startIdx,\n\
-         /* Generated */                           int            endIdx,\n\
-         /* Generated */                           int           *outBegIdx,\n\
-         /* Generated */                           int           *outNBElement )\n\
-         /* Generated */ {{"
+        "TA_RetCode TA_{name}_FramePP( const TA_ParamHolderPriv *params,\n\
+         \x20                          int            startIdx,\n\
+         \x20                          int            endIdx,\n\
+         \x20                          int           *outBegIdx,\n\
+         \x20                          int           *outNBElement )\n\
+         {{"
     );
-    let _ = writeln!(o, "/* Generated */    return TA_{name}(");
-    let _ = writeln!(o, "/* Generated */                startIdx,");
-    let _ = writeln!(o, "/* Generated */                endIdx,");
+    let _ = writeln!(o, "   return TA_{name}(");
+    let _ = writeln!(o, "               startIdx,");
+    let _ = writeln!(o, "               endIdx,");
 
     // Input params — reconstruct Price groups from expanded Real inputs.
     let abstract_inputs = reconstruct_abstract_inputs(&func.inputs);
@@ -839,7 +839,7 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
                 for comp in components {
                     let _ = writeln!(
                         o,
-                        "/* Generated */                params->in[{abstract_idx}].data.inPrice.{comp}, \
+                        "               params->in[{abstract_idx}].data.inPrice.{comp}, \
                          /* in{} */",
                         capitalize_first(comp)
                     );
@@ -853,7 +853,7 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
                 };
                 let _ = writeln!(
                     o,
-                    "/* Generated */                params->in[{abstract_idx}].data.{accessor}, /* {} */",
+                    "               params->in[{abstract_idx}].data.{accessor}, /* {} */",
                     inp.name
                 );
             }
@@ -865,14 +865,14 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
         let accessor = opt_input_accessor(opt, i);
         let _ = writeln!(
             o,
-            "/* Generated */                {accessor}, /* {}*/",
+            "               {accessor}, /* {}*/",
             opt.name
         );
     }
 
     // outBegIdx, outNBElement
-    let _ = writeln!(o, "/* Generated */                outBegIdx, ");
-    let _ = writeln!(o, "/* Generated */                outNBElement, ");
+    let _ = writeln!(o, "               outBegIdx, ");
+    let _ = writeln!(o, "               outNBElement, ");
 
     // Output params
     for (i, out) in func.outputs.iter().enumerate() {
@@ -884,13 +884,13 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
         let comma = if is_last { "" } else { "," };
         let _ = writeln!(
             o,
-            "/* Generated */                {accessor}{comma} /*  {} */",
+            "               {accessor}{comma} /*  {} */",
             out.name
         );
     }
 
-    o.push_str("/* Generated */                );\n");
-    o.push_str("/* Generated */ }\n");
+    o.push_str("               );\n");
+    o.push_str("}\n");
 }
 
 /// Emit the `TA_XXX_FramePPLB` function.
@@ -898,28 +898,28 @@ fn emit_frame_pp_lb(o: &mut String, func: &FuncDef) {
     let name = &func.name;
     let _ = writeln!(
         o,
-        "/* Generated */ unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n\
-         /* Generated */ {{"
+        "unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n\
+         {{"
     );
 
     if func.optional_inputs.is_empty() {
-        let _ = writeln!(o, "/* Generated */    (void)params;");
-        let _ = writeln!(o, "/* Generated */    return TA_{name}_Lookback( );");
+        let _ = writeln!(o, "   (void)params;");
+        let _ = writeln!(o, "   return TA_{name}_Lookback( );");
     } else {
-        let _ = write!(o, "/* Generated */    return TA_{name}_Lookback(");
+        let _ = write!(o, "   return TA_{name}_Lookback(");
         for (i, opt) in func.optional_inputs.iter().enumerate() {
             let accessor = opt_input_accessor(opt, i);
             let is_last = i + 1 == func.optional_inputs.len();
             let comma = if is_last { "" } else { "," };
             let _ = write!(o, "{accessor}{comma} /* {}*/", opt.name);
             if !is_last {
-                let _ = write!(o, "\n/* Generated */                     ");
+                let _ = write!(o, "\n                    ");
             }
         }
         let _ = writeln!(o, " );");
     }
 
-    o.push_str("/* Generated */ }\n");
+    o.push_str("}\n");
 }
 
 /// Build the C accessor expression for an optional input parameter.
@@ -1693,27 +1693,27 @@ fn gen_group_idx(sorted: &[&FuncDef], groups: &[Vec<&FuncDef>]) -> String {
     let nb_groups = groups.len();
     let _ = writeln!(
         o,
-        "/* Generated */ const TA_FuncDef **TA_PerGroupFuncDef[{nb_groups}] = {{"
+        "const TA_FuncDef **TA_PerGroupFuncDef[{nb_groups}] = {{"
     );
     for (i, _) in groups.iter().enumerate() {
         let comma = if i + 1 < nb_groups { "," } else { "" };
         let _ = writeln!(o, "&TA_PerGroupFunc_{i}[0]{comma}");
     }
-    o.push_str("/* Generated */ };\n\n");
+    o.push_str("};\n\n");
 
     // TA_PerGroupSize
     let _ = writeln!(
         o,
-        "/* Generated */ const unsigned int TA_PerGroupSize[{nb_groups}] = {{"
+        "const unsigned int TA_PerGroupSize[{nb_groups}] = {{"
     );
     for (i, _) in groups.iter().enumerate() {
         let comma = if i + 1 < nb_groups { "," } else { "" };
         let _ = writeln!(o, "SIZE_GROUP_{i}{comma}");
     }
-    o.push_str("/* Generated */ };\n\n");
+    o.push_str("};\n\n");
 
     // TA_TotalNbFunction
-    o.push_str("/* Generated */ const unsigned int TA_TotalNbFunction =\n");
+    o.push_str("const unsigned int TA_TotalNbFunction =\n");
     for (i, _) in groups.iter().enumerate() {
         let sep = if i + 1 < nb_groups { "+" } else { ";" };
         let _ = writeln!(o, "SIZE_GROUP_{i}{sep}");

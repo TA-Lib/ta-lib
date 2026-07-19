@@ -132,7 +132,7 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     * inReal[startIdx+outIdx] was read.
     */
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
@@ -185,7 +185,7 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
       prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -275,7 +275,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -313,7 +313,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Unguarded( int    startIdx,
       prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       tempReal = 0.0;
       tempReal += prevEMA2;
@@ -402,7 +402,7 @@ TA_RetCode TA_S_TRIX( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -440,7 +440,7 @@ TA_RetCode TA_S_TRIX( int    startIdx,
       prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       tempReal = 0.0;
       tempReal += prevEMA2;
@@ -515,7 +515,7 @@ TA_RetCode TA_S_TRIX_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -553,7 +553,7 @@ TA_RetCode TA_S_TRIX_Unguarded( int    startIdx,
       prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       tempReal = 0.0;
       tempReal += prevEMA2;
@@ -683,7 +683,7 @@ TA_RetCode TA_TRIX_OpenInternal( struct TA_TRIX_Stream **stream, const double in
        * inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA1 with a simple average of the first
           * 'period' price bars.
@@ -736,7 +736,7 @@ TA_RetCode TA_TRIX_OpenInternal( struct TA_TRIX_Stream **stream, const double in
          prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA3 with a simple average of the first 'period'
           * EMA2 values, accumulated as EMA2 produces them.
@@ -871,7 +871,7 @@ TA_LIB_API TA_RetCode TA_TRIX_OpenAndFill( TA_TRIX_Stream **stream, const double
        * inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA1 with a simple average of the first
           * 'period' price bars.
@@ -924,7 +924,7 @@ TA_LIB_API TA_RetCode TA_TRIX_OpenAndFill( TA_TRIX_Stream **stream, const double
          prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed EMA3 with a simple average of the first 'period'
           * EMA2 values, accumulated as EMA2 produces them.

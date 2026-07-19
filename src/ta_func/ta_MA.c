@@ -76,31 +76,31 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
    }
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       retValue = TA_SMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       retValue = TA_EMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       retValue = TA_WMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       retValue = TA_DEMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       retValue = TA_TEMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       retValue = TA_TRIMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       retValue = TA_KAMA_Lookback(optInTimePeriod);
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       retValue = TA_MAMA_Lookback(0.5,0.05);
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       retValue = TA_T3_Lookback(optInTimePeriod,0.7);
       break;
    default:
@@ -154,34 +154,34 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    /* Simply forward the job to the corresponding TA function. */
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       retCode = TA_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       retCode = TA_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       retCode = TA_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       retCode = TA_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       retCode = TA_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       retCode = TA_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       /* The optInTimePeriod is ignored. FAMA is a nullable output
        * (issue #125): pass NULL to compute only the MAMA line into outReal.
        */
       retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    default:
@@ -218,31 +218,31 @@ TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
    }
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       retCode = TA_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       retCode = TA_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       retCode = TA_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       retCode = TA_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       retCode = TA_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       retCode = TA_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    default:
@@ -295,31 +295,31 @@ TA_RetCode TA_S_MA( int    startIdx,
    }
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       retCode = TA_S_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       retCode = TA_S_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       retCode = TA_S_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       retCode = TA_S_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       retCode = TA_S_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    default:
@@ -356,31 +356,31 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
    }
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       retCode = TA_S_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       retCode = TA_S_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       retCode = TA_S_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       retCode = TA_S_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       retCode = TA_S_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    default:
@@ -434,63 +434,63 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
    retCode = TA_BAD_PARAM;
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       {
          TA_SMA_Stream *sub = NULL;
          retCode = TA_SMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       {
          TA_EMA_Stream *sub = NULL;
          retCode = TA_EMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       {
          TA_WMA_Stream *sub = NULL;
          retCode = TA_WMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       {
          TA_DEMA_Stream *sub = NULL;
          retCode = TA_DEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       {
          TA_TEMA_Stream *sub = NULL;
          retCode = TA_TEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       {
          TA_TRIMA_Stream *sub = NULL;
          retCode = TA_TRIMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       {
          TA_KAMA_Stream *sub = NULL;
          retCode = TA_KAMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       {
          TA_MAMA_Stream *sub = NULL;
          retCode = TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       {
          TA_T3_Stream *sub = NULL;
          retCode = TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7, outReal );
@@ -559,63 +559,63 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
    retCode = TA_BAD_PARAM;
    switch( optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       {
          TA_SMA_Stream *sub = NULL;
          retCode = TA_SMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       {
          TA_EMA_Stream *sub = NULL;
          retCode = TA_EMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       {
          TA_WMA_Stream *sub = NULL;
          retCode = TA_WMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       {
          TA_DEMA_Stream *sub = NULL;
          retCode = TA_DEMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       {
          TA_TEMA_Stream *sub = NULL;
          retCode = TA_TEMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       {
          TA_TRIMA_Stream *sub = NULL;
          retCode = TA_TRIMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       {
          TA_KAMA_Stream *sub = NULL;
          retCode = TA_KAMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       {
          TA_MAMA_Stream *sub = NULL;
          retCode = TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL );
          sp->sub = sub;
       }
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       {
          TA_T3_Stream *sub = NULL;
          retCode = TA_T3_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal );
@@ -646,23 +646,23 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
    }
    switch( stream->optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       return TA_SMA_Update( (TA_SMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       return TA_EMA_Update( (TA_EMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       return TA_WMA_Update( (TA_WMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       return TA_DEMA_Update( (TA_DEMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       return TA_TEMA_Update( (TA_TEMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       return TA_TRIMA_Update( (TA_TRIMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       return TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       return TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       return TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
@@ -680,23 +680,23 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
    }
    switch( stream->optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       return TA_SMA_Peek( (const TA_SMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       return TA_EMA_Peek( (const TA_EMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       return TA_WMA_Peek( (const TA_WMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       return TA_DEMA_Peek( (const TA_DEMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       return TA_TEMA_Peek( (const TA_TEMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       return TA_TRIMA_Peek( (const TA_TRIMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
@@ -709,31 +709,31 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
    if( !stream ) return TA_SUCCESS;
    switch( stream->optInMAType )
    {
-   case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
+   case TA_MAType_SMA:
       TA_SMA_Close( (TA_SMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
+   case TA_MAType_EMA:
       TA_EMA_Close( (TA_EMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
+   case TA_MAType_WMA:
       TA_WMA_Close( (TA_WMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
+   case TA_MAType_DEMA:
       TA_DEMA_Close( (TA_DEMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
+   case TA_MAType_TEMA:
       TA_TEMA_Close( (TA_TEMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
+   case TA_MAType_TRIMA:
       TA_TRIMA_Close( (TA_TRIMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
+   case TA_MAType_KAMA:
       TA_KAMA_Close( (TA_KAMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
+   case TA_MAType_MAMA:
       TA_MAMA_Close( (TA_MAMA_Stream *)stream->sub );
       break;
-   case ENUM_CASE(MAType, TA_MAType_T3, T3):
+   case TA_MAType_T3:
       TA_T3_Close( (TA_T3_Stream *)stream->sub );
       break;
    default:

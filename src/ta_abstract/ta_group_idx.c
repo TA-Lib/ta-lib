@@ -411,7 +411,7 @@ const TA_FuncDef *TA_PerGroupFunc_9[] = {
 NULL };
 #define SIZE_GROUP_9 ((sizeof(TA_PerGroupFunc_9)/sizeof(const TA_FuncDef *))-1)
 
-/* Generated */ const TA_FuncDef **TA_PerGroupFuncDef[10] = {
+const TA_FuncDef **TA_PerGroupFuncDef[10] = {
 &TA_PerGroupFunc_0[0],
 &TA_PerGroupFunc_1[0],
 &TA_PerGroupFunc_2[0],
@@ -422,9 +422,9 @@ NULL };
 &TA_PerGroupFunc_7[0],
 &TA_PerGroupFunc_8[0],
 &TA_PerGroupFunc_9[0]
-/* Generated */ };
+};
 
-/* Generated */ const unsigned int TA_PerGroupSize[10] = {
+const unsigned int TA_PerGroupSize[10] = {
 SIZE_GROUP_0,
 SIZE_GROUP_1,
 SIZE_GROUP_2,
@@ -435,9 +435,9 @@ SIZE_GROUP_6,
 SIZE_GROUP_7,
 SIZE_GROUP_8,
 SIZE_GROUP_9
-/* Generated */ };
+};
 
-/* Generated */ const unsigned int TA_TotalNbFunction =
+const unsigned int TA_TotalNbFunction =
 SIZE_GROUP_0+
 SIZE_GROUP_1+
 SIZE_GROUP_2+

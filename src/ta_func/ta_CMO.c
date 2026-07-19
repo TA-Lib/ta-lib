@@ -65,7 +65,7 @@ TA_LIB_API int TA_CMO_Lookback( int optInTimePeriod )
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
    retValue = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {
       retValue -= 1;
    }
@@ -162,7 +162,7 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
     * no need to calculate since this
     * first value will be surely skip.
     */
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {
       /* Preserve prevValue because it may get
        * overwritten by the output.
@@ -360,7 +360,7 @@ TA_LIB_API TA_RetCode TA_CMO_Unguarded( int    startIdx,
    today = startIdx - lookbackTotal;
    prevValue = inReal[today];
    unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {
       savePrevValue = prevValue;
       prevGain = 0.0;
@@ -536,7 +536,7 @@ TA_RetCode TA_S_CMO( int    startIdx,
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
    unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {
       savePrevValue = prevValue;
       prevGain = 0.0;
@@ -698,7 +698,7 @@ TA_RetCode TA_S_CMO_Unguarded( int    startIdx,
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
    unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {
       savePrevValue = prevValue;
       prevGain = 0.0;
@@ -963,7 +963,7 @@ TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inRe
        * no need to calculate since this
        * first value will be surely skip.
        */
-      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
       {
          /* Preserve prevValue because it may get
           * overwritten by the output.
@@ -1246,7 +1246,7 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
        * no need to calculate since this
        * first value will be surely skip.
        */
-      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock) )
+      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
       {
          /* Preserve prevValue because it may get
           * overwritten by the output.

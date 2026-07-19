@@ -1396,7 +1396,7 @@ fn dispatch_identity_cond_on_handle(
 }
 
 /// Per-arm dispatch bodies for Update/Peek/Close, plus the shared open
-/// switch. All labels render through the batch's own `ENUM_CASE` mapping so
+/// switch. All labels render through the batch's own switch-label mapping so
 /// the arms read exactly like the batch dispatch they mirror.
 #[allow(clippy::too_many_lines)]
 /// The dispatch tier's `OpenAndFill` (MA): dispatch to the selected arm's public

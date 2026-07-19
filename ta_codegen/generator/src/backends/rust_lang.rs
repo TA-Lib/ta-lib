@@ -1738,7 +1738,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                     self.helpers,
                 );
                 let mut s = String::new();
-                // Parity with the reference CIRCBUF_INIT guard (ta_memory.h _RUST branch);
+                // Parity with the pre-cutover reference's CIRCBUF_INIT _RUST guard;
                 // also prevents the `(sz as usize) - 1` underflow on the unguarded path.
                 let alloc_fail = if self.ctx.result_error_returns {
                     "return Err(RetCode::AllocErr);"

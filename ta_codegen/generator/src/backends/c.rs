@@ -1413,14 +1413,11 @@ fn try_render_switch_as_ternary(
 }
 
 /// Render a switch case label for C output.
-/// Looks up the label in the enum registry to generate `ENUM_CASE(Type, C_Name, Pascal)`.
+/// Looks up the label in the enum registry to resolve the plain C enumerator name.
 /// Falls back to the raw label if not an enum variant.
 pub(crate) fn render_c_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
-    if let Some((enum_name, variant)) = lookup_variant(label, enums) {
-        format!(
-            "ENUM_CASE({}, {}, {})",
-            enum_name, variant.c_name, variant.pascal_name
-        )
+    if let Some((_enum_name, variant)) = lookup_variant(label, enums) {
+        variant.c_name.clone()
     } else {
         label.to_string()
     }
@@ -1496,10 +1493,8 @@ impl ExprEmitter for CExpr<'_> {
     fn var(&self, name: &str) -> String {
         match name {
             "COMPATIBILITY" => "TA_GLOBALS_COMPATIBILITY".to_string(),
-            "METASTOCK" => {
-                "ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock)".to_string()
-            }
-            "DEFAULT" => "ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default)".to_string(),
+            "METASTOCK" => "TA_COMPATIBILITY_METASTOCK".to_string(),
+            "DEFAULT" => "TA_COMPATIBILITY_DEFAULT".to_string(),
             "BAD_PARAM" => "TA_BAD_PARAM".to_string(),
             "SUCCESS" => "TA_SUCCESS".to_string(),
             "ALLOC_ERR" => "TA_ALLOC_ERR".to_string(),

@@ -291,29 +291,6 @@ fn test_java_backend_generates_mult() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// .NET backend
-// ---------------------------------------------------------------------------
-
-#[test]
-fn test_dotnet_backend_generates_mult() {
-    let func = load_mult();
-    let output = backends::dotnet::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
-    assert!(
-        output.contains("MultLookback") || output.contains("Lookback"),
-        ".NET output missing lookback"
-    );
-    assert!(
-        output.contains("Mult") || output.contains("MULT"),
-        ".NET output missing Mult function"
-    );
-    assert!(
-        output.contains("SubArray") || output.contains("cli::array"),
-        ".NET output missing managed array types"
-    );
-}
-
-
 // test_sma_from_c_generates_all_backends removed: covered by dynamic
 // test_all_backends_produce_nonempty_output + backend_suite variant checks
 
@@ -408,20 +385,18 @@ fn test_all_backends_produce_nonempty_output() {
             let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
             let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
             let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
-            let dotnet_out = backends::dotnet::generate(&func, &enums, &registry, &helpers);
-            (c_out, rust_out, java_out, dotnet_out)
+            (c_out, rust_out, java_out)
         })) {
             Ok(o) => o,
             Err(_) => continue,
         };
 
-        let (c_out, rust_out, java_out, dotnet_out) = outputs;
+        let (c_out, rust_out, java_out) = outputs;
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             assert!(!c_out.is_empty(), "{}: C output is empty", name);
             assert!(!rust_out.is_empty(), "{}: Rust output is empty", name);
             assert!(!java_out.is_empty(), "{}: Java output is empty", name);
-            assert!(!dotnet_out.is_empty(), "{}: Dotnet output is empty", name);
 
             assert!(c_out.len() > 100, "{}: C output suspiciously short", name);
             assert!(
@@ -432,11 +407,6 @@ fn test_all_backends_produce_nonempty_output() {
             assert!(
                 java_out.len() > 100,
                 "{}: Java output suspiciously short",
-                name
-            );
-            assert!(
-                dotnet_out.len() > 100,
-                "{}: Dotnet output suspiciously short",
                 name
             );
         }));

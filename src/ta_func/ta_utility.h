@@ -7,20 +7,12 @@
 #ifndef TA_UTILITY_H
 #define TA_UTILITY_H
 
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-   #ifndef TA_FUNC_H
-      #include "ta_func.h"
-   #endif
-
-   #ifndef TA_GLOBAL_H
-      #include "ta_global.h"
-   #endif
+#ifndef TA_FUNC_H
+   #include "ta_func.h"
 #endif
 
-#if defined( _MANAGED )
-   #ifndef NULL
-      #define NULL 0
-   #endif
+#ifndef TA_GLOBAL_H
+   #include "ta_global.h"
 #endif
 
 /* FMA runtime CPU dispatch (PR #96): mark fused indicators with target_clones so
@@ -36,214 +28,23 @@
    #define TA_FMA_MULTIVERSION
 #endif
 
-/* BEGIN_TA_INT_DECLARATIONS — codegen strips everything between these markers */
-
-/* Calculate a Simple Moving Average.
- * This is an internal version, parameter are assumed validated.
- * (startIdx and endIdx cannot be -1).
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-TA_RetCode TA_INT_SMA( int           startIdx,
-                       int           endIdx,
-                       const double *inReal,
-                       int           optInTimePeriod,
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double       *outReal );
-
-TA_RetCode TA_S_INT_SMA( int          startIdx,
-                         int          endIdx,
-                         const float *inReal,
-                         int          optInTimePeriod,
-                         int         *outBegIdx,
-                         int         *outNBElement,
-                         double      *outReal );
-#endif
-
-/* Calculate an Exponential Moving Average.
- * This is an internal version, parameter are assumed validated.
- * (startIdx and endIdx cannot be -1).
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-TA_RetCode TA_INT_EMA( int           startIdx,
-                       int           endIdx,
-                       const double *inReal,
-                       int           optInTimePeriod,
-                       double        optInK_1,
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double       *outReal );
-
-TA_RetCode TA_S_INT_EMA( int          startIdx,
-                         int          endIdx,
-                         const float *inReal,
-                         int          optInTimePeriod,
-                         double       optInK_1,
-                         int         *outBegIdx,
-                         int         *outNBElement,
-                         double      *outReal );
-#endif
-
-/* Calculate a MACD
- * This is an internal version, parameter are assumed validated.
- * (startIdx and endIdx cannot be -1).
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-TA_RetCode TA_INT_MACD( int           startIdx,
-                        int           endIdx,
-                        const double  inReal[],
-                        int           optInFastPeriod, /* 0 is fix 12 */
-                        int           optInSlowPeriod, /* 0 is fix 26 */
-                        int           optInSignalPeriod_2,
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outRealMACD_0[],
-                        double        outRealMACDSignal_1[],
-                        double        outRealMACDHist_2[] );
-
-TA_RetCode TA_S_INT_MACD( int          startIdx,
-                          int          endIdx,
-                          const float  inReal[],
-                          int          optInFastPeriod, /* 0 is fix 12 */
-                          int          optInSlowPeriod, /* 0 is fix 26 */
-                          int          optInSignalPeriod_2,
-                          int         *outBegIdx,
-                          int         *outNBElement,
-                          double       outRealMACD_0[],
-                          double       outRealMACDSignal_1[],
-                          double       outRealMACDHist_2[] );
-#endif
-
-/* Internal Price Oscillator function.
- *
- * A buffer must be provided for intermediate processing
- * 'tempBuffer' must be of at least (endIdx-startIdx+1)
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-TA_RetCode TA_INT_PO( int           startIdx,
-                      int           endIdx,
-                      const double *inReal,
-                      int           optInFastPeriod,
-                      int           optInSlowPeriod,
-                      TA_MAType     optInMethod_2,
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double       *outReal,
-                      double       *tempBuffer,
-                      int  doPercentageOutput );
-
-TA_RetCode TA_S_INT_PO( int           startIdx,
-                        int           endIdx,
-                        const float  *inReal,
-                        int           optInFastPeriod,
-                        int           optInSlowPeriod,
-                        TA_MAType     optInMethod_2,
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double       *outReal,
-                        double       *tempBuffer,
-                        int  doPercentageOutput );
-#endif
-
-/* Internal variance function.
- * Skipped when TA_INT_VAR is a macro (codegen builds define it
- * in ta_func_unguarded.h to redirect to TA_VAR_Unguarded which
- * has a different signature with an extra optInNbDev parameter).
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST ) && !defined( TA_INT_VAR )
-TA_RetCode TA_INT_VAR( int           startIdx,
-                       int           endIdx,
-                       const double *inReal,
-                       int           optInTimePeriod,
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double       *outReal );
-
-TA_RetCode TA_S_INT_VAR( int           startIdx,
-                         int           endIdx,
-                         const float  *inReal,
-                         int           optInTimePeriod,
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double       *outReal );
-#endif
-
-/* A function to calculate a standard deviation.
- *
- * This function allows speed optimization when the
- * moving average series is already calculated.
- */
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-void TA_INT_stddev_using_precalc_ma( const double *inReal,
-                                     const double *inMovAvg,
-                                     int           inMovAvgBegIdx,
-                                     int           inMovAvgNbElement,
-                                     int           timePeriod,
-                                     double       *output );
-
-void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
-                                       const double *inMovAvg,
-                                       int           inMovAvgBegIdx,
-                                       int           inMovAvgNbElement,
-                                       int           timePeriod,
-                                       double       *output );
-#endif
-
-/* END_TA_INT_DECLARATIONS */
-
-   /* Provides an equivalent to standard "math.h" functions. */
-#if defined( _MANAGED )
-   #define std_floor Math::Floor
-   #define std_ceil  Math::Ceiling
-   #define std_fabs  Math::Abs
-   #define std_atan  Math::Atan
-   #define std_cos   Math::Cos
-   #define std_sin   Math::Sin
-   #define std_sqrt  Math::Sqrt
-   #define std_tanh  Math::Tanh
-   #define std_tan   Math::Tan
-   #define std_sinh  Math::Sinh
-   #define std_log10 Math::Log10
-   #define std_log   Math::Log
-   #define std_exp   Math::Exp
-   #define std_cosh  Math::Cosh
-   #define std_asin  Math::Asin
-   #define std_acos  Math::Acos
-#elif defined( _JAVA ) || defined( _RUST )
-   #define std_floor Math.floor
-   #define std_ceil  Math.ceil
-   #define std_fabs  Math.abs
-   #define std_atan  Math.atan
-   #define std_cos   Math.cos
-   #define std_sin   Math.sin
-   #define std_sqrt  Math.sqrt
-   #define std_tanh  Math.tanh
-   #define std_tan   Math.tan
-   #define std_sinh  Math.sinh
-   #define std_log10 Math.log10
-   #define std_log   Math.log
-   #define std_exp   Math.exp
-   #define std_cosh  Math.cosh
-   #define std_asin  Math.asin
-   #define std_acos  Math.acos
-#else
-   #define std_floor floor
-   #define std_ceil  ceil
-   #define std_fabs  fabs
-   #define std_atan  atan
-   #define std_cos   cos
-   #define std_sin   sin
-   #define std_sqrt  sqrt
-   #define std_tanh  tanh
-   #define std_tan   tan
-   #define std_sinh  sinh
-   #define std_log10 log10
-   #define std_log   log
-   #define std_exp   exp
-   #define std_cosh  cosh
-   #define std_asin  asin
-   #define std_acos  acos
-#endif
+/* Provides an equivalent to standard "math.h" functions. */
+#define std_floor floor
+#define std_ceil  ceil
+#define std_fabs  fabs
+#define std_atan  atan
+#define std_cos   cos
+#define std_sin   sin
+#define std_sqrt  sqrt
+#define std_tanh  tanh
+#define std_tan   tan
+#define std_sinh  sinh
+#define std_log10 log10
+#define std_log   log
+#define std_exp   exp
+#define std_cosh  cosh
+#define std_asin  asin
+#define std_acos  acos
 
 /* Rounding macro for doubles. Works only with positive numbers. */
 #define round_pos(x) (std_floor((x)+0.5))
@@ -333,7 +134,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  *
  *    k = 2 / (period + 1)
  *
- * Useful to calculate the 'k' for TA_INT_EMA().
+ * Useful to calculate the smoothing factor 'k' of an EMA.
  */
 #define PER_TO_K( per ) ((double)2.0 / ((double)(per + 1)))
 
@@ -358,37 +159,26 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
-#if defined( _MANAGED )
-   #define TA_CANDLERANGETYPE(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (Globals->candleSettings[(int)CandleSettingType::SET]->factor)
-#elif defined( _JAVA ) || defined( _RUST )
-   #define TA_CANDLERANGETYPE(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (this.candleSettings[CandleSettingType.SET.ordinal()].factor)
-#else
-   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[TA_##SET].rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[TA_##SET].avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[TA_##SET].factor)
-#endif
+#define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[TA_##SET].rangeType)
+#define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[TA_##SET].avgPeriod)
+#define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[TA_##SET].factor)
 
 #define TA_CANDLERANGE(SET,IDX) \
-    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_RealBody,RealBody) ? TA_REALBODY(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_HighLow,HighLow)   ? TA_HIGHLOWRANGE(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_Shadows,Shadows)   ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
       0 ) ) )
 #define TA_CANDLEAVERAGE(SET,SUM,IDX) \
     ( TA_CANDLEFACTOR(SET) \
         * ( TA_CANDLEAVGPERIOD(SET) != 0.0? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
-        / ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_Shadows,Shadows) ? 2.0 : 1.0 ) \
+        / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2.0 : 1.0 ) \
     )
 #define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )
 #define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )
 #define TA_CANDLEGAPDOWN(IDX2,IDX1)     ( inHigh[IDX2] < inLow[IDX1] )
 
-#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
-/* Scalar-argument candle macros for the generated streaming API (C only).
+/* Scalar-argument candle macros for the generated streaming API.
  * These MUST mirror TA_CANDLERANGE/TA_CANDLEAVERAGE above exactly (same
  * operations in the same order) with the bar's OHLC supplied as scalar
  * expressions instead of array reads — the stream transition has no input
@@ -409,6 +199,5 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
         * ( TA_CANDLEAVGPERIOD(SET) != 0.0? (SUM) / TA_CANDLEAVGPERIOD(SET) : TA_STREAM_CANDLERANGE(SET,O,H,L,C) ) \
         / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2.0 : 1.0 ) \
     )
-#endif
 
 #endif

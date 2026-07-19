@@ -173,7 +173,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
     * [outIdx] are written only after inReal[startIdx+outIdx] was
     * read.
     */
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       /* Seed each price EMA with a simple average of its first
        * 'period' price bars. The fast window is the tail of the
@@ -322,7 +322,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
@@ -467,7 +467,7 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
@@ -592,7 +592,7 @@ TA_RetCode TA_S_MACDFIX_Unguarded( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
@@ -795,7 +795,7 @@ TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const dou
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed each price EMA with a simple average of its first
           * 'period' price bars. The fast window is the tail of the
@@ -1012,7 +1012,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const 
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          /* Seed each price EMA with a simple average of its first
           * 'period' price bars. The fast window is the tail of the

@@ -81,7 +81,6 @@ struct AllOutputs {
     c: String,
     rust: String,
     java: String,
-    dotnet: String,
 }
 
 fn make_registry() -> Registry {
@@ -96,24 +95,12 @@ fn generate_all(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> All
         c: backends::c::generate(func, enums, &registry, &helpers),
         rust: backends::rust_lang::generate(func, enums, &registry, &helpers),
         java: backends::java::generate(func, enums, &registry, &helpers),
-        dotnet: backends::dotnet::generate(func, enums, &registry, &helpers),
     }
 }
 
 // ---------------------------------------------------------------------------
 // Variant check functions (extracted from macros for dynamic invocation)
 // ---------------------------------------------------------------------------
-
-/// Derive Pascal case from the indicator name.
-/// Must match the dotnet backend's to_pascal_case: lowercase then capitalize first char.
-fn to_pascal(name: &str) -> String {
-    let lower = name.to_lowercase();
-    let mut chars = lower.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(c) => c.to_uppercase().to_string() + chars.as_str(),
-    }
-}
 
 /// Convert snake_case to Java camelCase: "linearreg_angle" -> "linearregAngle"
 fn to_camel(name: &str) -> String {
@@ -224,42 +211,6 @@ fn check_java_variants(j: &str, lower: &str, name: &str) {
     );
 }
 
-/// Check that all .NET variants exist for a given indicator.
-fn check_dotnet_variants(d: &str, pascal: &str, upper: &str, name: &str) {
-    assert!(
-        d.contains(&format!("{}Lookback(", pascal)),
-        "{}: .NET missing {}Lookback",
-        name,
-        pascal
-    );
-    assert!(
-        d.contains(&format!("{}(", pascal)) || d.contains(&format!("{} (", pascal)),
-        "{}: .NET missing {} function",
-        name,
-        pascal
-    );
-    assert!(
-        d.contains(&format!("{}Logic(", pascal)),
-        "{}: .NET missing {}Logic declaration",
-        name,
-        pascal
-    );
-    assert!(
-        d.contains(&format!("#define TA_{} ", upper))
-            || d.contains(&format!("#define TA_{}\n", upper)),
-        "{}: .NET missing #define TA_{}",
-        name,
-        upper
-    );
-    assert!(
-        d.contains(&format!("#define TA_{}_Logic", upper)),
-        "{}: .NET missing #define TA_{}_Logic",
-        name,
-        upper
-    );
-    // TA_INT_* macros are no longer generated for .NET
-}
-
 /// Check C does NOT generate TA_INT_ macros (they've been removed).
 fn check_c_int_alias(c: &str, upper: &str, name: &str) {
     assert!(
@@ -268,35 +219,6 @@ fn check_c_int_alias(c: &str, upper: &str, name: &str) {
         name,
         upper
     );
-}
-
-/// Check .NET macros point to correct Core:: methods for an indicator.
-fn check_dotnet_macros(d: &str, pascal: &str, upper: &str, name: &str) {
-    assert!(
-        d.contains(&format!("#define TA_{} Core::{}", upper, pascal)),
-        "{}: .NET TA_{} should point to Core::{}",
-        name,
-        upper,
-        pascal
-    );
-    assert!(
-        d.contains(&format!(
-            "#define TA_{}_Lookback Core::{}Lookback",
-            upper, pascal
-        )),
-        "{}: .NET TA_{}_Lookback should point to Core::{}Lookback",
-        name,
-        upper,
-        pascal
-    );
-    assert!(
-        d.contains(&format!("#define TA_{}_Logic Core::{}Logic", upper, pascal)),
-        "{}: .NET TA_{}_Logic should point to Core::{}Logic",
-        name,
-        upper,
-        pascal
-    );
-    // TA_INT_* macros are no longer generated for .NET
 }
 
 /// Try to load an indicator, returning None if parsing fails (not yet supported).
@@ -349,7 +271,6 @@ fn test_all_indicators_all_backends() {
         // Phase 2: run variant checks (failures here are real bugs)
         let upper = func.name.clone();
         let snake = name.clone();
-        let pascal = to_pascal(name);
         // Java method name comes from the YAML `camel_case` field (first char
         // lower-cased), matching the backend; this captures the historical
         // irregular/typo names (e.g. ma -> movingAverage, willr -> willR).
@@ -367,9 +288,7 @@ fn test_all_indicators_all_backends() {
             check_c_variants(&out.c, &upper, &snake);
             check_rust_generic_variants(&out.rust, &snake, &snake);
             check_java_variants(&out.java, &camel, &snake);
-            check_dotnet_variants(&out.dotnet, &pascal, &upper, &snake);
             check_c_int_alias(&out.c, &upper, &snake);
-            check_dotnet_macros(&out.dotnet, &pascal, &upper, &snake);
         }));
 
         if let Err(e) = result {
@@ -740,10 +659,10 @@ fn test_ma_c_switch_statement() {
         out.c.contains("switch(") || out.c.contains("switch ("),
         "C MA should contain a switch statement"
     );
-    // Should use ENUM_CASE macro in C for enum labels
+    // Enum labels render as plain C enumerator names
     assert!(
-        out.c.contains("ENUM_CASE("),
-        "C MA should use ENUM_CASE for switch labels"
+        out.c.contains("case TA_MAType_SMA:"),
+        "C MA should use plain C enumerator names for switch labels"
     );
 }
 
@@ -840,7 +759,6 @@ fn test_all_indicators_nonempty_output() {
             assert!(!out.c.is_empty(), "{}: C output is empty", name);
             assert!(!out.rust.is_empty(), "{}: Rust output is empty", name);
             assert!(!out.java.is_empty(), "{}: Java output is empty", name);
-            assert!(!out.dotnet.is_empty(), "{}: .NET output is empty", name);
 
             assert!(out.c.len() > 200, "{}: C output suspiciously short", name);
             assert!(
@@ -851,11 +769,6 @@ fn test_all_indicators_nonempty_output() {
             assert!(
                 out.java.len() > 100,
                 "{}: Java output suspiciously short",
-                name
-            );
-            assert!(
-                out.dotnet.len() > 100,
-                "{}: .NET output suspiciously short",
                 name
             );
         }));
@@ -5932,8 +5845,8 @@ fn c_metastock_and_default_var_rendering() {
     };
     let rendered1 = render_c_stmt(&stmt1);
     assert!(
-        rendered1.contains("ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock)"),
-        "C METASTOCK should render as ENUM_VALUE macro: {rendered1}"
+        rendered1.contains("TA_COMPATIBILITY_METASTOCK"),
+        "C METASTOCK should render as the plain enumerator: {rendered1}"
     );
 
     let stmt2 = ir::Statement::Assign {
@@ -5943,8 +5856,8 @@ fn c_metastock_and_default_var_rendering() {
     };
     let rendered2 = render_c_stmt(&stmt2);
     assert!(
-        rendered2.contains("ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default)"),
-        "C DEFAULT should render as ENUM_VALUE macro: {rendered2}"
+        rendered2.contains("TA_COMPATIBILITY_DEFAULT"),
+        "C DEFAULT should render as the plain enumerator: {rendered2}"
     );
 }
 
@@ -6390,7 +6303,7 @@ fn java_array_access() {
 // ---------------------------------------------------------------------------
 
 /// Pin the generated MA dispatch stream section: tagged handle over the
-/// callees' PUBLIC streams, batch-order ENUM_CASE arms, identity fast path, and
+/// callees' PUBLIC streams, batch-order case arms, identity fast path, and
 /// the MAMA arm forwarding the MAMA line while discarding FAMA as NULL (the
 /// nullable-output delegation from issue #125 — no reject arm remains).
 #[test]
@@ -6423,7 +6336,7 @@ fn test_c_ma_dispatch_stream_section() {
         ("Mama", "TA_MAMA"),   // nullable FAMA (#125): auto-promoted from reject
     ] {
         assert!(
-            c.contains(&format!("case ENUM_CASE(MAType, TA_MAType_{}, {label}):", label.to_uppercase())),
+            c.contains(&format!("case TA_MAType_{}:", label.to_uppercase())),
             "supported arm case label for {label}"
         );
         assert!(c.contains(&format!("{callee}_OpenInternal(")), "sub open for {callee}");

@@ -23,27 +23,19 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
         .expect("FuncUnstId enum missing from enums.yaml");
 
     // The ALL/NONE sentinel rows have no `/* NNN */` index comment, so they pad
-    // with spaces to keep `ENUM_DEFINE` column-aligned with the data rows
-    // (`/* Generated */` is 15 chars + "     /* NNN */  " reaches column 31).
-    let align = " ".repeat(16);
+    // with spaces to keep the enumerators column-aligned with the data rows
+    // ("    /* NNN */  " reaches column 15).
+    let align = " ".repeat(15);
 
     let mut block = String::new();
-    block.push_str("/* Generated */ \n");
-    block.push_str("/* Generated */ ENUM_BEGIN( FuncUnstId )\n");
+    block.push('\n');
+    block.push_str("typedef enum {\n");
     for (i, v) in fu.variants.iter().enumerate() {
-        block.push_str(&format!(
-            "/* Generated */     /* {i:03} */  ENUM_DEFINE( {}, {}),\n",
-            v.c_name, v.pascal_name
-        ));
+        block.push_str(&format!("    /* {i:03} */  {},\n", v.c_name));
     }
-    block.push_str(&format!(
-        "/* Generated */{align}ENUM_DEFINE( TA_FUNC_UNST_ALL, FuncUnstAll),\n"
-    ));
-    block.push_str(&format!(
-        "/* Generated */{align}ENUM_DEFINE( TA_FUNC_UNST_NONE, FuncUnstNone) = -1\n"
-    ));
-    block.push_str("/* Generated */ ENUM_END( FuncUnstId )\n");
-    block.push_str("/* Generated */ ");
+    block.push_str(&format!("{align}TA_FUNC_UNST_ALL,\n"));
+    block.push_str(&format!("{align}TA_FUNC_UNST_NONE = -1\n"));
+    block.push_str("} TA_FuncUnstId;\n");
 
     let existing = std::fs::read_to_string(ta_defs_path)
         .unwrap_or_else(|e| panic!("reading {}: {e}", ta_defs_path.display()));

@@ -134,7 +134,7 @@ TA_LIB_API TA_RetCode TA_EMA_Private( int    startIdx,
     *    period is 1 who use 2th price bar or something
     *    like that... (not an obvious one...).
     */
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -192,7 +192,7 @@ TA_RetCode TA_S_EMA_Private( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -293,7 +293,7 @@ TA_RetCode TA_S_EMA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -365,7 +365,7 @@ TA_RetCode TA_S_EMA( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -495,7 +495,7 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
        *    period is 1 who use 2th price bar or something
        *    like that... (not an obvious one...).
        */
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;
@@ -626,7 +626,7 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
        *    period is 1 who use 2th price bar or something
        *    like that... (not an obvious one...).
        */
-      if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
       {
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;

@@ -18,7 +18,7 @@ ta_codegen/input/                (per-indicator .c logic + YAML metadata)
 backends            server_gen / bench_gen
   ↓                      ↓
 c.rs, rust_lang.rs,   JSON-RPC servers, bench binary,
-java.rs, dotnet.rs    include/ta_func_unguarded.h
+java.rs               include/ta_func_unguarded.h
 ta_abstract_c.rs
   ↓
 src/ta_func/*.c          (C indicator code — generated IN PLACE)
@@ -53,7 +53,6 @@ include/ta_func.h        (generated public header)
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded + unguarded variants) |
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
-| `backends/dotnet.rs` | Generates .NET P/Invoke wrappers |
 | `backends/ta_abstract_c.rs` | Generates `ta_abstract` introspection layer (tables, frames, group index, runtime API) |
 | `backends/func_api_xml.rs` | Generates `ta_func_api.xml` metadata |
 | `backends/docs_site.rs` | Generates the ta-lib.org website (`website/src/functions/<name>.md` + `index.md`) from each function's `ta_codegen/input/<name>/<name>.md` — written directly into the VuePress site source tree (`website/`), not `ta_codegen/output/` |

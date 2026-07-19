@@ -44,91 +44,52 @@
  *  -------------------------------------------------------------------
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  123004 RM,MF  Adapt code to work with Visual Studio 2005
+ *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
  *
  */
 
-#if defined( _MANAGED )
-   #using <mscorlib.dll>
-   #include "TA-Lib-Core.h"
-   #include "ta_memory.h"
-namespace TicTacTec { namespace TA { namespace Library {
-#else
-   #include "ta_utility.h"
-   #include "ta_func.h"
-   #include "ta_memory.h"
-#endif
+#include "ta_utility.h"
+#include "ta_func.h"
+#include "ta_memory.h"
 
-#if defined( _MANAGED )
- enum class Core::RetCode Core::SetUnstablePeriod(  enum class FuncUnstId id,
-                                                    unsigned int unstablePeriod )
-#else
 TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod )
-#endif
 {
    int i;
 
-   if( id > ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll) )
-      return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+   if( id > TA_FUNC_UNST_ALL )
+      return TA_BAD_PARAM;
 
-   if( id == ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll) )
+   if( id == TA_FUNC_UNST_ALL )
    {
-      for( i=0; i < (int)ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll); i++ )
+      for( i=0; i < (int)TA_FUNC_UNST_ALL; i++ )
 	  {
-         #if defined( _MANAGED )
-            Globals->unstablePeriod[(int)i] = unstablePeriod;
-         #else
-            TA_Globals->unstablePeriod[i] = unstablePeriod;
-         #endif
+         TA_Globals->unstablePeriod[i] = unstablePeriod;
 	  }
    }
    else
    {
-         #if defined( _MANAGED )
-            Globals->unstablePeriod[(int)id] = unstablePeriod;
-         #else
-            TA_Globals->unstablePeriod[id] = unstablePeriod;
-         #endif
+      TA_Globals->unstablePeriod[id] = unstablePeriod;
    }
 
-   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   return TA_SUCCESS;
 }
 
-#if defined( _MANAGED )
-unsigned int Core::GetUnstablePeriod( enum class FuncUnstId id )
-#else
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
-#endif
 {
-   if( id >= ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll) )
+   if( id >= TA_FUNC_UNST_ALL )
 	   return 0;
 
-   #if defined( _MANAGED )
-      return Globals->unstablePeriod[(int)id];
-   #else
-      return TA_Globals->unstablePeriod[id];
-   #endif
+   return TA_Globals->unstablePeriod[id];
 }
 
-#if defined( _MANAGED )
- enum class Core::RetCode Core::SetCompatibility(  enum class Compatibility value )
-#else
 TA_RetCode TA_SetCompatibility( TA_Compatibility value )
-#endif
 {
    TA_GLOBALS_COMPATIBILITY = value;
-   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   return TA_SUCCESS;
 }
 
-#if defined( _MANAGED )
- enum class Core::Compatibility Core::GetCompatibility( void )
-#else
 TA_Compatibility TA_GetCompatibility( void )
-#endif
 {
    return TA_GLOBALS_COMPATIBILITY;
 }
-
-#if defined( _MANAGED )
-}}} // Close namespace TicTacTec::TA::Lib
-#endif

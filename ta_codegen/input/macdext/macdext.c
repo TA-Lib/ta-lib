@@ -54,7 +54,7 @@ TA_RetCode macdext(int startIdx, int endIdx,
    int outNbElement2;
    int lookbackTotal, lookbackSignal, lookbackLargest;
    int i;
-   ENUM_DECLARATION(MAType) tempMAType;
+   int tempMAType;
 
    /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
     * to its single-pass implementation. Period 1 stays on the generic
