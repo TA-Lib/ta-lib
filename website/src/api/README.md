@@ -184,7 +184,7 @@ it is TA_SMA_Lookback.</p>
 <h2 id="advanced">4.0 Advanced Features</h2>
 
 <h3 id="abstract">4.1 Abstraction Layer</h3>
-<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime. It reports, at runtime, which inputs, optional parameters (and their valid ranges), and outputs a function takes — so you can call one without knowing it a priori.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime. It reports which inputs, optional parameters (and their valid ranges), and outputs a function takes — so you can call a function whose signature was unknown at compile time.</p>
 <p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
 <ul>
   <li>Generating glue code or wrappers for higher-level languages.</li>
@@ -195,11 +195,9 @@ it is TA_SMA_Lookback.</p>
 <p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
 
 <h3 id="unstable_period">4.2 Unstable Period</h3>
-<p>Some TA functions provides different results depending of the &quot;starting point&quot; of the data being
-involve. This is often referred as a function having memories. An example of such function is the Exponential Moving Average. It is
-possible to control the unstable period (the amount of data to strip off) with
-<a href="/api/unstable-period/">TA_SetUnstablePeriod</a> and
-<a href="/api/unstable-period/">TA_GetUnstablePeriod</a>. See the <a href="/api/unstable-period/">Unstable Period</a> page for details and the list of affected functions.</p>
+<p>For some recursive TA functions, such as the Exponential Moving Average, the first outputs depend on where the input data begins — an effect that decays until the output becomes stable. The unstable period setting
+(<a href="/api/unstable-period/#api">TA_SetUnstablePeriod</a>,
+<a href="/api/unstable-period/#api">TA_GetUnstablePeriod</a>) controls how many of those early values are discarded. See the <a href="/api/unstable-period/">Unstable Period</a> page for details and the list of affected functions.</p>
 <h3 id="input_type">4.3 Input Type: float vs. double</h3>
 <p>Each TA function have two implementation. One accepts input arrays of float and the other accepts double. The float version has a &quot;TA_S_&quot; suffix e.g. for TA_MA there is an equivalent TA_S_MA function.</p>
 <pre>TA_RetCode TA_MA( int     startIdx,
