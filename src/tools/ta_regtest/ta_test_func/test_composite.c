@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  First version. Composite-function test category.
+ *  072026 MF,CC  Oracle check via checkOracleValue (near-zero absolute floor).
  */
 
 /* Description:
@@ -140,6 +141,13 @@ static const struct { int idx; double value; } pvoOracle[] =
  * tighter than any real formula error (SMA-vs-EMA, wrong scalar/periods all
  * diverge by >1%). */
 #define PVO_ORACLE_TOL 1e-12
+/* Near-zero absolute floor. PVO is an oscillator: it crosses zero, where a
+ * relative test is meaningless. The six goldens above were deliberately sampled
+ * where |value| >= 1, so this floor never governs them (rel term at |want|=1 is
+ * 1e-12, a decade above it) -- it is here so that adding a golden near a
+ * crossing later cannot silently turn the check into a spurious failure. Sized
+ * ~10x the measured absolute agreement (~6e-14). See checkOracleValue(). */
+#define PVO_ORACLE_ABS 1e-12
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_pvo_differential( const TA_History *history );
@@ -270,13 +278,12 @@ static ErrorNumber test_pvo_oracle( const TA_History *history )
       int idx = pvoOracle[k].idx;
       double want = pvoOracle[k].value;
       double got  = out[idx];
-      double ad   = fabs( got - want );
-      double rel  = ad / fabs( want );   /* every golden |value| >> 1, no zero guard needed */
+      double err; const char *mode;
 
-      if( rel > PVO_ORACLE_TOL )
+      if( !checkOracleValue( got, want, PVO_ORACLE_TOL, PVO_ORACLE_ABS, &err, &mode ) )
       {
-         printf( "PVO oracle Fail at out[%d]: got %.17g expected %.17g (rel=%.3e > %.3e)\n",
-                 idx, got, want, rel, PVO_ORACLE_TOL );
+         printf( "PVO oracle Fail at out[%d]: got %.17g expected %.17g (%s=%.3e > rel %.3e / abs %.3e)\n",
+                 idx, got, want, mode, err, PVO_ORACLE_TOL, PVO_ORACLE_ABS );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
