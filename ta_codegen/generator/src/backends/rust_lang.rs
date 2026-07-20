@@ -116,7 +116,7 @@ pub fn generate(
 
 fn gen_header() -> String {
     let mut out = String::new();
-    out.push_str("/* TA-LIB Copyright (c) 1999-2025, Mario Fortier\n");
+    out.push_str("/* TA-LIB Copyright (c) 1999-2026, Mario Fortier\n");
     out.push_str(" * All rights reserved.\n");
     out.push_str(" *\n");
     out.push_str(" * Redistribution and use in source and binary forms, with or\n");
