@@ -168,31 +168,31 @@ retCode = TA_MA( <span style="background-color: #00FFFF; color: #000" lang="en-u
 <p>Of course, the input is overwritten, but this avoids allocating a temporary buffer. All TA functions support this.</p>
 <h3 id="output_size" align="justify">3.3 Output Size</h3>
 <p>
-It is important that the output array is large enough. Depending of your needs, you might find one of the following method useful to determine the output allocation size. All these methods works consistently for all TA functions:</p>
+It is important that the output array is large enough. Here are three ways to determine the allocation size; all of them work for every TA function:</p>
 
 | Method           | Description                                                                                                                                                                                                 |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input Matching   | allocationSize = endIdx + 1; <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when specifying small range.                                              |
-| Range Matching   | allocationSize = endIdx - startIdx + 1; <br> <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: for a 30 period SMA, you will get 29 elements wasted because of the lookback. |
-| Exact Allocation | lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp > endIdx ) <br> &nbsp;&nbsp; allocationSize = 0; // No output <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> **Pros**: Optimal allocation algorithm. <br> **Cons**: Slightly more complex. |
+| Input Matching   | allocationSize = endIdx + 1; <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when requesting a small range.                                              |
+| Range Matching   | allocationSize = endIdx - startIdx + 1; <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
+| Exact Allocation | lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp > endIdx ) <br> &nbsp;&nbsp; allocationSize = 0; // No output <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex. |
 
 
-<p>A function TA_XXXX_Lookback is provided for each TA function. Example: For TA_SMA,
-there is a TA_SMA_Lookback.</p>
-<p>The lookback indicates how many inputs are consume before the first output can be calculated. Example: A simple moving average (SMA) of period 10 will have a lookback of 9.</p>
+<p>Each TA function has a matching TA_XXXX_Lookback function. Example: for TA_SMA,
+it is TA_SMA_Lookback.</p>
+<p>The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.</p>
 
 <h2 id="advanced">4.0 Advanced Features</h2>
 
 <h3 id="abstract">4.1 Abstraction Layer</h3>
-<p>Instead of calling each TA function by name, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>. It reports, at runtime, which inputs, optional parameters (and their valid ranges), and outputs a function takes — so you can call one without knowing it a priori.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime. It reports, at runtime, which inputs, optional parameters (and their valid ranges), and outputs a function takes — so you can call one without knowing it a priori.</p>
 <p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
 <ul>
+  <li>Generating glue code or wrappers for higher-level languages.</li>
   <li>Automatically picking up new functions after a TA-Lib upgrade, with no code change.</li>
   <li>"Mutating" the function and its parameters while searching for strategies (e.g. a genetic or neural-network algorithm).</li>
-  <li>Driving a UI that offers every function applicable to a series and adjusts its parameters from the metadata.</li>
-  <li>Generating glue code or wrappers for higher-level languages.</li>
+  <li>Populating a charting app: the indicator menu and each settings dialog come straight from the metadata.</li>
 </ul>
-<p>If you only need a handful of specific functions, <a href="#direct_call">batch processing</a> is simpler.</p>
+<p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
 
 <h3 id="unstable_period">4.2 Unstable Period</h3>
 <p>Some TA functions provides different results depending of the &quot;starting point&quot; of the data being
