@@ -77,12 +77,11 @@ TA_RetCode TA_Shutdown( void );</pre>
 <p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it single-threaded, typically from the last remaining thread just before your application exits.</p>
 
 <h3 id="direct_call">3.2 Batch Processing</h3>
-All functions are simple "array processing" functions. You provides the inputs with an array, and the the output is written in a caller provided output array.<br/>
+Every function follows the same simple pattern: it reads its inputs from arrays you pass in and writes its results to buffers you allocate.<br/>
 <br/>
-The number of data written will NEVER exceed the number of elements requested to be calculated (with the startIdx and endIdx explained below).<br/>
+A function never writes more elements than you request, so the buffers only need to cover the startIdx-to-endIdx range.<br/>
 
-Here is an example:
-We will dissect the TA_MA function allowing to calculate a simple moving average.
+As an example, let's walk through TA_MA, a function to calculate a moving average.
 <pre>TA_RetCode TA_MA(&nbsp;<span style="background-color: #66FFFF; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startIdx,</span>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #66FFFF; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; endIdx,</span>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #00FF00; color: #000">const double&nbsp;inReal[],</span>
@@ -93,22 +92,22 @@ We will dissect the TA_MA function allowing to calculate a simple moving average
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00; color: #000">double&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; outReal[]</span>&nbsp;<span lang="en-us">&nbsp;&nbsp;</span>)
 </pre>
 
-All TA functions use the same calling pattern, divided in 4 groups:
+All TA functions use the same calling pattern, divided into 4 groups:
 <ul>
 <li>
-<span style="background-color: #66FFFF; color: #000">The output will be calculated only for the range specified by startIdx to endIdx. These are zero base index into the input arrays.</span></li>
+<span style="background-color: #66FFFF; color: #000">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input arrays.</span></li>
 <li>
-<span style="background-color: #00FF00; color: #000">One or more input arrays are then specified. Typically, these are going to be the "price" data. In that example there is only one input. All inputs parameter name starts with &quot;in&quot;.</span>
+<span style="background-color: #00FF00; color: #000">One or more input arrays are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with &quot;in&quot;.</span>
 </li>
-<li><span style="background-color: #C0C0C0; color: #000">Zero or more optional inputs may need to be specified. In that example there are 2 optional inputs. These parameters allow more control specific to the function. If you do not care about a particular optIn just specify TA_INTEGER_DEFAULT or TA_REAL_DEFAULT (depending on the type).</span>
+<li><span style="background-color: #C0C0C0; color: #000">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. If you do not care about a particular optIn, just specify TA_INTEGER_DEFAULT or TA_REAL_DEFAULT (depending on the type).</span>
 </li>
 <li>
-<span style="background-color: #FFFF00; color: #000">One or more output arrays are finally specified. In that example there is only one output (outReal). The params outBegIdx and outNbElement are always specified once before the output arrays.</span>
+<span style="background-color: #FFFF00; color: #000">One or more output arrays come last. In this example there is only one output (outReal). The parameters outBegIdx and outNbElement always come just before the output arrays.</span>
 </li>
 </ul>
-<p>This calling pattern provides control on calculating ONLY the portion of data needed for your app. It is slightly complex, but it enables speed/memory optimizations.
+<p>This calling pattern takes some getting used to, but it lets your app spend time and memory only on the data it actually needs.
 </p>
-<p>Example calculating a 30 days simple moving average (SMA) of daily closing prices:</p>
+<p>For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:</p>
 <div align="justify">
 <pre>TA_Real    closePrice[400];
 TA_Real    out[400];
@@ -130,17 +129,15 @@ for( i=0; i &lt; outNbElement; i++ )
    printf( &quot;Day %d = %f\n&quot;, outBeg+i, out[i] );
 </pre>
 </div>
-<p>After the call, it is important to check the value returned by outBeg and outNbElement. Even if it was requested to calculate for the whole range (from 0 to 399), the moving average is not valid until the 30th day. Consequently, outBeg will be 29 (zero base)&nbsp; and
-outNbElement will be 400-29 = 371. In other words, only the first 371 elements of out[] are valid, and these could be calculated only
-starting at the 30th element of the input array.</p>
-<p>As an alternative example, if you would have requested to calculate only in
-the &quot;125 to 225&quot; range (with startIdx and endIdx), the outBeg will be
-125 and outNbElement will be 100. (the &quot;30&quot; minimum required is not an
-issue because we dispose of 125 closing price before the start of the requested
-range...). As you may have already understand, the &quot;out&quot; array will be
-written only for its first 100 elements. The rest will be left untouched.</p>
-<p>Here is another example. In that case we want to calculate a 14 bars exponential moving average
-only for 1 price bar in particular (say the last day of 300 price bar):&nbsp;</p>
+<p>After the call, it is important to check the values returned in outBeg and outNbElement. Even though we requested the whole range (0 to 399), a 30-day average is not defined until the 30th day. Consequently, outBeg will be 29 (zero-based) and
+outNbElement will be 400-29 = 371. In other words, only the first 371 elements of out[] are written, and they correspond to input elements 29 through 399.</p>
+<p>As another example, if you had requested only the range 125 to 225, outBeg
+would be 125 and outNbElement would be 101 (endIdx is inclusive: 225-125+1).
+The 30-day minimum is not a problem here, because the 125 closing prices before
+the requested range provide the needed history. As you may have guessed, only
+the first 101 elements of out[] are written; the rest is left untouched.</p>
+<p>Here is another example. This time we calculate a 14-bar exponential moving average
+for a single price bar (say, the last of 300 bars):</p>
 <div align="justify">
 <pre>TA_Real    closePrice[300];
 TA_Real    out;
@@ -156,9 +153,9 @@ TA_Integer outNbElement;</pre>
                  <span style="background-color: #C0C0C0; color: #000" lang="en-us">14</span>, <span style="background-color: #C0C0C0; color: #000">TA_MAType_EMA</span>,
                  <span style="background-color: #FFFF00; color: #000">&amp;outBeg</span>, <span style="background-color: #FFFF00; color: #000">&amp;outNbElement</span>, <span style="background-color: #FFFF00; color: #000">&amp;out</span> );</pre>
 </div>
-<p>In that example: outBeg will be 299,&nbsp; outNbElement will be 1, and only one value gets written into out.</p>
-<p>In the case that you do not provide enough data to even being able to calculate at least one value, outNbElement will be 0 and outBeg shall&nbsp; be ignored.</p>
-<p>If the input and output of a TA function are of the same type, the caller can re-use the input buffer for storing <u>one of the output</u> of the TA function. The following example will work:</p>
+<p>In this example, outBeg will be 299, outNbElement will be 1, and only one value is written into out.</p>
+<p>If you do not provide enough data to calculate even one value, outNbElement will be 0 and outBeg should be ignored.</p>
+<p>If the input and output of a TA function are of the same type, the caller can reuse the input buffer to store <u>one of the outputs</u>. The following example works:</p>
 <div align="justify">
 <pre>#define BUFFER_SIZE 100
 TA_Real buffer[BUFFER_SIZE];
@@ -168,7 +165,7 @@ retCode = TA_MA( <span style="background-color: #00FFFF; color: #000" lang="en-u
                  <span style="background-color: #C0C0C0; color: #000">30</span>, <span style="background-color: #C0C0C0; color: #000">TA_MAType_SMA</span>,
                  <span style="background-color: #FFFF00; color: #000">&amp;outBeg</span>, <span style="background-color: #FFFF00; color: #000">&amp;outNbElement</span>, <span style="background-color: #FFFF00; color: #000">&amp;buffer[0]</span> );</pre>
 </div>
-<p>Of course, the input is overwritten, but this capability diminish needs for temporary memory buffers. This capability is true for all TA functions.</p>
+<p>Of course, the input is overwritten, but this avoids allocating a temporary buffer. All TA functions support this.</p>
 <h3 id="output_size" align="justify">3.3 Output Size</h3>
 <p>
 It is important that the output array is large enough. Depending of your needs, you might find one of the following method useful to determine the output allocation size. All these methods works consistently for all TA functions:</p>
