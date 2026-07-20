@@ -68,7 +68,7 @@ For windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bits and <b>C:\Prog
 
 <h2 id="ta_func">3.0 Calling into TA-Lib</h2>
 
-<p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">headers in include/*.h</a>.</p>
+<p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">the include/*.h headers</a>.</p>
 
 <h3 id="init">3.1 Initialize and Shutdown</h3>
 <pre>TA_RetCode TA_Initialize( void );
@@ -199,8 +199,8 @@ it is TA_SMA_Lookback.</p>
 (<a href="/api/unstable-period/#api">TA_SetUnstablePeriod</a>,
 <a href="/api/unstable-period/#api">TA_GetUnstablePeriod</a>) controls how many of those early values are discarded. See the <a href="/api/unstable-period/">Unstable Period</a> page for details and the list of affected functions.</p>
 <h3 id="input_type">4.3 Input Type: float vs. double</h3>
-<p>Each TA function have two implementation. One accepts input arrays of float and the other accepts double. The float version has a &quot;TA_S_&quot; suffix e.g. for TA_MA there is an equivalent TA_S_MA function.</p>
-<pre>TA_RetCode TA_MA( int     startIdx,
+<p>Each TA function has two implementations: one accepts input arrays of double, the other of float. The float version carries the &quot;TA_S_&quot; prefix, e.g. TA_S_MA is the float equivalent of TA_MA.</p>
+<pre>TA_RetCode TA_MA( int          startIdx,
                   int          endIdx,
                   <b>const double inReal[]</b>,
                   int          optInTimePeriod,
@@ -209,9 +209,9 @@ it is TA_SMA_Lookback.</p>
                   int         *outNbElement,
                   double       outReal[] );
 </pre>
-<pre>TA_RetCode TA_S_MA( int     startIdx,
+<pre>TA_RetCode TA_S_MA( int          startIdx,
                     int          endIdx,
-                    <b>const float inReal[]</b>,
+                    <b>const float  inReal[]</b>,
                     int          optInTimePeriod,
                     TA_MAType    optInMAType,
                     int         *outBegIdx,
@@ -219,23 +219,23 @@ it is TA_SMA_Lookback.</p>
                     double       outReal[] );
 </pre>
 
-<p>Internally both version do all the calculation using double e.g. when an element of a float array is accessed, it is changed to double. Consequently, both function will produce the same output</p>
-<p>Some apps have their price bar data already loaded as float. The TA_S_XXXX functions allows to digest these directly (no copy needed) while still maintaining all intermediate calculation as double.
+<p>Internally, both versions do all calculations in double &mdash; each float element is converted to double when read. Consequently, both functions produce the same output, bit-for-bit.</p>
+<p>Some apps already hold their price data as float. The TA_S_XXXX functions consume such arrays directly (no conversion copy needed) while keeping every intermediate calculation in double.
 </p>
 
 <h3 id="multithreading">4.4 High-performance multi-threading</h3>
 
-<p>TA-Lib is multi-thread safe where it matters the most for performance: When calling any TA functions (e.g. TA_SMA, TA_RSI etc... )</p>
+<p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 
-<p>One important caveat is the initialization of the "global settings" must first be done from a single thread. That includes calls to:</p>
+<p>One important caveat: the "global settings" must first be initialized from a single thread. That includes calls to:</p>
 <ul>
   <li><a href="#init">TA_Initialize</a></li>
   <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>
 
-<p>After you are done with these initial calls, the application can start performing multi-thread calls with the rest of the API (including the ta_abstract.h API).</p>
+<p>Once these initial calls are done, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface).</p>
 
-<p>One exception to the rule is <a href="#init">TA_Shutdown()</a> which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
+<p>The exception is <a href="#init">TA_Shutdown()</a>, which must be called single-threaded (typically from the last remaining thread just before your application exits).</p>
 
-<p>Note: TA-Lib assumes it is link to a thread safe malloc/free runtime library, which is the default on all modern platforms (Linux,Windows,Mac). In other word, safe with any compiler supporting C11 or more recent.</p>
+<p>Note: TA-Lib assumes it is linked against a thread-safe malloc/free runtime, which is the default on all modern platforms (Linux, Windows, Mac). In other words, any toolchain supporting C11 or newer is safe.</p>
