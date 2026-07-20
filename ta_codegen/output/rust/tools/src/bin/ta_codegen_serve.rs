@@ -4,7 +4,7 @@
 use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
-use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, Compatibility};
+use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};
 use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptDomain};
 
@@ -14666,12 +14666,11 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
         }
         "set_compatibility" => {
             let mode = params["mode"].as_u64().unwrap_or(0);
-            let compat = match mode {
-                1 => Compatibility::Metastock,
-                _ => Compatibility::Default,
-            };
-            *core = core.to_builder().compatibility(compat).build();
-            "{\"status\":\"ok\"}".to_string()
+            if mode == 0 {
+                "{\"status\":\"ok\"}".to_string()
+            } else {
+                "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string()
+            }
         }
         "eval_predicate" => {
             let which = params["which"].as_i64().unwrap_or(0);
@@ -15531,6 +15530,9 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -15553,8 +15555,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.accbands(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.accbands_lookback(optInTimePeriod);
@@ -15629,6 +15630,9 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -15648,8 +15652,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.acos(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.acos_lookback();
@@ -15712,6 +15715,9 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -15731,8 +15737,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.ad(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.ad_lookback();
@@ -15795,6 +15800,9 @@ fn sv_add(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -15814,8 +15822,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.add(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.add_lookback();
@@ -15878,6 +15885,9 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(3) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -15900,7 +15910,6 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.adosc(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut beg, &mut nb, &mut b0);
@@ -15964,6 +15973,9 @@ fn sv_adx(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -15985,7 +15997,6 @@ fn sv_adx(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(0usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.adx(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -16049,6 +16060,9 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16070,7 +16084,6 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(1usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(0usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
@@ -16135,6 +16148,9 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -16158,7 +16174,6 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -16225,6 +16240,9 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16246,8 +16264,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.aroon(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.aroon_lookback(optInTimePeriod);
@@ -16316,6 +16333,9 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16336,8 +16356,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.aroonosc(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.aroonosc_lookback(optInTimePeriod);
@@ -16400,6 +16419,9 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -16419,8 +16441,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.asin(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.asin_lookback();
@@ -16483,6 +16504,9 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -16502,8 +16526,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.atan(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.atan_lookback();
@@ -16566,6 +16589,9 @@ fn sv_atr(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16587,7 +16613,6 @@ fn sv_atr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(2usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.atr(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -16651,6 +16676,9 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16671,8 +16699,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.avgdev(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.avgdev_lookback(optInTimePeriod);
@@ -16735,6 +16762,9 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -16754,8 +16784,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.avgprice(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.avgprice_lookback();
@@ -16818,6 +16847,9 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
@@ -16844,7 +16876,6 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -16923,6 +16954,9 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -16943,8 +16977,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.beta(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.beta_lookback(optInTimePeriod);
@@ -17007,6 +17040,9 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -17026,8 +17062,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.bop(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.bop_lookback();
@@ -17090,6 +17125,9 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17110,8 +17148,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.cci(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.cci_lookback(optInTimePeriod);
@@ -17174,6 +17211,9 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17195,7 +17235,6 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl2crows(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17261,6 +17300,9 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17282,7 +17324,6 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3blackcrows(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17348,6 +17389,9 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17369,7 +17413,6 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3inside(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17435,6 +17478,9 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17456,7 +17502,6 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3linestrike(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17522,6 +17567,9 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17543,7 +17591,6 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3outside(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17609,6 +17656,9 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17630,7 +17680,6 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3starsinsouth(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17696,6 +17745,9 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17717,7 +17769,6 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdl3whitesoldiers(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17783,6 +17834,9 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -17805,7 +17859,6 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlabandonedbaby(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -17871,6 +17924,9 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17892,7 +17948,6 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdladvanceblock(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -17958,6 +18013,9 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -17979,7 +18037,6 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlbelthold(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18045,6 +18102,9 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18066,7 +18126,6 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlbreakaway(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18132,6 +18191,9 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18153,7 +18215,6 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlclosingmarubozu(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18219,6 +18280,9 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18240,7 +18304,6 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlconcealbabyswall(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18306,6 +18369,9 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18327,7 +18393,6 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlcounterattack(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18393,6 +18458,9 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5);
     let mut fz_o = vec![0.0f64; svN];
@@ -18415,7 +18483,6 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdldarkcloudcover(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -18481,6 +18548,9 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18502,7 +18572,6 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdldoji(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18568,6 +18637,9 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18589,7 +18661,6 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdldojistar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18655,6 +18726,9 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18676,7 +18750,6 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdldragonflydoji(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18742,6 +18815,9 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -18763,7 +18839,6 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlengulfing(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -18829,6 +18904,9 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -18851,7 +18929,6 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdleveningdojistar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -18917,6 +18994,9 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -18939,7 +19019,6 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdleveningstar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -19005,6 +19084,9 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19026,7 +19108,6 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlgapsidesidewhite(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19092,6 +19173,9 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19113,7 +19197,6 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlgravestonedoji(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19179,6 +19262,9 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19200,7 +19286,6 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhammer(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19266,6 +19351,9 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19287,7 +19375,6 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhangingman(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19353,6 +19440,9 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19374,7 +19464,6 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlharami(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19440,6 +19529,9 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19461,7 +19553,6 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlharamicross(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19527,6 +19618,9 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19548,7 +19642,6 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhighwave(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19614,6 +19707,9 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19635,7 +19731,6 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhikkake(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19701,6 +19796,9 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19722,7 +19820,6 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhikkakemod(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19788,6 +19885,9 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19809,7 +19909,6 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlhomingpigeon(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19875,6 +19974,9 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19896,7 +19998,6 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlidentical3crows(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -19962,6 +20063,9 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -19983,7 +20087,6 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlinneck(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20049,6 +20152,9 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20070,7 +20176,6 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlinvertedhammer(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20136,6 +20241,9 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20157,7 +20265,6 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlkicking(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20223,6 +20330,9 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20244,7 +20354,6 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlkickingbylength(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20310,6 +20419,9 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20331,7 +20443,6 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlladderbottom(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20397,6 +20508,9 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20418,7 +20532,6 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdllongleggeddoji(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20484,6 +20597,9 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20505,7 +20621,6 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdllongline(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20571,6 +20686,9 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20592,7 +20710,6 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlmarubozu(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20658,6 +20775,9 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -20679,7 +20799,6 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlmatchinglow(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -20745,6 +20864,9 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5);
     let mut fz_o = vec![0.0f64; svN];
@@ -20767,7 +20889,6 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlmathold(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -20833,6 +20954,9 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -20855,7 +20979,6 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlmorningdojistar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -20921,6 +21044,9 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -20943,7 +21069,6 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlmorningstar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
@@ -21009,6 +21134,9 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21030,7 +21158,6 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlonneck(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21096,6 +21223,9 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21117,7 +21247,6 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlpiercing(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21183,6 +21312,9 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21204,7 +21336,6 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlrickshawman(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21270,6 +21401,9 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21291,7 +21425,6 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlrisefall3methods(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21357,6 +21490,9 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21378,7 +21514,6 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlseparatinglines(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21444,6 +21579,9 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21465,7 +21603,6 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlshootingstar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21531,6 +21668,9 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21552,7 +21692,6 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlshortline(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21618,6 +21757,9 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21639,7 +21781,6 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlspinningtop(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21705,6 +21846,9 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21726,7 +21870,6 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlstalledpattern(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21792,6 +21935,9 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21813,7 +21959,6 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlsticksandwich(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21879,6 +22024,9 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21900,7 +22048,6 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdltakuri(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -21966,6 +22113,9 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -21987,7 +22137,6 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdltasukigap(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22053,6 +22202,9 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22074,7 +22226,6 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlthrusting(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22140,6 +22291,9 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22161,7 +22315,6 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdltristar(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22227,6 +22380,9 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22248,7 +22404,6 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlunique3river(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22314,6 +22469,9 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22335,7 +22493,6 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlupsidegap2crows(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22401,6 +22558,9 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22422,7 +22582,6 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
         let c2 = cb.build();
         let rc = c2.cdlxsidegap3methods(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -22488,6 +22647,9 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -22507,8 +22669,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.ceil(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.ceil_lookback();
@@ -22571,6 +22732,9 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22592,7 +22756,6 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(3usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.cmo(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -22656,6 +22819,9 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22676,8 +22842,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.cmou(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.cmou_lookback(optInTimePeriod);
@@ -22740,6 +22905,9 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -22760,8 +22928,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.correl(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.correl_lookback(optInTimePeriod);
@@ -22824,6 +22991,9 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -22843,8 +23013,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.cos(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.cos_lookback();
@@ -22907,6 +23076,9 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -22926,8 +23098,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.cosh(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.cosh_lookback();
@@ -22990,6 +23161,9 @@ fn sv_dema(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -23011,7 +23185,6 @@ fn sv_dema(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.dema(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -23075,6 +23248,9 @@ fn sv_div(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23094,8 +23270,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.div(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.div_lookback();
@@ -23158,6 +23333,9 @@ fn sv_dx(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -23179,7 +23357,6 @@ fn sv_dx(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(4usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.dx(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -23243,6 +23420,9 @@ fn sv_ema(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -23264,7 +23444,6 @@ fn sv_ema(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ema(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -23328,6 +23507,9 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23347,8 +23529,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.exp(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.exp_lookback();
@@ -23411,6 +23592,9 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23430,8 +23614,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.floor(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.floor_lookback();
@@ -23494,6 +23677,9 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23514,7 +23700,6 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(6usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_dcperiod(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -23578,6 +23763,9 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23598,7 +23786,6 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(7usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_dcphase(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -23662,6 +23849,9 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23683,7 +23873,6 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(8usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_phasor(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
@@ -23753,6 +23942,9 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23774,7 +23966,6 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(9usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_sine(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
@@ -23844,6 +24035,9 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23864,7 +24058,6 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(10usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_trendline(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -23928,6 +24121,9 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23948,7 +24144,6 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(11usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.ht_trendmode(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
@@ -24012,6 +24207,9 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24032,8 +24230,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.imi(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.imi_lookback(optInTimePeriod);
@@ -24096,6 +24293,9 @@ fn sv_kama(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24117,7 +24317,6 @@ fn sv_kama(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.kama(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -24181,6 +24380,9 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24201,8 +24403,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.linearreg(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.linearreg_lookback(optInTimePeriod);
@@ -24265,6 +24466,9 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24285,8 +24489,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.linearreg_angle(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.linearreg_angle_lookback(optInTimePeriod);
@@ -24349,6 +24552,9 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24369,8 +24575,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.linearreg_intercept(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.linearreg_intercept_lookback(optInTimePeriod);
@@ -24433,6 +24638,9 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24453,8 +24661,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.linearreg_slope(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.linearreg_slope_lookback(optInTimePeriod);
@@ -24517,6 +24724,9 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -24536,8 +24746,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.ln(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.ln_lookback();
@@ -24600,6 +24809,9 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -24619,8 +24831,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.log10(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.log10_lookback();
@@ -24683,6 +24894,9 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -24705,7 +24919,6 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -24772,6 +24985,9 @@ fn sv_macd(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
@@ -24797,7 +25013,6 @@ fn sv_macd(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.macd(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
@@ -24873,6 +25088,9 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInFastMAType = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
@@ -24901,7 +25119,6 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -24980,6 +25197,9 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25003,7 +25223,6 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.macdfix(0, svN - 1, &fz_c, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
@@ -25079,6 +25298,9 @@ fn sv_mama(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastLimit = params["optInFastLimit"].as_f64().unwrap_or(0.5);
     let optInSlowLimit = params["optInSlowLimit"].as_f64().unwrap_or(0.05);
     let mut fz_o = vec![0.0f64; svN];
@@ -25102,7 +25324,6 @@ fn sv_mama(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.mama(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut beg, &mut nb, &mut b0, &mut b1);
@@ -25172,6 +25393,9 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
     let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
@@ -25196,7 +25420,6 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -25263,6 +25486,9 @@ fn sv_max(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25283,8 +25509,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.max(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.max_lookback(optInTimePeriod);
@@ -25347,6 +25572,9 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25367,8 +25595,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.maxindex(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.maxindex_lookback(optInTimePeriod);
@@ -25431,6 +25658,9 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -25450,8 +25680,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.medprice(0, svN - 1, &fz_h, &fz_l, &mut beg, &mut nb, &mut b0);
         let lb = c2.medprice_lookback();
@@ -25514,6 +25743,9 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25534,8 +25766,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.mfi(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.mfi_lookback(optInTimePeriod);
@@ -25598,6 +25829,9 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25618,8 +25852,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.midpoint(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.midpoint_lookback(optInTimePeriod);
@@ -25682,6 +25915,9 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25702,8 +25938,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.midprice(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.midprice_lookback(optInTimePeriod);
@@ -25766,6 +26001,9 @@ fn sv_min(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25786,8 +26024,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.min(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.min_lookback(optInTimePeriod);
@@ -25850,6 +26087,9 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25870,8 +26110,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.minindex(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.minindex_lookback(optInTimePeriod);
@@ -25934,6 +26173,9 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25955,8 +26197,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.minmax(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.minmax_lookback(optInTimePeriod);
@@ -26025,6 +26266,9 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26046,8 +26290,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.minmaxindex(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.minmaxindex_lookback(optInTimePeriod);
@@ -26116,6 +26359,9 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26137,7 +26383,6 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(16usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.minus_di(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -26201,6 +26446,9 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26222,7 +26470,6 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(17usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.minus_dm(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -26286,6 +26533,9 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26306,8 +26556,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.mom(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.mom_lookback(optInTimePeriod);
@@ -26370,6 +26619,9 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26389,8 +26641,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.mult(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.mult_lookback();
@@ -26453,6 +26704,9 @@ fn sv_natr(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26474,7 +26728,6 @@ fn sv_natr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(18usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.natr(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -26538,6 +26791,9 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26557,8 +26813,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.nvi(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.nvi_lookback();
@@ -26621,6 +26876,9 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26640,8 +26898,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.obv(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.obv_lookback();
@@ -26704,6 +26961,9 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26725,7 +26985,6 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(19usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.plus_di(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -26789,6 +27048,9 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26810,7 +27072,6 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(20usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.plus_dm(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -26874,6 +27135,9 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -26897,7 +27161,6 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -26964,6 +27227,9 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26983,8 +27249,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.pvi(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.pvi_lookback();
@@ -27047,6 +27312,9 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -27070,7 +27338,6 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -27137,6 +27404,9 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27157,8 +27427,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.roc(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.roc_lookback(optInTimePeriod);
@@ -27221,6 +27490,9 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27241,8 +27513,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.rocp(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.rocp_lookback(optInTimePeriod);
@@ -27305,6 +27576,9 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27325,8 +27599,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.rocr(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.rocr_lookback(optInTimePeriod);
@@ -27389,6 +27662,9 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27409,8 +27685,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.rocr100(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.rocr100_lookback(optInTimePeriod);
@@ -27473,6 +27748,9 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27494,7 +27772,6 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.rsi(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -27558,6 +27835,9 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInAcceleration = params["optInAcceleration"].as_f64().unwrap_or(0.02);
     let optInMaximum = params["optInMaximum"].as_f64().unwrap_or(0.2);
     let mut fz_o = vec![0.0f64; svN];
@@ -27579,8 +27859,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sar(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut beg, &mut nb, &mut b0);
         let lb = c2.sar_lookback(optInAcceleration, optInMaximum);
@@ -27643,6 +27922,9 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInStartValue = params["optInStartValue"].as_f64().unwrap_or(0.0);
     let optInOffsetOnReverse = params["optInOffsetOnReverse"].as_f64().unwrap_or(0.0);
     let optInAccelerationInitLong = params["optInAccelerationInitLong"].as_f64().unwrap_or(0.02);
@@ -27670,8 +27952,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sarext(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut beg, &mut nb, &mut b0);
         let lb = c2.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -27734,6 +28015,9 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -27753,8 +28037,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sin(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.sin_lookback();
@@ -27817,6 +28100,9 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -27836,8 +28122,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sinh(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.sinh_lookback();
@@ -27900,6 +28185,9 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27920,8 +28208,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sma(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.sma_lookback(optInTimePeriod);
@@ -27984,6 +28271,9 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -28003,8 +28293,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sqrt(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.sqrt_lookback();
@@ -28067,6 +28356,9 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -28088,8 +28380,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.stddev(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
         let lb = c2.stddev_lookback(optInTimePeriod, optInNbDev);
@@ -28152,6 +28443,9 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
     let optInSlowK_MAType = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
@@ -28178,7 +28472,6 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -28251,6 +28544,9 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
     let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
@@ -28275,7 +28571,6 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
@@ -28348,6 +28643,9 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
@@ -28373,7 +28671,6 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(22usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -28448,6 +28745,9 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -28467,8 +28767,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sub(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.sub_lookback();
@@ -28531,6 +28830,9 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28551,8 +28853,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.sum(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.sum_lookback(optInTimePeriod);
@@ -28615,6 +28916,9 @@ fn sv_t3(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInVFactor = params["optInVFactor"].as_f64().unwrap_or(0.7);
     let mut fz_o = vec![0.0f64; svN];
@@ -28637,7 +28941,6 @@ fn sv_t3(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.t3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut beg, &mut nb, &mut b0);
@@ -28701,6 +29004,9 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -28720,8 +29026,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.tan(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.tan_lookback();
@@ -28784,6 +29089,9 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -28803,8 +29111,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.tanh(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.tanh_lookback();
@@ -28867,6 +29174,9 @@ fn sv_tema(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28888,7 +29198,6 @@ fn sv_tema(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.tema(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -28952,6 +29261,9 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -28971,8 +29283,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.trange(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.trange_lookback();
@@ -29035,6 +29346,9 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29055,8 +29369,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.trima(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.trima_lookback(optInTimePeriod);
@@ -29119,6 +29432,9 @@ fn sv_trix(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29140,7 +29456,6 @@ fn sv_trix(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.trix(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -29204,6 +29519,9 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29224,8 +29542,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.tsf(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.tsf_lookback(optInTimePeriod);
@@ -29288,6 +29605,9 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -29307,8 +29627,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.typprice(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.typprice_lookback();
@@ -29371,6 +29690,9 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod1 = params["optInTimePeriod1"].as_i64().unwrap_or(7) as i32;
     let optInTimePeriod2 = params["optInTimePeriod2"].as_i64().unwrap_or(14) as i32;
     let optInTimePeriod3 = params["optInTimePeriod3"].as_i64().unwrap_or(28) as i32;
@@ -29393,8 +29715,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.ultosc(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut beg, &mut nb, &mut b0);
         let lb = c2.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -29457,6 +29778,9 @@ fn sv_var(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -29478,8 +29802,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.var(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
         let lb = c2.var_lookback(optInTimePeriod, optInNbDev);
@@ -29542,6 +29865,9 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -29561,8 +29887,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.wclprice(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.wclprice_lookback();
@@ -29625,6 +29950,9 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29645,8 +29973,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.willr(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.willr_lookback(optInTimePeriod);
@@ -29709,6 +30036,9 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     if svN > 256 { svN = 256; }
     let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29729,8 +30059,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let mut cb = core.to_builder();
-        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });
+        let cb = core.to_builder();
         let c2 = cb.build();
         let rc = c2.wma(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.wma_lookback(optInTimePeriod);

@@ -102,8 +102,6 @@ impl Core {
     ///
     /// * Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple
     ///   period sums of Chande's original definition.
-    /// * In Metastock-compatibility mode, an extra initial bar is emitted using a simple gain/loss
-    ///   average.
     ///
     /// # Arguments
     ///

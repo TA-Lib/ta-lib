@@ -10,7 +10,6 @@ Initial avgGain/avgLoss = simple mean of up/down moves over the period, then Wil
 
 ## Notes
 
-- In Metastock-compatibility mode an extra initial value is emitted, treating the first bar as having no gain or loss.
 
 ## Inputs
 

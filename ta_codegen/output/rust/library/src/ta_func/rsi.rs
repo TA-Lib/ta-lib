@@ -98,11 +98,6 @@ impl Core {
     /// Initial avgGain/avgLoss = simple mean of up/down moves over the period, then Wilder-smoothed each bar: $avg = (avg_{prev}\cdot(period-1) + move)/period$. $RSI = 100\cdot avgGain/(avgGain+avgLoss)$ (equivalent to $100 - 100/(1+RS)$).
     /// ```
     ///
-    /// # Notes
-    ///
-    /// * In Metastock-compatibility mode an extra initial value is emitted, treating the first bar
-    ///   as having no gain or loss.
-    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

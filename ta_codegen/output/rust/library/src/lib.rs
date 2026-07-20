@@ -41,15 +41,14 @@
 //!   means no output was produced.
 //!
 //! [`Core`] is immutable after construction: its per-instance settings — unstable
-//! period, Metastock [`Compatibility`], and candlestick thresholds — are chosen up
-//! front with [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
+//! period and candlestick thresholds — are chosen up front with
+//! [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
 //! can be shared read-only across threads (e.g. via `Arc`) with no locking:
 //!
 //! ```
-//! use ta_lib::{Core, Compatibility, FuncUnstId};
+//! use ta_lib::{Core, FuncUnstId};
 //!
 //! let core = Core::builder()
-//!     .compatibility(Compatibility::Metastock)
 //!     .unstable_period(FuncUnstId::Ema, 10)
 //!     .build();
 //! ```

@@ -11,11 +11,10 @@ Exponential moving average that weights recent prices more heavily via a recursi
 
 ## Formula
 
-k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed (DEFAULT): EMA = SMA of first `period` bars.
+k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
 
 ## Notes
 
-- In Metastock compatibility mode the average is seeded with the first price value and the recursion starts at the second bar, rather than the default of seeding with a simple average of the first period bars.
 - A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).
 
 ## Inputs

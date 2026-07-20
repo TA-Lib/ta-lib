@@ -56,6 +56,9 @@ public class Core {
    
    private CandleSetting[] candleSettings;
    
+   /* Pinned to Default: the variant notion is not maintained, so no public
+    * setter is offered. The variant branches below are dead code pending
+    * their removal. */
    private Compatibility compatibility;
    
    /** Creates a new instance of Core */
@@ -176,16 +179,6 @@ public class Core {
    public int GetUnstablePeriod(FuncUnstId id)
    {
       return unstablePeriod[id.ordinal()];
-   }
-   
-   public void SetCompatibility(Compatibility compatibility)
-   {
-      this.compatibility = compatibility;
-   }
-   
-   public Compatibility getCompatibility()
-   {
-      return compatibility;
    }
    
    /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/

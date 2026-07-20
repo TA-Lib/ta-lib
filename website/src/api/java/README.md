@@ -70,7 +70,6 @@ Library settings live on the `Core` instance:
 
 ```java
 core.SetUnstablePeriod(FuncUnstId.Ema, 10);
-core.SetCompatibility(Compatibility.Metastock);
 core.SetCandleSettings(/* ... */);
 ```
 

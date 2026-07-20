@@ -70,6 +70,34 @@ static const CodegenLanguage ALL_LANGUAGES[] = {
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
+/* See test_codegen.h. Rust pins compatibility to Default and exposes no setter,
+ * so its Metastock legs are skipped rather than run vacuously. */
+int codegen_lang_has_compatibility_api(const char *lang)
+{
+    return !(lang && strcmp(lang, "rust") == 0);
+}
+
+/* One line per language per kind of skipped leg, so the coverage a language
+ * cannot take is stated in the log instead of quietly vanishing. */
+#define MAX_COMPAT_NOTES (NUM_LANGUAGES * 4)
+static void note_compat_skip(const char *lang, const char *what)
+{
+    static const char *reportedLang[MAX_COMPAT_NOTES];
+    static const char *reportedWhat[MAX_COMPAT_NOTES];
+    static int nbReported = 0;
+    int i;
+    for( i = 0; i < nbReported; i++ )
+        if( reportedLang[i] == lang && reportedWhat[i] == what ) return;
+    if( nbReported < (int)MAX_COMPAT_NOTES )
+    {
+        reportedLang[nbReported] = lang;
+        reportedWhat[nbReported] = what;
+        nbReported++;
+    }
+    printf("  NOTE [%s]: %s skipped - no compatibility API in this language\n",
+           lang, what);
+}
+
 /* ---- Global timing results store (Task 12) ---- */
 
 #define MAX_FUNCTIONS 200
@@ -1909,8 +1937,14 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     }
 
     /* Metastock-compatibility pass at defaults (both servers AND the
-     * in-process library switched, for the guarded triangle leg). */
-    if( params.codegenError == TA_TEST_PASS )
+     * in-process library switched, for the guarded triangle leg). Languages
+     * with no compatibility API cannot take this leg — skip it out loud. */
+    if( params.codegenError == TA_TEST_PASS &&
+        !codegen_lang_has_compatibility_api(ctx->lang->name) )
+    {
+        note_compat_skip(ctx->lang->name, "sweep Metastock pass");
+    }
+    else if( params.codegenError == TA_TEST_PASS )
     {
         if( sweep_set_compat(params.refCp, 1, params.responseBuf) &&
             sweep_set_compat(params.cp,    1, params.responseBuf) )
@@ -2285,8 +2319,15 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             else if( variant == 2 )
             {
                 /* Metastock leg: defaults vector + enum-sweep vectors (an
-                 * EMA-family arm seeds differently under Metastock). */
+                 * EMA-family arm seeds differently under Metastock). Skipped
+                 * where the language cannot switch mode — the server would
+                 * otherwise just re-verify the Default leg. */
                 if( v != 0 && !vecIsEnum[v] ) continue;
+                if( !codegen_lang_has_compatibility_api(ctx->lang->name) )
+                {
+                    note_compat_skip(ctx->lang->name, "stream Metastock leg");
+                    continue;
+                }
                 compat = 1;
             }
             else if( variant >= 3 )

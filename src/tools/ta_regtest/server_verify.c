@@ -538,6 +538,23 @@ ErrorNumber server_verify(
             printf("  SV WARN [%s]: failed to sync unstable periods\n", funcName);
             continue;
         }
+        if( TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT &&
+            !codegen_lang_has_compatibility_api(lang) )
+        {
+            /* A Metastock leg of a hand-written test, and this language has no
+             * compatibility API (its mode is pinned to Default) — there is
+             * nothing to verify. Reported once per language so the gap shows up
+             * in the log instead of passing vacuously. */
+            static int noted[SV_MAX_PIPES];
+            if( !noted[p] )
+            {
+                noted[p] = 1;
+                printf("  SV NOTE [%s]: non-default compatibility legs skipped "
+                       "- no compatibility API in this language\n",
+                       lang ? lang : "?");
+            }
+            continue;
+        }
         err = sync_compatibility(p);
         if( err != TA_TEST_PASS )
         {

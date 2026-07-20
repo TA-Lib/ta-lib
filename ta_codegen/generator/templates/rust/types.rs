@@ -34,8 +34,12 @@ impl std::fmt::Display for RetCode {
 impl std::error::Error for RetCode {}
 
 /// Compatibility mode for technical analysis calculations.
+///
+/// Crate-internal and pinned to [`Compatibility::Default`]: the variant notion is
+/// not maintained, so the Rust API never exposes a way to select one. The variant
+/// branches in the generated indicators are dead code pending their removal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Compatibility {
+pub(crate) enum Compatibility {
     /// Default TA-Lib compatibility mode.
     Default,
     /// Metastock-compatible calculation mode.
@@ -144,21 +148,20 @@ pub enum CandleSettingType {
 /// Provides access to all TA-Lib technical-analysis functions.
 ///
 /// A `Core` is **immutable after construction**: it holds the value-affecting
-/// globals — per-function unstable periods, Metastock [`Compatibility`], and
-/// candlestick thresholds — and every indicator method takes `&self` and only
-/// *reads* them. That makes `Core` deeply immutable and `Send + Sync`, so a
-/// single instance can be shared read-only across threads (e.g. wrapped in an
-/// `Arc` with concurrent `core.sma(...)` calls) with no locking and no risk of
-/// configuration changing mid-computation.
+/// globals — per-function unstable periods and candlestick thresholds — and
+/// every indicator method takes `&self` and only *reads* them. That makes
+/// `Core` deeply immutable and `Send + Sync`, so a single instance can be shared
+/// read-only across threads (e.g. wrapped in an `Arc` with concurrent
+/// `core.sma(...)` calls) with no locking and no risk of configuration changing
+/// mid-computation.
 ///
 /// Construct one with [`Core::new()`] for all-defaults, or with
 /// [`Core::builder()`] to configure settings up front:
 ///
 /// ```
-/// use ta_lib::{Core, Compatibility, FuncUnstId};
+/// use ta_lib::{Core, FuncUnstId};
 ///
 /// let core = Core::builder()
-///     .compatibility(Compatibility::Metastock)
 ///     .unstable_period(FuncUnstId::Ema, 10)
 ///     .build();
 /// ```
@@ -170,7 +173,7 @@ pub enum CandleSettingType {
 pub struct Core {
     /// Unstable period for each function identified by [`FuncUnstId`].
     pub(crate) unstable_period: [i32; FuncUnstId::FuncUnstAll as usize],
-    /// Compatibility mode (default: [`Compatibility::Default`]).
+    /// Compatibility mode (default: `Compatibility::Default`).
     pub(crate) compatibility: Compatibility,
     /// Candlestick pattern settings.
     pub(crate) candle_settings: CandleSettings,
@@ -197,7 +200,7 @@ impl Core {
     }
 
     /// Seed a [`CoreBuilder`] from this `Core`'s current settings, for
-    /// clone-and-modify: `core.to_builder().compatibility(...).build()`.
+    /// clone-and-modify: `core.to_builder().unstable_period(...).build()`.
     pub fn to_builder(&self) -> CoreBuilder {
         CoreBuilder {
             unstable_period: self.unstable_period,
@@ -209,11 +212,6 @@ impl Core {
     /// Get the unstable period for a specific function.
     pub fn get_unstable_period(&self, id: FuncUnstId) -> i32 {
         self.unstable_period[id as usize]
-    }
-
-    /// Get the current compatibility mode.
-    pub fn get_compatibility(&self) -> Compatibility {
-        self.compatibility
     }
 
     /// Compute candlestick range for the given range type and OHLC values.
@@ -257,10 +255,9 @@ impl Default for Core {
 /// call [`build`](CoreBuilder::build):
 ///
 /// ```
-/// use ta_lib::{Core, Compatibility, FuncUnstId};
+/// use ta_lib::{Core, FuncUnstId};
 ///
 /// let core = Core::builder()
-///     .compatibility(Compatibility::Metastock)
 ///     .unstable_period(FuncUnstId::Ema, 10)
 ///     .build();
 /// ```
@@ -279,13 +276,6 @@ impl CoreBuilder {
             compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
         }
-    }
-
-    /// Set the compatibility mode.
-    #[must_use]
-    pub fn compatibility(mut self, compatibility: Compatibility) -> Self {
-        self.compatibility = compatibility;
-        self
     }
 
     /// Set the unstable period for a specific function.
@@ -350,7 +340,7 @@ mod tests {
     #[test]
     fn new_default_and_empty_builder_are_all_defaults() {
         for core in [Core::new(), Core::default(), Core::builder().build()] {
-            assert_eq!(core.get_compatibility(), Compatibility::Default);
+            assert_eq!(core.compatibility, Compatibility::Default);
             assert!(core.unstable_period.iter().all(|&p| p == 0));
             // A representative candle default (BodyDoji: HighLow range, 10, 0.1).
             assert_eq!(core.candle_settings.body_doji.range_type, 1);
@@ -360,10 +350,17 @@ mod tests {
     }
 
     #[test]
-    fn builder_sets_compatibility_only() {
-        let core = Core::builder().compatibility(Compatibility::Metastock).build();
-        assert_eq!(core.get_compatibility(), Compatibility::Metastock);
-        assert!(core.unstable_period.iter().all(|&p| p == 0));
+    fn compatibility_is_pinned_to_default() {
+        // There is no public setter: every construction path — including the
+        // clone-and-modify one — must leave the mode at Default, so the variant
+        // branches in the generated indicators stay unreachable.
+        let derived = Core::builder()
+            .unstable_period(FuncUnstId::Ema, 10)
+            .build()
+            .to_builder()
+            .unstable_period(FuncUnstId::Rsi, 5)
+            .build();
+        assert_eq!(derived.compatibility, Compatibility::Default);
     }
 
     #[test]
@@ -391,11 +388,9 @@ mod tests {
         let core = Core::builder()
             .unstable_period(FuncUnstId::FuncUnstAll, 7) // all -> 7
             .unstable_period(FuncUnstId::Ema, 3)         // then EMA -> 3
-            .compatibility(Compatibility::Metastock)
             .build();
         assert_eq!(core.get_unstable_period(FuncUnstId::Ema), 3);
         assert_eq!(core.get_unstable_period(FuncUnstId::Rsi), 7);
-        assert_eq!(core.get_compatibility(), Compatibility::Metastock);
     }
 
     #[test]
@@ -425,8 +420,8 @@ mod tests {
 
     #[test]
     fn candle_setting_flows_into_computation() {
-        // A behavioral witness (mirrors `compatibility_setting_changes_computed_output`):
-        // prove a builder candle setting actually reaches the CDL math, not just the
+        // A behavioral witness: prove a builder candle setting actually reaches
+        // the CDL math, not just the
         // `candle_settings` struct. Identical clear candles — real body 4, high-low
         // range 6 — are never dojis at the default BodyDoji threshold (0.1), but a huge
         // factor makes the threshold enormous so every candle qualifies as a doji.
@@ -464,7 +459,6 @@ mod tests {
     #[test]
     fn to_builder_round_trips_and_leaves_original_untouched() {
         let original = Core::builder()
-            .compatibility(Compatibility::Metastock)
             .unstable_period(FuncUnstId::Rsi, 5)
             .candle_setting(
                 CandleSettingType::BodyLong,
@@ -476,35 +470,14 @@ mod tests {
         // The original is immutable and unchanged.
         assert_eq!(original.get_unstable_period(FuncUnstId::Ema), 0);
         assert_eq!(original.get_unstable_period(FuncUnstId::Rsi), 5);
-        // The derived Core inherits ALL three settings (candle_settings included, which
+        // The derived Core inherits the settings (candle_settings included, which
         // guards against to_builder dropping a field), plus the new one.
         assert_eq!(derived.get_unstable_period(FuncUnstId::Rsi), 5);
         assert_eq!(derived.get_unstable_period(FuncUnstId::Ema), 9);
-        assert_eq!(derived.get_compatibility(), Compatibility::Metastock);
         // candle_settings survived the round-trip (default avg_period would be 10).
         assert_eq!(derived.candle_settings.body_long.avg_period, 20);
         assert_eq!(derived.candle_settings.body_long.factor, 1.5);
         assert_eq!(derived.candle_settings.body_long.range_type, 2);
-    }
-
-    #[test]
-    fn compatibility_setting_changes_computed_output() {
-        // EMA is seeded differently under Metastock, so the two configs must
-        // produce different values from the same input.
-        let close: Vec<f64> = (0..40).map(|i| 100.0 + f64::from(i)).collect();
-        let run = |core: &Core| {
-            let mut out = vec![0.0; close.len()];
-            let (mut beg, mut n) = (0usize, 0usize);
-            let rc = core.ema(0, close.len() - 1, &close, 10, &mut beg, &mut n, &mut out);
-            assert_eq!(rc, RetCode::Success);
-            out
-        };
-        let default_out = run(&Core::new());
-        let metastock_out = run(&Core::builder().compatibility(Compatibility::Metastock).build());
-        assert_ne!(
-            default_out[0], metastock_out[0],
-            "Metastock compatibility should change EMA seeding"
-        );
     }
 
     #[test]

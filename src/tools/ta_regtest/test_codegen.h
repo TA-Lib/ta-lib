@@ -14,6 +14,16 @@ ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter);
 
+/* Can this language server select a compatibility variant?
+ * C still carries the deprecated TA_SetCompatibility and .NET P/Invokes into it.
+ * The Rust crate does not: its mode is pinned to Default with no public setter,
+ * so a Metastock leg would silently re-run the Default one — callers must skip
+ * it visibly instead. Java's shipped Core lost its setter too, but the Java
+ * server embeds its own Core copy whose field stays settable, so the Metastock
+ * branches in the generated Java keep their bit-exact coverage.
+ * Returns 1 when the mode can be switched. */
+int codegen_lang_has_compatibility_api(const char *lang);
+
 /* Bit-exact differential fuzz of the current in-process library against the
  * frozen released v0.6.4 exposed as bin/ta_064_serve. Opt-in (--fuzz-064),
  * never part of default/nightly runs. functionFilter: CSV substring filter

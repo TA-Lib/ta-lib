@@ -46,7 +46,8 @@
 
 package com.tictactec.ta.lib;
 
-public enum Compatibility
+/* Package-private: pinned to Default, with no public API to select a variant. */
+enum Compatibility
 {
     Default,
     Metastock

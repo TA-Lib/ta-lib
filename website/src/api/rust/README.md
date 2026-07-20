@@ -75,13 +75,12 @@ Enum parameters (e.g. an `MAType`) and integer parameters are `i32`; real parame
 
 ## Settings
 
-Library settings — [unstable period](/api/#unstable_period), compatibility, and candle settings — live on `Core` and are **immutable after construction**. Set them through the builder:
+Library settings — [unstable period](/api/#unstable_period) and candle settings — live on `Core` and are **immutable after construction**. Set them through the builder:
 
 ```rust
-use ta_lib::{Core, Compatibility, FuncUnstId};
+use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
-    .compatibility(Compatibility::Metastock)
     .unstable_period(FuncUnstId::Ema, 10)
     .build();
 ```

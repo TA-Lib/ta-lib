@@ -3133,7 +3133,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use serde_json::{self, Value};\n");
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
-    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, Compatibility};\n");
+    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptDomain};\n\n");
 
@@ -3641,19 +3641,23 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            }\n");
     s.push_str("        }\n");
 
-    // set_compatibility method
+    // set_compatibility method. The Rust crate exposes no way to select a
+    // compatibility variant (it is pinned to Default), so mode 0 is a no-op and
+    // any other mode is an explicit error — the driver skips that leg rather
+    // than silently comparing a Default run against a Metastock reference.
     s.push_str("        \"set_compatibility\" => {\n");
     s.push_str(
         "            let mode = params[\"mode\"].as_u64().unwrap_or(0);\n",
     );
-    s.push_str("            let compat = match mode {\n");
-    s.push_str("                1 => Compatibility::Metastock,\n");
-    s.push_str("                _ => Compatibility::Default,\n");
-    s.push_str("            };\n");
-    s.push_str("            *core = core.to_builder().compatibility(compat).build();\n");
+    s.push_str("            if mode == 0 {\n");
     s.push_str(
-        "            \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
+        "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
     );
+    s.push_str("            } else {\n");
+    s.push_str(
+        "                \"{\\\"error\\\":\\\"rust has no compatibility API (pinned to Default)\\\"}\".to_string()\n",
+    );
+    s.push_str("            }\n");
     s.push_str("        }\n");
 
     // eval_predicate method — boolean near-zero builtin on each input value.
@@ -4031,6 +4035,11 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    if svN < 2 { svN = 2; }\n    if svN > 256 { svN = 256; }\n");
     s.push_str("    let svK = params[\"unstablePeriod\"].as_i64().unwrap_or(0) as i32;\n");
     s.push_str("    let svCompat = params[\"compatibility\"].as_i64().unwrap_or(0) as i32;\n");
+    // Compatibility is pinned to Default in the Rust crate; a Metastock leg would
+    // silently re-run the Default one, so refuse it instead of passing vacuously.
+    s.push_str("    if svCompat != 0 {\n");
+    s.push_str("        return \"{\\\"error\\\":\\\"rust has no compatibility API (pinned to Default)\\\"}\".to_string();\n");
+    s.push_str("    }\n");
     if candle {
         s.push_str("    let candleLegs = params[\"candleLegs\"].as_i64().unwrap_or(0);\n");
     }
@@ -4128,10 +4137,13 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(rounds);
     s.push_str("    for rd in 0..rounds {\n        let _ = rd;\n");
 
-    // Pinned + configured core for this round.
-    s.push_str("        let mut cb = core.to_builder();\n");
-    s.push_str("        cb = cb.compatibility(if svCompat == 1 { Compatibility::Metastock } else { Compatibility::Default });\n");
-    for id in collect_pin_ids(func, funcs) {
+    // Pinned + configured core for this round. `mut` only when something below
+    // actually reassigns it (no compatibility leg any more — the Rust crate
+    // pins the mode to Default), otherwise rustc warns on every such function.
+    let pin_ids = collect_pin_ids(func, funcs);
+    let cb_mut = if pin_ids.is_empty() && !candle { "" } else { "mut " };
+    let _ = writeln!(s, "        let {cb_mut}cb = core.to_builder();");
+    for id in pin_ids {
         let _ = writeln!(
             s,
             "        if let Some(id) = func_unst_id_from_int({id}usize) {{ cb = cb.unstable_period(id, svK); }}"

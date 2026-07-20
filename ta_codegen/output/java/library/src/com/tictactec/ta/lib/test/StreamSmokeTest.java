@@ -40,11 +40,12 @@
  */
 package com.tictactec.ta.lib.test;
 
-import com.tictactec.ta.lib.Compatibility;
+import com.tictactec.ta.lib.CandleSettingType;
 import com.tictactec.ta.lib.Core;
 import com.tictactec.ta.lib.InsufficientHistoryException;
 import com.tictactec.ta.lib.MAType;
 import com.tictactec.ta.lib.MInteger;
+import com.tictactec.ta.lib.RangeType;
 import com.tictactec.ta.lib.RetCode;
 import com.tictactec.ta.lib.meta.CoreMetaData;
 
@@ -77,10 +78,12 @@ public class StreamSmokeTest {
         double[] close = new double[n];
         double[] high = new double[n];
         double[] low = new double[n];
+        double[] open = new double[n];
         for (int i = 0; i < n; i++) {
             close[i] = 100.0 + 10.0 * Math.sin(0.1 * i) + 0.013 * i;
             high[i] = close[i] + Math.abs(Math.sin(1.3 * i));
             low[i] = close[i] - Math.abs(Math.sin(1.7 * i));
+            open[i] = close[i] - 0.4;   /* a clear (non-doji) real body */
         }
         Core core = new Core();
         MInteger beg = new MInteger(), nb = new MInteger();
@@ -157,13 +160,19 @@ public class StreamSmokeTest {
             ma.update(close[n - 1]);
         }
 
-        /* Settings are per-instance and frozen into the stream at open:
-         * a Metastock-compat core yields a different EMA trajectory. */
-        Core metastock = new Core();
-        metastock.SetCompatibility(Compatibility.Metastock);
-        Core.EmaStream e1 = core.emaOpen(java.util.Arrays.copyOf(close, 60), 21);
-        Core.EmaStream e2 = metastock.emaOpen(java.util.Arrays.copyOf(close, 60), 21);
-        check(!bitEq(e1.value(), e2.value()), "compatibility captured per Core instance");
+        /* Settings are per-instance and frozen into the stream at open: a core
+         * with a huge BodyDoji factor calls every candle a doji, the default
+         * core calls none of these one. */
+        Core tuned = new Core();
+        tuned.SetCandleSettings(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9);
+        Core.CdlDojiStream d1 = core.cdlDojiOpen(
+            java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
+            java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
+        Core.CdlDojiStream d2 = tuned.cdlDojiOpen(
+            java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
+            java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
+        check(d1.value() == 0 && d2.value() == 100,
+              "candle settings captured per Core instance");
 
         /* Reflection layer unchanged: the streaming surface must be invisible
          * to CoreMetaData (RetCode-return + Lookback-pair discovery) — pinned

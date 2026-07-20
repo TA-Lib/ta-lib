@@ -41,14 +41,13 @@ input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 ## Configuration
 
 `Core` is immutable after construction. The value-affecting settings — unstable
-period, Metastock compatibility, and candlestick thresholds — are chosen up front
-with a builder and then frozen:
+period and candlestick thresholds — are chosen up front with a builder and then
+frozen:
 
 ```rust
-use ta_lib::{Core, Compatibility, FuncUnstId};
+use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
-    .compatibility(Compatibility::Metastock)
     .unstable_period(FuncUnstId::Ema, 10)
     .build();
 ```

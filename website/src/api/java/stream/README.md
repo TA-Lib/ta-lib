@@ -48,7 +48,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 - **Warm-up.** `Open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the handle keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same code on a throwaway deep copy (which allocates for windowed indicators — `update` is the cheaper path). `value()` re-reads the last committed value without recomputing.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#unstable_period), compatibility, and candle settings are captured at `Open` and must not change on the owning `Core` while its streams are live.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#unstable_period) and candle settings are captured at `Open` and must not change on the owning `Core` while its streams are live.
 - **Threads.** A handle is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same handle. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Independent handles (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
