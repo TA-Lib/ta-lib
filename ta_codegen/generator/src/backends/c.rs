@@ -176,7 +176,7 @@ fn gen_header_comments(func: &FuncDef) -> String {
 fn gen_header() -> String {
     let mut out = String::new();
     out.push_str(
-        "/* TA-LIB Copyright (c) 1999-2025, Mario Fortier\n\
+        "/* TA-LIB Copyright (c) 1999-2026, Mario Fortier\n\
          * All rights reserved.\n\
          *\n\
          * Redistribution and use in source and binary forms, with or\n\

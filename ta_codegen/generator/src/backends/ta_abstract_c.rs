@@ -21,7 +21,7 @@ use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
 // ---------------------------------------------------------------------------
 
 const LICENSE: &str = "\
-/* TA-LIB Copyright (c) 1999-2025, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2026, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
