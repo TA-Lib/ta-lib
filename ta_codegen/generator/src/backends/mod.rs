@@ -329,9 +329,8 @@ pub fn write_if_changed_silent(path: &std::path::Path, content: &str) {
 /// drift apart. Every function in `ta_codegen/input/`, upper-cased and sorted.
 ///
 /// Returns `(sorted_stems, extras)`; `extras` is always empty (kept for the callers'
-/// signature). The former un-ported `src/ta_func/` stubs (NVI/PVI) are dropped in the
-/// canonical cutover — they are dead (absent from `include/` and the `ta_abstract`
-/// tables, not in the 161-function set).
+/// signature) — every shipped `.c` comes from `ta_codegen/input/`, nothing is picked up
+/// by scanning `src/ta_func/`.
 pub fn sorted_source_stems(funcs: &[FuncDef], _root: &Path) -> (Vec<String>, Vec<String>) {
     let mut names: Vec<String> = funcs.iter().map(|f| f.name.to_uppercase()).collect();
     names.sort();

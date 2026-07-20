@@ -64,10 +64,10 @@ def get_filter(args, prefix):
     return None
 
 
-# Canonical cutover task #7 (reference-as-server): the reference C library is
-# frozen at this immutable tag and checked out in a sibling git worktree, so
-# ta_ref_serve stays a true oracle even after src/ta_func becomes the generated
-# code. See docs/canonical-cutover-runbook.md.
+# Reference-as-server: the reference C library is frozen at this immutable tag
+# and checked out in a sibling git worktree, so ta_ref_serve stays a true oracle
+# now that src/ta_func holds the generated code (comparing against an in-process
+# baseline built from the same tree would be circular).
 REF_TAG = "reference-pre-cutover"
 
 

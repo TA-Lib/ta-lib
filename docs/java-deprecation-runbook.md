@@ -6,11 +6,16 @@ Java-build code has changed yet. The only thing done so far is a docs cosmetic: 
 per-function Java link now points at `ta_codegen/output/java/Core_<NAME>.java` instead of the
 un-renderable 3.2 MB `java/.../Core.java` monolith.
 
-> Like `docs/canonical-cutover-runbook.md`, this is a *careful, reversible, one-step-at-a-time*
+> This is a *careful, reversible, one-step-at-a-time*
 > plan. Every phase has a **green/red checkpoint** and a **rollback**. Do not proceed past a red
-> checkpoint. Coordinate each phase with the maintainer. The guiding constraint: **existing
-> `com.tictactec:ta-lib` users must never be stranded** — dual-publish and a relocation POM before
-> anything is removed.
+> checkpoint. Coordinate each phase with the maintainer.
+>
+> **Green field (maintainer's call, 2026-07-20).** The generated Java library is *not* an upgrade
+> of `com.tictactec:ta-lib:0.4.0`. That artifact has no real user base, the code has diverged too
+> far for an API-compatible path to be honest, and the new library publishes under different
+> coordinates. So: no dual-publish, no API/ABI compatibility promise, and API changes need not be
+> justified against 0.4.0. A relocation POM may still be published as a *signpost* if the old
+> namespace is still ours (§7) — a pointer to the new coordinate, not a drop-in replacement.
 
 ---
 
@@ -52,9 +57,10 @@ no DNS, no renewal, survives as long as the org exists. Bonus: `io.github.ta-lib
 of `ta-lib.github.io`, so a future GitHub Pages site and the Maven namespace are the *same identity*.
 
 **Migration for existing users:** `com.tictactec:ta-lib:0.4.0` **is** on Maven Central (see §7). It is
-immutable and stays resolvable forever, so nothing we publish can break existing pins. A **relocation
-POM** to auto-forward old users is *optional* and depends on still holding Sonatype rights to the
-`com.tictactec` namespace — details and fallback in §7.
+immutable and stays resolvable forever, so nothing we publish can break existing pins — and nothing
+we publish is a drop-in replacement for it either. A **relocation POM** pointing at the new coordinate
+is *optional* and depends on still holding Sonatype rights to the `com.tictactec` namespace — details
+and fallback in §7.
 
 **Website / github.io note (why the GitHub anchor is safe):** the site stays at **ta-lib.org** — it is
 *hosted on* GitHub Pages (the `mkdocs gh-deploy` job pushes to the `gh-pages` branch of
@@ -152,7 +158,11 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
   (sources jar, javadoc jar, GPG signing);
 - **nothing for the abstract layer** (Decision B1: dropped) — no `CoreAnnotated`, no `meta/`;
 - a minimal or zero in-tree test surface — cross-language correctness is already covered by
-  `ta_regtest` driving `TaCodegenServe`, so in-tree JUnit can likely be dropped.
+  `ta_regtest` driving `TaCodegenServe`, so in-tree JUnit can likely be dropped. Note the
+  status quo already is "not run": the checked-in `AllTests.java` / `build.xml` targets are
+  dead (no `junit.jar` in-tree, no script or CI job invokes them), and the Java backend was
+  accepted at cutover on javac-compiles + one sanity call. Decide here: wire it up or
+  formally drop it.
 
 ---
 
@@ -172,18 +182,19 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
   C library + `include/` ABI untouched. **Rollback:** the new tree is additive — delete it; `/java`
   is still the shipped path, nothing lost.
 
-### Phase 2 — Dual-publish one release
-- Publish `io.github.ta-lib:ta-lib:<version>` to Maven Central **and** keep `/java` building/publishing
-  under `com.tictactec` for the same release.
-- **Checkpoint:** both artifacts resolve from a clean consumer project; a smoke test calls `rsi`/`sma`
-  on each. **Rollback:** unpublish/stage only — never release a broken new artifact.
+### Phase 2 — Publish the new coordinate
+- Publish `io.github.ta-lib:ta-lib:<version>` to Maven Central. Nothing is published under
+  `com.tictactec` (green field — see the note at the top).
+- **Checkpoint:** the artifact resolves from a clean consumer project and a smoke test calls
+  `rsi`/`sma`. **Rollback:** unpublish/stage only — never release a broken new artifact.
 
-### Phase 3 — Deprecate `/java`
-- README + changelog notice; `@Deprecated` on the legacy entry points if kept a release longer.
-- Relocation POM on `com.tictactec:ta-lib` → `io.github.ta-lib:ta-lib`.
+### Phase 3 — Retire `/java`
+- README + changelog notice pointing at the new coordinate.
+- Optional relocation POM on `com.tictactec:ta-lib` → `io.github.ta-lib:ta-lib`, as a signpost only:
+  the APIs differ, so a resolved build is not expected to compile unchanged.
 - Repoint any remaining docs/build references from `java/` to `ta_codegen/output/java/`.
 - **Checkpoint:** old-coordinate build resolves via relocation with a warning, not an error.
-  **Rollback:** remove the relocation POM / deprecation notices.
+  **Rollback:** remove the relocation POM / notices.
 
 ### Phase 4 — Remove `/java`
 - **Gating (maintainer's call, 2026-07-08): remove `/java` as soon as the rebuild from
@@ -216,8 +227,9 @@ Central search API). Consequences:
   anyone with it pinned. The new library is a separate coordinate; publishing it can't disturb `0.4.0`.
 - **The new artifact is a fresh listing**, `io.github.ta-lib:ta-lib`, versioned to match the library
   line (e.g. `0.7.x`), *not* a continuation of the `com.tictactec` `0.4.x` series.
-- **Relocation POM is optional and has a prerequisite.** A `<relocation>` POM would auto-forward old
-  users, but it must be published as a *new version under the old coordinate* (e.g.
+- **Relocation POM is optional and has a prerequisite.** A `<relocation>` POM would point old
+  users at the new coordinate (a signpost, not an API-compatible upgrade — the two libraries have
+  diverged), but it must be published as a *new version under the old coordinate* (e.g.
   `com.tictactec:ta-lib:0.4.1`), which requires still holding **Sonatype publish rights to the
   `com.tictactec` namespace** (originally verified via the `tictactec.com` domain, years ago).
   - If that access still exists → publish a relocation POM in Phase 3 (cleanest).

@@ -16,8 +16,15 @@ plus a grouped `website/src/functions/index.md`, written directly into the VuePr
 source tree (`website/`) — the one generated output that lives there rather than under
 `ta_codegen/output/`. (`docs/` itself now holds only hand-written dev-docs.)
 
-> The legacy C generator `gen_code` was **removed** in the canonical cutover (Stage 7);
+> The legacy C generator `gen_code` was **removed** in the canonical cutover (v0.7.1);
 > `ta_codegen` is the only generator.
+
+**Why the C is generated in place and not symlinked** to `ta_codegen/output/c`: a whole-dir
+symlink breaks autotools' per-dir libtool recursion (`make` enters the symlink's *physical*
+path, so the Makefile's relative `../../libtool` fails with `Error 127`), and it would also
+force a packaging dereference step. Real files in `src/` avoid both — and downstream
+consumers (notably the PHP `trader` extension) glob `src/ta_func/*.c` straight out of the
+released source tarball.
 
 **Build separation (important):** the C build systems (CMake + autotools) build **only
 C** — the library + the C tools (`ta_regtest`, `ta_bench`). `ta_codegen` is Rust and is

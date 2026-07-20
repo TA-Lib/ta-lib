@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""ABI gate for the canonical cutover (task #2 / runbook Stage 2).
+"""ABI gate: generated C library vs the frozen pre-cutover reference.
 
 Compares the EXPORTED symbol surface of the GENERATED C library — the CMake
-archive `cmake-build/libta-lib.a`, built from `src/` (which holds the generated C
-post-cutover, option B) — against the FROZEN reference library built from the
-pinned-tag worktree (../ta-lib-ref @ reference-pre-cutover).
+archive `cmake-build/libta-lib.a`, built from `src/` (which holds the generated
+C) — against the FROZEN reference library built from the pinned-tag worktree
+(../ta-lib-ref @ reference-pre-cutover).
 
 Why this is the right check: the build uses no -fvisibility=hidden and no linker
 version script, so on ELF every extern symbol of the static archive is exported
@@ -16,8 +16,11 @@ Pass rule:
     header) is missing from the generated lib — those are the contract downstream
     binaries link against; removing/renaming one is an ABI break.
   - ADDED exported symbols (e.g. *_Unguarded) are ABI-compatible additions. They
-    are reported for the "_Unguarded visibility" decision but do NOT fail the gate
-    (adding symbols never breaks an existing consumer).
+    are reported but do NOT fail the gate (adding symbols never breaks an
+    existing consumer). Decision: accept the additions and deliberately do NOT
+    add -fvisibility=hidden or a version script — the pre-cutover reference
+    exported all its internals too, so export-everything is the status quo.
+    Hardening is a possible future cleanup, not an ABI obligation.
   - Type ABI (enums/structs/typedefs) lives in include/, which the cutover keeps
     in place; the gate verifies include/ is unchanged vs the tag.
 

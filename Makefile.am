@@ -5,7 +5,10 @@ SUBDIRS = src src/tools
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ta-lib.pc
 
-# Distribute all .h files in the src directory and its subdirectories
+# Distribute all .h files in the src directory and its subdirectories.
+# Downstream consumers build straight out of this tarball — the PHP `trader`
+# extension globs src/ta_func/*.c — so the internal headers those .c files
+# include (ta_func_private.h, ta_utility.h, ta_common/*.h) must ship too.
 HEADER_FILES = $(shell find src -name '*.h')
 
 # Distribute some C files containing static data used for ta_regtest
