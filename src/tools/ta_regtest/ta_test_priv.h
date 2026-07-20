@@ -257,6 +257,33 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
                            unsigned int nbOutput,
                            unsigned int integerTolerance );
 
+/* Compare one computed value against an external-oracle golden.
+ *
+ * Passes when   |got - want| <= absTol + relTol * |want|.
+ *
+ * WHY NOT RELATIVE-ONLY. The original PVO/CMOU template divided by |want| and
+ * justified it with "every golden |value| >> 1". That holds only because those
+ * goldens were hand-picked away from zero. Relative error is UNBOUNDED as
+ * want -> 0, so for any oscillator that crosses zero a relative-only check must
+ * either be loosened until it no longer bites away from the crossing, or it
+ * fails spuriously at it. Measured examples in this codebase's candidate set:
+ * FOSC 8.6e-10 and AO 6.7e-13 relative at a crossing, against 8.9e-14 away from
+ * one -- four orders of magnitude of spread that says nothing about correctness.
+ *
+ * This is the issue #107 abs-near-zero / rel-away-from-zero rule in the form
+ * used by every mature numerical comparison. Choose absTol from the measured
+ * noise floor AT a crossing, and relTol from the measured agreement where
+ * |want| is O(1) or larger; a wrong formula misses by whole percent and is
+ * caught by either term.
+ *
+ * Returns 1 on match, 0 on mismatch. On return, *outErr (optional) receives the
+ * error in the regime that dominated and *outMode (optional) a short label
+ * ("abs" or "rel") for use in the failure message.
+ */
+int checkOracleValue( double got, double want,
+                      double relTol, double absTol,
+                      double *outErr, const char **outMode );
+
 /* Print out info about a retCode */
 void printRetCode( TA_RetCode retCode );
 

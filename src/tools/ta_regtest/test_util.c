@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
+ *  072026 MF,CC Add checkOracleValue (abs-near-zero / rel-away tolerance).
  *
  */
 
@@ -59,6 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include "ta_test_priv.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
@@ -1431,4 +1433,22 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
    }
 
    return retCode;
+}
+
+/* See ta_test_priv.h for the rationale (why relative-only is wrong for any
+ * value that can cross zero). */
+int checkOracleValue( double got, double want,
+                      double relTol, double absTol,
+                      double *outErr, const char **outMode )
+{
+   double ad      = fabs( got - want );
+   double aw      = fabs( want );
+   double relTerm = relTol * aw;
+
+   /* Report in whichever regime is actually governing, so a failure message
+    * says something useful instead of printing a 1e300 "relative error". */
+   if( outMode ) *outMode = ( relTerm >= absTol ) ? "rel" : "abs";
+   if( outErr )  *outErr  = ( relTerm >= absTol && aw > 0.0 ) ? ( ad / aw ) : ad;
+
+   return ad <= ( absTol + relTerm );
 }

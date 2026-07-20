@@ -2017,7 +2017,9 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * functions (and servers without the method) answer with an error and are
  * counted as skips. See docs/streaming-api-proposal.md, Verification. */
 
-#define STREAM_MAX_OPT 8
+/* Headroom over the widest shipped function (SAREXT, 8) so a normal-sized new
+ * function cannot reach the cap. Overflow is a hard failure, never a skip. */
+#define STREAM_MAX_OPT 16
 #define STREAM_MAX_VEC 64
 #define STREAM_N       240
 
@@ -3094,7 +3096,7 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
 static const char *const argv_064[] = {"./ta_064_serve", NULL};
 
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
-#define FUZZ_MAX_OPT  8
+#define FUZZ_MAX_OPT  16
 #define FUZZ_MAX_VEC  48    /* parameter vectors per function. Sized for the
                              * widest sweep (MACDEXT: 3 period ranges x up to 6
                              * candidates + 3 MAType lists x 8 = ~42, + defaults).
@@ -3549,7 +3551,21 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( ctx->error != TA_TEST_PASS ) return;
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
-    if( funcInfo->nbOptInput > FUZZ_MAX_OPT ) return;
+
+    /* Overflowing the cap must FAIL, not skip. A silent return here would drop
+     * the function from the differential entirely — no message, no counter — so
+     * the run stays green while testing nothing. Same treatment as the
+     * STREAM_MAX_OPT guard above. */
+    if( funcInfo->nbOptInput > FUZZ_MAX_OPT )
+    {
+        printf("FUZZ PARAM OVERFLOW [TA_%s]: %u opt params > FUZZ_MAX_OPT (%d) — "
+               "raise the cap; skipping would make this function's gate vacuous\n",
+               funcInfo->name, funcInfo->nbOptInput, FUZZ_MAX_OPT);
+        ctx->failures++;
+        ctx->funcsWithFailures++;
+        ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+        return;
+    }
 
     /* Subset tolerance is 0.6.4-only: skip functions added after 0.6.4. */
     if( ctx->funcList )
@@ -3918,6 +3934,21 @@ typedef struct {
     ErrorNumber  error;
 } XlangCtx;
 
+/* Count the functions the gate will actually visit, so the banner cannot drift
+ * from reality the way a hardcoded literal does (it read 162 against 165). */
+static void codegen_count_cb(const TA_FuncInfo *funcInfo, void *opaqueData)
+{
+    (void)funcInfo;
+    (*(int *)opaqueData)++;
+}
+
+static int codegen_function_count(void)
+{
+    int n = 0;
+    TA_ForEachFunc(codegen_count_cb, &n);
+    return n;
+}
+
 /* Parse a hex hash string field; *present=0 if the field is absent (which for a
  * gen_present request means the server does not speak the out_hash protocol). */
 static unsigned long long xlang_parse_hash(const char *resp, const char *field, int *present)
@@ -4264,7 +4295,18 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( ctx->error != TA_TEST_PASS ) return;
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
-    if( funcInfo->nbOptInput > FUZZ_MAX_OPT ) return;
+
+    /* See fuzz_one_function: a silent skip would remove this function from the
+     * cross-language bitwise gate with no trace. Fail loudly instead. */
+    if( funcInfo->nbOptInput > FUZZ_MAX_OPT )
+    {
+        printf("XLANG PARAM OVERFLOW [TA_%s]: %u opt params > FUZZ_MAX_OPT (%d) — "
+               "raise the cap; skipping would make this function's gate vacuous\n",
+               funcInfo->name, funcInfo->nbOptInput, FUZZ_MAX_OPT);
+        ctx->funcsWithFailures++;
+        ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+        return;
+    }
 
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
@@ -4553,7 +4595,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( inFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("\nOutput parity gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
-               162);
+               codegen_function_count());
         TA_ForEachFunc(xlang_one_function, &ctx);
     }
     else if( inFails > 0 )
