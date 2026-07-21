@@ -156,6 +156,8 @@ static ErrorNumber test_pvo_default_is_ema( const TA_History *history );
 static ErrorNumber test_vwma_differential( const TA_History *history );
 static ErrorNumber test_vwma_oracle( const TA_History *history );
 static ErrorNumber test_vwma_inplace( const TA_History *history );
+static ErrorNumber test_vwma_tulip_vectors( void );
+static ErrorNumber test_vwma_flat_price( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -187,6 +189,14 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_vwma_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_tulip_vectors();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_flat_price();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -614,4 +624,141 @@ static ErrorNumber test_vwma_inplace( const TA_History *history )
       }
 
    return TA_TEST_PASS;
+}
+
+/* (4) SECOND EXTERNAL ORACLE: Tulip Indicators 0.9.2 checked-in vectors.
+ *
+ * The pandas goldens above and these are independent of each other, which
+ * matters because the composite differential cannot catch a shared wrong
+ * formula. Note the two vectors are NOT of equal standing:
+ *
+ *   - tests/extra.txt:320 states its values are "calculated by hand or in a
+ *     spreadsheet" -- genuinely independent of any implementation.
+ *   - tests/untest.txt:466 is regenerated from Tulip's own output; its header
+ *     says "failing a test here doesn't necessarily indicate a fault". It is a
+ *     cross-implementation check, not an independent derivation.
+ *
+ * Tolerance is absolute at half a unit of the last printed decimal, since that
+ * is the only precision the vectors carry (4dp for extra, 3dp for untest).
+ * Tulip computes the fused Sum(pv)/Sum(v); we compute the /n form, so the two
+ * agree to ~1e-16 relative -- far inside the printed precision. */
+static const double tulipVwma5In[]  = { 81.59,81.06,82.87,83.00,83.61,83.15,82.84,83.99,
+                                        84.55,84.36,85.53,86.54,86.89,87.77,87.29 };
+static const double tulipVwma5Vol[] = { 5653100,6447400,7690900,3831400,4455100,3798000,
+                                        3936200,4732000,4841300,3915300,6830800,6694100,
+                                        5293600,7985800,4807900 };
+static const double tulipVwma5Exp[] = { 82.332,82.610,83.070,83.354,83.682,83.822,
+                                        84.409,85.165,85.698,86.418,86.805 };
+
+static const double tulipVwma4In[]  = { 50.25,50.55,52.5,54.5,54.1,54.12,55.5,50.2,50.45,50.24 };
+static const double tulipVwma4Vol[] = { 12412,12458,15874,12354,12456,12542,15421,19510,12521,12041 };
+static const double tulipVwma4Exp[] = { 51.9819,52.8828,53.7204,54.6075,53.1948,52.4340,51.6345 };
+
+static ErrorNumber vwma_check_vector( const char *tag,
+                                      const double *in, const double *vol, int n,
+                                      int period, const double *exp, int nbExp,
+                                      double absTol )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i;
+   static TA_Real out[OUT_CAP];
+   double err; const char *mode;
+
+   rc = TA_VWMA( 0, n - 1, in, vol, period, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "VWMA %s Fail: retCode %d\n", tag, (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != period - 1 || nb != nbExp )
+   {
+      printf( "VWMA %s Fail: beg=%d nb=%d expected beg=%d nb=%d\n",
+              tag, (int)beg, (int)nb, period - 1, nbExp );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbExp; i++ )
+   {
+      if( !checkOracleValue( out[i], exp[i], 0.0, absTol, &err, &mode ) )
+      {
+         printf( "VWMA %s Fail at out[%d]: got %.17g expected %.17g (%s=%.3e > abs %.3e)\n",
+                 tag, i, out[i], exp[i], mode, err, absTol );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_vwma_tulip_vectors( void )
+{
+   ErrorNumber r;
+
+   /* extra.txt:320 -- hand/spreadsheet derived, 4 decimals. */
+   r = vwma_check_vector( "tulip extra.txt:320 (vwma 4)",
+                          tulipVwma4In, tulipVwma4Vol,
+                          (int)(sizeof(tulipVwma4In)/sizeof(double)), 4,
+                          tulipVwma4Exp,
+                          (int)(sizeof(tulipVwma4Exp)/sizeof(double)), 5e-5 );
+   if( r != TA_TEST_PASS ) return r;
+
+   /* untest.txt:466 -- regenerated from Tulip's own output, 3 decimals. */
+   r = vwma_check_vector( "tulip untest.txt:466 (vwma 5)",
+                          tulipVwma5In, tulipVwma5Vol,
+                          (int)(sizeof(tulipVwma5In)/sizeof(double)), 5,
+                          tulipVwma5Exp,
+                          (int)(sizeof(tulipVwma5Exp)/sizeof(double)), 5e-4 );
+   return r;
+}
+
+/* (5) FLAT PRICE SERIES. With every price equal to C the weighted mean is C for
+ * any volumes, since sum(C*v)/sum(v) = C*sum(v)/sum(v).
+ *
+ * That identity is exact in real arithmetic but NOT in floating point: the
+ * running sum of C*v does not round to C*sum(v). Measured worst case across
+ * prices {0.1, 93.75, 100, 12345.678} and periods {2,5,14,30,100} with wildly
+ * varying volume: 8.0e-11 absolute at C=12345.678, i.e. ~6.5e-15 relative. So
+ * this asserts a RELATIVE bound, not bit-equality -- asserting exactness here
+ * would be a self-inflicted failure. */
+static ErrorNumber test_vwma_flat_price( void )
+{
+#define FLAT_N 120
+   static const double flatPrice[] = { 0.1, 93.75, 100.0, 12345.678 };
+   static const int    flatPeriod[] = { 2, 5, 14, 30, 100 };
+   static TA_Real in[FLAT_N], vol[FLAT_N], out[OUT_CAP];
+   unsigned int pi, ki;
+   int i;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   double err; const char *mode;
+
+   for( i = 0; i < FLAT_N; i++ )
+      vol[i] = 1000.0 + (double)((i * 37) % 911) * 13.0;   /* wildly varying */
+
+   for( pi = 0; pi < sizeof(flatPrice)/sizeof(flatPrice[0]); pi++ )
+   {
+      double C = flatPrice[pi];
+      for( i = 0; i < FLAT_N; i++ ) in[i] = C;
+
+      for( ki = 0; ki < sizeof(flatPeriod)/sizeof(flatPeriod[0]); ki++ )
+      {
+         int period = flatPeriod[ki];
+         rc = TA_VWMA( 0, FLAT_N - 1, in, vol, period, &beg, &nb, out );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "VWMA flat-price Fail [C=%g period=%d]: retCode %d\n", C, period, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         for( i = 0; i < nb; i++ )
+         {
+            if( !checkOracleValue( out[i], C, 1e-13, 0.0, &err, &mode ) )
+            {
+               printf( "VWMA flat-price Fail [C=%g period=%d] at out[%d]: got %.17g (%s=%.3e > rel 1e-13)\n",
+                       C, period, i, out[i], mode, err );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
+   return TA_TEST_PASS;
+#undef FLAT_N
 }
