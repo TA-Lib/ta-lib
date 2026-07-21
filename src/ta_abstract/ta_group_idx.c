@@ -121,6 +121,7 @@ extern const TA_FuncDef TA_DEF_CDLUNIQUE3RIVER;
 extern const TA_FuncDef TA_DEF_CDLUPSIDEGAP2CROWS;
 extern const TA_FuncDef TA_DEF_CDLXSIDEGAP3METHODS;
 extern const TA_FuncDef TA_DEF_CEIL;
+extern const TA_FuncDef TA_DEF_CMF;
 extern const TA_FuncDef TA_DEF_CMO;
 extern const TA_FuncDef TA_DEF_CMOU;
 extern const TA_FuncDef TA_DEF_CORREL;
@@ -319,6 +320,7 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_AD,
 &TA_DEF_ADOSC,
+&TA_DEF_CMF,
 &TA_DEF_NVI,
 &TA_DEF_OBV,
 &TA_DEF_PVI,

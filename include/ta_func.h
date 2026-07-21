@@ -4394,6 +4394,66 @@ TA_LIB_API TA_RetCode TA_CEIL_Close( TA_CEIL_Stream *stream );
 TA_LIB_API TA_RetCode TA_CEIL_OpenAndFill( TA_CEIL_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_CMF - Chaikin Money Flow
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CMF( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_CMF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CMF — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_CMF_Stream TA_CMF_Stream;
+
+TA_LIB_API TA_RetCode TA_CMF_Open( TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMF_Update( TA_CMF_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CMF_Close( TA_CMF_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_CMF( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_CMF_OpenAndFill( TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_CMO - Chande Momentum Oscillator
  * 
  * Input  = double

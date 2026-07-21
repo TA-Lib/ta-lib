@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  071626 MF,CC  First version. Composite-function test category.
  *  072026 MF,CC  Oracle check via checkOracleValue (near-zero absolute floor).
+ *  072126 MF,CC  CMF differential leg, at tolerance rather than bitwise (#134).
  */
 
 /* Description:
@@ -51,6 +52,15 @@
  *   Regression test category for COMPOSITE functions: indicators defined as an
  *   exact arithmetic composition of functions TA-Lib already ships. Each such
  *   function is verified two independent ways:
+ *
+ *   The DIFFERENTIAL leg comes in two flavours. Most members are BIT-EXACT: the
+ *   fused loop and the compose-over-primitives reference perform the same
+ *   operations in the same order, so anything but equality is a defect. CMF is
+ *   the other flavour, ALGEBRAIC-IDENTITY-AT-TOLERANCE: its reference differences
+ *   a cumulative accumulator (TA_AD) where the shipped loop sums a sliding
+ *   window, so the two sum different term sets in different orders and IEEE
+ *   addition is not associative. Bit-equality is unreachable there by
+ *   construction, not by sloppiness -- do not "fix" it into a memcmp.
  *
  *   1. DIFFERENTIAL (bit-exact). The shipped implementation is compared,
  *      bit-for-bit, against a test-only reference built by calling the shipped
@@ -159,6 +169,7 @@ static ErrorNumber test_vwma_inplace( const TA_History *history );
 static ErrorNumber test_vwma_tulip_vectors( void );
 static ErrorNumber test_vwma_flat_price( void );
 static ErrorNumber test_vwma_all_zero_volume( void );
+static ErrorNumber test_cmf_differential( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -202,6 +213,10 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_vwma_all_zero_volume();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_cmf_differential( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -796,4 +811,100 @@ static ErrorNumber test_vwma_all_zero_volume( void )
    }
    return TA_TEST_PASS;
 #undef ZV_N
+}
+
+/* ------------------------------------------------------------------------- */
+/* CMF -- ALGEBRAIC-IDENTITY-AT-TOLERANCE differential.
+ *
+ * CMF[i] == ( AD[i] - AD[i-n] ) / SUM(volume,n)[i]
+ *
+ * This is an algebraic identity, not an operational one: TA_AD is a cumulative
+ * start-dependent accumulator, so differencing two of its running totals sums a
+ * different term set, in a different order, than the shipped sliding-window sum.
+ * Measured against exact rational arithmetic the two are equally accurate
+ * (~1e-16 absolute on this corpus); they simply round differently. Hence the
+ * tolerance, and hence an ABSOLUTE one -- CMF crosses zero, so a relative bound
+ * explodes at the crossings while the absolute error stays at the last bit.
+ *
+ * The value of the leg is twofold: it states at a high level that the fused loop
+ * computes what it claims, and it is a cross-function integrity net -- if a
+ * future change silently breaks TA_AD or TA_SUM, this composed expectation
+ * breaks too, so the damage surfaces here as well as in those functions' own
+ * tests. It introduces NO new numerical logic: only calls to shipped primitives.
+ */
+#define CMF_DIFF_TOL 1e-13
+#define CMF_DIFF_ABS 1e-13
+
+static const int cmfDiffGrid[] = { 2, 14, 20, 21, 50, 100 };  /* 100 > CIRCBUF static size */
+#define NB_CMF_DIFF_GRID (sizeof(cmfDiffGrid)/sizeof(cmfDiffGrid[0]))
+
+static ErrorNumber test_cmf_differential( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rcC, rcAD, rcS;
+   TA_Integer begC, nbC, begAD, nbAD, begS, nbS;
+   static TA_Real outCMF[OUT_CAP];
+   static TA_Real outAD[OUT_CAP];
+   static TA_Real outSumV[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   /* AD over the whole series: outAD[i] is the accumulator at bar i. */
+   rcAD = TA_AD( 0, nbBars - 1, history->high, history->low,
+                 history->close, history->volume, &begAD, &nbAD, outAD );
+   if( rcAD != TA_SUCCESS || begAD != 0 || nbAD != nbBars )
+   {
+      printf( "CMF differential Fail: TA_AD rc=%d shape (%d,%d) expected (0,%d)\n",
+              (int)rcAD, (int)begAD, (int)nbAD, nbBars );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( g = 0; g < NB_CMF_DIFF_GRID; g++ )
+   {
+      int period = cmfDiffGrid[g];
+
+      rcC = TA_CMF( 0, nbBars - 1, history->high, history->low,
+                    history->close, history->volume,
+                    period, &begC, &nbC, outCMF );
+      rcS = TA_SUM( 0, nbBars - 1, history->volume, period, &begS, &nbS, outSumV );
+
+      if( rcC != rcS )
+      {
+         printf( "CMF differential Fail [period %d]: retCode CMF=%d SUM=%d\n",
+                 period, (int)rcC, (int)rcS );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( rcC != TA_SUCCESS )
+         continue;
+
+      /* Both are plain (n-1) window lookbacks, so the ranges must coincide. */
+      if( begC != begS || nbC != nbS )
+      {
+         printf( "CMF differential Fail [period %d]: range CMF(%d,%d) SUM(%d,%d)\n",
+                 period, (int)begC, (int)nbC, (int)begS, (int)nbS );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = 0; i < nbC; i++ )
+      {
+         int bar = begC + i;                 /* absolute bar for output i */
+         double adNow  = outAD[bar];
+         double adThen = ( bar - period >= 0 ) ? outAD[bar - period] : 0.0;
+         double want   = ( adNow - adThen ) / outSumV[i];
+         double err;
+         const char *mode;
+
+         if( !checkOracleValue( outCMF[i], want, CMF_DIFF_TOL, CMF_DIFF_ABS, &err, &mode ) )
+         {
+            printf( "CMF differential Fail [period %d] at out[%d] (bar %d): "
+                    "fused %.17g vs AD-difference %.17g (%s err=%.3e > %.3e/%.3e)\n",
+                    period, i, bar, outCMF[i], want,
+                    mode, err, CMF_DIFF_TOL, CMF_DIFF_ABS );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
 }

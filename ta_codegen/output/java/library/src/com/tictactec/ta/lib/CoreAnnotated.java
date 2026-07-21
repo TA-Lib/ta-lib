@@ -4370,6 +4370,71 @@ public RetCode ceil(
 ); }
 
 
+public int cmfLookback(
+        int optInTimePeriod) {
+    return super.cmfLookback(
+        optInTimePeriod); }
+
+@FuncInfo(
+        name  = "CMF",
+        group = "Volume Indicators",
+        flags = 33554432,
+        nbInput    = 1,
+        nbOptInput = 1,
+        nbOutput   = 1
+)
+public RetCode cmf(
+            int startIdx,
+            int endIdx,
+            @InputParameterInfo(
+                paramName = "inPriceHLCV",
+                flags     = 30,
+                type = InputParameterType.TA_Input_Price
+            )
+            double inHigh [],
+            double inLow [],
+            double inClose [],
+            double inVolume [],
+            @OptInputParameterInfo(
+                paramName    = "optInTimePeriod",
+                displayName  = "Time Period",
+                flags        = 0,
+                type    = OptInputParameterType.TA_OptInput_IntegerRange,
+                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerRange.class
+            )
+            @IntegerRange(
+                    paramName    = "optInTimePeriod",
+                    defaultValue = 20,
+                    min          = 2,
+                    max          = 100000,
+                    suggested_start     = 4,
+                    suggested_end       = 200,
+                    suggested_increment = 1
+            )
+            int optInTimePeriod,
+            MInteger     outBegIdx,
+            MInteger     outNBElement,
+            @OutputParameterInfo(
+                paramName = "outReal",
+                flags     = 1,
+                type = OutputParameterType.TA_Output_Real
+            )
+            double outReal[]
+) {
+    return super.cmf (
+        startIdx,
+        endIdx,
+        inHigh ,
+        inLow ,
+        inClose ,
+        inVolume ,
+        optInTimePeriod,
+        outBegIdx,
+        outNBElement,
+        outReal
+); }
+
+
 public int cmoLookback(
         int optInTimePeriod) {
     return super.cmoLookback(

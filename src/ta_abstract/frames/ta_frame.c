@@ -1895,6 +1895,29 @@ unsigned int TA_CEIL_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CEIL_Lookback( );
 }
+TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CMF(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->in[0].data.inPrice.volume, /* inVolume */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_CMF_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_CMF_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_CMO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
