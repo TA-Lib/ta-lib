@@ -498,24 +498,77 @@ fn fmt_real_literal(v: f64) -> String {
 /// lints on text like `inReal[i]` or `close<open`. Inside backtick code spans,
 /// escapes would render literally, so leave those intact.
 ///
+/// A genuine inline link, `[label](https://…)`, is passed through unescaped. Escaping its
+/// opening bracket would strand the URL as plain text, which renders as the literal
+/// `\[label](https://…)` *and* trips rustdoc's `bare_urls` lint — the docs are required to
+/// build warning-free. Only a bracket whose matching `]` is immediately followed by
+/// `(<scheme-or-path>)` qualifies, so `inReal[i]` and `close[i](t)`-style prose still escape.
 fn escape_prose(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 8);
     let mut in_code = false;
-    for c in text.chars() {
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
         match c {
             '`' => {
                 in_code = !in_code;
                 out.push(c);
             }
-            '[' | '<' if !in_code => {
+            '[' if !in_code => {
+                if let Some(end) = inline_link_end(&chars, i) {
+                    let link: String = chars[i..end].iter().collect();
+                    // A site-absolute destination (`/functions/sma`) is written for
+                    // ta-lib.org, where the page is served from the site root. Rustdoc has
+                    // no such root — docs.rs would resolve it against its own domain — so
+                    // point it at the real page instead.
+                    out.push_str(&link.replace("](/", "](https://ta-lib.org/"));
+                    i = end;
+                    continue;
+                }
+                out.push('\\');
+                out.push(c);
+            }
+            '<' if !in_code => {
                 out.push('\\');
                 out.push(c);
             }
             '\n' => out.push(' '), // reflow: paragraphs re-wrap on emit
             _ => out.push(c),
         }
+        i += 1;
     }
     out
+}
+
+/// If a well-formed inline link starts at `start` (`chars[start] == '['`), the index one
+/// past its closing `)`. The label must not itself contain a bracket, and the destination
+/// must look like a URL or a site-absolute path — a parenthesis that merely follows a
+/// bracketed aside is not a link.
+fn inline_link_end(chars: &[char], start: usize) -> Option<usize> {
+    let close = chars[start + 1..]
+        .iter()
+        .position(|c| *c == ']' || *c == '[')
+        .map(|p| start + 1 + p)
+        .filter(|p| chars[*p] == ']')?;
+    if chars.get(close + 1) != Some(&'(') {
+        return None;
+    }
+    let paren = chars[close + 2..]
+        .iter()
+        .position(|c| *c == ')' || *c == '(')
+        .map(|p| close + 2 + p)
+        .filter(|p| chars[*p] == ')')?;
+    let dest: String = chars[close + 2..paren].iter().collect();
+    let is_url = dest.starts_with("http://")
+        || dest.starts_with("https://")
+        || dest.starts_with('/')
+        || dest.starts_with('#');
+    if is_url && !dest.contains(char::is_whitespace) {
+        Some(paren + 1)
+    } else {
+        None
+    }
 }
 
 /// A wrapped-`///` doc-comment writer.
@@ -635,6 +688,33 @@ mod tests {
     fn escapes_brackets_and_tags_outside_code() {
         assert_eq!(escape_prose("a[i] < b"), "a\\[i] \\< b");
         assert_eq!(escape_prose("`a[i] < b`"), "`a[i] < b`");
+    }
+
+    /// A real inline link survives intact: escaping it would strand the URL as plain text
+    /// and trip rustdoc's `bare_urls` lint.
+    #[test]
+    fn inline_links_are_not_escaped() {
+        assert_eq!(
+            escape_prose("see [TradingView](https://tv.com/x) for more"),
+            "see [TradingView](https://tv.com/x) for more"
+        );
+        // Site-absolute destinations are rebased: docs.rs has no ta-lib.org root.
+        assert_eq!(
+            escape_prose("the [`SMA`](/functions/sma) page"),
+            "the [`SMA`](https://ta-lib.org/functions/sma) page"
+        );
+    }
+
+    /// Bracketed prose that merely happens to be followed by parentheses is still escaped —
+    /// only a URL-ish destination makes it a link.
+    #[test]
+    fn bracketed_prose_is_still_escaped() {
+        assert_eq!(escape_prose("range [-1, 1]"), "range \\[-1, 1]");
+        assert_eq!(escape_prose("close[i](t)"), "close\\[i](t)");
+        assert_eq!(
+            escape_prose("[label](not a url)"),
+            "\\[label](not a url)"
+        );
     }
 
     #[test]

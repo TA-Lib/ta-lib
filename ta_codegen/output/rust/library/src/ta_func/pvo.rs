@@ -90,12 +90,12 @@ impl Core {
         // Lookback is driven by the slowest MA.
         return self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
     }
-    /// Percentage Volume Oscillator: a variation of the \[Percentage Price
-    /// Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the **volume** series
-    /// instead of price. It is the difference between a fast and slow moving average of volume,
-    /// expressed as a percentage of the slow MA. Positive when short-term volume is above its
-    /// longer-term average (rising participation), negative when below. The default periods (12,
-    /// 26) match MACD and PPO.
+    /// Percentage Volume Oscillator: a variation of the [Percentage Price
+    /// Oscillator](https://ta-lib.org/functions/ppo) (PPO, created by Gerald Appel) applied to the
+    /// **volume** series instead of price. It is the difference between a fast and slow moving
+    /// average of volume, expressed as a percentage of the slow MA. Positive when short-term volume
+    /// is above its longer-term average (rising participation), negative when below. The default
+    /// periods (12, 26) match MACD and PPO.
     ///
     /// # Formula
     ///
@@ -159,10 +159,10 @@ impl Core {
     ///
     /// * PVO has no separately documented originator; it applies the PPO/MACD oscillator (Gerald
     ///   Appel) to the volume series.
-    /// * Formula and standard (12, 26, 9) parameters: \[Percentage Volume Oscillator
+    /// * Formula and standard (12, 26, 9) parameters: [Percentage Volume Oscillator
     ///   (PVO)](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/percentage-volume-oscillator-pvo),
     ///   StockCharts ChartSchool; also documented by
-    ///   \[TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
+    ///   [TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
     ///
     /// Further reading: [ta-lib.org/functions/pvo](https://ta-lib.org/functions/pvo/)
     #[doc(alias = "PercentageVolumeOscillator")]

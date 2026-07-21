@@ -93,7 +93,7 @@ impl Core {
     /// \[-100,+100]; positive = net upward momentum, negative = net downward. CMOU is the version
     /// as defined by Chande in his book *The New Technical Trader* (1994), and is the more common
     /// implementation used by TradingView (`ta.cmo`), QuantConnect and pandas-ta's default. See
-    /// \[`CMO`](/functions/cmo) for a smoothed variant of CMOU.
+    /// [`CMO`](https://ta-lib.org/functions/cmo) for a smoothed variant of CMOU.
     ///
     /// # Formula
     ///
