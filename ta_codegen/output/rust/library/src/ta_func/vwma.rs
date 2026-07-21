@@ -110,8 +110,6 @@ impl Core {
     /// * A period of 1 reduces to `(P * V) / V`. That is the price arithmetically, but not a
     ///   guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an
     ///   exact copy of the input.
-    /// * The default period follows the TA-Lib moving-average family; other packages default to
-    ///   shorter windows (10 or 20). Compare across implementations with an explicit period.
     ///
     /// # Arguments
     ///

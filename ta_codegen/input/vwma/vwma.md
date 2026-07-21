@@ -18,7 +18,6 @@ Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — th
 
 - Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. Only a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.
 - A period of 1 reduces to `(P * V) / V`. That is the price arithmetically, but not a guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an exact copy of the input.
-- The default period follows the TA-Lib moving-average family; other packages default to shorter windows (10 or 20). Compare across implementations with an explicit period.
 
 ## Inputs
 
