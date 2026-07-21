@@ -55,7 +55,13 @@ TA_RetCode wma(int startIdx, int endIdx,
       *outBegIdx    = startIdx;
       *outNBElement = endIdx-startIdx+1;
 
-      memmove(outReal, &inReal[startIdx], ((int)*outNBElement) * sizeof(double));
+      /* Element loop, not a block copy: the C single-precision variant reads a
+       * float array, so a double-sized byte copy would reinterpret and
+       * over-read it (#137). Forward order keeps the in-place case correct (#94).
+       */
+      inIdx = startIdx;
+      for( i = 0; i < (int)*outNBElement; i++ )
+         outReal[i] = inReal[inIdx++];
 
       return TA_SUCCESS;
    }

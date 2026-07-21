@@ -71,9 +71,12 @@ TA_RetCode cmo(int startIdx, int endIdx,
       *outBegIdx = startIdx;
       i = (endIdx-startIdx)+1;
       *outNBElement = i;
-      /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-       * startIdx > 0 overlaps source and destination (issue #94; matches WMA). */
-      memmove(&outReal[0], &inReal[startIdx], (i) * sizeof(double));
+      /* Element loop, not a block copy: the C single-precision variant reads a
+       * float array, so a double-sized byte copy would reinterpret and
+       * over-read it (#137). Forward order keeps the in-place case correct (#94). */
+      today = startIdx;
+      for( outIdx = 0; outIdx < i; outIdx++ )
+         outReal[outIdx] = inReal[today++];
       return TA_SUCCESS;
    }
 

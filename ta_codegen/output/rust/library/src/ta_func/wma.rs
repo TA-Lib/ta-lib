@@ -195,12 +195,16 @@ impl Core {
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             (*outNBElement) = endIdx - startIdx + 1;
-            {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (startIdx) as usize;
-            outReal[_di.._di + _n].copy_from_slice(&inReal[_si.._si + _n]);
-        };
+            // Element loop, not a block copy: the C single-precision variant reads a
+            // float array, so a double-sized byte copy would reinterpret and
+            // over-read it (#137). Forward order keeps the in-place case correct (#94).
+            inIdx = startIdx;
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                outReal[i] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }]) as f64);
+                i += 1;
+            }
             return RetCode::Success;
         }
         // Calculate the divider (always an integer value).
@@ -314,12 +318,13 @@ impl Core {
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             (*outNBElement) = endIdx - startIdx + 1;
-            {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (startIdx) as usize;
-            outReal[_di.._di + _n].copy_from_slice(&inReal[_si.._si + _n]);
-        };
+            inIdx = startIdx;
+            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            i = 0;
+            while i < (((*outNBElement) as usize)) as usize {
+                outReal[i] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }]) as f64);
+                i += 1;
+            }
             return RetCode::Success;
         }
         divider = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;

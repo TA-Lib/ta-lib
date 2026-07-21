@@ -33,7 +33,7 @@ include/ta_func.h        (generated public header)
 
 **Hand-written library templates** (not indicator algorithms, not generated) live under
 `ta_codegen/generator/templates/` — the generator's own assets, kept out of `input/`
-(which holds only the 161 indicator definitions) and out of `output/` (100% generated):
+(which holds only the indicator definitions) and out of `output/` (100% generated):
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
   scaffolding, copied verbatim into the Rust crate (`output/rust/library/src/ta_func/types.rs`).
 - `templates/c/ta_retcode.c.template` — spliced with `src/ta_common/ta_retcode.csv`
@@ -102,7 +102,7 @@ Tests are in `tests/backend_suite.rs` and `tests/integration_test.rs` — they v
 - `ta_codegen build` compiles servers into executables in `bin/`
 
 **What's working end-to-end:**
-- Generic callback in `test_codegen.c` auto-generates JSON-RPC requests from ta_abstract metadata for all 161 indicators
+- Generic callback in `test_codegen.c` auto-generates JSON-RPC requests from ta_abstract metadata for every indicator
 - `list_functions` implemented — servers report available indicators with parameter metadata
 - `timing_ns` returned with each response — ta_regtest collects and prints a timing summary
 - `set_unstable_period` and `set_compatibility` implemented for all 24 unstable-period functions
@@ -227,6 +227,6 @@ Strict Clippy pedantic lints are enabled in `src/lib.rs`. Allowed exceptions:
 - Full parameter validation (NULL checks, INTEGER_DEFAULT, range) is required — missing validation changes compiler register allocation
 - `ta_ref_serve` is statically linked against `libta-lib.a` — MUST rebuild when cmake rebuilds the library, or benchmarks compare against stale code
 - `regtest.py` auto-rebuilds ta_ref_serve in the cmake step
-- Benchmark noise: full 161-indicator runs have 10-20% variance from icache pressure. Use `ta_bench --function=NAME --iters=500` for ground truth.
+- Benchmark noise: full-suite runs have 10-20% variance from icache pressure. Use `ta_bench --function=NAME --iters=500` for ground truth.
 - All servers and bench binaries call `TA_Initialize()` at startup — required for candle settings defaults.
 - Thermal canary (SMA) runs between each indicator in ta_bench to normalize CPU thermal state

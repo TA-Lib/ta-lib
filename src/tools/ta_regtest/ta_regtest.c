@@ -640,9 +640,13 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
    DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
-   DO_TEST( test_func_composite, "PVO,COMPOSITE" );
+   /* The tag is what --function= substring-matches, so every function the
+    * group covers must appear in it: --function=VWMA matched nothing before
+    * VWMA was named here (issue #137). */
+   DO_TEST( test_func_composite, "PVO,VWMA,COMPOSITE" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );
+   DO_TEST( test_func_variants,  "UNGUARDED,TA_S_,VARIANT" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

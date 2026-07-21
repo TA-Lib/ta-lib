@@ -73,7 +73,14 @@
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
          outNBElement.value = endIdx - startIdx + 1;
-         System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
+          */
+         inIdx = startIdx;
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            outReal[i] = inReal[inIdx++];
+         }
          return RetCode.Success ;
       }
       /* Calculate the divider (always an integer value).
@@ -177,7 +184,10 @@
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
          outNBElement.value = endIdx - startIdx + 1;
-         System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+         inIdx = startIdx;
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            outReal[i] = inReal[inIdx++];
+         }
          return RetCode.Success ;
       }
       divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -248,7 +258,10 @@
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
          outNBElement.value = endIdx - startIdx + 1;
-         System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+         inIdx = startIdx;
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            outReal[i] = (double)inReal[inIdx++];
+         }
          return RetCode.Success ;
       }
       divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -308,7 +321,10 @@
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
          outNBElement.value = endIdx - startIdx + 1;
-         System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+         inIdx = startIdx;
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            outReal[i] = (double)inReal[inIdx++];
+         }
          return RetCode.Success ;
       }
       divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;

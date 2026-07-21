@@ -93,10 +93,14 @@
          outBegIdx.value = startIdx;
          i = (int)(endIdx - startIdx + 1);
          outNBElement.value = (int)i;
-         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
           */
-         System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+            outReal[outIdx] = inReal[today++];
+         }
          return RetCode.Success ;
       }
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -284,7 +288,10 @@
          outBegIdx.value = startIdx;
          i = (int)(endIdx - startIdx + 1);
          outNBElement.value = (int)i;
-         System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+            outReal[outIdx] = inReal[today++];
+         }
          return RetCode.Success ;
       }
       today = startIdx - lookbackTotal;
@@ -436,7 +443,10 @@
          outBegIdx.value = startIdx;
          i = (int)(endIdx - startIdx + 1);
          outNBElement.value = (int)i;
-         System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+            outReal[outIdx] = (double)inReal[today++];
+         }
          return RetCode.Success ;
       }
       today = startIdx - lookbackTotal;
@@ -577,7 +587,10 @@
          outBegIdx.value = startIdx;
          i = (int)(endIdx - startIdx + 1);
          outNBElement.value = (int)i;
-         System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+            outReal[outIdx] = (double)inReal[today++];
+         }
          return RetCode.Success ;
       }
       today = startIdx - lookbackTotal;

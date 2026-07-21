@@ -42,7 +42,7 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 ### Source of Truth: ta_codegen/input/
 
 `ta_codegen/input/` is the single source of truth for ALL generated code
-(161 indicator definitions).
+(one directory per indicator).
 
 - **YAML** = data, config, enums, IDL. Pure definitions with no logic.
   - MAType and FuncUnstId enums (`ta_codegen/input/enums.yaml`)
@@ -110,7 +110,7 @@ functions via `list_functions`, returns `timing_ns` with each call, and supports
 
 `codegen_pipe.c/h` handles subprocess management and JSON-RPC communication.
 `test_codegen.c` has a generic callback driven by `TA_ForEachFunc` enumeration —
-it covers all 161 indicators automatically using ta_abstract function metadata,
+it covers every indicator automatically using ta_abstract function metadata,
 including price inputs (OHLCV), multi-output functions (BBANDS=3, MACD=3,
 STOCH=2), integer outputs (CDL* patterns), real optional params, and all 24
 unstable-period functions. It produces a timing summary, cross-language
@@ -203,7 +203,7 @@ cd bin && ./ta_bench --language=cref,c --points=100000 --iters=200
 
 **Gotcha:** `ta_ref_serve` is statically linked — rebuild when `libta-lib.a`
 changes or benchmarks are invalid. `regtest.py` handles this automatically.
-Full 161-indicator benchmark runs have 10–20% variance from icache pressure;
+Full-suite benchmark runs have 10–20% variance from icache pressure;
 use `--function=NAME --iters=500` for ground truth.
 
 ## Project Structure
