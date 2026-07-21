@@ -131,6 +131,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -198,6 +199,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -276,6 +278,7 @@ TA_RetCode TA_S_MAXINDEX( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -340,6 +343,7 @@ TA_RetCode TA_S_MAXINDEX_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -406,6 +410,7 @@ static void TA_MAXINDEX_StepInternal( struct TA_MAXINDEX_Stream *sp, double inRe
       sp->highestIdx = sp->trailingIdx;
       sp->highest = sp->x_inReal[sp->highestIdx % sp->xCap];
       sp->i = sp->highestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inReal[sp->i % sp->xCap];
@@ -494,6 +499,7 @@ TA_RetCode TA_MAXINDEX_OpenInternal( struct TA_MAXINDEX_Stream **stream, const d
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];
@@ -620,6 +626,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_OpenAndFill( TA_MAXINDEX_Stream **stream, cons
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];

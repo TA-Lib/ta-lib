@@ -86,6 +86,7 @@ TA_RetCode midpoint(int startIdx, int endIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmpHigh = inReal[i];
@@ -107,6 +108,7 @@ TA_RetCode midpoint(int startIdx, int endIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmpLow = inReal[i];

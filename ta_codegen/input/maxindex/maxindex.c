@@ -66,6 +66,7 @@ TA_RetCode maxindex(int startIdx, int endIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmp = inReal[i];

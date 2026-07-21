@@ -131,6 +131,7 @@ TA_LIB_API TA_RetCode TA_MININDEX( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -198,6 +199,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -276,6 +278,7 @@ TA_RetCode TA_S_MININDEX( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -340,6 +343,7 @@ TA_RetCode TA_S_MININDEX_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -406,6 +410,7 @@ static void TA_MININDEX_StepInternal( struct TA_MININDEX_Stream *sp, double inRe
       sp->lowestIdx = sp->trailingIdx;
       sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
       sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inReal[sp->i % sp->xCap];
@@ -494,6 +499,7 @@ TA_RetCode TA_MININDEX_OpenInternal( struct TA_MININDEX_Stream **stream, const d
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];
@@ -620,6 +626,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_OpenAndFill( TA_MININDEX_Stream **stream, cons
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];

@@ -154,6 +154,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpHigh = inReal[i];
@@ -173,6 +174,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpLow = inReal[i];
@@ -246,6 +248,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpHigh = inReal[i];
@@ -265,6 +268,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpLow = inReal[i];
@@ -349,6 +353,7 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpHigh = (double)inReal[i];
@@ -368,6 +373,7 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpLow = (double)inReal[i];
@@ -438,6 +444,7 @@ TA_RetCode TA_S_MIDPOINT_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpHigh = (double)inReal[i];
@@ -457,6 +464,7 @@ TA_RetCode TA_S_MIDPOINT_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmpLow = (double)inReal[i];
@@ -527,6 +535,7 @@ static void TA_MIDPOINT_StepInternal( struct TA_MIDPOINT_Stream *sp, double inRe
       sp->highestIdx = sp->trailingIdx;
       sp->highest = sp->x_inReal[sp->highestIdx % sp->xCap];
       sp->i = sp->highestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          sp->tmpHigh = sp->x_inReal[sp->i % sp->xCap];
@@ -546,6 +555,7 @@ static void TA_MIDPOINT_StepInternal( struct TA_MIDPOINT_Stream *sp, double inRe
       sp->lowestIdx = sp->trailingIdx;
       sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
       sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          sp->tmpLow = sp->x_inReal[sp->i % sp->xCap];
@@ -652,6 +662,7 @@ TA_RetCode TA_MIDPOINT_OpenInternal( struct TA_MIDPOINT_Stream **stream, const d
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inReal[i];
@@ -671,6 +682,7 @@ TA_RetCode TA_MIDPOINT_OpenInternal( struct TA_MIDPOINT_Stream **stream, const d
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inReal[i];
@@ -819,6 +831,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_OpenAndFill( TA_MIDPOINT_Stream **stream, cons
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inReal[i];
@@ -838,6 +851,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_OpenAndFill( TA_MIDPOINT_Stream **stream, cons
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inReal[i];

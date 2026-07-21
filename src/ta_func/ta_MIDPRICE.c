@@ -192,6 +192,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inHigh[i];
@@ -211,6 +212,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inLow[i];
@@ -311,6 +313,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Unguarded( int    startIdx,
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inHigh[i];
@@ -330,6 +333,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Unguarded( int    startIdx,
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inLow[i];
@@ -443,6 +447,7 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
             highestIdx = trailingIdx;
             highest = (double)inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = (double)inHigh[i];
@@ -462,6 +467,7 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
             lowestIdx = trailingIdx;
             lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = (double)inLow[i];
@@ -559,6 +565,7 @@ TA_RetCode TA_S_MIDPRICE_Unguarded( int    startIdx,
             highestIdx = trailingIdx;
             highest = (double)inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = (double)inHigh[i];
@@ -578,6 +585,7 @@ TA_RetCode TA_S_MIDPRICE_Unguarded( int    startIdx,
             lowestIdx = trailingIdx;
             lowest = (double)inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = (double)inLow[i];
@@ -655,6 +663,7 @@ static void TA_MIDPRICE_StepInternal( struct TA_MIDPRICE_Stream *sp, double inHi
       sp->highestIdx = sp->trailingIdx;
       sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
       sp->i = sp->highestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmpHigh = sp->x_inHigh[sp->i % sp->xCap];
@@ -674,6 +683,7 @@ static void TA_MIDPRICE_StepInternal( struct TA_MIDPRICE_Stream *sp, double inHi
       sp->lowestIdx = sp->trailingIdx;
       sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
       sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmpLow = sp->x_inLow[sp->i % sp->xCap];
@@ -787,6 +797,7 @@ TA_RetCode TA_MIDPRICE_OpenInternal( struct TA_MIDPRICE_Stream **stream, const d
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inHigh[i];
@@ -806,6 +817,7 @@ TA_RetCode TA_MIDPRICE_OpenInternal( struct TA_MIDPRICE_Stream **stream, const d
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inLow[i];
@@ -964,6 +976,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_OpenAndFill( TA_MIDPRICE_Stream **stream, cons
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpHigh = inHigh[i];
@@ -983,6 +996,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_OpenAndFill( TA_MIDPRICE_Stream **stream, cons
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmpLow = inLow[i];

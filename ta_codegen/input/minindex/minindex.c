@@ -66,6 +66,7 @@ TA_RetCode minindex(int startIdx, int endIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmp = inReal[i];

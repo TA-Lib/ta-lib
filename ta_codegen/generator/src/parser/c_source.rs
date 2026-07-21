@@ -1043,6 +1043,7 @@ impl Parser {
                 self.consume_semicolon();
                 Statement::Continue
             }
+            Some(Token::Ident(ref s)) if s == "TA_UNROLL" => self.parse_unroll_hint(),
             Some(Token::Ident(ref s)) if s == "typedef" => self.parse_typedef_struct(),
             Some(Token::Ident(ref s)) if Self::is_macro_decl(s) => self.parse_macro_decl(),
             Some(Token::Star) => self.parse_pointer_deref_assign(),
@@ -1546,6 +1547,22 @@ impl Parser {
         self.expect(&Token::RParen);
         self.consume_semicolon();
         Statement::DoWhile { condition, body }
+    }
+
+    /// `TA_UNROLL(n)` — unroll hint for the loop that follows. The trailing
+    /// semicolon is optional so the input reads the same as the emitted C.
+    fn parse_unroll_hint(&mut self) -> Statement {
+        self.advance(); // consume "TA_UNROLL"
+        self.expect(&Token::LParen);
+        let count = match self.advance() {
+            Token::IntNumber(n) if n > 0 => u32::try_from(n).expect("TA_UNROLL count too large"),
+            other => panic!("TA_UNROLL expects a positive integer count, got {other:?}"),
+        };
+        self.expect(&Token::RParen);
+        if self.peek() == Some(&Token::Semicolon) {
+            self.advance();
+        }
+        Statement::UnrollHint { count }
     }
 
     fn parse_while(&mut self) -> Statement {

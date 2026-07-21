@@ -201,6 +201,7 @@ fn collect_address_of_vars_stmt(stmt: &Statement, vars: &mut HashSet<String>) {
         }
         Statement::VarDecl { init: None, .. }
         | Statement::Return { value: None }
+        | Statement::UnrollHint { .. }
         | Statement::Break
         | Statement::Continue
         | Statement::CircBuf(_)
