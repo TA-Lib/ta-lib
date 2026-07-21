@@ -10,7 +10,10 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 ## Inputs
 
-- `inPriceOHLC` — Open, High, Low, Close price series
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

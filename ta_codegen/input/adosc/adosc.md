@@ -13,7 +13,10 @@ ADOSC = fastEMA - slowEMA
 
 ## Inputs
 
-- `inPriceHLCV` — High, low, close, and volume series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

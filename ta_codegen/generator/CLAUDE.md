@@ -54,6 +54,7 @@ include/ta_func.h        (generated public header)
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
 | `backends/ta_abstract_c.rs` | Generates `ta_abstract` introspection layer (tables, frames, group index, runtime API) |
+| `backends/price_bundle.rs` | Folds the expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags). Shared by the C, Rust and Java abstract backends — that name and flags word are **public ABI** (wrappers read them; ta-lib-python renders them as `{'prices': [...]}`), so they are derived once, from the YAML declaration carried on each `Input` as a `PriceRef`, never re-inferred from argument names |
 | `backends/func_api_xml.rs` | Generates `ta_func_api.xml` metadata |
 | `backends/docs_site.rs` | Generates the ta-lib.org website (`website/src/functions/<name>.md` + `index.md`) from each function's `ta_codegen/input/<name>/<name>.md` — written directly into the VuePress site source tree (`website/`), not `ta_codegen/output/` |
 | `server_gen` | Generates JSON-RPC server wrappers + `include/ta_func_unguarded.h` |

@@ -10,7 +10,8 @@ upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for ba
 
 ## Inputs
 
-- `inPriceOC` — Per-bar open and close prices
+- `inOpen` — Open price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

@@ -10,7 +10,8 @@ MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod b
 
 ## Inputs
 
-- `inPriceHL` — High and Low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

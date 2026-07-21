@@ -1715,10 +1715,7 @@ fn backends_render_max_min_fmax_fmin_abs() {
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![Input {
-            name: "inReal".to_string(),
-            param_type: ParamType::Real,
-        }],
+        inputs: vec![Input::new("inReal", ParamType::Real)],
         optional_inputs: vec![],
         outputs: vec![Output {
             name: "outReal".to_string(),
@@ -2218,10 +2215,7 @@ fn make_func_with_helper_call(
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![ir::Input {
-            name: "inReal".to_string(),
-            param_type: ir::ParamType::Real,
-        }],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
         optional_inputs: vec![],
         outputs: vec![ir::Output {
             name: "outReal".to_string(),
@@ -2314,10 +2308,7 @@ fn inlining_counter_avoids_name_collisions() {
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![ir::Input {
-            name: "inReal".to_string(),
-            param_type: ir::ParamType::Real,
-        }],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
         optional_inputs: vec![],
         outputs: vec![ir::Output {
             name: "outReal".to_string(),
@@ -4030,10 +4021,7 @@ fn rust_lookback_param_minus() {
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![ir::Input {
-            name: "inReal".to_string(),
-            param_type: ir::ParamType::Real,
-        }],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
         optional_inputs: vec![ir::OptInput {
             name: "optInTimePeriod".to_string(),
             param_type: ir::ParamType::Integer,
@@ -4088,10 +4076,7 @@ fn rust_lookback_none() {
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![ir::Input {
-            name: "inReal".to_string(),
-            param_type: ir::ParamType::Real,
-        }],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
         optional_inputs: vec![],
         outputs: vec![ir::Output {
             name: "outReal".to_string(),
@@ -4294,10 +4279,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
         camel_case: None,
         hint: None,
         flags: vec![],
-        inputs: vec![ir::Input {
-            name: "inReal".to_string(),
-            param_type: ir::ParamType::Real,
-        }],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
         optional_inputs: vec![],
         outputs: vec![ir::Output {
             name: "outReal".to_string(),

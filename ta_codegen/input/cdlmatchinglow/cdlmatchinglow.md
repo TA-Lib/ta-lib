@@ -14,7 +14,10 @@ Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open)
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price series (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

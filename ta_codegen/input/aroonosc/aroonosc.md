@@ -14,7 +14,8 @@ highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (p
 
 ## Inputs
 
-- `inPriceHL` — High and low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

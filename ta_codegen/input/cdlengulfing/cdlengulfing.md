@@ -10,7 +10,10 @@ A two-candle reversal pattern where the second candle's real body engulfs the fi
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price bars (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

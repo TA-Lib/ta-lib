@@ -10,7 +10,9 @@ $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
 
 ## Inputs
 
-- `inPriceHLC` — High, low, and close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

@@ -5810,10 +5810,7 @@ mod tests {
             camel_case: None,
             hint: None,
             flags: vec![],
-            inputs: vec![Input {
-                name: "inReal".into(),
-                param_type: ParamType::Real,
-            }],
+            inputs: vec![Input::new("inReal", ParamType::Real)],
             optional_inputs: vec![],
             outputs: vec![Output {
                 name: "outReal".into(),

@@ -134,9 +134,9 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInFastK_Period` — Lookback window for the raw %K high-low range (default 5, range
     ///   1..=100000)
     /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range

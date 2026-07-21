@@ -18,7 +18,9 @@ When period <= 1: +DI = +DM1 / TR1 (no *100).
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price bars
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

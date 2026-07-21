@@ -6,7 +6,10 @@ Single-candle pattern: a doji whose open and close sit at the high (no/very shor
 
 ## Inputs
 
-- `inPriceOHLC` — Open, High, Low, Close price series
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

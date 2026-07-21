@@ -27,7 +27,7 @@ Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — th
 ## Inputs
 
 - `inReal` — Source price series, close by convention
-- `inPriceV` — Volume weighting each bar
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

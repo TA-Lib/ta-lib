@@ -10,8 +10,8 @@ OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? 
 
 ## Inputs
 
-- `inReal` — Price series compared bar-over-bar (typically close)
-- `inPriceV` — Volume added/subtracted each bar
+- `inReal` — Price series, typically close
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

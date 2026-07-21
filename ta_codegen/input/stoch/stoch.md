@@ -16,7 +16,9 @@ SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close series; range from High/Low, level from Close
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

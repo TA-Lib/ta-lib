@@ -10,7 +10,10 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Inputs
 
-- `inPriceOHLC` — Open, High, Low, Close price series
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

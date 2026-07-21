@@ -7,7 +7,7 @@
 //!
 //! The metadata VALUES — flag bit-masks, price-input collapsing, real sentinels —
 //! are computed by the SAME helpers that build the C and Rust tables
-//! ([`func_flag_bits`], [`canonical_price`], `ta_real_sentinel`, ...), so the three
+//! ([`func_flag_bits`], [`price_bundle`], `ta_real_sentinel`, ...), so the three
 //! backends agree by construction rather than by three hand-maintained copies.
 
 #![allow(
@@ -20,9 +20,8 @@ use std::collections::HashMap;
 use std::fmt::Write;
 
 use super::common::ta_real_sentinel;
-use super::rust_abstract::{
-    canonical_price, func_flag_bits, opt_flag_bits, output_flag_bits, price_component_of,
-};
+use super::price_bundle;
+use super::rust_abstract::{func_flag_bits, opt_flag_bits, output_flag_bits};
 use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
 
 /// Format an `f64` as a valid Java `double` literal. Rust's `Debug` yields the
@@ -97,47 +96,28 @@ fn emit_func_registration(s: &mut String, f: &FuncDef, enums: &HashMap<String, E
     let _ = writeln!(s, "            new AbsOut[]{{ {} }}));", emit_outputs(&f.outputs));
 }
 
-/// Re-collapse the parser's expanded price components back into a single
-/// `Price` input with an OHLCV flag bitmask + canonical `inPriceXXX` name
-/// (identical logic to `rust_abstract::emit_inputs`). Input type codes match C:
-/// Price=0, Real=1, Integer=2.
+/// Fold the parser's expanded price components back into a single `Price` input with an
+/// OHLCV flag bitmask + canonical `inPriceXXX` name, via the shared
+/// [`price_bundle::group`] that the C and Rust abstract backends also use. Input type
+/// codes match C: Price=0, Real=1, Integer=2.
 fn emit_inputs(inputs: &[Input]) -> String {
     let mut items: Vec<String> = Vec::new();
-    let mut price: Vec<&str> = Vec::new();
-    for inp in inputs {
-        match &inp.param_type {
-            ParamType::Price(components) => {
-                flush_price(&mut items, &mut price);
-                let comps: Vec<&str> = components.iter().map(String::as_str).collect();
-                let (name, bits) = canonical_price(&comps);
+    for grouped in price_bundle::group(inputs) {
+        match grouped {
+            price_bundle::Grouped::Price(bundle) => {
+                let components = price_bundle::components(&bundle);
+                let name = price_bundle::canonical_name(&components);
+                let bits = price_bundle::flags(&components);
                 items.push(format!("new AbsIn(0,{},{})", js(&name), bits));
             }
-            ParamType::Real => {
-                if let Some(comp) = price_component_of(&inp.name) {
-                    price.push(comp);
-                } else {
-                    flush_price(&mut items, &mut price);
-                    items.push(format!("new AbsIn(1,{},0)", js(&inp.name)));
-                }
-            }
-            ParamType::Integer => {
-                flush_price(&mut items, &mut price);
-                items.push(format!("new AbsIn(2,{},0)", js(&inp.name)));
-            }
-            ParamType::Enum(_) => {}
+            price_bundle::Grouped::Single(inp) => match &inp.param_type {
+                ParamType::Real => items.push(format!("new AbsIn(1,{},0)", js(&inp.name))),
+                ParamType::Integer => items.push(format!("new AbsIn(2,{},0)", js(&inp.name))),
+                ParamType::Price(_) | ParamType::Enum(_) => {}
+            },
         }
     }
-    flush_price(&mut items, &mut price);
     items.join(", ")
-}
-
-fn flush_price(items: &mut Vec<String>, price: &mut Vec<&str>) {
-    if price.is_empty() {
-        return;
-    }
-    let (name, bits) = canonical_price(price);
-    items.push(format!("new AbsIn(0,{},{})", js(&name), bits));
-    price.clear();
 }
 
 /// Output type codes match C: Real=0, Integer=1.

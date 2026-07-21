@@ -6,7 +6,10 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price series (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

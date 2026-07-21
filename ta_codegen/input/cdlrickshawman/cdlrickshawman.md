@@ -6,7 +6,10 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price series (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

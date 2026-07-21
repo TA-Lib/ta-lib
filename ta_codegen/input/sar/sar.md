@@ -12,7 +12,8 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 
 ## Inputs
 
-- `inPriceHL` — High/Low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

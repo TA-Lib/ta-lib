@@ -14,6 +14,7 @@
 
 use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
 use super::common::ta_real_sentinel;
+use super::price_bundle;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
@@ -115,103 +116,49 @@ fn emit_func(o: &mut String, f: &FuncDef, enums: &HashMap<String, EnumDef>) {
     o.push_str("    },\n");
 }
 
-/// Emit the `inputs:` slice. The YAML parser expands a price input into individual
-/// `inHigh`/`inLow`/`inClose`/... `Real` inputs; here we RE-COLLAPSE a contiguous run
-/// of price-component inputs back into a single `InputType::Price` with an OHLCV flag
-/// bitmask and the canonical `inPriceXXX` name, matching C's `ta_abstract`.
+/// Emit the `inputs:` slice. The YAML parser expands a price bundle into individual
+/// `inHigh`/`inLow`/`inClose`/... arguments; [`price_bundle::group`] folds them back into
+/// a single `InputType::Price` carrying the OHLCV flag bitmask and the canonical
+/// `inPriceXXX` name, matching C's `ta_abstract` — the same fold, from the same
+/// declaration, as the C and Java backends.
 fn emit_inputs(o: &mut String, inputs: &[Input]) {
     o.push('&');
     o.push('[');
-    let mut price: Vec<&str> = Vec::new();
-    for inp in inputs {
-        match &inp.param_type {
-            ParamType::Price(components) => {
-                flush_price(o, &mut price);
-                let comps: Vec<&str> = components.iter().map(String::as_str).collect();
-                let (name, bits) = canonical_price(&comps);
+    for grouped in price_bundle::group(inputs) {
+        match grouped {
+            price_bundle::Grouped::Price(bundle) => {
+                let components = price_bundle::components(&bundle);
+                let name = price_bundle::canonical_name(&components);
+                let bits = price_bundle::flags(&components);
                 let _ = write!(
                     o,
                     "InputInfo {{ param_name: {name:?}, kind: InputType::Price, flags: InputFlags({bits:#010x}) }}, "
                 );
             }
-            ParamType::Real => {
-                if let Some(comp) = price_component_of(&inp.name) {
-                    price.push(comp);
-                } else {
-                    flush_price(o, &mut price);
+            price_bundle::Grouped::Single(inp) => match &inp.param_type {
+                ParamType::Real => {
                     let _ = write!(
                         o,
                         "InputInfo {{ param_name: {:?}, kind: InputType::Real, flags: InputFlags(0) }}, ",
                         inp.name
                     );
                 }
-            }
-            ParamType::Integer => {
-                flush_price(o, &mut price);
-                let _ = write!(
-                    o,
-                    "InputInfo {{ param_name: {:?}, kind: InputType::Integer, flags: InputFlags(0) }}, ",
-                    inp.name
-                );
-            }
-            ParamType::Enum(_) => {}
+                ParamType::Integer => {
+                    let _ = write!(
+                        o,
+                        "InputInfo {{ param_name: {:?}, kind: InputType::Integer, flags: InputFlags(0) }}, ",
+                        inp.name
+                    );
+                }
+                ParamType::Price(_) | ParamType::Enum(_) => {}
+            },
         }
     }
-    flush_price(o, &mut price);
     o.push(']');
 }
 
-/// Price components in canonical OHLCV order: (yaml key, name letter, C flag bit).
-const PRICE_ORDER: &[(&str, char, u32)] = &[
-    ("open", 'O', 0x0000_0001),
-    ("high", 'H', 0x0000_0002),
-    ("low", 'L', 0x0000_0004),
-    ("close", 'C', 0x0000_0008),
-    ("volume", 'V', 0x0000_0010),
-    ("openinterest", 'I', 0x0000_0020),
-    ("timestamp", 'T', 0x0000_0040),
-];
-
-/// The price component an expanded input name refers to, if any.
-pub(crate) fn price_component_of(input_name: &str) -> Option<&'static str> {
-    match input_name {
-        "inOpen" => Some("open"),
-        "inHigh" => Some("high"),
-        "inLow" => Some("low"),
-        "inClose" => Some("close"),
-        "inVolume" => Some("volume"),
-        "inOpenInterest" => Some("openinterest"),
-        "inTimestamp" => Some("timestamp"),
-        _ => None,
-    }
-}
-
-/// Canonical `inPriceXXX` name + OHLCV flag bits for a set of components,
-/// reproducing C's `ta_abstract` price-input names (HLC, HLCV, OHLC, ...).
-pub(crate) fn canonical_price(components: &[&str]) -> (String, u32) {
-    let mut suffix = String::new();
-    let mut bits = 0u32;
-    for (key, letter, bit) in PRICE_ORDER {
-        if components.contains(key) {
-            suffix.push(*letter);
-            bits |= *bit;
-        }
-    }
-    (format!("inPrice{suffix}"), bits)
-}
-
-/// Flush a pending run of price components as one `Price` input.
-fn flush_price(o: &mut String, price: &mut Vec<&str>) {
-    if price.is_empty() {
-        return;
-    }
-    let (name, bits) = canonical_price(price);
-    let _ = write!(
-        o,
-        "InputInfo {{ param_name: {name:?}, kind: InputType::Price, flags: InputFlags({bits:#010x}) }}, "
-    );
-    price.clear();
-}
+// The canonical `inPriceXXX` name and its OHLCV flag bits now come from
+// `backends::price_bundle`, shared with the C and Java abstract backends.
 
 fn emit_output(o: &mut String, out: &Output) {
     let kind = if out.param_type == ParamType::Integer { "Integer" } else { "Real" };

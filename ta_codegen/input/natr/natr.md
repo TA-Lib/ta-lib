@@ -11,7 +11,9 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 ## Inputs
 
-- `inPriceHLC` — High, low, close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

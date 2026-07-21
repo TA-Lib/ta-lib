@@ -104,10 +104,10 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open prices per bar.
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
     ///   penetrate (default 0.5, minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.

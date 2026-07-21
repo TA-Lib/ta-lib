@@ -10,7 +10,10 @@ A three-candle continuation pattern: two same-color candles separated by a real-
 
 ## Inputs
 
-- `inPriceOHLC` — Open, High, Low, Close price series
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

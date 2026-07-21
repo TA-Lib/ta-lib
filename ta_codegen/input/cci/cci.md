@@ -13,7 +13,9 @@ CCI = (TP_last - SMA) / (0.015 * meanDev)
 
 ## Inputs
 
-- `inPriceHLC` — High, Low, Close series (typical price is their average)
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

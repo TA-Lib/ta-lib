@@ -109,7 +109,7 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inVolume` — Volume series.
+    /// * `inVolume` — Volume of each bar.
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,

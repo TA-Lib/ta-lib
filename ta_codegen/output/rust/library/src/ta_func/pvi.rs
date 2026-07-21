@@ -94,8 +94,8 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inClose` — Closing price series, providing the bar-over-bar percentage change.
-    /// * `inVolume` — Volume series, compared bar-over-bar to gate each update.
+    /// * `inClose` — Close price of each bar.
+    /// * `inVolume` — Volume of each bar.
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Cumulative positive volume index (seeded at 1000)

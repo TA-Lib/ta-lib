@@ -14,7 +14,9 @@ Wilder's Average Directional Movement Index, a smoothed measure of trend strengt
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

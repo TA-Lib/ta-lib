@@ -10,7 +10,9 @@ out[i] = (High[i] + Low[i] + Close[i]) / 3
 
 ## Inputs
 
-- `inPriceHLC` — high, low, close of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

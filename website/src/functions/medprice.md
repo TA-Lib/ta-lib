@@ -15,7 +15,8 @@ $MEDPRICE_i = (High_i + Low_i) / 2$
 
 ## Inputs
 
-- `inPriceHL` — High and low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 
