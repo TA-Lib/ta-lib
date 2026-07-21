@@ -30,7 +30,7 @@
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
+         optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
@@ -78,7 +78,7 @@
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
+         optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
@@ -501,7 +501,7 @@
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
+         optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
@@ -1014,7 +1014,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
+         optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
@@ -1117,7 +1117,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
+         optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }

@@ -12,7 +12,7 @@ optional_inputs:
     display_name: Time Period
     hint: Time period
     range: [2, 100000]
-    default: 5
+    default: 20
     suggested: [4, 200, 1]
   - name: optInNbDevUp
     type: real

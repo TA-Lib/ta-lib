@@ -74,7 +74,7 @@
 TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
 {
    if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
+      optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
    if( optInNbDevUp == -4e37 )
@@ -124,7 +124,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    if( !inReal )
       return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
+      optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
@@ -645,7 +645,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
    if( !inReal )
       return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
+      optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
@@ -1169,7 +1169,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
    if( !inReal || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
+      optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
@@ -1364,7 +1364,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( (const void *)outRealUpperBand == (const void *)inReal || (const void *)outRealMiddleBand == (const void *)inReal || (const void *)outRealLowerBand == (const void *)inReal || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
+      optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )

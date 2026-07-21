@@ -2127,7 +2127,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _json_inReal = parse_f64_array(&params["inReal"]);
                 inReal = &_json_inReal;
             }
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
             let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
@@ -14987,7 +14987,7 @@ fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usi
             Some(core.avgprice_lookback())
         }
         "BBANDS" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
             let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
@@ -16933,7 +16933,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
     }
-    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
+    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
     let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
