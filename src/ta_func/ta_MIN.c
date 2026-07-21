@@ -135,6 +135,11 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+#if defined(__clang__)
+#pragma clang loop unroll_count(4)
+#elif defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC unroll 4
+#endif
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -202,6 +207,11 @@ TA_LIB_API TA_RetCode TA_MIN_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
+#if defined(__clang__)
+#pragma clang loop unroll_count(4)
+#elif defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC unroll 4
+#endif
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -280,6 +290,11 @@ TA_RetCode TA_S_MIN( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+#if defined(__clang__)
+#pragma clang loop unroll_count(4)
+#elif defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC unroll 4
+#endif
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -344,6 +359,11 @@ TA_RetCode TA_S_MIN_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
+#if defined(__clang__)
+#pragma clang loop unroll_count(4)
+#elif defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC unroll 4
+#endif
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
