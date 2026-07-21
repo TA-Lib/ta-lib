@@ -123,7 +123,15 @@ TA_LIB_API TA_RetCode TA_WMA( int    startIdx,
    {
       *outBegIdx= startIdx;
       *outNBElement= endIdx - startIdx + 1;
-      memmove(outReal,&inReal[startIdx],(int)*outNBElement * sizeof(double));
+      /* Element loop, not a block copy: the C single-precision variant reads a
+       * float array, so a double-sized byte copy would reinterpret and
+       * over-read it (#137). Forward order keeps the in-place case correct (#94).
+       */
+      inIdx = startIdx;
+      for( i = 0; i < (int)*outNBElement; i += 1 )
+      {
+         outReal[i] = inReal[inIdx++];
+      }
       return TA_SUCCESS;
    }
    /* Calculate the divider (always an integer value).
@@ -234,7 +242,11 @@ TA_LIB_API TA_RetCode TA_WMA_Unguarded( int    startIdx,
    {
       *outBegIdx= startIdx;
       *outNBElement= endIdx - startIdx + 1;
-      memmove(outReal,&inReal[startIdx],(int)*outNBElement * sizeof(double));
+      inIdx = startIdx;
+      for( i = 0; i < (int)*outNBElement; i += 1 )
+      {
+         outReal[i] = inReal[inIdx++];
+      }
       return TA_SUCCESS;
    }
    divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -315,7 +327,11 @@ TA_RetCode TA_S_WMA( int    startIdx,
    {
       *outBegIdx= startIdx;
       *outNBElement= endIdx - startIdx + 1;
-      memmove(outReal,&inReal[startIdx],(int)*outNBElement * sizeof(double));
+      inIdx = startIdx;
+      for( i = 0; i < (int)*outNBElement; i += 1 )
+      {
+         outReal[i] = (double)inReal[inIdx++];
+      }
       return TA_SUCCESS;
    }
    divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -382,7 +398,11 @@ TA_RetCode TA_S_WMA_Unguarded( int    startIdx,
    {
       *outBegIdx= startIdx;
       *outNBElement= endIdx - startIdx + 1;
-      memmove(outReal,&inReal[startIdx],(int)*outNBElement * sizeof(double));
+      inIdx = startIdx;
+      for( i = 0; i < (int)*outNBElement; i += 1 )
+      {
+         outReal[i] = (double)inReal[inIdx++];
+      }
       return TA_SUCCESS;
    }
    divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -557,7 +577,15 @@ TA_RetCode TA_WMA_OpenInternal( struct TA_WMA_Stream **stream, const double inRe
       {
          dummyBegIdx = startIdx;
          dummyNBElement = endIdx - startIdx + 1;
-         memmove(outReal,&inReal[startIdx],(int)dummyNBElement * sizeof(double));
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
+          */
+         inIdx = startIdx;
+         for( i = 0; i < (int)dummyNBElement; i += 1 )
+         {
+            lastValue_outReal = inReal[inIdx++];
+         }
          return TA_BAD_PARAM;
       }
       /* Calculate the divider (always an integer value).
@@ -751,7 +779,15 @@ TA_LIB_API TA_RetCode TA_WMA_OpenAndFill( TA_WMA_Stream **stream, const double i
       {
          *outBegIdx= startIdx;
          *outNBElement= endIdx - startIdx + 1;
-         memmove(outReal,&inReal[startIdx],(int)*outNBElement * sizeof(double));
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
+          */
+         inIdx = startIdx;
+         for( i = 0; i < (int)*outNBElement; i += 1 )
+         {
+            outReal[i] = inReal[inIdx++];
+         }
          return TA_BAD_PARAM;
       }
       /* Calculate the divider (always an integer value).

@@ -12,7 +12,7 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 
 | Flag | Description |
 |------|-------------|
-| `--function=CSV` | Substring filter — run only matching test groups |
+| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite group is tagged `PVO,VWMA,COMPOSITE`). |
 | `--codegen` | Run codegen verification after C reference tests |
 | `--codegen-only` | Run only codegen verification, skip C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
@@ -81,10 +81,10 @@ ta_regtest
 
 ### Current State
 
-A single generic callback driven by `TA_ForEachFunc` enumeration covers all 161 indicators automatically. The callback uses ta_abstract metadata (`TA_GetFuncInfo`, `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo`) to build JSON-RPC requests without any per-function hand-coding. `TA_CallFunc` executes the C reference, then the callback copies the requested `outputNb` into the range-test output buffer.
+A single generic callback driven by `TA_ForEachFunc` enumeration covers every indicator automatically. The callback uses ta_abstract metadata (`TA_GetFuncInfo`, `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo`) to build JSON-RPC requests without any per-function hand-coding. `TA_CallFunc` executes the C reference, then the callback copies the requested `outputNb` into the range-test output buffer.
 
-The generic `doRangeTest` sweep **compares values by default** for all 161
-functions (lesson from issue #98: the TRIX partial-range mislabeling survived
+The generic `doRangeTest` sweep **compares values by default** for every
+function (lesson from issue #98: the TRIX partial-range mislabeling survived
 two decades because this sweep used `TA_DO_NOT_COMPARE` everywhere, checking
 only coherency). EMA-derived functions (DEMA, TEMA, TRIX, MACD, MACDEXT,
 MACDFIX) map to `TA_FUNC_UNST_EMA` in `UNSTABLE_MAP` so the unstable-period
@@ -180,6 +180,49 @@ drift only). They no longer carry the `unstable_period` abstract flag and are
 excluded from `UNSTABLE_MAP` so their range sweeps use the tight
 `TA_FUNC_UNST_NONE` tolerance rather than the loose convergence envelope.
 
+## The VARIANT gate — four-variant bitwise parity, no oracle (issue #137)
+
+Every function ships four times over: `TA_<N>`, `TA_<N>_Unguarded`, `TA_S_<N>`,
+`TA_S_<N>_Unguarded`. `test_variants.c` (tag `UNGUARDED,TA_S_,VARIANT`) asserts
+two exact contracts across all of them, in-process, with no server and no oracle
+— so a bare `./ta_regtest` covers it, which is what the autotools dist nightly runs:
+
+1. **unguarded == guarded** — the generator strips only a validation prologue, so
+   on already-valid arguments the two must be bit-identical.
+2. **`TA_S_` == `TA_` on widened inputs** — PR #33's contract. Feed `TA_S_` a float
+   array and `TA_` those same floats widened back; outputs must match bit for bit.
+
+Dispatch comes from the generated `ta_variant_frame.h`
+(`generator/src/backends/variant_frame.rs`): four uniform thunks plus a row per
+function. A **header on purpose** — no source-list entry, so the CMake/autotools
+lists cannot drift.
+
+Sabotage-proven to catch what nothing caught before: `-999.0` in
+`TA_S_CMF_Unguarded` (post-cutover, skipped by `--codegen`); in **guarded**
+`TA_S_ADX` (the server calls `TA_S_<N>` then `TA_S_<N>_Unguarded` into the *same*
+buffer, so the guarded single-precision result was reported nowhere, for any
+function); in `TA_WILLR_Unguarded` (**pre-cutover leaf** — so the hole was never
+limited to the 6 skipped functions); and a `1e-12` drift in `TA_SMA_Unguarded`
+(ref diff is 1e-9, float leg 1e-6 — this gate is bitwise).
+
+**It found a live defect on first run:** `TA_S_WMA` at `optInTimePeriod == 1` did
+`memmove(..., n * sizeof(double))` out of a `const float*` — wrong bits plus a
+`4n`-byte over-read, through the *public guarded* API (WMA's range is
+`[1,100000]`). Same shape in `TA_S_{RSI,CMO}_Unguarded`. Fixed in
+`ta_codegen/input/{wma,rsi,cmo}/` with a forward element loop, which the
+generator widens via an explicit `(double)` in the `TA_S_` bodies and which still
+handles the in-place `out == in` case from #94.
+
+Preconditions it maintains (the negation of the stripped checks — violating any
+makes an unguarded call read out of bounds): `startIdx >= 0`; `endIdx >= startIdx`;
+non-NULL inputs; every optional parameter **resolved and in-range** (never a
+`TA_INTEGER_DEFAULT` sentinel — unguarded does not substitute defaults); non-NULL,
+pairwise-distinct outputs. `startIdx < lookback` *is* allowed — that clamp lives
+in the shared body.
+
+The gate prints its coverage (functions, vectors, and how many compared actual
+output) and asserts it non-zero, so it cannot pass by silently doing nothing.
+
 ## Buffer Sizes
 
 - `JSON_BUF_SIZE` = 64KB in current code
@@ -225,7 +268,7 @@ Architecture (see `fuzz_data.h` + the fuzz block in `test_codegen.c`):
 - **Outputs by hash:** the server returns a 64-bit FNV hash of the raw output
   bytes. On any mismatch the driver re-issues that one case with
   `"full_output":1` (exact `%a` hex arrays) to pinpoint the diverging element.
-- **Coverage:** all 161 functions × 7 data shapes × 3 seeds × 3 sizes ×
+- **Coverage:** every function × 7 data shapes × 3 seeds × 3 sizes ×
   parameter vectors (boundary periods, MA-type lists, real-param bounds) × 3
   subranges ≈ 118k comparisons in ~17s.
 
@@ -315,7 +358,7 @@ Architecture (see `fuzz_data.h`, the Rust port in
   its own in-process generation, so a `fuzz_gen`-port bug surfaces as an INPUT
   mismatch, not a fake indicator-output bug. Hex servers (Java) send the driver's
   exact arrays, so they have no port to self-check and are skipped here.
-- **Coverage:** all 161 functions × 9 shapes × 3 seeds × 3 sizes × parameter
+- **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter
   vectors × 3 subranges ≈ 182k comparisons **per server**, ~94% with non-empty
   output (a non-vacuity guard fails the run if nothing produced output — an empty
   output hashes the same on both sides).

@@ -563,6 +563,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_cmf.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_cmou.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_variants.c"
 
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/codegen_pipe.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_codegen.c"

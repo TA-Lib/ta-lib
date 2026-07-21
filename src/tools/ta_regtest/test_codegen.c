@@ -1245,6 +1245,16 @@ typedef struct {
     int               passed;
     int               failed;
     int               skipped;
+    /* Names behind the aggregate `skipped` count. An unnamed "N skipped" reads
+     * as noise; naming them is what makes a post-cutover addition's reduced
+     * coverage visible at a glance (issue #137). */
+    char              skipNames[MAX_FUNCTIONS][20];
+    int               nbSkipNames;
+    char              intInputSkipNames[MAX_FUNCTIONS][20];
+    int               nbIntInputSkipNames;
+    /* sweep_one_function has its own subset gate that used to `return` with no
+     * counter at all — sweep skips were invisible even in the aggregate. */
+    int               sweepSkipped;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
     /* Ref differential sweep counters */
@@ -1280,7 +1290,14 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         char needle[80];
         snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->refFuncList, needle) ) { ctx->skipped++; return; }
+        if( !strstr(ctx->refFuncList, needle) )
+        {
+            if( ctx->nbSkipNames < MAX_FUNCTIONS )
+                strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
+                        sizeof(ctx->skipNames[0]) - 1);
+            ctx->skipped++;
+            return;
+        }
     }
 
     /* Skip functions with integer inputs (very rare, no test data) */
@@ -1315,6 +1332,9 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     sizeof(g_timingResults[ridx].funcName) - 1);
         }
         /* langs[langIndex].tested stays 0 (skipped) */
+        if( ctx->nbIntInputSkipNames < MAX_FUNCTIONS )
+            strncpy(ctx->intInputSkipNames[ctx->nbIntInputSkipNames++], funcInfo->name,
+                    sizeof(ctx->intInputSkipNames[0]) - 1);
         ctx->skipped++;
         return;
     }
@@ -1797,7 +1817,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         char needle[80];
         snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->refFuncList, needle) ) return;
+        if( !strstr(ctx->refFuncList, needle) ) { ctx->sweepSkipped++; return; }
     }
 
     /* Skip functions with integer inputs (same rule as the main pass). */
@@ -2616,6 +2636,9 @@ static ErrorNumber test_codegen_for_language(
     ctx.passed         = 0;
     ctx.failed         = 0;
     ctx.skipped        = 0;
+    ctx.nbSkipNames    = 0;
+    ctx.nbIntInputSkipNames = 0;
+    ctx.sweepSkipped   = 0;
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
 
@@ -2632,7 +2655,21 @@ static ErrorNumber test_codegen_for_language(
             && strstr(refFuncList, "\"functions\"") )
             ctx.refFuncList = refFuncList;
         else
-            printf("  (warning: ta_ref_serve list_functions failed — subset gate disabled)\n");
+        {
+            /* Fail, don't warn. With refFuncList NULL the subset gate is off,
+             * every function is compared against a reference that does not
+             * have all of them, and the run still prints "0 skipped" — which
+             * reads as MORE coverage than a healthy run, not less (#137). */
+            printf("\nCODEGEN FAILED: ta_ref_serve list_functions failed, so the "
+                   "subset gate cannot be applied.\n"
+                   "  Continuing would report '0 skipped' while silently comparing "
+                   "post-cutover functions\n  against a reference that lacks them.\n");
+            free(refFuncList);
+            free(requestBuf);
+            free(responseBuf);
+            codegen_pipe_close(&cp);
+            return TA_CODEGEN_SUBSET_GATE_UNAVAILABLE;
+        }
     }
 
     TA_ForEachFunc(test_one_function, &ctx);
@@ -2726,6 +2763,30 @@ static ErrorNumber test_codegen_for_language(
 
     printf("\n  %s: %d passed, %d failed, %d skipped\n",
            lang->display, ctx.passed, ctx.failed, ctx.skipped);
+
+    /* Name the skips — an unnamed "6 skipped" reads as noise. The set is the
+     * same for every language, so print it once (issue #137). All four variants
+     * of every function are gated bitwise anyway by the VARIANT group. */
+    if( langIndex == 0 )
+    {
+        int s;
+        if( ctx.nbSkipNames > 0 )
+        {
+            printf("    no frozen-reference baseline (post-cutover): ");
+            for( s = 0; s < ctx.nbSkipNames; s++ )
+                printf("%s%s", ctx.skipNames[s], (s + 1 < ctx.nbSkipNames) ? "," : "");
+            printf("  [sweep skipped %d; all still bitwise-gated by VARIANT]\n",
+                   ctx.sweepSkipped);
+        }
+        if( ctx.nbIntInputSkipNames > 0 )
+        {
+            printf("    integer inputs (no test data): ");
+            for( s = 0; s < ctx.nbIntInputSkipNames; s++ )
+                printf("%s%s", ctx.intInputSkipNames[s],
+                       (s + 1 < ctx.nbIntInputSkipNames) ? "," : "");
+            printf("\n");
+        }
+    }
 
     return TA_TEST_PASS;
 }

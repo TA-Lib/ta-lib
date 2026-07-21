@@ -69519,10 +69519,14 @@ class Core {
              outBegIdx.value = startIdx;
              i = endIdx - startIdx + 1;
              outNBElement.value = i;
-             /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-              * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+             /* Element loop, not a block copy: the C single-precision variant reads a
+              * float array, so a double-sized byte copy would reinterpret and
+              * over-read it (#137). Forward order keeps the in-place case correct (#94).
               */
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = startIdx;
+             for( outIdx = 0; outIdx < i; outIdx += 1 ) {
+                outReal[outIdx] = inReal[today++];
+             }
              return RetCode.Success ;
           }
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -69704,7 +69708,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = endIdx - startIdx + 1;
              outNBElement.value = i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = startIdx;
+             for( outIdx = 0; outIdx < i; outIdx += 1 ) {
+                outReal[outIdx] = inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -69850,7 +69857,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = endIdx - startIdx + 1;
              outNBElement.value = i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = startIdx;
+             for( outIdx = 0; outIdx < i; outIdx += 1 ) {
+                outReal[outIdx] = (double)inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -69985,7 +69995,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = endIdx - startIdx + 1;
              outNBElement.value = i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = startIdx;
+             for( outIdx = 0; outIdx < i; outIdx += 1 ) {
+                outReal[outIdx] = (double)inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -127167,10 +127180,14 @@ class Core {
              outBegIdx.value = startIdx;
              i = (int)(endIdx - startIdx + 1);
              outNBElement.value = (int)i;
-             /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-              * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+             /* Element loop, not a block copy: the C single-precision variant reads a
+              * float array, so a double-sized byte copy would reinterpret and
+              * over-read it (#137). Forward order keeps the in-place case correct (#94).
               */
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = (int)startIdx;
+             for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+                outReal[outIdx] = inReal[today++];
+             }
              return RetCode.Success ;
           }
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -127358,7 +127375,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = (int)(endIdx - startIdx + 1);
              outNBElement.value = (int)i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = (int)startIdx;
+             for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+                outReal[outIdx] = inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -127510,7 +127530,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = (int)(endIdx - startIdx + 1);
              outNBElement.value = (int)i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = (int)startIdx;
+             for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+                outReal[outIdx] = (double)inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -127651,7 +127674,10 @@ class Core {
              outBegIdx.value = startIdx;
              i = (int)(endIdx - startIdx + 1);
              outNBElement.value = (int)i;
-             System.arraycopy(inReal, startIdx, outReal, 0, i * 1);
+             today = (int)startIdx;
+             for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
+                outReal[outIdx] = (double)inReal[today++];
+             }
              return RetCode.Success ;
           }
           today = startIdx - lookbackTotal;
@@ -149955,7 +149981,14 @@ class Core {
           if( optInTimePeriod == 1 ) {
              outBegIdx.value = startIdx;
              outNBElement.value = endIdx - startIdx + 1;
-             System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+             /* Element loop, not a block copy: the C single-precision variant reads a
+              * float array, so a double-sized byte copy would reinterpret and
+              * over-read it (#137). Forward order keeps the in-place case correct (#94).
+              */
+             inIdx = startIdx;
+             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+                outReal[i] = inReal[inIdx++];
+             }
              return RetCode.Success ;
           }
           /* Calculate the divider (always an integer value).
@@ -150059,7 +150092,10 @@ class Core {
           if( optInTimePeriod == 1 ) {
              outBegIdx.value = startIdx;
              outNBElement.value = endIdx - startIdx + 1;
-             System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+             inIdx = startIdx;
+             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+                outReal[i] = inReal[inIdx++];
+             }
              return RetCode.Success ;
           }
           divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -150130,7 +150166,10 @@ class Core {
           if( optInTimePeriod == 1 ) {
              outBegIdx.value = startIdx;
              outNBElement.value = endIdx - startIdx + 1;
-             System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+             inIdx = startIdx;
+             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+                outReal[i] = (double)inReal[inIdx++];
+             }
              return RetCode.Success ;
           }
           divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;
@@ -150190,7 +150229,10 @@ class Core {
           if( optInTimePeriod == 1 ) {
              outBegIdx.value = startIdx;
              outNBElement.value = endIdx - startIdx + 1;
-             System.arraycopy(inReal, startIdx, outReal, 0, (int)outNBElement.value * 1);
+             inIdx = startIdx;
+             for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+                outReal[i] = (double)inReal[inIdx++];
+             }
              return RetCode.Success ;
           }
           divider = optInTimePeriod * (optInTimePeriod + 1) >> 1;

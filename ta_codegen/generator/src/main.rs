@@ -647,6 +647,10 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // Generate ta_abstract layer from YAML definitions
         backends::ta_abstract_c::generate(all_funcs, &enums, &out_base);
 
+        // Generate the four-variant dispatcher ta_regtest's variant-parity gate
+        // drives (issue #137). A header, so neither source list needs an entry.
+        backends::variant_frame::generate(all_funcs, &enums, &root);
+
         // Take over gen_code's two remaining C-side scalar generators:
         //   - the FuncUnstId enum (GENCODE SECTION 1) in the public header ta_defs.h
         //   - the TA_SetRetCodeInfo table in ta_common/ta_retcode.c (from the csv)

@@ -144,10 +144,15 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
       *outBegIdx= startIdx;
       i = (int)(endIdx - startIdx + 1);
       *outNBElement= (int)i;
-      /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-       * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+      /* Element loop, not a block copy: the C single-precision variant reads a
+       * float array, so a double-sized byte copy would reinterpret and
+       * over-read it (#137). Forward order keeps the in-place case correct (#94).
        */
-      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      today = (int)startIdx;
+      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+      {
+         outReal[outIdx] = inReal[today++];
+      }
       return TA_SUCCESS;
    }
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -362,7 +367,11 @@ TA_LIB_API TA_RetCode TA_RSI_Unguarded( int    startIdx,
       *outBegIdx= startIdx;
       i = (int)(endIdx - startIdx + 1);
       *outNBElement= (int)i;
-      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      today = (int)startIdx;
+      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+      {
+         outReal[outIdx] = inReal[today++];
+      }
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;
@@ -544,7 +553,11 @@ TA_RetCode TA_S_RSI( int    startIdx,
       *outBegIdx= startIdx;
       i = (int)(endIdx - startIdx + 1);
       *outNBElement= (int)i;
-      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      today = (int)startIdx;
+      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+      {
+         outReal[outIdx] = (double)inReal[today++];
+      }
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;
@@ -712,7 +725,11 @@ TA_RetCode TA_S_RSI_Unguarded( int    startIdx,
       *outBegIdx= startIdx;
       i = (int)(endIdx - startIdx + 1);
       *outNBElement= (int)i;
-      memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+      today = (int)startIdx;
+      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+      {
+         outReal[outIdx] = (double)inReal[today++];
+      }
       return TA_SUCCESS;
    }
    today = startIdx - lookbackTotal;
@@ -972,10 +989,15 @@ TA_RetCode TA_RSI_OpenInternal( struct TA_RSI_Stream **stream, const double inRe
          dummyBegIdx = startIdx;
          i = (int)(endIdx - startIdx + 1);
          dummyNBElement = (int)i;
-         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
           */
-         memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+         {
+            lastValue_outReal = inReal[today++];
+         }
          return TA_BAD_PARAM;
       }
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -1264,10 +1286,15 @@ TA_LIB_API TA_RetCode TA_RSI_OpenAndFill( TA_RSI_Stream **stream, const double i
          *outBegIdx= startIdx;
          i = (int)(endIdx - startIdx + 1);
          *outNBElement= (int)i;
-         /* memmove, not memcpy: an in-place caller (outReal == inReal) with
-          * startIdx > 0 overlaps source and destination (issue #94; matches WMA).
+         /* Element loop, not a block copy: the C single-precision variant reads a
+          * float array, so a double-sized byte copy would reinterpret and
+          * over-read it (#137). Forward order keeps the in-place case correct (#94).
           */
-         memmove(&outReal[0],&inReal[startIdx],i * sizeof(double));
+         today = (int)startIdx;
+         for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
+         {
+            outReal[outIdx] = inReal[today++];
+         }
          return TA_BAD_PARAM;
       }
       /* Accumulate Wilder's "Average Gain" and "Average Loss"

@@ -24,6 +24,7 @@ pub mod rust_stream;
 pub mod stmt_walk;
 pub mod ta_abstract_c;
 pub mod ta_defs;
+pub mod variant_frame;
 
 use crate::helper_registry::HelperRegistry;
 use crate::ir::{EnumDef, FuncDef};
