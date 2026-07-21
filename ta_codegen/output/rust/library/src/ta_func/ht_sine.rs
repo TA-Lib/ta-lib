@@ -119,6 +119,7 @@ impl Core {
     /// );
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
+    /// assert!(sine[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
     /// # See also

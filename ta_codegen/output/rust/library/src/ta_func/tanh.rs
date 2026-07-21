@@ -99,7 +99,7 @@ impl Core {
     /// ```
     /// use ta_lib::{Core, RetCode};
     ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
     /// let mut out_beg = 0;
@@ -109,6 +109,7 @@ impl Core {
     /// let ret = core.tanh(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
+    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
     /// # See also
@@ -253,12 +254,12 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.tanh_open(&data).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(0.42);
+    /// let updated = s.update(0.42);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TANH_Open")]

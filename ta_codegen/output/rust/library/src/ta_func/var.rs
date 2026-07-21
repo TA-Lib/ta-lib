@@ -142,6 +142,7 @@ impl Core {
     /// let ret = core.var(0, data.len() - 1, &data, 5, 1.0, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
+    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
     /// # See also

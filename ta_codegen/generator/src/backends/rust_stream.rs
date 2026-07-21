@@ -32,6 +32,7 @@ use crate::ir::{CircBuf, EnumDef, Expr, FuncDef, ParamType, Statement, VarType};
 use crate::registry::Registry;
 use crate::streaming::{self, StreamModel, StreamPlan};
 
+use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
     collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars, collect_var_types,
     emit_circbuf_prolog_rust, expr_is_untyped_integer, gen_opt_param_validation_with,
@@ -1577,20 +1578,19 @@ fn stream_doctest(func: &FuncDef, sn: &str) -> Option<Vec<String>> {
     let mut bar_args: Vec<String> = Vec::new();
     for input in &func.inputs {
         let (var, def, bar) = match input.name.as_str() {
+            "inReal" if unit_domain(func) => ("data", UNIT_SERIES, "0.42"),
             "inOpen" => ("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()", "100.2"),
             "inHigh" => ("high", "101.0 + 10.0 * (0.1 * i as f64).sin()", "101.4"),
             "inLow" => ("low", "99.0 + 10.0 * (0.1 * i as f64).sin()", "99.1"),
-            "inClose" => ("close", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
-            "inVolume" => ("volume", "10_000.0 + 100.0 * i as f64", "12_345.0"),
+            "inClose" => ("close", CLOSE_SERIES, "100.9"),
+            "inVolume" => ("volume", VOLUME_SERIES, "12_345.0"),
             "inPeriods" => ("periods", "5.0 + (i % 10) as f64", "14.0"),
             "inReal" => ("data", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
             "inReal0" => ("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
             "inReal1" => ("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()", "101.3"),
             _ => return None,
         };
-        lines.push(format!(
-            "let {var}: Vec<f64> = (0..252).map(|i| {def}).collect();"
-        ));
+        lines.extend(series_def(var, def));
         args.push(format!("&{var}"));
         bar_args.push(bar.to_string());
     }

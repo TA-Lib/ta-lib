@@ -136,7 +136,9 @@ impl Core {
     /// ```
     /// use ta_lib::{Core, RetCode};
     ///
-    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut out_beg = 0;
@@ -149,6 +151,7 @@ impl Core {
     /// );
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
+    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
     /// # See also
@@ -452,7 +455,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let volume: Vec<f64> = (0..252).map(|i| 10_000.0 + 100.0 * i as f64).collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.pvo_open(&volume, 12, 26, 1).expect("enough history");
