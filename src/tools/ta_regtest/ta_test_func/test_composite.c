@@ -158,6 +158,7 @@ static ErrorNumber test_vwma_oracle( const TA_History *history );
 static ErrorNumber test_vwma_inplace( const TA_History *history );
 static ErrorNumber test_vwma_tulip_vectors( void );
 static ErrorNumber test_vwma_flat_price( void );
+static ErrorNumber test_vwma_all_zero_volume( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -197,6 +198,10 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_vwma_flat_price();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_all_zero_volume();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -711,14 +716,10 @@ static ErrorNumber test_vwma_tulip_vectors( void )
 }
 
 /* (5) FLAT PRICE SERIES. With every price equal to C the weighted mean is C for
- * any volumes, since sum(C*v)/sum(v) = C*sum(v)/sum(v).
- *
- * That identity is exact in real arithmetic but NOT in floating point: the
- * running sum of C*v does not round to C*sum(v). Measured worst case across
- * prices {0.1, 93.75, 100, 12345.678} and periods {2,5,14,30,100} with wildly
- * varying volume: 8.0e-11 absolute at C=12345.678, i.e. ~6.5e-15 relative. So
- * this asserts a RELATIVE bound, not bit-equality -- asserting exactness here
- * would be a self-inflicted failure. */
+ * any volumes. The running sum of C*v does not round to C*sum(v), so agreement
+ * is to a few ULP rather than bitwise -- as it is everywhere: on the same flat
+ * series pandas-ta is out by up to 9.1e-12 and Tulip by 6.5e-11 (ours 8.0e-11).
+ * Hence a relative bound. */
 static ErrorNumber test_vwma_flat_price( void )
 {
 #define FLAT_N 120
@@ -761,4 +762,38 @@ static ErrorNumber test_vwma_flat_price( void )
    }
    return TA_TEST_PASS;
 #undef FLAT_N
+}
+
+/* (6) ALL-ZERO VOLUME. The window has no weights, so the weighted mean is
+ * undefined and the element is NaN -- same as Tulip, pandas-ta and numpy's
+ * zero-weight average. There is deliberately no guard; this pins that, so a
+ * future guard cannot silently contradict the VWMA page. */
+static ErrorNumber test_vwma_all_zero_volume( void )
+{
+#define ZV_N 60
+   static TA_Real in[ZV_N], vol[ZV_N], out[OUT_CAP];
+   int i;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+
+   for( i = 0; i < ZV_N; i++ ) { in[i] = 90.0 + (double)(i % 5); vol[i] = 0.0; }
+
+   rc = TA_VWMA( 0, ZV_N - 1, in, vol, 30, &beg, &nb, out );
+   if( rc != TA_SUCCESS || nb <= 0 )
+   {
+      printf( "VWMA all-zero-volume Fail: retCode %d nb %d (a successful call is expected)\n",
+              (int)rc, (int)nb );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = 0; i < nb; i++ )
+   {
+      if( out[i] == out[i] )   /* NaN is the only value failing self-equality */
+      {
+         printf( "VWMA all-zero-volume Fail at out[%d]: got %.17g, expected NaN "
+                 "(no guard is intended)\n", i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+#undef ZV_N
 }
