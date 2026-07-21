@@ -86,10 +86,11 @@ impl Core {
     /// Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod`
     /// bars, each bar weighted by its own volume. Heavily traded bars pull the average toward their
     /// price; quiet bars barely move it. Read like any moving average — price above is strength,
-    /// below is weakness. Against a plain \[`SMA`](/functions/sma) of the same window it leads on
-    /// high-volume moves and lags on low-volume drift, so the gap between the two lines measures
-    /// how volume-confirmed a move is. It has no attributable inventor — charting-package
-    /// folklore — and every published definition agrees, so there is no competing variant.
+    /// below is weakness. Against a plain [`SMA`](https://ta-lib.org/functions/sma) of the same
+    /// window it leads on high-volume moves and lags on low-volume drift, so the gap between the
+    /// two lines measures how volume-confirmed a move is. It has no attributable inventor —
+    /// charting-package folklore — and every published definition agrees, so there is no
+    /// competing variant.
     ///
     /// # Formula
     ///
