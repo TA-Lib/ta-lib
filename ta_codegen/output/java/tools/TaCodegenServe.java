@@ -104686,6 +104686,7 @@ class Core {
           int[] localPeriodArray;
           double[] localOutputArray;
           double[] localFinalArray;
+          int finalIsAllocated = 0;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104747,11 +104748,18 @@ class Core {
           /* Allocate intermediate local buffer. */
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
-          /* Results are staged locally and copied to outReal once at the end: each
-           * ma() pass re-reads inReal over the full range, so direct outReal writes
-           * corrupt an in-place (outReal==inReal) call (issue #130).
+          /* In-place defence (issue #130): each ma() pass below re-reads inReal over
+           * the full range, so with outReal==inReal the results are staged in a
+           * scratch buffer and copied once at the end. A regular call writes
+           * straight to outReal and skips both the allocation and the copy.
            */
-          localFinalArray = new double[(int)(outputSize * 1)];
+          finalIsAllocated = 0;
+          if( outReal == inReal ) {
+             finalIsAllocated = 1;
+             localFinalArray = new double[(int)(outputSize * 1)];
+          } else {
+             localFinalArray = outReal;
+          }
           /* Copy caller array of period into local buffer.
            * At the same time, truncate to min/max.
            */
@@ -104782,6 +104790,8 @@ class Core {
                 /* Calculation of the MA required. */
                 retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                 if( retCode != RetCode.Success ) {
+                   if( (finalIsAllocated) != 0 ) {
+                   }
                    outBegIdx.value = 0;
                    outNBElement.value = 0;
                    return retCode ;
@@ -104796,7 +104806,15 @@ class Core {
                 }
              }
           }
-          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          /* Pointer-inequality guard, not finalIsAllocated: in backends where the
+           * scratch election materializes as a copy (Rust), the copy-back must
+           * always run; in C/Java the non-aliased self-copy is skipped.
+           */
+          if( localFinalArray != outReal ) {
+             System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          }
+          if( (finalIsAllocated) != 0 ) {
+          }
           /* Done. Inform the caller of the success. */
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
@@ -104822,6 +104840,7 @@ class Core {
           int[] localPeriodArray;
           double[] localOutputArray;
           double[] localFinalArray;
+          int finalIsAllocated = 0;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104852,7 +104871,13 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
-          localFinalArray = new double[(int)(outputSize * 1)];
+          finalIsAllocated = 0;
+          if( outReal == inReal ) {
+             finalIsAllocated = 1;
+             localFinalArray = new double[(int)(outputSize * 1)];
+          } else {
+             localFinalArray = outReal;
+          }
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -104867,6 +104892,8 @@ class Core {
              if( curPeriod != 0 ) {
                 retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                 if( retCode != RetCode.Success ) {
+                   if( (finalIsAllocated) != 0 ) {
+                   }
                    outBegIdx.value = 0;
                    outNBElement.value = 0;
                    return retCode ;
@@ -104880,7 +104907,11 @@ class Core {
                 }
              }
           }
-          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          if( localFinalArray != outReal ) {
+             System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          }
+          if( (finalIsAllocated) != 0 ) {
+          }
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;
@@ -104905,6 +104936,7 @@ class Core {
           int[] localPeriodArray;
           double[] localOutputArray;
           double[] localFinalArray;
+          int finalIsAllocated = 0;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104951,7 +104983,13 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
-          localFinalArray = new double[(int)(outputSize * 1)];
+          finalIsAllocated = 0;
+          if( false ) {
+             finalIsAllocated = 1;
+             localFinalArray = new double[(int)(outputSize * 1)];
+          } else {
+             localFinalArray = outReal;
+          }
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)(double)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -104966,6 +105004,8 @@ class Core {
              if( curPeriod != 0 ) {
                 retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                 if( retCode != RetCode.Success ) {
+                   if( (finalIsAllocated) != 0 ) {
+                   }
                    outBegIdx.value = 0;
                    outNBElement.value = 0;
                    return retCode ;
@@ -104979,7 +105019,11 @@ class Core {
                 }
              }
           }
-          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          if( localFinalArray != outReal ) {
+             System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          }
+          if( (finalIsAllocated) != 0 ) {
+          }
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;
@@ -105004,6 +105048,7 @@ class Core {
           int[] localPeriodArray;
           double[] localOutputArray;
           double[] localFinalArray;
+          int finalIsAllocated = 0;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -105034,7 +105079,13 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
-          localFinalArray = new double[(int)(outputSize * 1)];
+          finalIsAllocated = 0;
+          if( false ) {
+             finalIsAllocated = 1;
+             localFinalArray = new double[(int)(outputSize * 1)];
+          } else {
+             localFinalArray = outReal;
+          }
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)(double)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -105049,6 +105100,8 @@ class Core {
              if( curPeriod != 0 ) {
                 retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                 if( retCode != RetCode.Success ) {
+                   if( (finalIsAllocated) != 0 ) {
+                   }
                    outBegIdx.value = 0;
                    outNBElement.value = 0;
                    return retCode ;
@@ -105062,7 +105115,11 @@ class Core {
                 }
              }
           }
-          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          if( localFinalArray != outReal ) {
+             System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
+          }
+          if( (finalIsAllocated) != 0 ) {
+          }
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;

@@ -197,6 +197,7 @@ impl Core {
         let mut localPeriodArray: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
+        let mut finalIsAllocated: usize = 0_usize;
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -239,10 +240,17 @@ impl Core {
         // Allocate intermediate local buffer.
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
-        // Results are staged locally and copied to outReal once at the end: each
-        // ma() pass re-reads inReal over the full range, so direct outReal writes
-        // corrupt an in-place (outReal==inReal) call (issue #130).
-        localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
+        // In-place defence (issue #130): each ma() pass below re-reads inReal over
+        // the full range, so with outReal==inReal the results are staged in a
+        // scratch buffer and copied once at the end. A regular call writes
+        // straight to outReal and skips both the allocation and the copy.
+        finalIsAllocated = 0;
+        if outReal.as_ptr() == inReal.as_ptr() {
+            finalIsAllocated = 1;
+            localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
+        } else {
+            localFinalArray = outReal.to_vec();
+        }
         // Copy caller array of period into local buffer.
         // At the same time, truncate to min/max.
         // for( i = 0; i < outputSize; i += 1 )
@@ -275,6 +283,8 @@ impl Core {
                 // Calculation of the MA required.
                 retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                 if retCode != RetCode::Success {
+                    if finalIsAllocated != 0 {
+                    }
                     (*outBegIdx) = 0;
                     (*outNBElement) = 0;
                     return retCode;
@@ -293,12 +303,19 @@ impl Core {
             }
             i += 1;
         }
-        {
+        // Pointer-inequality guard, not finalIsAllocated: in backends where the
+        // scratch election materializes as a copy (Rust), the copy-back must
+        // always run; in C/Java the non-aliased self-copy is skipped.
+        if localFinalArray.as_ptr() != outReal.as_ptr() {
+            {
             let _n = (outputSize * 1) as usize;
             let _di = (0) as usize;
             let _si = (0) as usize;
             outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
         };
+        }
+        if finalIsAllocated != 0 {
+        }
         // Done. Inform the caller of the success.
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
@@ -333,6 +350,7 @@ impl Core {
         let mut localPeriodArray: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
+        let mut finalIsAllocated: usize = 0_usize;
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -368,7 +386,13 @@ impl Core {
         outputSize = endIdx - tempInt + 1;
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
-        localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
+        finalIsAllocated = 0;
+        if outReal.as_ptr() == inReal.as_ptr() {
+            finalIsAllocated = 1;
+            localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
+        } else {
+            localFinalArray = outReal.to_vec();
+        }
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -388,6 +412,8 @@ impl Core {
             if curPeriod != 0 {
                 retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                 if retCode != RetCode::Success {
+                    if finalIsAllocated != 0 {
+                    }
                     (*outBegIdx) = 0;
                     (*outNBElement) = 0;
                     return retCode;
@@ -405,12 +431,16 @@ impl Core {
             }
             i += 1;
         }
-        {
+        if localFinalArray.as_ptr() != outReal.as_ptr() {
+            {
             let _n = (outputSize * 1) as usize;
             let _di = (0) as usize;
             let _si = (0) as usize;
             outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
         };
+        }
+        if finalIsAllocated != 0 {
+        }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
         return RetCode::Success;

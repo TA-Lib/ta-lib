@@ -31,6 +31,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
    int *localPeriodArray;
    double *localOutputArray;
    double *localFinalArray;
+   int finalIsAllocated;
    int localBegIdx;
    int localNbElement;
    TA_RetCode retCode;
@@ -84,10 +85,20 @@ TA_RetCode mavp(int startIdx, int endIdx,
    double *localOutputArray = malloc((outputSize) * sizeof(double));
    int *localPeriodArray = malloc((outputSize) * sizeof(int));
 
-   /* Results are staged locally and copied to outReal once at the end: each
-    * ma() pass re-reads inReal over the full range, so direct outReal writes
-    * corrupt an in-place (outReal==inReal) call (issue #130). */
-   double *localFinalArray = malloc((outputSize) * sizeof(double));
+   /* In-place defence (issue #130): each ma() pass below re-reads inReal over
+    * the full range, so with outReal==inReal the results are staged in a
+    * scratch buffer and copied once at the end. A regular call writes
+    * straight to outReal and skips both the allocation and the copy. */
+   finalIsAllocated = 0;
+   if( outReal == inReal )
+   {
+      finalIsAllocated = 1;
+      localFinalArray = malloc((outputSize) * sizeof(double));
+   }
+   else
+   {
+      localFinalArray = outReal;
+   }
 
    /* Copy caller array of period into local buffer.
     * At the same time, truncate to min/max.
@@ -129,8 +140,8 @@ TA_RetCode mavp(int startIdx, int endIdx,
          {
             free(localOutputArray);
             free(localPeriodArray);
-            free(localFinalArray);
-            *outBegIdx = 0;
+            if( finalIsAllocated ) { free(localFinalArray); }
+               *outBegIdx = 0;
             *outNBElement = 0;
             return retCode;
          }
@@ -147,13 +158,19 @@ TA_RetCode mavp(int startIdx, int endIdx,
       }
    }
 
-   memcpy(outReal, localFinalArray, outputSize * sizeof(double));
+   /* Pointer-inequality guard, not finalIsAllocated: in backends where the
+    * scratch election materializes as a copy (Rust), the copy-back must
+    * always run; in C/Java the non-aliased self-copy is skipped. */
+   if( localFinalArray != outReal )
+   {
+      memcpy(outReal, localFinalArray, outputSize * sizeof(double));
+   }
 
    free(localOutputArray);
    free(localPeriodArray);
-   free(localFinalArray);
+   if( finalIsAllocated ) { free(localFinalArray); }
 
-   /* Done. Inform the caller of the success. */
+      /* Done. Inform the caller of the success. */
    *outBegIdx = startIdx;
    *outNBElement = outputSize;
    return TA_SUCCESS;
