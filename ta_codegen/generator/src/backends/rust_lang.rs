@@ -1370,6 +1370,7 @@ fn count_assignments_inner(name: &str, body: &[Statement], in_loop: bool) -> usi
                 count += count_assignments_inner(name, else_body, in_loop);
             }
             Statement::Return { .. }
+            | Statement::UnrollHint { .. }
             | Statement::Break
             | Statement::Continue
             | Statement::CircBuf(_)
@@ -1422,6 +1423,7 @@ pub(crate) fn collect_for_loop_vars(body: &[Statement]) -> Vec<String> {
             | Statement::Expr(_)
             | Statement::If { .. }
             | Statement::Return { .. }
+            | Statement::UnrollHint { .. }
             | Statement::Break
             | Statement::Continue
             | Statement::Switch { .. }

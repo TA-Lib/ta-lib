@@ -231,6 +231,7 @@ pub fn substitute_statement(
                 .collect(),
         },
         Statement::Expr(e) => Statement::Expr(substitute_expr(e, subs)),
+        Statement::UnrollHint { count } => Statement::UnrollHint { count: *count },
         Statement::Break => Statement::Break,
         Statement::Continue => Statement::Continue,
         Statement::CircBuf(op) => Statement::CircBuf(op.clone()),
@@ -268,6 +269,7 @@ fn collect_local_names(body: &[Statement]) -> Vec<String> {
             Statement::Assign { .. }
             | Statement::Expr(_)
             | Statement::Return { .. }
+            | Statement::UnrollHint { .. }
             | Statement::Break
             | Statement::Continue
             | Statement::CircBuf(_)
@@ -372,6 +374,7 @@ fn replace_returns_with_assign(body: &mut [Statement], temp_name: &str) {
             | Statement::VarDecl { .. }
             | Statement::Assign { .. }
             | Statement::Expr(_)
+            | Statement::UnrollHint { .. }
             | Statement::Break
             | Statement::Continue
             | Statement::CircBuf(_)

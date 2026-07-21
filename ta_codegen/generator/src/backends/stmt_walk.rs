@@ -160,6 +160,14 @@ pub trait StatementEmitter {
     /// input `.c`. Language-specific comment syntax (block vs line).
     fn comment(&self, lines: &[String], indent: usize) -> String;
 
+    /// Render a `Statement::UnrollHint` — the `TA_UNROLL(n)` advisory that
+    /// precedes a loop. Only C has a place to put it (the macro in
+    /// `ta_utility.h`); every other backend leaves the loop to its own
+    /// optimizer, so the default is to emit nothing. Never affects semantics.
+    fn unroll_hint(&self, _count: u32, _indent: usize) -> String {
+        String::new()
+    }
+
     /// Render a `Statement::Break` (`break;`). Identical across backends.
     fn break_stmt(&self, indent: usize) -> String {
         format!("{}break;\n", " ".repeat(indent))
@@ -199,6 +207,7 @@ pub trait StatementEmitter {
                 self.if_stmt(condition, then_body, else_body, cond_comments, indent)
             }
             Statement::Return { value } => self.return_stmt(value, indent),
+            Statement::UnrollHint { count } => self.unroll_hint(*count, indent),
             Statement::Break => self.break_stmt(indent),
             Statement::Continue => self.continue_stmt(indent),
             Statement::For { var, count, body } => self.for_loop(var, count, body, indent),
@@ -292,6 +301,7 @@ pub(crate) fn strip_comments(stmts: &[Statement]) -> Vec<Statement> {
             Statement::VarDecl { .. }
             | Statement::Assign { .. }
             | Statement::Return { .. }
+            | Statement::UnrollHint { .. }
             | Statement::Break
             | Statement::Continue
             | Statement::Expr(_)

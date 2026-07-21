@@ -135,11 +135,7 @@ TA_LIB_API TA_RetCode TA_MAX( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -207,11 +203,7 @@ TA_LIB_API TA_RetCode TA_MAX_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = inReal[highestIdx];
          i = highestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -290,11 +282,7 @@ TA_RetCode TA_S_MAX( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -359,11 +347,7 @@ TA_RetCode TA_S_MAX_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inReal[highestIdx];
          i = highestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -430,6 +414,7 @@ static void TA_MAX_StepInternal( struct TA_MAX_Stream *sp, double inReal, double
       sp->highestIdx = sp->trailingIdx;
       sp->highest = sp->x_inReal[sp->highestIdx % sp->xCap];
       sp->i = sp->highestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inReal[sp->i % sp->xCap];
@@ -518,6 +503,7 @@ TA_RetCode TA_MAX_OpenInternal( struct TA_MAX_Stream **stream, const double inRe
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];
@@ -644,6 +630,7 @@ TA_LIB_API TA_RetCode TA_MAX_OpenAndFill( TA_MAX_Stream **stream, const double i
             highestIdx = trailingIdx;
             highest = inReal[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];

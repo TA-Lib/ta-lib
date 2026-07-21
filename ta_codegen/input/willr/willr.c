@@ -74,6 +74,7 @@ TA_RetCode willr(int startIdx, int endIdx,
          lowestIdx = trailingIdx;
          lowest = inLow[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmp = inLow[i];
@@ -99,6 +100,7 @@ TA_RetCode willr(int startIdx, int endIdx,
          highestIdx = trailingIdx;
          highest = inHigh[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i<=today )
          {
             tmp = inHigh[i];

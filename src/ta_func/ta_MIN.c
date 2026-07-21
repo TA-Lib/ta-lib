@@ -135,11 +135,7 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -207,11 +203,7 @@ TA_LIB_API TA_RetCode TA_MIN_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inReal[lowestIdx];
          i = lowestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inReal[i];
@@ -290,11 +282,7 @@ TA_RetCode TA_S_MIN( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -359,11 +347,7 @@ TA_RetCode TA_S_MIN_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inReal[lowestIdx];
          i = lowestIdx;
-#if defined(__clang__)
-#pragma clang loop unroll_count(4)
-#elif defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC unroll 4
-#endif
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inReal[i];
@@ -430,6 +414,7 @@ static void TA_MIN_StepInternal( struct TA_MIN_Stream *sp, double inReal, double
       sp->lowestIdx = sp->trailingIdx;
       sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
       sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inReal[sp->i % sp->xCap];
@@ -518,6 +503,7 @@ TA_RetCode TA_MIN_OpenInternal( struct TA_MIN_Stream **stream, const double inRe
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];
@@ -644,6 +630,7 @@ TA_LIB_API TA_RetCode TA_MIN_OpenAndFill( TA_MIN_Stream **stream, const double i
             lowestIdx = trailingIdx;
             lowest = inReal[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inReal[i];

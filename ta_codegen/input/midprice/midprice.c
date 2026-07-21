@@ -120,6 +120,7 @@ TA_RetCode midprice(int startIdx, int endIdx,
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i<=today )
             {
                tmpHigh = inHigh[i];
@@ -141,6 +142,7 @@ TA_RetCode midprice(int startIdx, int endIdx,
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i<=today )
             {
                tmpLow = inLow[i];

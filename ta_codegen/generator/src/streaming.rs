@@ -789,7 +789,11 @@ pub fn walk_stmt_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {
             }
         }
         Statement::Expr(e) => f(e),
-        Statement::CircBuf(_) | Statement::Comment(_) | Statement::Break | Statement::Continue => {}
+        Statement::CircBuf(_)
+        | Statement::Comment(_)
+        | Statement::UnrollHint { .. }
+        | Statement::Break
+        | Statement::Continue => {}
     }
 }
 
@@ -2942,6 +2946,7 @@ fn stmt_kind(s: &Statement) -> &'static str {
         Statement::For { .. } | Statement::ForC { .. } => "for loop",
         Statement::Switch { .. } => "switch",
         Statement::Return { .. } => "return",
+        Statement::UnrollHint { .. } => "unroll hint",
         Statement::Break => "break",
         Statement::Continue => "continue",
         Statement::Block { .. } => "block",

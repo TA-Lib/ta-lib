@@ -148,6 +148,7 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inLow[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inLow[i];
@@ -171,6 +172,7 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
          highestIdx = trailingIdx;
          highest = inHigh[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inHigh[i];
@@ -255,6 +257,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = inLow[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inLow[i];
@@ -277,6 +280,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = inHigh[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = inHigh[i];
@@ -376,6 +380,7 @@ TA_RetCode TA_S_WILLR( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inLow[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inLow[i];
@@ -398,6 +403,7 @@ TA_RetCode TA_S_WILLR( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inHigh[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inHigh[i];
@@ -479,6 +485,7 @@ TA_RetCode TA_S_WILLR_Unguarded( int    startIdx,
          lowestIdx = trailingIdx;
          lowest = (double)inLow[lowestIdx];
          i = lowestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inLow[i];
@@ -501,6 +508,7 @@ TA_RetCode TA_S_WILLR_Unguarded( int    startIdx,
          highestIdx = trailingIdx;
          highest = (double)inHigh[highestIdx];
          i = highestIdx;
+         TA_UNROLL(4)
          while( ++i <= today )
          {
             tmp = (double)inHigh[i];
@@ -590,6 +598,7 @@ static void TA_WILLR_StepInternal( struct TA_WILLR_Stream *sp, double inHigh, do
       sp->lowestIdx = sp->trailingIdx;
       sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
       sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inLow[sp->i % sp->xCap];
@@ -613,6 +622,7 @@ static void TA_WILLR_StepInternal( struct TA_WILLR_Stream *sp, double inHigh, do
       sp->highestIdx = sp->trailingIdx;
       sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
       sp->i = sp->highestIdx;
+      TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inHigh[sp->i % sp->xCap];
@@ -718,6 +728,7 @@ TA_RetCode TA_WILLR_OpenInternal( struct TA_WILLR_Stream **stream, const double 
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inLow[i];
@@ -741,6 +752,7 @@ TA_RetCode TA_WILLR_OpenInternal( struct TA_WILLR_Stream **stream, const double 
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inHigh[i];
@@ -897,6 +909,7 @@ TA_LIB_API TA_RetCode TA_WILLR_OpenAndFill( TA_WILLR_Stream **stream, const doub
             lowestIdx = trailingIdx;
             lowest = inLow[lowestIdx];
             i = lowestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inLow[i];
@@ -920,6 +933,7 @@ TA_LIB_API TA_RetCode TA_WILLR_OpenAndFill( TA_WILLR_Stream **stream, const doub
             highestIdx = trailingIdx;
             highest = inHigh[highestIdx];
             i = highestIdx;
+            TA_UNROLL(4)
             while( ++i <= today )
             {
                tmp = inHigh[i];

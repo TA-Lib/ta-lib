@@ -71,28 +71,7 @@ struct CRenderCtx<'a> {
     /// so callers may pass NULL to discard it. Empty for every non-body render
     /// pass (helpers, lookback) and every function without a nullable output.
     nullable_outputs: &'a [String],
-    /// MIN/MAX batch bodies only: emit an explicit unroll hint on the
-    /// expired-extreme rescan loop. `false` everywhere else, including every
-    /// stream-transition render, so streaming output is untouched.
-    unroll_rescan: bool,
 }
-
-/// Loop condition that identifies the expired-extreme rescan in MIN/MAX.
-const RESCAN_LOOP_CONDITION: &str = "++i <= today";
-
-/// Explicit unroll hint for the MIN/MAX expired-extreme rescan.
-///
-/// The rescan already exists; it runs only when the cached extreme leaves the
-/// window. Giving GCC/Clang an explicit unroll count cuts its loop-control
-/// overhead without adding a comparison to the per-sample tight loop. MSVC has
-/// no equivalent pragma with this spelling, so nothing is emitted for it.
-const RESCAN_UNROLL_PRAGMA: &str = concat!(
-    "#if defined(__clang__)\n",
-    "#pragma clang loop unroll_count(4)\n",
-    "#elif defined(__GNUC__) && __GNUC__ >= 8\n",
-    "#pragma GCC unroll 4\n",
-    "#endif\n",
-);
 
 #[allow(clippy::implicit_hasher)]
 pub fn generate(
@@ -531,15 +510,12 @@ fn gen_func_inner(
         .filter(|o| o.is_nullable())
         .map(|o| o.name.clone())
         .collect();
-    // Only MIN and MAX carry the cached-extreme rescan this hint applies to.
-    let unroll_rescan = matches!(func.name.as_str(), "MIN" | "MAX");
     let ctx = &CRenderCtx {
         single_precision,
         inline_counter: &inline_counter,
         stream_scalar_candles: false,
         fma: Some(&fma_sets),
         nullable_outputs: &nullable_outputs,
-        unroll_rescan,
     };
 
     // For S_ variants with explicit _private: emit private_param_init as local VarDecls.
@@ -736,18 +712,6 @@ fn gen_func_inner(
         out.insert_str(0, "TA_FMA_MULTIVERSION\n");
     }
 
-    // Fail closed: if MIN/MAX ever stops having exactly one expired-extreme
-    // rescan loop, the hint has silently landed on the wrong loop (or on none),
-    // so refuse to generate rather than emit misplaced or missing directives.
-    if unroll_rescan {
-        let emitted = out.matches("#pragma GCC unroll 4").count();
-        let name = &func.name;
-        assert!(
-            emitted == 1,
-            "{name}: expected exactly one expired-extreme rescan loop to unroll, found {emitted}"
-        );
-    }
-
     out
 }
 
@@ -825,7 +789,6 @@ pub fn render_statement(
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
             nullable_outputs: nullable,
-            unroll_rescan: false,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -851,7 +814,6 @@ pub fn render_statement_stream(
             stream_scalar_candles: true,
             fma: fma_sets.as_ref(),
             nullable_outputs: nullable,
-            unroll_rescan: false,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -908,6 +870,13 @@ impl CStmt<'_> {
 impl StatementEmitter for CStmt<'_> {
     fn comment(&self, lines: &[String], indent: usize) -> String {
         super::stmt_walk::block_comment(lines, indent)
+    }
+
+    /// `TA_UNROLL(n)` verbatim — `ta_utility.h` expands it to the GCC/Clang
+    /// unroll pragma and to nothing on every other compiler, so the macro is
+    /// the whole portability story and none of it leaks into the generator.
+    fn unroll_hint(&self, count: u32, indent: usize) -> String {
+        format!("{}TA_UNROLL({count})\n", " ".repeat(indent))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -1127,11 +1096,12 @@ impl StatementEmitter for CStmt<'_> {
         out.push_str(&render_hoisted_blocks(
             &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
         ));
-        let rendered_cond = render_expr(&new_cond, self.ctx, self.registry, self.helpers);
-        if self.ctx.unroll_rescan && rendered_cond == RESCAN_LOOP_CONDITION {
-            out.push_str(RESCAN_UNROLL_PRAGMA);
-        }
-        out.push_str(&format!("{pad}while( {rendered_cond} )\n{pad}{{\n"));
+        out.push_str(&format!(
+            "{}while( {} )\n{}{{\n",
+            pad,
+            render_expr(&new_cond, self.ctx, self.registry, self.helpers),
+            pad
+        ));
         for s in body {
             out.push_str(&self.walk_stmt(s, indent + 3));
         }
@@ -1746,7 +1716,6 @@ pub(crate) fn render_expression(
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
             nullable_outputs: &[],
-            unroll_rescan: false,
         };
         render_expr(expr, &ctx, registry, helpers)
     })
@@ -2067,7 +2036,7 @@ fn render_lookback_code(
     let inline_counter = Cell::new(0);
     // Lookback bodies are pure integer index arithmetic (the first-valid-output
     // count) — no float multiply-add, so fusion never applies here.
-    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None, nullable_outputs: &[], unroll_rescan: false };
+    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None, nullable_outputs: &[] };
 
     // Declare local variables (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();

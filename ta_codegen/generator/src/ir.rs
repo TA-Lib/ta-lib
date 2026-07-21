@@ -229,6 +229,14 @@ pub enum Statement {
         /// True if originally written as a compound assignment (+=, -=, etc.)
         compound: bool,
     },
+    /// `TA_UNROLL(n)` — unroll hint for the loop on the next line. Written in
+    /// the input C source and carried through so the C backend can re-emit the
+    /// macro (`ta_utility.h` expands it to a GCC/Clang unroll pragma, and to
+    /// nothing on every other compiler). Advisory only: no backend may let it
+    /// change what is computed, and Rust/Java/.NET drop it entirely.
+    UnrollHint {
+        count: u32,
+    },
     While {
         condition: Expr,
         body: Vec<Statement>,
