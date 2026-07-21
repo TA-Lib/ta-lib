@@ -1505,6 +1505,15 @@ TA_RetCode TA_VAR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_VAR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_VWMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_VWMA_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

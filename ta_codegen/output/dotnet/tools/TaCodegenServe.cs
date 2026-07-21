@@ -3062,6 +3062,24 @@ public class TaCodegenServe {
         out int outBegIdx, out int outNBElement,
         double[] outArr0);
 
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_VWMA")]
+    static extern int TA_VWMA(
+        int startIdx, int endIdx,
+        double[] inReal,
+        double[] inVolume,
+        int optInTimePeriod,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
+    [DllImport("ta_codegen_funcs", EntryPoint = "TA_VWMA_Unguarded")]
+    static extern int TA_VWMA_Unguarded(
+        int startIdx, int endIdx,
+        double[] inReal,
+        double[] inVolume,
+        int optInTimePeriod,
+        out int outBegIdx, out int outNBElement,
+        double[] outArr0);
+
     [DllImport("ta_codegen_funcs", EntryPoint = "TA_WCLPRICE")]
     static extern int TA_WCLPRICE(
         int startIdx, int endIdx,
@@ -10572,6 +10590,50 @@ public class TaCodegenServe {
                 sb.Append("}");
                 return sb.ToString();
             }
+            else if (method == "TA_VWMA") {
+                int use_preloaded = p.TryGetProperty("use_preloaded", out var _upre) ? _upre.GetInt32() : 0;
+                int bench_iters = p.TryGetProperty("iters", out var _iters) ? _iters.GetInt32() : 1;
+                if (bench_iters < 1) bench_iters = 1;
+                double[] inReal = Array.Empty<double>();
+                double[] inVolume = Array.Empty<double>();
+                if (use_preloaded != 0 && refN > 0) {
+                    inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+                    inVolume = new double[refN]; Array.Copy(refVolume, inVolume, refN);
+                } else {
+                    inReal = GetDoubleArray(p, "inReal");
+                    inVolume = GetDoubleArray(p, "inVolume");
+                }
+                int optInTimePeriod = p.TryGetProperty("optInTimePeriod", out var _optInTimePeriodVal) ? _optInTimePeriodVal.GetInt32() : 30;
+                double[] outArr0 = new double[n];
+                int rc = 0;
+                int outBegIdx = 0, outNBElement = 0;
+                long _t0 = GetNanoTime();
+                for (int _bi = 0; _bi < bench_iters; _bi++) {
+                rc = TA_VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+                if ((p.TryGetProperty("want_hash", out var _wh) ? _wh.GetInt32() : 0) != 0 &&
+                    (p.TryGetProperty("full_output", out var _fo) ? _fo.GetInt32() : 0) == 0) {
+                    ulong _h = SvHashInit();
+                    if (rc == 0 && outNBElement > 0) {
+                        _h = SvHashF64(_h, outArr0, outNBElement);
+                    }
+                    _h = SvHashFin(_h);
+                    return $"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+                }
+                long _t0u = GetNanoTime();
+                for (int _biu = 0; _biu < bench_iters; _biu++) {
+                rc = TA_VWMA_Unguarded(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                }
+                long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
+                var sb = new System.Text.StringBuilder();
+                sb.Append($"{{\"retCode\":{rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+                sb.Append($",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+                sb.Append($",\"timing_ns\":{elapsedNs}");
+                sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
+                sb.Append("}");
+                return sb.ToString();
+            }
             else if (method == "TA_WCLPRICE") {
                 int use_preloaded = p.TryGetProperty("use_preloaded", out var _upre) ? _upre.GetInt32() : 0;
                 int bench_iters = p.TryGetProperty("iters", out var _iters) ? _iters.GetInt32() : 1;
@@ -11031,6 +11093,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_ULTOSC\"");
                 sb.Append(",");
                 sb.Append("\"TA_VAR\"");
+                sb.Append(",");
+                sb.Append("\"TA_VWMA\"");
                 sb.Append(",");
                 sb.Append("\"TA_WCLPRICE\"");
                 sb.Append(",");

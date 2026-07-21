@@ -3639,6 +3639,27 @@ unsigned int TA_VAR_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_VAR_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInNbDev*/ );
 }
+TA_RetCode TA_VWMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_VWMA(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->in[1].data.inPrice.volume, /* inVolume */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_VWMA_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_VWMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

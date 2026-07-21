@@ -167,6 +167,7 @@
 #include "ta_TYPPRICE.c"
 #include "ta_ULTOSC.c"
 #include "ta_VAR.c"
+#include "ta_VWMA.c"
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"

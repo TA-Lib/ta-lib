@@ -65,6 +65,33 @@ DEF_FUNCTION( VAR,
              );
 /* VAR END */
 
+/* VWMA BEGIN */
+static const TA_InputParameterInfo    *TA_VWMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Price_V,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_VWMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_VWMA_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30,
+  NULL
+};
+
+DEF_FUNCTION( VWMA,
+              TA_GroupId_OverlapStudies,
+              "Volume Weighted Moving Average",
+              "Vwma",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* VWMA END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -72,6 +99,7 @@ DEF_FUNCTION( VAR,
 const TA_FuncDef *TA_DEF_TableV[] =
 {
    ADD_TO_TABLE(VAR),
+   ADD_TO_TABLE(VWMA),
    NULL
 };
 

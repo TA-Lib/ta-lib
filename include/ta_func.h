@@ -8874,6 +8874,62 @@ TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream );
 TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_VWMA - Volume Weighted Moving Average
+ * 
+ * Input  = double, Volume
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_VWMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          const double inVolume[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_VWMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            const float  inVolume[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_VWMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_VWMA — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_VWMA_Stream TA_VWMA_Stream;
+
+TA_LIB_API TA_RetCode TA_VWMA_Open( TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWMA_Update( TA_VWMA_Stream *stream, double inReal, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_VWMA( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_WCLPRICE - Weighted Close Price
  * 
  * Input  = High, Low, Close

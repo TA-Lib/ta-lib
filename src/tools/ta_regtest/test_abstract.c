@@ -179,6 +179,31 @@ static unsigned long long abstract_json_get_ull(const char *json, const char *fi
     return strtoull(p, NULL, 10);
 }
 
+/* Volume is a non-negative quantity, and every TA-Lib function that consumes it
+ * assumes so. The generic datasets here are sign-agnostic noise (notably
+ * inputRandFltEpsilon, which is a random-signed +/-FLT_EPSILON), so feeding them
+ * unchanged into a volume slot tests an input that cannot occur.
+ *
+ * That is not merely wasteful, it is actively misleading: with random-signed
+ * volume a trailing window sum can reach exactly 0.0 while the window is NOT
+ * all-zero, which trips the degenerate-input guard of any Sum(x*v)/Sum(v)
+ * indicator (VWMA) on data that would never arise. ta_abstract already records
+ * which slot is volume (TA_IN_PRICE_VOLUME), so use it: hand volume slots the
+ * magnitude only.
+ *
+ * Both the in-process call and the JSON request must use this same view or the
+ * two sides diverge for reasons that have nothing to do with the function. */
+static const double *abstract_volume_view( const double *input, unsigned int size )
+{
+    static double volBuf[2000];
+    unsigned int i;
+    if( size > (unsigned int)(sizeof(volBuf)/sizeof(volBuf[0])) )
+        return input;   /* cannot buffer it; leave the caller's data alone */
+    for( i = 0; i < size; i++ )
+        volBuf[i] = input[i] < 0.0 ? -input[i] : input[i];
+    return volBuf;
+}
+
 static int abstract_json_write_double_array(char *buf, int buf_size,
                                             const double *data, int count)
 {
@@ -644,6 +669,8 @@ static ErrorNumber abstract_verify_server_call(
 {
     if( !g_abstractPipe ) return TA_TEST_PASS;
 
+    const double *volInput = abstract_volume_view( input, (unsigned int)size );
+
     char *buf = g_abstractReqBuf;
     int bufSize = ABSTRACT_JSON_BUF_SIZE;
     int pos = 0;
@@ -691,7 +718,7 @@ static ErrorNumber abstract_verify_server_call(
             }
             if( flags & TA_IN_PRICE_VOLUME ) {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inVolume\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, volInput, size);
             }
             if( flags & TA_IN_PRICE_OPENINTEREST ) {
                 pos += snprintf(buf + pos, bufSize - pos, ",\"inOpenInterest\":");
@@ -1286,12 +1313,14 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  switch(inputInfo->type)
 	  {
 	  case TA_Input_Price:
+         /* Volume gets the magnitude only -- see abstract_volume_view(). The
+          * JSON request builder applies the identical view. */
          TA_SetInputParamPricePtr( paramHolder, i,
 			 inputInfo->flags&TA_IN_PRICE_OPEN?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_CLOSE?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_VOLUME?input:NULL, NULL );
+			 inputInfo->flags&TA_IN_PRICE_VOLUME?abstract_volume_view(input,(unsigned int)size):NULL, NULL );
 		 break;
 	  case TA_Input_Real:
          TA_SetInputParamRealPtr( paramHolder, i, input );
