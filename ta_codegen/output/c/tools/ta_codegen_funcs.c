@@ -87,6 +87,7 @@
 #include "ta_CDLUPSIDEGAP2CROWS.c"
 #include "ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_CEIL.c"
+#include "ta_CMF.c"
 #include "ta_CMO.c"
 #include "ta_CMOU.c"
 #include "ta_CORREL.c"

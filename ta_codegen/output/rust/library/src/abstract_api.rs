@@ -113,6 +113,7 @@ pub enum FuncId {
     Cdlupsidegap2crows,
     Cdlxsidegap3methods,
     Ceil,
+    Cmf,
     Cmo,
     Cmou,
     Correl,
@@ -202,7 +203,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 166;
+    pub const COUNT: usize = 167;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -378,7 +379,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 166] = [
+pub static FUNCS: [FuncInfo; 167] = [
     FuncInfo {
         id: FuncId::Accbands,
         name: "ACCBANDS",
@@ -1348,6 +1349,18 @@ pub static FUNCS: [FuncInfo; 166] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
         opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::Cmf,
+        name: "CMF",
+        camel_case_name: "Cmf",
+        group: Group::VolumeIndicators,
+        hint: "Chaikin Money Flow",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2460,6 +2473,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "CDLUPSIDEGAP2CROWS" => FuncId::Cdlupsidegap2crows,
         "CDLXSIDEGAP3METHODS" => FuncId::Cdlxsidegap3methods,
         "CEIL" => FuncId::Ceil,
+        "CMF" => FuncId::Cmf,
         "CMO" => FuncId::Cmo,
         "CMOU" => FuncId::Cmou,
         "CORREL" => FuncId::Correl,

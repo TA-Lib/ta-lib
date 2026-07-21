@@ -319,6 +319,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CDLUPSIDEGAP2CROWS.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CDLXSIDEGAP3METHODS.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CEIL.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMF.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMOU.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CORREL.c"
@@ -560,6 +561,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_period_boundary.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_s_overflow.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_cmf.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_cmou.c"
 
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/codegen_pipe.c"

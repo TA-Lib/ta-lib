@@ -1566,6 +1566,32 @@ DEF_FUNCTION( CEIL,
              );
 /* CEIL END */
 
+/* CMF BEGIN */
+static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CMF_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CMF_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_20_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( CMF,
+              TA_GroupId_VolumeIndicators,
+              "Chaikin Money Flow",
+              "Cmf",
+              TA_FUNC_FLG_STREAM
+             );
+/* CMF END */
+
 /* CMO BEGIN */
 static const TA_InputParameterInfo    *TA_CMO_Inputs[]    =
 {
@@ -1762,6 +1788,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS),
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS),
    ADD_TO_TABLE(CEIL),
+   ADD_TO_TABLE(CMF),
    ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CMOU),
    ADD_TO_TABLE(CORREL),
