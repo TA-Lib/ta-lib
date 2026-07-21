@@ -27,7 +27,9 @@ EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 
 
 ## Parameters
 
-- `optInTimePeriod` — EMA period used for all three passes
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | EMA period used for all three passes |
 
 ## Implementation
 

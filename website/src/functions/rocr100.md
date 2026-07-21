@@ -23,7 +23,9 @@ $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeri
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback distance (bars back) for the reference price
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Lookback distance (bars back) for the reference price |
 
 ## Implementation
 

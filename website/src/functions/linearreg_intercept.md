@@ -25,7 +25,9 @@ b = (SumY − m·SumX) / period   ← output
 
 ## Parameters
 
-- `optInTimePeriod` — Window length of the regression
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Window length of the regression |
 
 ## Implementation
 

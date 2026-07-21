@@ -28,7 +28,9 @@ Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9)
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the averaging window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Number of bars in the averaging window |
 
 ## Implementation
 

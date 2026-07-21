@@ -23,7 +23,9 @@ upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for ba
 
 ## Parameters
 
-- `optInTimePeriod` — Rolling window length for the up/down body sums
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Rolling window length for the up/down body sums |
 
 ## Implementation
 

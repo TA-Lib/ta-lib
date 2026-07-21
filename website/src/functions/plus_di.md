@@ -31,7 +31,9 @@ When period <= 1: +DI = +DM1 / TR1 (no *100).
 
 ## Parameters
 
-- `optInTimePeriod` — Wilder smoothing period
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 1–100000 | Wilder smoothing period |
 
 ## Implementation
 

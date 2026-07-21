@@ -24,7 +24,9 @@ Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1
 
 ## Parameters
 
-- `optInTimePeriod` — Rolling window length (number of returns) for the regression sums
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 5 | 1–100000 | Rolling window length (number of returns) for the regression sums |
 
 ## Implementation
 

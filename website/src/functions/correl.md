@@ -28,7 +28,9 @@ r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = 
 
 ## Parameters
 
-- `optInTimePeriod` — Rolling window length
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Rolling window length |
 
 ## Implementation
 

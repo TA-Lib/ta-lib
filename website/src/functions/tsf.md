@@ -23,7 +23,9 @@ Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSq
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the regression window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of bars in the regression window |
 
 ## Implementation
 

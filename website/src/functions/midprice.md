@@ -23,7 +23,9 @@ MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod b
 
 ## Parameters
 
-- `optInTimePeriod` — Window length over which the high/low extremes are taken
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Window length over which the high/low extremes are taken |
 
 ## Implementation
 

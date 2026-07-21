@@ -7,14 +7,23 @@
 //! `ta_codegen/input/<dir>/<dir>.md` and emits a website page at
 //! `website/src/functions/<dir>.md` (served at `https://ta-lib.org/functions/<name>`), plus
 //! a grouped `website/src/functions/index.md`. The page transform is deterministic (SEO
-//! front matter + `## See Also` links), so the output stays byte-stable under the regen oracle.
+//! front matter + `## See Also` links + the `## Parameters` table), so the output stays
+//! byte-stable under the regen oracle.
+//!
+//! The transform works on the **raw markdown text**, not on the parsed [`crate::ir::DocDef`].
+//! That is deliberate: on a filtered run (`generate --func=SMA`) the `FuncDef`s come from
+//! `load_all_yaml_defs`, which never attaches `doc`, so a `DocDef`-driven renderer would
+//! blank all 166 pages whenever anyone regenerated a single function. Only the YAML
+//! metadata — always present — is injected.
 
-use crate::ir::FuncDef;
-use std::collections::{BTreeMap, HashSet};
+use super::doc_meta::{self, RangeMeta};
+use crate::ir::{EnumDef, FuncDef, ParamType};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
 /// Generate the per-function website pages + index into `website/src/functions/`.
-pub fn generate(funcs: &[FuncDef], root: &Path) {
+#[allow(clippy::implicit_hasher)]
+pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path) {
     let input_base = root.join("ta_codegen/input");
     let out_dir = root.join("website/src/functions");
     std::fs::create_dir_all(&out_dir).expect("create website/src/functions");
@@ -33,7 +42,7 @@ pub fn generate(funcs: &[FuncDef], root: &Path) {
             eprintln!("  docs: no source {dir}/{dir}.md — skipping page");
             continue;
         };
-        let page = transform_page(&body, &f.name, &known);
+        let page = transform_page(&body, f, enums, &known);
         super::write_if_changed_silent(&out_dir.join(format!("{dir}.md")), &page);
         paged.push(f);
     }
@@ -64,10 +73,19 @@ pub fn generate(funcs: &[FuncDef], root: &Path) {
     }
 }
 
-/// Prepend SEO front matter (title + description) and linkify `## See Also`.
-fn transform_page(body: &str, name: &str, known: &HashSet<&str>) -> String {
+/// Prepend SEO front matter (title + description), linkify `## See Also`, and replace the
+/// `## Parameters` bullet list with a table carrying the YAML numbers.
+fn transform_page(
+    body: &str,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    known: &HashSet<&str>,
+) -> String {
+    let name = &func.name;
+    // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
-    let linked = linkify_see_also(body, known);
+    let injected = inject_parameters(body, func, enums);
+    let linked = linkify_see_also(&injected, known);
     let mut out = String::from("---\n");
     out.push_str(&format!("title: {name}\n"));
     if !desc.is_empty() {
@@ -90,6 +108,272 @@ fn extract_summary(body: &str) -> String {
     };
     let end = rest.find("\n## ").unwrap_or(rest.len());
     rest[..end].split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Replace the `## Parameters` bullet list with a table joining the authored prose to the
+/// YAML metadata — the render-time injection `docs/ta_codegen_input_doc.md` specifies, so a
+/// reader learns a parameter's type, default and accepted values without opening the header.
+///
+/// A no-op for the 89 functions with no `optional_inputs` (they have no such section).
+fn inject_parameters(body: &str, func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
+    // Validated up-front by `validate_docs`, before any backend has written a file.
+    match try_inject_parameters(body, func, enums) {
+        Ok(page) => page,
+        Err(e) => panic!("{e}"),
+    }
+}
+
+/// Check that every function's `## Parameters` section can be rendered, without writing
+/// anything. Returns every problem found rather than the first, so one run reports the
+/// whole backlog. Called before Phase 2 so a documentation typo cannot abort a `generate`
+/// that has already rewritten `src/ta_func/*.c`.
+///
+/// # Errors
+/// One message per function whose documentation and YAML disagree.
+#[allow(clippy::implicit_hasher)]
+pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> {
+    let input_base = root.join("ta_codegen/input");
+    let enums = HashMap::new();
+    let mut errors = Vec::new();
+    for f in funcs {
+        let dir = f.name.to_lowercase();
+        let src = input_base.join(&dir).join(format!("{dir}.md"));
+        // A missing .md is not an error here: `generate` warns and skips the page.
+        let Ok(body) = std::fs::read_to_string(&src) else {
+            continue;
+        };
+        if let Err(e) = try_inject_parameters(&body, f, &enums) {
+            errors.push(e);
+        }
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
+}
+
+/// The fallible core of [`inject_parameters`], so the same rules can gate a run before
+/// anything is written.
+fn try_inject_parameters(
+    body: &str,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+) -> Result<String, String> {
+    if func.optional_inputs.is_empty() {
+        return Ok(body.to_string());
+    }
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((heading, end)) = section_span(&lines, "## Parameters") else {
+        return Err(format!(
+            "{}: YAML declares {} optional input(s) but {}.md has no `## Parameters` section",
+            func.name,
+            func.optional_inputs.len(),
+            func.name.to_lowercase()
+        ));
+    };
+
+    let section = &lines[heading + 1..end];
+    // The section is replaced wholesale by the table, so any block in it that is not a
+    // parameter bullet would vanish (before the first bullet) or be folded into the
+    // preceding description (after one). `## Parameters` is specified as a
+    // name-to-meaning list (docs/ta_codegen_input_doc.md), so reject the rest loudly
+    // rather than delete an author's sentence without telling them. A *wrapped* bullet
+    // is fine and stays supported: it continues the line above with no blank line
+    // between, whereas a stray paragraph or sub-heading starts its own block.
+    let strays: Vec<&str> = section
+        .iter()
+        .enumerate()
+        .filter(|(i, l)| {
+            let starts_block = *i == 0 || section[i - 1].trim().is_empty();
+            starts_block && !l.trim().is_empty() && !is_bullet_line(l)
+        })
+        .map(|(_, l)| *l)
+        .collect();
+    if !strays.is_empty() {
+        return Err(format!(
+            "{}: `## Parameters` opens a block that is not a `- `name` — description` \
+             bullet, which the rendered table would drop: {strays:?}",
+            func.name
+        ));
+    }
+
+    // Every bullet must be a named one. An item that fails the backtick parse is dropped
+    // by `named_bullets`, and dropping it silently would both delete it from the page and
+    // slip past the name check below, which only sees what parsed.
+    let items = bullet_items(section);
+    let prose = named_bullets(section);
+    if items.len() != prose.len() {
+        let unparsed: Vec<&String> = items
+            .iter()
+            .filter(|i| !i.starts_with('`') || !i[1..].contains('`'))
+            .collect();
+        return Err(format!(
+            "{}: `## Parameters` has {} bullet(s) that are not \
+             `- `name` — description` and would be dropped: {unparsed:?}",
+            func.name,
+            items.len() - prose.len()
+        ));
+    }
+
+    // The join is by position *and* name: the authored bullets must mirror the YAML
+    // exactly. They do for all 120 parameters today, so a mismatch means a parameter was
+    // renamed or added on one side only — say so rather than silently drop a description.
+    let names: Vec<&str> = prose.iter().map(|(n, _)| n.as_str()).collect();
+    let expected: Vec<&str> = func
+        .optional_inputs
+        .iter()
+        .map(|o| o.name.as_str())
+        .collect();
+    if names != expected {
+        return Err(format!(
+            "{}: `## Parameters` bullets {names:?} do not match the YAML optional_inputs \
+             {expected:?} — the two must agree in name and order",
+            func.name
+        ));
+    }
+
+    let mut table = vec![
+        "| Parameter | Type | Default | Accepted values | Description |".to_string(),
+        "| --- | --- | --- | --- | --- |".to_string(),
+    ];
+    for (opt, (_, desc)) in func.optional_inputs.iter().zip(prose.iter()) {
+        let m = doc_meta::param_meta(opt, enums);
+        let default = match (&m.default_variant, &m.default) {
+            (Some(variant), Some(value)) => format!("{variant} ({value})"),
+            (_, Some(value)) => value.clone(),
+            (_, None) => "—".to_string(),
+        };
+        table.push(format!(
+            "| `{}` | {} | {} | {} | {} |",
+            opt.name,
+            m.type_label,
+            default,
+            accepted_values(&m),
+            escape_cell(desc)
+        ));
+    }
+
+    let mut out: Vec<String> = lines[..=heading].iter().map(|s| (*s).to_string()).collect();
+    out.push(String::new());
+    out.extend(table);
+    for legend in enum_legends(func, enums) {
+        out.push(String::new());
+        out.push(legend);
+    }
+    out.push(String::new());
+    out.extend(lines[end..].iter().map(|s| (*s).to_string()));
+    let mut s = out.join("\n");
+    s.push('\n');
+    Ok(s)
+}
+
+/// A line that [`named_bullets`] will turn into a `(name, description)` pair.
+fn is_bullet_line(line: &str) -> bool {
+    let Some(item) = line.trim().strip_prefix("- ") else {
+        return false;
+    };
+    item.trim()
+        .strip_prefix('`')
+        .is_some_and(|rest| rest.contains('`'))
+}
+
+/// The `Accepted values` cell: a numeric domain for integer/real parameters, `any <type>`
+/// for an enum (whose admissible set is spelled out once per page by [`enum_legends`]).
+/// `TA_REAL_MIN`/`TA_REAL_MAX` bounds constrain nothing, so they read as `any real` or a
+/// one-sided `≥` rather than as ±1.8e308.
+fn accepted_values(m: &doc_meta::ParamMeta) -> String {
+    match &m.range {
+        RangeMeta::Bounded(lo, hi) => format!("{lo}–{hi}"),
+        RangeMeta::Min(lo) => format!("≥ {lo}"),
+        RangeMeta::Max(hi) => format!("≤ {hi}"),
+        RangeMeta::Unbounded => format!("any {}", m.type_label),
+    }
+}
+
+/// One italic legend per distinct enum type used on the page, spelling out its admissible
+/// values with their numeric codes. Emitted once rather than per row because MACDEXT takes
+/// three `MAType` parameters and STOCH two — repeating nine names in every row would
+/// dominate the table's width to no benefit.
+fn enum_legends(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<String> {
+    let mut seen: Vec<&str> = Vec::new();
+    let mut out = Vec::new();
+    for opt in &func.optional_inputs {
+        let ParamType::Enum(name) = &opt.param_type else {
+            continue;
+        };
+        if seen.contains(&name.as_str()) {
+            continue;
+        }
+        seen.push(name);
+        let Some(def) = enums.get(name) else { continue };
+        let values: Vec<String> = def
+            .variants
+            .iter()
+            .map(|v| format!("{} {}", v.value, v.short_name))
+            .collect();
+        out.push(format!("*`{name}` values: {}*", values.join(" · ")));
+    }
+    out
+}
+
+/// Escape prose for a GFM table cell: an unescaped `|` would end the cell early
+/// (SAREXT's `optInStartValue` description contains `|value|`).
+fn escape_cell(text: &str) -> String {
+    text.replace('|', "\\|")
+}
+
+/// The half-open line span of a `## ` section: `(heading index, index of the next `## `)`.
+fn section_span(lines: &[&str], heading: &str) -> Option<(usize, usize)> {
+    let start = lines.iter().position(|l| l.trim() == heading)?;
+    let end = lines[start + 1..]
+        .iter()
+        .position(|l| l.starts_with("## "))
+        .map_or(lines.len(), |i| start + 1 + i);
+    Some((start, end))
+}
+
+/// Collect `- ` items, folding a wrapped continuation line into the item above.
+///
+/// Deliberately staged exactly like `parser::doc_md::bullets`: continuations are merged
+/// **before** any name parsing, so an item that later fails to parse takes its own
+/// continuation lines with it instead of donating them to the previous parameter. Merging
+/// after the parse — the obvious shortcut — makes this renderer disagree with the rustdoc
+/// one on malformed input, which is the single thing sharing `doc_meta` exists to prevent.
+fn bullet_items(lines: &[&str]) -> Vec<String> {
+    let mut items: Vec<String> = Vec::new();
+    for line in lines {
+        let trimmed = line.trim();
+        if let Some(item) = trimmed.strip_prefix("- ") {
+            items.push(item.trim().to_string());
+        } else if !trimmed.is_empty() {
+            if let Some(last) = items.last_mut() {
+                last.push(' ');
+                last.push_str(trimmed);
+            }
+        }
+    }
+    items
+}
+
+/// Parse ``- `name` — description`` bullets. Mirrors `parser::doc_md::named_bullets`,
+/// including its single-separator strip: a CDL output description legitimately begins with
+/// `-` (`-100 on a bearish pattern`), so exactly one separator character comes off.
+fn named_bullets(lines: &[&str]) -> Vec<(String, String)> {
+    bullet_items(lines)
+        .iter()
+        .filter_map(|item| {
+            let rest = item.strip_prefix('`')?;
+            let (name, after) = rest.split_once('`')?;
+            let after = after.trim_start();
+            let desc = after
+                .strip_prefix('—')
+                .or_else(|| after.strip_prefix('-'))
+                .unwrap_or(after)
+                .trim_start();
+            Some((name.to_string(), desc.to_string()))
+        })
+        .collect()
 }
 
 /// Turn `## See Also` entries (`ADX · DX · …`) into source-root-absolute, extensionless
@@ -151,4 +435,241 @@ fn build_index(funcs: &[&FuncDef]) -> String {
         }
     }
     s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ir::{EnumVariant, Input, OptInput};
+
+    fn func(name: &str, opts: Vec<OptInput>) -> FuncDef {
+        FuncDef {
+            name: name.to_string(),
+            group: "Overlap Studies".to_string(),
+            description: None,
+            camel_case: None,
+            hint: None,
+            flags: vec![],
+            inputs: vec![Input {
+                name: "inReal".to_string(),
+                param_type: ParamType::Real,
+            }],
+            optional_inputs: opts,
+            outputs: vec![],
+            lookback: None,
+            body: vec![],
+            private_body: vec![],
+            private_extra_params: vec![],
+            private_param_init: vec![],
+            has_explicit_private: false,
+            header_comments: vec![],
+            doc: None,
+            streaming: false,
+        }
+    }
+
+    fn opt(name: &str, pt: ParamType, range: Option<(f64, f64)>, default: f64) -> OptInput {
+        OptInput {
+            name: name.to_string(),
+            param_type: pt,
+            range,
+            default: Some(default),
+            display_name: None,
+            hint: None,
+            flags: vec![],
+            suggested: None,
+            precision: None,
+        }
+    }
+
+    fn ma_type() -> HashMap<String, EnumDef> {
+        let variants = [("SMA", 0), ("EMA", 1), ("WMA", 2)]
+            .iter()
+            .map(|(n, v)| EnumVariant {
+                c_name: format!("TA_MAType_{n}"),
+                pascal_name: (*n).to_string(),
+                short_name: (*n).to_string(),
+                value: *v,
+            })
+            .collect();
+        let mut m = HashMap::new();
+        m.insert(
+            "MAType".to_string(),
+            EnumDef {
+                name: "MAType".to_string(),
+                variants,
+            },
+        );
+        m
+    }
+
+    const PAGE: &str = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n\n## Implementation\n\nkeep me\n";
+
+    #[test]
+    fn parameters_become_a_table_with_the_yaml_numbers() {
+        let f = func(
+            "X",
+            vec![opt(
+                "optInTimePeriod",
+                ParamType::Integer,
+                Some((1.0, 100_000.0)),
+                30.0,
+            )],
+        );
+        let out = inject_parameters(PAGE, &f, &HashMap::new());
+        assert!(out.contains("| `optInTimePeriod` | integer | 30 | 1–100000 | Window length |"));
+        // Surrounding sections survive untouched.
+        assert!(out.contains("## Implementation\n\nkeep me"));
+        assert!(!out.contains("- `optInTimePeriod`"));
+    }
+
+    /// The 89 functions with no optional inputs have no `## Parameters` section at all.
+    #[test]
+    fn no_optional_inputs_is_a_no_op() {
+        let f = func("X", vec![]);
+        let body = "# X\n\n## Inputs\n\n- `inReal` — Series\n";
+        assert_eq!(inject_parameters(body, &f, &HashMap::new()), body);
+    }
+
+    /// BBANDS' `optInNbDevUp`: both bounds are `TA_REAL_MIN`/`TA_REAL_MAX` sentinels, which
+    /// constrain nothing — the cell must say so rather than print ±1.8e308.
+    #[test]
+    fn sentinel_range_reads_as_any_of_the_type() {
+        let f = func(
+            "X",
+            vec![opt(
+                "optInTimePeriod",
+                ParamType::Real,
+                Some((f64::MIN, f64::MAX)),
+                2.0,
+            )],
+        );
+        let out = inject_parameters(PAGE, &f, &HashMap::new());
+        assert!(out.contains("| `optInTimePeriod` | real | 2 | any real |"));
+    }
+
+    /// APO/PPO/PVO default to `1 = EMA`: the variant is looked up by value, not by index.
+    /// The admissible set goes in a single per-page legend, not into every row.
+    #[test]
+    fn enum_names_the_default_by_value_and_legends_the_variants_once() {
+        let f = func(
+            "X",
+            vec![
+                opt(
+                    "optInTimePeriod",
+                    ParamType::Enum("MAType".to_string()),
+                    None,
+                    1.0,
+                ),
+                opt(
+                    "optInSecond",
+                    ParamType::Enum("MAType".to_string()),
+                    None,
+                    0.0,
+                ),
+            ],
+        );
+        let body = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n- `optInSecond` — Second\n";
+        let out = inject_parameters(body, &f, &ma_type());
+        assert!(out.contains("| `optInTimePeriod` | MAType | EMA (1) | any MAType |"));
+        assert!(out.contains("| `optInSecond` | MAType | SMA (0) | any MAType |"));
+        // One legend for the shared enum type, not one per parameter.
+        assert_eq!(out.matches("`MAType` values:").count(), 1);
+        assert!(out.contains("*`MAType` values: 0 SMA · 1 EMA · 2 WMA*"));
+    }
+
+    /// SAREXT's `optInStartValue` prose contains `|value|`, which would end the cell early.
+    #[test]
+    fn pipes_in_prose_are_escaped() {
+        let f = func(
+            "X",
+            vec![opt("optInStartValue", ParamType::Real, Some((0.0, f64::MAX)), 0.0)],
+        );
+        let body = "# X\n\n## Parameters\n\n- `optInStartValue` — start short at |value|\n";
+        let out = inject_parameters(body, &f, &HashMap::new());
+        assert!(out.contains(r"start short at \|value\| |"));
+        assert!(out.contains("| ≥ 0 |"));
+    }
+
+    /// A parameter renamed in the YAML but not in the prose would otherwise silently lose
+    /// its description; the golden rule only holds if the two stay in lockstep.
+    #[test]
+    #[should_panic(expected = "do not match the YAML optional_inputs")]
+    fn a_name_mismatch_fails_loudly() {
+        let f = func(
+            "X",
+            vec![opt("optInRenamed", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
+        );
+        inject_parameters(PAGE, &f, &HashMap::new());
+    }
+
+    /// The table replaces the whole section, so a stray paragraph would be deleted (before
+    /// the first bullet) or swallowed into the last cell (after one). Refuse instead.
+    #[test]
+    fn stray_prose_in_the_section_is_rejected_not_deleted() {
+        let f = func(
+            "X",
+            vec![opt("optInTimePeriod", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
+        );
+        let leading = "# X\n\n## Parameters\n\nAll periods are in bars.\n\n- `optInTimePeriod` — Window length\n";
+        let err = try_inject_parameters(leading, &f, &HashMap::new()).unwrap_err();
+        assert!(err.contains("All periods are in bars."), "{err}");
+
+        let trailing = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n\n### Notes on tuning\n";
+        let err = try_inject_parameters(trailing, &f, &HashMap::new()).unwrap_err();
+        assert!(err.contains("Notes on tuning"), "{err}");
+    }
+
+    /// A bullet wrapped over two lines is legitimate authoring — it must keep working, and
+    /// the continuation belongs to the description.
+    #[test]
+    fn a_wrapped_bullet_is_joined_not_rejected() {
+        let f = func(
+            "X",
+            vec![opt("optInTimePeriod", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
+        );
+        let body = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length,\n  measured in bars\n";
+        let out = try_inject_parameters(body, &f, &HashMap::new()).unwrap();
+        assert!(out.contains("| Window length, measured in bars |"), "{out}");
+    }
+
+    /// The exact case the review reproduced: a non-named bullet tucked directly under a
+    /// parameter bullet (no blank line, so the stray-block check does not see it). Its
+    /// wrapped line used to be grafted onto the preceding parameter's description on the
+    /// website while rustdoc dropped the whole item — the two surfaces silently disagreeing.
+    #[test]
+    fn an_unparseable_bullet_cannot_graft_itself_onto_the_previous_parameter() {
+        let f = func(
+            "X",
+            vec![opt("optInTimePeriod", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
+        );
+        let body = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n- Note: interacts with\n  the unstable period\n";
+        let err = try_inject_parameters(body, &f, &HashMap::new()).unwrap_err();
+        assert!(err.contains("would be dropped"), "{err}");
+        assert!(err.contains("Note: interacts with"), "{err}");
+    }
+
+    /// `named_bullets` must stage exactly like `parser::doc_md::named_bullets`: a failed
+    /// item swallows its own continuation rather than donating it to the item above.
+    #[test]
+    fn continuations_are_merged_before_the_name_parse() {
+        let lines = vec![
+            "- `optInA` — First",
+            "- Note: stray",
+            "  continuation of the stray",
+        ];
+        let parsed = named_bullets(&lines);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].1, "First");
+    }
+
+    #[test]
+    #[should_panic(expected = "has no `## Parameters` section")]
+    fn a_missing_section_fails_loudly() {
+        let f = func(
+            "X",
+            vec![opt("optInTimePeriod", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
+        );
+        inject_parameters("# X\n\n## Inputs\n\n- `inReal` — Series\n", &f, &HashMap::new());
+    }
 }

@@ -27,7 +27,9 @@ Wilder's Average Directional Movement Index, a smoothed measure of trend strengt
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing/averaging period for DM, TR, and ADX
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Smoothing/averaging period for DM, TR, and ADX |
 
 ## Implementation
 

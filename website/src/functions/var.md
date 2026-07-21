@@ -28,8 +28,10 @@ $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, ove
 
 ## Parameters
 
-- `optInTimePeriod` — Window length for the variance
-- `optInNbDev` — Deviation count accepted by the API but never used in the computation
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 5 | 1–100000 | Window length for the variance |
+| `optInNbDev` | real | 1 | any real | Deviation count accepted by the API but never used in the computation |
 
 ## Implementation
 

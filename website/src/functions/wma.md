@@ -27,7 +27,9 @@ WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the weighting window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Number of bars in the weighting window |
 
 ## Implementation
 

@@ -26,7 +26,9 @@ CCI = (TP_last - SMA) / (0.015 * meanDev)
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the averaging/deviation window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of bars in the averaging/deviation window |
 
 ## Implementation
 

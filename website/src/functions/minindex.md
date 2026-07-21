@@ -27,7 +27,9 @@ outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into in
 
 ## Parameters
 
-- `optInTimePeriod` — Window length over which the minimum is located
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length over which the minimum is located |
 
 ## Implementation
 

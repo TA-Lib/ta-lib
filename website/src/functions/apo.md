@@ -25,9 +25,13 @@ The standard form is exponential — APO with EMA and periods 12/26 is the fast-
 
 ## Parameters
 
-- `optInFastPeriod` — Period of the fast moving average
-- `optInSlowPeriod` — Period of the slow moving average
-- `optInMAType` — Moving-average type used for both MAs
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastPeriod` | integer | 12 | 2–100000 | Period of the fast moving average |
+| `optInSlowPeriod` | integer | 26 | 2–100000 | Period of the slow moving average |
+| `optInMAType` | MAType | EMA (1) | any MAType | Moving-average type used for both MAs |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

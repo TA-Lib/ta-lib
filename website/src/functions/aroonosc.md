@@ -27,7 +27,9 @@ highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (p
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback window for locating the highest high and lowest low
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback window for locating the highest high and lowest low |
 
 ## Implementation
 

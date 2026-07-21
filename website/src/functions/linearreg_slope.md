@@ -25,7 +25,9 @@ SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the regression window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of bars in the regression window |
 
 ## Implementation
 

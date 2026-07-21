@@ -24,7 +24,9 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback window length
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback window length |
 
 ## Implementation
 

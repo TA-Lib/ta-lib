@@ -19,7 +19,7 @@ A three-candle bottom-reversal pattern: a long black candle, a small-bodied star
 
 ## Parameters
 
-- `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above the 1st close; larger = deeper penetration required (default 0.3)
+- `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above the 1st close; larger = deeper penetration required
 
 ## Implementation
 

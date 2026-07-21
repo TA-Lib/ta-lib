@@ -28,7 +28,9 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing period for the DM and TR sums
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Smoothing period for the DM and TR sums |
 
 ## Implementation
 

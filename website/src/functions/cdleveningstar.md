@@ -24,7 +24,9 @@ A three-candle bearish reversal pattern: a long white candle, a short-bodied sta
 
 ## Parameters
 
-- `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate below the 1st close (default 0.3); larger requires deeper penetration
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInPenetration` | real | 0.3 | ≥ 0 | Fraction of the 1st candle's real body the 3rd close must penetrate below the 1st close; larger requires deeper penetration |
 
 ## Implementation
 

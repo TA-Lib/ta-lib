@@ -24,9 +24,9 @@ p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal
 
 ## Parameters
 
-- `optInMinPeriod` — lower clamp for per-bar period
-- `optInMaxPeriod` — upper clamp for per-bar period
-- `optInMAType` — moving-average type applied
+- `optInMinPeriod` — Lower clamp for the per-bar period
+- `optInMaxPeriod` — Upper clamp for the per-bar period
+- `optInMAType` — Moving-average type applied
 
 ## Implementation
 

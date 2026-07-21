@@ -30,9 +30,11 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 
 ## Parameters
 
-- `optInFastPeriod` — Period of the fast EMA
-- `optInSlowPeriod` — Period of the slow EMA
-- `optInSignalPeriod` — Smoothing period of the signal line
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastPeriod` | integer | 12 | 2–100000 | Period of the fast EMA |
+| `optInSlowPeriod` | integer | 26 | 2–100000 | Period of the slow EMA |
+| `optInSignalPeriod` | integer | 9 | 1–100000 | Smoothing period of the signal line |
 
 ## Implementation
 

@@ -35,7 +35,9 @@ Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — th
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the weighting window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Number of bars in the weighting window |
 
 ## Implementation
 

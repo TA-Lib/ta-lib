@@ -33,12 +33,16 @@ Hist = MACD - Signal
 
 ## Parameters
 
-- `optInFastPeriod` — Period of the fast MA
-- `optInFastMAType` — MA type for the fast MA
-- `optInSlowPeriod` — Period of the slow MA
-- `optInSlowMAType` — MA type for the slow MA
-- `optInSignalPeriod` — Period of the signal-line MA
-- `optInSignalMAType` — MA type for the signal line
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastPeriod` | integer | 12 | 2–100000 | Period of the fast MA |
+| `optInFastMAType` | MAType | SMA (0) | any MAType | MA type for the fast MA |
+| `optInSlowPeriod` | integer | 26 | 2–100000 | Period of the slow MA |
+| `optInSlowMAType` | MAType | SMA (0) | any MAType | MA type for the slow MA |
+| `optInSignalPeriod` | integer | 9 | 1–100000 | Period of the signal-line MA |
+| `optInSignalMAType` | MAType | SMA (0) | any MAType | MA type for the signal line |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

@@ -27,8 +27,10 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 
 ## Parameters
 
-- `optInFastLimit` — Upper bound on the adaptive smoothing factor
-- `optInSlowLimit` — Lower bound on the adaptive smoothing factor
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastLimit` | real | 0.5 | 0.01–0.99 | Upper bound on the adaptive smoothing factor |
+| `optInSlowLimit` | real | 0.05 | 0.01–0.99 | Lower bound on the adaptive smoothing factor |
 
 ## Implementation
 

@@ -19,7 +19,9 @@ Least-squares straight-line fit over the last optInTimePeriod bars, reported as 
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in each regression window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of bars in each regression window |
 
 ## Implementation
 

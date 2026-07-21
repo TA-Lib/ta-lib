@@ -19,7 +19,7 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 ## Parameters
 
-- `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may penetrate; default 0.5
+- `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may penetrate
 
 ## Implementation
 

@@ -23,7 +23,9 @@ ROCR = price / price[t - optInTimePeriod]
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback distance in bars for the prior price
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Lookback distance in bars for the prior price |
 
 ## Implementation
 

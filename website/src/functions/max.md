@@ -23,7 +23,9 @@ outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Parameters
 
-- `optInTimePeriod` — Window length in bars
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length in bars |
 
 ## Implementation
 

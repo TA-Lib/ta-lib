@@ -18,7 +18,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 ## Parameters
 
-- `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate; default 0.3, range [0, TA_REAL_MAX]
+- `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate
 
 ## Implementation
 

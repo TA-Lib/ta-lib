@@ -69,7 +69,7 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — number of bars in the average; sets smoothing k = 2/(period+1)
+    /// * `optInTimePeriod` — Number of bars in the average; sets smoothing k = 2/(period+1)
     ///   (default 30, range 1..=100000)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
@@ -103,7 +103,7 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — price/data series to smooth.
-    /// * `optInTimePeriod` — number of bars in the average; sets smoothing k = 2/(period+1)
+    /// * `optInTimePeriod` — Number of bars in the average; sets smoothing k = 2/(period+1)
     ///   (default 30, range 1..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.

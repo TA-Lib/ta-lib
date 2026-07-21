@@ -23,7 +23,9 @@ $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
 
 ## Parameters
 
-- `optInTimePeriod` — Window length summed
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length summed |
 
 ## Implementation
 

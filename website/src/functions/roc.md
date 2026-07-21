@@ -23,7 +23,9 @@ ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePer
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback distance to the prior price
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Lookback distance to the prior price |
 
 ## Implementation
 

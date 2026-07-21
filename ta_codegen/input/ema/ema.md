@@ -22,7 +22,7 @@ k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA =
 
 ## Parameters
 
-- `optInTimePeriod` — number of bars in the average; sets smoothing k = 2/(period+1)
+- `optInTimePeriod` — Number of bars in the average; sets smoothing k = 2/(period+1)
 
 ## Implementation
 

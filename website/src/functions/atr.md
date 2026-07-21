@@ -25,7 +25,9 @@ ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing period
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 1–100000 | Smoothing period |
 
 ## Implementation
 

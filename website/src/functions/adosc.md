@@ -26,8 +26,10 @@ ADOSC = fastEMA - slowEMA
 
 ## Parameters
 
-- `optInFastPeriod` — Period of the fast A/D EMA
-- `optInSlowPeriod` — Period of the slow A/D EMA
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastPeriod` | integer | 3 | 2–100000 | Period of the fast A/D EMA |
+| `optInSlowPeriod` | integer | 10 | 2–100000 | Period of the slow A/D EMA |
 
 ## Implementation
 

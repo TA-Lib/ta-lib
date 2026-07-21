@@ -27,7 +27,9 @@ Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
 
 ## Parameters
 
-- `optInTimePeriod` — SMA smoothing period for all three bands
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 20 | 2–100000 | SMA smoothing period for all three bands |
 
 ## Implementation
 

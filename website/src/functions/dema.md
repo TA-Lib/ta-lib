@@ -27,7 +27,9 @@ EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing period for both EMA passes
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Smoothing period for both EMA passes |
 
 ## Implementation
 

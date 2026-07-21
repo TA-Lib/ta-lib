@@ -30,9 +30,11 @@ ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
 
 ## Parameters
 
-- `optInTimePeriod1` — Bars for one averaging window
-- `optInTimePeriod2` — Bars for another averaging window
-- `optInTimePeriod3` — Bars for another averaging window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod1` | integer | 7 | 1–100000 | Bars for one averaging window |
+| `optInTimePeriod2` | integer | 14 | 1–100000 | Bars for another averaging window |
+| `optInTimePeriod3` | integer | 28 | 1–100000 | Bars for another averaging window |
 
 ## Implementation
 
