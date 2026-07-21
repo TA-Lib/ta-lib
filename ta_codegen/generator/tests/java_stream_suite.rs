@@ -263,7 +263,7 @@ fn test_java_stream_emit_ratchet() {
     }
     assert_eq!(emitted, total);
     assert_eq!(
-        emitted, 165,
+        emitted, 166,
         "Java stream emit count moved — update this ratchet deliberately"
     );
 }
