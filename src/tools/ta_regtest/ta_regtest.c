@@ -546,6 +546,9 @@ static ErrorNumber test_codegen_with_simulator( void )
    history.low    = TA_SREF_low_daily_ref_0_PRIV;
    history.close  = TA_SREF_close_daily_ref_0_PRIV;
    history.volume = TA_SREF_volume_daily_ref_0_PRIV;
+   history.openInterest = NULL;   /* the test series carries no OI; honor the
+                                     "unused arrays are NULL" contract so readers
+                                     (test_variants.c build_regime) can trust it */
 
    retValue = test_codegen(&history, codegenLanguageFilter, functionFilter);
    if( retValue != TA_TEST_PASS )
@@ -593,6 +596,9 @@ static ErrorNumber testTAFunction_ALL( void )
    history.low    = TA_SREF_low_daily_ref_0_PRIV;
    history.close  = TA_SREF_close_daily_ref_0_PRIV;
    history.volume = TA_SREF_volume_daily_ref_0_PRIV;
+   history.openInterest = NULL;   /* the test series carries no OI; honor the
+                                     "unused arrays are NULL" contract so readers
+                                     (test_variants.c build_regime) can trust it */
 
    printf( "Testing the TA functions\n" );
 
