@@ -160,6 +160,7 @@ TSF                 Time Series Forecast
 TYPPRICE            Typical Price
 ULTOSC              Ultimate Oscillator
 VAR                 Variance
+VWMA                Volume Weighted Moving Average
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average

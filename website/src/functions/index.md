@@ -101,6 +101,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [T3](/functions/t3) — Triple Exponential Moving Average (T3)
 - [TEMA](/functions/tema) — Triple Exponential Moving Average
 - [TRIMA](/functions/trima) — Triangular Moving Average
+- [VWMA](/functions/vwma) — Volume Weighted Moving Average
 - [WMA](/functions/wma) — Weighted Moving Average
 
 ## Pattern Recognition

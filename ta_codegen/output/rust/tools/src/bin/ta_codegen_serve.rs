@@ -14245,6 +14245,84 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             resp.push('}');
             resp
         }
+        "TA_VWMA" => {
+            let startIdx = params["startIdx"].as_u64().unwrap_or(0) as usize;
+            let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
+            let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
+            let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let gen_present = params["gen_present"].as_i64().unwrap_or(0);
+            let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+            let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+            let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
+            let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
+            let mut _json_inReal: Vec<f64> = Vec::new();
+            let mut _json_inVolume: Vec<f64> = Vec::new();
+            let inReal: &[f64];
+            let inVolume: &[f64];
+            if gen_present != 0 {
+                let mut _fz_o = vec![0.0f64; gen_n];
+                let mut _fz_h = vec![0.0f64; gen_n];
+                let mut _fz_l = vec![0.0f64; gen_n];
+                let mut _fz_c = vec![0.0f64; gen_n];
+                let mut _fz_v = vec![0.0f64; gen_n];
+                let mut _fz_oi = vec![0.0f64; gen_n];
+                fuzz_gen(gen_shape, gen_seed, gen_n as i32, &mut _fz_o, &mut _fz_h, &mut _fz_l, &mut _fz_c, &mut _fz_v, &mut _fz_oi);
+                _json_inReal = _fz_c.clone();
+                inReal = &_json_inReal;
+                _json_inVolume = _fz_v.clone();
+                inVolume = &_json_inVolume;
+            } else if use_preloaded != 0 && ref_data.n > 0 {
+                inReal = &ref_data.close[..ref_data.n];
+                inVolume = &ref_data.volume[..ref_data.n];
+            } else {
+                _json_inReal = parse_f64_array(&params["inReal"]);
+                inReal = &_json_inReal;
+                _json_inVolume = parse_f64_array(&params["inVolume"]);
+                inVolume = &_json_inVolume;
+            }
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
+            let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
+            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBegIdx: usize = 0;
+            let mut outNBElement: usize = 0;
+            let mut rc = RetCode::Success;
+            let start_time = Instant::now();
+            for _bi in 0..bench_iters {
+            rc = core.vwma(
+                startIdx, endIdx,
+                &inReal,
+                &inVolume,
+                optInTimePeriod,
+                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+            );
+            }
+            let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
+                let mut _oh = fuzz_hash_init();
+                if matches!(rc, RetCode::Success) && outNBElement > 0 {
+                    _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
+                }
+                _oh = fuzz_hash_fin(_oh);
+                return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+            }
+            let start_time_ung = Instant::now();
+            for _biu in 0..bench_iters {
+            rc = core.vwma_unguarded(
+                startIdx, endIdx,
+                &inReal,
+                &inVolume,
+                optInTimePeriod,
+                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+            );
+            }
+            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let lookback = core.vwma_lookback(optInTimePeriod);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
+            resp.push('}');
+            resp
+        }
         "TA_WCLPRICE" => {
             let startIdx = params["startIdx"].as_u64().unwrap_or(0) as usize;
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
@@ -14649,6 +14727,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 "TA_TYPPRICE",
                 "TA_ULTOSC",
                 "TA_VAR",
+                "TA_VWMA",
                 "TA_WCLPRICE",
                 "TA_WILLR",
                 "TA_WMA",
@@ -15452,6 +15531,10 @@ fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usi
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
             let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0) as f64;
             Some(core.var_lookback(optInTimePeriod, optInNbDev))
+        }
+        "VWMA" => {
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
+            Some(core.vwma_lookback(optInTimePeriod))
         }
         "WCLPRICE" => {
             Some(core.wclprice_lookback())
@@ -29857,6 +29940,92 @@ fn sv_var(core: &Core, params: &Value) -> String {
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)
 }
 
+fn sv_vwma(core: &Core, params: &Value) -> String {
+    let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+    let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+    let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
+    if svN < 2 { svN = 2; }
+    if svN > 256 { svN = 256; }
+    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
+    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
+    let mut fz_o = vec![0.0f64; svN];
+    let mut fz_h = vec![0.0f64; svN];
+    let mut fz_l = vec![0.0f64; svN];
+    let mut fz_c = vec![0.0f64; svN];
+    let mut fz_v = vec![0.0f64; svN];
+    let mut fz_oi = vec![0.0f64; svN];
+    fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
+    let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut legs = 0i64;
+    let mut all_ok = true;
+    let mut peek_all = true;
+    let mut fill_checked = 0i32;
+    let mut fill_ok = true;
+    let mut beg = 0usize;
+    let mut nb = 0usize;
+    let mut diag = String::new();
+    let rounds = 1;
+    for rd in 0..rounds {
+        let _ = rd;
+        let cb = core.to_builder();
+        let c2 = cb.build();
+        let rc = c2.vwma(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let lb = c2.vwma_lookback(optInTimePeriod);
+        if rc != RetCode::Success || nb == 0 {
+            let open_rejects = c2.vwma_open(&fz_c, &fz_v, optInTimePeriod).is_err();
+            return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
+        }
+        fill_checked = 1;
+        {
+        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut fBeg = 0usize;
+        let mut fNb = 0usize;
+        match c2.vwma_open_and_fill(&fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
+            Err(_) => { fill_ok = false; }
+            Ok(_h) => {
+                if fBeg != beg || fNb != nb { fill_ok = false; }
+                else {
+                    for i in 0..nb { if f0[i].to_bits() != b0[i].to_bits() { fill_ok = false; } }
+                }
+            }
+        }
+        }
+        let seed_shift: usize = 0;
+        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        pcs.sort_unstable();
+        pcs.dedup();
+        for &p in &pcs {
+            match c2.vwma_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
+                Ok((mut st, v0)) => {
+                    legs += 1;
+                    if v0.to_bits() != b0[p - 1 - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
+                    for t in p..svN {
+                        if t % 7 == 0 {
+                            let pk = st.peek(fz_c[t], fz_v[t]);
+                            let up = st.update(fz_c[t], fz_v[t]);
+                            if pk.to_bits() != up.to_bits() { peek_all = false; }
+                            if up.to_bits() != b0[t - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
+                        } else {
+                            let up = st.update(fz_c[t], fz_v[t]);
+                            if up.to_bits() != b0[t - beg].to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
+                        }
+                    }
+                }
+            }
+        }
+        if lb >= 1 && lb < svN {
+            if c2.vwma_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+        }
+    }
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)
+}
+
 fn sv_wclprice(core: &Core, params: &Value) -> String {
     let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
     let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -30279,6 +30448,7 @@ fn handle_stream_verify(core: &Core, params: &Value) -> String {
         "TA_TYPPRICE" => sv_typprice(core, params),
         "TA_ULTOSC" => sv_ultosc(core, params),
         "TA_VAR" => sv_var(core, params),
+        "TA_VWMA" => sv_vwma(core, params),
         "TA_WCLPRICE" => sv_wclprice(core, params),
         "TA_WILLR" => sv_willr(core, params),
         "TA_WMA" => sv_wma(core, params),

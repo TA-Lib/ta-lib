@@ -9608,6 +9608,72 @@ public RetCode variance(
 ); }
 
 
+public int vwmaLookback(
+        int optInTimePeriod) {
+    return super.vwmaLookback(
+        optInTimePeriod); }
+
+@FuncInfo(
+        name  = "VWMA",
+        group = "Overlap Studies",
+        flags = 50331648,
+        nbInput    = 2,
+        nbOptInput = 1,
+        nbOutput   = 1
+)
+public RetCode vwma(
+            int startIdx,
+            int endIdx,
+            @InputParameterInfo(
+                paramName = "inReal",
+                flags     = 0,
+                type = InputParameterType.TA_Input_Real
+            )
+            double inReal[],
+            @InputParameterInfo(
+                paramName = "inPriceV",
+                flags     = 16,
+                type = InputParameterType.TA_Input_Price
+            )
+            double inVolume [],
+            @OptInputParameterInfo(
+                paramName    = "optInTimePeriod",
+                displayName  = "Time Period",
+                flags        = 0,
+                type    = OptInputParameterType.TA_OptInput_IntegerRange,
+                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerRange.class
+            )
+            @IntegerRange(
+                    paramName    = "optInTimePeriod",
+                    defaultValue = 30,
+                    min          = 1,
+                    max          = 100000,
+                    suggested_start     = 1,
+                    suggested_end       = 200,
+                    suggested_increment = 1
+            )
+            int optInTimePeriod,
+            MInteger     outBegIdx,
+            MInteger     outNBElement,
+            @OutputParameterInfo(
+                paramName = "outReal",
+                flags     = 1,
+                type = OutputParameterType.TA_Output_Real
+            )
+            double outReal[]
+) {
+    return super.vwma (
+        startIdx,
+        endIdx,
+        inReal,
+        inVolume ,
+        optInTimePeriod,
+        outBegIdx,
+        outNBElement,
+        outReal
+); }
+
+
 public int wclPriceLookback(
 ) {
     return super.wclPriceLookback(

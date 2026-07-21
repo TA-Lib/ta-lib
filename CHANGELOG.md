@@ -16,6 +16,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)
+  - VWMA: Volume Weighted Moving Average (#131)
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX

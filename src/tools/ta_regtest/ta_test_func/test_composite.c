@@ -153,6 +153,9 @@ static const struct { int idx; double value; } pvoOracle[] =
 static ErrorNumber test_pvo_differential( const TA_History *history );
 static ErrorNumber test_pvo_oracle( const TA_History *history );
 static ErrorNumber test_pvo_default_is_ema( const TA_History *history );
+static ErrorNumber test_vwma_differential( const TA_History *history );
+static ErrorNumber test_vwma_oracle( const TA_History *history );
+static ErrorNumber test_vwma_inplace( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -172,6 +175,18 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_pvo_default_is_ema( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_oracle( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_inplace( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -385,6 +400,218 @@ static ErrorNumber test_pvo_default_is_ema( const TA_History *history )
               "(the default is not EMA)\n" );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
+
+   return TA_TEST_PASS;
+}
+
+/* ==================== VWMA ====================
+ *
+ * VWMA is Sum(P*V)/Sum(V) over a trailing window. TradingView documents the
+ * equivalence ta.vwma(src,len) == ta.sma(src*volume,len)/ta.sma(volume,len),
+ * and the shipped implementation keeps the redundant /n on both sums (and
+ * TA_SMA's add-new / snapshot / subtract-old order) precisely so that
+ * equivalence holds BIT-FOR-BIT rather than approximately. If the differential
+ * below ever needs a tolerance, the implementation has drifted from the spec --
+ * do not paper over it with an epsilon.
+ */
+
+/* VWMA period grid: the boundary period, the two oracle-vector periods, the
+ * shipped default, and a long window. */
+static const int vwmaGrid[] = { 1, 2, 3, 4, 5, 14, 30, 100 };
+#define NB_VWMA_GRID (sizeof(vwmaGrid)/sizeof(vwmaGrid[0]))
+
+/* VWMA external-oracle golden values.
+ *
+ * Source: pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1), on the standard
+ * 252-bar close/volume series (TA_SREF_close_daily_ref_0_PRIV /
+ * TA_SREF_volume_daily_ref_0_PRIV), optInTimePeriod = 30. outBegIdx = 29,
+ * nb = 223. pandas agrees on all six to a measured max relative error of
+ * 4.7e-16; Tulip's fused Sum(pv)/Sum(v) form deviates by 2.2e-16 on this series
+ * (it is a tolerance oracle, not a bitwise one -- see the header note).
+ *
+ * idx is the OUTPUT-array index (0 == global bar 29). */
+static const struct { int idx; double value; } vwmaOracle[] =
+{
+   {   0,  90.3104571585586  },
+   {   1,  90.1627270288419  },
+   {   2,  89.9679352432261  },
+   { 111, 127.6634203180634  },
+   { 221, 107.8003329935021  },
+   { 222, 108.2790680119618  },
+};
+#define NB_VWMA_ORACLE (sizeof(vwmaOracle)/sizeof(vwmaOracle[0]))
+
+#define VWMA_ORACLE_EXPECTED_BEG 29
+#define VWMA_ORACLE_EXPECTED_NB  223
+#define VWMA_ORACLE_PERIOD       30
+/* Relative tolerance 1e-12 against a measured 4.7e-16 agreement -- a ~1000x
+ * margin for cross-platform rounding, still far tighter than any formula error
+ * (an unweighted mean, or a fused-form mix-up, diverges by whole percent).
+ * Absolute floor 1e-9: VWMA tracks price, so it never approaches zero on any
+ * realistic series, but the floor keeps a future near-zero golden from turning
+ * the check into a spurious failure. See checkOracleValue(). */
+#define VWMA_ORACLE_TOL 1e-12
+#define VWMA_ORACLE_ABS 1e-9
+
+/* (1) DIFFERENTIAL: VWMA == SMA(inReal*inVolume)/SMA(inVolume), bit-for-bit. */
+static ErrorNumber test_vwma_differential( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rcV, rcA, rcB;
+   TA_Integer begV, nbV, begA, nbA, begB, nbB;
+   static TA_Real product[OUT_CAP];
+   static TA_Real outVWMA[OUT_CAP];
+   static TA_Real outSmaPV[OUT_CAP];
+   static TA_Real outSmaV[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   /* Form the price*volume series exactly as vwma.c does: the multiply is its
+    * own statement so neither side can contract it into an FMA. */
+   for( i = 0; i < nbBars; i++ )
+      product[i] = history->close[i] * history->volume[i];
+
+   for( g = 0; g < NB_VWMA_GRID; g++ )
+   {
+      int period = vwmaGrid[g];
+
+      rcV = TA_VWMA( 0, nbBars - 1, history->close, history->volume,
+                     period, &begV, &nbV, outVWMA );
+
+      /* Test-only reference: two calls to the shipped TA_SMA. No new numerical
+       * logic -- only primitives already proven by the bitwise cross-language
+       * gate, the differential fuzz and the hardcoded expected values. */
+      rcA = TA_SMA( 0, nbBars - 1, product,          period, &begA, &nbA, outSmaPV );
+      rcB = TA_SMA( 0, nbBars - 1, history->volume,  period, &begB, &nbB, outSmaV );
+
+      if( rcV != rcA || rcA != rcB )
+      {
+         printf( "VWMA differential Fail [period %d]: retCode VWMA=%d SMA=%d/%d\n",
+                 period, (int)rcV, (int)rcA, (int)rcB );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( rcV != TA_SUCCESS )
+         continue;
+
+      if( begV != begA || nbV != nbA || begA != begB || nbA != nbB )
+      {
+         printf( "VWMA differential Fail [period %d]: range VWMA(%d,%d) SMA(%d,%d)/(%d,%d)\n",
+                 period, (int)begV, (int)nbV, (int)begA, (int)nbA, (int)begB, (int)nbB );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = 0; i < nbV; i++ )
+      {
+         double want = outSmaPV[i] / outSmaV[i];
+         if( memcmp( &outVWMA[i], &want, sizeof(double) ) != 0 )
+         {
+            printf( "VWMA differential Fail [period %d] at out[%d]: "
+                    "fused %.17g != compose %.17g (must be BIT-exact)\n",
+                    period, i, outVWMA[i], want );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) EXTERNAL ORACLE: the composition is the RIGHT formula, which (1) cannot
+ * show -- both sides of (1) could share the same wrong formula. */
+static ErrorNumber test_vwma_oracle( const TA_History *history )
+{
+   unsigned int k;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+
+   rc = TA_VWMA( 0, (int)history->nbBars - 1, history->close, history->volume,
+                 VWMA_ORACLE_PERIOD, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "VWMA oracle Fail: retCode %d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != VWMA_ORACLE_EXPECTED_BEG || nb != VWMA_ORACLE_EXPECTED_NB )
+   {
+      printf( "VWMA oracle Fail: got beg=%d nb=%d expected %d/%d\n",
+              (int)beg, (int)nb, VWMA_ORACLE_EXPECTED_BEG, VWMA_ORACLE_EXPECTED_NB );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( k = 0; k < NB_VWMA_ORACLE; k++ )
+   {
+      int idx = vwmaOracle[k].idx;
+      double want = vwmaOracle[k].value;
+      double got  = out[idx];
+      double err; const char *mode;
+
+      if( !checkOracleValue( got, want, VWMA_ORACLE_TOL, VWMA_ORACLE_ABS, &err, &mode ) )
+      {
+         printf( "VWMA oracle Fail at out[%d]: got %.17g expected %.17g "
+                 "(%s=%.3e > rel %.3e / abs %.3e)\n",
+                 idx, got, want, mode, err, VWMA_ORACLE_TOL, VWMA_ORACLE_ABS );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) IN-PLACE ALIASING. The C API lets the caller pass the same buffer as an
+ * input and the output. VWMA reads both trailing values before storing, so this
+ * must hold for the output aliased over EITHER input -- and each is a distinct
+ * risk, since the two reads are separate statements. See issue #130 for the
+ * functions where this invariant is currently broken. */
+static ErrorNumber test_vwma_inplace( const TA_History *history )
+{
+   int i, nbBars, period = 30;
+   TA_RetCode rc;
+   TA_Integer begR, nbR, beg, nb;
+   static TA_Real ref[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+   static TA_Real vol[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   rc = TA_VWMA( 0, nbBars - 1, history->close, history->volume, period, &begR, &nbR, ref );
+   if( rc != TA_SUCCESS )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+   /* (a) output aliased over the price input. */
+   for( i = 0; i < nbBars; i++ ) work[i] = history->close[i];
+   rc = TA_VWMA( 0, nbBars - 1, work, history->volume, period, &beg, &nb, work );
+   if( rc != TA_SUCCESS || beg != begR || nb != nbR )
+   {
+      printf( "VWMA in-place(price) Fail: rc=%d range(%d,%d) vs (%d,%d)\n",
+              (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nb; i++ )
+      if( memcmp( &work[i], &ref[i], sizeof(double) ) != 0 )
+      {
+         printf( "VWMA in-place(price) Fail at out[%d]: got %.17g expected %.17g\n",
+                 i, work[i], ref[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+   /* (b) output aliased over the volume input. */
+   for( i = 0; i < nbBars; i++ ) vol[i] = history->volume[i];
+   rc = TA_VWMA( 0, nbBars - 1, history->close, vol, period, &beg, &nb, vol );
+   if( rc != TA_SUCCESS || beg != begR || nb != nbR )
+   {
+      printf( "VWMA in-place(volume) Fail: rc=%d range(%d,%d) vs (%d,%d)\n",
+              (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nb; i++ )
+      if( memcmp( &vol[i], &ref[i], sizeof(double) ) != 0 )
+      {
+         printf( "VWMA in-place(volume) Fail at out[%d]: got %.17g expected %.17g\n",
+                 i, vol[i], ref[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
 
    return TA_TEST_PASS;
 }

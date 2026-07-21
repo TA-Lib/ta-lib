@@ -147036,6 +147036,699 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  072026 MF,CC  First version.
+     */
+
+       public int vwmaLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod - 1 ;
+
+       }
+       public RetCode vwma( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            double inVolume[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          /* Identify the minimum number of price bar needed
+           * to calculate at least one output.
+           */
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          /* Add-up the initial period, except for the last value.
+           *
+           * The price*volume product is kept in its own statement so no compiler may
+           * contract it into an FMA: that would make this function disagree with the
+           * Rust/Java backends under the cross-language bitwise gate, and with the
+           * two-TA_SMA composite reference.
+           */
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = inReal[i] * inVolume[i];
+                sumPV += tempReal;
+                sumV += inVolume[i];
+                i = i + 1;
+             }
+          }
+          /* Proceed with the calculation for the requested range.
+           * Note that this algorithm allows the inReal and
+           * outReal to be the same buffer.
+           */
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = inReal[i] * inVolume[i];
+             sumPV += tempReal;
+             sumV += inVolume[i];
+             i = i + 1;
+             /* Snapshot both sums before removing the trailing bar, mirroring the
+              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              */
+             tempPV = sumPV;
+             tempV = sumV;
+             /* Read the trailing values before writing the output, since the caller
+              * may pass the same buffer for an input and the output.
+              */
+             tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= inVolume[trailingIdx];
+             outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          /* All done. Indicate the output limits and return. */
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.Success ;
+       }
+       public RetCode vwmaUnguarded( int startIdx,
+                                     int endIdx,
+                                     double inReal[],
+                                     double inVolume[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = inReal[i] * inVolume[i];
+                sumPV += tempReal;
+                sumV += inVolume[i];
+                i = i + 1;
+             }
+          }
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = inReal[i] * inVolume[i];
+             sumPV += tempReal;
+             sumV += inVolume[i];
+             i = i + 1;
+             tempPV = sumPV;
+             tempV = sumV;
+             tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= inVolume[trailingIdx];
+             outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.Success ;
+       }
+       public RetCode vwma( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            float inVolume[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = (double)inReal[i] * (double)inVolume[i];
+                sumPV += tempReal;
+                sumV += (double)inVolume[i];
+                i = i + 1;
+             }
+          }
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = (double)inReal[i] * (double)inVolume[i];
+             sumPV += tempReal;
+             sumV += (double)inVolume[i];
+             i = i + 1;
+             tempPV = sumPV;
+             tempV = sumV;
+             tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= (double)inVolume[trailingIdx];
+             outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.Success ;
+       }
+       public RetCode vwmaUnguarded( int startIdx,
+                                     int endIdx,
+                                     float inReal[],
+                                     float inVolume[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = (double)inReal[i] * (double)inVolume[i];
+                sumPV += tempReal;
+                sumV += (double)inVolume[i];
+                i = i + 1;
+             }
+          }
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = (double)inReal[i] * (double)inVolume[i];
+             sumPV += tempReal;
+             sumV += (double)inVolume[i];
+             i = i + 1;
+             tempPV = sumPV;
+             tempV = sumV;
+             tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= (double)inVolume[trailingIdx];
+             outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.Success ;
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live VWMA stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#vwma} over the same series.
+        * Open with {@link Core#vwmaOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code copy} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code copy} never write the handle and may be called
+        * concurrently after safe publication. Independent handles (including
+        * {@code copy()} results) are fully independent. Do not mutate the owning
+        * {@link Core}'s settings while streams opened from it are live.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class VwmaStream {
+          final Core core;
+          int optInTimePeriod;
+          double sumPV;
+          double sumV;
+          double tempPV;
+          double tempV;
+          int ringPos_trailingIdx;
+          int ringCap_trailingIdx;
+          double[] ring_trailingIdx_inReal;
+          double[] ring_trailingIdx_inVolume;
+          double cur_outReal;
+
+          VwmaStream( Core core ) { this.core = core; }
+
+          VwmaStream( VwmaStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.sumPV = other.sumPV;
+             this.sumV = other.sumV;
+             this.tempPV = other.tempPV;
+             this.tempV = other.tempV;
+             this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+             this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+             this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
+             this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
+             this.cur_outReal = other.cur_outReal;
+          }
+
+          /**
+           * Commit one closed bar; always produces the new current value.
+           * Never throws after a successful open; never allocates handle state.
+           */
+          public double update( double inReal, double inVolume ) {
+             core.vwmaStreamStep(this, inReal, inVolume);
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return (it is the same
+           * generated code, run on a throwaway copy). Deep-copies the handle state
+           * on every call: O(period) for windowed indicators — for hot loops,
+           * prefer {@code update} on a {@code copy()}.
+           */
+          public double peek( double inReal, double inVolume ) {
+             VwmaStream scratch = new VwmaStream(this);
+             core.vwmaStreamStep(scratch, inReal, inVolume);
+             return scratch.cur_outReal;
+          }
+
+          /**
+           * The value at the most recently committed bar — the last history bar
+           * right after open, then whatever the latest {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent deep copy of this stream: both evolve separately from
+           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           */
+          public VwmaStream copy() {
+             return new VwmaStream(this);
+          }
+       }
+       void vwmaStreamStep( VwmaStream sp, double inReal, double inVolume )
+       {
+          double tempReal = 0.0;
+          if( sp.ringCap_trailingIdx == 0 ) {
+             sp.ring_trailingIdx_inReal[0] = inReal;
+             sp.ring_trailingIdx_inVolume[0] = inVolume;
+          }
+          tempReal = inReal * inVolume;
+          sp.sumPV += tempReal;
+          sp.sumV += inVolume;
+          /* Snapshot both sums before removing the trailing bar, mirroring the
+           * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+           * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+           */
+          sp.tempPV = sp.sumPV;
+          sp.tempV = sp.sumV;
+          /* Read the trailing values before writing the output, since the caller
+           * may pass the same buffer for an input and the output.
+           */
+          tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+          sp.sumPV -= tempReal;
+          sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+          sp.cur_outReal = sp.tempPV / (double)sp.optInTimePeriod / (sp.tempV / (double)sp.optInTimePeriod);
+          sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+          sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
+          sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+          if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+             sp.ringPos_trailingIdx = 0;
+          }
+       }
+       private RetCode vwmaOpenBody( VwmaStream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double lastValue_outReal = 0.0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 || inVolume.length != inReal.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          /* Identify the minimum number of price bar needed
+           * to calculate at least one output.
+           */
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* Add-up the initial period, except for the last value.
+           *
+           * The price*volume product is kept in its own statement so no compiler may
+           * contract it into an FMA: that would make this function disagree with the
+           * Rust/Java backends under the cross-language bitwise gate, and with the
+           * two-TA_SMA composite reference.
+           */
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = inReal[i] * inVolume[i];
+                sumPV += tempReal;
+                sumV += inVolume[i];
+                i = i + 1;
+             }
+          }
+          /* Proceed with the calculation for the requested range.
+           * Note that this algorithm allows the inReal and
+           * outReal to be the same buffer.
+           */
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = inReal[i] * inVolume[i];
+             sumPV += tempReal;
+             sumV += inVolume[i];
+             i = i + 1;
+             /* Snapshot both sums before removing the trailing bar, mirroring the
+              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              */
+             tempPV = sumPV;
+             tempV = sumV;
+             /* Read the trailing values before writing the output, since the caller
+              * may pass the same buffer for an input and the output.
+              */
+             tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= inVolume[trailingIdx];
+             lastValue_outReal = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          /* All done. Indicate the output limits and return. */
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_trailingIdx = i - trailingIdx;
+          if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+             return RetCode.InternalError;
+          }
+          int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+          double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+          System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+          double[] capRing_trailingIdx_inVolume = new double[allocN_trailingIdx];
+          System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.sumPV = sumPV;
+          sp.sumV = sumV;
+          sp.tempPV = tempPV;
+          sp.tempV = tempV;
+          sp.ringPos_trailingIdx = 0;
+          sp.ringCap_trailingIdx = cap_trailingIdx;
+          sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+          sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
+          sp.cur_outReal = lastValue_outReal;
+          return RetCode.Success;
+       }
+       private RetCode vwmaOpenAndFillBody( VwmaStream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double tempPV = 0;
+          double tempV = 0;
+          double tempReal = 0;
+          int i = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          int startIdx = 0;
+          if( historyLen < 1 || inVolume.length != inReal.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+             return RetCode.BadParam;
+          }
+          /* Identify the minimum number of price bar needed
+           * to calculate at least one output.
+           */
+          lookbackTotal = (int)(optInTimePeriod - 1);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* Add-up the initial period, except for the last value.
+           *
+           * The price*volume product is kept in its own statement so no compiler may
+           * contract it into an FMA: that would make this function disagree with the
+           * Rust/Java backends under the cross-language bitwise gate, and with the
+           * two-TA_SMA composite reference.
+           */
+          sumPV = 0.0;
+          sumV = 0.0;
+          trailingIdx = startIdx - lookbackTotal;
+          i = trailingIdx;
+          if( optInTimePeriod > 1 ) {
+             while( i < startIdx ) {
+                tempReal = inReal[i] * inVolume[i];
+                sumPV += tempReal;
+                sumV += inVolume[i];
+                i = i + 1;
+             }
+          }
+          /* Proceed with the calculation for the requested range.
+           * Note that this algorithm allows the inReal and
+           * outReal to be the same buffer.
+           */
+          outIdx = 0;
+          while( i <= endIdx ) {
+             tempReal = inReal[i] * inVolume[i];
+             sumPV += tempReal;
+             sumV += inVolume[i];
+             i = i + 1;
+             /* Snapshot both sums before removing the trailing bar, mirroring the
+              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              */
+             tempPV = sumPV;
+             tempV = sumV;
+             /* Read the trailing values before writing the output, since the caller
+              * may pass the same buffer for an input and the output.
+              */
+             tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
+             sumPV -= tempReal;
+             sumV -= inVolume[trailingIdx];
+             outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+             trailingIdx = trailingIdx + 1;
+             outIdx = outIdx + 1;
+          }
+          /* All done. Indicate the output limits and return. */
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_trailingIdx = i - trailingIdx;
+          if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+             return RetCode.InternalError;
+          }
+          int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+          double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+          System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+          double[] capRing_trailingIdx_inVolume = new double[allocN_trailingIdx];
+          System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.sumPV = sumPV;
+          sp.sumV = sumV;
+          sp.tempPV = tempPV;
+          sp.tempV = tempV;
+          sp.ringPos_trailingIdx = 0;
+          sp.ringCap_trailingIdx = cap_trailingIdx;
+          sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+          sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
+          sp.cur_outReal = outReal[outNBElement.value - 1];
+          return RetCode.Success;
+       }
+       /* Internal startIdx-anchored open behind vwmaOpen (composition seam). */
+       VwmaStream vwmaOpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+       {
+          VwmaStream sp = new VwmaStream(this);
+          RetCode retCode = vwmaOpenBody(sp, inReal, inVolume, startIdx, optInTimePeriod);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("TA_VWMA open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("TA_VWMA open: internal error");
+          }
+          throw new IllegalArgumentException("TA_VWMA open: " + retCode);
+       }
+       /**
+        * Open a live VWMA stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#vwma} at that bar.
+        * <p>The history must hold at least {@code vwmaLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API).
+        */
+       public VwmaStream vwmaOpen( double inReal[], double inVolume[], int optInTimePeriod )
+       {
+          return vwmaOpenInternal(inReal, inVolume, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#vwmaOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#vwma} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values.
+        */
+       public VwmaStream vwmaOpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          VwmaStream sp = new VwmaStream(this);
+          RetCode retCode = vwmaOpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("TA_VWMA openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("TA_VWMA openAndFill: internal error");
+          }
+          throw new IllegalArgumentException("TA_VWMA openAndFill: " + retCode);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -149814,6 +150507,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("VWMA", new AbsFunc("VWMA", "Overlap Studies", "Volume Weighted Moving Average", "Vwma", 50331648,
+            new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("WCLPRICE", new AbsFunc("WCLPRICE", "Price Transform", "Weighted Close Price", "WclPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{  },
@@ -149906,8 +150603,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 191505;
-    static final long ABSTRACT_XML_CHECKSUM = 15345387L;
+    static final int ABSTRACT_XML_LENGTH = 192743;
+    static final long ABSTRACT_XML_CHECKSUM = 15444987L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -150093,6 +150790,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_TYPPRICE\"")) return handle_TYPPRICE(json);
         else if (json.contains("\"TA_ULTOSC\"")) return handle_ULTOSC(json);
         else if (json.contains("\"TA_VAR\"")) return handle_VAR(json);
+        else if (json.contains("\"TA_VWMA\"")) return handle_VWMA(json);
         else if (json.contains("\"TA_WCLPRICE\"")) return handle_WCLPRICE(json);
         else if (json.contains("\"TA_WILLR\"")) return handle_WILLR(json);
         else if (json.contains("\"TA_WMA\"")) return handle_WMA(json);
@@ -150421,6 +151119,8 @@ public class TaCodegenServe {
             sb.append("\"TA_ULTOSC\"");
             sb.append(",");
             sb.append("\"TA_VAR\"");
+            sb.append(",");
+            sb.append("\"TA_VWMA\"");
             sb.append(",");
             sb.append("\"TA_WCLPRICE\"");
             sb.append(",");
@@ -160802,6 +161502,67 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_VWMA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
+            inReal = _tmp_inReal;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        long startNs = System.nanoTime();
+        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        rc = core.vwma(
+            startIdx, endIdx,
+            inReal,
+            inVolume,
+            optInTimePeriod,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        long startNsUng = System.nanoTime();
+        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        rc = core.vwmaUnguarded(
+            startIdx, endIdx,
+            inReal,
+            inVolume,
+            optInTimePeriod,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_WCLPRICE(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -161593,6 +162354,10 @@ public class TaCodegenServe {
             double optInNbDev = jsonDouble(json, "optInNbDev");
             return core.varianceLookback(optInTimePeriod, optInNbDev);
         }
+        case "VWMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.vwmaLookback(optInTimePeriod);
+        }
         case "WCLPRICE": {
             return core.wclPriceLookback();
         }
@@ -161774,6 +162539,7 @@ public class TaCodegenServe {
         case "TYPPRICE": resp = handle_TYPPRICE(json); break;
         case "ULTOSC": resp = handle_ULTOSC(json); break;
         case "VAR": resp = handle_VAR(json); break;
+        case "VWMA": resp = handle_VWMA(json); break;
         case "WCLPRICE": resp = handle_WCLPRICE(json); break;
         case "WILLR": resp = handle_WILLR(json); break;
         case "WMA": resp = handle_WMA(json); break;
@@ -178633,6 +179399,110 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + diag + "}";
     }
 
+    static String sv_VWMA(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
+            RetCode rc = c2.vwma(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            int lb = c2.vwmaLookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.vwmaOpen(fz_c, fz_v, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                MInteger fBeg = new MInteger();
+                MInteger fNb = new MInteger();
+                Core.VwmaStream _fh = c2.vwmaOpenAndFill(fz_c, fz_v, optInTimePeriod, fBeg, fNb, f0);
+                if (fBeg.value != beg.value || fNb.value != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svBne(f0[i], b0[i])) fillOk = false;
+                }
+                try { c2.vwmaOpenAndFill(fz_c, fz_v, optInTimePeriod, fBeg, fNb, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.VwmaStream st;
+                try { st = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svBne(st.value(), b0[p - 1 - beg.value])) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        double pk = st.peek(fz_c[t], fz_v[t]);
+                        double up = st.update(fz_c[t], fz_v[t]);
+                        if (svBne(pk, up)) peekAll = false;
+                        if (svBne(st.value(), up)) allOk = false;
+                        if (svBne(up, b0[t - beg.value])) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    } else {
+                        double up = st.update(fz_c[t], fz_v[t]);
+                        if (svBne(up, b0[t - beg.value])) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.VwmaStream sA = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        Core.VwmaStream sB = sA.copy();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            if (svBne(uA, uB) || svBne(uA, b0[t - beg.value])) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.VwmaStream sD = c2.vwmaOpen(fz_c, fz_v, Integer.MIN_VALUE);
+                Core.VwmaStream sE = c2.vwmaOpen(fz_c, fz_v, 30);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + diag + "}";
+    }
+
     static String sv_WCLPRICE(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -179124,6 +179994,7 @@ public class TaCodegenServe {
         case "TA_TYPPRICE": return sv_TYPPRICE(json);
         case "TA_ULTOSC": return sv_ULTOSC(json);
         case "TA_VAR": return sv_VAR(json);
+        case "TA_VWMA": return sv_VWMA(json);
         case "TA_WCLPRICE": return sv_WCLPRICE(json);
         case "TA_WILLR": return sv_WILLR(json);
         case "TA_WMA": return sv_WMA(json);

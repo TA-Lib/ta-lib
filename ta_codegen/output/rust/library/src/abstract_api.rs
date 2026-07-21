@@ -194,6 +194,7 @@ pub enum FuncId {
     Typprice,
     Ultosc,
     Var,
+    Vwma,
     Wclprice,
     Willr,
     Wma,
@@ -201,7 +202,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 165;
+    pub const COUNT: usize = 166;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -377,7 +378,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 165] = [
+pub static FUNCS: [FuncInfo; 166] = [
     FuncInfo {
         id: FuncId::Accbands,
         name: "ACCBANDS",
@@ -2323,6 +2324,18 @@ pub static FUNCS: [FuncInfo; 165] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::Vwma,
+        name: "VWMA",
+        camel_case_name: "Vwma",
+        group: Group::OverlapStudies,
+        hint: "Volume Weighted Moving Average",
+        flags: FuncFlags(0x03000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::Wclprice,
         name: "WCLPRICE",
         camel_case_name: "WclPrice",
@@ -2528,6 +2541,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "TYPPRICE" => FuncId::Typprice,
         "ULTOSC" => FuncId::Ultosc,
         "VAR" => FuncId::Var,
+        "VWMA" => FuncId::Vwma,
         "WCLPRICE" => FuncId::Wclprice,
         "WILLR" => FuncId::Willr,
         "WMA" => FuncId::Wma,
