@@ -29,7 +29,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use super::write_if_changed;
-use crate::ir::{EnumDef, FuncDef, OptInput, ParamType};
+use crate::ir::{EnumDef, FuncDef, OptInput, ParamType, PriceComponent};
 
 const LICENSE: &str = "\
 /* TA-LIB Copyright (c) 1999-2026, Mario Fortier
@@ -67,18 +67,18 @@ const LICENSE: &str = "\
 
 /// One flattened input slot: what series `ta_regtest` should feed it.
 ///
-/// `Price(...)` groups expand to one slot per component, so the gate never has
-/// to reconstruct the abstract-layer grouping.
-fn input_kind(name: &str, component: Option<&str>) -> &'static str {
+/// A price bundle is already expanded to one input per component by
+/// `parser::yaml`, which tags each with the component it carries — so the kind
+/// is read off that tag rather than reconstructed from the abstract grouping.
+fn input_kind(name: &str, component: Option<PriceComponent>) -> &'static str {
     if let Some(comp) = component {
         return match comp {
-            "open" => "TA_VIN_OPEN",
-            "high" => "TA_VIN_HIGH",
-            "low" => "TA_VIN_LOW",
-            "close" => "TA_VIN_CLOSE",
-            "volume" => "TA_VIN_VOLUME",
-            "openInterest" | "openinterest" => "TA_VIN_OPENINTEREST",
-            other => panic!("unknown price component `{other}`"),
+            PriceComponent::Open => "TA_VIN_OPEN",
+            PriceComponent::High => "TA_VIN_HIGH",
+            PriceComponent::Low => "TA_VIN_LOW",
+            PriceComponent::Close => "TA_VIN_CLOSE",
+            PriceComponent::Volume => "TA_VIN_VOLUME",
+            PriceComponent::OpenInterest => "TA_VIN_OPENINTEREST",
         };
     }
     // Plain real inputs. `inPeriods` (MAVP) is a period series, not a price
@@ -96,13 +96,16 @@ fn flat_inputs(func: &FuncDef) -> Vec<(&'static str, String)> {
     let mut out = Vec::new();
     for input in &func.inputs {
         match &input.param_type {
-            ParamType::Price(components) => {
-                for comp in components {
-                    let name = format!("in{}{}", comp[..1].to_uppercase(), &comp[1..]);
-                    out.push((input_kind(&name, Some(comp)), name));
-                }
-            }
-            ParamType::Real => out.push((input_kind(&input.name, None), input.name.clone())),
+            // Price components arrive here already expanded, as `Real` inputs carrying a
+            // `PriceRef`; a literal `ParamType::Price` never reaches the backends.
+            ParamType::Price(_) => unreachable!(
+                "TA_{}: parser::yaml expands price bundles before the backends see them",
+                func.name
+            ),
+            ParamType::Real => out.push((
+                input_kind(&input.name, input.price.map(|p| p.component)),
+                input.name.clone(),
+            )),
             ParamType::Integer | ParamType::Enum(_) => panic!(
                 "TA_{}: input `{}` is not a real/price array — the variant frame \
                  assumes every input array is `const double[]` / `const float[]`",
