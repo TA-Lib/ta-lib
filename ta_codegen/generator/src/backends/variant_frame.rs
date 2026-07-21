@@ -125,12 +125,8 @@ fn opt_spec(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> (bool, f64, f64
     let (min, max) = match (&opt.range, &opt.param_type) {
         (Some((lo, hi)), _) => (*lo, *hi),
         (None, ParamType::Enum(enum_name)) => {
-            let n = enums
-                .get(enum_name)
-                .map(|e| e.variants.len())
-                .unwrap_or(1)
-                .max(1);
-            (0.0, (n - 1) as f64)
+            let n = enums.get(enum_name).map_or(1, |e| e.variants.len()).max(1);
+            (0.0, f64::from(u32::try_from(n - 1).unwrap_or(u32::MAX)))
         }
         (None, _) => (0.0, 0.0),
     };
@@ -139,6 +135,10 @@ fn opt_spec(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> (bool, f64, f64
 }
 
 /// Render a C double literal that round-trips exactly.
+///
+/// The `==` against `trunc()` is deliberate: the question is exactly "is this
+/// value integral", so an epsilon would be wrong, not safer.
+#[allow(clippy::float_cmp)]
 fn c_double(v: f64) -> String {
     if v == v.trunc() && v.abs() < 1e15 {
         format!("{v:.1}")
@@ -204,15 +204,12 @@ fn emit_thunks(o: &mut String, func: &FuncDef) {
         let mut real_i = 0;
         let mut int_i = 0;
         for out in &func.outputs {
-            match out.param_type {
-                ParamType::Integer => {
-                    args.push(format!("outInteger[{int_i}] /* {} */", out.name));
-                    int_i += 1;
-                }
-                _ => {
-                    args.push(format!("outReal[{real_i}] /* {} */", out.name));
-                    real_i += 1;
-                }
+            if out.param_type == ParamType::Integer {
+                args.push(format!("outInteger[{int_i}] /* {} */", out.name));
+                int_i += 1;
+            } else {
+                args.push(format!("outReal[{real_i}] /* {} */", out.name));
+                real_i += 1;
             }
         }
         let _ = writeln!(o, "   return {callee}(");
@@ -226,6 +223,7 @@ fn emit_thunks(o: &mut String, func: &FuncDef) {
 }
 
 /// Build the whole `ta_variant_frame.h` for `funcs`.
+#[allow(clippy::implicit_hasher, clippy::too_many_lines)]
 pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut o = String::new();
     o.push_str(LICENSE);
@@ -381,6 +379,7 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
 }
 
 /// Write `src/tools/ta_regtest/ta_variant_frame.h`.
+#[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path) {
     let path = root.join("src/tools/ta_regtest/ta_variant_frame.h");
     write_if_changed(&path, &render(funcs, enums), "ta_variant_frame.h", funcs.len());
