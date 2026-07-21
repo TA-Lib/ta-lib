@@ -709,7 +709,7 @@
 					<SuggestedEnd>100000</SuggestedEnd>
 					<SuggestedIncrement>100000</SuggestedIncrement>
 				</Range>
-				<DefaultValue>5</DefaultValue>
+				<DefaultValue>20</DefaultValue>
 			</OptionalInputArgument>
 			<OptionalInputArgument>
 				<Name>Deviations up</Name>

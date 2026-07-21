@@ -997,7 +997,7 @@ public RetCode bbands(
             )
             @IntegerRange(
                     paramName    = "optInTimePeriod",
-                    defaultValue = 5,
+                    defaultValue = 20,
                     min          = 2,
                     max          = 100000,
                     suggested_start     = 4,

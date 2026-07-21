@@ -10037,7 +10037,7 @@ class Core {
        public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 5;
+             optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
@@ -10085,7 +10085,7 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 5;
+             optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
@@ -10508,7 +10508,7 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 5;
+             optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
@@ -11021,7 +11021,7 @@ class Core {
              return RetCode.BadParam;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 5;
+             optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
@@ -11124,7 +11124,7 @@ class Core {
              return RetCode.BadParam;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 5;
+             optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
@@ -149978,7 +149978,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", "Bbands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -150660,8 +150660,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 192743;
-    static final long ABSTRACT_XML_CHECKSUM = 15444987L;
+    static final int ABSTRACT_XML_LENGTH = 192744;
+    static final long ABSTRACT_XML_CHECKSUM = 15445032L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -164201,7 +164201,7 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
-        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
@@ -164321,7 +164321,7 @@ public class TaCodegenServe {
             }
             try {
                 Core.BbandsStream sD = c2.bbandsOpen(fz_c, Integer.MIN_VALUE, optInNbDevUp, optInNbDevDn, optInMAType);
-                Core.BbandsStream sE = c2.bbandsOpen(fz_c, 5, optInNbDevUp, optInNbDevDn, optInMAType);
+                Core.BbandsStream sE = c2.bbandsOpen(fz_c, 20, optInNbDevUp, optInNbDevDn, optInMAType);
                 if (svBne(sD.value().realUpperBand, sE.value().realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().realMiddleBand, sE.value().realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().realLowerBand, sE.value().realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }

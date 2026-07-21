@@ -83,7 +83,7 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 5, range
+    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 20, range
     ///   2..=100000)
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
@@ -95,7 +95,7 @@ impl Core {
     #[inline]
     pub fn bbands_lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
+            optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
@@ -128,7 +128,7 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Input data series.
-    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 5, range
+    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 20, range
     ///   2..=100000)
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
@@ -168,7 +168,7 @@ impl Core {
     /// let mut lower_band = vec![0.0; 252];
     ///
     /// let ret = core.bbands(
-    ///     0, data.len() - 1, &data, 5, 2.0, 2.0, 0,
+    ///     0, data.len() - 1, &data, 20, 2.0, 2.0, 0,
     ///     &mut out_beg, &mut out_nb, &mut upper_band, &mut middle_band, &mut lower_band,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -204,7 +204,7 @@ impl Core {
             return RetCode::OutOfRangeStartIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
+            optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
@@ -737,7 +737,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
+            optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
@@ -859,7 +859,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.bbands_open(&data, 5, 2.0, 2.0, 0).expect("enough history");
+    /// let (mut s, _last) = core.bbands_open(&data, 20, 2.0, 2.0, 0).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -894,7 +894,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
+            optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }

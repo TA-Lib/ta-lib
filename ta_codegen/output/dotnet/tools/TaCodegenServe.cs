@@ -3854,7 +3854,7 @@ public class TaCodegenServe {
                 } else {
                     inReal = GetDoubleArray(p, "inReal");
                 }
-                int optInTimePeriod = p.TryGetProperty("optInTimePeriod", out var _optInTimePeriodVal) ? _optInTimePeriodVal.GetInt32() : 5;
+                int optInTimePeriod = p.TryGetProperty("optInTimePeriod", out var _optInTimePeriodVal) ? _optInTimePeriodVal.GetInt32() : 20;
                 double optInNbDevUp = p.TryGetProperty("optInNbDevUp", out var _optInNbDevUpVal) ? _optInNbDevUpVal.GetDouble() : 2;
                 double optInNbDevDn = p.TryGetProperty("optInNbDevDn", out var _optInNbDevDnVal) ? _optInNbDevDnVal.GetDouble() : 2;
                 int optInMAType = p.TryGetProperty("optInMAType", out var _optInMATypeVal) ? _optInMATypeVal.GetInt32() : 0;
