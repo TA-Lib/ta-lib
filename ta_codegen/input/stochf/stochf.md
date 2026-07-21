@@ -15,7 +15,9 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

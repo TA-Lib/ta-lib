@@ -107,9 +107,9 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInTimePeriod` — Smoothing period for the true range average (default 14, range
     ///   1..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.

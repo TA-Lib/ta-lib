@@ -10,7 +10,8 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Inputs
 
-- `inPriceHL` — High and low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

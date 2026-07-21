@@ -99,8 +99,8 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
     /// * `optInAcceleration` — Step added to the acceleration factor on each new extreme point
     ///   (default 0.02, minimum 0)
     /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)

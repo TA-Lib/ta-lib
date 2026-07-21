@@ -15,8 +15,9 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use super::java::to_java_method_name;
+use super::price_bundle;
 use crate::helper_registry::HelperRegistry;
-use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
+use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType, PriceComponent};
 use crate::registry::Registry;
 
 const CORE_START: &str = "/**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/";
@@ -151,9 +152,9 @@ fn gen_annotation(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
     o.push_str("        endIdx,\n");
     for desc in &descs {
         match desc {
-            InputDesc::Price(names) => {
-                for n in names {
-                    let _ = writeln!(o, "        {n} ,");
+            InputDesc::Price(components) => {
+                for c in components {
+                    let _ = writeln!(o, "        {} ,", c.input_name());
                 }
             }
             InputDesc::Real(n) | InputDesc::Integer(n) => {
@@ -181,76 +182,55 @@ fn gen_annotation(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
 enum InputDesc {
     Real(String),
     Integer(String),
-    /// The expanded component parameter names, e.g. `["inHigh", "inLow", "inClose"]`.
-    Price(Vec<String>),
+    /// One price bundle's components in **signature order**.
+    ///
+    /// Signature order, not canonical `OHLCV` order, because this vec drives two
+    /// positional surfaces — the Java parameter declarations and the `super.<name>(...)`
+    /// argument list — and `Core.java` (emitted by [`super::java`] straight from
+    /// `func.inputs`) is in signature order. Canonicalising here would bind the arrays to
+    /// the wrong parameters for any function whose YAML lists its components out of
+    /// `OHLCV` order: it would still compile, and silently compute the wrong numbers.
+    /// The descriptor's `paramName`/`flags` are canonicalised at their point of use.
+    Price(Vec<PriceComponent>),
 }
 
-const PRICE_INPUT_NAMES: &[&str] =
-    &["inOpen", "inHigh", "inLow", "inClose", "inVolume", "inOpenInterest"];
-
-/// Regroup the expanded price components (`inHigh`/`inLow`/`inClose`) into a single
-/// abstract `Price` descriptor, mirroring `ta_abstract_c::reconstruct_abstract_inputs`.
+/// Fold the expanded price components (`inHigh`/`inLow`/`inClose`) into a single abstract
+/// `Price` descriptor, via the shared [`price_bundle::group`] the other abstract backends
+/// use — the grouping comes from the YAML declaration, not from the argument names.
 fn input_descriptors(inputs: &[Input]) -> Vec<InputDesc> {
-    let mut result = Vec::new();
-    let mut i = 0;
-    while i < inputs.len() {
-        if PRICE_INPUT_NAMES.contains(&inputs[i].name.as_str()) {
-            let mut names = Vec::new();
-            while i < inputs.len() && PRICE_INPUT_NAMES.contains(&inputs[i].name.as_str()) {
-                names.push(inputs[i].name.clone());
-                i += 1;
-            }
-            result.push(InputDesc::Price(names));
-        } else {
-            match &inputs[i].param_type {
-                ParamType::Integer => result.push(InputDesc::Integer(inputs[i].name.clone())),
-                _ => result.push(InputDesc::Real(inputs[i].name.clone())),
-            }
-            i += 1;
-        }
-    }
-    result
-}
-
-/// Price-component flag bit (`TA_IN_PRICE_*`).
-fn price_bit(name: &str) -> u32 {
-    match name {
-        "inOpen" => 0x0000_0001,
-        "inHigh" => 0x0000_0002,
-        "inLow" => 0x0000_0004,
-        "inClose" => 0x0000_0008,
-        "inVolume" => 0x0000_0010,
-        "inOpenInterest" => 0x0000_0020,
-        _ => 0,
-    }
-}
-
-/// Price-suffix letter for the `inPrice<SUFFIX>` param name (`inHigh` -> `H`).
-fn price_letter(name: &str) -> char {
-    match name {
-        "inOpen" => 'O',
-        "inHigh" => 'H',
-        "inLow" => 'L',
-        "inClose" => 'C',
-        "inVolume" => 'V',
-        "inOpenInterest" => 'I',
-        _ => '?',
-    }
+    price_bundle::group(inputs)
+        .into_iter()
+        .map(|g| match g {
+            price_bundle::Grouped::Price(bundle) => InputDesc::Price(
+                bundle
+                    .iter()
+                    .map(|i| i.price.expect("bundle member carries a PriceRef").component)
+                    .collect(),
+            ),
+            price_bundle::Grouped::Single(inp) => match &inp.param_type {
+                ParamType::Integer => InputDesc::Integer(inp.name.clone()),
+                _ => InputDesc::Real(inp.name.clone()),
+            },
+        })
+        .collect()
 }
 
 fn emit_input_annotation(o: &mut String, desc: &InputDesc) {
     match desc {
-        InputDesc::Price(names) => {
-            let flags: u32 = names.iter().map(|n| price_bit(n)).sum();
-            let suffix: String = names.iter().map(|n| price_letter(n)).collect();
+        InputDesc::Price(components) => {
+            // The descriptor is canonical (public ABI); the parameter list below stays in
+            // signature order so it lines up with `Core.java`.
+            let canonical = price_bundle::canonical(components);
+            let name = price_bundle::canonical_name(&canonical);
+            let flags = price_bundle::flags(&canonical);
             o.push_str("            @InputParameterInfo(\n");
-            let _ = writeln!(o, "                paramName = \"inPrice{suffix}\",");
+            let _ = writeln!(o, "                paramName = \"{name}\",");
             let _ = writeln!(o, "                flags     = {flags},");
             o.push_str("                type = InputParameterType.TA_Input_Price\n");
             o.push_str("            )\n");
-            for n in names {
+            for c in components {
                 // gen_code emits a trailing space before `[]` for price components.
-                let _ = writeln!(o, "            double {n} [],");
+                let _ = writeln!(o, "            double {} [],", c.input_name());
             }
         }
         InputDesc::Real(n) => {

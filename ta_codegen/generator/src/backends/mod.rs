@@ -16,6 +16,7 @@ pub mod java_stream;
 pub mod java_enums;
 pub mod java_shipped;
 pub mod makefile_am;
+pub mod price_bundle;
 pub mod retcode;
 pub mod rust_abstract;
 pub mod rust_doc;

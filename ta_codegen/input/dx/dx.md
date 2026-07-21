@@ -15,7 +15,9 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

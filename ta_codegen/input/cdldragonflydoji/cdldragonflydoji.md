@@ -14,7 +14,10 @@ Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < Shado
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price bars (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

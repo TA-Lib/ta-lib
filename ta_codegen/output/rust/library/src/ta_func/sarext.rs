@@ -111,8 +111,8 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
     /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
     ///   short at |value| (default 0)
     /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default

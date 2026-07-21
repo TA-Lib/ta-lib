@@ -97,10 +97,162 @@ pub struct DocDef {
     pub references: Vec<String>,
 }
 
+/// One component of a `ta_abstract` price bar.
+///
+/// `ta_abstract` describes a price bar as a *single* `TA_Input_Price` parameter whose
+/// `flags` word names the components it needs (`TA_IN_PRICE_HIGH|...`). That grouping is
+/// public ABI — `include/ta_abstract.h` has carried it since the 2002 initial revision,
+/// and wrappers read it: ta-lib-python turns `inPriceHLC` + flags into
+/// `{'prices': ['high','low','close']}`. The generated *functions*, by contrast, take one
+/// array per component (`TA_STOCH(startIdx, endIdx, inHigh, inLow, inClose, ...)`).
+///
+/// This enum is the single definition of the two representations' correspondence, so the
+/// flag bit, the `inPriceXXX` suffix letter and the argument name cannot drift apart
+/// across the four backends that each used to carry their own copy.
+///
+/// `TA_IN_PRICE_TIMESTAMP` (0x40) is deliberately absent: `TA_PricePtrs`
+/// (`src/ta_abstract/ta_frame_priv.h`) has no timestamp field, so a bundle declaring one
+/// could never have produced compiling C. Declaring `timestamp` in `price_components:`
+/// now fails loudly in the parser rather than generating a broken frame.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PriceComponent {
+    Open,
+    High,
+    Low,
+    Close,
+    Volume,
+    OpenInterest,
+}
+
+impl PriceComponent {
+    /// The YAML `price_components:` token.
+    #[must_use]
+    pub fn token(self) -> &'static str {
+        match self {
+            PriceComponent::Open => "open",
+            PriceComponent::High => "high",
+            PriceComponent::Low => "low",
+            PriceComponent::Close => "close",
+            PriceComponent::Volume => "volume",
+            PriceComponent::OpenInterest => "openInterest",
+        }
+    }
+
+    /// The generated argument name this component expands to.
+    #[must_use]
+    pub fn input_name(self) -> &'static str {
+        match self {
+            PriceComponent::Open => "inOpen",
+            PriceComponent::High => "inHigh",
+            PriceComponent::Low => "inLow",
+            PriceComponent::Close => "inClose",
+            PriceComponent::Volume => "inVolume",
+            PriceComponent::OpenInterest => "inOpenInterest",
+        }
+    }
+
+    /// The `TA_IN_PRICE_*` flag bit (`include/ta_abstract.h`) — public ABI.
+    #[must_use]
+    pub fn flag_bit(self) -> u32 {
+        match self {
+            PriceComponent::Open => 0x0000_0001,
+            PriceComponent::High => 0x0000_0002,
+            PriceComponent::Low => 0x0000_0004,
+            PriceComponent::Close => 0x0000_0008,
+            PriceComponent::Volume => 0x0000_0010,
+            PriceComponent::OpenInterest => 0x0000_0020,
+        }
+    }
+
+    /// The `TA_IN_PRICE_*` flag macro name, for the generated C.
+    #[must_use]
+    pub fn flag_macro(self) -> &'static str {
+        match self {
+            PriceComponent::Open => "TA_IN_PRICE_OPEN",
+            PriceComponent::High => "TA_IN_PRICE_HIGH",
+            PriceComponent::Low => "TA_IN_PRICE_LOW",
+            PriceComponent::Close => "TA_IN_PRICE_CLOSE",
+            PriceComponent::Volume => "TA_IN_PRICE_VOLUME",
+            PriceComponent::OpenInterest => "TA_IN_PRICE_OPENINTEREST",
+        }
+    }
+
+    /// Human-readable name, as `ta_func_api.xml` spells it.
+    #[must_use]
+    pub fn display_name(self) -> &'static str {
+        match self {
+            PriceComponent::Open => "Open",
+            PriceComponent::High => "High",
+            PriceComponent::Low => "Low",
+            PriceComponent::Close => "Close",
+            PriceComponent::Volume => "Volume",
+            PriceComponent::OpenInterest => "Open Interest",
+        }
+    }
+
+    /// The letter this component contributes to an `inPriceXXX` name (`High` -> `H`).
+    #[must_use]
+    pub fn suffix_letter(self) -> char {
+        match self {
+            PriceComponent::Open => 'O',
+            PriceComponent::High => 'H',
+            PriceComponent::Low => 'L',
+            PriceComponent::Close => 'C',
+            PriceComponent::Volume => 'V',
+            PriceComponent::OpenInterest => 'I',
+        }
+    }
+
+    /// Parse a YAML `price_components:` token.
+    #[must_use]
+    pub fn from_token(token: &str) -> Option<Self> {
+        match token {
+            "open" => Some(PriceComponent::Open),
+            "high" => Some(PriceComponent::High),
+            "low" => Some(PriceComponent::Low),
+            "close" => Some(PriceComponent::Close),
+            "volume" => Some(PriceComponent::Volume),
+            "openInterest" | "openinterest" => Some(PriceComponent::OpenInterest),
+            _ => None,
+        }
+    }
+}
+
+/// An input argument's membership in a price bundle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PriceRef {
+    /// Ordinal of the bundle within this function's input list (0 = the first bundle).
+    /// Carrying it explicitly is what lets `ta_abstract` rebuild `TA_Input_Price` from a
+    /// declaration instead of guessing from a run of consecutive component *names* —
+    /// a guess that would regroup wrongly, and so silently change the public abstract
+    /// API, for a standalone `inVolume` or a `real` input placed between components.
+    pub group: usize,
+    /// Which component of that bundle this argument carries.
+    pub component: PriceComponent,
+}
+
+/// One argument of the generated function signature.
 #[derive(Debug, Clone)]
 pub struct Input {
     pub name: String,
     pub param_type: ParamType,
+    /// `Some` when this argument is one component of a `ta_abstract` price bundle.
+    /// The YAML declares the bundle (`type: price` + `price_components:`) and
+    /// `parser::yaml` expands it into one `Input` per component, tagging each with the
+    /// bundle it came from; `backends::price_bundle` folds them back for `ta_abstract`.
+    pub price: Option<PriceRef>,
+}
+
+impl Input {
+    /// A plain (non-bundle) input argument.
+    #[must_use]
+    pub fn new(name: impl Into<String>, param_type: ParamType) -> Self {
+        Input {
+            name: name.into(),
+            param_type,
+            price: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

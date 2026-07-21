@@ -22,8 +22,8 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Inputs
 
-- `inClose` — Closing price series, providing the bar-over-bar percentage change
-- `inVolume` — Volume series, compared bar-over-bar to gate each update
+- `inClose` — Close price of each bar
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

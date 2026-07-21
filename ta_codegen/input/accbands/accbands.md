@@ -12,7 +12,9 @@ Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price bars
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

@@ -36,7 +36,10 @@ There is no seeding and no recursion, hence no unstable period. Each output depe
 
 ## Inputs
 
-- `inPriceHLCV` — High, low, close and volume
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

@@ -14,7 +14,10 @@ One candle. Detected when all hold: (1) doji body: realbody |close-open| <= Body
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price series (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

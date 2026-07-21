@@ -10,7 +10,8 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 
 ## Inputs
 
-- `inPriceHL` — High and low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

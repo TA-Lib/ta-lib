@@ -17,7 +17,9 @@ ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
 
 ## Inputs
 
-- `inPriceHLC` — High/Low/Close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

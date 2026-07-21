@@ -13,8 +13,9 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
+use super::price_bundle;
 use super::write_if_changed_silent;
-use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
+use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType, PriceComponent};
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -421,23 +422,12 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     }
     o.push_str("};\n\n");
 
-    // Input constants
-    emit_price_input(&mut o, "OHLCV", "inPriceOHLCV",
-        &["TA_IN_PRICE_OPEN", "TA_IN_PRICE_HIGH", "TA_IN_PRICE_LOW", "TA_IN_PRICE_CLOSE", "TA_IN_PRICE_VOLUME"]);
-    emit_price_input(&mut o, "HLCV", "inPriceHLCV",
-        &["TA_IN_PRICE_HIGH", "TA_IN_PRICE_LOW", "TA_IN_PRICE_CLOSE", "TA_IN_PRICE_VOLUME"]);
-    emit_price_input(&mut o, "OHLC", "inPriceOHLC",
-        &["TA_IN_PRICE_OPEN", "TA_IN_PRICE_HIGH", "TA_IN_PRICE_LOW", "TA_IN_PRICE_CLOSE"]);
-    emit_price_input(&mut o, "HLC", "inPriceHLC",
-        &["TA_IN_PRICE_HIGH", "TA_IN_PRICE_LOW", "TA_IN_PRICE_CLOSE"]);
-    emit_price_input(&mut o, "HL", "inPriceHL",
-        &["TA_IN_PRICE_HIGH", "TA_IN_PRICE_LOW"]);
-    emit_price_input(&mut o, "OC", "inPriceOC",
-        &["TA_IN_PRICE_OPEN", "TA_IN_PRICE_CLOSE"]);
-    emit_price_input(&mut o, "CV", "inPriceCV",
-        &["TA_IN_PRICE_CLOSE", "TA_IN_PRICE_VOLUME"]);
-    emit_price_input(&mut o, "V", "inPriceV",
-        &["TA_IN_PRICE_VOLUME"]);
+    // Input constants. Name, suffix and flags are all derived from the component list by
+    // `price_bundle`, so the ABI string a wrapper reads (`inPriceHLC`) and the flags word
+    // it decodes into `['high','low','close']` cannot fall out of step.
+    for components in PRICE_INPUT_CONSTANTS {
+        emit_price_input(&mut o, components);
+    }
 
     o.push_str("const TA_InputParameterInfo TA_DEF_UI_Input_Real =\n");
     o.push_str("                                  { TA_Input_Real, \"inReal\", 0 };\n\n");
@@ -590,19 +580,55 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     o
 }
 
-fn emit_price_input(o: &mut String, suffix: &str, param_name: &str, flags: &[&str]) {
+/// The eight `TA_DEF_UI_Input_Price_*` constants `ta_def_ui.c` has declared since the
+/// 2002 initial revision. `OHLCV` is unused by any current function but stays declared:
+/// it is part of the shipped `ta_def_ui.h` surface.
+const PRICE_INPUT_CONSTANTS: &[&[PriceComponent]] = &[
+    &[
+        PriceComponent::Open,
+        PriceComponent::High,
+        PriceComponent::Low,
+        PriceComponent::Close,
+        PriceComponent::Volume,
+    ],
+    &[
+        PriceComponent::High,
+        PriceComponent::Low,
+        PriceComponent::Close,
+        PriceComponent::Volume,
+    ],
+    &[
+        PriceComponent::Open,
+        PriceComponent::High,
+        PriceComponent::Low,
+        PriceComponent::Close,
+    ],
+    &[
+        PriceComponent::High,
+        PriceComponent::Low,
+        PriceComponent::Close,
+    ],
+    &[PriceComponent::High, PriceComponent::Low],
+    &[PriceComponent::Open, PriceComponent::Close],
+    &[PriceComponent::Close, PriceComponent::Volume],
+    &[PriceComponent::Volume],
+];
+
+fn emit_price_input(o: &mut String, components: &[PriceComponent]) {
+    let suffix = price_bundle::suffix(components);
+    let param_name = price_bundle::canonical_name(components);
     let _ = writeln!(
         o,
         "const TA_InputParameterInfo TA_DEF_UI_Input_Price_{suffix} ="
     );
     o.push_str("                                  { TA_Input_Price, \"");
-    o.push_str(param_name);
+    o.push_str(&param_name);
     o.push_str("\",\n                                    ");
-    for (i, flag) in flags.iter().enumerate() {
+    for (i, c) in components.iter().enumerate() {
         if i > 0 {
             o.push_str(" |\n                                    ");
         }
-        o.push_str(flag);
+        o.push_str(c.flag_macro());
     }
     o.push_str(" };\n\n");
 }
@@ -836,12 +862,14 @@ fn emit_frame_pp(o: &mut String, func: &FuncDef) {
     for (abstract_idx, ai) in abstract_inputs.iter().enumerate() {
         match ai {
             AbstractInput::Price(components) => {
+                // Signature order, not canonical order: this is building the call.
                 for comp in components {
                     let _ = writeln!(
                         o,
-                        "               params->in[{abstract_idx}].data.inPrice.{comp}, \
-                         /* in{} */",
-                        capitalize_first(comp)
+                        "               params->in[{abstract_idx}].data.inPrice.{}, \
+                         /* {} */",
+                        comp.token(),
+                        comp.input_name()
                     );
                 }
             }
@@ -937,66 +965,34 @@ fn opt_input_accessor(opt: &OptInput, idx: usize) -> String {
 // Price input reconstruction
 // ---------------------------------------------------------------------------
 
-/// Known price component names that the YAML parser expands.
-const PRICE_COMPONENT_NAMES: &[&str] = &[
-    "inOpen",
-    "inHigh",
-    "inLow",
-    "inClose",
-    "inVolume",
-    "inOpenInterest",
-];
-
 /// Represents either a single abstract input or a group of price components.
 enum AbstractInput {
     /// A single non-price input (Real, Integer, etc.)
     Single(Input),
-    /// A group of price component names, e.g. `["high", "low", "close"]`.
-    Price(Vec<String>),
+    /// The components of one `TA_Input_Price` descriptor, in **signature order** — the
+    /// order the generated frame must pass them to the function. The descriptor's own
+    /// name and flags are canonical `OHLCV` regardless; see [`price_bundle`].
+    Price(Vec<PriceComponent>),
 }
 
-/// Reconstruct abstract (ta_abstract-style) inputs from the expanded IR inputs.
+/// Reconstruct the `ta_abstract` input view from the expanded IR inputs.
 ///
-/// The YAML parser expands `type: price, price_components: [high, low, close]`
-/// into three separate `Real` inputs: `inHigh`, `inLow`, `inClose`.
-/// For ta_abstract, we need to group these back into a single `Price` input.
+/// The grouping is read from the `PriceRef` the YAML parser attached to each expanded
+/// component, not inferred from the argument names — see [`price_bundle`] for why that
+/// distinction is load-bearing for the public abstract API.
 fn reconstruct_abstract_inputs(inputs: &[Input]) -> Vec<AbstractInput> {
-    let mut result = Vec::new();
-    let mut i = 0;
-    while i < inputs.len() {
-        // Check if current input is a price component.
-        if is_price_component(&inputs[i].name) {
-            // Consume consecutive price components.
-            let mut components = Vec::new();
-            while i < inputs.len() && is_price_component(&inputs[i].name) {
-                let comp = input_name_to_component(&inputs[i].name);
-                components.push(comp);
-                i += 1;
-            }
-            result.push(AbstractInput::Price(components));
-        } else {
-            result.push(AbstractInput::Single(inputs[i].clone()));
-            i += 1;
-        }
-    }
-    result
-}
-
-fn is_price_component(name: &str) -> bool {
-    PRICE_COMPONENT_NAMES.contains(&name)
-}
-
-/// Convert expanded input name back to component: "inHigh" -> "high", "inClose" -> "close".
-fn input_name_to_component(name: &str) -> String {
-    match name {
-        "inOpen" => "open".to_string(),
-        "inHigh" => "high".to_string(),
-        "inLow" => "low".to_string(),
-        "inClose" => "close".to_string(),
-        "inVolume" => "volume".to_string(),
-        "inOpenInterest" => "openInterest".to_string(),
-        _ => name.to_string(),
-    }
+    price_bundle::group(inputs)
+        .into_iter()
+        .map(|g| match g {
+            price_bundle::Grouped::Price(bundle) => AbstractInput::Price(
+                bundle
+                    .iter()
+                    .map(|i| i.price.expect("bundle member carries a PriceRef").component)
+                    .collect(),
+            ),
+            price_bundle::Grouped::Single(inp) => AbstractInput::Single(inp.clone()),
+        })
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -1158,25 +1154,23 @@ fn input_ref_name(inp: &crate::ir::Input) -> String {
 }
 
 /// Map price component list to the suffix like "OHLCV", "HLC", etc.
-fn price_components_to_suffix(components: &[String]) -> String {
-    let normalized: Vec<&str> = components.iter().map(String::as_str).collect();
-    match normalized.as_slice() {
-        ["open", "high", "low", "close", "volume"] => "OHLCV".to_string(),
-        ["high", "low", "close", "volume"] => "HLCV".to_string(),
-        ["open", "high", "low", "close"] => "OHLC".to_string(),
-        ["high", "low", "close"] => "HLC".to_string(),
-        ["high", "low"] => "HL".to_string(),
-        ["open", "close"] => "OC".to_string(),
-        ["close", "volume"] => "CV".to_string(),
-        ["volume"] => "V".to_string(),
-        _ => {
-            // Fallback: uppercase first letter of each component.
-            components
-                .iter()
-                .map(|c| c.chars().next().unwrap_or('x').to_ascii_uppercase())
-                .collect()
-        }
-    }
+/// The `TA_DEF_UI_Input_Price_<SUFFIX>` symbol suffix for a bundle.
+///
+/// # Panics
+/// If the combination has no declared constant. The tables reference the symbol by name,
+/// so an undeclared combination would otherwise surface as an undefined-symbol error when
+/// the *C library* is compiled, with nothing pointing back at the YAML that caused it —
+/// declare the new combination in [`PRICE_INPUT_CONSTANTS`] instead.
+fn price_components_to_suffix(components: &[PriceComponent]) -> String {
+    let suffix = price_bundle::suffix(components);
+    assert!(
+        PRICE_INPUT_CONSTANTS
+            .iter()
+            .any(|c| price_bundle::suffix(c) == suffix),
+        "no TA_DEF_UI_Input_Price_{suffix} constant is declared for price components \
+         {components:?} — add the combination to PRICE_INPUT_CONSTANTS in ta_abstract_c.rs"
+    );
+    suffix
 }
 
 /// Check if an output matches a pre-defined constant.
@@ -2898,7 +2892,7 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef, lookup: &dyn crate::streami
         .map(|ai| match ai {
             AbstractInput::Price(components) => components
                 .iter()
-                .map(|c| capitalize_first(c))
+                .map(|c| capitalize_first(c.token()))
                 .collect::<Vec<_>>()
                 .join(", "),
             AbstractInput::Single(input) => match input.param_type {

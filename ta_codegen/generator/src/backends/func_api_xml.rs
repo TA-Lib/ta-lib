@@ -3,7 +3,7 @@
 //! Produces output matching the legacy `gen_code` XML format.
 //! `<Precision>` is always emitted (defaults to 0 when not specified in YAML).
 
-use crate::ir::{FuncDef, ParamType};
+use crate::ir::{FuncDef, Input, ParamType};
 use std::fmt::Write as _;
 use std::path::Path;
 use super::common::ta_real_sentinel;
@@ -95,25 +95,12 @@ fn write_func_flags(out: &mut String, flags: &[String]) {
 
 // --- Required inputs ---
 
-/// Known price component prefixes (YAML parser expands `Price` inputs
-/// into individual `Real` inputs named `in{Component}`).  We detect and
-/// reverse-map them to the XML price-component format.
-const PRICE_COMPONENTS: &[(&str, &str)] = &[
-    ("inOpen", "Open"),
-    ("inHigh", "High"),
-    ("inLow", "Low"),
-    ("inClose", "Close"),
-    ("inVolume", "Volume"),
-    ("inOpenInterest", "Open Interest"),
-    ("inTimestamp", "Timestamp"),
-];
-
-/// Check if an input name is an expanded price component.
-fn as_price_component(name: &str) -> Option<&'static str> {
-    PRICE_COMPONENTS
-        .iter()
-        .find(|(prefix, _)| *prefix == name)
-        .map(|(_, xml_name)| *xml_name)
+/// The XML name of an argument that a price bundle expanded into (`inHigh` -> `High`).
+///
+/// Read from the `PriceRef` the YAML parser attached, not matched on the argument name:
+/// an input only renders as a price component when a bundle actually declared it.
+fn as_price_component(input: &Input) -> Option<&'static str> {
+    input.price.map(|p| p.component.display_name())
 }
 
 fn write_inputs(out: &mut String, func: &FuncDef) {
@@ -128,7 +115,7 @@ fn write_inputs(out: &mut String, func: &FuncDef) {
             ParamType::Real => {
                 out.push_str("\t\t\t<RequiredInputArgument>\n");
                 // Detect expanded price components (inHigh → High)
-                if let Some(pc) = as_price_component(&input.name) {
+                if let Some(pc) = as_price_component(input) {
                     let _ = writeln!(out, "\t\t\t\t<Type>{pc}</Type>");
                     let _ = writeln!(out, "\t\t\t\t<Name>{pc}</Name>");
                 } else {

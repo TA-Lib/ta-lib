@@ -107,10 +107,10 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open prices per bar.
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
     ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.

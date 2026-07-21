@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use crate::ir::{FuncDef, Input, OptInput, Output, ParamType};
+use crate::ir::{FuncDef, Input, OptInput, Output, ParamType, PriceComponent, PriceRef};
 
 #[derive(Deserialize)]
 struct YamlFunc {
@@ -108,6 +108,12 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
     let yaml: YamlFunc = serde_yaml::from_str(&content)
         .unwrap_or_else(|e| panic!("Failed to parse {}: {}", path.display(), e));
 
+    // A `type: price` input is one `ta_abstract` descriptor but several function
+    // arguments, so it expands here. Each expanded argument keeps a `PriceRef` back to
+    // the bundle it came from: the fold is ABI (see `ir::PriceComponent`), so
+    // `backends::price_bundle` must be able to rebuild it from data rather than by
+    // re-recognising component names.
+    let mut next_price_group = 0usize;
     let inputs: Vec<Input> = yaml
         .inputs
         .into_iter()
@@ -115,23 +121,28 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
             let pt = parse_param_type(&p.param_type, p.price_components);
             match pt {
                 ParamType::Price(components) => {
-                    // Expand price input into individual Real inputs
-                    // e.g., inPriceHLC with [high, low, close] -> inHigh, inLow, inClose
+                    let group = next_price_group;
+                    next_price_group += 1;
                     components
                         .into_iter()
                         .map(|c| {
-                            let capitalized = format!("{}{}", c[..1].to_uppercase(), &c[1..]);
+                            let component =
+                                PriceComponent::from_token(&c).unwrap_or_else(|| {
+                                    panic!(
+                                        "{}: unknown price component {c:?} on input {:?}",
+                                        path.display(),
+                                        p.name
+                                    )
+                                });
                             Input {
-                                name: format!("in{capitalized}"),
+                                name: component.input_name().to_string(),
                                 param_type: ParamType::Real,
+                                price: Some(PriceRef { group, component }),
                             }
                         })
                         .collect::<Vec<_>>()
                 }
-                other => vec![Input {
-                    name: p.name.clone(),
-                    param_type: other,
-                }],
+                other => vec![Input::new(p.name.clone(), other)],
             }
         })
         .collect();

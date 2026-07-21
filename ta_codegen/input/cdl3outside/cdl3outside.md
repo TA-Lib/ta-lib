@@ -10,7 +10,10 @@ A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 
 
 ## Inputs
 
-- `inPriceOHLC` — Open, High, Low, Close price arrays
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

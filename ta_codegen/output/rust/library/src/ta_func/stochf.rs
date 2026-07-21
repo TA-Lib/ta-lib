@@ -123,9 +123,9 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInFastK_Period` — Lookback window for the highest-high/lowest-low of Fast-K (default
     ///   5, range 1..=100000)
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)

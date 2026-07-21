@@ -14,7 +14,8 @@ period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
 
 ## Inputs
 
-- `inPriceHL` — High and low price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
 
 ## Outputs
 

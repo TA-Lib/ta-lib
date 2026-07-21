@@ -145,12 +145,65 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         if let Err(e) = try_inject_parameters(&body, f, &enums) {
             errors.push(e);
         }
+        if let Err(e) = validate_inputs(&body, f) {
+            errors.push(e);
+        }
     }
     if errors.is_empty() {
         Ok(())
     } else {
         Err(errors)
     }
+}
+
+/// Check that `## Inputs` names the arrays the function is actually called with.
+///
+/// The YAML folds a price bar into one named input (`inPriceHLC` + `price_components`)
+/// because `ta_abstract` — and through it every wrapper that reads the abstract API —
+/// needs a single `TA_Input_Price` descriptor. That fold is an introspection detail: the
+/// C, Rust and Java signatures all take the components as separate arrays
+/// (`TA_STOCH(startIdx, endIdx, inHigh, inLow, inClose, ...)`), so a page documenting
+/// `inPriceHLC` names a parameter the reader cannot pass. `parser/yaml.rs` expands the
+/// bundle, so `func.inputs` is already the real argument list — require the prose to
+/// match it in name and order, exactly as `## Parameters` must match `optional_inputs`.
+///
+/// Unlike `## Parameters` this section is passed through to the page verbatim; the check
+/// exists because nothing else joins it to the IR. `rust_doc::input_desc` looks the
+/// authored prose up by expanded name and silently falls back to canned text on a miss,
+/// which is what let 94 pages drift onto the bundle name unnoticed.
+fn validate_inputs(body: &str, func: &FuncDef) -> Result<(), String> {
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((heading, end)) = section_span(&lines, "## Inputs") else {
+        return Err(format!(
+            "{}: {}.md has no `## Inputs` section, but the function takes {} input(s)",
+            func.name,
+            func.name.to_lowercase(),
+            func.inputs.len()
+        ));
+    };
+
+    let section = &lines[heading + 1..end];
+    let items = bullet_items(section);
+    let prose = named_bullets(section);
+    if items.len() != prose.len() {
+        return Err(format!(
+            "{}: `## Inputs` has {} bullet(s) that are not `- `name` — description`",
+            func.name,
+            items.len() - prose.len()
+        ));
+    }
+
+    let names: Vec<&str> = prose.iter().map(|(n, _)| n.as_str()).collect();
+    let expected: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
+    if names != expected {
+        return Err(format!(
+            "{}: `## Inputs` bullets {names:?} do not match the call signature {expected:?} \
+             — the two must agree in name and order. A price bundle (`inPriceHLC`) is an \
+             abstract-API descriptor, not an argument: document its components separately.",
+            func.name
+        ));
+    }
+    Ok(())
 }
 
 /// The fallible core of [`inject_parameters`], so the same rules can gate a run before
@@ -440,7 +493,7 @@ fn build_index(funcs: &[&FuncDef]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ir::{EnumVariant, Input, OptInput};
+    use crate::ir::{EnumVariant, Input, OptInput, PriceComponent, PriceRef};
 
     fn func(name: &str, opts: Vec<OptInput>) -> FuncDef {
         FuncDef {
@@ -450,10 +503,7 @@ mod tests {
             camel_case: None,
             hint: None,
             flags: vec![],
-            inputs: vec![Input {
-                name: "inReal".to_string(),
-                param_type: ParamType::Real,
-            }],
+            inputs: vec![Input::new("inReal", ParamType::Real)],
             optional_inputs: opts,
             outputs: vec![],
             lookback: None,
@@ -466,6 +516,69 @@ mod tests {
             doc: None,
             streaming: false,
         }
+    }
+
+    /// A function taking a price bar, i.e. after `parser/yaml.rs` has expanded
+    /// `inPriceHLC` into the three arrays the signature really has.
+    fn hlc_func(name: &str) -> FuncDef {
+        let mut f = func(name, vec![]);
+        f.inputs = [
+            PriceComponent::High,
+            PriceComponent::Low,
+            PriceComponent::Close,
+        ]
+        .iter()
+        .map(|c| Input {
+            name: c.input_name().to_string(),
+            param_type: ParamType::Real,
+            price: Some(PriceRef {
+                group: 0,
+                component: *c,
+            }),
+        })
+        .collect();
+        f
+    }
+
+    /// The bundle name is an `ta_abstract` descriptor, never a parameter. Documenting it
+    /// (as 94 pages did) tells the reader to pass an array that does not exist.
+    #[test]
+    fn the_price_bundle_name_is_rejected_in_inputs() {
+        let body = "# X\n\n## Inputs\n\n- `inPriceHLC` — High/Low/Close price series\n\n## Outputs\n";
+        let err = validate_inputs(body, &hlc_func("X")).unwrap_err();
+        assert!(err.contains("do not match the call signature"), "{err}");
+        assert!(err.contains("inHigh"), "{err}");
+    }
+
+    /// The components, in signature order, are what the caller actually passes.
+    #[test]
+    fn expanded_components_in_signature_order_are_accepted() {
+        let body = "# X\n\n## Inputs\n\n- `inHigh` — High price\n- `inLow` — Low price\n\
+                    - `inClose` — Close price\n\n## Outputs\n";
+        assert!(validate_inputs(body, &hlc_func("X")).is_ok());
+    }
+
+    /// Order is part of the contract: the bullets document positional arguments.
+    #[test]
+    fn components_out_of_signature_order_are_rejected() {
+        let body = "# X\n\n## Inputs\n\n- `inClose` — Close price\n- `inHigh` — High price\n\
+                    - `inLow` — Low price\n\n## Outputs\n";
+        assert!(validate_inputs(body, &hlc_func("X")).is_err());
+    }
+
+    /// A partially documented bar (NVI/PVI/PVO authored components while their YAML
+    /// declared a bundle — nothing caught the disagreement) must not pass.
+    #[test]
+    fn a_missing_component_is_rejected() {
+        let body = "# X\n\n## Inputs\n\n- `inHigh` — High price\n- `inLow` — Low price\n\n## Outputs\n";
+        assert!(validate_inputs(body, &hlc_func("X")).is_err());
+    }
+
+    #[test]
+    fn a_missing_inputs_section_is_rejected() {
+        let body = "# X\n\n## Outputs\n\n- `outReal` — Values\n";
+        let err = validate_inputs(body, &hlc_func("X")).unwrap_err();
+        assert!(err.contains("no `## Inputs` section"), "{err}");
     }
 
     fn opt(name: &str, pt: ParamType, range: Option<(f64, f64)>, default: f64) -> OptInput {

@@ -117,7 +117,7 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Source price series, close by convention.
-    /// * `inVolume` — Volume per bar.
+    /// * `inVolume` — Volume of each bar.
     /// * `optInTimePeriod` — Number of bars in the weighting window (default 30, range
     ///   1..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.

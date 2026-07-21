@@ -12,7 +12,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volu
 
 ## Inputs
 
-- `inVolume` — Volume series
+- `inVolume` — Volume of each bar
 
 ## Outputs
 

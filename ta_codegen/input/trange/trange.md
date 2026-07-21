@@ -14,7 +14,9 @@ TR = max( high - low, |prevClose - high|, |prevClose - low| )
 
 ## Inputs
 
-- `inPriceHLC` — High, low, and close price series
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

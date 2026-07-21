@@ -11,7 +11,10 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 ## Inputs
 
-- `inPriceOHLC` — OHLC price series (open, high, low, close)
+- `inOpen` — Open price of each bar
+- `inHigh` — High price of each bar
+- `inLow` — Low price of each bar
+- `inClose` — Close price of each bar
 
 ## Outputs
 

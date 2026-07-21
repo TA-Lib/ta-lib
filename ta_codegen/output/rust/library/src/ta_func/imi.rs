@@ -105,8 +105,8 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open prices per bar.
-    /// * `inClose` — Close prices per bar.
+    /// * `inOpen` — Open price of each bar.
+    /// * `inClose` — Close price of each bar.
     /// * `optInTimePeriod` — Rolling window length for the up/down body sums (default 14, range
     ///   2..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.

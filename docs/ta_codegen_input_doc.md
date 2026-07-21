@@ -10,11 +10,12 @@ title: "ta_codegen Input: Documentation (<name>.md) Reference"
 > **embedded rustdoc** in the generated Rust crate (`backends/rust_doc.rs`, including a
 > runnable doctest per function, verified by `cargo test --doc`). Both inject the YAML
 > numbers for **optional inputs** from the shared `backends/doc_meta.rs` (issue #132), the
-> website as a `## Parameters` table. Still **planned**: injecting the same way into
-> `## Inputs` / `## Outputs` (blocked on the IR flattening price bundles, so the authored
-> `inPriceHLC` name has nothing to join against), the npm/TSDoc render, Javadoc/.NET
-> XML-doc, and the `docs-lint` gate (the "Rendering targets" / "Verification" sections
-> below describe those intended targets). See the sibling references for the two other
+> website as a `## Parameters` table. `## Inputs` is now **gated** instead: it must name the
+> arrays the function is actually called with, in signature order (issue #135) — the price
+> bundle (`inPriceHLC`) is an `ta_abstract` descriptor, not an argument, so it never appears
+> in prose. Still **planned**: injecting YAML facts into `## Inputs` / `## Outputs`, the
+> npm/TSDoc render, Javadoc/.NET XML-doc, and the `docs-lint` gate (the "Rendering targets" /
+> "Verification" sections below describe those intended targets). See the sibling references for the two other
 > input file kinds: [metadata](ta_codegen_input_yaml.md) and [code](ta_codegen_input_code.md).
 
 `<name>.md` is the **third sibling** in each `ta_codegen/input/<name>/` directory,
@@ -70,7 +71,7 @@ Numbers/ranges/defaults are **injected from YAML** at render — never restate t
 | `## Summary` | yes | One prose block: what the function is + a brief intro **and** how to read its output. Interpretation is merged in — there is **no** separate `Interpretation` section. |
 | `## Formula` | optional | A **brief, high-level** formula, only when the computation is expressible concisely. Omit for long detection lists (`CDL*`) or long DSP computations (`HT_*`) — that detail lives behind the Implementation source link. |
 | `## Notes` | optional | Bullet list of ONLY variations / specification differences from the original indicator (e.g. rounding disabled, a compatibility-mode behavior, a pattern that does not verify the prior trend it classically assumes). **No** implementation mechanics or internal identifiers — those live behind the source link. |
-| `## Inputs` | yes | One short line per **input name** (arity/type come from YAML). |
+| `## Inputs` | yes | One short line per **input name**, matching the call signature in name and order (arity/type come from YAML). A `type: price` bundle is documented as its **components** (`inHigh`, `inLow`, `inClose`) — the bundle name is an `ta_abstract` descriptor, never a parameter. Enforced by `docs_site::validate_inputs`. |
 | `## Outputs` | yes | One short line per **output name**; for `CDL*` state the actual sign(s) emitted (+100 / −100 / 0). |
 | `## Parameters` | if `optional_inputs` | Meaning per optional-input **name** (range / default / `suggested` come from YAML). |
 | `## Implementation` | yes | A **TA-Lib Definition:** line (input `<name>.c` · `.yaml`), then a **Native** table of the generated **C / Rust / Java** files, then a pointer to language wrappers. |

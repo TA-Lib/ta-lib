@@ -85,8 +85,8 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Price series compared bar-over-bar (typically close)
-    /// * `inVolume` — Volume per bar.
+    /// * `inReal` — Price series, typically close.
+    /// * `inVolume` — Volume of each bar.
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Cumulative on-balance volume.
