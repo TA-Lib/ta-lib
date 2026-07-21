@@ -1553,16 +1553,27 @@ impl ExprEmitter for CExpr<'_> {
             BinOp::Shr => ">>",
             BinOp::Shl => "<<",
         };
-        // In single-precision variants, pointer aliasing checks compare
-        // float* inputs against double* outputs/buffers. Cast both to
-        // void* to avoid -Wcompare-distinct-pointer-types warnings.
-        let needs_void_cast = self.ctx.single_precision
+        // In single-precision variants, input params are const float* while
+        // outputs and temp buffers are double*. A float input can never
+        // legally occupy the same buffer as a double array, so an == / !=
+        // between them folds to a constant — mirroring the Java backend
+        // (which must fold: Java rejects the comparison outright) and the
+        // frozen reference (which compiled the scratch election out of the
+        // USE_SINGLE_PRECISION_INPUT path: "Always alloc, since output is of
+        // different type"). The old (void *) cast merely silenced
+        // -Wcompare-distinct-pointer-types; a *live* mixed-width election
+        // writes 8-byte doubles across the 4-byte float samples it still has
+        // to read (issue #130). Same-typed pointers compare normally.
+        if self.ctx.single_precision
             && matches!(op, BinOp::Eq | BinOp::NotEq)
             && is_pointer_var(left)
-            && is_pointer_var(right);
-        if needs_void_cast {
-            // Operands are plain pointer identifiers (atomic) — no wrapping.
-            return format!("(void *){} {op_str} (void *){}", self.walk(left), self.walk(right));
+            && is_pointer_var(right)
+        {
+            let left_is_input = matches!(left, Expr::Var(n) if is_input_param_name(n));
+            let right_is_input = matches!(right, Expr::Var(n) if is_input_param_name(n));
+            if left_is_input != right_is_input {
+                return if matches!(op, BinOp::Eq) { "0".to_string() } else { "1".to_string() };
+            }
         }
         // Parenthesize an operand only when its own operator binds *looser* than
         // this one (or ties on the right, since every binary operator here is

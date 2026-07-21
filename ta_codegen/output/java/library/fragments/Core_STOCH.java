@@ -14,6 +14,8 @@
  *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
  *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
+ *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
+ *               in-place ma() destroyed the smoothed K before the final copy.
  */
 
    public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -175,14 +177,15 @@
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
-       * If the output is the same as the input, great
-       * we just save ourself one memory allocation.
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
        */
       bufferIsAllocated = 0;
       if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose ) {
          tempBuffer = outSlowK;
-      } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose ) {
-         tempBuffer = outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -336,8 +339,6 @@
       bufferIsAllocated = 0;
       if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose ) {
          tempBuffer = outSlowK;
-      } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose ) {
-         tempBuffer = outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -486,8 +487,6 @@
       bufferIsAllocated = 0;
       if( false || false || false ) {
          tempBuffer = outSlowK;
-      } else if( false || false || false ) {
-         tempBuffer = outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -612,8 +611,6 @@
       bufferIsAllocated = 0;
       if( false || false || false ) {
          tempBuffer = outSlowK;
-      } else if( false || false || false ) {
-         tempBuffer = outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -1007,14 +1004,15 @@
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
-       * If the output is the same as the input, great
-       * we just save ourself one memory allocation.
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
        */
       bufferIsAllocated = 0;
       if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose ) {
          tempBuffer = sc_outSlowK;
-      } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose ) {
-         tempBuffer = sc_outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -1279,14 +1277,15 @@
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
-       * If the output is the same as the input, great
-       * we just save ourself one memory allocation.
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
        */
       bufferIsAllocated = 0;
       if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose ) {
          tempBuffer = sc_outSlowK;
-      } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose ) {
-         tempBuffer = sc_outSlowD;
       } else {
          bufferIsAllocated = 1;
          tempBuffer = new double[(int)((endIdx - today + 1) * 1)];

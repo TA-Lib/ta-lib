@@ -50,6 +50,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  021807 MF     Initial Version
+ *  072026 MF,CC  Fix #130. Stage results locally so in-place (outReal==inReal)
+ *                calls no longer corrupt the input the ma() passes re-read.
  */
 
 // Import types from parent module
@@ -194,6 +196,7 @@ impl Core {
         let mut curPeriod: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
+        let mut localFinalArray: Vec<f64> = Vec::new();
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -236,6 +239,10 @@ impl Core {
         // Allocate intermediate local buffer.
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        // Results are staged locally and copied to outReal once at the end: each
+        // ma() pass re-reads inReal over the full range, so direct outReal writes
+        // corrupt an in-place (outReal==inReal) call (issue #130).
+        localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
         // Copy caller array of period into local buffer.
         // At the same time, truncate to min/max.
         // for( i = 0; i < outputSize; i += 1 )
@@ -272,20 +279,26 @@ impl Core {
                     (*outNBElement) = 0;
                     return retCode;
                 }
-                outReal[i] = ((localOutputArray[i]) as f64);
+                localFinalArray[i] = localOutputArray[i];
                 // for( j = i + 1; j < outputSize; j += 1 )
                 j = i + 1;
                 while j < outputSize {
                     if (localPeriodArray[j]) as usize == curPeriod {
                         localPeriodArray[j] = 0;
                         // Flag to avoid recalculation
-                        outReal[j] = ((localOutputArray[j]) as f64);
+                        localFinalArray[j] = localOutputArray[j];
                     }
                     j += 1;
                 }
             }
             i += 1;
         }
+        {
+            let _n = (outputSize * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (0) as usize;
+            outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
+        };
         // Done. Inform the caller of the success.
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
@@ -319,6 +332,7 @@ impl Core {
         let mut curPeriod: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
+        let mut localFinalArray: Vec<f64> = Vec::new();
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -354,6 +368,7 @@ impl Core {
         outputSize = endIdx - tempInt + 1;
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -377,19 +392,25 @@ impl Core {
                     (*outNBElement) = 0;
                     return retCode;
                 }
-                outReal[i] = ((localOutputArray[i]) as f64);
+                localFinalArray[i] = localOutputArray[i];
                 // for( j = i + 1; j < outputSize; j += 1 )
                 j = i + 1;
                 while j < outputSize {
                     if (localPeriodArray[j]) as usize == curPeriod {
                         localPeriodArray[j] = 0;
-                        outReal[j] = ((localOutputArray[j]) as f64);
+                        localFinalArray[j] = localOutputArray[j];
                     }
                     j += 1;
                 }
             }
             i += 1;
         }
+        {
+            let _n = (outputSize * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (0) as usize;
+            outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
+        };
         (*outBegIdx) = startIdx;
         (*outNBElement) = outputSize;
         return RetCode::Success;

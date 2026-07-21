@@ -665,15 +665,15 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
 
    if( optInMAType == TA_MAType_SMA )
    {
-      if( (void *)inReal == (void *)outRealUpperBand )
+      if( 0 )
       {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealLowerBand;
-      } else if( (void *)inReal == (void *)outRealLowerBand )
+      } else if( 0 )
       {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
-      } else if( (void *)inReal == (void *)outRealMiddleBand )
+      } else if( 0 )
       {
          tempBuffer1 = outRealLowerBand;
          tempBuffer2 = outRealUpperBand;
@@ -682,7 +682,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
       }
-      if( (void *)tempBuffer1 == (void *)inReal || (void *)tempBuffer2 == (void *)inReal )
+      if( 0 || 0 )
       {
          return TA_BAD_PARAM;
       }
@@ -784,7 +784,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       } while( _i <= endIdx );
       *outNBElement= _outIdx;
       *outBegIdx= startIdx;
-      if( (void *)tempBuffer1 != (void *)outRealMiddleBand )
+      if( tempBuffer1 != outRealMiddleBand )
       {
          memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
       }
@@ -893,15 +893,15 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
 
    if( optInMAType == TA_MAType_SMA )
    {
-      if( (void *)inReal == (void *)outRealUpperBand )
+      if( 0 )
       {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealLowerBand;
-      } else if( (void *)inReal == (void *)outRealLowerBand )
+      } else if( 0 )
       {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
-      } else if( (void *)inReal == (void *)outRealMiddleBand )
+      } else if( 0 )
       {
          tempBuffer1 = outRealLowerBand;
          tempBuffer2 = outRealUpperBand;
@@ -910,7 +910,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
       }
-      if( (void *)tempBuffer1 == (void *)inReal || (void *)tempBuffer2 == (void *)inReal )
+      if( 0 || 0 )
       {
          return TA_BAD_PARAM;
       }
@@ -1012,7 +1012,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
       } while( _i <= endIdx );
       *outNBElement= _outIdx;
       *outBegIdx= startIdx;
-      if( (void *)tempBuffer1 != (void *)outRealMiddleBand )
+      if( tempBuffer1 != outRealMiddleBand )
       {
          memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
       }

@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  021807 MF     Initial Version
+ *  072026 MF,CC  Fix #130. Stage results locally so in-place (outReal==inReal)
+ *                calls no longer corrupt the input the ma() passes re-read.
  */
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
@@ -28,6 +30,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
    int i, j, lookbackTotal, outputSize, tempInt, curPeriod;
    int *localPeriodArray;
    double *localOutputArray;
+   double *localFinalArray;
    int localBegIdx;
    int localNbElement;
    TA_RetCode retCode;
@@ -81,6 +84,11 @@ TA_RetCode mavp(int startIdx, int endIdx,
    double *localOutputArray = malloc((outputSize) * sizeof(double));
    int *localPeriodArray = malloc((outputSize) * sizeof(int));
 
+   /* Results are staged locally and copied to outReal once at the end: each
+    * ma() pass re-reads inReal over the full range, so direct outReal writes
+    * corrupt an in-place (outReal==inReal) call (issue #130). */
+   double *localFinalArray = malloc((outputSize) * sizeof(double));
+
    /* Copy caller array of period into local buffer.
     * At the same time, truncate to min/max.
     */
@@ -121,25 +129,29 @@ TA_RetCode mavp(int startIdx, int endIdx,
          {
             free(localOutputArray);
             free(localPeriodArray);
+            free(localFinalArray);
             *outBegIdx = 0;
             *outNBElement = 0;
             return retCode;
          }
 
-         outReal[i] = localOutputArray[i];
+         localFinalArray[i] = localOutputArray[i];
          for( j=i+1; j < outputSize; j++ )
          {
             if( localPeriodArray[j] == curPeriod )
             {
                localPeriodArray[j] = 0; /* Flag to avoid recalculation */
-               outReal[j] = localOutputArray[j];
+               localFinalArray[j] = localOutputArray[j];
             }
          }
       }
    }
 
+   memcpy(outReal, localFinalArray, outputSize * sizeof(double));
+
    free(localOutputArray);
    free(localPeriodArray);
+   free(localFinalArray);
 
    /* Done. Inform the caller of the success. */
    *outBegIdx = startIdx;

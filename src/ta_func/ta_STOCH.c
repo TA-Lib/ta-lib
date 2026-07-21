@@ -58,6 +58,8 @@
  *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
  *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
+ *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
+ *               in-place ma() destroyed the smoothed K before the final copy.
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -233,16 +235,16 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    /* Allocate a temporary buffer large enough to
     * store the K.
     *
-    * If the output is the same as the input, great
-    * we just save ourself one memory allocation.
+    * When outSlowK aliases a price input the caller buffer doubles as the
+    * scratch, saving one allocation: the K writes trail the min/max window
+    * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+    * elected: the %D ma() below would then run in place over the smoothed K
+    * that the memmove into outSlowK still needs (issue #130).
     */
    bufferIsAllocated = 0;
    if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose )
    {
       tempBuffer = outSlowK;
-   } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose )
-   {
-      tempBuffer = outSlowD;
    } else 
    {
       bufferIsAllocated = 1;
@@ -419,9 +421,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
    if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose )
    {
       tempBuffer = outSlowK;
-   } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose )
-   {
-      tempBuffer = outSlowD;
    } else 
    {
       bufferIsAllocated = 1;
@@ -600,12 +599,9 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    highest = lowest;
    diff = highest;
    bufferIsAllocated = 0;
-   if( (void *)outSlowK == (void *)inHigh || (void *)outSlowK == (void *)inLow || (void *)outSlowK == (void *)inClose )
+   if( 0 || 0 || 0 )
    {
       tempBuffer = outSlowK;
-   } else if( (void *)outSlowD == (void *)inHigh || (void *)outSlowD == (void *)inLow || (void *)outSlowD == (void *)inClose )
-   {
-      tempBuffer = outSlowD;
    } else 
    {
       bufferIsAllocated = 1;
@@ -750,12 +746,9 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
    highest = lowest;
    diff = highest;
    bufferIsAllocated = 0;
-   if( (void *)outSlowK == (void *)inHigh || (void *)outSlowK == (void *)inLow || (void *)outSlowK == (void *)inClose )
+   if( 0 || 0 || 0 )
    {
       tempBuffer = outSlowK;
-   } else if( (void *)outSlowD == (void *)inHigh || (void *)outSlowD == (void *)inLow || (void *)outSlowD == (void *)inClose )
-   {
-      tempBuffer = outSlowD;
    } else 
    {
       bufferIsAllocated = 1;
@@ -1125,16 +1118,16 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
-       * If the output is the same as the input, great
-       * we just save ourself one memory allocation.
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
        */
       bufferIsAllocated = 0;
       if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose )
       {
          tempBuffer = sc_outSlowK;
-      } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose )
-      {
-         tempBuffer = sc_outSlowD;
       } else 
       {
          bufferIsAllocated = 1;
@@ -1488,16 +1481,16 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
-       * If the output is the same as the input, great
-       * we just save ourself one memory allocation.
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
        */
       bufferIsAllocated = 0;
       if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose )
       {
          tempBuffer = sc_outSlowK;
-      } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose )
-      {
-         tempBuffer = sc_outSlowD;
       } else 
       {
          bufferIsAllocated = 1;

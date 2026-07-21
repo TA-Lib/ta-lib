@@ -56,6 +56,8 @@
  *  070203 JP     Initial.
  *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
  *                (numerics-changing). See issue #103.
+ *  072026 MF,CC  Read the departing value before the output write so in-place
+ *                (outReal==inReal) calls stay correct. See issue #130.
  */
 
 TA_LIB_API int TA_LINEARREG_SLOPE_Lookback( int optInTimePeriod )
@@ -151,6 +153,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
       SumY += tempValue1;
       SumXY += (double)i * tempValue1;
    }
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    today += 1;
    /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -158,12 +161,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
     * the departing value at full weight (subtracts period*trailingValue). Same
     * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
     * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+    * Each departing value is read before the output write of the same bar:
+    * with outReal==inReal (in-place, #130) that write lands on the cell the
+    * next iteration departs from.
     */
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
    }
@@ -218,13 +224,14 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Unguarded( int    startIdx,
       SumY += tempValue1;
       SumXY += (double)i * tempValue1;
    }
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
    }
@@ -293,13 +300,14 @@ TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
       SumY += tempValue1;
       SumXY += (double)i * tempValue1;
    }
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
    }
@@ -354,13 +362,14 @@ TA_RetCode TA_S_LINEARREG_SLOPE_Unguarded( int    startIdx,
       SumY += tempValue1;
       SumXY += (double)i * tempValue1;
    }
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
    }
@@ -377,6 +386,7 @@ struct TA_LINEARREG_SLOPE_Stream {
    double SumXY;
    double SumY;
    double Divisor;
+   double trailingValue;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
@@ -395,15 +405,13 @@ static void TA_LINEARREG_SLOPE_ReleaseInternal( struct TA_LINEARREG_SLOPE_Stream
 /* Private function, not in public API. */
 static void TA_LINEARREG_SLOPE_StepInternal( struct TA_LINEARREG_SLOPE_Stream *sp, double inReal, double *outReal )
 {
-   double trailingValue;
-
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
-   trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * trailingValue;
-   sp->SumY = sp->SumY - trailingValue + inReal;
+   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * sp->trailingValue;
+   sp->SumY = sp->SumY - sp->trailingValue + inReal;
+   sp->trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    *outReal= (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
@@ -449,7 +457,7 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
       double Divisor = 0.0;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -499,6 +507,7 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
       }
+      trailingValue = inReal[trailingIdx++];
       lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -506,12 +515,15 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
+         trailingValue = inReal[trailingIdx++];
          lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          today += 1;
       }
@@ -527,6 +539,7 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_SLOPE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
@@ -584,7 +597,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
       double Divisor = 0.0;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -634,6 +647,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
       }
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -641,12 +655,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          today += 1;
       }
@@ -662,6 +679,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_SLOPE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

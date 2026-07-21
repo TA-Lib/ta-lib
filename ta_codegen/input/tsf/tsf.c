@@ -12,6 +12,8 @@
  *  090103 MF     Initial coding re-using the existing TA_LinearReg
  *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
  *                (numerics-changing). See issue #103.
+ *  072026 MF,CC  Read the departing value before the output write so in-place
+ *                (outReal==inReal) calls stay correct. See issue #130.
  */
 
 int tsf_lookback(int optInTimePeriod)
@@ -87,6 +89,7 @@ TA_RetCode tsf(int startIdx, int endIdx,
    }
    m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = ( SumY - m * SumX ) / (double)optInTimePeriod;
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = b + m * (double)optInTimePeriod;
    today++;
 
@@ -94,14 +97,17 @@ TA_RetCode tsf(int startIdx, int endIdx,
     * the window raises every retained value's weight by 1 (adds SumY) and drops
     * the departing value at full weight (subtracts period*trailingValue). Same
     * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
-    * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.) */
+    * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+    * Each departing value is read before the output write of the same bar:
+    * with outReal==inReal (in-place, #130) that write lands on the cell the
+    * next iteration departs from. */
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
       m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = ( SumY - m * SumX ) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = b + m * (double)optInTimePeriod;
       today++;
    }
