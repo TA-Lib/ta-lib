@@ -23,7 +23,9 @@ MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback distance in bars
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Lookback distance in bars |
 
 ## Implementation
 

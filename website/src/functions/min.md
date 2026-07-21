@@ -23,7 +23,9 @@ outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the trailing window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Number of bars in the trailing window |
 
 ## Implementation
 

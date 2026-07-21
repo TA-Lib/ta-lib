@@ -23,7 +23,9 @@ ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback distance to the previous price
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Lookback distance to the previous price |
 
 ## Implementation
 

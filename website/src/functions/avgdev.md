@@ -23,7 +23,9 @@ $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0
 
 ## Parameters
 
-- `optInTimePeriod` — window length
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Window length |
 
 ## Implementation
 

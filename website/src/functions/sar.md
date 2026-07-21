@@ -25,8 +25,10 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 
 ## Parameters
 
-- `optInAcceleration` — Step added to the acceleration factor on each new extreme point
-- `optInMaximum` — Ceiling on the acceleration factor
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInAcceleration` | real | 0.02 | ≥ 0 | Step added to the acceleration factor on each new extreme point |
+| `optInMaximum` | real | 0.2 | ≥ 0 | Ceiling on the acceleration factor |
 
 ## Implementation
 

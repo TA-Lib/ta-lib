@@ -3,6 +3,7 @@ pub mod c;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
+pub mod doc_meta;
 pub mod docs_patch;
 pub mod docs_site;
 pub mod expr_walk;

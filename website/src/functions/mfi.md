@@ -27,7 +27,9 @@ TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback window for summing money flow
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback window for summing money flow |
 
 ## Implementation
 

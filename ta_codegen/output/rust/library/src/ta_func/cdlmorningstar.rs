@@ -69,7 +69,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above
-    ///   the 1st close; larger = deeper penetration required (default 0.3) (default 0.3, minimum 0)
+    ///   the 1st close; larger = deeper penetration required (default 0.3, minimum 0)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -109,7 +109,7 @@ impl Core {
     /// * `inLow` — Low prices per bar.
     /// * `inClose` — Close prices per bar.
     /// * `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above
-    ///   the 1st close; larger = deeper penetration required (default 0.3) (default 0.3, minimum 0)
+    ///   the 1st close; larger = deeper penetration required (default 0.3, minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — +100 when the morning star is detected, 0 otherwise. Never negative

@@ -23,7 +23,9 @@ m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, S
 
 ## Parameters
 
-- `optInTimePeriod` — Number of points in the regression window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of points in the regression window |
 
 ## Implementation
 

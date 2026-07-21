@@ -12,6 +12,7 @@
 //! of `inReal[i]` and `close<open`), and a wrapped line must not start with a list
 //! or blockquote marker.
 
+use super::doc_meta::{self, ensure_period, RangeMeta};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
 use crate::registry::Registry;
 use std::collections::HashMap;
@@ -259,6 +260,8 @@ fn output_desc(name: &str, doc: &DocDef) -> String {
 
 /// One `# Arguments` bullet for an optional parameter: canonical prose plus the
 /// default/range injected from YAML (numbers live only in the YAML — golden rule).
+/// The facts come from [`doc_meta::param_meta`], shared with the website renderer so
+/// the two surfaces cannot drift; only the phrasing below is rustdoc's own.
 fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> String {
     let desc = doc
         .params
@@ -269,47 +272,26 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         .or_else(|| opt.display_name.clone())
         .unwrap_or_else(|| "Optional parameter".to_string());
 
+    let m = doc_meta::param_meta(opt, enums);
     let mut meta: Vec<String> = Vec::new();
-    match &opt.param_type {
-        ParamType::Enum(enum_name) => {
-            if let Some(def) = enums.get(enum_name) {
-                #[allow(clippy::cast_possible_truncation)]
-                let default = opt.default.unwrap_or(0.0) as i32;
-                if let Some(v) = def.variants.iter().find(|v| v.value == default) {
-                    meta.push(format!("default {} = {}", v.value, v.short_name));
-                }
-                let values: Vec<String> = def
-                    .variants
-                    .iter()
-                    .map(|v| format!("{}={}", v.value, v.short_name))
-                    .collect();
-                meta.push(format!("values: {}", values.join(", ")));
-            }
+    if matches!(opt.param_type, ParamType::Enum(_)) {
+        // An enum's admissible set is its variant list; the default names a variant.
+        if let (Some(d), Some(variant)) = (m.default.as_ref(), m.default_variant.as_ref()) {
+            meta.push(format!("default {d} = {variant}"));
         }
-        ParamType::Integer => {
-            if let Some(default) = opt.default {
-                #[allow(clippy::cast_possible_truncation)]
-                meta.push(format!("default {}", default as i64));
-            }
-            if let Some((lo, hi)) = opt.range {
-                #[allow(clippy::cast_possible_truncation)]
-                meta.push(format!("range {}..={}", lo as i64, hi as i64));
-            }
+        if !m.values.is_empty() {
+            let values: Vec<String> = m.values.iter().map(|(v, n)| format!("{v}={n}")).collect();
+            meta.push(format!("values: {}", values.join(", ")));
         }
-        _ => {
-            if let Some(default) = opt.default {
-                meta.push(format!("default {}", fmt_real(default)));
-            }
-            if let Some((lo, hi)) = opt.range {
-                let lo_bounded = lo.abs() < 1e15;
-                let hi_bounded = hi.abs() < 1e15;
-                match (lo_bounded, hi_bounded) {
-                    (true, true) => meta.push(format!("range {}..={}", fmt_real(lo), fmt_real(hi))),
-                    (true, false) => meta.push(format!("minimum {}", fmt_real(lo))),
-                    (false, true) => meta.push(format!("maximum {}", fmt_real(hi))),
-                    (false, false) => {}
-                }
-            }
+    } else {
+        if let Some(d) = &m.default {
+            meta.push(format!("default {d}"));
+        }
+        match &m.range {
+            RangeMeta::Bounded(lo, hi) => meta.push(format!("range {lo}..={hi}")),
+            RangeMeta::Min(lo) => meta.push(format!("minimum {lo}")),
+            RangeMeta::Max(hi) => meta.push(format!("maximum {hi}")),
+            RangeMeta::Unbounded => {}
         }
     }
 
@@ -500,35 +482,14 @@ fn camel_to_snake(s: &str) -> String {
 // Formatting / escaping helpers
 // ---------------------------------------------------------------------------
 
-/// True when `v` is an exactly-representable integer we can print without a fraction.
-fn is_integral(v: f64) -> bool {
-    (v - v.trunc()).abs() < f64::EPSILON && v.abs() < 1e15
-}
-
-/// Format an f64 for prose (`2` not `2.0`, `0.02` untouched).
-fn fmt_real(v: f64) -> String {
-    if is_integral(v) {
-        format!("{v:.0}")
-    } else {
-        format!("{v}")
-    }
-}
-
-/// Format an f64 as a Rust literal (`2.0`, `0.02`).
+/// Format an f64 as a Rust literal (`2.0`, `0.02`). Distinct from `doc_meta::fmt_real`,
+/// which drops the fraction: this one feeds generated doctest source, where `2` would
+/// be an integer literal and fail to type-check as an `f64` argument.
 fn fmt_real_literal(v: f64) -> String {
-    if is_integral(v) {
+    if doc_meta::is_integral(v) {
         format!("{v:.1}")
     } else {
         format!("{v}")
-    }
-}
-
-fn ensure_period(s: &str) -> String {
-    let t = s.trim_end();
-    if t.is_empty() || t.ends_with(['.', '!', '?', ')']) {
-        t.to_string()
-    } else {
-        format!("{t}.")
     }
 }
 
@@ -536,6 +497,7 @@ fn ensure_period(s: &str) -> String {
 /// start an intra-doc link and `<` an (unclosed) HTML tag — both draw rustdoc
 /// lints on text like `inReal[i]` or `close<open`. Inside backtick code spans,
 /// escapes would render literally, so leave those intact.
+///
 fn escape_prose(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 8);
     let mut in_code = false;
@@ -709,10 +671,11 @@ mod tests {
         assert_eq!(camel_to_snake("SlowK"), "slow_k");
     }
 
+    /// Doctest arguments are Rust source: a whole-number `f64` default must keep its
+    /// `.0` or the generated example fails to compile. (Prose formatting is
+    /// `doc_meta::fmt_real`, tested there.)
     #[test]
-    fn real_formatting() {
-        assert_eq!(fmt_real(2.0), "2");
-        assert_eq!(fmt_real(0.02), "0.02");
+    fn real_literal_formatting() {
         assert_eq!(fmt_real_literal(2.0), "2.0");
         assert_eq!(fmt_real_literal(0.3), "0.3");
     }

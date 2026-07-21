@@ -23,7 +23,9 @@ MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback window length
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback window length |
 
 ## Implementation
 

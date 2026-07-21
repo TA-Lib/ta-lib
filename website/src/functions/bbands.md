@@ -30,10 +30,14 @@ middle = MA(inReal, period); sd = stddev(inReal, period); upper = middle + nbDev
 
 ## Parameters
 
-- `optInTimePeriod` — Periods for the MA and standard deviation
-- `optInNbDevUp` — Standard-deviation multiplier for the upper band
-- `optInNbDevDn` — Standard-deviation multiplier for the lower band
-- `optInMAType` — Moving-average type for the middle band
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 20 | 2–100000 | Periods for the MA and standard deviation |
+| `optInNbDevUp` | real | 2 | any real | Standard-deviation multiplier for the upper band |
+| `optInNbDevDn` | real | 2 | any real | Standard-deviation multiplier for the lower band |
+| `optInMAType` | MAType | SMA (0) | any MAType | Moving-average type for the middle band |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

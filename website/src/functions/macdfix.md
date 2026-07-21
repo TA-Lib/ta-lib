@@ -31,7 +31,9 @@ Hist = MACD - Signal
 
 ## Parameters
 
-- `optInSignalPeriod` — Smoothing period for the signal line
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInSignalPeriod` | integer | 9 | 1–100000 | Smoothing period for the signal line |
 
 ## Implementation
 

@@ -31,10 +31,14 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 ## Parameters
 
-- `optInTimePeriod` — RSI period
-- `optInFastK_Period` — Lookback window for the RSI min/max stochastic
-- `optInFastD_Period` — Smoothing period for %D
-- `optInFastD_MAType` — MA type used to smooth %D
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | RSI period |
+| `optInFastK_Period` | integer | 5 | 1–100000 | Lookback window for the RSI min/max stochastic |
+| `optInFastD_Period` | integer | 3 | 1–100000 | Smoothing period for %D |
+| `optInFastD_MAType` | MAType | SMA (0) | any MAType | MA type used to smooth %D |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

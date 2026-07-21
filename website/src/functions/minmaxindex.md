@@ -28,7 +28,9 @@ For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = ar
 
 ## Parameters
 
-- `optInTimePeriod` — Window length in bars
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length in bars |
 
 ## Implementation
 

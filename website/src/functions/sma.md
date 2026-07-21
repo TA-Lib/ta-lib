@@ -27,7 +27,9 @@ SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
 
 ## Parameters
 
-- `optInTimePeriod` — Number of bars in the averaging window
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Number of bars in the averaging window |
 
 ## Implementation
 

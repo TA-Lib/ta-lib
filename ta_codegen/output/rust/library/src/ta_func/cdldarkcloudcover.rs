@@ -69,8 +69,8 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInPenetration` — Fraction of candle 1's real body that candle 2's close must
-    ///   penetrate below close\[i-1] (default 0.5); larger values require deeper penetration
-    ///   (default 0.5, minimum 0)
+    ///   penetrate below close\[i-1]; larger values require deeper penetration (default 0.5,
+    ///   minimum 0)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -102,8 +102,8 @@ impl Core {
     /// * `inLow` — Low prices per bar.
     /// * `inClose` — Close prices per bar.
     /// * `optInPenetration` — Fraction of candle 1's real body that candle 2's close must
-    ///   penetrate below close\[i-1] (default 0.5); larger values require deeper penetration
-    ///   (default 0.5, minimum 0)
+    ///   penetrate below close\[i-1]; larger values require deeper penetration (default 0.5,
+    ///   minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — -100 when the pattern is detected (always bearish), 0 otherwise; never

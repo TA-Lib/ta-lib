@@ -26,7 +26,9 @@ Initial avgGain/avgLoss = simple mean of up/down moves over the period, then Wil
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback for the gain/loss averaging
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback for the gain/loss averaging |
 
 ## Implementation
 

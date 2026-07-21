@@ -29,7 +29,9 @@ d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum
 
 ## Parameters
 
-- `optInTimePeriod` — Number of trailing price changes summed
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of trailing price changes summed |
 
 ## Implementation
 

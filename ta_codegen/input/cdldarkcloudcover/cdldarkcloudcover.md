@@ -18,7 +18,7 @@ A two-candle bearish reversal pattern: a long white candle followed by a black c
 
 ## Parameters
 
-- `optInPenetration` — Fraction of candle 1's real body that candle 2's close must penetrate below close[i-1] (default 0.5); larger values require deeper penetration
+- `optInPenetration` — Fraction of candle 1's real body that candle 2's close must penetrate below close[i-1]; larger values require deeper penetration
 
 ## Implementation
 

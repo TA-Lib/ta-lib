@@ -29,9 +29,13 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 ## Parameters
 
-- `optInFastK_Period` — Lookback window for the highest-high/lowest-low of Fast-K
-- `optInFastD_Period` — Smoothing period for the Fast-D line
-- `optInFastD_MAType` — Moving-average type used to smooth Fast-D
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastK_Period` | integer | 5 | 1–100000 | Lookback window for the highest-high/lowest-low of Fast-K |
+| `optInFastD_Period` | integer | 3 | 1–100000 | Smoothing period for the Fast-D line |
+| `optInFastD_MAType` | MAType | SMA (0) | any MAType | Moving-average type used to smooth Fast-D |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

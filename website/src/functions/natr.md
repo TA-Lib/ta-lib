@@ -24,7 +24,9 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing period for the true range average
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 1–100000 | Smoothing period for the true range average |
 
 ## Implementation
 

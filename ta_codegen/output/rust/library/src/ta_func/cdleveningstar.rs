@@ -69,8 +69,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate
-    ///   below the 1st close (default 0.3); larger requires deeper penetration (default 0.3,
-    ///   minimum 0)
+    ///   below the 1st close; larger requires deeper penetration (default 0.3, minimum 0)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -109,8 +108,7 @@ impl Core {
     /// * `inLow` — Low prices per bar.
     /// * `inClose` — Close prices per bar.
     /// * `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate
-    ///   below the 1st close (default 0.3); larger requires deeper penetration (default 0.3,
-    ///   minimum 0)
+    ///   below the 1st close; larger requires deeper penetration (default 0.3, minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — -100 when detected (always bearish), 0 otherwise. Never emits +100.

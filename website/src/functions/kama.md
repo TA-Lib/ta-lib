@@ -29,7 +29,9 @@ KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback window for the efficiency ratio
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Lookback window for the efficiency ratio |
 
 ## Implementation
 

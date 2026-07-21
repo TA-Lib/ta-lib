@@ -30,11 +30,15 @@ SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
 
 ## Parameters
 
-- `optInFastK_Period` — Lookback window for the raw %K high-low range
-- `optInSlowK_Period` — Smoothing period turning FastK into SlowK
-- `optInSlowK_MAType` — MA type used to smooth into SlowK
-- `optInSlowD_Period` — Smoothing period for the SlowD signal line
-- `optInSlowD_MAType` — MA type used for the SlowD line
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInFastK_Period` | integer | 5 | 1–100000 | Lookback window for the raw %K high-low range |
+| `optInSlowK_Period` | integer | 3 | 1–100000 | Smoothing period turning FastK into SlowK |
+| `optInSlowK_MAType` | MAType | SMA (0) | any MAType | MA type used to smooth into SlowK |
+| `optInSlowD_Period` | integer | 3 | 1–100000 | Smoothing period for the SlowD signal line |
+| `optInSlowD_MAType` | MAType | SMA (0) | any MAType | MA type used for the SlowD line |
+
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
 
 ## Implementation
 

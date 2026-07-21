@@ -27,7 +27,9 @@ d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, lo
 
 ## Parameters
 
-- `optInTimePeriod` — Bars over which gains/losses are smoothed
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Bars over which gains/losses are smoothed |
 
 ## Implementation
 

@@ -23,14 +23,16 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Parameters
 
-- `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, <0 start short at |value|
-- `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal
-- `optInAccelerationInitLong` — Initial acceleration factor when long
-- `optInAccelerationLong` — AF increment per new long extreme
-- `optInAccelerationMaxLong` — Cap on the long acceleration factor
-- `optInAccelerationInitShort` — Initial acceleration factor when short
-- `optInAccelerationShort` — AF increment per new short extreme
-- `optInAccelerationMaxShort` — Cap on the short acceleration factor
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInStartValue` | real | 0 | any real | Initial SAR/direction: 0 auto, >0 start long at value, <0 start short at \|value\| |
+| `optInOffsetOnReverse` | real | 0 | ≥ 0 | Fractional offset applied to the stop on each reversal |
+| `optInAccelerationInitLong` | real | 0.02 | ≥ 0 | Initial acceleration factor when long |
+| `optInAccelerationLong` | real | 0.02 | ≥ 0 | AF increment per new long extreme |
+| `optInAccelerationMaxLong` | real | 0.2 | ≥ 0 | Cap on the long acceleration factor |
+| `optInAccelerationInitShort` | real | 0.02 | ≥ 0 | Initial acceleration factor when short |
+| `optInAccelerationShort` | real | 0.02 | ≥ 0 | AF increment per new short extreme |
+| `optInAccelerationMaxShort` | real | 0.2 | ≥ 0 | Cap on the short acceleration factor |
 
 ## Implementation
 

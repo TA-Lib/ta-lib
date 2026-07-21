@@ -20,7 +20,9 @@ Returns both the lowest and highest values of the input over a rolling window of
 
 ## Parameters
 
-- `optInTimePeriod` — Rolling window length
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Rolling window length |
 
 ## Implementation
 

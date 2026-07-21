@@ -24,7 +24,9 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 ## Parameters
 
-- `optInPenetration` — Fraction (default 0.3) of the 1st candle's real body the 3rd close must exceed above close[i-2]; larger values demand deeper penetration into the black body
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInPenetration` | real | 0.3 | ≥ 0 | Fraction of the 1st candle's real body the 3rd close must exceed above close[i-2]; larger values demand deeper penetration into the black body |
 
 ## Implementation
 

@@ -69,7 +69,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
-    ///   penetrate; default 0.5 (default 0.5, minimum 0)
+    ///   penetrate (default 0.5, minimum 0)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -109,7 +109,7 @@ impl Core {
     /// * `inLow` — Low prices per bar.
     /// * `inClose` — Close prices per bar.
     /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
-    ///   penetrate; default 0.5 (default 0.5, minimum 0)
+    ///   penetrate (default 0.5, minimum 0)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — +100 when the bullish Mat Hold is detected, 0 otherwise. Never emits

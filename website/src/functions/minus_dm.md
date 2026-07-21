@@ -27,7 +27,9 @@ period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
 
 ## Parameters
 
-- `optInTimePeriod` — Wilder smoothing period
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 1–100000 | Wilder smoothing period |
 
 ## Implementation
 

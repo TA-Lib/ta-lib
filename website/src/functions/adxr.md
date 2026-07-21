@@ -27,7 +27,9 @@ ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing period, also the bar gap between the two averaged ADX values
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Smoothing period, also the bar gap between the two averaged ADX values |
 
 ## Implementation
 

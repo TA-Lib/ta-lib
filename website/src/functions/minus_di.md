@@ -27,7 +27,9 @@ Wilder's Minus Directional Indicator: the Wilder-smoothed downward directional m
 
 ## Parameters
 
-- `optInTimePeriod` — Smoothing/lookback period for -DM and TR
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 1–100000 | Smoothing/lookback period for -DM and TR |
 
 ## Implementation
 

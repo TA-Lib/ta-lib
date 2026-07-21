@@ -27,7 +27,9 @@ E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * 
 
 ## Parameters
 
-- `optInTimePeriod` — EMA period used at each of the three smoothing passes
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | EMA period used at each of the three smoothing passes |
 
 ## Implementation
 

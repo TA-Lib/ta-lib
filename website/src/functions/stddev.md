@@ -27,8 +27,10 @@ $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{
 
 ## Parameters
 
-- `optInTimePeriod` — Window length
-- `optInNbDev` — Multiplier applied to the standard deviation
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 5 | 2–100000 | Window length |
+| `optInNbDev` | real | 1 | any real | Multiplier applied to the standard deviation |
 
 ## Implementation
 

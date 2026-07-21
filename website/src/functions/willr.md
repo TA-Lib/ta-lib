@@ -23,7 +23,9 @@ Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Me
 
 ## Parameters
 
-- `optInTimePeriod` — Lookback bars for the high/low range
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback bars for the high/low range |
 
 ## Implementation
 

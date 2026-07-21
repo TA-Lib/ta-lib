@@ -27,7 +27,9 @@ outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
 
 ## Parameters
 
-- `optInTimePeriod` — Window length over which the max is located
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length over which the max is located |
 
 ## Implementation
 
