@@ -128,7 +128,9 @@ impl Core {
     /// use ta_lib::{Core, RetCode};
     ///
     /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()).collect();
+    /// let data1: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut out_beg = 0;
@@ -141,6 +143,7 @@ impl Core {
     /// );
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
+    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
     /// # See also
@@ -765,7 +768,9 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()).collect();
+    /// let data1: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.beta_open(&data0, &data1, 5).expect("enough history");

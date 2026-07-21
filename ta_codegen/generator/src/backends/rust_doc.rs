@@ -331,6 +331,70 @@ fn doc_aliases(func: &FuncDef, doc: &DocDef) -> Vec<String> {
 /// larger than the largest default lookback (~64 for the Hilbert Transform family).
 const EXAMPLE_LEN: usize = 252;
 
+/// `close` carries a second harmonic so it is never at the exact midpoint of the
+/// bar: a midpoint close makes the money-flow multiplier
+/// `((close-low) - (high-close)) / (high-low)` identically zero, which left the
+/// AD/ADOSC/CMF examples unable to fail (issue #136). The harmonic amplitude keeps
+/// `|close - midpoint| < 1.0`, so `close` stays inside `[low, high]`.
+pub(super) const CLOSE_SERIES: &str =
+    "100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin()";
+
+/// `volume` rises overall but falls on some bars: a monotonically increasing volume
+/// never takes the down-volume branch (NVI stays at its 1000.0 seed for every bar).
+pub(super) const VOLUME_SERIES: &str =
+    "10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin()";
+
+/// Input series for the functions that need small inputs: on the default ~100.0
+/// price series ACOS/ASIN are out of domain (every output `NaN`) and TANH saturates
+/// to a constant 1.0.
+pub(super) const UNIT_SERIES: &str = "(0.1 * i as f64).sin()";
+
+/// Functions whose example needs an input in `[-1, 1]` to be meaningful.
+pub(super) fn unit_domain(func: &FuncDef) -> bool {
+    matches!(func.name.to_uppercase().as_str(), "ACOS" | "ASIN" | "TANH")
+}
+
+/// The example input series for one input, as `(variable name, source lines)`.
+/// `open` and `close` both stay inside `[low, high]`: their offset from the bar
+/// midpoint never reaches 1.0. Returns `None` for an unknown input shape, which
+/// drops the example.
+fn example_input(func: &FuncDef, input: &str) -> Option<(&'static str, Vec<String>)> {
+    Some(match input {
+        "inReal" if unit_domain(func) => ("data", series_def("data", UNIT_SERIES)),
+        "inOpen" => (
+            "open",
+            series_def("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()"),
+        ),
+        "inHigh" => (
+            "high",
+            series_def("high", "101.0 + 10.0 * (0.1 * i as f64).sin()"),
+        ),
+        "inLow" => (
+            "low",
+            series_def("low", "99.0 + 10.0 * (0.1 * i as f64).sin()"),
+        ),
+        "inClose" => ("close", series_def("close", CLOSE_SERIES)),
+        "inVolume" => ("volume", series_def("volume", VOLUME_SERIES)),
+        "inPeriods" => (
+            "periods",
+            vec![format!("let periods = vec![14.0; {EXAMPLE_LEN}];")],
+        ),
+        "inReal" => (
+            "data",
+            series_def("data", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
+        ),
+        "inReal0" => (
+            "data0",
+            series_def("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
+        ),
+        "inReal1" => (
+            "data1",
+            series_def("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()"),
+        ),
+        _ => return None,
+    })
+}
+
 /// Build a runnable `# Examples` doctest that calls the guarded function on
 /// deterministic synthetic data with every optional parameter at its default,
 /// and asserts success. Returned lines are raw markdown (no `///` prefix).
@@ -340,51 +404,11 @@ fn example_doctest(func: &FuncDef, snake: &str) -> Option<Vec<String>> {
     lines.push("use ta_lib::{Core, RetCode};".to_string());
     lines.push(String::new());
 
-    // Input series, in signature order. `open` stays within [low, high] because
-    // its phase shift keeps |open - close| < 1.0.
     let mut first_series: Option<String> = None;
     let mut args: Vec<String> = Vec::new();
     for input in &func.inputs {
-        let (var, def) = match input.name.as_str() {
-            "inOpen" => (
-                "open",
-                series_def("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()"),
-            ),
-            "inHigh" => (
-                "high",
-                series_def("high", "101.0 + 10.0 * (0.1 * i as f64).sin()"),
-            ),
-            "inLow" => (
-                "low",
-                series_def("low", "99.0 + 10.0 * (0.1 * i as f64).sin()"),
-            ),
-            "inClose" => (
-                "close",
-                series_def("close", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
-            ),
-            "inVolume" => (
-                "volume",
-                series_def("volume", "10_000.0 + 100.0 * i as f64"),
-            ),
-            "inPeriods" => (
-                "periods",
-                format!("let periods = vec![14.0; {EXAMPLE_LEN}];"),
-            ),
-            "inReal" => (
-                "data",
-                series_def("data", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
-            ),
-            "inReal0" => (
-                "data0",
-                series_def("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
-            ),
-            "inReal1" => (
-                "data1",
-                series_def("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()"),
-            ),
-            _ => return None, // unknown input shape: skip the example
-        };
-        lines.push(def);
+        let (var, def) = example_input(func, &input.name)?;
+        lines.extend(def);
         if first_series.is_none() {
             first_series = Some(var.to_string());
         }
@@ -436,13 +460,33 @@ fn example_doctest(func: &FuncDef, snake: &str) -> Option<Vec<String>> {
     }
     lines.push("assert_eq!(ret, RetCode::Success);".to_string());
     lines.push("assert!(out_nb > 0);".to_string());
+    // Assert on the values, not just the return code: a successful call never
+    // emits NaN or infinity.
+    if let Some(output) = func
+        .outputs
+        .iter()
+        .find(|o| o.param_type != ParamType::Integer)
+    {
+        let var = output_var_name(output);
+        lines.push(format!(
+            "assert!({var}[..out_nb].iter().all(|v| v.is_finite()));"
+        ));
+    }
     lines.push("```".to_string());
     Some(lines)
 }
 
 /// `let <name>: Vec<f64> = (0..252).map(|i| <expr>).collect();`
-fn series_def(name: &str, expr: &str) -> String {
-    format!("let {name}: Vec<f64> = (0..{EXAMPLE_LEN}).map(|i| {expr}).collect();")
+pub(super) fn series_def(name: &str, expr: &str) -> Vec<String> {
+    let one_line = format!("let {name}: Vec<f64> = (0..{EXAMPLE_LEN}).map(|i| {expr}).collect();");
+    if one_line.len() <= WRAP {
+        return vec![one_line];
+    }
+    vec![
+        format!("let {name}: Vec<f64> = (0..{EXAMPLE_LEN})"),
+        format!("    .map(|i| {expr})"),
+        "    .collect();".to_string(),
+    ]
 }
 
 /// Example variable name for an output: `outRealUpperBand` → `upper_band`,

@@ -310,6 +310,13 @@ jobs:
         shell: bash
         run: cargo test --manifest-path ta_codegen/generator/Cargo.toml
 
+      # The generated per-function rustdoc examples are runnable doctests, but
+      # nothing executed them: clippy --all-targets does not build doctests. They
+      # are the crate's public-facing documentation — run them (issue #136).
+      - name: Run the generated crate's doctests
+        shell: bash
+        run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
