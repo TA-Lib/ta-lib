@@ -3391,9 +3391,17 @@ static int fma_needs_input_scale(const char *name)
         || strcmp(name, "HT_PHASOR") == 0;
 }
 
-enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2 };
+enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2, TOL_REL_OUT = 3 };
 static const struct { const char *name; int mode; double tol; double cap; } FUZZ_064_TOL[] = {
     { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
+    /* #118 cancellation-free variance. Bounded relative to the OUTPUT, not the
+     * input: VAR's output is a squared quantity, so an inScale-relative bound is
+     * the wrong dimension for it and would be meaningless at FUZZ_EXTREME
+     * magnitudes. Only well-conditioned windows reach here at all — see
+     * fuzz_variance_condition(). */
+    { "VAR",                 TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
+    { "STDDEV",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
+    { "BBANDS",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
     { "LINEARREG",           TOL_REL_IN, 1e-9, 0.0 },  /* #103 O(1) sliding-sum recurrence   */
     { "LINEARREG_SLOPE",     TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
     { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
@@ -3410,6 +3418,70 @@ static const void *fuzz_064_tol_lookup(const char *name, int *mode, double *tol,
         { *mode = FUZZ_064_TOL[i].mode; *tol = FUZZ_064_TOL[i].tol; *cap = FUZZ_064_TOL[i].cap;
           return &FUZZ_064_TOL[i]; }
     return NULL;
+}
+
+/* Conditioning of v0.6.4's variance form over the windows a case evaluates.
+ *
+ * 0.6.4 computes variance as E[x^2] - mean^2, which cancels catastrophically
+ * when the mean dominates the spread (SourceForge bug 90); 0.8.1 uses the
+ * shifted-data form and does not. The severity is the condition number
+ * kappa = mean^2 / variance: 0.6.4 loses roughly log10(kappa) significant
+ * digits, i.e. its relative error is about DBL_EPSILON * kappa.
+ *
+ * Crucially the severity is NOT a property of the window alone. Both versions
+ * keep RUNNING sums over the sliding window, so the accumulators carry rounding
+ * from every value they ever absorbed, not just the ones currently inside it.
+ * On FUZZ_EXTREME (values alternating ~1e9 and ~1e-7) a window of tiny values
+ * looks perfectly conditioned on its own -- measured kappa 26.7 -- while 0.6.4
+ * reports 256 for a true variance of 7.6e-16, because its accumulator absorbed
+ * the ~1e9 values earlier and carries an absolute error of eps*(1e9)^2 ~ 220.
+ *
+ * So the measure is the largest magnitude the accumulators absorb over the case,
+ * squared, against the smallest window variance the case reports:
+ *
+ *     kappa = max|x|^2 / min(variance)
+ *
+ * The naive bound on 0.6.4's relative error is DBL_EPSILON * kappa, but the
+ * sliding accumulator also rounds once per step, so long cases drift further:
+ * at kappa just under 1e6 a 240-bar VAR case was measured at 1.21e-9 relative,
+ * about 5x the naive estimate. The threshold is therefore set an order of
+ * magnitude tighter than the model, which keeps observed divergence inside the
+ * manifest's 1e-9 bound with margin. Returns HUGE_VAL for a flat window, where
+ * 0.6.4 can go negative and produce NaN through the sqrt. */
+#define FUZZ_VAR_MAX_KAPPA 1.0e5
+static double fuzz_variance_condition( const double *x, int n, int period, int s, int e )
+{
+    double maxAbs = 0.0, minVar = HUGE_VAL;
+    int t, first, j;
+
+    if( period < 2 ) return 0.0;      /* no cancellation possible */
+    first = (s > period - 1) ? s : period - 1;
+    if( first > e || first >= n ) return 0.0;
+
+    /* Largest magnitude the running accumulators absorb over this case, from the
+     * first bar they read (window start of the first output) through the last. */
+    for( j = first - period + 1; j <= e && j < n; j++ )
+    {
+        double m = fabs(x[j]);
+        if( m > maxAbs ) maxAbs = m;
+    }
+
+    /* Smallest window variance the case reports. Two-pass on purpose: the test
+     * must not reuse the algorithm under test to decide whether to trust the
+     * oracle. */
+    for( t = first; t <= e && t < n; t++ )
+    {
+        double sum = 0.0, mean, var = 0.0;
+        for( j = t - period + 1; j <= t; j++ ) sum += x[j];
+        mean = sum / (double)period;
+        for( j = t - period + 1; j <= t; j++ ) { double dv = x[j] - mean; var += dv * dv; }
+        var /= (double)period;
+        if( !(var > 0.0) ) return HUGE_VAL;   /* flat window: 0.6.4 can go negative */
+        if( var < minVar ) minVar = var;
+    }
+    if( !(minVar > 0.0) || !(maxAbs > 0.0) ) return HUGE_VAL;
+
+    return (maxAbs * maxAbs) / minVar;
 }
 
 /* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if tolerated
@@ -3485,8 +3557,16 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                     continue;
                 }
                 double d = a - b; if( d < 0 ) d = -d;
+                /* TOL_REL_OUT is output-relative, so its bound is per element and
+                 * cannot be precomputed like the others. */
+                double outBound = tolBound;
+                if( tolEntry && tolMode == TOL_REL_OUT )
+                {
+                    double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
+                    outBound = tolVal * m;
+                }
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
-                else if( tolEntry && d <= tolBound ) tolDiff = 1; /* within manifest bound */
+                else if( tolEntry && d <= outBound ) tolDiff = 1; /* within manifest bound */
 #if FMA_TRANSITION_TOLERANCE
                 /* One-time FMA re-baseline: within the 1e-9 relative contract,
                  * output-relative (`1e-9 × max(|current|, |v0.6.4|)`). The
@@ -3585,14 +3665,16 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     /* VAR/STDDEV/BBANDS intentionally diverge from 0.6.4 (issue #118): their
      * variance moved from the catastrophically-cancelling E[x^2]-mean^2 to a
-     * cancellation-free shifted-data form, so on ill-conditioned windows 0.6.4
-     * (which collapsed - SourceForge bug 90) is the wrong oracle. Excluded from the
-     * differential fuzz; the new behaviour is pinned by test_stddev.c and the
-     * BBANDS stable-variance test, and stays bitwise cross-language (--xlang-hash)
-     * and batch==stream (stream_verify). */
-    if( strcmp(funcInfo->name, "VAR") == 0 ||
-        strcmp(funcInfo->name, "STDDEV") == 0 ||
-        strcmp(funcInfo->name, "BBANDS") == 0 ) { ctx->varianceSkipped++; return; }
+     * cancellation-free shifted-data form, so on ILL-CONDITIONED windows 0.6.4
+     * (which collapsed - SourceForge bug 90) is the wrong oracle. Those cases are
+     * skipped per-case below, gated on fuzz_variance_condition(); every
+     * well-conditioned case IS compared, at the manifest's output-relative bound.
+     * The new behaviour is additionally pinned by test_stddev.c and the BBANDS
+     * stable-variance test, stays bitwise cross-language (--xlang-hash) and
+     * batch==stream (stream_verify). */
+    int isVarianceFunc = ( strcmp(funcInfo->name, "VAR") == 0 ||
+                           strcmp(funcInfo->name, "STDDEV") == 0 ||
+                           strcmp(funcInfo->name, "BBANDS") == 0 );
 
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
@@ -3706,6 +3788,15 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         }
                     }
                     if( skip98 ) { ctx->skipped98++; continue; }
+                }
+
+                /* #118: compare against 0.6.4 only where its cancelling variance
+                 * form still has significant digits. optInTimePeriod is opt 0 for
+                 * all three; the primary input is close (g_fzBuf[3]). */
+                if( isVarianceFunc )
+                {
+                    double kappa = fuzz_variance_condition( g_fzBuf[3], n, (int)vec[k][0], s, e );
+                    if( kappa > FUZZ_VAR_MAX_KAPPA ) { ctx->varianceSkipped++; continue; }
                 }
 
                 TA_Integer curBeg = 0, curNb = 0;
@@ -3838,11 +3929,11 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                "FMA-enabled release is tagged (PR #96)\n", ctx.fmaTol, ctx.maxFmaRel);
 #endif
     if( ctx.stochRsiSkipped > 0 )
-        printf("stochrsi-skipped: %lld STOCHRSI case(s) — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
+        printf("stochrsi-skipped: %lld STOCHRSI function(s) skipped entirely — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
     if( ctx.varianceSkipped > 0 )
-        printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) — cancellation-free variance re-baseline (issue #118); pinned by test_stddev.c + BBANDS stable-variance test\n",
-               ctx.varianceSkipped);
+        printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",
+               ctx.varianceSkipped, (double)FUZZ_VAR_MAX_KAPPA);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )
