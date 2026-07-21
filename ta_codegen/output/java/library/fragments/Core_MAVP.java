@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  021807 MF     Initial Version
+ *  072026 MF,CC  Fix #130. Stage results locally so in-place (outReal==inReal)
+ *                calls no longer corrupt the input the ma() passes re-read.
  */
 
    public int movingAverageVariablePeriodLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -45,6 +47,7 @@
       int curPeriod = 0;
       int[] localPeriodArray;
       double[] localOutputArray;
+      double[] localFinalArray;
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
@@ -106,6 +109,11 @@
       /* Allocate intermediate local buffer. */
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      /* Results are staged locally and copied to outReal once at the end: each
+       * ma() pass re-reads inReal over the full range, so direct outReal writes
+       * corrupt an in-place (outReal==inReal) call (issue #130).
+       */
+      localFinalArray = new double[(int)(outputSize * 1)];
       /* Copy caller array of period into local buffer.
        * At the same time, truncate to min/max.
        */
@@ -140,16 +148,17 @@
                outNBElement.value = 0;
                return retCode ;
             }
-            outReal[i] = localOutputArray[i];
+            localFinalArray[i] = localOutputArray[i];
             for( j = i + 1; j < outputSize; j += 1 ) {
                if( localPeriodArray[j] == curPeriod ) {
                   localPeriodArray[j] = 0;
                   /* Flag to avoid recalculation */
-                  outReal[j] = localOutputArray[j];
+                  localFinalArray[j] = localOutputArray[j];
                }
             }
          }
       }
+      System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
       /* Done. Inform the caller of the success. */
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
@@ -174,6 +183,7 @@
       int curPeriod = 0;
       int[] localPeriodArray;
       double[] localOutputArray;
+      double[] localFinalArray;
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
@@ -204,6 +214,7 @@
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      localFinalArray = new double[(int)(outputSize * 1)];
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
@@ -222,15 +233,16 @@
                outNBElement.value = 0;
                return retCode ;
             }
-            outReal[i] = localOutputArray[i];
+            localFinalArray[i] = localOutputArray[i];
             for( j = i + 1; j < outputSize; j += 1 ) {
                if( localPeriodArray[j] == curPeriod ) {
                   localPeriodArray[j] = 0;
-                  outReal[j] = localOutputArray[j];
+                  localFinalArray[j] = localOutputArray[j];
                }
             }
          }
       }
+      System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
       return RetCode.Success ;
@@ -254,6 +266,7 @@
       int curPeriod = 0;
       int[] localPeriodArray;
       double[] localOutputArray;
+      double[] localFinalArray;
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
@@ -300,6 +313,7 @@
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      localFinalArray = new double[(int)(outputSize * 1)];
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)(double)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
@@ -318,15 +332,16 @@
                outNBElement.value = 0;
                return retCode ;
             }
-            outReal[i] = localOutputArray[i];
+            localFinalArray[i] = localOutputArray[i];
             for( j = i + 1; j < outputSize; j += 1 ) {
                if( localPeriodArray[j] == curPeriod ) {
                   localPeriodArray[j] = 0;
-                  outReal[j] = localOutputArray[j];
+                  localFinalArray[j] = localOutputArray[j];
                }
             }
          }
       }
+      System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
       return RetCode.Success ;
@@ -350,6 +365,7 @@
       int curPeriod = 0;
       int[] localPeriodArray;
       double[] localOutputArray;
+      double[] localFinalArray;
       MInteger localBegIdx = new MInteger();
       MInteger localNbElement = new MInteger();
       RetCode retCode;
@@ -380,6 +396,7 @@
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      localFinalArray = new double[(int)(outputSize * 1)];
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)(double)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
@@ -398,15 +415,16 @@
                outNBElement.value = 0;
                return retCode ;
             }
-            outReal[i] = localOutputArray[i];
+            localFinalArray[i] = localOutputArray[i];
             for( j = i + 1; j < outputSize; j += 1 ) {
                if( localPeriodArray[j] == curPeriod ) {
                   localPeriodArray[j] = 0;
-                  outReal[j] = localOutputArray[j];
+                  localFinalArray[j] = localOutputArray[j];
                }
             }
          }
       }
+      System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
       return RetCode.Success ;

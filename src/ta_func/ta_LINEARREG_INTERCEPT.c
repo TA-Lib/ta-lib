@@ -56,6 +56,8 @@
  *  070203 JP     Initial.
  *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
  *                (numerics-changing). See issue #103.
+ *  072026 MF,CC  Read the departing value before the output write so in-place
+ *                (outReal==inReal) calls stay correct. See issue #130.
  */
 
 TA_LIB_API int TA_LINEARREG_INTERCEPT_Lookback( int optInTimePeriod )
@@ -153,6 +155,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
       SumXY += (double)i * tempValue1;
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
    today += 1;
    /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -160,13 +163,16 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
     * the departing value at full weight (subtracts period*trailingValue). Same
     * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
     * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+    * Each departing value is read before the output write of the same bar:
+    * with outReal==inReal (in-place, #130) that write lands on the cell the
+    * next iteration departs from.
     */
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
    }
@@ -223,14 +229,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Unguarded( int    startIdx,
       SumXY += (double)i * tempValue1;
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
    }
@@ -301,14 +308,15 @@ TA_RetCode TA_S_LINEARREG_INTERCEPT( int    startIdx,
       SumXY += (double)i * tempValue1;
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
    }
@@ -365,14 +373,15 @@ TA_RetCode TA_S_LINEARREG_INTERCEPT_Unguarded( int    startIdx,
       SumXY += (double)i * tempValue1;
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
    }
@@ -389,6 +398,7 @@ struct TA_LINEARREG_INTERCEPT_Stream {
    double SumXY;
    double SumY;
    double Divisor;
+   double trailingValue;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
@@ -408,16 +418,15 @@ static void TA_LINEARREG_INTERCEPT_ReleaseInternal( struct TA_LINEARREG_INTERCEP
 static void TA_LINEARREG_INTERCEPT_StepInternal( struct TA_LINEARREG_INTERCEPT_Stream *sp, double inReal, double *outReal )
 {
    double m;
-   double trailingValue;
 
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
-   trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * trailingValue;
-   sp->SumY = sp->SumY - trailingValue + inReal;
+   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * sp->trailingValue;
+   sp->SumY = sp->SumY - sp->trailingValue + inReal;
    m = (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
+   sp->trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    *outReal= (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
@@ -464,7 +473,7 @@ TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_St
       double m;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -515,6 +524,7 @@ TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_St
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       lastValue_outReal = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -522,13 +532,16 @@ TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_St
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          lastValue_outReal = (SumY - m * SumX) / (double)optInTimePeriod;
          today += 1;
       }
@@ -544,6 +557,7 @@ TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_St
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_INTERCEPT_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
@@ -602,7 +616,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFill( TA_LINEARREG_INTERCEPT
       double m;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -653,6 +667,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFill( TA_LINEARREG_INTERCEPT
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -660,13 +675,16 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFill( TA_LINEARREG_INTERCEPT
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
          today += 1;
       }
@@ -682,6 +700,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFill( TA_LINEARREG_INTERCEPT
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_INTERCEPT_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

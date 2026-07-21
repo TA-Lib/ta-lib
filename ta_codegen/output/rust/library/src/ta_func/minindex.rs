@@ -187,8 +187,8 @@ impl Core {
             return RetCode::Success;
         }
         // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the input and
-        // output to be the same buffer.
+        // (The integer output can never share the real input's buffer —
+        // different element type; issue #130.)
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
@@ -401,8 +401,8 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the input and
-        // output to be the same buffer.
+        // (The integer output can never share the real input's buffer —
+        // different element type; issue #130.)
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
@@ -530,8 +530,8 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the input and
-        // output to be the same buffer.
+        // (The integer output can never share the real input's buffer —
+        // different element type; issue #130.)
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;

@@ -15,6 +15,8 @@
  *  072106 MF,AM   Fix #1526632. Add missing atan().
  *  071326 MF,CC   O(period) per-bar rescan -> O(1) sliding-sum recurrence
  *                 (numerics-changing). See issue #103.
+ *  072026 MF,CC   Read the departing value before the output write so in-place
+ *                 (outReal==inReal) calls stay correct. See issue #130.
  */
 
    public int linearRegAngleLookback( int optInTimePeriod )
@@ -106,6 +108,7 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -113,12 +116,15 @@
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx ) {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -170,13 +176,14 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       while( today <= endIdx ) {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -239,13 +246,14 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       while( today <= endIdx ) {
-         trailingValue = (double)inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = (double)inReal[trailingIdx++];
          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -297,13 +305,14 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       while( today <= endIdx ) {
-         trailingValue = (double)inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + (double)inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = (double)inReal[trailingIdx++];
          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -335,6 +344,7 @@
       double SumXY;
       double SumY;
       double Divisor;
+      double trailingValue;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
@@ -349,6 +359,7 @@
          this.SumXY = other.SumXY;
          this.SumY = other.SumY;
          this.Divisor = other.Divisor;
+         this.trailingValue = other.trailingValue;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -397,14 +408,13 @@
    void linearRegAngleStreamStep( LinearRegAngleStream sp, double inReal )
    {
       double m = 0.0;
-      double trailingValue = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
-      trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-      sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-      sp.SumY = sp.SumY - trailingValue + inReal;
+      sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+      sp.SumY = sp.SumY - sp.trailingValue + inReal;
       m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+      sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       sp.cur_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -487,6 +497,7 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       lastValue_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -494,12 +505,15 @@
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx ) {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          lastValue_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -518,6 +532,7 @@
       sp.SumXY = SumXY;
       sp.SumY = SumY;
       sp.Divisor = Divisor;
+      sp.trailingValue = trailingValue;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -600,6 +615,7 @@
          SumXY += (double)i * tempValue1;
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -607,12 +623,15 @@
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx ) {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
          today += 1;
       }
@@ -631,6 +650,7 @@
       sp.SumXY = SumXY;
       sp.SumY = SumY;
       sp.Divisor = Divisor;
+      sp.trailingValue = trailingValue;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

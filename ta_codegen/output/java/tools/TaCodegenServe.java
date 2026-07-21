@@ -94404,6 +94404,8 @@ class Core {
      *  070203 JP     Initial.
      *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
      *                (numerics-changing). See issue #103.
+     *  072026 MF,CC  Read the departing value before the output write so in-place
+     *                (outReal==inReal) calls stay correct. See issue #130.
      */
 
        public int linearRegLookback( int optInTimePeriod )
@@ -94497,6 +94499,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -94504,13 +94507,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -94564,14 +94570,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -94636,14 +94643,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -94697,14 +94705,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -94736,6 +94745,7 @@ class Core {
           double SumXY;
           double SumY;
           double Divisor;
+          double trailingValue;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
@@ -94750,6 +94760,7 @@ class Core {
              this.SumXY = other.SumXY;
              this.SumY = other.SumY;
              this.Divisor = other.Divisor;
+             this.trailingValue = other.trailingValue;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -94799,15 +94810,14 @@ class Core {
        {
           double m = 0.0;
           double b = 0.0;
-          double trailingValue = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
           }
-          trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-          sp.SumY = sp.SumY - trailingValue + inReal;
+          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+          sp.SumY = sp.SumY - sp.trailingValue + inReal;
           m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
           b = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+          sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
           sp.cur_outReal = Math.fma(m, (double)(sp.optInTimePeriod - 1), b);
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -94892,6 +94902,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           lastValue_outReal = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -94899,13 +94910,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              lastValue_outReal = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -94924,6 +94938,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -95008,6 +95023,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -95015,13 +95031,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)(optInTimePeriod - 1), b);
              today += 1;
           }
@@ -95040,6 +95059,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -95115,6 +95135,8 @@ class Core {
      *  072106 MF,AM   Fix #1526632. Add missing atan().
      *  071326 MF,CC   O(period) per-bar rescan -> O(1) sliding-sum recurrence
      *                 (numerics-changing). See issue #103.
+     *  072026 MF,CC   Read the departing value before the output write so in-place
+     *                 (outReal==inReal) calls stay correct. See issue #130.
      */
 
        public int linearRegAngleLookback( int optInTimePeriod )
@@ -95206,6 +95228,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -95213,12 +95236,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95270,13 +95296,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95339,13 +95366,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95397,13 +95425,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95435,6 +95464,7 @@ class Core {
           double SumXY;
           double SumY;
           double Divisor;
+          double trailingValue;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
@@ -95449,6 +95479,7 @@ class Core {
              this.SumXY = other.SumXY;
              this.SumY = other.SumY;
              this.Divisor = other.Divisor;
+             this.trailingValue = other.trailingValue;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -95497,14 +95528,13 @@ class Core {
        void linearRegAngleStreamStep( LinearRegAngleStream sp, double inReal )
        {
           double m = 0.0;
-          double trailingValue = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
           }
-          trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-          sp.SumY = sp.SumY - trailingValue + inReal;
+          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+          sp.SumY = sp.SumY - sp.trailingValue + inReal;
           m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+          sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
           sp.cur_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -95587,6 +95617,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           lastValue_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -95594,12 +95625,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              lastValue_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95618,6 +95652,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -95700,6 +95735,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -95707,12 +95743,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.atan(m) * (180.0 / 3.141592653589793);
              today += 1;
           }
@@ -95731,6 +95770,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -95803,6 +95843,8 @@ class Core {
      *  070203 JP     Initial.
      *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
      *                (numerics-changing). See issue #103.
+     *  072026 MF,CC  Read the departing value before the output write so in-place
+     *                (outReal==inReal) calls stay correct. See issue #130.
      */
 
        public int linearRegInterceptLookback( int optInTimePeriod )
@@ -95894,6 +95936,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -95901,12 +95944,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -95958,13 +96004,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -96027,13 +96074,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -96085,13 +96133,14 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -96123,6 +96172,7 @@ class Core {
           double SumXY;
           double SumY;
           double Divisor;
+          double trailingValue;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
@@ -96137,6 +96187,7 @@ class Core {
              this.SumXY = other.SumXY;
              this.SumY = other.SumY;
              this.Divisor = other.Divisor;
+             this.trailingValue = other.trailingValue;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -96185,14 +96236,13 @@ class Core {
        void linearRegInterceptStreamStep( LinearRegInterceptStream sp, double inReal )
        {
           double m = 0.0;
-          double trailingValue = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
           }
-          trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-          sp.SumY = sp.SumY - trailingValue + inReal;
+          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+          sp.SumY = sp.SumY - sp.trailingValue + inReal;
           m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+          sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
           sp.cur_outReal = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -96275,6 +96325,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           lastValue_outReal = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -96282,12 +96333,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              lastValue_outReal = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -96306,6 +96360,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -96388,6 +96443,7 @@ class Core {
              SumXY += (double)i * tempValue1;
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -96395,12 +96451,15 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
              today += 1;
           }
@@ -96419,6 +96478,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -96491,6 +96551,8 @@ class Core {
      *  070203 JP     Initial.
      *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
      *                (numerics-changing). See issue #103.
+     *  072026 MF,CC  Read the departing value before the output write so in-place
+     *                (outReal==inReal) calls stay correct. See issue #130.
      */
 
        public int linearRegSlopeLookback( int optInTimePeriod )
@@ -96580,6 +96642,7 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -96587,11 +96650,14 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -96641,12 +96707,13 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -96707,12 +96774,13 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -96762,12 +96830,13 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -96799,6 +96868,7 @@ class Core {
           double SumXY;
           double SumY;
           double Divisor;
+          double trailingValue;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
@@ -96813,6 +96883,7 @@ class Core {
              this.SumXY = other.SumXY;
              this.SumY = other.SumY;
              this.Divisor = other.Divisor;
+             this.trailingValue = other.trailingValue;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -96860,13 +96931,12 @@ class Core {
        }
        void linearRegSlopeStreamStep( LinearRegSlopeStream sp, double inReal )
        {
-          double trailingValue = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
           }
-          trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-          sp.SumY = sp.SumY - trailingValue + inReal;
+          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+          sp.SumY = sp.SumY - sp.trailingValue + inReal;
+          sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
           sp.cur_outReal = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -96947,6 +97017,7 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = inReal[trailingIdx++];
           lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -96954,11 +97025,14 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
+             trailingValue = inReal[trailingIdx++];
              lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -96977,6 +97051,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -97057,6 +97132,7 @@ class Core {
              SumY += tempValue1;
              SumXY += (double)i * tempValue1;
           }
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -97064,11 +97140,14 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              today += 1;
           }
@@ -97087,6 +97166,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -104567,6 +104647,8 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  021807 MF     Initial Version
+     *  072026 MF,CC  Fix #130. Stage results locally so in-place (outReal==inReal)
+     *                calls no longer corrupt the input the ma() passes re-read.
      */
 
        public int movingAverageVariablePeriodLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -104603,6 +104685,7 @@ class Core {
           int curPeriod = 0;
           int[] localPeriodArray;
           double[] localOutputArray;
+          double[] localFinalArray;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104664,6 +104747,11 @@ class Core {
           /* Allocate intermediate local buffer. */
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
+          /* Results are staged locally and copied to outReal once at the end: each
+           * ma() pass re-reads inReal over the full range, so direct outReal writes
+           * corrupt an in-place (outReal==inReal) call (issue #130).
+           */
+          localFinalArray = new double[(int)(outputSize * 1)];
           /* Copy caller array of period into local buffer.
            * At the same time, truncate to min/max.
            */
@@ -104698,16 +104786,17 @@ class Core {
                    outNBElement.value = 0;
                    return retCode ;
                 }
-                outReal[i] = localOutputArray[i];
+                localFinalArray[i] = localOutputArray[i];
                 for( j = i + 1; j < outputSize; j += 1 ) {
                    if( localPeriodArray[j] == curPeriod ) {
                       localPeriodArray[j] = 0;
                       /* Flag to avoid recalculation */
-                      outReal[j] = localOutputArray[j];
+                      localFinalArray[j] = localOutputArray[j];
                    }
                 }
              }
           }
+          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
           /* Done. Inform the caller of the success. */
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
@@ -104732,6 +104821,7 @@ class Core {
           int curPeriod = 0;
           int[] localPeriodArray;
           double[] localOutputArray;
+          double[] localFinalArray;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104762,6 +104852,7 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
+          localFinalArray = new double[(int)(outputSize * 1)];
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -104780,15 +104871,16 @@ class Core {
                    outNBElement.value = 0;
                    return retCode ;
                 }
-                outReal[i] = localOutputArray[i];
+                localFinalArray[i] = localOutputArray[i];
                 for( j = i + 1; j < outputSize; j += 1 ) {
                    if( localPeriodArray[j] == curPeriod ) {
                       localPeriodArray[j] = 0;
-                      outReal[j] = localOutputArray[j];
+                      localFinalArray[j] = localOutputArray[j];
                    }
                 }
              }
           }
+          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;
@@ -104812,6 +104904,7 @@ class Core {
           int curPeriod = 0;
           int[] localPeriodArray;
           double[] localOutputArray;
+          double[] localFinalArray;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104858,6 +104951,7 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
+          localFinalArray = new double[(int)(outputSize * 1)];
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)(double)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -104876,15 +104970,16 @@ class Core {
                    outNBElement.value = 0;
                    return retCode ;
                 }
-                outReal[i] = localOutputArray[i];
+                localFinalArray[i] = localOutputArray[i];
                 for( j = i + 1; j < outputSize; j += 1 ) {
                    if( localPeriodArray[j] == curPeriod ) {
                       localPeriodArray[j] = 0;
-                      outReal[j] = localOutputArray[j];
+                      localFinalArray[j] = localOutputArray[j];
                    }
                 }
              }
           }
+          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;
@@ -104908,6 +105003,7 @@ class Core {
           int curPeriod = 0;
           int[] localPeriodArray;
           double[] localOutputArray;
+          double[] localFinalArray;
           MInteger localBegIdx = new MInteger();
           MInteger localNbElement = new MInteger();
           RetCode retCode;
@@ -104938,6 +105034,7 @@ class Core {
           outputSize = endIdx - tempInt + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
+          localFinalArray = new double[(int)(outputSize * 1)];
           for( i = 0; i < outputSize; i += 1 ) {
              tempInt = (int)(double)inPeriods[startIdx + i];
              if( tempInt < optInMinPeriod ) {
@@ -104956,15 +105053,16 @@ class Core {
                    outNBElement.value = 0;
                    return retCode ;
                 }
-                outReal[i] = localOutputArray[i];
+                localFinalArray[i] = localOutputArray[i];
                 for( j = i + 1; j < outputSize; j += 1 ) {
                    if( localPeriodArray[j] == curPeriod ) {
                       localPeriodArray[j] = 0;
-                      outReal[j] = localOutputArray[j];
+                      localFinalArray[j] = localOutputArray[j];
                    }
                 }
              }
           }
+          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
           return RetCode.Success ;
@@ -105939,8 +106037,8 @@ class Core {
              return RetCode.Success ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -106306,8 +106404,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -106402,8 +106500,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -110269,8 +110367,8 @@ class Core {
              return RetCode.Success ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -110636,8 +110734,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -110732,8 +110830,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer output can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -111765,8 +111863,8 @@ class Core {
              return RetCode.Success ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer outputs can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -112285,8 +112383,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer outputs can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -112410,8 +112508,8 @@ class Core {
              return RetCode.OutOfRangeEndIndex ;
           }
           /* Proceed with the calculation for the requested range.
-           * Note that this algorithm allows the input and
-           * output to be the same buffer.
+           * (The integer outputs can never share the real input's buffer —
+           * different element type; issue #130.)
            */
           outIdx = 0;
           today = startIdx;
@@ -132628,6 +132726,8 @@ class Core {
      *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
      *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
      *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
+     *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
+     *               in-place ma() destroyed the smoothed K before the final copy.
      */
 
        public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -132789,14 +132889,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outSlowK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+           * elected: the %D ma() below would then run in place over the smoothed K
+           * that the memmove into outSlowK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose ) {
              tempBuffer = outSlowK;
-          } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose ) {
-             tempBuffer = outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -132950,8 +133051,6 @@ class Core {
           bufferIsAllocated = 0;
           if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose ) {
              tempBuffer = outSlowK;
-          } else if( outSlowD == inHigh || outSlowD == inLow || outSlowD == inClose ) {
-             tempBuffer = outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -133100,8 +133199,6 @@ class Core {
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outSlowK;
-          } else if( false || false || false ) {
-             tempBuffer = outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -133226,8 +133323,6 @@ class Core {
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outSlowK;
-          } else if( false || false || false ) {
-             tempBuffer = outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -133621,14 +133716,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outSlowK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+           * elected: the %D ma() below would then run in place over the smoothed K
+           * that the memmove into outSlowK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose ) {
              tempBuffer = sc_outSlowK;
-          } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose ) {
-             tempBuffer = sc_outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -133893,14 +133989,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outSlowK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+           * elected: the %D ma() below would then run in place over the smoothed K
+           * that the memmove into outSlowK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose ) {
              tempBuffer = sc_outSlowK;
-          } else if( sc_outSlowD == inHigh || sc_outSlowD == inLow || sc_outSlowD == inClose ) {
-             tempBuffer = sc_outSlowD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -134116,6 +134213,8 @@ class Core {
      *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
      *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
      *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
+     *  072026 MF,CC Fix #130. Never elect outFastD as the K scratch buffer: %D's
+     *               in-place ma() destroyed the raw K before the final copy.
      */
 
        public int stochFLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -134261,14 +134360,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outFastK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outFastD must NOT be
+           * elected: the %D ma() below would then run in place over the raw K
+           * that the memmove into outFastK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( outFastK == inHigh || outFastK == inLow || outFastK == inClose ) {
              tempBuffer = outFastK;
-          } else if( outFastD == inHigh || outFastD == inLow || outFastD == inClose ) {
-             tempBuffer = outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -134412,8 +134512,6 @@ class Core {
           bufferIsAllocated = 0;
           if( outFastK == inHigh || outFastK == inLow || outFastK == inClose ) {
              tempBuffer = outFastK;
-          } else if( outFastD == inHigh || outFastD == inLow || outFastD == inClose ) {
-             tempBuffer = outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -134552,8 +134650,6 @@ class Core {
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outFastK;
-          } else if( false || false || false ) {
-             tempBuffer = outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -134673,8 +134769,6 @@ class Core {
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outFastK;
-          } else if( false || false || false ) {
-             tempBuffer = outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -135053,14 +135147,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outFastK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outFastD must NOT be
+           * elected: the %D ma() below would then run in place over the raw K
+           * that the memmove into outFastK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( sc_outFastK == inHigh || sc_outFastK == inLow || sc_outFastK == inClose ) {
              tempBuffer = sc_outFastK;
-          } else if( sc_outFastD == inHigh || sc_outFastD == inLow || sc_outFastD == inClose ) {
-             tempBuffer = sc_outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -135306,14 +135401,15 @@ class Core {
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
-           * If the output is the same as the input, great
-           * we just save ourself one memory allocation.
+           * When outFastK aliases a price input the caller buffer doubles as the
+           * scratch, saving one allocation: the K writes trail the min/max window
+           * reads, and the final memmove is overlap-safe. outFastD must NOT be
+           * elected: the %D ma() below would then run in place over the raw K
+           * that the memmove into outFastK still needs (issue #130).
            */
           bufferIsAllocated = 0;
           if( sc_outFastK == inHigh || sc_outFastK == inLow || sc_outFastK == inClose ) {
              tempBuffer = sc_outFastK;
-          } else if( sc_outFastD == inHigh || sc_outFastD == inLow || sc_outFastD == inClose ) {
-             tempBuffer = sc_outFastD;
           } else {
              bufferIsAllocated = 1;
              tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -142975,6 +143071,8 @@ class Core {
      *  090103 MF     Initial coding re-using the existing TA_LinearReg
      *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
      *                (numerics-changing). See issue #103.
+     *  072026 MF,CC  Read the departing value before the output write so in-place
+     *                (outReal==inReal) calls stay correct. See issue #130.
      */
 
        public int tsfLookback( int optInTimePeriod )
@@ -143068,6 +143166,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -143075,13 +143174,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143135,14 +143237,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143207,14 +143310,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143268,14 +143372,15 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = (double)inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           while( today <= endIdx ) {
-             trailingValue = (double)inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + (double)inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = (double)inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143307,6 +143412,7 @@ class Core {
           double SumXY;
           double SumY;
           double Divisor;
+          double trailingValue;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
@@ -143321,6 +143427,7 @@ class Core {
              this.SumXY = other.SumXY;
              this.SumY = other.SumY;
              this.Divisor = other.Divisor;
+             this.trailingValue = other.trailingValue;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -143370,15 +143477,14 @@ class Core {
        {
           double m = 0.0;
           double b = 0.0;
-          double trailingValue = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
           }
-          trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * trailingValue;
-          sp.SumY = sp.SumY - trailingValue + inReal;
+          sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+          sp.SumY = sp.SumY - sp.trailingValue + inReal;
           m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
           b = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+          sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
           sp.cur_outReal = Math.fma(m, (double)sp.optInTimePeriod, b);
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -143463,6 +143569,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           lastValue_outReal = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -143470,13 +143577,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              lastValue_outReal = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143495,6 +143605,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -143579,6 +143690,7 @@ class Core {
           }
           m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
           b = (SumY - m * SumX) / (double)optInTimePeriod;
+          trailingValue = inReal[trailingIdx++];
           outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
           today += 1;
           /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -143586,13 +143698,16 @@ class Core {
            * the departing value at full weight (subtracts period*trailingValue). Same
            * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
            * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+           * Each departing value is read before the output write of the same bar:
+           * with outReal==inReal (in-place, #130) that write lands on the cell the
+           * next iteration departs from.
            */
           while( today <= endIdx ) {
-             trailingValue = inReal[trailingIdx++];
              SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
              SumY = SumY - trailingValue + inReal[today];
              m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
              b = (SumY - m * SumX) / (double)optInTimePeriod;
+             trailingValue = inReal[trailingIdx++];
              outReal[outIdx++] = Math.fma(m, (double)optInTimePeriod, b);
              today += 1;
           }
@@ -143611,6 +143726,7 @@ class Core {
           sp.SumXY = SumXY;
           sp.SumY = SumY;
           sp.Divisor = Divisor;
+          sp.trailingValue = trailingValue;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

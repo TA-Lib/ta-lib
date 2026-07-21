@@ -123,8 +123,8 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
       return TA_SUCCESS;
    }
    /* Proceed with the calculation for the requested range.
-    * Note that this algorithm allows the input and
-    * output to be the same buffer.
+    * (The integer outputs can never share the real input's buffer —
+    * different element type; issue #130.)
     */
    outIdx = 0;
    today = startIdx;
@@ -627,8 +627,8 @@ TA_RetCode TA_MINMAXINDEX_OpenInternal( struct TA_MINMAXINDEX_Stream **stream, c
          return TA_BAD_PARAM;
       }
       /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the input and
-       * output to be the same buffer.
+       * (The integer outputs can never share the real input's buffer —
+       * different element type; issue #130.)
        */
       outIdx = 0;
       today = startIdx;
@@ -785,8 +785,8 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_OpenAndFill( TA_MINMAXINDEX_Stream **stream
          return TA_BAD_PARAM;
       }
       /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the input and
-       * output to be the same buffer.
+       * (The integer outputs can never share the real input's buffer —
+       * different element type; issue #130.)
        */
       outIdx = 0;
       today = startIdx;

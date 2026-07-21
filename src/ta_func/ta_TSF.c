@@ -56,6 +56,8 @@
  *  090103 MF     Initial coding re-using the existing TA_LinearReg
  *  071326 MF,CC  O(period) per-bar rescan -> O(1) sliding-sum recurrence
  *                (numerics-changing). See issue #103.
+ *  072026 MF,CC  Read the departing value before the output write so in-place
+ *                (outReal==inReal) calls stay correct. See issue #130.
  */
 
 TA_LIB_API int TA_TSF_Lookback( int optInTimePeriod )
@@ -156,6 +158,7 @@ TA_LIB_API TA_RetCode TA_TSF( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
    today += 1;
    /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -163,14 +166,17 @@ TA_LIB_API TA_RetCode TA_TSF( int    startIdx,
     * the departing value at full weight (subtracts period*trailingValue). Same
     * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
     * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+    * Each departing value is read before the output write of the same bar:
+    * with outReal==inReal (in-place, #130) that write lands on the cell the
+    * next iteration departs from.
     */
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
       today += 1;
    }
@@ -230,15 +236,16 @@ TA_LIB_API TA_RetCode TA_TSF_Unguarded( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
+   trailingValue = inReal[trailingIdx++];
    outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
       today += 1;
    }
@@ -312,15 +319,16 @@ TA_RetCode TA_S_TSF( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
       today += 1;
    }
@@ -380,15 +388,16 @@ TA_RetCode TA_S_TSF_Unguarded( int    startIdx,
    }
    m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
    b = (SumY - m * SumX) / (double)optInTimePeriod;
+   trailingValue = (double)inReal[trailingIdx++];
    outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
    today += 1;
    while( today <= endIdx )
    {
-      trailingValue = (double)inReal[trailingIdx++];
       SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
       SumY = SumY - trailingValue + (double)inReal[today];
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = (double)inReal[trailingIdx++];
       outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
       today += 1;
    }
@@ -405,6 +414,7 @@ struct TA_TSF_Stream {
    double SumXY;
    double SumY;
    double Divisor;
+   double trailingValue;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
@@ -425,17 +435,16 @@ static void TA_TSF_StepInternal( struct TA_TSF_Stream *sp, double inReal, double
 {
    double m;
    double b;
-   double trailingValue;
 
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
-   trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * trailingValue;
-   sp->SumY = sp->SumY - trailingValue + inReal;
+   sp->SumXY = sp->SumXY + sp->SumY - (double)sp->optInTimePeriod * sp->trailingValue;
+   sp->SumY = sp->SumY - sp->trailingValue + inReal;
    m = (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
    b = (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
+   sp->trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    *outReal= fma(m, (double)sp->optInTimePeriod, b);
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
@@ -483,7 +492,7 @@ TA_RetCode TA_TSF_OpenInternal( struct TA_TSF_Stream **stream, const double inRe
       double b;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -535,6 +544,7 @@ TA_RetCode TA_TSF_OpenInternal( struct TA_TSF_Stream **stream, const double inRe
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
       lastValue_outReal = fma(m, (double)optInTimePeriod, b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -542,14 +552,17 @@ TA_RetCode TA_TSF_OpenInternal( struct TA_TSF_Stream **stream, const double inRe
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
+         trailingValue = inReal[trailingIdx++];
          lastValue_outReal = fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
@@ -565,6 +578,7 @@ TA_RetCode TA_TSF_OpenInternal( struct TA_TSF_Stream **stream, const double inRe
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TSF_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
@@ -624,7 +638,7 @@ TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double i
       double b;
       int i;
       double tempValue1;
-      double trailingValue;
+      double trailingValue = 0.0;
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between
@@ -676,6 +690,7 @@ TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double i
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
       outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -683,14 +698,17 @@ TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double i
        * the departing value at full weight (subtracts period*trailingValue). Same
        * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
        * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
        */
       while( today <= endIdx )
       {
-         trailingValue = inReal[trailingIdx++];
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
+         trailingValue = inReal[trailingIdx++];
          outReal[outIdx++] = fma(m, (double)optInTimePeriod, b);
          today += 1;
       }
@@ -706,6 +724,7 @@ TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double i
       sp->SumXY = SumXY;
       sp->SumY = SumY;
       sp->Divisor = Divisor;
+      sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TSF_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

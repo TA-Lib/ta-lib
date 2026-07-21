@@ -14,6 +14,8 @@
  *  071026 MF,CC Fix #107. Guard the Fast-K division with TA_IS_ZERO, not an
  *               exact `diff != 0.0`, so a machine-flat window yields 0 instead
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
+ *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
+ *               in-place ma() destroyed the smoothed K before the final copy.
  *
  */
 
@@ -134,8 +136,11 @@ TA_RetCode stoch(int startIdx, int endIdx,
    /* Allocate a temporary buffer large enough to
     * store the K.
     *
-    * If the output is the same as the input, great
-    * we just save ourself one memory allocation.
+    * When outSlowK aliases a price input the caller buffer doubles as the
+    * scratch, saving one allocation: the K writes trail the min/max window
+    * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+    * elected: the %D ma() below would then run in place over the smoothed K
+    * that the memmove into outSlowK still needs (issue #130).
     */
    bufferIsAllocated = 0;
 
@@ -144,12 +149,6 @@ TA_RetCode stoch(int startIdx, int endIdx,
       (outSlowK == inClose) )
    {
       tempBuffer = outSlowK;
-   }
-   else if( (outSlowD == inHigh) ||
-      (outSlowD == inLow)  ||
-      (outSlowD == inClose) )
-   {
-      tempBuffer = outSlowD;
    }
    else
    {

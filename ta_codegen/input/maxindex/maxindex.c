@@ -48,8 +48,8 @@ TA_RetCode maxindex(int startIdx, int endIdx,
    }
 
    /* Proceed with the calculation for the requested range.
-    * Note that this algorithm allows the input and
-    * output to be the same buffer.
+    * (The integer output can never share the real input's buffer —
+    * different element type; issue #130.)
     */
    outIdx = 0;
    today       = startIdx;
