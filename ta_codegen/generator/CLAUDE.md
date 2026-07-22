@@ -106,7 +106,7 @@ Tests are in `tests/backend_suite.rs` and `tests/integration_test.rs` — they v
 - Generic callback in `test_codegen.c` auto-generates JSON-RPC requests from ta_abstract metadata for every indicator
 - `list_functions` implemented — servers report available indicators with parameter metadata
 - `timing_ns` returned with each response — ta_regtest collects and prints a timing summary
-- `set_unstable_period` and `set_compatibility` implemented for all 24 unstable-period functions
+- `set_unstable_period` and `set_compatibility` implemented for all 20 unstable-period functions
 
 ### How It Works
 
@@ -156,7 +156,7 @@ JSON-RPC over stdin/stdout.
 - `list_functions` — servers report available indicators with parameter metadata
 - `set_unstable_period` / `set_compatibility` — global state management implemented
 - `timing_ns` — execution timing returned with every response
-- All 24 unstable-period functions mapped in `func_unst_id()`
+- All 20 unstable-period functions mapped in `func_unst_id()`
 - Real-valued optional params use `json_find_double` (e.g., BBANDS `optInNbDevUp`, SAR `optInAcceleration`)
 - Price input support (OHLCV arrays) for STOCH, BBANDS, ADX, MACD, etc.
 - Multi-output support (BBANDS=3, MACD=3, STOCH=2) with `outReal`, `outReal1`, `outReal2`

@@ -168,7 +168,7 @@ typedef enum {
 
 typedef enum {
     TA_FUNC_UNST_ADX          =  0,
-    TA_FUNC_UNST_ADXR         =  1,
+    TA_FUNC_UNST_UNUSED_1     =  1,
     TA_FUNC_UNST_ATR          =  2,
     TA_FUNC_UNST_CMO          =  3,
     TA_FUNC_UNST_DX           =  4,
@@ -189,7 +189,7 @@ typedef enum {
     TA_FUNC_UNST_PLUS_DI      = 19,
     TA_FUNC_UNST_PLUS_DM      = 20,
     TA_FUNC_UNST_RSI          = 21,
-    TA_FUNC_UNST_STOCHRSI     = 22,
+    TA_FUNC_UNST_UNUSED_22    = 22,
     TA_FUNC_UNST_T3           = 23,
     TA_FUNC_UNST_ALL          = 24,
     TA_FUNC_UNST_NONE         = -1

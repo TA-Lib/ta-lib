@@ -50,7 +50,8 @@ pub(crate) enum Compatibility {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FuncUnstId {
     Adx,
-    Adxr,
+    /// Reserved: was ADXR, knob was inert (#129); kept for ABI, reusable.
+    Unused1,
     Atr,
     Cmo,
     Dx,
@@ -73,7 +74,8 @@ pub enum FuncUnstId {
     PlusDI,
     PlusDM,
     Rsi,
-    StochRsi,
+    /// Reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable.
+    Unused22,
     T3,
     /// Wildcard: set the unstable period for all functions at once.
     FuncUnstAll,

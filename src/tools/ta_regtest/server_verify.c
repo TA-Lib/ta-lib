@@ -49,7 +49,6 @@ static int          g_curPipe = -1; /* pipe being verified (for diagnostics) */
 typedef struct { const char *name; TA_FuncUnstId id; } UnstableLookup;
 static const UnstableLookup UNSTABLE_MAP[] = {
     {"ADX",          TA_FUNC_UNST_ADX},
-    {"ADXR",         TA_FUNC_UNST_ADXR},
     {"ATR",          TA_FUNC_UNST_ATR},
     {"CMO",          TA_FUNC_UNST_CMO},
     {"DX",           TA_FUNC_UNST_DX},
@@ -62,8 +61,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"HT_TRENDMODE", TA_FUNC_UNST_HT_TRENDMODE},
     /* IMI and MFI are intentionally omitted: both are finite sliding-window
      * indicators reclassified as stable (no TA_FUNC_FLG_UNST_PER), and their
-     * lookback no longer consults the unstable period. Keep in sync with the
-     * UNSTABLE_MAP in test_codegen.c. */
+     * lookback no longer consults the unstable period. ADXR and STOCHRSI are
+     * omitted too: their own knobs were inert and retired (#129) — they follow
+     * their internal ADX/RSI, whose slots the numeric sync mirrors. Keep in
+     * sync with the UNSTABLE_MAP in test_codegen.c. */
     {"KAMA",         TA_FUNC_UNST_KAMA},
     {"MAMA",         TA_FUNC_UNST_MAMA},
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
@@ -72,7 +73,6 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PLUS_DI",      TA_FUNC_UNST_PLUS_DI},
     {"PLUS_DM",      TA_FUNC_UNST_PLUS_DM},
     {"RSI",          TA_FUNC_UNST_RSI},
-    {"STOCHRSI",     TA_FUNC_UNST_STOCHRSI},
     {"T3",           TA_FUNC_UNST_T3},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))

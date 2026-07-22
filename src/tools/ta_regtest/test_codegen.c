@@ -259,9 +259,9 @@ static int json_is_error(const char *json)
 /* ---- Unstable period lookup ---- */
 
 /* Map function name to TA_FuncUnstId for range-sweep tolerance selection.
- * Entries are the 22 functions that carry TA_FUNC_FLG_UNST_PER, plus the 8
- * EMA-derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX + APO/PPO) that
- * converge like EMA. APO and PPO now default to EMA (issue #120), so their
+ * Entries are the 20 functions that carry TA_FUNC_FLG_UNST_PER, plus the 10
+ * derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX + APO/PPO via EMA,
+ * ADXR/STOCHRSI via ADX/RSI) that converge through an internal callee. APO and PPO now default to EMA (issue #120), so their
  * default-parameter range sweep is EMA-converging and needs the loose convergence
  * envelope; the envelope is a safe superset for their finite-window (SMA/WMA/…)
  * parameterisations too. (MACDEXT defaults to SMA but is in this list on the same
@@ -275,7 +275,6 @@ typedef struct {
 
 static const UnstableLookup UNSTABLE_MAP[] = {
     {"ADX",          TA_FUNC_UNST_ADX},
-    {"ADXR",         TA_FUNC_UNST_ADXR},
     {"ATR",          TA_FUNC_UNST_ATR},
     {"CMO",          TA_FUNC_UNST_CMO},
     {"DX",           TA_FUNC_UNST_DX},
@@ -301,7 +300,6 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PLUS_DI",      TA_FUNC_UNST_PLUS_DI},
     {"PLUS_DM",      TA_FUNC_UNST_PLUS_DM},
     {"RSI",          TA_FUNC_UNST_RSI},
-    {"STOCHRSI",     TA_FUNC_UNST_STOCHRSI},
     {"T3",           TA_FUNC_UNST_T3},
     /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
     {"DEMA",         TA_FUNC_UNST_EMA},
@@ -313,6 +311,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. */
     {"APO",          TA_FUNC_UNST_EMA},
     {"PPO",          TA_FUNC_UNST_EMA},
+    /* ADXR/STOCHRSI own knobs were inert and retired (#129); they converge
+     * via their internal ADX/RSI, like the EMA-derived set above. */
+    {"ADXR",         TA_FUNC_UNST_ADX},
+    {"STOCHRSI",     TA_FUNC_UNST_RSI},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 
@@ -324,15 +326,6 @@ static TA_FuncUnstId get_unst_id(const char *funcName)
             return UNSTABLE_MAP[i].id;
     }
     return TA_FUNC_UNST_NONE;
-}
-
-/* doRangeTest convergence driver; ADXR converges via its internal ADX
- * (same mapping as test_adx.c). Codegen sweeps keep get_unst_id(). */
-static TA_FuncUnstId get_range_unst_id(const char *funcName)
-{
-    if( strcmp(funcName, "ADXR") == 0 ) return TA_FUNC_UNST_ADX;
-    if( strcmp(funcName, "STOCHRSI") == 0 ) return TA_FUNC_UNST_RSI;
-    return get_unst_id(funcName);
 }
 
 /* ---- Generic CodegenRangeTestParam (Task 6) ---- */
@@ -1160,7 +1153,7 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         if( strcmp(funcInfo->name, epsilon[i]) == 0 )
             return TA_STABLE_EPSILON;
 
-    if( get_range_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE )
+    if( get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE )
         return TA_STABLE_CONVERGING;
 
     /* Default: a finite-window function without an unstable period compares at
@@ -1526,7 +1519,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         errNb = doRangeTestEx(
             codegen_range_generic,
             stability_class(funcInfo),
-            get_range_unst_id(funcInfo->name),
+            get_unst_id(funcInfo->name),
             (void *)&params,
             funcInfo->nbOutput,
             get_integer_tolerance(funcInfo));

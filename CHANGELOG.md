@@ -30,7 +30,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
-- API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
+- (#4,#14) API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
+- (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 
 ### Deprecated

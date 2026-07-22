@@ -49,7 +49,7 @@ package com.tictactec.ta.lib;
 public enum FuncUnstId {
 	
 	  /* 000 */  Adx,
-	  /* 001 */  Adxr,
+	  /* 001 */  Unused1,
 	  /* 002 */  Atr,
 	  /* 003 */  Cmo,
 	  /* 004 */  Dx,
@@ -70,7 +70,7 @@ public enum FuncUnstId {
 	  /* 019 */  PlusDI,
 	  /* 020 */  PlusDM,
 	  /* 021 */  Rsi,
-	  /* 022 */  StochRsi,
+	  /* 022 */  Unused22,
 	  /* 023 */  T3,
                  All,
                  None

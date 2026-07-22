@@ -112,7 +112,7 @@ functions via `list_functions`, returns `timing_ns` with each call, and supports
 `test_codegen.c` has a generic callback driven by `TA_ForEachFunc` enumeration —
 it covers every indicator automatically using ta_abstract function metadata,
 including price inputs (OHLCV), multi-output functions (BBANDS=3, MACD=3,
-STOCH=2), integer outputs (CDL* patterns), real optional params, and all 24
+STOCH=2), integer outputs (CDL* patterns), real optional params, and all 20
 unstable-period functions. It produces a timing summary, cross-language
 comparison table, and JSONL report.
 

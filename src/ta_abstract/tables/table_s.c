@@ -721,7 +721,7 @@ DEF_FUNCTION( STOCHRSI,
               TA_GroupId_MomentumIndicators,
               "Stochastic Relative Strength Index",
               "StochRsi",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM
              );
 /* STOCHRSI END */
 
