@@ -189,10 +189,14 @@
  * Don't use i++ or func(i) with these macros !
  */
 
-#define TA_REALBODY(IDX)        ( std_fabs( inClose[IDX] - inOpen[IDX] ) )
-#define TA_UPPERSHADOW(IDX)     ( inHigh[IDX] - ( inClose[IDX] >= inOpen[IDX] ? inClose[IDX] : inOpen[IDX] ) )
-#define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? inOpen[IDX] : inClose[IDX] ) - inLow[IDX] )
-#define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
+/* The subtraction operands are widened to double so these compute in double even
+ * when the arrays are const float[] (the TA_S_ bodies) — a no-op for the double
+ * variants, PR #33's "double throughout" for the single-precision ones (#138).
+ * The >= tests need no cast: float->double is order-preserving. */
+#define TA_REALBODY(IDX)        ( std_fabs( (double)inClose[IDX] - (double)inOpen[IDX] ) )
+#define TA_UPPERSHADOW(IDX)     ( (double)inHigh[IDX] - ( inClose[IDX] >= inOpen[IDX] ? (double)inClose[IDX] : (double)inOpen[IDX] ) )
+#define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? (double)inOpen[IDX] : (double)inClose[IDX] ) - (double)inLow[IDX] )
+#define TA_HIGHLOWRANGE(IDX)    ( (double)inHigh[IDX] - (double)inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
 #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[TA_##SET].rangeType)
@@ -221,10 +225,10 @@
  * arrays.  Any change to the batch macros must be mirrored here, or the
  * streams lose bit-exactness with batch on the affected range type.
  */
-#define TA_STREAM_REALBODY(O,H,L,C)     ( std_fabs( (C) - (O) ) )
-#define TA_STREAM_UPPERSHADOW(O,H,L,C)  ( (H) - ( (C) >= (O) ? (C) : (O) ) )
-#define TA_STREAM_LOWERSHADOW(O,H,L,C)  ( ( (C) >= (O) ? (O) : (C) ) - (L) )
-#define TA_STREAM_HIGHLOWRANGE(O,H,L,C) ( (H) - (L) )
+#define TA_STREAM_REALBODY(O,H,L,C)     ( std_fabs( (double)(C) - (double)(O) ) )
+#define TA_STREAM_UPPERSHADOW(O,H,L,C)  ( (double)(H) - ( (C) >= (O) ? (double)(C) : (double)(O) ) )
+#define TA_STREAM_LOWERSHADOW(O,H,L,C)  ( ( (C) >= (O) ? (double)(O) : (double)(C) ) - (double)(L) )
+#define TA_STREAM_HIGHLOWRANGE(O,H,L,C) ( (double)(H) - (double)(L) )
 #define TA_STREAM_CANDLERANGE(SET,O,H,L,C) \
     ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_STREAM_REALBODY(O,H,L,C) : \
     ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_STREAM_HIGHLOWRANGE(O,H,L,C) : \

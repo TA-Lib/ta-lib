@@ -343,6 +343,125 @@ ErrorNumber test_func_variants( TA_History *history )
    return TA_TEST_PASS;
 }
 
+/* Targeted precision regression — issue #138.
+ *
+ * The generic gate above sweeps every CDL* across the history and nine fuzz
+ * shapes and reports them bit-identical across all four variants. That green is
+ * partly hollow: TA_CANDLERANGE/TA_CANDLEAVERAGE reach the leaf macros in
+ * ta_utility.h (TA_HIGHLOWRANGE etc.), which read their input arrays WITHOUT a
+ * (double) cast. Inside a TA_S_ body those arrays are `const float[]`, so the
+ * range term is evaluated in float and rounded before it widens into the double
+ * accumulator — violating PR #33's "TA_S_ computes in double throughout".
+ *
+ * No realistic bar triggers it. Subtracting two floats within a factor of two is
+ * exact (Sterbenz's lemma), so any bar whose high and low are close — every bar
+ * in the fuzz corpus — produces zero float error, which is why the sweep above
+ * sees nothing. It bites only when one operand sits below the other's float ULP,
+ * a high/low ratio past ~2^24. This vector constructs exactly that and pins the
+ * resulting integer flip, so the fix is regression-locked with a concrete case
+ * rather than the comment it used to be.
+ *
+ * Construction (CDLDOJI, HighLow range, avgPeriod 10, factor 0.1):
+ *   bars 0..8 : flat O=H=L=C=1000   -> range 0, exact in both
+ *   bar 9     : H=2^30, L=31        -> true range 2^30-31 = 1073741793, but the
+ *               float subtraction rounds UP to 2^30 (31 < half-ULP(2^30f) = 32),
+ *               a +31 error the double path never makes. Windowed sum: double
+ *               1073741793 vs float 1073741824.
+ *   bar 10    : O=0, C=10737418     -> body 10737418 tuned into the 0.31-wide gap
+ *               between the float threshold 10737418.24 and the double 10737417.93.
+ * At bar 10 the double variant sees body > threshold (not a doji -> 0); the float
+ * variant sees body <= threshold (doji -> 100). Pre-fix the two TA_S_ legs return
+ * 100 while the two double legs return 0 and this test fails; post-fix all four
+ * agree at 0.
+ */
+ErrorNumber test_candle_precision( TA_History *history )
+{
+   enum { NB = 11 };
+   float  fO[NB], fH[NB], fL[NB], fC[NB];
+   double dO[NB], dH[NB], dL[NB], dC[NB];
+   int    outD[NB], outDU[NB], outS[NB], outSU[NB];
+   int    begD = 0, nbD = 0, begDU = 0, nbDU = 0, begS = 0, nbS = 0, begSU = 0, nbSU = 0;
+   TA_RetCode rcD, rcDU, rcS, rcSU, rcSet, rcRestore;
+   int i;
+
+   (void)history;
+
+   /* Pin the settings this vector depends on, independent of any earlier test
+    * group that may have left custom candle globals behind. HighLow is the range
+    * type that reaches TA_HIGHLOWRANGE. */
+   rcSet = TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, 0.1 );
+   if( rcSet != TA_SUCCESS )
+   {
+      printf( "\nCandle precision Fail: TA_SetCandleSettings rc=%d\n", (int)rcSet );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   for( i = 0; i < NB; i++ )
+   {
+      fO[i] = 1000.0f; fH[i] = 1000.0f; fL[i] = 1000.0f; fC[i] = 1000.0f;
+   }
+   /* bar 9: huge high, low below half the float ULP of the high */
+   fH[9] = 1073741824.0f;   /* 2^30, exactly representable */
+   fL[9] = 31.0f;
+   /* bar 10: the evaluated bar; body sits in the float-vs-double threshold gap */
+   fO[10] = 0.0f;
+   fC[10] = 10737418.0f;    /* < 2^24, exactly representable */
+   fH[10] = 10737418.0f;
+   fL[10] = 0.0f;
+
+   /* Widen the SAME float values into the double arrays, so any divergence is
+    * algorithmic rather than a narrowing artefact — the identical convention the
+    * generic gate uses above. */
+   for( i = 0; i < NB; i++ )
+   {
+      dO[i] = (double)fO[i]; dH[i] = (double)fH[i];
+      dL[i] = (double)fL[i]; dC[i] = (double)fC[i];
+   }
+
+   rcD  = TA_CDLDOJI            ( 10, 10, dO, dH, dL, dC, &begD,  &nbD,  outD  );
+   rcDU = TA_CDLDOJI_Unguarded  ( 10, 10, dO, dH, dL, dC, &begDU, &nbDU, outDU );
+   rcS  = TA_S_CDLDOJI          ( 10, 10, fO, fH, fL, fC, &begS,  &nbS,  outS  );
+   rcSU = TA_S_CDLDOJI_Unguarded( 10, 10, fO, fH, fL, fC, &begSU, &nbSU, outSU );
+
+   /* Restore before any early return so a failure here cannot leak custom candle
+    * globals into the tests that follow. */
+   rcRestore = TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+
+   if( rcD != TA_SUCCESS || rcDU != TA_SUCCESS ||
+       rcS != TA_SUCCESS || rcSU != TA_SUCCESS || rcRestore != TA_SUCCESS )
+   {
+      printf( "\nCandle precision Fail [CDLDOJI]: retCode double=%d/%d single=%d/%d "
+              "restore=%d\n", (int)rcD, (int)rcDU, (int)rcS, (int)rcSU, (int)rcRestore );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   if( begD != 10 || nbD != 1 || begDU != 10 || nbDU != 1 ||
+       begS != 10 || nbS != 1 || begSU != 10 || nbSU != 1 )
+   {
+      printf( "\nCandle precision Fail [CDLDOJI]: expected one output at index 10, got "
+              "double(%d,%d) unguarded(%d,%d) single(%d,%d) single_unguarded(%d,%d)\n",
+              begD, nbD, begDU, nbDU, begS, nbS, begSU, nbSU );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   /* The contract: all four variants agree bit-for-bit. Pre-#138-fix the float
+    * legs return 100 (doji) and the double legs 0, because the leaf range term
+    * was rounded to float in the TA_S_ bodies. */
+   if( outS[0] != outD[0] || outSU[0] != outD[0] || outDU[0] != outD[0] )
+   {
+      printf( "\nCandle precision Fail [CDLDOJI issue #138]: variants disagree at bar 10"
+              " -- double=%d unguarded=%d TA_S_=%d TA_S_unguarded=%d. The single-precision"
+              " bodies must compute the candle range in double, not float.\n",
+              outD[0], outDU[0], outS[0], outSU[0] );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   printf( "\n  Candle precision (issue #138): CDLDOJI four-variant parity on a high/low"
+           " span past the float ULP -- bit-identical (out=%d)\n", outD[0] );
+
+   return TA_TEST_PASS;
+}
+
 /**** Local functions definitions.  ****/
 
 /* Stage one regime's OHLCV+OI series into ctx. */
