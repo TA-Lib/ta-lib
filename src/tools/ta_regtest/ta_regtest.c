@@ -653,6 +653,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );
    DO_TEST( test_func_variants,  "UNGUARDED,TA_S_,VARIANT" );
+   DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }
