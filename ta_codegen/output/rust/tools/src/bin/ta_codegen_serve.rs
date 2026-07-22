@@ -803,7 +803,7 @@ fn json_i32_array(data: &[i32]) -> String {
 fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {
     match id {
         0 => Some(FuncUnstId::Adx),
-        1 => Some(FuncUnstId::Adxr),
+        1 => Some(FuncUnstId::Unused1),
         2 => Some(FuncUnstId::Atr),
         3 => Some(FuncUnstId::Cmo),
         4 => Some(FuncUnstId::Dx),
@@ -824,7 +824,7 @@ fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {
         19 => Some(FuncUnstId::PlusDI),
         20 => Some(FuncUnstId::PlusDM),
         21 => Some(FuncUnstId::Rsi),
-        22 => Some(FuncUnstId::StochRsi),
+        22 => Some(FuncUnstId::Unused22),
         23 => Some(FuncUnstId::T3),
         _ => None,
     }
@@ -1434,9 +1434,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inClose = &_json_inClose;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 1, period as i32);
-            }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
@@ -13330,9 +13327,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
             let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
-            if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 22, period as i32);
-            }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -16268,7 +16262,6 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        if let Some(id) = func_unst_id_from_int(1usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(0usize) { cb = cb.unstable_period(id, svK); }
         let c2 = cb.build();
         let rc = c2.adxr(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
@@ -28941,7 +28934,6 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        if let Some(id) = func_unst_id_from_int(22usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }

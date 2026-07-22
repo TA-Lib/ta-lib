@@ -21,10 +21,10 @@ enum RetCode {
 class MInteger { public int value; }
 
 enum FuncUnstId {
-    Adx, Adxr, Atr, Cmo, Dx, Ema,
+    Adx, Unused1, Atr, Cmo, Dx, Ema,
     HtDcPeriod, HtDcPhase, HtPhasor, HtSine, HtTrendline, HtTrendMode,
     Unused12, Kama, Mama, Unused15, MinusDI, MinusDM,
-    Natr, PlusDI, PlusDM, Rsi, StochRsi, T3, None;
+    Natr, PlusDI, PlusDM, Rsi, Unused22, T3, None;
 }
 
 enum Compatibility {
@@ -150901,7 +150901,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ADXR", new AbsFunc("ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", "Adxr", 167772160,
+        ABSTRACT.put("ADXR", new AbsFunc("ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", "Adxr", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -151473,7 +151473,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
-        ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", "StochRsi", 167772160,
+        ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", "StochRsi", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
@@ -151625,8 +151625,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 194133;
-    static final long ABSTRACT_XML_CHECKSUM = 15556218L;
+    static final int ABSTRACT_XML_LENGTH = 194069;
+    static final long ABSTRACT_XML_CHECKSUM = 15551104L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -152622,7 +152622,6 @@ public class TaCodegenServe {
             inClose = _tmp_inClose;
         }
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
-        core.unstablePeriod[1] = jsonInt(json, "unstablePeriod");
         double[] outArr0 = new double[endIdx - startIdx + 1];
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
@@ -161794,7 +161793,6 @@ public class TaCodegenServe {
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInFastD_Period = jsonInt(json, "optInFastD_Period");
         MAType optInFastD_MAType = MAType.values()[jsonInt(json, "optInFastD_MAType")];
-        core.unstablePeriod[22] = jsonInt(json, "unstablePeriod");
         double[] outArr0 = new double[endIdx - startIdx + 1];
         double[] outArr1 = new double[endIdx - startIdx + 1];
         MInteger outBegIdx = new MInteger();
@@ -164324,7 +164322,6 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
-            c2.unstablePeriod[1] = svK;
             c2.unstablePeriod[0] = svK;
             RetCode rc = c2.adxr(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.adxrLookback(optInTimePeriod);
@@ -179186,7 +179183,6 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
-            c2.unstablePeriod[22] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;

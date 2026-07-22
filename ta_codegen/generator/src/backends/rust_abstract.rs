@@ -315,7 +315,6 @@ fn group_variant(g: &str) -> &'static str {
 fn unst_variant(name: &str) -> Option<&'static str> {
     Some(match name {
         "ADX" => "Adx",
-        "ADXR" => "Adxr",
         "ATR" => "Atr",
         "CMO" => "Cmo",
         "DX" => "Dx",
@@ -334,7 +333,6 @@ fn unst_variant(name: &str) -> Option<&'static str> {
         "PLUS_DI" => "PlusDI",
         "PLUS_DM" => "PlusDM",
         "RSI" => "Rsi",
-        "STOCHRSI" => "StochRsi",
         "T3" => "T3",
         _ => return None,
     })

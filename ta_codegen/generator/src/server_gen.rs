@@ -151,7 +151,6 @@ fn price_input_to_rust_ref(name: &str) -> Option<&'static str> {
 fn func_unst_id(name: &str) -> Option<i32> {
     match name {
         "ADX" => Some(0),        // TA_FUNC_UNST_ADX
-        "ADXR" => Some(1),       // TA_FUNC_UNST_ADXR
         "ATR" => Some(2),        // TA_FUNC_UNST_ATR
         "CMO" => Some(3),        // TA_FUNC_UNST_CMO
         "DX" => Some(4),         // TA_FUNC_UNST_DX
@@ -170,7 +169,6 @@ fn func_unst_id(name: &str) -> Option<i32> {
         "PLUS_DI" => Some(19),   // TA_FUNC_UNST_PLUS_DI
         "PLUS_DM" => Some(20),   // TA_FUNC_UNST_PLUS_DM
         "RSI" => Some(21),       // TA_FUNC_UNST_RSI
-        "STOCHRSI" => Some(22),  // TA_FUNC_UNST_STOCHRSI
         "T3" => Some(23),        // TA_FUNC_UNST_T3
         _ => None,
     }

@@ -429,7 +429,7 @@ public int adxrLookback(
 @FuncInfo(
         name  = "ADXR",
         group = "Momentum Indicators",
-        flags = 167772160,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 1,
         nbOutput   = 1
@@ -8786,7 +8786,7 @@ public int stochRsiLookback(
 @FuncInfo(
         name  = "STOCHRSI",
         group = "Momentum Indicators",
-        flags = 167772160,
+        flags = 33554432,
         nbInput    = 1,
         nbOptInput = 4,
         nbOutput   = 2

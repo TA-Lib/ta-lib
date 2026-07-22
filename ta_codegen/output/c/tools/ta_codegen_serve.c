@@ -958,7 +958,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
-        TA_SetUnstablePeriod(1, (unsigned int)svK);
         TA_SetUnstablePeriod(0, (unsigned int)svK);
         rc = TA_ADXR(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
         lb = TA_ADXR_Lookback(optInTimePeriod);
@@ -966,7 +965,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_ADXR_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_ADXR_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_ADXR_Close(st); }
-            TA_SetUnstablePeriod(1, 0);
             TA_SetUnstablePeriod(0, 0);
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
@@ -1039,7 +1037,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
-        TA_SetUnstablePeriod(1, 0);
         TA_SetUnstablePeriod(0, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
@@ -14013,7 +14010,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
-        TA_SetUnstablePeriod(22, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
         TA_SetUnstablePeriod(13, (unsigned int)svK);
@@ -14025,7 +14021,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(&st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHRSI_Close(st); }
-            TA_SetUnstablePeriod(22, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
             TA_SetUnstablePeriod(13, 0);
@@ -14115,7 +14110,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
-        TA_SetUnstablePeriod(22, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
         TA_SetUnstablePeriod(13, 0);
@@ -16170,7 +16164,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             json_find_double_array(json, "inClose", g_inBuf2, MAX_ARRAY_SIZE);
         }
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        TA_SetUnstablePeriod(1, json_find_int(json, "unstablePeriod"));
         int outBegIdx = 0, outNBElement = 0;
         int bench_iters = json_find_int(json, "iters");
         if( bench_iters < 1 ) bench_iters = 1;
@@ -27689,7 +27682,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int optInFastK_Period = json_find_int(json, "optInFastK_Period");
         int optInFastD_Period = json_find_int(json, "optInFastD_Period");
         TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
-        TA_SetUnstablePeriod(22, json_find_int(json, "unstablePeriod"));
         int outBegIdx = 0, outNBElement = 0;
         int bench_iters = json_find_int(json, "iters");
         if( bench_iters < 1 ) bench_iters = 1;

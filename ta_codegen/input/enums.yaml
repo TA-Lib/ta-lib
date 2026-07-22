@@ -27,7 +27,7 @@ MAType:
 # here. Add a row when a new indicator gains an unstable period.
 FuncUnstId:
   - { c_name: TA_FUNC_UNST_ADX,          pascal_name: Adx,         value: 0 }
-  - { c_name: TA_FUNC_UNST_ADXR,         pascal_name: Adxr,        value: 1 }
+  - { c_name: TA_FUNC_UNST_UNUSED_1,     pascal_name: Unused1,     value: 1 }  # reserved: was ADXR, knob was inert (#129); kept for ABI, reusable
   - { c_name: TA_FUNC_UNST_ATR,          pascal_name: Atr,         value: 2 }
   - { c_name: TA_FUNC_UNST_CMO,          pascal_name: Cmo,         value: 3 }
   - { c_name: TA_FUNC_UNST_DX,           pascal_name: Dx,          value: 4 }
@@ -48,5 +48,5 @@ FuncUnstId:
   - { c_name: TA_FUNC_UNST_PLUS_DI,      pascal_name: PlusDI,      value: 19 }
   - { c_name: TA_FUNC_UNST_PLUS_DM,      pascal_name: PlusDM,      value: 20 }
   - { c_name: TA_FUNC_UNST_RSI,          pascal_name: Rsi,         value: 21 }
-  - { c_name: TA_FUNC_UNST_STOCHRSI,     pascal_name: StochRsi,    value: 22 }
+  - { c_name: TA_FUNC_UNST_UNUSED_22,    pascal_name: Unused22,    value: 22 }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
   - { c_name: TA_FUNC_UNST_T3,           pascal_name: T3,          value: 23 }

@@ -289,7 +289,6 @@
 		<ShortDescription>Average Directional Movement Index Rating</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
-			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
@@ -6627,7 +6626,6 @@
 		<ShortDescription>Stochastic Relative Strength Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
-			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>

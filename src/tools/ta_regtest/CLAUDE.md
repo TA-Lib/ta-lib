@@ -167,18 +167,22 @@ Integer outputs use exact match comparison (or tolerance via `TA_DO_NOT_COMPARE`
 
 ### Unstable Period Functions
 
-22 functions have a genuine unstable period that affects output (recursive /
+20 functions have a genuine unstable period that affects output (recursive /
 converging — Wilder smoothing, EMA/adaptive-EMA, Hilbert IIR). Must send
 `unstablePeriod` param to servers:
-ADX, ADXR, ATR, CMO, DX, EMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, KAMA, MAMA, MINUS_DI, MINUS_DM, NATR, PLUS_DI, PLUS_DM, RSI, STOCHRSI, T3
+ADX, ATR, CMO, DX, EMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, KAMA, MAMA, MINUS_DI, MINUS_DM, NATR, PLUS_DI, PLUS_DM, RSI, T3
 
-The `TA_FuncUnstId` enum still has 24 entries: **IMI** and **MFI** keep their
-`TA_FUNC_UNST_*` id (removing it would renumber the enum → ABI break) but are
-*not* unstable — both are finite sliding-window indicators (IMI recomputes its
-window fresh each bar → bit-exact; MFI carries a running accumulator → ~1e-13
-drift only). They no longer carry the `unstable_period` abstract flag and are
-excluded from `UNSTABLE_MAP` so their range sweeps use the tight
-`TA_FUNC_UNST_NONE` tolerance rather than the loose convergence envelope.
+The `TA_FuncUnstId` enum still has 24 entries: four retired ids are kept as
+`TA_FUNC_UNST_UNUSED_*` (removing one would renumber the enum → ABI break).
+**IMI** (#14) and **MFI** (#4) are *not* unstable — finite sliding-window
+indicators (IMI recomputes its window fresh each bar → bit-exact; MFI carries a
+running accumulator → ~1e-13 drift only); they carry no `unstable_period`
+abstract flag and are excluded from `UNSTABLE_MAP` so their range sweeps use the
+tight `TA_FUNC_UNST_NONE` tolerance rather than the loose convergence envelope.
+**ADXR** and **STOCHRSI** (#129) had ids that were never read — they follow
+their internal ADX/RSI instead, so `UNSTABLE_MAP` maps them to
+`TA_FUNC_UNST_ADX`/`_RSI` (the DEMA→EMA pattern), keeping the converging
+range tolerance and the stream K-leg coverage.
 
 ## The VARIANT gate — four-variant bitwise parity, no oracle (issue #137)
 
