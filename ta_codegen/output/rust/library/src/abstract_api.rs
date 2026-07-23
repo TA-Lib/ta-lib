@@ -125,6 +125,7 @@ pub enum FuncId {
     Ema,
     Exp,
     Floor,
+    Hma,
     HtDcperiod,
     HtDcphase,
     HtPhasor,
@@ -203,7 +204,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 167;
+    pub const COUNT: usize = 168;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -379,7 +380,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 167] = [
+pub static FUNCS: [FuncInfo; 168] = [
     FuncInfo {
         id: FuncId::Accbands,
         name: "ACCBANDS",
@@ -472,7 +473,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Absolute Price Oscillator",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 1 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -568,7 +569,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Bollinger Bands",
         flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), domain: OptDomain::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
         unst_id: None,
     },
@@ -1497,6 +1498,18 @@ pub static FUNCS: [FuncInfo; 167] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::Hma,
+        name: "HMA",
+        camel_case_name: "Hma",
+        group: Group::OverlapStudies,
+        hint: "Hull Moving Average",
+        flags: FuncFlags(0x01000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::HtDcperiod,
         name: "HT_DCPERIOD",
         camel_case_name: "HtDcPeriod",
@@ -1672,7 +1685,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Moving average",
         flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -1696,7 +1709,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "MACD with controllable MA type",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastMAType", display_name: "Fast MA", hint: "Type of Moving Average for fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowMAType", display_name: "Slow MA", hint: "Type of Moving Average for slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalMAType", display_name: "Signal MA", hint: "Type of Moving Average for signal line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastMAType", display_name: "Fast MA", hint: "Type of Moving Average for fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowMAType", display_name: "Slow MA", hint: "Type of Moving Average for slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalMAType", display_name: "Signal MA", hint: "Type of Moving Average for signal line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outMACD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
         unst_id: None,
     },
@@ -1732,7 +1745,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Moving average with variable period",
         flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, InputInfo { param_name: "inPeriods", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInMinPeriod", display_name: "Minimum Period", hint: "Value less than minimum will be changed to Minimum period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMaxPeriod", display_name: "Maximum Period", hint: "Value higher than maximum will be changed to Maximum period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInMinPeriod", display_name: "Minimum Period", hint: "Value less than minimum will be changed to Minimum period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMaxPeriod", display_name: "Maximum Period", hint: "Value higher than maximum will be changed to Maximum period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -1972,7 +1985,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Percentage Price Oscillator",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 1 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -1996,7 +2009,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Percentage Volume Oscillator",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 1 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2152,7 +2165,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Stochastic",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_Period", display_name: "Slow-K Period", hint: "Smoothing for making the Slow-K line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_MAType", display_name: "Slow-K MA", hint: "Type of Moving Average for Slow-K", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowD_Period", display_name: "Slow-D Period", hint: "Smoothing for making the Slow-D line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowD_MAType", display_name: "Slow-D MA", hint: "Type of Moving Average for Slow-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_Period", display_name: "Slow-K Period", hint: "Smoothing for making the Slow-K line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_MAType", display_name: "Slow-K MA", hint: "Type of Moving Average for Slow-K", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowD_Period", display_name: "Slow-D Period", hint: "Smoothing for making the Slow-D line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowD_MAType", display_name: "Slow-D MA", hint: "Type of Moving Average for Slow-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outSlowK", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outSlowD", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
         unst_id: None,
     },
@@ -2164,7 +2177,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Stochastic Fast",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outFastK", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFastD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2176,7 +2189,7 @@ pub static FUNCS: [FuncInfo; 167] = [
         hint: "Stochastic Relative Strength Index",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), ], default: 0 } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outFastK", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFastD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2485,6 +2498,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "EMA" => FuncId::Ema,
         "EXP" => FuncId::Exp,
         "FLOOR" => FuncId::Floor,
+        "HMA" => FuncId::Hma,
         "HT_DCPERIOD" => FuncId::HtDcperiod,
         "HT_DCPHASE" => FuncId::HtDcphase,
         "HT_PHASOR" => FuncId::HtPhasor,

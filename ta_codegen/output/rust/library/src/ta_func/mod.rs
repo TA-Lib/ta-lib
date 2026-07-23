@@ -99,6 +99,7 @@ mod dx;
 mod ema;
 mod exp;
 mod floor;
+mod hma;
 mod ht_dcperiod;
 mod ht_dcphase;
 mod ht_phasor;

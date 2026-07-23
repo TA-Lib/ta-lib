@@ -5016,6 +5016,38 @@ TA_LIB_API TA_RetCode TA_FLOOR_Close( TA_FLOOR_Stream *stream );
 TA_LIB_API TA_RetCode TA_FLOOR_OpenAndFill( TA_FLOOR_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_HMA - Hull Moving Average
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_HMA( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_HMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
  * TA_HT_DCPERIOD - Hilbert Transform - Dominant Cycle Period
  * 
  * Input  = double
@@ -5754,6 +5786,10 @@ TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 10000
 /*
  * Streaming API for TA_MA — incremental per-bar evaluation.
  * See docs/streaming-api-design.md.
+ * Note: optInMAType values whose underlying function has no stream yet
+ * (TA_MAType_HMA) are rejected at Open with TA_BAD_PARAM; they gain
+ * streams automatically when the underlying function does.
+ * The optInTimePeriod == 1 identity path streams for every optInMAType value.
  */
 typedef struct TA_MA_Stream TA_MA_Stream;
 

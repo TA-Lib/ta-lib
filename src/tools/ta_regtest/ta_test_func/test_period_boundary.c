@@ -310,7 +310,7 @@ static ErrorNumber testLookbackContract( void )
    PB_CHECK_INT( "TA_TRIX_Lookback(1)", TA_TRIX_Lookback( 1 ), 1 );
    PB_CHECK_INT( "TA_ULTOSC_Lookback(1,1,1)", TA_ULTOSC_Lookback( 1, 1, 1 ), 1 );
 
-   for( i = 0; i <= (int)TA_MAType_T3; i++ )
+   for( i = 0; i <= (int)TA_MAType_HMA; i++ )
    {
       PB_CHECK_INT( "TA_MA_Lookback(1,maType)", TA_MA_Lookback( 1, (TA_MAType)i ), 0 );
    }
@@ -490,7 +490,7 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* MA(period=1) for every MAType: the documented "just copy" path. */
-   for( i = 0; i <= (int)TA_MAType_T3; i++ )
+   for( i = 0; i <= (int)TA_MAType_HMA; i++ )
    {
       char label[64];
       snprintf( label, sizeof(label), "MA(1,maType=%d)", i );
@@ -770,7 +770,7 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* MACDEXT with signalPeriod=1 for every signal MAType. */
-   for( maType = 0; maType <= (int)TA_MAType_T3; maType++ )
+   for( maType = 0; maType <= (int)TA_MAType_HMA; maType++ )
    {
       char label[64];
       snprintf( label, sizeof(label), "MACDEXT(12,26,sig=1,maType=%d)", maType );

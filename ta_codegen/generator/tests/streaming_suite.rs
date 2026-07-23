@@ -575,7 +575,7 @@ fn ma_derives_dispatch_plan() {
     };
     assert_eq!(dp.param, "optInMAType");
     assert!(dp.identity.is_some(), "period==1 identity path");
-    assert_eq!(dp.arms.len(), 9, "all nine batch arms recognized");
+    assert_eq!(dp.arms.len(), 10, "all ten batch arms recognized");
     let supported: Vec<&str> = dp
         .arms
         .iter()
@@ -585,12 +585,14 @@ fn ma_derives_dispatch_plan() {
     assert_eq!(
         supported,
         ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3"],
-        "every arm streams: single-output MAs plus MAMA via its nullable FAMA \
-         (TRIMA joined in M6c, MAMA via nullable outputs in #125)"
+        "every pre-#139 arm streams: single-output MAs plus MAMA via its \
+         nullable FAMA (TRIMA joined in M6c, MAMA via nullable outputs in #125)"
     );
-    // No reject arms remain — MAMA is now a supported trailing-NULL delegation.
+    // HMA (#139) is the one reject arm: hma has no stream yet (Map-feeds-Sub
+    // shape), so its arm must be an Open-time reject that auto-flips to
+    // supported on the first generate after hma gains the YAML `stream` flag.
     let rejected: Vec<&str> = dp.unsupported_labels();
-    assert!(rejected.is_empty(), "no MAType rejects: got {rejected:?}");
+    assert_eq!(rejected, ["MAType_HMA"], "HMA is the sole reject arm");
     // The MAMA arm forwards mama's output 0 (the MAMA line) into MA's single
     // output and discards output 1 (FAMA, nullable) as NULL. This map is what
     // the C emitter renders as `TA_MAMA_*( ..., outReal, NULL )`.

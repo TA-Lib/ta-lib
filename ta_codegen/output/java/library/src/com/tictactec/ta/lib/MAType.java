@@ -56,5 +56,6 @@ public enum MAType
    Trima,
    Kama,
    Mama,
-   T3
+   T3,
+   Hma
 };

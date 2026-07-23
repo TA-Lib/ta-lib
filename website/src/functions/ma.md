@@ -32,7 +32,7 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 | `optInTimePeriod` | integer | 30 | 1–100000 | Averaging window length |
 | `optInMAType` | MAType | SMA (0) | any MAType | Which moving-average algorithm to dispatch to |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA*
 
 ## Implementation
 
@@ -52,4 +52,4 @@ Moving Average, MovingAverage
 
 ## See Also
 
-[SMA](/functions/sma) · [EMA](/functions/ema) · [WMA](/functions/wma) · [DEMA](/functions/dema) · [TEMA](/functions/tema) · [TRIMA](/functions/trima) · [KAMA](/functions/kama) · [MAMA](/functions/mama) · [T3](/functions/t3)
+[SMA](/functions/sma) · [EMA](/functions/ema) · [WMA](/functions/wma) · [DEMA](/functions/dema) · [TEMA](/functions/tema) · [TRIMA](/functions/trima) · [KAMA](/functions/kama) · [MAMA](/functions/mama) · [T3](/functions/t3) · [HMA](/functions/hma)

@@ -2106,8 +2106,13 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    Default, Metastock;\n");
     s.push_str("}\n\n");
 
+    // MAType — ordinal == the C enum value (enums.yaml rows are ascending).
     s.push_str("enum MAType {\n");
-    s.push_str("    Sma, Ema, Wma, Dema, Tema, Trima, Kama, Mama, T3;\n");
+    {
+        let ma = enums.get("MAType").expect("MAType enum required");
+        let names: Vec<&str> = ma.variants.iter().map(|v| v.pascal_name.as_str()).collect();
+        s.push_str(&format!("    {};\n", names.join(", ")));
+    }
     s.push_str("}\n\n");
 
     // RangeType — mirrors the shipped enum (RealBody=0, HighLow=1, Shadows=2) so the
@@ -3977,9 +3982,10 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
 //   mutating globals.
 // ---------------------------------------------------------------------------
 
-/// Substitute C enum constants (`TA_MAType_MAMA`) with their integer values so
-/// a `sv_reject_condition` guard renders as valid Rust.
-fn sv_guard_to_rust(guard: &str, enums: &HashMap<String, EnumDef>) -> String {
+/// Substitute C enum constants (`TA_MAType_HMA`) with their integer values so
+/// a `sv_reject_condition` guard renders as valid Rust or Java (both compare
+/// the raw enum int).
+fn sv_guard_enum_ints(guard: &str, enums: &HashMap<String, EnumDef>) -> String {
     let mut out = guard.to_string();
     for e in enums.values() {
         for v in &e.variants {
@@ -4154,7 +4160,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     // Expected-reject precheck (dispatch / period-bank arms without a stream).
     if let Some(guard) = sv_reject_condition(func, funcs, None) {
-        let guard = sv_guard_to_rust(&guard, enums);
+        let guard = sv_guard_enum_ints(&guard, enums);
         let _ = writeln!(s, "        if {guard} {{");
         let _ = writeln!(
             s,
@@ -4376,7 +4382,7 @@ fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 // Integer optional-param defaults are integer-valued `f64` in the IR; the
 // `as i64` casts for literal emission are exact, not truncating.
 #[allow(clippy::too_many_lines, clippy::cast_possible_truncation, clippy::cognitive_complexity)]
-fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
+fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
     let base = crate::backends::java::to_java_method_name(&func.name, func.camel_case.as_deref());
     let class = crate::backends::java_stream::stream_class_name(func);
@@ -4532,12 +4538,14 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
     }
 
     // Expected-reject precheck (dispatch/period-bank arms without a stream) —
-    // currently generates for zero functions (all arms stream post-#125); the
-    // machinery regenerates automatically if an arm ever loses its stream. The
-    // guard compares raw enum ints, so substitute C constants with values.
+    // live again since #139: hma has no stream yet, so every MAType-dispatching
+    // function (MA, BBANDS, APO/PPO/PVO, STOCH*, MACDEXT, MAVP) generates a
+    // guard for the HMA arm. The guard compares raw enum ints, so substitute
+    // C constants with values.
     if let Some(guard) = sv_reject_condition(func, funcs, None) {
-        // Rewrite enum param names to their raw-int locals for the guard.
-        let mut guard_java = guard.clone();
+        // Rewrite enum param names to their raw-int locals for the guard, and
+        // C enum constants to their integer values (Java has no TA_MAType_*).
+        let mut guard_java = sv_guard_enum_ints(&guard, enums);
         for p in &func.optional_inputs {
             if matches!(p.param_type, crate::ir::ParamType::Enum(_)) {
                 guard_java = guard_java.replace(&p.name, &format!("_raw_{}", p.name));
@@ -4833,7 +4841,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef]) -> String {
 /// "not_streamable", the driver's capability probe contract).
 pub(crate) fn generate_java_stream_verify(
     funcs: &[FuncDef],
-    _enums: &HashMap<String, EnumDef>,
+    enums: &HashMap<String, EnumDef>,
 ) -> String {
     use std::fmt::Write as _;
     let mut s = String::new();
@@ -4855,7 +4863,7 @@ pub(crate) fn generate_java_stream_verify(
         .filter(|f| crate::backends::java_stream::emits_stream(f, &lookup))
         .collect();
     for f in &emitted {
-        s.push_str(&emit_java_sv_func(f, funcs));
+        s.push_str(&emit_java_sv_func(f, funcs, enums));
     }
 
     // fuzz_in_hash — the same input-port self-check the Rust server answers

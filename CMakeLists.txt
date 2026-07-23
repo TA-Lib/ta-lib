@@ -331,6 +331,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EXP.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FLOOR.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_HMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_HT_DCPERIOD.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_HT_DCPHASE.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_HT_PHASOR.c"

@@ -1625,6 +1625,32 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
 #define SWEEP_MAX_OPT 16
 
+/* --- Post-freeze enum values (issue #139) --------------------------------
+ * TA_MAType_HMA (9) exists only in the current library: the frozen oracles
+ * (ta_ref_serve @ reference-pre-cutover, ta_064_serve @ v0.6.4) reject it
+ * with TA_BAD_PARAM while the current side computes -- a guaranteed false
+ * mismatch that would diff the feature itself, not a bug. Vector builders
+ * that feed a FROZEN oracle therefore skip IntegerList values above this
+ * max, and the affected run summaries print the skip count so the exclusion
+ * is loud, never silent. Current-vs-current gates are unaffected and DO
+ * exercise the new value: --xlang-hash, stream_verify's enum sweep, the
+ * VARIANT gate and the COMPOSITE hand tests (TA_MAType_HMA dispatch parity).
+ * When a frozen oracle is re-frozen on a tag that includes #139, raise (or
+ * retire) this max accordingly. */
+#define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; HMA(9) added by #139 */
+static long long g_frozenEnumSkips = 0;
+
+static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value)
+{
+    if( oi->paramName && strstr(oi->paramName, "MAType")
+        && value > FROZEN_ORACLE_MATYPE_MAX )
+    {
+        g_frozenEnumSkips++;
+        return 1;
+    }
+    return 0;
+}
+
 /* Send a set_compatibility to one server. Returns 1 on success. */
 static int sweep_set_compat(CodegenPipe *pipe, int mode, char *respBuf)
 {
@@ -1882,7 +1908,10 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(funcInfo->handle, i, &optInfo);
 
-        double cand[8];
+        /* Sized past the widest single-param list (MAType: 10 values, 9
+         * non-default) so the cap below never silently drops a value if
+         * FROZEN_ORACLE_MATYPE_MAX is retired after a re-freeze. */
+        double cand[12];
         int nc = 0;
 
         if( optInfo->type == TA_OptInput_IntegerRange )
@@ -1911,9 +1940,18 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         {
             const TA_IntegerList *l = (const TA_IntegerList *)optInfo->dataSet;
             unsigned int e;
-            for( e = 0; e < l->nbElement && nc < 8; e++ )
+            for( e = 0; e < l->nbElement; e++ )
             {
-                if( l->data[e].value != (int)optInfo->defaultValue )
+                if( l->data[e].value == (int)optInfo->defaultValue )
+                    continue;
+                /* This sweep diffs against the frozen ta_ref_serve: skip enum
+                 * values it predates (counted; see FROZEN_ORACLE_MATYPE_MAX).
+                 * Evaluated BEFORE the cand cap so the exclusion stays loud --
+                 * an `nc` bound in the loop condition would silently truncate
+                 * the tail value instead of counting it. */
+                if( frozen_excludes_enum_value( optInfo, l->data[e].value ) )
+                    continue;
+                if( nc < 12 )
                     cand[nc++] = (double)l->data[e].value;
             }
         }
@@ -2686,10 +2724,15 @@ static ErrorNumber test_codegen_for_language(
     {
         ctx.sweepVariants  = 0;
         ctx.sweepFunctions = 0;
+        g_frozenEnumSkips  = 0;
         TA_ForEachFunc(sweep_one_function, &ctx);
         printf("  Ref differential sweep: %d variants across %d functions%s\n",
                ctx.sweepVariants, ctx.sweepFunctions,
                ctx.error == TA_TEST_PASS ? ", all match ta_ref_serve" : "");
+        if( g_frozenEnumSkips > 0 )
+            printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
+                   "(#139; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+                   g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     }
 
     /* Stream verification: batch-vs-stream bitwise, computed in-server.
@@ -3151,9 +3194,10 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
 
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
 #define FUZZ_MAX_OPT  16
-#define FUZZ_MAX_VEC  48    /* parameter vectors per function. Sized for the
+#define FUZZ_MAX_VEC  56    /* parameter vectors per function. Sized for the
                              * widest sweep (MACDEXT: 3 period ranges x up to 6
-                             * candidates + 3 MAType lists x 8 = ~42, + defaults).
+                             * candidates + 3 MAType lists x 9 = ~46, + defaults;
+                             * MAType grew to 10 values with HMA #139).
                              * fuzz_build_vectors reports any overflow and the
                              * caller fails the run loudly (no silent drop). */
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
@@ -3277,9 +3321,14 @@ static unsigned long long fuzz_parse_hash(const char *resp)
 }
 
 /* Parameter vectors: defaults + one-param-varied boundary/list sweeps. */
+/* frozenOracle: 1 when the vectors feed a frozen oracle (--fuzz-064's
+ * ta_064_serve) -- IntegerList values the freeze predates are then excluded
+ * (see FROZEN_ORACLE_MATYPE_MAX). --xlang-hash is current-vs-current and
+ * passes 0, so the new values stay bitwise-gated there. */
 static int fuzz_build_vectors(const TA_FuncInfo *fi,
                               double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
-                              int *overflow)
+                              int *overflow,
+                              int frozenOracle)
 {
     *overflow = 0;
     double def[FUZZ_MAX_OPT];
@@ -3328,7 +3377,9 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
         {
             const TA_IntegerList *l = (const TA_IntegerList *)oi->dataSet;
             for( unsigned int e2 = 0; l && e2 < l->nbElement && nc < 10; e2++ )
-                if( l->data[e2].value != (int)oi->defaultValue )
+                if( l->data[e2].value != (int)oi->defaultValue
+                    && !(frozenOracle
+                         && frozen_excludes_enum_value( oi, l->data[e2].value )) )
                     cand[nc++] = (double)l->data[e2].value;
         }
         else if( oi->type == TA_OptInput_RealRange )
@@ -3755,7 +3806,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
     int vecOverflow = 0;
-    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow);
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 1);
     if( vecOverflow > 0 )
     {
         printf("FUZZ VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped by "
@@ -3959,6 +4010,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     else
         printf("  (warning: list_functions failed — subset gate disabled)\n");
 
+    g_frozenEnumSkips = 0;
     TA_ForEachFunc(fuzz_one_function, &ctx);
 
     free(ctx.reqBuf); free(ctx.respBuf); free(funcList);
@@ -3985,6 +4037,10 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI function(s) skipped entirely — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
+    if( g_frozenEnumSkips > 0 )
+        printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
+               "(#139; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+               g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     if( ctx.varianceSkipped > 0 )
         printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",
                ctx.varianceSkipped, (double)FUZZ_VAR_MAX_KAPPA);
@@ -4478,7 +4534,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
     int vecOverflow = 0;
-    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow);
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 0);
     if( vecOverflow > 0 )
     {
         printf("XLANG VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped\n",

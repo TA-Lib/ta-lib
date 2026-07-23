@@ -160,7 +160,8 @@ typedef enum {
    TA_MAType_TRIMA =5,
    TA_MAType_KAMA  =6,
    TA_MAType_MAMA  =7,
-   TA_MAType_T3    =8
+   TA_MAType_T3    =8,
+   TA_MAType_HMA   =9
 } TA_MAType;
 
 

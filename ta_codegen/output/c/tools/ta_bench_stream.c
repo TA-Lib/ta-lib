@@ -135,6 +135,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_CDLUPSIDEGAP2CROWS.c"
 #include "ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_CEIL.c"
+#include "ta_CMF.c"
 #include "ta_CMO.c"
 #include "ta_CMOU.c"
 #include "ta_CORREL.c"
@@ -146,6 +147,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_EMA.c"
 #include "ta_EXP.c"
 #include "ta_FLOOR.c"
+#include "ta_HMA.c"
 #include "ta_HT_DCPERIOD.c"
 #include "ta_HT_DCPHASE.c"
 #include "ta_HT_PHASOR.c"
@@ -180,10 +182,12 @@ static void bench_tracked_free(void *p) {
 #include "ta_MOM.c"
 #include "ta_MULT.c"
 #include "ta_NATR.c"
+#include "ta_NVI.c"
 #include "ta_OBV.c"
 #include "ta_PLUS_DI.c"
 #include "ta_PLUS_DM.c"
 #include "ta_PPO.c"
+#include "ta_PVI.c"
 #include "ta_PVO.c"
 #include "ta_ROC.c"
 #include "ta_ROCP.c"
@@ -213,6 +217,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_TYPPRICE.c"
 #include "ta_ULTOSC.c"
 #include "ta_VAR.c"
+#include "ta_VWMA.c"
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"
@@ -1287,14 +1292,14 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_BBANDS_Lookback(5, 2.000000000000000, 2.000000000000000, 0);
+        int lb = TA_BBANDS_Lookback(20, 2.000000000000000, 2.000000000000000, 0);
         if( lb < 0 ) lb = 0;
         for( int pass = 0; pass < 3; pass++ ) {
             int t = lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_BBANDS(t, t, g_rt_close, 5, 2.000000000000000, 2.000000000000000, 0, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_BBANDS(t, t, g_rt_close, 20, 2.000000000000000, 2.000000000000000, 0, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -1308,7 +1313,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BBANDS_Open(&st, g_close, g_nPoints, 5, 2.000000000000000, 2.000000000000000, 0, &v0, &v1, &v2);
+        TA_RetCode orc = TA_BBANDS_Open(&st, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -5705,6 +5710,73 @@ static void bench_stream_all(const char *filter, int iters) {
         }
         fflush(stdout);
     }
+    if( func_matches(filter, "CMF") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_CMF_Lookback(20);
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_high[t] = g_high[it & BENCH_MASK];
+                g_rt_low[t] = g_low[it & BENCH_MASK];
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                g_rt_volume[t] = g_volume[it & BENCH_MASK];
+                TA_CMF(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, 20, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_CMF_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_CMF_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 20, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_CMF_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_CMF_Peek(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_CMF_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_CMF_Close(st);
+            printf("CMF %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_CMF_Close(st); }
+            printf("CMF %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
     if( func_matches(filter, "CMO") ) {
         long long best_b = 0, best_u = -1, best_p = -1;
         int begIdx = 0, nb = 0;
@@ -8721,6 +8793,71 @@ static void bench_stream_all(const char *filter, int iters) {
         }
         fflush(stdout);
     }
+    if( func_matches(filter, "NVI") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_NVI_Lookback();
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                g_rt_volume[t] = g_volume[it & BENCH_MASK];
+                TA_NVI(t, t, g_rt_close, g_rt_volume, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_NVI_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_NVI_Open(&st, g_close, g_volume, g_nPoints, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_NVI_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_NVI_Peek(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_NVI_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_NVI_Close(st);
+            printf("NVI %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_NVI_Close(st); }
+            printf("NVI %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
     if( func_matches(filter, "OBV") ) {
         long long best_b = 0, best_u = -1, best_p = -1;
         int begIdx = 0, nb = 0;
@@ -8978,6 +9115,135 @@ static void bench_stream_all(const char *filter, int iters) {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PPO_Close(st); }
             printf("PPO %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "PVI") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_PVI_Lookback();
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                g_rt_volume[t] = g_volume[it & BENCH_MASK];
+                TA_PVI(t, t, g_rt_close, g_rt_volume, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_PVI_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_PVI_Open(&st, g_close, g_volume, g_nPoints, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_PVI_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_PVI_Peek(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_PVI_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_PVI_Close(st);
+            printf("PVI %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_PVI_Close(st); }
+            printf("PVI %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "PVO") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_PVO_Lookback(12, 26, 1);
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_volume[t] = g_volume[it & BENCH_MASK];
+                TA_PVO(t, t, g_rt_volume, 12, 26, 1, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_PVO_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_PVO_Open(&st, g_volume, g_nPoints, 12, 26, 1, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_PVO_Update(st, g_volume[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_PVO_Peek(st, g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_PVO_Update(st, g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_PVO_Close(st);
+            printf("PVO %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_PVO_Close(st); }
+            printf("PVO %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
         }
         fflush(stdout);
     }
@@ -10798,6 +11064,71 @@ static void bench_stream_all(const char *filter, int iters) {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VAR_Close(st); }
             printf("VAR %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "VWMA") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_VWMA_Lookback(30);
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                g_rt_volume[t] = g_volume[it & BENCH_MASK];
+                TA_VWMA(t, t, g_rt_close, g_rt_volume, 30, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_VWMA_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_VWMA_Open(&st, g_close, g_volume, g_nPoints, 30, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_VWMA_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_VWMA_Peek(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_VWMA_Update(st, g_close[it & BENCH_MASK], g_volume[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_VWMA_Close(st);
+            printf("VWMA %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_VWMA_Close(st); }
+            printf("VWMA %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
         }
         fflush(stdout);
     }

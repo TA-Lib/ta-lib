@@ -72,7 +72,7 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -115,7 +115,7 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — variable-period moving average.

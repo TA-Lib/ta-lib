@@ -88,6 +88,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [BBANDS](/functions/bbands) — Bollinger Bands
 - [DEMA](/functions/dema) — Double Exponential Moving Average
 - [EMA](/functions/ema) — Exponential Moving Average
+- [HMA](/functions/hma) — Hull Moving Average
 - [HT_TRENDLINE](/functions/ht_trendline) — Hilbert Transform - Instantaneous Trendline
 - [KAMA](/functions/kama) — Kaufman Adaptive Moving Average
 - [MA](/functions/ma) — Moving average

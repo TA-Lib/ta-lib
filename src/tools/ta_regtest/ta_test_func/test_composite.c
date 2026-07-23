@@ -45,6 +45,7 @@
  *  071626 MF,CC  First version. Composite-function test category.
  *  072026 MF,CC  Oracle check via checkOracleValue (near-zero absolute floor).
  *  072126 MF,CC  CMF differential leg, at tolerance rather than bitwise (#134).
+ *  072226 MF,CC  HMA legs, incl. TA_MAType_HMA dispatch parity (#139).
  */
 
 /* Description:
@@ -112,6 +113,7 @@ static const struct { int fast; int slow; TA_MAType maType; } pvoGrid[] =
    { 12, 26, TA_MAType_KAMA  },
    { 12, 26, TA_MAType_MAMA  },
    { 12, 26, TA_MAType_T3    },
+   { 12, 26, TA_MAType_HMA   },
    { 26, 12, TA_MAType_SMA   },  /* fast>slow: internal swap path */
    { 26, 12, TA_MAType_EMA   },  /* fast>slow: internal swap path */
    {  5, 10, TA_MAType_EMA   },  /* shorter periods */
@@ -170,6 +172,14 @@ static ErrorNumber test_vwma_tulip_vectors( void );
 static ErrorNumber test_vwma_flat_price( void );
 static ErrorNumber test_vwma_all_zero_volume( void );
 static ErrorNumber test_cmf_differential( const TA_History *history );
+static ErrorNumber test_hma_differential( const TA_History *history );
+static ErrorNumber test_hma_oracle( const TA_History *history );
+static ErrorNumber test_hma_tulip_vector( void );
+static ErrorNumber test_hma_inplace( const TA_History *history );
+static ErrorNumber test_hma_matype( const TA_History *history );
+static ErrorNumber test_hma_single_element( const TA_History *history );
+static ErrorNumber test_hma_param_reject( const TA_History *history );
+static ErrorNumber test_hma_large_period( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -217,6 +227,38 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_cmf_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_oracle( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_tulip_vector();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_matype( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_single_element( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_param_reject( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_hma_large_period();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -904,6 +946,620 @@ static ErrorNumber test_cmf_differential( const TA_History *history )
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* ==================== HMA ====================
+ *
+ * HMA(n) = WMA( 2*WMA(close, n/2) - WMA(close, n), (int)sqrt(n) ), both derived
+ * periods TRUNCATED -- the author's Integer(); see hma.c and issue #139.
+ *
+ * The shipped hma() is a FUSED single pass (three interleaved WMA rolling
+ * sums + a sqrt(n)-sized ring, issue #139), while the differential below
+ * re-composes the formula through the PUBLIC TA_WMA at the fused loop's own
+ * anchor -- two genuinely independent code paths that must agree BIT-FOR-BIT,
+ * because the fused loop reproduces TA_WMA's exact accumulation order per
+ * stage. Formula correctness additionally comes from the external oracle (2)
+ * and the Tulip vector (3), which a differential cannot provide (both sides
+ * could share the same wrong formula).
+ *
+ * The sub-ranges matter: TA_WMA carries periodSum/periodSub accumulators from
+ * its (clamped) startIdx, so its output at a given bar depends at ULP scale on
+ * where the call started (TA_STABLE_EPSILON class, ~1e-13 relative -- MEASURED
+ * 233/233 bars differ bitwise for WMA(10) started at bar 19 vs bar 9). The
+ * composition below therefore anchors the two inner WMAs at period-1, exactly
+ * where a full-range hma() anchors them internally. If this differential ever
+ * needs a tolerance, the implementation has drifted from the composition --
+ * do not paper over it with an epsilon.
+ */
+
+/* HMA period grid: 2 and 3 drive halfPeriod/sqrtPeriod to 1 (TA_WMA's
+ * period==1 identity short-circuit); 4 is the smallest fully-weighted case;
+ * 5 matches the Tulip vector; 9, 16, 25 and 100 have exact integer square
+ * roots (the truncation boundary); 20 is the shipped default (author's); 30
+ * is the TA-Lib MA-family default. */
+static const int hmaGrid[] = { 2, 3, 4, 5, 9, 16, 20, 25, 30, 100 };
+#define NB_HMA_GRID (sizeof(hmaGrid)/sizeof(hmaGrid[0]))
+
+/* HMA external-oracle golden values.
+ *
+ * Source: pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1), on the
+ * standard 252-bar close series (TA_SREF_close_daily_ref_0_PRIV),
+ * optInTimePeriod = 20. outBegIdx = 22, nb = 230. Independently reproduced
+ * from scratch (fresh rolling dot-product WMAs, no TA-Lib code) to a measured
+ * max relative error of 2.7e-16 across all six -- ULP-level agreement of two
+ * structurally different implementations.
+ *
+ * idx is the OUTPUT-array index (0 == global bar 22). */
+static const struct { int idx; double value; } hmaOracle[] =
+{
+   {   0,  87.94363051948052  },
+   {   1,  86.58896103896105  },
+   {  57,  98.18782943722945  },
+   { 115, 136.34847445887448  },
+   { 172, 115.81672034632035  },
+   { 229, 108.51976017316020  },
+};
+#define NB_HMA_ORACLE (sizeof(hmaOracle)/sizeof(hmaOracle[0]))
+
+#define HMA_ORACLE_EXPECTED_BEG 22
+#define HMA_ORACLE_EXPECTED_NB  230
+#define HMA_ORACLE_PERIOD       20
+/* Relative tolerance 1e-12 against a measured 2.7e-16 agreement -- a ~3000x
+ * margin for cross-platform rounding, still far tighter than any formula error
+ * (a rounding-convention mix-up on the derived periods moves values by 1e-3
+ * relative and shifts the lookback). Absolute floor 1e-9: HMA tracks price and
+ * never approaches zero on this series; the floor keeps a future near-zero
+ * golden from becoming a spurious failure. See checkOracleValue(). */
+#define HMA_ORACLE_TOL 1e-12
+#define HMA_ORACLE_ABS 1e-9
+
+/* (1) DIFFERENTIAL: hma() == WMA(2*WMA(h) - WMA(n), s) composed through the
+ * public TA_WMA at hma()'s own internal sub-ranges, bit-for-bit. */
+static ErrorNumber test_hma_differential( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars, halfPeriod, sqrtPeriod, wmaStart;
+   TA_RetCode rcH, rcF, rcHalf, rcS;
+   TA_Integer begH, nbH, begF, nbF, begHalf, nbHalf, begS, nbS;
+   static TA_Real outHMA[OUT_CAP];
+   static TA_Real outFull[OUT_CAP];
+   static TA_Real outHalf[OUT_CAP];
+   static TA_Real diffSeries[OUT_CAP];
+   static TA_Real outSmooth[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( g = 0; g < NB_HMA_GRID; g++ )
+   {
+      int period = hmaGrid[g];
+      halfPeriod = period / 2;
+      sqrtPeriod = (int)sqrt((double)period);
+      /* A full-range hma() clamps startIdx to its lookback (period+sqrt-2) and
+       * anchors both inner WMAs sqrt-1 bars earlier: at period-1 exactly. */
+      wmaStart = period - 1;
+
+      rcH = TA_HMA( 0, nbBars - 1, history->close, period, &begH, &nbH, outHMA );
+
+      /* Test-only reference: three calls to the shipped TA_WMA plus the de-lag
+       * combine. No new numerical logic -- only primitives already proven by
+       * the bitwise cross-language gate, the differential fuzz and the
+       * hardcoded expected values. */
+      rcF    = TA_WMA( wmaStart, nbBars - 1, history->close, period,
+                       &begF, &nbF, outFull );
+      rcHalf = TA_WMA( wmaStart, nbBars - 1, history->close, halfPeriod,
+                       &begHalf, &nbHalf, outHalf );
+
+      if( rcH != TA_SUCCESS || rcF != TA_SUCCESS || rcHalf != TA_SUCCESS )
+      {
+         printf( "HMA differential Fail [period %d]: retCode HMA=%d WMA=%d/%d\n",
+                 period, (int)rcH, (int)rcF, (int)rcHalf );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      /* wmaStart >= both inner lookbacks, so both calls start exactly there. */
+      if( begF != wmaStart || begHalf != wmaStart || nbF != nbHalf )
+      {
+         printf( "HMA differential Fail [period %d]: inner ranges (%d,%d)/(%d,%d) "
+                 "expected beg %d\n",
+                 period, (int)begF, (int)nbF, (int)begHalf, (int)nbHalf, wmaStart );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      /* De-lag combine, the same expression hma() fuses. */
+      for( i = 0; i < nbF; i++ )
+         diffSeries[i] = 2.0*outHalf[i] - outFull[i];
+
+      rcS = TA_WMA( 0, nbF - 1, diffSeries, sqrtPeriod, &begS, &nbS, outSmooth );
+      if( rcS != TA_SUCCESS )
+      {
+         printf( "HMA differential Fail [period %d]: smoothing retCode %d\n",
+                 period, (int)rcS );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      /* Global first output = wmaStart + (sqrt-1) == the HMA lookback. */
+      if( begH != wmaStart + begS || nbH != nbS )
+      {
+         printf( "HMA differential Fail [period %d]: range HMA(%d,%d) vs "
+                 "compose(%d,%d)\n",
+                 period, (int)begH, (int)nbH, (int)(wmaStart + begS), (int)nbS );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = 0; i < nbH; i++ )
+      {
+         if( memcmp( &outHMA[i], &outSmooth[i], sizeof(double) ) != 0 )
+         {
+            printf( "HMA differential Fail [period %d] at out[%d]: "
+                    "fused %.17g != compose %.17g (must be BIT-exact)\n",
+                    period, i, outHMA[i], outSmooth[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) EXTERNAL ORACLE: the composition is the RIGHT formula -- including the
+ * author's truncation of both derived periods -- which (1) cannot show. */
+static ErrorNumber test_hma_oracle( const TA_History *history )
+{
+   unsigned int k;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+
+   rc = TA_HMA( 0, (int)history->nbBars - 1, history->close,
+                HMA_ORACLE_PERIOD, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "HMA oracle Fail: retCode %d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != HMA_ORACLE_EXPECTED_BEG || nb != HMA_ORACLE_EXPECTED_NB )
+   {
+      printf( "HMA oracle Fail: got beg=%d nb=%d expected %d/%d\n",
+              (int)beg, (int)nb, HMA_ORACLE_EXPECTED_BEG, HMA_ORACLE_EXPECTED_NB );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( k = 0; k < NB_HMA_ORACLE; k++ )
+   {
+      int idx = hmaOracle[k].idx;
+      double want = hmaOracle[k].value;
+      double got  = out[idx];
+      double err; const char *mode;
+
+      if( !checkOracleValue( got, want, HMA_ORACLE_TOL, HMA_ORACLE_ABS, &err, &mode ) )
+      {
+         printf( "HMA oracle Fail at out[%d]: got %.17g expected %.17g "
+                 "(%s=%.3e > rel %.3e / abs %.3e)\n",
+                 idx, got, want, mode, err, HMA_ORACLE_TOL, HMA_ORACLE_ABS );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) TULIP VECTOR: Tulip Indicators 0.9.2 tests/untest.txt:203, "hma 5" on
+ * its 15-bar sample series, published at 3 decimals. Tulip truncates both
+ * derived periods exactly as the author does, so this is a second, structurally
+ * independent implementation agreeing on the convention. Measured max
+ * |TA_HMA - printed| = 4.5e-4, inside the 5e-4 half-ulp of the 3-decimal
+ * print. A rounding-convention mix-up moves these values by ~1e-1. */
+static ErrorNumber test_hma_tulip_vector( void )
+{
+   static const double tulipHma5In[] =
+   {
+      81.59, 81.06, 82.87, 83.00, 83.61, 83.15, 82.84, 83.99, 84.55, 84.36,
+      85.53, 86.54, 86.89, 87.77, 87.29
+   };
+   static const double tulipHma5Exp[] =
+   {
+      83.690, 83.038, 83.472, 84.550, 84.835, 85.360, 86.552, 87.346, 87.965,
+      87.916
+   };
+   const int nIn  = (int)(sizeof(tulipHma5In)/sizeof(double));
+   const int nExp = (int)(sizeof(tulipHma5Exp)/sizeof(double));
+   int i;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+
+   rc = TA_HMA( 0, nIn - 1, tulipHma5In, 5, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "HMA tulip vector Fail: retCode %d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != TA_HMA_Lookback( 5 ) || nb != nExp )
+   {
+      printf( "HMA tulip vector Fail: got beg=%d nb=%d expected %d/%d\n",
+              (int)beg, (int)nb, TA_HMA_Lookback( 5 ), nExp );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nExp; i++ )
+   {
+      if( fabs( out[i] - tulipHma5Exp[i] ) > 5e-4 )
+      {
+         printf( "HMA tulip vector Fail at out[%d]: got %.6f expected %.3f\n",
+                 i, out[i], tulipHma5Exp[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* Rounding-convention pins. Neither the n=20 pandas oracle nor the n=5
+    * vector above can SEE the sqrt-rounding convention (their sqrt truncates
+    * and rounds to the same integer), so a round-nearest sabotage would slip
+    * past both external legs. n=7 (sqrt 2.65) and n=8 (sqrt 2.83) round UP:
+    * the trunc/round last-bar values differ by ~0.1 (88.109365 vs 88.015536
+    * at n=7; 88.013870 vs 87.860130 at n=8). Expected values from an
+    * independent from-scratch implementation (fresh rolling dot products),
+    * which reproduces Tulip's published 3-decimal output exactly; tolerance
+    * 1e-9 abs against a measured cross-implementation drift of ~1e-12. */
+   {
+      static const struct { int period; double lastWant; } convPin[] =
+      {
+         { 7, 88.10936507936505 },
+         { 8, 88.01387037037038 },
+      };
+      unsigned int k;
+      for( k = 0; k < sizeof(convPin)/sizeof(convPin[0]); k++ )
+      {
+         rc = TA_HMA( 0, nIn - 1, tulipHma5In, convPin[k].period, &beg, &nb, out );
+         if( rc != TA_SUCCESS || nb < 1 )
+         {
+            printf( "HMA convention pin Fail [period %d]: rc=%d nb=%d\n",
+                    convPin[k].period, (int)rc, (int)nb );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( fabs( out[nb-1] - convPin[k].lastWant ) > 1e-9 )
+         {
+            printf( "HMA convention pin Fail [period %d]: last got %.17g "
+                    "expected %.17g (truncate, not round, the derived periods)\n",
+                    convPin[k].period, out[nb-1], convPin[k].lastWant );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4) IN-PLACE ALIASING: outReal == inReal must hold (#130). In the composed
+ * form safety comes from the final WMA reading only the scratch buffer; in a
+ * fused rolling-sum form it comes from the write cursor trailing every read
+ * by the lookback clamp. That margin is exactly ZERO at sqrt(n) == 1 (n = 2
+ * and 3): the output store lands on the same slot as the same iteration's
+ * trailing read, so ordering (read trailing BEFORE store) is load-bearing --
+ * pin those periods alongside the default. */
+static ErrorNumber test_hma_inplace( const TA_History *history )
+{
+   static const int ipGrid[] = { 2, 3, 20 };
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rc;
+   TA_Integer begR, nbR, beg, nb;
+   static TA_Real ref[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( g = 0; g < sizeof(ipGrid)/sizeof(ipGrid[0]); g++ )
+   {
+      int period = ipGrid[g];
+
+      rc = TA_HMA( 0, nbBars - 1, history->close, period, &begR, &nbR, ref );
+      if( rc != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      for( i = 0; i < nbBars; i++ ) work[i] = history->close[i];
+      rc = TA_HMA( 0, nbBars - 1, work, period, &beg, &nb, work );
+      if( rc != TA_SUCCESS || beg != begR || nb != nbR )
+      {
+         printf( "HMA in-place Fail [period %d]: rc=%d range(%d,%d) vs (%d,%d)\n",
+                 period, (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nb; i++ )
+         if( memcmp( &work[i], &ref[i], sizeof(double) ) != 0 )
+         {
+            printf( "HMA in-place Fail [period %d] at out[%d]: got %.17g expected %.17g\n",
+                    period, i, work[i], ref[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (5) MATYPE ARM (#139): TA_MAType_HMA == 9 dispatches to the same code.
+ * (a) MA(period, HMA) == TA_HMA(period), bit-for-bit, across the grid;
+ * (b) MA(1, HMA) takes the documented identity path (copy of the input),
+ *     BEFORE the dispatch -- so hma()'s own period floor of 2 is never hit;
+ * (c) BBANDS middle band with TA_MAType_HMA == TA_HMA, bit-for-bit, through
+ *     the abstract-visible param surface (smoke for every other MAType taker).
+ */
+static ErrorNumber test_hma_matype( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rcM, rcH;
+   TA_Integer begM, nbM, begH, nbH;
+   static TA_Real outMA[OUT_CAP];
+   static TA_Real outHMA[OUT_CAP];
+   static TA_Real outUpper[OUT_CAP];
+   static TA_Real outMiddle[OUT_CAP];
+   static TA_Real outLower[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   /* (a) dispatch parity across the period grid. */
+   for( g = 0; g < NB_HMA_GRID; g++ )
+   {
+      int period = hmaGrid[g];
+
+      rcM = TA_MA( 0, nbBars - 1, history->close, period, TA_MAType_HMA,
+                   &begM, &nbM, outMA );
+      rcH = TA_HMA( 0, nbBars - 1, history->close, period, &begH, &nbH, outHMA );
+
+      if( rcM != TA_SUCCESS || rcH != TA_SUCCESS )
+      {
+         printf( "HMA matype Fail [period %d]: retCode MA=%d HMA=%d\n",
+                 period, (int)rcM, (int)rcH );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( begM != begH || nbM != nbH )
+      {
+         printf( "HMA matype Fail [period %d]: range MA(%d,%d) HMA(%d,%d)\n",
+                 period, (int)begM, (int)nbM, (int)begH, (int)nbH );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nbM; i++ )
+         if( memcmp( &outMA[i], &outHMA[i], sizeof(double) ) != 0 )
+         {
+            printf( "HMA matype Fail [period %d] at out[%d]: "
+                    "MA %.17g != HMA %.17g (must be BIT-exact)\n",
+                    period, i, outMA[i], outHMA[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+   }
+
+   /* (b) MA(1, HMA): the identity path runs before the dispatch. */
+   rcM = TA_MA( 0, nbBars - 1, history->close, 1, TA_MAType_HMA,
+                &begM, &nbM, outMA );
+   if( rcM != TA_SUCCESS || begM != 0 || nbM != nbBars )
+   {
+      printf( "HMA matype Fail: MA(1,HMA) rc=%d beg=%d nb=%d expected 0/%d\n",
+              (int)rcM, (int)begM, (int)nbM, nbBars );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = 0; i < nbBars; i++ )
+      if( memcmp( &outMA[i], &history->close[i], sizeof(double) ) != 0 )
+      {
+         printf( "HMA matype Fail: MA(1,HMA) at out[%d] not an input copy\n", i );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+   /* (c) BBANDS(20, 2, 2, HMA): the middle band IS MA(close, 20, HMA). */
+   rcM = TA_BBANDS( 0, nbBars - 1, history->close, 20, 2.0, 2.0, TA_MAType_HMA,
+                    &begM, &nbM, outUpper, outMiddle, outLower );
+   rcH = TA_HMA( 0, nbBars - 1, history->close, 20, &begH, &nbH, outHMA );
+   if( rcM != TA_SUCCESS || rcH != TA_SUCCESS || begM != begH || nbM != nbH )
+   {
+      printf( "HMA matype Fail: BBANDS(HMA) rc=%d range(%d,%d) vs HMA rc=%d (%d,%d)\n",
+              (int)rcM, (int)begM, (int)nbM, (int)rcH, (int)begH, (int)nbH );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbM; i++ )
+      if( memcmp( &outMiddle[i], &outHMA[i], sizeof(double) ) != 0 )
+      {
+         printf( "HMA matype Fail: BBANDS(HMA) middle[%d] %.17g != HMA %.17g\n",
+                 i, outMiddle[i], outHMA[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+   return TA_TEST_PASS;
+}
+
+/* (6) SINGLE-ELEMENT RANGE: startIdx == endIdx == last bar. TA_WMA carries
+ * running accumulators from its clamped startIdx, so a late-start hma() is
+ * NOT bit-identical to the full-range call at the same bar (TA_STABLE_EPSILON
+ * class) -- compare at the class tolerance, not memcmp. */
+static ErrorNumber test_hma_single_element( const TA_History *history )
+{
+   /* 20 exercises the general regime; 2 the degenerate (n<=3) arm, whose
+    * late-start indexing is otherwise untested (every other degenerate leg
+    * calls with startIdx 0). */
+   static const int seGrid[] = { 2, 20 };
+   unsigned int g;
+   int nbBars;
+   TA_RetCode rc;
+   TA_Integer begR, nbR, beg, nb;
+   double want, got, relErr;
+   static TA_Real ref[OUT_CAP];
+   static TA_Real out[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( g = 0; g < sizeof(seGrid)/sizeof(seGrid[0]); g++ )
+   {
+      int period = seGrid[g];
+
+      rc = TA_HMA( 0, nbBars - 1, history->close, period, &begR, &nbR, ref );
+      if( rc != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      rc = TA_HMA( nbBars - 1, nbBars - 1, history->close, period, &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != nbBars - 1 || nb != 1 )
+      {
+         printf( "HMA single-element Fail [period %d]: rc=%d beg=%d nb=%d expected %d/1\n",
+                 period, (int)rc, (int)beg, (int)nb, nbBars - 1 );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      want = ref[nbR - 1];
+      got  = out[0];
+      relErr = fabs( got - want ) / fabs( want );
+      if( relErr > 1e-9 )
+      {
+         printf( "HMA single-element Fail [period %d]: got %.17g expected %.17g (rel %.3e)\n",
+                 period, got, want, relErr );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (7) PARAMETER FLOOR (#139): the smallest legal period is 2 -- period 1
+ * would make the half-period WMA degenerate (Integer(1/2) = 0, a 0/0
+ * divider), and 0 is out of every published definition. Both must be
+ * guarded rejects, never a computed answer; the default sentinel must
+ * resolve to the documented 20. */
+static ErrorNumber test_hma_param_reject( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+   static const int badPeriod[] = { 0, 1, -1, 100001 };
+   unsigned int k;
+
+   for( k = 0; k < sizeof(badPeriod)/sizeof(badPeriod[0]); k++ )
+   {
+      rc = TA_HMA( 0, (int)history->nbBars - 1, history->close,
+                   badPeriod[k], &beg, &nb, out );
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "HMA param reject Fail: period %d returned %d, expected TA_BAD_PARAM\n",
+                 badPeriod[k], (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( TA_HMA_Lookback( badPeriod[k] ) != -1 )
+      {
+         printf( "HMA param reject Fail: TA_HMA_Lookback(%d) != -1\n", badPeriod[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* The TA_INTEGER_DEFAULT sentinel resolves to the documented default 20. */
+   if( TA_HMA_Lookback( TA_INTEGER_DEFAULT ) != TA_HMA_Lookback( 20 ) )
+   {
+      printf( "HMA param reject Fail: default sentinel lookback %d != lookback(20) %d\n",
+              TA_HMA_Lookback( TA_INTEGER_DEFAULT ), TA_HMA_Lookback( 20 ) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   rc = TA_HMA( 0, (int)history->nbBars - 1, history->close,
+                TA_INTEGER_DEFAULT, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != TA_HMA_Lookback( 20 ) )
+   {
+      printf( "HMA param reject Fail: default sentinel rc=%d beg=%d\n", (int)rc, (int)beg );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (8) LARGE PERIODS -- the scratch-allocation regimes (#139).
+ *
+ * The fused implementation's scratch is the de-lag ring of sqrt(n)-1 slots
+ * (CIRCBUF): STACK while that fits the 50-slot prolog, i.e. every
+ * n <= 2703, and TA_Malloc from n = 2704 (sqrt = 52, ring = 51) up --
+ * verified against the macro's `Size > capacity` test, NOT assumed from
+ * sqrt(n) alone (an off-by-one here once made this leg silently stack-only).
+ * Pin BOTH sides of the true boundary with the same bitwise WMA-composition
+ * differential used at small periods, plus an in-place run per period.
+ *
+ * Synthetic deterministic series: 2860 bars of a trending sine, enough for
+ * n=2704 (lookback 2754) to emit 106 outputs. */
+#define HMA_LP_BARS 2860
+static ErrorNumber test_hma_large_period( void )
+{
+   static TA_Real lpIn[HMA_LP_BARS];
+   static TA_Real lpHMA[HMA_LP_BARS];
+   static TA_Real lpFull[HMA_LP_BARS];
+   static TA_Real lpHalf[HMA_LP_BARS];
+   static TA_Real lpDiff[HMA_LP_BARS];
+   static TA_Real lpSmooth[HMA_LP_BARS];
+   static TA_Real lpWork[HMA_LP_BARS];
+   /* 2703: sqrt = 51, ring = 50 -- the LAST stack-CIRCBUF period;
+    * 2704: sqrt = 52, ring = 51 -- the FIRST TA_Malloc period. */
+   static const int lpGrid[] = { 2703, 2704 };
+   unsigned int g;
+   int i, halfPeriod, sqrtPeriod, wmaStart;
+   TA_RetCode rc, rcF, rcH, rcS;
+   TA_Integer begV, nbV, begF, nbF, begH, nbH, begS, nbS;
+
+   for( i = 0; i < HMA_LP_BARS; i++ )
+      lpIn[i] = 100.0 + 25.0 * sin( 0.05 * (double)i ) + 0.01 * (double)i;
+
+   for( g = 0; g < sizeof(lpGrid)/sizeof(lpGrid[0]); g++ )
+   {
+      int period = lpGrid[g];
+      halfPeriod = period / 2;
+      sqrtPeriod = (int)sqrt((double)period);
+      wmaStart   = period - 1;
+
+      rc = TA_HMA( 0, HMA_LP_BARS - 1, lpIn, period, &begV, &nbV, lpHMA );
+      if( rc != TA_SUCCESS || nbV < 1 )
+      {
+         printf( "HMA large-period Fail [n=%d]: rc=%d nb=%d\n", period, (int)rc, (int)nbV );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( begV != period + sqrtPeriod - 2 )
+      {
+         printf( "HMA large-period Fail [n=%d]: beg=%d expected %d\n",
+                 period, (int)begV, period + sqrtPeriod - 2 );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      /* Same three-TA_WMA composition as the small-period differential. */
+      rcF = TA_WMA( wmaStart, HMA_LP_BARS - 1, lpIn, period, &begF, &nbF, lpFull );
+      rcH = TA_WMA( wmaStart, HMA_LP_BARS - 1, lpIn, halfPeriod, &begH, &nbH, lpHalf );
+      if( rcF != TA_SUCCESS || rcH != TA_SUCCESS || begF != begH || nbF != nbH )
+      {
+         printf( "HMA large-period Fail [n=%d]: inner WMA rc=%d/%d\n",
+                 period, (int)rcF, (int)rcH );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < nbF; i++ )
+         lpDiff[i] = 2.0*lpHalf[i] - lpFull[i];
+      rcS = TA_WMA( 0, nbF - 1, lpDiff, sqrtPeriod, &begS, &nbS, lpSmooth );
+      if( rcS != TA_SUCCESS || begV != wmaStart + begS || nbV != nbS )
+      {
+         printf( "HMA large-period Fail [n=%d]: compose range (%d,%d) vs (%d,%d)\n",
+                 period, (int)(wmaStart + begS), (int)nbS, (int)begV, (int)nbV );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nbV; i++ )
+         if( memcmp( &lpHMA[i], &lpSmooth[i], sizeof(double) ) != 0 )
+         {
+            printf( "HMA large-period Fail [n=%d] at out[%d]: %.17g != %.17g "
+                    "(must be BIT-exact)\n", period, i, lpHMA[i], lpSmooth[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+
+      /* In-place over the same period: the scratch-allocation path must not
+       * change the aliasing contract. */
+      for( i = 0; i < HMA_LP_BARS; i++ ) lpWork[i] = lpIn[i];
+      rc = TA_HMA( 0, HMA_LP_BARS - 1, lpWork, period, &begF, &nbF, lpWork );
+      if( rc != TA_SUCCESS || begF != begV || nbF != nbV )
+      {
+         printf( "HMA large-period in-place Fail [n=%d]: rc=%d range(%d,%d)\n",
+                 period, (int)rc, (int)begF, (int)nbF );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nbV; i++ )
+         if( memcmp( &lpWork[i], &lpHMA[i], sizeof(double) ) != 0 )
+         {
+            printf( "HMA large-period in-place Fail [n=%d] at out[%d]\n", period, i );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
    }
 
    return TA_TEST_PASS;

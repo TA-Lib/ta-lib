@@ -223,6 +223,7 @@ MAType:
   - { c_name: TA_MAType_KAMA,  pascal_name: Kama,  value: 6 }
   - { c_name: TA_MAType_MAMA,  pascal_name: Mama,  value: 7 }
   - { c_name: TA_MAType_T3,    pascal_name: T3,    value: 8 }
+  - { c_name: TA_MAType_HMA,   pascal_name: Hma,   value: 9 }
 ```
 
 Each variant has:

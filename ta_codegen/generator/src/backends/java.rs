@@ -1542,6 +1542,7 @@ impl ExprEmitter for JavaExpr<'_> {
             "TA_MAType_KAMA" => "MAType.Kama".to_string(),
             "TA_MAType_MAMA" => "MAType.Mama".to_string(),
             "TA_MAType_T3" => "MAType.T3".to_string(),
+            "TA_MAType_HMA" => "MAType.Hma".to_string(),
             _ => name.to_string(),
         };
         if self.ctx.address_of_vars.contains(name) {

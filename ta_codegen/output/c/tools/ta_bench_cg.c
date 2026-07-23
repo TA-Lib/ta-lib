@@ -100,6 +100,7 @@
 #include "ta_CDLUPSIDEGAP2CROWS.c"
 #include "ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_CEIL.c"
+#include "ta_CMF.c"
 #include "ta_CMO.c"
 #include "ta_CMOU.c"
 #include "ta_CORREL.c"
@@ -111,6 +112,7 @@
 #include "ta_EMA.c"
 #include "ta_EXP.c"
 #include "ta_FLOOR.c"
+#include "ta_HMA.c"
 #include "ta_HT_DCPERIOD.c"
 #include "ta_HT_DCPHASE.c"
 #include "ta_HT_PHASOR.c"
@@ -145,10 +147,12 @@
 #include "ta_MOM.c"
 #include "ta_MULT.c"
 #include "ta_NATR.c"
+#include "ta_NVI.c"
 #include "ta_OBV.c"
 #include "ta_PLUS_DI.c"
 #include "ta_PLUS_DM.c"
 #include "ta_PPO.c"
+#include "ta_PVI.c"
 #include "ta_PVO.c"
 #include "ta_ROC.c"
 #include "ta_ROCP.c"
@@ -178,6 +182,7 @@
 #include "ta_TYPPRICE.c"
 #include "ta_ULTOSC.c"
 #include "ta_VAR.c"
+#include "ta_VWMA.c"
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"
@@ -494,7 +499,7 @@ static void bench_all(const char *filter, int iters) {
             int outBegIdx, outNBElement;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
-                TA_BBANDS(0, g_nPoints - 1, g_close, 5, 2.000000000000000, 2.000000000000000, 0, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_BBANDS(0, g_nPoints - 1, g_close, 20, 2.000000000000000, 2.000000000000000, 0, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
             }
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
@@ -1546,6 +1551,22 @@ static void bench_all(const char *filter, int iters) {
         printf("CEIL %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "CMF") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CMF(0, g_nPoints - 1, g_high, g_low, g_close, g_volume, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("CMF %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "CMO") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -1720,6 +1741,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("FLOOR %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "HMA") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_HMA(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("HMA %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "HT_DCPERIOD") ) {
@@ -2293,6 +2330,22 @@ static void bench_all(const char *filter, int iters) {
         printf("NATR %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "NVI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_NVI(0, g_nPoints - 1, g_close, g_volume, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("NVI %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "OBV") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -2355,6 +2408,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("PPO %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "PVI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_PVI(0, g_nPoints - 1, g_close, g_volume, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("PVI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "PVO") ) {
@@ -2822,6 +2891,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("VAR %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "VWMA") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_VWMA(0, g_nPoints - 1, g_close, g_volume, 30, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("VWMA %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "WCLPRICE") ) {

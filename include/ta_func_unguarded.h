@@ -207,6 +207,8 @@ TA_LIB_API TA_RetCode TA_EXP_Unguarded(int startIdx, int endIdx, const double in
 extern TA_RetCode TA_S_EXP_Unguarded(int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_FLOOR_Unguarded(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_FLOOR_Unguarded(int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
+TA_LIB_API TA_RetCode TA_HMA_Unguarded(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
+extern TA_RetCode TA_S_HMA_Unguarded(int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Unguarded(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
 extern TA_RetCode TA_S_HT_DCPERIOD_Unguarded(int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, double outReal[]);
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Unguarded(int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[]);

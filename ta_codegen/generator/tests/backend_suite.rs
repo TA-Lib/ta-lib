@@ -5619,6 +5619,7 @@ fn java_var_name_mappings() {
         ("TA_MAType_KAMA", "MAType.Kama"),
         ("TA_MAType_MAMA", "MAType.Mama"),
         ("TA_MAType_T3", "MAType.T3"),
+        ("TA_MAType_HMA", "MAType.Hma"),
     ];
 
     for (var_name, expected) in stmts {
