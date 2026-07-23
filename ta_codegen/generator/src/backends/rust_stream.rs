@@ -524,8 +524,10 @@ fn emit_state_struct_from(o: &mut String, func: &FuncDef, fields: &[(String, Str
 // ---------------------------------------------------------------------------
 
 /// Step context: the open-body typing plus every state name aliased under its
-/// `sp.` field path, plus the per-bar input scalars as reals.
-fn build_step_ctx(func: &FuncDef, model: &StreamModel, typing: &Typing) -> RustRenderCtx {
+/// `sp.` field path, plus the per-bar input scalars as reals. Takes the
+/// models whose fields the step addresses: one for the single-model tiers,
+/// both arms for the dual-mode step (their field sets may differ — HMA).
+fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> RustRenderCtx {
     let mut ctx = typing.ctx.clone();
     for bar in streaming::input_array_names(func) {
         ctx.real_vars.insert(bar);
@@ -546,54 +548,56 @@ fn build_step_ctx(func: &FuncDef, model: &StreamModel, typing: &Typing) -> RustR
     // Emitter-owned fields. The f64 buffers also register as real arrays so
     // element reads type as float in the shared inference (batch's `in[i]`
     // heuristics don't recognize the ring/window names).
-    for ring in model.rings() {
-        let v = &ring.var;
-        ctx.index_vars.insert(format!("ringPos_{v}"));
-        ctx.index_vars.insert(format!("ringCap_{v}"));
-        ctx.index_vars.insert(format!("ringLag_{v}"));
-        for arr in &ring.arrays {
-            ctx.vec_vars.insert(format!("ring_{v}_{arr}"));
-            ctx.real_array_vars.insert(format!("ring_{v}_{arr}"));
-        }
-    }
-    for win in model.windows() {
-        let v = &win.var;
-        ctx.index_vars.insert(format!("winPos_{v}"));
-        ctx.index_vars.insert(format!("winCap_{v}"));
-        for arr in &win.arrays {
-            ctx.vec_vars.insert(format!("win_{v}_{arr}"));
-            ctx.real_array_vars.insert(format!("win_{v}_{arr}"));
-        }
-    }
-    for circ in model.circs() {
-        ctx.index_vars.insert(format!("cbSize_{}", circ.id));
-        for (storage, ty) in streaming::circ_storages(circ) {
-            ctx.vec_vars.insert(format!("cb_{storage}"));
-            if matches!(ty, VarType::Integer) {
-                ctx.int_vec_vars.insert(format!("cb_{storage}"));
-            } else {
-                ctx.real_array_vars.insert(format!("cb_{storage}"));
+    for model in models {
+        for ring in model.rings() {
+            let v = &ring.var;
+            ctx.index_vars.insert(format!("ringPos_{v}"));
+            ctx.index_vars.insert(format!("ringCap_{v}"));
+            ctx.index_vars.insert(format!("ringLag_{v}"));
+            for arr in &ring.arrays {
+                ctx.vec_vars.insert(format!("ring_{v}_{arr}"));
+                ctx.real_array_vars.insert(format!("ring_{v}_{arr}"));
             }
         }
-    }
-    if let Some(ex) = model.extrema() {
-        ctx.sentinel_vars.insert("xCap".to_string());
-        for arr in &ex.arrays {
-            ctx.vec_vars.insert(format!("x_{arr}"));
-            ctx.real_array_vars.insert(format!("x_{arr}"));
+        for win in model.windows() {
+            let v = &win.var;
+            ctx.index_vars.insert(format!("winPos_{v}"));
+            ctx.index_vars.insert(format!("winCap_{v}"));
+            for arr in &win.arrays {
+                ctx.vec_vars.insert(format!("win_{v}_{arr}"));
+                ctx.real_array_vars.insert(format!("win_{v}_{arr}"));
+            }
         }
-    }
-    for name in &model.out_feedback {
-        let f = format!("lastOut_{name}");
-        if out_is_int(func, name) {
-            ctx.sentinel_vars.insert(f);
-        } else {
-            ctx.real_vars.insert(f);
+        for circ in model.circs() {
+            ctx.index_vars.insert(format!("cbSize_{}", circ.id));
+            for (storage, ty) in streaming::circ_storages(circ) {
+                ctx.vec_vars.insert(format!("cb_{storage}"));
+                if matches!(ty, VarType::Integer) {
+                    ctx.int_vec_vars.insert(format!("cb_{storage}"));
+                } else {
+                    ctx.real_array_vars.insert(format!("cb_{storage}"));
+                }
+            }
         }
-    }
-    for lag in &model.lags {
-        for k in 1..=lag.depth {
-            ctx.real_vars.insert(StreamModel::lag_field(&lag.array, k));
+        if let Some(ex) = model.extrema() {
+            ctx.sentinel_vars.insert("xCap".to_string());
+            for arr in &ex.arrays {
+                ctx.vec_vars.insert(format!("x_{arr}"));
+                ctx.real_array_vars.insert(format!("x_{arr}"));
+            }
+        }
+        for name in &model.out_feedback {
+            let f = format!("lastOut_{name}");
+            if out_is_int(func, name) {
+                ctx.sentinel_vars.insert(f);
+            } else {
+                ctx.real_vars.insert(f);
+            }
+        }
+        for lag in &model.lags {
+            for k in 1..=lag.depth {
+                ctx.real_vars.insert(StreamModel::lag_field(&lag.array, k));
+            }
         }
     }
     alias(&mut ctx.index_vars);
@@ -618,7 +622,7 @@ fn emit_step(
     counter: &Cell<usize>,
 ) {
     emit_step_sig(o, func);
-    let ctx = build_step_ctx(func, model, typing);
+    let ctx = build_step_ctx(func, &[model], typing);
     emit_step_body(o, func, model, typing, &ctx, enums, registry, helpers, counter, 8);
     let _ = writeln!(o, "    }}\n");
 }
@@ -1769,6 +1773,52 @@ fn dual_scalar_union(func: &FuncDef, ma: &StreamModel, mb: &StreamModel) -> Vec<
     order
 }
 
+/// The union state-struct field list: mode-A fields first, then mode-B-only
+/// fields (HMA: the general arm's half-period ring and d-CIRCBUF vec). A name
+/// both lists carry must agree on type — its two defaults may legally differ
+/// only in the shared-scalar positions, which the literal never reads from
+/// here (each arm captures its own value; the complement uses the OWNING
+/// list's default).
+fn dual_union_fields(
+    func: &FuncDef,
+    fields_a: &[(String, String, String)],
+    fields_b: &[(String, String, String)],
+) -> Vec<(String, String, String)> {
+    let mut fields: Vec<(String, String, String)> = fields_a.to_vec();
+    let a_types: HashMap<&String, &String> = fields_a.iter().map(|(n, t, _)| (n, t)).collect();
+    for f in fields_b {
+        if let Some(prev) = a_types.get(&f.0) {
+            assert!(
+                **prev == f.1,
+                "{}: dual-mode field `{}` has conflicting types across modes",
+                func.name,
+                f.0
+            );
+        } else {
+            fields.push(f.clone());
+        }
+    }
+    fields
+}
+
+/// Struct-literal lines for the fields of `other` missing from `own` (by
+/// name): the OTHER mode's non-scalar state, initialized to its type default
+/// in this arm's capture literal — buffers a mode-fixed stream never touches
+/// (C memsets instead; clone-Peek and Drop handle empty Vecs fine).
+fn dual_complement_literal(
+    own: &[(String, String, String)],
+    other: &[(String, String, String)],
+) -> String {
+    let own_names: HashSet<&String> = own.iter().map(|(n, _, _)| n).collect();
+    let mut s = String::new();
+    for (name, _, default) in other {
+        if !own_names.contains(name) {
+            let _ = writeln!(s, "            {name}: {default},");
+        }
+    }
+    s
+}
+
 /// Emit the full dual-mode stream section: ONE union state struct, one
 /// predicate-branching step, one predicate-branching open per `OutMode` (each
 /// arm transcribing `prologue ++ its own body ++ epilogue`, then capturing
@@ -1800,17 +1850,17 @@ fn emit_dual_mode(
     let typing = build_typing_from(func, &tbody, &[ma, mb]);
 
     let union_scalars = dual_scalar_union(func, ma, mb);
-    // Both modes must carry IDENTICAL non-scalar state (TRIMA's odd/even arms
-    // share the very same rings; DI/DM have none) — mirror C's assertion.
-    assert!(
-        state_fields_from(func, ma, &typing, &[]) == state_fields_from(func, mb, &typing, &[]),
-        "{}: dual-mode modes carry differing non-scalar state (rings/windows/\
-         circs/extrema/feedback/lags); a real per-arm union is not supported",
-        func.name
-    );
+    // The struct carries the UNION of both modes' state: shared fields once
+    // (TRIMA's odd/even arms share the very same rings; DI/DM overlap fully),
+    // then mode-B-only fields (HMA's half-period ring + d-CIRCBUF). The mode
+    // is fixed at Open, so each arm's step touches only its own fields; the
+    // inactive mode's buffers sit at their type defaults.
+    let fields_a = state_fields_from(func, ma, &typing, &union_scalars);
+    let fields_b = state_fields_from(func, mb, &typing, &union_scalars);
+    let union_fields = dual_union_fields(func, &fields_a, &fields_b);
 
     emit_handle_struct(o, func);
-    emit_state_struct_from(o, func, &state_fields_from(func, ma, &typing, &union_scalars));
+    emit_state_struct_from(o, func, &union_fields);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
@@ -1822,7 +1872,7 @@ fn emit_dual_mode(
         .map(|p| p.name.clone())
         .collect();
     emit_step_sig(o, func);
-    let ctx = build_step_ctx(func, ma, &typing);
+    let ctx = build_step_ctx(func, &[ma, mb], &typing);
     let pred_sp = params_on_state(func, &dmp.predicate);
     let pred_sp = render_expr(&pred_sp, &ctx, &opt_real_params, registry, helpers);
     let _ = writeln!(o, "        if {pred_sp} {{");
@@ -1871,6 +1921,10 @@ fn emit_dual_open(
         .map(|p| p.name.clone())
         .collect();
     let pred = render_expr(&dmp.predicate, &typing.ctx, &opt_real_params, registry, helpers);
+    // The OTHER mode's exclusive non-scalar fields, filled with type defaults
+    // in this arm's state literal (the struct is the union of both modes).
+    let fields_a = state_fields_from(func, ma, typing, union_scalars);
+    let fields_b = state_fields_from(func, mb, typing, union_scalars);
     let _ = writeln!(o, "        if {pred} {{");
     for (k, arm) in [ma, mb].into_iter().enumerate() {
         if k == 1 {
@@ -1888,7 +1942,9 @@ fn emit_dual_open(
         let open_body = build_open_body_rust(arm, &body, mode);
         let mut s = String::new();
         emit_open_region(&mut s, func, arm, typing, &open_body, enums, registry, helpers, counter, &[]);
-        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, registry, helpers, counter, mode, "");
+        let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
+        let complement = dual_complement_literal(own, other);
+        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, registry, helpers, counter, mode, &complement);
         o.push_str(&indent_block(&s, 4));
     }
     let _ = writeln!(o, "        }}");
@@ -2630,7 +2686,7 @@ fn composed_step_ctx(
     cur_scalars: &[String],
 ) -> RustRenderCtx {
     let mut ctx = if let Some(model) = &cp.producer {
-        build_step_ctx(func, model, typing)
+        build_step_ctx(func, &[model], typing)
     } else {
         let mut c = typing.ctx.clone();
         for p in &func.optional_inputs {

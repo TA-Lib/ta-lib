@@ -1048,21 +1048,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_APO_Open( &st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_APO_Close( st );
-            { TA_APO_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_APO_OpenAndFill( &stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_APO_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -1795,21 +1780,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         double optInNbDevUp = json_find_double(json, "optInNbDevUp");
         double optInNbDevDn = json_find_double(json, "optInNbDevDn");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_BBANDS_Open( &st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_BBANDS_Close( st );
-            { TA_BBANDS_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_BBANDS_OpenAndFill( &stf, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_BBANDS_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -8837,6 +8807,94 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
+    else if( fnLen == 6 && strncmp(fn, "TA_HMA", 6) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int fillOk = 1, fillChecked = 0;
+        int pref[4]; int pc[4];
+        rc = TA_HMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_HMA_Lookback(optInTimePeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_HMA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_HMA_Open(&st, sv_c, svN, optInTimePeriod, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HMA_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_HMA_Stream *stf = NULL;
+            TA_RetCode frc = TA_HMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_bitne(sv_f0[ft], sv_b0[ft]) ) fillOk = 0;
+            }
+            if( stf ) TA_HMA_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_HMA_Stream *sal = NULL;
+            TA_RetCode alrc = TA_HMA_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, &alB, &alN, sv_c);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_HMA_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_HMA_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            rc = TA_HMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_bitne(v0, sv_b0[(P - 1) - svBeg]) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_HMA_Peek(st, sv_c[t], &pk0);
+                TA_HMA_Update(st, sv_c[t], &v0);
+                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            }
+            if( st ) TA_HMA_Close(st);
+            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_HMA(Sidx, svN - 1, sv_c, optInTimePeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_HMA_Stream *stA = NULL;
+                    TA_RetCode arc = TA_HMA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_bitne(v0, sv_b0[(svN - 1) - svBegS]) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( stA ) TA_HMA_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        return;
+    }
     else if( fnLen == 14 && strncmp(fn, "TA_HT_DCPERIOD", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
@@ -10104,21 +10162,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( !(optInTimePeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) )
-        {
-            TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_MA_Open( &st, sv_c, svN, optInTimePeriod, optInMAType, &v0 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_MA_Close( st );
-            { TA_MA_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_MA_OpenAndFill( &stf, sv_c, svN, optInTimePeriod, optInMAType, &fBeg, &fNb, sv_f0 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_MA_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -10336,21 +10379,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_MAType optInSlowMAType = (TA_MAType)json_find_int(json, "optInSlowMAType");
         int optInSignalPeriod = json_find_int(json, "optInSignalPeriod");
         TA_MAType optInSignalMAType = (TA_MAType)json_find_int(json, "optInSignalMAType");
-        if( ( ( !(optInSlowPeriod == 1) && ( optInSlowMAType == TA_MAType_HMA ) ) || ( !(optInFastPeriod == 1) && ( optInFastMAType == TA_MAType_HMA ) ) || ( !(optInSignalPeriod == 1) && ( optInSignalMAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_MACDEXT_Open( &st, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_MACDEXT_Close( st );
-            { TA_MACDEXT_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_MACDEXT_OpenAndFill( &stf, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_MACDEXT_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -10688,21 +10716,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInMaxPeriod = json_find_int(json, "optInMaxPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
         { int _pi; for( _pi = 0; _pi < svN; _pi++ ) sv_v[_pi] = (double)(optInMinPeriod + (_pi % (optInMaxPeriod - optInMinPeriod + 3)) - 1); }
-        if( ( !(optInMaxPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) )
-        {
-            TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_MAVP_Open( &st, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_MAVP_Close( st );
-            { TA_MAVP_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_MAVP_OpenAndFill( &stf, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &fBeg, &fNb, sv_f0 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_MAVP_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -12493,21 +12506,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_PPO_Open( &st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_PPO_Close( st );
-            { TA_PPO_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_PPO_OpenAndFill( &stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_PPO_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -12697,21 +12695,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastPeriod = json_find_int(json, "optInFastPeriod");
         int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
         TA_MAType optInMAType = (TA_MAType)json_find_int(json, "optInMAType");
-        if( ( ( !(optInFastPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) || ( !(optInSlowPeriod == 1) && ( optInMAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_PVO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_PVO_Open( &st, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_PVO_Close( st );
-            { TA_PVO_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_PVO_OpenAndFill( &stf, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_PVO_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -13881,21 +13864,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_MAType optInSlowK_MAType = (TA_MAType)json_find_int(json, "optInSlowK_MAType");
         int optInSlowD_Period = json_find_int(json, "optInSlowD_Period");
         TA_MAType optInSlowD_MAType = (TA_MAType)json_find_int(json, "optInSlowD_MAType");
-        if( ( ( !(optInSlowK_Period == 1) && ( optInSlowK_MAType == TA_MAType_HMA ) ) || ( !(optInSlowD_Period == 1) && ( optInSlowD_MAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_STOCH_Open( &st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_STOCH_Close( st );
-            { TA_STOCH_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_STOCH_OpenAndFill( &stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &fBeg, &fNb, sv_f0, sv_f1 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_STOCH_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -14011,21 +13979,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastK_Period = json_find_int(json, "optInFastK_Period");
         int optInFastD_Period = json_find_int(json, "optInFastD_Period");
         TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
-        if( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_HMA ) ) ) )
-        {
-            TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_STOCHF_Open( &st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_STOCHF_Close( st );
-            { TA_STOCHF_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_STOCHF_OpenAndFill( &stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_STOCHF_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
@@ -14142,21 +14095,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int optInFastK_Period = json_find_int(json, "optInFastK_Period");
         int optInFastD_Period = json_find_int(json, "optInFastD_Period");
         TA_MAType optInFastD_MAType = (TA_MAType)json_find_int(json, "optInFastD_MAType");
-        if( ( ( ( !(optInFastD_Period == 1) && ( optInFastD_MAType == TA_MAType_HMA ) ) ) ) )
-        {
-            TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc;
-            int rejected;
-            orc = TA_STOCHRSI_Open( &st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1 );
-            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;
-            if( st ) TA_STOCHRSI_Close( st );
-            { TA_STOCHRSI_Stream *stf = NULL; int fBeg = 0, fNb = 0;
-              TA_RetCode frc = TA_STOCHRSI_OpenAndFill( &stf, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1 );
-              if( !( frc != TA_SUCCESS && !stf ) ) rejected = 0;
-              if( stf ) TA_STOCHRSI_Close( stf ); }
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":%d,\"peek_ok\":1}", rejected);
-            return;
-        }
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;

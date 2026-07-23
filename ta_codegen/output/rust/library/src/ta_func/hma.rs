@@ -566,6 +566,977 @@ impl Core {
         return RetCode::Success;
     }
 }
+/**** Streaming API *****/
+
+/// Live HMA stream: one value per closed bar, bit-identical to [`Core::hma`]
+/// over the same series. Open with [`Core::hma_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_HMA_Stream")]
+pub struct HmaStream {
+    core: Core,
+    state: HmaStreamState,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct HmaStreamState {
+    optInTimePeriod: i32,
+    dividerFull: usize,
+    periodSubFull: f64,
+    periodSumFull: f64,
+    trailingFull: f64,
+    fullOut: f64,
+    halfPeriod: usize,
+    sqrtPeriod: usize,
+    dividerHalf: usize,
+    dividerSqrt: usize,
+    periodSubHalf: f64,
+    periodSumHalf: f64,
+    trailingHalf: f64,
+    periodSubSqrt: f64,
+    periodSumSqrt: f64,
+    trailingSqrt: f64,
+    halfOut: f64,
+    diffReal: f64,
+    dRing_Idx: usize,
+    maxIdx_dRing: usize,
+    ringPos_trailingIdxFull: usize,
+    ringCap_trailingIdxFull: usize,
+    ring_trailingIdxFull_inReal: Vec<f64>,
+    ringPos_trailingIdxHalf: usize,
+    ringCap_trailingIdxHalf: usize,
+    ring_trailingIdxHalf_inReal: Vec<f64>,
+    cbSize_dRing: usize,
+    cb_dRing: Vec<f64>,
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn hma_step_internal(&self, sp: &mut HmaStreamState, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
+            let mut tempReal: f64 = 0.0_f64;
+            if sp.ringCap_trailingIdxFull == 0 {
+                sp.ring_trailingIdxFull_inReal[0] = inReal;
+            }
+            tempReal = inReal;
+            sp.periodSubFull += tempReal;
+            sp.periodSubFull -= sp.trailingFull;
+            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
+            sp.fullOut = sp.periodSumFull / ((sp.dividerFull) as f64);
+            sp.periodSumFull -= sp.periodSubFull;
+            (*outReal) = 2.0 * tempReal - sp.fullOut;
+            sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
+            sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
+            if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+                sp.ringPos_trailingIdxFull = 0;
+            }
+        } else {
+            let mut tempReal: f64 = 0.0_f64;
+            if sp.ringCap_trailingIdxFull == 0 {
+                sp.ring_trailingIdxFull_inReal[0] = inReal;
+            }
+            if sp.ringCap_trailingIdxHalf == 0 {
+                sp.ring_trailingIdxHalf_inReal[0] = inReal;
+            }
+            tempReal = inReal;
+            sp.periodSubFull += tempReal;
+            sp.periodSubFull -= sp.trailingFull;
+            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
+            sp.fullOut = sp.periodSumFull / ((sp.dividerFull) as f64);
+            sp.periodSumFull -= sp.periodSubFull;
+            sp.periodSubHalf += tempReal;
+            sp.periodSubHalf -= sp.trailingHalf;
+            sp.periodSumHalf += tempReal * ((sp.halfPeriod) as f64);
+            sp.trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
+            sp.halfOut = sp.periodSumHalf / ((sp.dividerHalf) as f64);
+            sp.periodSumHalf -= sp.periodSubHalf;
+            sp.diffReal = 2.0 * sp.halfOut - sp.fullOut;
+            sp.periodSubSqrt += sp.diffReal;
+            sp.periodSubSqrt -= sp.trailingSqrt;
+            sp.periodSumSqrt += sp.diffReal * ((sp.sqrtPeriod) as f64);
+            sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
+            sp.cb_dRing[sp.dRing_Idx] = sp.diffReal;
+            sp.dRing_Idx = sp.dRing_Idx + 1;
+            if sp.dRing_Idx > sp.maxIdx_dRing {
+                sp.dRing_Idx = 0;
+            }
+            (*outReal) = sp.periodSumSqrt / ((sp.dividerSqrt) as f64);
+            sp.periodSumSqrt -= sp.periodSubSqrt;
+            sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
+            sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
+            if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+                sp.ringPos_trailingIdxFull = 0;
+            }
+            sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
+            sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
+            if sp.ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf {
+                sp.ringPos_trailingIdxHalf = 0;
+            }
+        }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::hma_open`] (composition seam).
+    pub(crate) fn hma_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(HmaStream, f64), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 2 || optInTimePeriod == 3 {
+            let mut lookbackTotal: usize = 0_usize;
+            let mut lookbackSqrt: usize = 0_usize;
+            let mut halfPeriod: usize = 0_usize;
+            let mut sqrtPeriod: usize = 0_usize;
+            let mut ringSize: usize = 0_usize;
+            let mut wmaStartIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut w: usize = 0_usize;
+            let mut dividerFull: usize = 0_usize;
+            let mut dividerHalf: usize = 0_usize;
+            let mut dividerSqrt: usize = 0_usize;
+            let mut trailingIdxFull: usize = 0_usize;
+            let mut trailingIdxHalf: usize = 0_usize;
+            let mut periodSubFull: f64 = 0.0_f64;
+            let mut periodSumFull: f64 = 0.0_f64;
+            let mut trailingFull: f64 = 0.0_f64;
+            let mut periodSubHalf: f64 = 0.0_f64;
+            let mut periodSumHalf: f64 = 0.0_f64;
+            let mut trailingHalf: f64 = 0.0_f64;
+            let mut periodSubSqrt: f64 = 0.0_f64;
+            let mut periodSumSqrt: f64 = 0.0_f64;
+            let mut trailingSqrt: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut halfOut: f64 = 0.0_f64;
+            let mut diffReal: f64 = 0.0_f64;
+            let mut dRing: Vec<f64> = Vec::new();
+            let mut dRing_Idx: usize = 0;
+            let mut maxIdx_dRing: usize = 49;
+            // The de-lagged series needs only its last sqrt(n) values, so the whole
+            // computation runs in one pass over a single window into the input:
+            // three interleaved WMA rolling sums plus this small ring. The ring has
+            // sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+            // (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+            // Hull Moving Average (Alan Hull, 2005):
+            //
+            //    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+            //
+            // Both derived periods use the author's Integer() truncation; some other
+            // published sources round to nearest instead, which is a visibly different
+            // line. See hma.md and issue #139.
+            //
+            // Each of the three WMAs keeps TA_WMA's exact accumulation order
+            // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+            // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+            // differential in test_composite.c holds it to that, memcmp-exact.
+            halfPeriod = (optInTimePeriod / 2) as usize;
+            sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
+            lookbackSqrt = self.wma_lookback((sqrtPeriod) as i32);
+            lookbackTotal = self.wma_lookback(optInTimePeriod) + lookbackSqrt;
+            // Move up the start index if there is not
+            // enough initial data.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                dummyBegIdx = 0;
+                dummyNBElement = 0;
+                return Err(RetCode::BadParam);
+            }
+            // The two price WMAs are anchored where the first de-lagged value is
+            // needed: lookbackSqrt bars before the first requested output.
+            // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+            wmaStartIdx = startIdx - lookbackSqrt;
+            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            // Prime the full-period WMA over the optInTimePeriod-1 bars before
+            // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+            periodSubFull = 0.0;
+            periodSumFull = 0.0;
+            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            i = trailingIdxFull;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubFull += tempReal;
+                periodSumFull += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingFull = 0.0;
+            outIdx = 0;
+            // sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+            // param so the stream analyzer sees a param-pure dual-mode split.
+            // Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
+            // sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
+            // own short-circuit). The whole formula collapses to
+            //    HMA[t] = 2*price[t] - WMA(price, n)[t]
+            // with no de-lag ring at all. In-place note: the output store lands on
+            // the SAME slot the trailing read just consumed (zero margin), so the
+            // read stays ordered before the store.
+            for today in (startIdx as usize)..(endIdx as usize) + 1 {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                lastValue_outReal = 2.0 * tempReal - fullOut;
+            }
+            today = (endIdx as usize) + 1;
+            dummyBegIdx = startIdx;
+            dummyNBElement = outIdx;
+
+            // Capture the live batch state into the handle.
+            let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
+            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
+            let mut ring_trailingIdxFull_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxFull];
+            ring_trailingIdxFull_inReal[..cap_trailingIdxFull as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxFull as usize..]);
+            let state = HmaStreamState {
+                optInTimePeriod,
+                dividerFull,
+                periodSubFull,
+                periodSumFull,
+                trailingFull,
+                fullOut,
+                halfPeriod,
+                sqrtPeriod,
+                dividerHalf,
+                dividerSqrt,
+                periodSubHalf,
+                periodSumHalf,
+                trailingHalf,
+                periodSubSqrt,
+                periodSumSqrt,
+                trailingSqrt,
+                halfOut,
+                diffReal,
+                dRing_Idx,
+                maxIdx_dRing,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
+                ring_trailingIdxFull_inReal,
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: 0_usize,
+                ring_trailingIdxHalf_inReal: vec![0.0_f64; 1],
+                cbSize_dRing: 0_usize,
+                cb_dRing: Vec::new(),
+            };
+            Ok((HmaStream { core: self.clone(), state }, lastValue_outReal))
+        } else {
+            let mut lookbackTotal: usize = 0_usize;
+            let mut lookbackSqrt: usize = 0_usize;
+            let mut halfPeriod: usize = 0_usize;
+            let mut sqrtPeriod: usize = 0_usize;
+            let mut ringSize: usize = 0_usize;
+            let mut wmaStartIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut w: usize = 0_usize;
+            let mut dividerFull: usize = 0_usize;
+            let mut dividerHalf: usize = 0_usize;
+            let mut dividerSqrt: usize = 0_usize;
+            let mut trailingIdxFull: usize = 0_usize;
+            let mut trailingIdxHalf: usize = 0_usize;
+            let mut periodSubFull: f64 = 0.0_f64;
+            let mut periodSumFull: f64 = 0.0_f64;
+            let mut trailingFull: f64 = 0.0_f64;
+            let mut periodSubHalf: f64 = 0.0_f64;
+            let mut periodSumHalf: f64 = 0.0_f64;
+            let mut trailingHalf: f64 = 0.0_f64;
+            let mut periodSubSqrt: f64 = 0.0_f64;
+            let mut periodSumSqrt: f64 = 0.0_f64;
+            let mut trailingSqrt: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut halfOut: f64 = 0.0_f64;
+            let mut diffReal: f64 = 0.0_f64;
+            let mut dRing: Vec<f64> = Vec::new();
+            let mut dRing_Idx: usize = 0;
+            let mut maxIdx_dRing: usize = 49;
+            // The de-lagged series needs only its last sqrt(n) values, so the whole
+            // computation runs in one pass over a single window into the input:
+            // three interleaved WMA rolling sums plus this small ring. The ring has
+            // sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+            // (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+            // Hull Moving Average (Alan Hull, 2005):
+            //
+            //    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+            //
+            // Both derived periods use the author's Integer() truncation; some other
+            // published sources round to nearest instead, which is a visibly different
+            // line. See hma.md and issue #139.
+            //
+            // Each of the three WMAs keeps TA_WMA's exact accumulation order
+            // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+            // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+            // differential in test_composite.c holds it to that, memcmp-exact.
+            halfPeriod = (optInTimePeriod / 2) as usize;
+            sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
+            lookbackSqrt = self.wma_lookback((sqrtPeriod) as i32);
+            lookbackTotal = self.wma_lookback(optInTimePeriod) + lookbackSqrt;
+            // Move up the start index if there is not
+            // enough initial data.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                dummyBegIdx = 0;
+                dummyNBElement = 0;
+                return Err(RetCode::BadParam);
+            }
+            // The two price WMAs are anchored where the first de-lagged value is
+            // needed: lookbackSqrt bars before the first requested output.
+            // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+            wmaStartIdx = startIdx - lookbackSqrt;
+            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            // Prime the full-period WMA over the optInTimePeriod-1 bars before
+            // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+            periodSubFull = 0.0;
+            periodSumFull = 0.0;
+            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            i = trailingIdxFull;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubFull += tempReal;
+                periodSumFull += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingFull = 0.0;
+            outIdx = 0;
+            // sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+            // param so the stream analyzer sees a param-pure dual-mode split.
+            // General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
+            // sqrtPeriod >= 2 -- no period-1 special cases below this point.
+            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            // Prime the half-period WMA the same way.
+            periodSubHalf = 0.0;
+            periodSumHalf = 0.0;
+            trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+            i = trailingIdxHalf;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingHalf = 0.0;
+            // The de-lagged value computed at bar t is consumed as the outer WMA's
+            // trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
+            // sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
+            // slot with the current one, advance.
+            ringSize = sqrtPeriod - 1;
+            if ringSize < 1 { return Err(RetCode::AllocErr); }
+            dRing = vec![0.0_f64; (ringSize) as usize];
+            maxIdx_dRing = ((ringSize) as usize) - 1;
+            dRing_Idx = 0;
+            // Warm-up: the sqrtPeriod-1 de-lagged values before the first output
+            // prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
+            periodSubSqrt = 0.0;
+            periodSumSqrt = 0.0;
+            trailingSqrt = 0.0;
+            w = 1;
+            // for( today = wmaStartIdx; today < startIdx; today += 1 )
+            today = wmaStartIdx;
+            while today < startIdx {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((halfPeriod) as f64);
+                trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
+                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * ((w) as f64);
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx += 1;
+                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                today += 1;
+            }
+            // Steady state: one pass, three rolling WMAs. Writes trail every read by
+            // at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
+            // stays safe.
+            for today in (startIdx as usize)..(endIdx as usize) + 1 {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((halfPeriod) as f64);
+                trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
+                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * ((sqrtPeriod) as f64);
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx += 1;
+                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                lastValue_outReal = periodSumSqrt / ((dividerSqrt) as f64);
+                periodSumSqrt -= periodSubSqrt;
+            }
+            today = (endIdx as usize) + 1;
+            dummyBegIdx = startIdx;
+            dummyNBElement = outIdx;
+
+            // Capture the live batch state into the handle.
+            let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
+            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
+            let mut ring_trailingIdxFull_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxFull];
+            ring_trailingIdxFull_inReal[..cap_trailingIdxFull as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxFull as usize..]);
+            let cap_trailingIdxHalf: i64 = (today as i64) - (trailingIdxHalf as i64);
+            if cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxHalf: usize = if cap_trailingIdxHalf > 0 { cap_trailingIdxHalf as usize } else { 1 };
+            let mut ring_trailingIdxHalf_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxHalf];
+            ring_trailingIdxHalf_inReal[..cap_trailingIdxHalf as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxHalf as usize..]);
+            let cbSize_dRing: usize = maxIdx_dRing + 1;
+            if cbSize_dRing > historyLen + 1 {
+                return Err(RetCode::InternalError);
+            }
+            let state = HmaStreamState {
+                optInTimePeriod,
+                dividerFull,
+                periodSubFull,
+                periodSumFull,
+                trailingFull,
+                fullOut,
+                halfPeriod,
+                sqrtPeriod,
+                dividerHalf,
+                dividerSqrt,
+                periodSubHalf,
+                periodSumHalf,
+                trailingHalf,
+                periodSubSqrt,
+                periodSumSqrt,
+                trailingSqrt,
+                halfOut,
+                diffReal,
+                dRing_Idx,
+                maxIdx_dRing,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
+                ring_trailingIdxFull_inReal,
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: cap_trailingIdxHalf as usize,
+                ring_trailingIdxHalf_inReal,
+                cbSize_dRing: cbSize_dRing,
+                cb_dRing: dRing,
+            };
+            Ok((HmaStream { core: self.clone(), state }, lastValue_outReal))
+        }
+    }
+
+    /// Open a live HMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::hma`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.hma_open(&data, 20).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_HMA_Open")]
+    pub fn hma_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(HmaStream, f64), RetCode> {
+        self.hma_open_internal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::hma_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::hma`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_HMA_OpenAndFill")]
+    pub fn hma_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<HmaStream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inReal.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx: usize = 0;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 2 || optInTimePeriod == 3 {
+            let mut lookbackTotal: usize = 0_usize;
+            let mut lookbackSqrt: usize = 0_usize;
+            let mut halfPeriod: usize = 0_usize;
+            let mut sqrtPeriod: usize = 0_usize;
+            let mut ringSize: usize = 0_usize;
+            let mut wmaStartIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut w: usize = 0_usize;
+            let mut dividerFull: usize = 0_usize;
+            let mut dividerHalf: usize = 0_usize;
+            let mut dividerSqrt: usize = 0_usize;
+            let mut trailingIdxFull: usize = 0_usize;
+            let mut trailingIdxHalf: usize = 0_usize;
+            let mut periodSubFull: f64 = 0.0_f64;
+            let mut periodSumFull: f64 = 0.0_f64;
+            let mut trailingFull: f64 = 0.0_f64;
+            let mut periodSubHalf: f64 = 0.0_f64;
+            let mut periodSumHalf: f64 = 0.0_f64;
+            let mut trailingHalf: f64 = 0.0_f64;
+            let mut periodSubSqrt: f64 = 0.0_f64;
+            let mut periodSumSqrt: f64 = 0.0_f64;
+            let mut trailingSqrt: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut halfOut: f64 = 0.0_f64;
+            let mut diffReal: f64 = 0.0_f64;
+            let mut dRing: Vec<f64> = Vec::new();
+            let mut dRing_Idx: usize = 0;
+            let mut maxIdx_dRing: usize = 49;
+            // The de-lagged series needs only its last sqrt(n) values, so the whole
+            // computation runs in one pass over a single window into the input:
+            // three interleaved WMA rolling sums plus this small ring. The ring has
+            // sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+            // (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+            // Hull Moving Average (Alan Hull, 2005):
+            //
+            //    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+            //
+            // Both derived periods use the author's Integer() truncation; some other
+            // published sources round to nearest instead, which is a visibly different
+            // line. See hma.md and issue #139.
+            //
+            // Each of the three WMAs keeps TA_WMA's exact accumulation order
+            // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+            // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+            // differential in test_composite.c holds it to that, memcmp-exact.
+            halfPeriod = (optInTimePeriod / 2) as usize;
+            sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
+            lookbackSqrt = self.wma_lookback((sqrtPeriod) as i32);
+            lookbackTotal = self.wma_lookback(optInTimePeriod) + lookbackSqrt;
+            // Move up the start index if there is not
+            // enough initial data.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::BadParam);
+            }
+            // The two price WMAs are anchored where the first de-lagged value is
+            // needed: lookbackSqrt bars before the first requested output.
+            // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+            wmaStartIdx = startIdx - lookbackSqrt;
+            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            // Prime the full-period WMA over the optInTimePeriod-1 bars before
+            // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+            periodSubFull = 0.0;
+            periodSumFull = 0.0;
+            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            i = trailingIdxFull;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubFull += tempReal;
+                periodSumFull += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingFull = 0.0;
+            outIdx = 0;
+            // sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+            // param so the stream analyzer sees a param-pure dual-mode split.
+            // Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
+            // sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
+            // own short-circuit). The whole formula collapses to
+            //    HMA[t] = 2*price[t] - WMA(price, n)[t]
+            // with no de-lag ring at all. In-place note: the output store lands on
+            // the SAME slot the trailing read just consumed (zero margin), so the
+            // read stays ordered before the store.
+            for today in (startIdx as usize)..(endIdx as usize) + 1 {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                outReal[outIdx] = 2.0 * tempReal - fullOut;
+                outIdx += 1;
+            }
+            today = (endIdx as usize) + 1;
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outIdx;
+
+            // Capture the live batch state into the handle.
+            let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
+            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
+            let mut ring_trailingIdxFull_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxFull];
+            ring_trailingIdxFull_inReal[..cap_trailingIdxFull as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxFull as usize..]);
+            let state = HmaStreamState {
+                optInTimePeriod,
+                dividerFull,
+                periodSubFull,
+                periodSumFull,
+                trailingFull,
+                fullOut,
+                halfPeriod,
+                sqrtPeriod,
+                dividerHalf,
+                dividerSqrt,
+                periodSubHalf,
+                periodSumHalf,
+                trailingHalf,
+                periodSubSqrt,
+                periodSumSqrt,
+                trailingSqrt,
+                halfOut,
+                diffReal,
+                dRing_Idx,
+                maxIdx_dRing,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
+                ring_trailingIdxFull_inReal,
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: 0_usize,
+                ring_trailingIdxHalf_inReal: vec![0.0_f64; 1],
+                cbSize_dRing: 0_usize,
+                cb_dRing: Vec::new(),
+            };
+            Ok(HmaStream { core: self.clone(), state })
+        } else {
+            let mut lookbackTotal: usize = 0_usize;
+            let mut lookbackSqrt: usize = 0_usize;
+            let mut halfPeriod: usize = 0_usize;
+            let mut sqrtPeriod: usize = 0_usize;
+            let mut ringSize: usize = 0_usize;
+            let mut wmaStartIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut outIdx: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut w: usize = 0_usize;
+            let mut dividerFull: usize = 0_usize;
+            let mut dividerHalf: usize = 0_usize;
+            let mut dividerSqrt: usize = 0_usize;
+            let mut trailingIdxFull: usize = 0_usize;
+            let mut trailingIdxHalf: usize = 0_usize;
+            let mut periodSubFull: f64 = 0.0_f64;
+            let mut periodSumFull: f64 = 0.0_f64;
+            let mut trailingFull: f64 = 0.0_f64;
+            let mut periodSubHalf: f64 = 0.0_f64;
+            let mut periodSumHalf: f64 = 0.0_f64;
+            let mut trailingHalf: f64 = 0.0_f64;
+            let mut periodSubSqrt: f64 = 0.0_f64;
+            let mut periodSumSqrt: f64 = 0.0_f64;
+            let mut trailingSqrt: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut halfOut: f64 = 0.0_f64;
+            let mut diffReal: f64 = 0.0_f64;
+            let mut dRing: Vec<f64> = Vec::new();
+            let mut dRing_Idx: usize = 0;
+            let mut maxIdx_dRing: usize = 49;
+            // The de-lagged series needs only its last sqrt(n) values, so the whole
+            // computation runs in one pass over a single window into the input:
+            // three interleaved WMA rolling sums plus this small ring. The ring has
+            // sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+            // (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+            // Hull Moving Average (Alan Hull, 2005):
+            //
+            //    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+            //
+            // Both derived periods use the author's Integer() truncation; some other
+            // published sources round to nearest instead, which is a visibly different
+            // line. See hma.md and issue #139.
+            //
+            // Each of the three WMAs keeps TA_WMA's exact accumulation order
+            // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+            // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+            // differential in test_composite.c holds it to that, memcmp-exact.
+            halfPeriod = (optInTimePeriod / 2) as usize;
+            sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
+            lookbackSqrt = self.wma_lookback((sqrtPeriod) as i32);
+            lookbackTotal = self.wma_lookback(optInTimePeriod) + lookbackSqrt;
+            // Move up the start index if there is not
+            // enough initial data.
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::BadParam);
+            }
+            // The two price WMAs are anchored where the first de-lagged value is
+            // needed: lookbackSqrt bars before the first requested output.
+            // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+            wmaStartIdx = startIdx - lookbackSqrt;
+            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            // Prime the full-period WMA over the optInTimePeriod-1 bars before
+            // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+            periodSubFull = 0.0;
+            periodSumFull = 0.0;
+            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            i = trailingIdxFull;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubFull += tempReal;
+                periodSumFull += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingFull = 0.0;
+            outIdx = 0;
+            // sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+            // param so the stream analyzer sees a param-pure dual-mode split.
+            // General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
+            // sqrtPeriod >= 2 -- no period-1 special cases below this point.
+            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            // Prime the half-period WMA the same way.
+            periodSubHalf = 0.0;
+            periodSumHalf = 0.0;
+            trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+            i = trailingIdxHalf;
+            w = 1;
+            while i < wmaStartIdx {
+                tempReal = inReal[{ let _v = i; i += 1; _v }];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * ((w) as f64);
+                w += 1;
+            }
+            trailingHalf = 0.0;
+            // The de-lagged value computed at bar t is consumed as the outer WMA's
+            // trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
+            // sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
+            // slot with the current one, advance.
+            ringSize = sqrtPeriod - 1;
+            if ringSize < 1 { return Err(RetCode::AllocErr); }
+            dRing = vec![0.0_f64; (ringSize) as usize];
+            maxIdx_dRing = ((ringSize) as usize) - 1;
+            dRing_Idx = 0;
+            // Warm-up: the sqrtPeriod-1 de-lagged values before the first output
+            // prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
+            periodSubSqrt = 0.0;
+            periodSumSqrt = 0.0;
+            trailingSqrt = 0.0;
+            w = 1;
+            // for( today = wmaStartIdx; today < startIdx; today += 1 )
+            today = wmaStartIdx;
+            while today < startIdx {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((halfPeriod) as f64);
+                trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
+                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * ((w) as f64);
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx += 1;
+                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                today += 1;
+            }
+            // Steady state: one pass, three rolling WMAs. Writes trail every read by
+            // at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
+            // stays safe.
+            for today in (startIdx as usize)..(endIdx as usize) + 1 {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((optInTimePeriod) as f64);
+                trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
+                fullOut = periodSumFull / ((dividerFull) as f64);
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((halfPeriod) as f64);
+                trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
+                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * ((sqrtPeriod) as f64);
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx += 1;
+                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                outReal[outIdx] = periodSumSqrt / ((dividerSqrt) as f64);
+                outIdx += 1;
+                periodSumSqrt -= periodSubSqrt;
+            }
+            today = (endIdx as usize) + 1;
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outIdx;
+
+            // Capture the live batch state into the handle.
+            let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
+            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
+            let mut ring_trailingIdxFull_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxFull];
+            ring_trailingIdxFull_inReal[..cap_trailingIdxFull as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxFull as usize..]);
+            let cap_trailingIdxHalf: i64 = (today as i64) - (trailingIdxHalf as i64);
+            if cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_trailingIdxHalf: usize = if cap_trailingIdxHalf > 0 { cap_trailingIdxHalf as usize } else { 1 };
+            let mut ring_trailingIdxHalf_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdxHalf];
+            ring_trailingIdxHalf_inReal[..cap_trailingIdxHalf as usize]
+                .copy_from_slice(&inReal[historyLen - cap_trailingIdxHalf as usize..]);
+            let cbSize_dRing: usize = maxIdx_dRing + 1;
+            if cbSize_dRing > historyLen + 1 {
+                return Err(RetCode::InternalError);
+            }
+            let state = HmaStreamState {
+                optInTimePeriod,
+                dividerFull,
+                periodSubFull,
+                periodSumFull,
+                trailingFull,
+                fullOut,
+                halfPeriod,
+                sqrtPeriod,
+                dividerHalf,
+                dividerSqrt,
+                periodSubHalf,
+                periodSumHalf,
+                trailingHalf,
+                periodSubSqrt,
+                periodSumSqrt,
+                trailingSqrt,
+                halfOut,
+                diffReal,
+                dRing_Idx,
+                maxIdx_dRing,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
+                ring_trailingIdxFull_inReal,
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: cap_trailingIdxHalf as usize,
+                ring_trailingIdxHalf_inReal,
+                cbSize_dRing: cbSize_dRing,
+                cb_dRing: dRing,
+            };
+            Ok(HmaStream { core: self.clone(), state })
+        }
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+impl HmaStream {
+    /// Commit one closed bar; always produces a value. Never allocates.
+    #[doc(alias = "TA_HMA_Update")]
+    pub fn update(&mut self, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        self.core.hma_step_internal(&mut self.state, inReal, &mut outReal);
+        outReal
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return (it is the same code, run on
+    /// a throwaway clone). Clones the internal state (allocates for windowed
+    /// indicators).
+    #[doc(alias = "TA_HMA_Peek")]
+    #[must_use]
+    pub fn peek(&self, inReal: f64) -> f64 {
+        let mut scratch = self.clone();
+        scratch.update(inReal)
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<HmaStream>();
+};
+
 /***************/
 /* End of File */
 /***************/

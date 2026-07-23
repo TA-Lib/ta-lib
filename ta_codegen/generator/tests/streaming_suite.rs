@@ -522,6 +522,7 @@ fn every_matype_is_streamable_except_tracked_blockers() {
         ("KAMA", "kama"),
         ("MAMA", "mama"),
         ("T3", "t3"),
+        ("HMA", "hma"),
     ];
     // Not-yet-streamable MAType functions (deep blockers). MUST ONLY SHRINK.
     // NOW EMPTY: MAMA streamed in M7c (it is an ordinary HT function — WMA ring +
@@ -584,15 +585,15 @@ fn ma_derives_dispatch_plan() {
         .collect();
     assert_eq!(
         supported,
-        ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3"],
-        "every pre-#139 arm streams: single-output MAs plus MAMA via its \
-         nullable FAMA (TRIMA joined in M6c, MAMA via nullable outputs in #125)"
+        ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3", "hma"],
+        "every arm streams: single-output MAs plus MAMA via its nullable FAMA \
+         (TRIMA joined in M6c, MAMA via nullable outputs in #125, HMA via the \
+         dual-mode buffer union in #141)"
     );
-    // HMA (#139) is the one reject arm: hma has no stream yet (Map-feeds-Sub
-    // shape), so its arm must be an Open-time reject that auto-flips to
-    // supported on the first generate after hma gains the YAML `stream` flag.
+    // No reject arms remain: HMA (#139) was the last, flipped to supported by
+    // its YAML `stream` flag + the dual-mode per-arm buffer union (#141).
     let rejected: Vec<&str> = dp.unsupported_labels();
-    assert_eq!(rejected, ["MAType_HMA"], "HMA is the sole reject arm");
+    assert!(rejected.is_empty(), "no reject arms remain, got {rejected:?}");
     // The MAMA arm forwards mama's output 0 (the MAMA line) into MA's single
     // output and discards output 1 (FAMA, nullable) as NULL. This map is what
     // the C emitter renders as `TA_MAMA_*( ..., outReal, NULL )`.

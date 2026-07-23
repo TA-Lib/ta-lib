@@ -1503,7 +1503,7 @@ pub static FUNCS: [FuncInfo; 168] = [
         camel_case_name: "Hma",
         group: Group::OverlapStudies,
         hint: "Hull Moving Average",
-        flags: FuncFlags(0x01000000),
+        flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), domain: OptDomain::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],

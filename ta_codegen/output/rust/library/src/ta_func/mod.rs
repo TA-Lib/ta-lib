@@ -269,6 +269,7 @@ pub use dx::DxStream;
 pub use ema::EmaStream;
 pub use exp::ExpStream;
 pub use floor::FloorStream;
+pub use hma::HmaStream;
 pub use ht_dcperiod::HtDcPeriodStream;
 pub use ht_dcphase::HtDcPhaseStream;
 pub use ht_phasor::HtPhasorStream;

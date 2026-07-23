@@ -60,7 +60,7 @@ DEF_FUNCTION( HMA,
               TA_GroupId_OverlapStudies,
               "Hull Moving Average",
               "Hma",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* HMA END */
 

@@ -381,6 +381,7 @@ enum MaSub {
     Kama(KamaStream),
     Mama(MamaStream),
     T3(T3Stream),
+    Hma(HmaStream),
 }
 
 #[allow(non_snake_case)]
@@ -425,6 +426,9 @@ impl Core {
                 (*outReal) = subValue.0;
             }
             MaSub::T3(sub) => {
+                (*outReal) = sub.update(inReal);
+            }
+            MaSub::Hma(sub) => {
                 (*outReal) = sub.update(inReal);
             }
         }
@@ -490,8 +494,10 @@ impl Core {
                 let (sub, subValue) = self.t3_open_internal(inReal, startIdx, optInTimePeriod, 0.7)?;
                 (MaSub::T3(sub), subValue)
             }
-            /* no hma stream */
-            9 => return Err(RetCode::BadParam),
+            9 => {
+                let (sub, subValue) = self.hma_open_internal(inReal, startIdx, optInTimePeriod)?;
+                (MaSub::Hma(sub), subValue)
+            }
             _ => return Err(RetCode::BadParam),
         };
         let state = MaStreamState { optInTimePeriod, optInMAType, sub };
@@ -583,8 +589,9 @@ impl Core {
             8 => MaSub::T3(
                 self.t3_open_and_fill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),
-            /* no hma stream */
-            9 => return Err(RetCode::BadParam),
+            9 => MaSub::Hma(
+                self.hma_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
             _ => return Err(RetCode::BadParam),
         };
         let state = MaStreamState { optInTimePeriod, optInMAType, sub };

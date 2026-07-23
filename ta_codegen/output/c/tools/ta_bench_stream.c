@@ -6485,6 +6485,70 @@ static void bench_stream_all(const char *filter, int iters) {
         }
         fflush(stdout);
     }
+    if( func_matches(filter, "HMA") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        int lb = TA_HMA_Lookback(20);
+        if( lb < 0 ) lb = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                TA_HMA(t, t, g_rt_close, 20, &begIdx, &nb, g_outBuf0);
+                acc += g_outBuf0[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_HMA_Stream *st = NULL;
+            double v0 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_HMA_Open(&st, g_close, g_nPoints, 20, &v0);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_HMA_Update(st, g_close[it & BENCH_MASK], &v0);
+                    acc += v0;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_HMA_Peek(st, g_close[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_HMA_Update(st, g_close[it & BENCH_MASK], &v0);
+                        acc += v0;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += (int)acc + nb;
+            TA_HMA_Close(st);
+            printf("HMA %.3f %.3f %.3f %d %zu\n", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += (int)acc + nb;
+            if( st ) { g_ta_track = 0; TA_HMA_Close(st); }
+            printf("HMA %.3f -1 -1 %d 0\n", best_b/(double)iters, lb);
+        }
+        fflush(stdout);
+    }
     if( func_matches(filter, "HT_DCPERIOD") ) {
         long long best_b = 0, best_u = -1, best_p = -1;
         int begIdx = 0, nb = 0;
