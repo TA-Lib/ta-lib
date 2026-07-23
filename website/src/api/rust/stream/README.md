@@ -9,18 +9,18 @@ toc: false
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The [batch methods](/api/rust/) (`core.sma`, `core.rsi`, …) recompute over a whole slice. The **streaming API** returns a small owned handle that carries state between bars, so each new bar costs O(1) — and every value is **bit-identical** to the batch method over the same series. Ideal for live feeds.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
 
-Each streamable function adds two constructors on `Core` and a handful of methods on its handle:
+Each streamable function adds two constructors on `Core` and a handful of methods on its stream:
 
 | Call | When | Does |
 |------|------|------|
-| `core.<name>_open(history, params)` | once | validate params, consume warm-up history, return `(handle, value)` |
+| `core.<name>_open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
 | `core.<name>_open_and_fill(..)` | once, instead of `open` | like `open`, but also fills the output for **every** history bar — see [below](#full-history-output-open-and-fill) |
-| `handle.update(bar)` | once per **closed** bar | commit one bar, return the new value |
-| `handle.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+| `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-There is no `close` — dropping the handle closes the stream (RAII).
+There is no `close` — dropping the stream closes it (RAII).
 
 ## Example (SMA)
 
@@ -31,7 +31,7 @@ let core = Core::new();
 
 // Seed with warm-up history (>= sma_lookback(period) + 1 bars).
 let history: Vec<f64> = /* ...your closing prices... */;
-let (mut s, last) = core.sma_open(&history, 30)?;   // handle + value at the last history bar
+let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
 
 // Each time a bar closes:
 let v = s.update(new_close);                         // always a value; never allocates
@@ -46,15 +46,15 @@ let provisional = s.peek(forming_close);             // state left unchanged
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the handle keeps everything it needs.
+- **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same transition on a throwaway clone (which allocates for windowed indicators — `update` is the allocation-free path).
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#unstable_period) and candle settings are captured from the immutable `Core` at `open` and cannot change during the stream's life.
-- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per handle. Handles are `Send + Sync + Clone`; **cloning forks an independent stream**.
-- **Don't persist** a handle across library versions.
+- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+- **Don't persist** a stream across library versions.
 
 ## Full-history output (`open_and_fill`)
 
-`open` gives you only the value at the last history bar. `open_and_fill` also writes the output for **every** history bar — the same values the [batch method](/api/rust/) would produce — while still returning the live handle, in one pass:
+`open` gives you only the value at the last history bar. `open_and_fill` also writes the output for **every** history bar — the same values the [batch method](/api/rust/) would produce — while still returning the live stream, in one pass:
 
 ```rust
 let mut beg = 0usize;
