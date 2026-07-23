@@ -59,6 +59,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
+ *  072226 MF,CC Add HMA (issue #139).
  */
 
 TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
@@ -102,6 +103,9 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
       break;
    case TA_MAType_T3:
       retValue = TA_T3_Lookback(optInTimePeriod,0.7);
+      break;
+   case TA_MAType_HMA:
+      retValue = TA_HMA_Lookback(optInTimePeriod);
       break;
    default:
       retValue = 0;
@@ -184,6 +188,9 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    case TA_MAType_T3:
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
+   case TA_MAType_HMA:
+      retCode = TA_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -244,6 +251,9 @@ TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
       break;
    case TA_MAType_T3:
       retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
+      break;
+   case TA_MAType_HMA:
+      retCode = TA_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -322,6 +332,9 @@ TA_RetCode TA_S_MA( int    startIdx,
    case TA_MAType_T3:
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
+   case TA_MAType_HMA:
+      retCode = TA_S_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -382,6 +395,9 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
       break;
    case TA_MAType_T3:
       retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
+      break;
+   case TA_MAType_HMA:
+      retCode = TA_S_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -497,6 +513,7 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          sp->sub = sub;
       }
       break;
+   case TA_MAType_HMA: /* no hma stream */
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -622,6 +639,7 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
+   case TA_MAType_HMA: /* no hma stream */
    default:
       retCode = TA_BAD_PARAM;
       break;

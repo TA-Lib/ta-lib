@@ -2142,6 +2142,26 @@ unsigned int TA_FLOOR_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_FLOOR_Lookback( );
 }
+TA_RetCode TA_HMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_HMA(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_HMA_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_HMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

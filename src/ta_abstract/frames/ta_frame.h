@@ -884,6 +884,15 @@ TA_RetCode TA_FLOOR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_FLOOR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_HMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_HMA_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

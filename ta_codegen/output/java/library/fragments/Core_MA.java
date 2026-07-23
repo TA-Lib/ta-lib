@@ -15,6 +15,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
+ *  072226 MF,CC Add HMA (issue #139).
  */
 
    public int movingAverageLookback( int optInTimePeriod, MAType optInMAType )
@@ -56,6 +57,9 @@
          break;
       case T3:
          retValue = t3Lookback(optInTimePeriod, 0.7);
+         break;
+      case Hma:
+         retValue = hmaLookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -130,6 +134,9 @@
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
          break;
+      case Hma:
+         retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -186,6 +193,9 @@
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         break;
+      case Hma:
+         retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -255,6 +265,9 @@
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
          break;
+      case Hma:
+         retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -311,6 +324,9 @@
          break;
       case T3:
          retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         break;
+      case Hma:
+         retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -556,6 +572,8 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case Hma:
+         return RetCode.BadParam; /* no hma stream */
       default:
          return RetCode.BadParam;
       }
@@ -652,6 +670,8 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case Hma:
+         return RetCode.BadParam; /* no hma stream */
       default:
          return RetCode.BadParam;
       }

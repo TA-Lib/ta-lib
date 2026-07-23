@@ -43,4 +43,4 @@ Moving Average, MovingAverage
 
 ## See Also
 
-SMA · EMA · WMA · DEMA · TEMA · TRIMA · KAMA · MAMA · T3
+SMA · EMA · WMA · DEMA · TEMA · TRIMA · KAMA · MAMA · T3 · HMA

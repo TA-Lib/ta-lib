@@ -32,7 +32,7 @@ enum Compatibility {
 }
 
 enum MAType {
-    Sma, Ema, Wma, Dema, Tema, Trima, Kama, Mama, T3;
+    Sma, Ema, Wma, Dema, Tema, Trima, Kama, Mama, T3, Hma;
 }
 
 enum RangeType {
@@ -76883,6 +76883,725 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  072226 MF,CC  First version (issue #139).
+     *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
+     *                CIRCBUF, no whole-range temporaries (issue #139).
+     */
+
+       public int hmaLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          int sqrtPeriod;
+          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
+          return wmaLookback(optInTimePeriod) + wmaLookback(sqrtPeriod) ;
+
+       }
+       public RetCode hma( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int lookbackTotal = 0;
+          int lookbackSqrt = 0;
+          int halfPeriod = 0;
+          int sqrtPeriod = 0;
+          int ringSize = 0;
+          int wmaStartIdx = 0;
+          int today = 0;
+          int outIdx = 0;
+          int i = 0;
+          int w = 0;
+          int dividerFull = 0;
+          int dividerHalf = 0;
+          int dividerSqrt = 0;
+          int trailingIdxFull = 0;
+          int trailingIdxHalf = 0;
+          double periodSubFull = 0;
+          double periodSumFull = 0;
+          double trailingFull = 0;
+          double periodSubHalf = 0;
+          double periodSumHalf = 0;
+          double trailingHalf = 0;
+          double periodSubSqrt = 0;
+          double periodSumSqrt = 0;
+          double trailingSqrt = 0;
+          double tempReal = 0;
+          double fullOut = 0;
+          double halfOut = 0;
+          double diffReal = 0;
+          double[] dRing;
+          int dRing_Idx = 0;
+          int maxIdx_dRing = (50)-1;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          /* The de-lagged series needs only its last sqrt(n) values, so the whole
+           * computation runs in one pass over a single window into the input:
+           * three interleaved WMA rolling sums plus this small ring. Stack for
+           * sqrt(n)-1 <= 49 (optInTimePeriod <= 2500), TA_Malloc beyond.
+           */
+          /* Hull Moving Average (Alan Hull, 2005):
+           *
+           *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+           *
+           * Both derived periods use the author's Integer() truncation; some other
+           * published sources round to nearest instead, which is a visibly different
+           * line. See hma.md and issue #139.
+           *
+           * Each of the three WMAs keeps TA_WMA's exact accumulation order
+           * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+           * differential in test_composite.c holds it to that, memcmp-exact.
+           */
+          halfPeriod = optInTimePeriod / 2;
+          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
+          lookbackSqrt = wmaLookback(sqrtPeriod);
+          lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          /* The two price WMAs are anchored where the first de-lagged value is
+           * needed: lookbackSqrt bars before the first requested output.
+           * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+           */
+          wmaStartIdx = startIdx - lookbackSqrt;
+          dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+          /* Prime the full-period WMA over the optInTimePeriod-1 bars before
+           * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+           */
+          periodSubFull = 0.0;
+          periodSumFull = 0.0;
+          trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+          i = trailingIdxFull;
+          w = 1;
+          while( i < wmaStartIdx ) {
+             tempReal = inReal[i++];
+             periodSubFull += tempReal;
+             periodSumFull += tempReal * w;
+             w += 1;
+          }
+          trailingFull = 0.0;
+          outIdx = 0;
+          /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+           * param so the stream analyzer sees a param-pure dual-mode split.
+           */
+          if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
+             /* Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
+              * sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
+              * own short-circuit). The whole formula collapses to
+              *    HMA[t] = 2*price[t] - WMA(price, n)[t]
+              * with no de-lag ring at all. In-place note: the output store lands on
+              * the SAME slot the trailing read just consumed (zero margin), so the
+              * read stays ordered before the store.
+              */
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                outReal[outIdx++] = 2.0 * tempReal - fullOut;
+             }
+          } else {
+             /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
+              * sqrtPeriod >= 2 -- no period-1 special cases below this point.
+              */
+             dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+             dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+             /* Prime the half-period WMA the same way. */
+             periodSubHalf = 0.0;
+             periodSumHalf = 0.0;
+             trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+             i = trailingIdxHalf;
+             w = 1;
+             while( i < wmaStartIdx ) {
+                tempReal = inReal[i++];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * w;
+                w += 1;
+             }
+             trailingHalf = 0.0;
+             /* The de-lagged value computed at bar t is consumed as the outer WMA's
+              * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
+              * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
+              * slot with the current one, advance.
+              */
+             ringSize = sqrtPeriod - 1;
+             if( ringSize < 1 ) return RetCode.AllocErr;
+             dRing = new double[ringSize];
+             maxIdx_dRing = (ringSize)-1;
+             dRing_Idx = 0;
+             /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
+              * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
+              */
+             periodSubSqrt = 0.0;
+             periodSumSqrt = 0.0;
+             trailingSqrt = 0.0;
+             w = 1;
+             for( today = wmaStartIdx; today < startIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * w;
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+             }
+             /* Steady state: one pass, three rolling WMAs. Writes trail every read by
+              * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
+              * stays safe.
+              */
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * sqrtPeriod;
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+                outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+                periodSumSqrt -= periodSubSqrt;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode hmaUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int lookbackTotal = 0;
+          int lookbackSqrt = 0;
+          int halfPeriod = 0;
+          int sqrtPeriod = 0;
+          int ringSize = 0;
+          int wmaStartIdx = 0;
+          int today = 0;
+          int outIdx = 0;
+          int i = 0;
+          int w = 0;
+          int dividerFull = 0;
+          int dividerHalf = 0;
+          int dividerSqrt = 0;
+          int trailingIdxFull = 0;
+          int trailingIdxHalf = 0;
+          double periodSubFull = 0;
+          double periodSumFull = 0;
+          double trailingFull = 0;
+          double periodSubHalf = 0;
+          double periodSumHalf = 0;
+          double trailingHalf = 0;
+          double periodSubSqrt = 0;
+          double periodSumSqrt = 0;
+          double trailingSqrt = 0;
+          double tempReal = 0;
+          double fullOut = 0;
+          double halfOut = 0;
+          double diffReal = 0;
+          double[] dRing;
+          int dRing_Idx = 0;
+          int maxIdx_dRing = (50)-1;
+          halfPeriod = optInTimePeriod / 2;
+          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
+          lookbackSqrt = wmaLookback(sqrtPeriod);
+          lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          wmaStartIdx = startIdx - lookbackSqrt;
+          dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+          periodSubFull = 0.0;
+          periodSumFull = 0.0;
+          trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+          i = trailingIdxFull;
+          w = 1;
+          while( i < wmaStartIdx ) {
+             tempReal = inReal[i++];
+             periodSubFull += tempReal;
+             periodSumFull += tempReal * w;
+             w += 1;
+          }
+          trailingFull = 0.0;
+          outIdx = 0;
+          if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                outReal[outIdx++] = 2.0 * tempReal - fullOut;
+             }
+          } else {
+             dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+             dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+             periodSubHalf = 0.0;
+             periodSumHalf = 0.0;
+             trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+             i = trailingIdxHalf;
+             w = 1;
+             while( i < wmaStartIdx ) {
+                tempReal = inReal[i++];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * w;
+                w += 1;
+             }
+             trailingHalf = 0.0;
+             ringSize = sqrtPeriod - 1;
+             if( ringSize < 1 ) return RetCode.AllocErr;
+             dRing = new double[ringSize];
+             maxIdx_dRing = (ringSize)-1;
+             dRing_Idx = 0;
+             periodSubSqrt = 0.0;
+             periodSumSqrt = 0.0;
+             trailingSqrt = 0.0;
+             w = 1;
+             for( today = wmaStartIdx; today < startIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * w;
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+             }
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * sqrtPeriod;
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+                outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+                periodSumSqrt -= periodSubSqrt;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode hma( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int lookbackTotal = 0;
+          int lookbackSqrt = 0;
+          int halfPeriod = 0;
+          int sqrtPeriod = 0;
+          int ringSize = 0;
+          int wmaStartIdx = 0;
+          int today = 0;
+          int outIdx = 0;
+          int i = 0;
+          int w = 0;
+          int dividerFull = 0;
+          int dividerHalf = 0;
+          int dividerSqrt = 0;
+          int trailingIdxFull = 0;
+          int trailingIdxHalf = 0;
+          double periodSubFull = 0;
+          double periodSumFull = 0;
+          double trailingFull = 0;
+          double periodSubHalf = 0;
+          double periodSumHalf = 0;
+          double trailingHalf = 0;
+          double periodSubSqrt = 0;
+          double periodSumSqrt = 0;
+          double trailingSqrt = 0;
+          double tempReal = 0;
+          double fullOut = 0;
+          double halfOut = 0;
+          double diffReal = 0;
+          double[] dRing;
+          int dRing_Idx = 0;
+          int maxIdx_dRing = (50)-1;
+          if( startIdx < 0 ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          halfPeriod = optInTimePeriod / 2;
+          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
+          lookbackSqrt = wmaLookback(sqrtPeriod);
+          lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          wmaStartIdx = startIdx - lookbackSqrt;
+          dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+          periodSubFull = 0.0;
+          periodSumFull = 0.0;
+          trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+          i = trailingIdxFull;
+          w = 1;
+          while( i < wmaStartIdx ) {
+             tempReal = (double)inReal[i++];
+             periodSubFull += tempReal;
+             periodSumFull += tempReal * w;
+             w += 1;
+          }
+          trailingFull = 0.0;
+          outIdx = 0;
+          if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                outReal[outIdx++] = 2.0 * tempReal - fullOut;
+             }
+          } else {
+             dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+             dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+             periodSubHalf = 0.0;
+             periodSumHalf = 0.0;
+             trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+             i = trailingIdxHalf;
+             w = 1;
+             while( i < wmaStartIdx ) {
+                tempReal = (double)inReal[i++];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * w;
+                w += 1;
+             }
+             trailingHalf = 0.0;
+             ringSize = sqrtPeriod - 1;
+             if( ringSize < 1 ) return RetCode.AllocErr;
+             dRing = new double[ringSize];
+             maxIdx_dRing = (ringSize)-1;
+             dRing_Idx = 0;
+             periodSubSqrt = 0.0;
+             periodSumSqrt = 0.0;
+             trailingSqrt = 0.0;
+             w = 1;
+             for( today = wmaStartIdx; today < startIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = (double)inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * w;
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+             }
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = (double)inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * sqrtPeriod;
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+                outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+                periodSumSqrt -= periodSubSqrt;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       public RetCode hmaUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
+       {
+          int lookbackTotal = 0;
+          int lookbackSqrt = 0;
+          int halfPeriod = 0;
+          int sqrtPeriod = 0;
+          int ringSize = 0;
+          int wmaStartIdx = 0;
+          int today = 0;
+          int outIdx = 0;
+          int i = 0;
+          int w = 0;
+          int dividerFull = 0;
+          int dividerHalf = 0;
+          int dividerSqrt = 0;
+          int trailingIdxFull = 0;
+          int trailingIdxHalf = 0;
+          double periodSubFull = 0;
+          double periodSumFull = 0;
+          double trailingFull = 0;
+          double periodSubHalf = 0;
+          double periodSumHalf = 0;
+          double trailingHalf = 0;
+          double periodSubSqrt = 0;
+          double periodSumSqrt = 0;
+          double trailingSqrt = 0;
+          double tempReal = 0;
+          double fullOut = 0;
+          double halfOut = 0;
+          double diffReal = 0;
+          double[] dRing;
+          int dRing_Idx = 0;
+          int maxIdx_dRing = (50)-1;
+          halfPeriod = optInTimePeriod / 2;
+          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
+          lookbackSqrt = wmaLookback(sqrtPeriod);
+          lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          wmaStartIdx = startIdx - lookbackSqrt;
+          dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+          periodSubFull = 0.0;
+          periodSumFull = 0.0;
+          trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+          i = trailingIdxFull;
+          w = 1;
+          while( i < wmaStartIdx ) {
+             tempReal = (double)inReal[i++];
+             periodSubFull += tempReal;
+             periodSumFull += tempReal * w;
+             w += 1;
+          }
+          trailingFull = 0.0;
+          outIdx = 0;
+          if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                outReal[outIdx++] = 2.0 * tempReal - fullOut;
+             }
+          } else {
+             dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+             dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+             periodSubHalf = 0.0;
+             periodSumHalf = 0.0;
+             trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+             i = trailingIdxHalf;
+             w = 1;
+             while( i < wmaStartIdx ) {
+                tempReal = (double)inReal[i++];
+                periodSubHalf += tempReal;
+                periodSumHalf += tempReal * w;
+                w += 1;
+             }
+             trailingHalf = 0.0;
+             ringSize = sqrtPeriod - 1;
+             if( ringSize < 1 ) return RetCode.AllocErr;
+             dRing = new double[ringSize];
+             maxIdx_dRing = (ringSize)-1;
+             dRing_Idx = 0;
+             periodSubSqrt = 0.0;
+             periodSumSqrt = 0.0;
+             trailingSqrt = 0.0;
+             w = 1;
+             for( today = wmaStartIdx; today < startIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = (double)inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * w;
+                w += 1;
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+             }
+             for( today = startIdx; today <= endIdx; today += 1 ) {
+                tempReal = (double)inReal[today];
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * optInTimePeriod;
+                trailingFull = (double)inReal[trailingIdxFull++];
+                fullOut = periodSumFull / dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * halfPeriod;
+                trailingHalf = (double)inReal[trailingIdxHalf++];
+                halfOut = periodSumHalf / dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * sqrtPeriod;
+                trailingSqrt = dRing[dRing_Idx];
+                dRing[dRing_Idx] = diffReal;
+                dRing_Idx++;
+                if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
+                outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+                periodSumSqrt -= periodSubSqrt;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -98694,6 +99413,7 @@ class Core {
      *  052603 MF   Adapt code to compile with .NET Managed C++
      *  111603 MF   Allow period of 1. Just copy input into output.
      *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
+     *  072226 MF,CC Add HMA (issue #139).
      */
 
        public int movingAverageLookback( int optInTimePeriod, MAType optInMAType )
@@ -98735,6 +99455,9 @@ class Core {
              break;
           case T3:
              retValue = t3Lookback(optInTimePeriod, 0.7);
+             break;
+          case Hma:
+             retValue = hmaLookback(optInTimePeriod);
              break;
           default:
              retValue = 0;
@@ -98809,6 +99532,9 @@ class Core {
           case T3:
              retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
              break;
+          case Hma:
+             retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+             break;
           default:
              retCode = RetCode.BadParam;
              break;
@@ -98865,6 +99591,9 @@ class Core {
              break;
           case T3:
              retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+             break;
+          case Hma:
+             retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
              break;
           default:
              retCode = RetCode.BadParam;
@@ -98934,6 +99663,9 @@ class Core {
           case T3:
              retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
              break;
+          case Hma:
+             retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+             break;
           default:
              retCode = RetCode.BadParam;
              break;
@@ -98990,6 +99722,9 @@ class Core {
              break;
           case T3:
              retCode = t3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+             break;
+          case Hma:
+             retCode = hmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
              break;
           default:
              retCode = RetCode.BadParam;
@@ -99235,6 +99970,8 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case Hma:
+             return RetCode.BadParam; /* no hma stream */
           default:
              return RetCode.BadParam;
           }
@@ -99331,6 +100068,8 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case Hma:
+             return RetCode.BadParam; /* no hma stream */
           default:
              return RetCode.BadParam;
           }
@@ -150907,7 +151646,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", "Apo", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", "Aroon", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -150939,7 +151678,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", "Bbands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -151249,6 +151988,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", "Hma", 16777216,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HT_DCPERIOD", new AbsFunc("HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", "HtDcPeriod", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
@@ -151307,7 +152050,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", "MovingAverage", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", "Macd", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -151315,7 +152058,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", "MacdExt", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", "MacdFix", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -151327,7 +152070,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",8196) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", "MovingAverageVariablePeriod", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", "Max", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -151407,7 +152150,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", "Ppo", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", "Pvi", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -151415,7 +152158,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", "Pvo", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", "Roc", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -151467,15 +152210,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", "Stoch", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outSlowK",4), new AbsOut(0,"outSlowD",4) }));
         ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", "StochF", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", "StochRsi", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", "Sub", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -151625,8 +152368,8 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 194069;
-    static final long ABSTRACT_XML_CHECKSUM = 15551104L;
+    static final int ABSTRACT_XML_LENGTH = 195164;
+    static final long ABSTRACT_XML_CHECKSUM = 15638970L;
     static String handleFunctionDescriptionXML() {
         return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
     }
@@ -151743,6 +152486,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_EMA\"")) return handle_EMA(json);
         else if (json.contains("\"TA_EXP\"")) return handle_EXP(json);
         else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
+        else if (json.contains("\"TA_HMA\"")) return handle_HMA(json);
         else if (json.contains("\"TA_HT_DCPERIOD\"")) return handle_HT_DCPERIOD(json);
         else if (json.contains("\"TA_HT_DCPHASE\"")) return handle_HT_DCPHASE(json);
         else if (json.contains("\"TA_HT_PHASOR\"")) return handle_HT_PHASOR(json);
@@ -152004,6 +152748,8 @@ public class TaCodegenServe {
             sb.append("\"TA_EXP\"");
             sb.append(",");
             sb.append("\"TA_FLOOR\"");
+            sb.append(",");
+            sb.append("\"TA_HMA\"");
             sb.append(",");
             sb.append("\"TA_HT_DCPERIOD\"");
             sb.append(",");
@@ -158451,6 +159197,61 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_HMA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
+            inReal = _tmp_inReal;
+        }
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        long startNs = System.nanoTime();
+        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        rc = core.hma(
+            startIdx, endIdx,
+            inReal,
+            optInTimePeriod,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        long startNsUng = System.nanoTime();
+        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        rc = core.hmaUnguarded(
+            startIdx, endIdx,
+            inReal,
+            optInTimePeriod,
+            outBegIdx, outNBElement, outArr0);
+        }
+        long elapsedNsUng = (System.nanoTime() - startNsUng) / bench_iters;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append(",\"timing_ns_unguarded\":").append(elapsedNsUng);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_HT_DCPERIOD(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -163158,6 +163959,10 @@ public class TaCodegenServe {
         case "FLOOR": {
             return core.floorLookback();
         }
+        case "HMA": {
+            int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+            return core.hmaLookback(optInTimePeriod);
+        }
         case "HT_DCPERIOD": {
             return core.htDcPeriodLookback();
         }
@@ -163570,6 +164375,7 @@ public class TaCodegenServe {
         case "EMA": resp = handle_EMA(json); break;
         case "EXP": resp = handle_EXP(json); break;
         case "FLOOR": resp = handle_FLOOR(json); break;
+        case "HMA": resp = handle_HMA(json); break;
         case "HT_DCPERIOD": resp = handle_HT_DCPERIOD(json); break;
         case "HT_DCPHASE": resp = handle_HT_DCPHASE(json); break;
         case "HT_PHASOR": resp = handle_HT_PHASOR(json); break;
@@ -164439,6 +165245,17 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInFastPeriod == 1) && ( _raw_optInMAType == 9 ) ) || ( !(optInSlowPeriod == 1) && ( _raw_optInMAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.apoOpen(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.apoOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fBegR, fNbR, f0); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.apo(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
             int lb = c2.apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -165280,6 +166097,19 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInTimePeriod == 1) && ( _raw_optInMAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.bbandsOpen(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                double[] f1 = new double[svN];
+                double[] f2 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.bbandsOpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fBegR, fNbR, f0, f1, f2); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.bbands(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0, b1, b2);
             int lb = c2.bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174641,6 +175471,17 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( !(optInTimePeriod == 1) && ( _raw_optInMAType == 9 ) )) {
+                boolean r1;
+                try { c2.movingAverageOpen(fz_c, optInTimePeriod, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.movingAverageOpenAndFill(fz_c, optInTimePeriod, optInMAType, fBegR, fNbR, f0); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.movingAverage(0, svN - 1, fz_c, optInTimePeriod, optInMAType, beg, nb, b0);
             int lb = c2.movingAverageLookback(optInTimePeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174901,6 +175742,19 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInSlowPeriod == 1) && ( _raw_optInSlowMAType == 9 ) ) || ( !(optInFastPeriod == 1) && ( _raw_optInFastMAType == 9 ) ) || ( !(optInSignalPeriod == 1) && ( _raw_optInSignalMAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.macdExtOpen(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                double[] f1 = new double[svN];
+                double[] f2 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.macdExtOpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fBegR, fNbR, f0, f1, f2); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.macdExt(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, beg, nb, b0, b1, b2);
             int lb = c2.macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -175272,6 +176126,17 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( !(optInMaxPeriod == 1) && ( _raw_optInMAType == 9 ) )) {
+                boolean r1;
+                try { c2.movingAverageVariablePeriodOpen(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.movingAverageVariablePeriodOpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fBegR, fNbR, f0); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.movingAverageVariablePeriod(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, beg, nb, b0);
             int lb = c2.movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177363,6 +178228,17 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInFastPeriod == 1) && ( _raw_optInMAType == 9 ) ) || ( !(optInSlowPeriod == 1) && ( _raw_optInMAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.ppoOpen(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.ppoOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fBegR, fNbR, f0); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.ppo(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
             int lb = c2.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177577,6 +178453,17 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInFastPeriod == 1) && ( _raw_optInMAType == 9 ) ) || ( !(optInSlowPeriod == 1) && ( _raw_optInMAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.pvoOpen(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.pvoOpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fBegR, fNbR, f0); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.pvo(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
             int lb = c2.pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178932,6 +179819,18 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInSlowK_Period == 1) && ( _raw_optInSlowK_MAType == 9 ) ) || ( !(optInSlowD_Period == 1) && ( _raw_optInSlowD_MAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.stochOpen(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                double[] f1 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.stochOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fBegR, fNbR, f0, f1); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.stoch(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1);
             int lb = c2.stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179059,6 +179958,18 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
+            if (( ( !(optInFastD_Period == 1) && ( _raw_optInFastD_MAType == 9 ) ) )) {
+                boolean r1;
+                try { c2.stochFOpen(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                double[] f1 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.stochFOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fBegR, fNbR, f0, f1); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.stochF(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1);
             int lb = c2.stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179188,6 +180099,18 @@ public class TaCodegenServe {
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[21] = svK;
+            if (( ( ( !(optInFastD_Period == 1) && ( _raw_optInFastD_MAType == 9 ) ) ) )) {
+                boolean r1;
+                try { c2.stochRsiOpen(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); r1 = false; } catch (IllegalArgumentException _e) { r1 = true; }
+                double[] f0 = new double[svN];
+                double[] f1 = new double[svN];
+                MInteger fBegR = new MInteger();
+                MInteger fNbR = new MInteger();
+                boolean r2;
+                try { c2.stochRsiOpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fBegR, fNbR, f0, f1); r2 = false; } catch (IllegalArgumentException _e) { r2 = true; }
+                boolean okr = r1 && r2;
+                return "{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":" + (okr ? 1 : 0) + ",\"peek_ok\":1}";
+            }
             RetCode rc = c2.stochRsi(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1);
             int lb = c2.stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {

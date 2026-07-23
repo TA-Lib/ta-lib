@@ -18,6 +18,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVI: Positive Volume Index (#126)
   - VWMA: Volume Weighted Moving Average (#131)
   - CMF: Chaikin Money Flow (#134)
+  - HMA: Hull Moving Average (#139). Also added as `TA_MAType_HMA`, selectable wherever an `optInMAType` parameter is accepted (MA, BBANDS, STOCH, MACDEXT, ...).
 - Algo Optimisations:
   - ~3x to 7x faster: DEMA, TEMA and TRIX
   - ~8x faster: MACD and MACDFIX

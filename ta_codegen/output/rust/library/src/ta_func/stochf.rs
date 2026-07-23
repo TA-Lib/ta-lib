@@ -80,7 +80,7 @@ impl Core {
     ///   5, range 1..=100000)
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
-    ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -130,7 +130,7 @@ impl Core {
     ///   5, range 1..=100000)
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
-    ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outFastK` — Raw %K stochastic line.

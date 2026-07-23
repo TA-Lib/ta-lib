@@ -56,6 +56,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
+ *  072226 MF,CC Add HMA (issue #139).
  */
 
 // Import types from parent module
@@ -75,7 +76,7 @@ impl Core {
     ///
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -118,6 +119,9 @@ impl Core {
             8 => {
                 retValue = self.t3_lookback(optInTimePeriod, 0.7);
             }
+            9 => {
+                retValue = self.hma_lookback(optInTimePeriod);
+            }
             _ => {
                 retValue = 0;
             }
@@ -144,7 +148,7 @@ impl Core {
     /// * `inReal` — Series to average.
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Selected moving average of the input.
@@ -183,7 +187,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::sma`] · [`Core::ema`] · [`Core::wma`] · [`Core::dema`] · [`Core::tema`] ·
-    /// [`Core::trima`] · [`Core::kama`] · [`Core::mama`] · [`Core::t3`]
+    /// [`Core::trima`] · [`Core::kama`] · [`Core::mama`] · [`Core::t3`] · [`Core::hma`]
     ///
     /// Further reading: [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma/)
     #[doc(alias = "MovingAverage")]
@@ -255,6 +259,9 @@ impl Core {
             }
             8 => {
                 retCode = self.t3_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+            }
+            9 => {
+                retCode = self.hma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
                 retCode = RetCode::BadParam;
@@ -329,6 +336,9 @@ impl Core {
             }
             8 => {
                 retCode = self.t3_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+            }
+            9 => {
+                retCode = self.hma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
                 retCode = RetCode::BadParam;
@@ -480,6 +490,8 @@ impl Core {
                 let (sub, subValue) = self.t3_open_internal(inReal, startIdx, optInTimePeriod, 0.7)?;
                 (MaSub::T3(sub), subValue)
             }
+            /* no hma stream */
+            9 => return Err(RetCode::BadParam),
             _ => return Err(RetCode::BadParam),
         };
         let state = MaStreamState { optInTimePeriod, optInMAType, sub };
@@ -571,6 +583,8 @@ impl Core {
             8 => MaSub::T3(
                 self.t3_open_and_fill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),
+            /* no hma stream */
+            9 => return Err(RetCode::BadParam),
             _ => return Err(RetCode::BadParam),
         };
         let state = MaStreamState { optInTimePeriod, optInMAType, sub };

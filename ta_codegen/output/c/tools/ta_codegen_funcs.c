@@ -99,6 +99,7 @@
 #include "ta_EMA.c"
 #include "ta_EXP.c"
 #include "ta_FLOOR.c"
+#include "ta_HMA.c"
 #include "ta_HT_DCPERIOD.c"
 #include "ta_HT_DCPHASE.c"
 #include "ta_HT_PHASOR.c"

@@ -2725,6 +2725,7 @@ impl ExprEmitter for RustExpr<'_> {
             "TA_MAType_KAMA" => "6".to_string(),
             "TA_MAType_MAMA" => "7".to_string(),
             "TA_MAType_T3" => "8".to_string(),
+            "TA_MAType_HMA" => "9".to_string(),
             _ => name.to_string(),
         }
     }
