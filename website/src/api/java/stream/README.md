@@ -9,20 +9,20 @@ toc: false
 The Java API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The [batch methods](/api/java/) (`core.sma`, `core.rsi`, …) recompute over a whole array. The **streaming API** returns a small handle that carries state between bars, so each new bar costs O(1) — and every value is **bit-identical** to the batch method over the same series. Ideal for live feeds.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/java/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole array.
 
-Each streamable function adds two factory methods on `Core` and a handful of methods on its handle (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
+Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
 
 | Call | When | Does |
 |------|------|------|
-| `core.<name>Open(history, params)` | once | validate params, consume warm-up history, return a **handle** |
+| `core.<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
 | `core.<name>OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
-| `handle.update(bar)` | once per **closed** bar | commit one bar, return the new value |
-| `handle.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
-| `handle.value()` | any time | the most recently committed value |
-| `handle.copy()` | any time | an independent copy of the stream |
+| `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+| `stream.value()` | any time | the most recently committed value |
+| `stream.copy()` | any time | an independent copy of the stream |
 
-There is no `close` — a handle is ordinary heap state, so an unreferenced handle is simply garbage-collected.
+There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
 ## Example (SMA)
 
@@ -42,19 +42,19 @@ double v = s.update(newClose);                  // always a value; never throws 
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`Open` returns the handle directly; its `value()` starts at the last history bar's value. After a successful `Open`, `update` and `peek` never throw.
+`Open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `Open`, `update` and `peek` never throw.
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the handle keeps everything it needs.
+- **Warm-up.** `Open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same code on a throwaway deep copy (which allocates for windowed indicators — `update` is the cheaper path). `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#unstable_period) and candle settings are captured at `Open` and must not change on the owning `Core` while its streams are live.
-- **Threads.** A handle is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same handle. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Independent handles (including `copy()` results) are fully independent.
+- **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Full-history output (`OpenAndFill`)
 
-`Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live handle, in one pass:
+`Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live stream, in one pass:
 
 ```java
 MInteger beg = new MInteger(), nb = new MInteger();
