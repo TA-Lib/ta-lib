@@ -26,7 +26,7 @@ use std::fmt::Write as _;
 use crate::helper_registry::HelperRegistry;
 use crate::ir::{EnumDef, Expr, FuncDef, ParamType, Statement};
 use crate::registry::Registry;
-use crate::streaming::{self, circ_storages, DispatchPlan, StreamModel, StreamPlan};
+use crate::streaming::{self, circ_storages, CircState, DispatchPlan, StreamModel, StreamPlan};
 
 use super::c::{
     c_decl, emit_opt_param_validation, render_c_switch_label, render_expression,
@@ -853,7 +853,9 @@ fn emit_composed(
         let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
         let _ = writeln!(o, "   scratch = *stream;");
         if let Some(model) = &cp.producer {
-            emit_peek_mirror_fixups(o, model);
+            for (_, text) in peek_fixup_groups(model) {
+                o.push_str(&text);
+            }
         }
         // Point each lag ring at its mirror so the step's ring push mutates the
         // scratch copy, leaving the live handle untouched (peek is const).
@@ -1743,23 +1745,46 @@ fn render_dual_pred(
 /// The dual-mode state struct: optional params (incl. the discriminator param),
 /// the TYPE-CHECKED UNION of both modes' SCALAR state (a name shared by the two
 /// modes — DI/DM's `prevHigh`/`prevLow`, TRIMA's `numerator` — is one field;
-/// mode-B-only fields sit zeroed under mode A), then the shared NON-SCALAR state
-/// (rings/windows/circs/extrema/feedback/lags). No `mode` tag is stored: the step
-/// re-derives it from the immutable discriminator param (the Dispatch precedent).
-/// The two modes must carry IDENTICAL non-scalar state — TRIMA's odd/even arms
-/// share the very same rings; DI/DM have none. Differing per-arm buffers would
-/// need a real per-arm union (extend then).
+/// mode-B-only fields sit zeroed under mode A), then the UNION of both modes'
+/// NON-SCALAR state (rings/windows/circs/extrema/feedback/lags): mode-A fields
+/// first, then mode-B-only fields (HMA: the general arm's half-period ring and
+/// d-CIRCBUF). The mode is fixed at Open and re-derived from the immutable
+/// discriminator param each step (the Dispatch precedent — no `mode` tag), so
+/// each arm touches only its own fields; Open's memset leaves the inactive
+/// mode's buffer pointers NULL (Release/Peek guard on them).
 fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
     let mut a_nonscalar = String::new();
     emit_nonscalar_struct_fields(&mut a_nonscalar, func, ma);
     let mut b_nonscalar = String::new();
     emit_nonscalar_struct_fields(&mut b_nonscalar, func, mb);
-    assert!(
-        a_nonscalar == b_nonscalar,
-        "{}: dual-mode modes carry differing non-scalar state (rings/windows/circs/\
-         extrema/feedback/lags); a real per-arm buffer union is not supported yet",
-        func.name
-    );
+    // Line-level union: every field line is `   <type> <name>;` with the name
+    // derived from its spec, so a spec both modes share renders the identical
+    // line and dedups away. A same-named field rendering DIFFERENTLY across
+    // modes is a type conflict — caught by the member-name check below.
+    let a_lines: std::collections::BTreeSet<&str> = a_nonscalar.lines().collect();
+    let mut union_nonscalar = a_nonscalar.clone();
+    for line in b_nonscalar.lines() {
+        if !a_lines.contains(line) {
+            union_nonscalar.push_str(line);
+            union_nonscalar.push('\n');
+        }
+    }
+    let mut member_names = std::collections::BTreeSet::new();
+    for line in union_nonscalar.lines() {
+        let name = line
+            .trim()
+            .trim_end_matches(';')
+            .split_whitespace()
+            .last()
+            .unwrap_or("")
+            .trim_start_matches('*')
+            .to_string();
+        assert!(
+            member_names.insert(name.clone()),
+            "{}: dual-mode non-scalar field `{name}` renders differently across modes",
+            func.name
+        );
+    }
 
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
@@ -1788,8 +1813,28 @@ fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: 
     for (name, ty) in &order {
         let _ = writeln!(o, "   {};", c_decl(ty, name));
     }
-    o.push_str(&a_nonscalar); // shared across modes (== b_nonscalar)
+    o.push_str(&union_nonscalar);
     let _ = writeln!(o, "}};\n");
+}
+
+/// Union of both modes' circs (mode-A order first, dedup by id). A shared id
+/// must expose identical storages — they name struct fields, hoisted Open
+/// locals, release frees and Peek mirrors that both arms address.
+fn dual_union_circs(func: &FuncDef, ma: &StreamModel, mb: &StreamModel) -> Vec<CircState> {
+    let mut v: Vec<CircState> = ma.circs().to_vec();
+    for c in mb.circs() {
+        if let Some(prev) = v.iter().find(|p| p.id == c.id) {
+            assert!(
+                circ_storages(prev) == circ_storages(c),
+                "{}: dual-mode circ `{}` differs across modes",
+                func.name,
+                c.id
+            );
+        } else {
+            v.push(c.clone());
+        }
+    }
+    v
 }
 
 /// Remove top-level `VarDecl`s whose variable is never referenced elsewhere in
@@ -1833,13 +1878,15 @@ fn emit_dual_mode(
     let n = uname(func);
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
+    let union_circs = dual_union_circs(func, ma, mb);
 
     // --- state struct -------------------------------------------------------
     emit_dual_state_struct(o, func, ma, mb);
-    // ReleaseInternal (frees the shared ring buffers) for a ring-carrying dual mode
-    // (TRIMA); inert for a scalar mode (DI/DM). Emitted before Open, whose
-    // malloc-failure paths call it.
-    emit_release(o, func, ma);
+    // ReleaseInternal (frees the union of both modes' buffers) for a
+    // buffer-carrying dual mode (TRIMA rings, HMA rings + circ); inert for a
+    // scalar mode (DI/DM). Emitted before Open, whose malloc-failure paths
+    // call it.
+    emit_release_dual(o, func, ma, mb);
 
     // --- Step: one function, mode selected from the stored param ------------
     let bars = bar_params_sig(func);
@@ -1859,6 +1906,9 @@ fn emit_dual_mode(
     let inputs = streaming::input_array_names(func);
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
+    // Union circ hoist: a mode-B-only CIRCBUF's locals (HMA's dRing) are
+    // declared once at function scope; only the owning arm touches them.
+    emit_circ_hoist(o, func, &union_circs);
     let _ = writeln!(o, "   int endIdx;");
     let _ = writeln!(o, "   int dummyBegIdx;");
     let _ = writeln!(o, "   int dummyNBElement;");
@@ -1907,10 +1957,11 @@ fn emit_dual_mode(
     emit_open_wrapper(o, func);
 
     // --- OpenAndFill: same predicate + arms, fill mode. The head reuses
-    // emit_open_head (dual-mode models carry no circ/identity, so it renders the
-    // same decls the scalar head inlines, plus the fill signature + startIdx
-    // local + aliasing guards). Reuses body_a/body_b/pred_bare above. ---------
-    emit_open_head(o, func, ma, registry, helpers, counter, OutMode::Fill);
+    // emit_open_head (dual-mode models carry no identity, so it renders the
+    // same decls the scalar head inlines — including the union circ hoist —
+    // plus the fill signature + startIdx local + aliasing guards). Reuses
+    // body_a/body_b/pred_bare above. -----------------------------------------
+    emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "\n   if( {pred_bare} )\n   {{");
     emit_open_arm(o, func, ma, &body_a, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "   }}\n   else\n   {{");
@@ -1918,10 +1969,12 @@ fn emit_dual_mode(
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "\n   return TA_INTERNAL_ERROR;\n}}\n");
 
-    // --- Update / Peek / Close (mode-independent for scalar modes) ----------
+    // --- Update / Peek / Close (mode-fixed handle: Peek mirrors the union of
+    // both modes' buffers, guarding mode-exclusive groups; Close releases the
+    // union) -----------------------------------------------------------------
     emit_update(o, func);
-    emit_peek(o, func, ma);
-    emit_close(o, func, ma);
+    emit_peek_dual(o, func, ma, mb);
+    emit_close_from(o, func, ma.needs_release() || mb.needs_release());
 }
 
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
@@ -2010,6 +2063,53 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
     let _ = writeln!(o, "}};\n");
 }
 
+/// Free-line list for one model's heap buffers (the `ReleaseInternal` body,
+/// minus the trailing handle free). Every line is NULL-guarded, so a line
+/// whose buffer the active mode never allocated is a no-op — which is what
+/// lets the dual-mode union release line-dedup two models' lists.
+fn release_free_lines(model: &StreamModel) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    for ring in model.rings() {
+        for arr in &ring.arrays {
+            lines.push(format!("   if( sp->ring_{0}_{arr} ) TA_Free( sp->ring_{0}_{arr} );", ring.var));
+            lines.push(format!("   if( sp->ringMirror_{0}_{arr} ) TA_Free( sp->ringMirror_{0}_{arr} );", ring.var));
+        }
+    }
+    for win in model.windows() {
+        for arr in &win.arrays {
+            lines.push(format!("   if( sp->win_{0}_{arr} ) TA_Free( sp->win_{0}_{arr} );", win.var));
+            lines.push(format!("   if( sp->winMirror_{0}_{arr} ) TA_Free( sp->winMirror_{0}_{arr} );", win.var));
+        }
+    }
+    for circ in model.circs() {
+        for (storage, _) in circ_storages(circ) {
+            lines.push(format!("   if( sp->cb_{storage} ) TA_Free( sp->cb_{storage} );"));
+            lines.push(format!("   if( sp->cbMirror_{storage} ) TA_Free( sp->cbMirror_{storage} );"));
+        }
+    }
+    if let Some(ex) = model.extrema() {
+        for arr in &ex.arrays {
+            lines.push(format!("   if( sp->x_{arr} ) TA_Free( sp->x_{arr} );"));
+            lines.push(format!("   if( sp->xMirror_{arr} ) TA_Free( sp->xMirror_{arr} );"));
+        }
+    }
+    lines
+}
+
+fn emit_release_from(o: &mut String, func: &FuncDef, lines: &[String]) {
+    let n = uname(func);
+    let _ = writeln!(o, "/* Private function, not in public API. */
+static void TA_{n}_ReleaseInternal( struct TA_{n}_Stream *sp )
+{{");
+    let _ = writeln!(o, "   if( !sp ) return;");
+    for line in lines {
+        let _ = writeln!(o, "{line}");
+    }
+    let _ = writeln!(o, "   TA_Free( sp );
+}}
+");
+}
+
 /// `static void TA_<N>_ReleaseInternal(...)`: frees every ring buffer and the
 /// handle itself. Emitted only for ring models; safe on partially-allocated
 /// handles (open memsets the struct, so unallocated buffers are NULL).
@@ -2017,38 +2117,24 @@ fn emit_release(o: &mut String, func: &FuncDef, model: &StreamModel) {
     if !model.needs_release() {
         return;
     }
-    let n = uname(func);
-    let _ = writeln!(o, "/* Private function, not in public API. */
-static void TA_{n}_ReleaseInternal( struct TA_{n}_Stream *sp )
-{{");
-    let _ = writeln!(o, "   if( !sp ) return;");
-    for ring in model.rings() {
-        for arr in &ring.arrays {
-            let _ = writeln!(o, "   if( sp->ring_{0}_{arr} ) TA_Free( sp->ring_{0}_{arr} );", ring.var);
-            let _ = writeln!(o, "   if( sp->ringMirror_{0}_{arr} ) TA_Free( sp->ringMirror_{0}_{arr} );", ring.var);
+    emit_release_from(o, func, &release_free_lines(model));
+}
+
+/// Dual-mode: one `ReleaseInternal` freeing the UNION of both modes' buffers
+/// (mode-A lines first, dedup by line). Open memsets the handle, so the
+/// inactive mode's pointers are NULL and their guarded frees no-op.
+fn emit_release_dual(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
+    if !ma.needs_release() && !mb.needs_release() {
+        return;
+    }
+    let mut lines = release_free_lines(ma);
+    let seen: std::collections::BTreeSet<String> = lines.iter().cloned().collect();
+    for line in release_free_lines(mb) {
+        if !seen.contains(&line) {
+            lines.push(line);
         }
     }
-    for win in model.windows() {
-        for arr in &win.arrays {
-            let _ = writeln!(o, "   if( sp->win_{0}_{arr} ) TA_Free( sp->win_{0}_{arr} );", win.var);
-            let _ = writeln!(o, "   if( sp->winMirror_{0}_{arr} ) TA_Free( sp->winMirror_{0}_{arr} );", win.var);
-        }
-    }
-    for circ in model.circs() {
-        for (storage, _) in circ_storages(circ) {
-            let _ = writeln!(o, "   if( sp->cb_{storage} ) TA_Free( sp->cb_{storage} );");
-            let _ = writeln!(o, "   if( sp->cbMirror_{storage} ) TA_Free( sp->cbMirror_{storage} );");
-        }
-    }
-    if let Some(ex) = model.extrema() {
-        for arr in &ex.arrays {
-            let _ = writeln!(o, "   if( sp->x_{arr} ) TA_Free( sp->x_{arr} );");
-            let _ = writeln!(o, "   if( sp->xMirror_{arr} ) TA_Free( sp->xMirror_{arr} );");
-        }
-    }
-    let _ = writeln!(o, "   TA_Free( sp );
-}}
-");
+    emit_release_from(o, func, &lines);
 }
 
 fn emit_step(
@@ -2174,6 +2260,7 @@ fn emit_open_head(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
+    hoist_circs: &[CircState],
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
@@ -2194,7 +2281,7 @@ fn emit_open_head(
 
     // --- declarations -------------------------------------------------------
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
-    emit_circ_hoist(o, func, model);
+    emit_circ_hoist(o, func, hoist_circs);
     let _ = writeln!(o, "   int endIdx;");
     if mode == OutMode::Fill {
         let _ = writeln!(o, "   int startIdx;");
@@ -2258,7 +2345,7 @@ fn emit_open(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_head(o, func, model, registry, helpers, counter, OutMode::Scalar);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar);
     emit_open_arm(o, func, model, model.body, enums, registry, helpers, counter, OutMode::Scalar);
     let _ = writeln!(o, "}}\n");
     emit_open_wrapper(o, func);
@@ -2297,7 +2384,7 @@ fn emit_open_and_fill_body(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_head(o, func, model, registry, helpers, counter, OutMode::Fill);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Fill);
     emit_open_arm(o, func, model, body, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "}}\n");
 }
@@ -2322,7 +2409,7 @@ fn emit_fastpath_skip(
     emit_release(o, func, model);
     emit_step(o, func, model, enums, registry, helpers, counter);
 
-    emit_open_head(o, func, model, registry, helpers, counter, OutMode::Scalar);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar);
     // prologue ++ general arm ++ epilogue: the Open seeds the general path for
     // every param (the skipped fast-path arm is bit-identical by construction).
     // drop_unused_decls prunes any fast-path-only locals the skipped arm owned.
@@ -3108,8 +3195,8 @@ fn free_batch_storages(model: &StreamModel) -> String {
     s
 }
 
-fn emit_circ_hoist(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    for circ in model.circs() {
+fn emit_circ_hoist(o: &mut String, func: &FuncDef, circs: &[CircState]) {
+    for circ in circs {
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
             let _ = writeln!(o, "   {et} local_{storage}[{}];", circ_static_size(func, &circ.id));
@@ -3303,7 +3390,7 @@ fn emit_update(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
-fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
+fn emit_peek_from(o: &mut String, func: &FuncDef, fixups: &str) {
     let n = uname(func);
     let bars: Vec<String> = streaming::input_array_names(func);
     let outs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
@@ -3319,7 +3406,7 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
         .collect();
     let _ = writeln!(o, "\n   if( {} ) return TA_BAD_PARAM;", checks.join(" || "));
     let _ = writeln!(o, "   scratch = *stream;");
-    emit_peek_mirror_fixups(o, model);
+    o.push_str(fixups);
     let args: Vec<String> = bars
         .iter()
         .cloned()
@@ -3329,60 +3416,123 @@ fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
+fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
+    let fixups: String = peek_fixup_groups(model)
+        .into_iter()
+        .map(|(_, text)| text)
+        .collect();
+    emit_peek_from(o, func, &fixups);
+}
+
+/// Dual-mode Peek: mirror fixups for the UNION of both modes' buffers. A
+/// group both modes carry is emitted bare (TRIMA: both arms share the same
+/// rings — byte-identical to the single-model Peek); a mode-exclusive group
+/// is guarded on its live buffer pointer, which Open's memset leaves NULL
+/// under the other mode (an unguarded memcpy would dereference it).
+fn emit_peek_dual(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
+    let ga = peek_fixup_groups(ma);
+    let gb = peek_fixup_groups(mb);
+    let a_keys: std::collections::BTreeSet<&String> = ga.iter().map(|(k, _)| k).collect();
+    let b_map: std::collections::BTreeMap<&String, &String> =
+        gb.iter().map(|(k, t)| (k, t)).collect();
+    let mut fixups = String::new();
+    let push_guarded = |out: &mut String, guard: &String, text: &String| {
+        let _ = writeln!(out, "   if( {guard} )\n   {{");
+        for line in text.lines() {
+            let _ = writeln!(out, "   {line}");
+        }
+        let _ = writeln!(out, "   }}");
+    };
+    for (k, t) in &ga {
+        if let Some(bt) = b_map.get(k) {
+            assert!(
+                *bt == t,
+                "{}: dual-mode Peek fixup for shared buffer `{k}` differs across modes",
+                func.name
+            );
+            fixups.push_str(t);
+        } else {
+            push_guarded(&mut fixups, k, t);
+        }
+    }
+    for (k, t) in &gb {
+        if !a_keys.contains(k) {
+            push_guarded(&mut fixups, k, t);
+        }
+    }
+    emit_peek_from(o, func, &fixups);
+}
+
 /// Rings/windows/circs/extrema: run the step against the handle's
 /// pre-allocated scratch mirrors so the live buffers are never touched (the
 /// handle is logically const; single-writer covers the mirror — see the
-/// proposal).
-fn emit_peek_mirror_fixups(o: &mut String, model: &StreamModel) {
+/// proposal). One `(live-buffer expr, fixup text)` group per buffer: the key
+/// identifies a buffer across the dual-mode arms and doubles as the NULL
+/// guard for a mode-exclusive group.
+fn peek_fixup_groups(model: &StreamModel) -> Vec<(String, String)> {
+    let mut groups: Vec<(String, String)> = Vec::new();
     for ring in model.rings() {
         let v = &ring.var;
         for arr in &ring.arrays {
-            let _ = writeln!(o, "   scratch.ring_{v}_{arr} = stream->ringMirror_{v}_{arr};");
+            let mut t = String::new();
+            let _ = writeln!(t, "   scratch.ring_{v}_{arr} = stream->ringMirror_{v}_{arr};");
             let _ = writeln!(
-                o,
+                t,
                 "   memcpy( scratch.ring_{v}_{arr}, stream->ring_{v}_{arr}, sizeof(double) * (size_t)(stream->ringCap_{v} > 0 ? stream->ringCap_{v} : 1) );"
             );
+            groups.push((format!("stream->ring_{v}_{arr}"), t));
         }
     }
     for win in model.windows() {
         let v = &win.var;
         for arr in &win.arrays {
-            let _ = writeln!(o, "   scratch.win_{v}_{arr} = stream->winMirror_{v}_{arr};");
+            let mut t = String::new();
+            let _ = writeln!(t, "   scratch.win_{v}_{arr} = stream->winMirror_{v}_{arr};");
             let _ = writeln!(
-                o,
+                t,
                 "   memcpy( scratch.win_{v}_{arr}, stream->win_{v}_{arr}, sizeof(double) * (size_t)stream->winCap_{v} );"
             );
+            groups.push((format!("stream->win_{v}_{arr}"), t));
         }
     }
     for circ in model.circs() {
         let id = &circ.id;
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
-            let _ = writeln!(o, "   scratch.cb_{storage} = stream->cbMirror_{storage};");
+            let mut t = String::new();
+            let _ = writeln!(t, "   scratch.cb_{storage} = stream->cbMirror_{storage};");
             let _ = writeln!(
-                o,
+                t,
                 "   memcpy( scratch.cb_{storage}, stream->cb_{storage}, sizeof({et}) * (size_t)stream->cbSize_{id} );"
             );
+            groups.push((format!("stream->cb_{storage}"), t));
         }
     }
     if let Some(ex) = model.extrema() {
         for arr in &ex.arrays {
-            let _ = writeln!(o, "   scratch.x_{arr} = stream->xMirror_{arr};");
+            let mut t = String::new();
+            let _ = writeln!(t, "   scratch.x_{arr} = stream->xMirror_{arr};");
             let _ = writeln!(
-                o,
+                t,
                 "   memcpy( scratch.x_{arr}, stream->x_{arr}, sizeof(double) * (size_t)stream->xCap );"
             );
+            groups.push((format!("stream->x_{arr}"), t));
         }
     }
+    groups
 }
 
-fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {
+fn emit_close_from(o: &mut String, func: &FuncDef, needs_release: bool) {
     let n = uname(func);
     let _ = writeln!(o, "{}\n{{", close_signature(func));
-    if model.needs_release() {
+    if needs_release {
         let _ = writeln!(o, "   TA_{n}_ReleaseInternal( stream );");
     } else {
         let _ = writeln!(o, "   if( stream ) TA_Free( stream );");
     }
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
+fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {
+    emit_close_from(o, func, model.needs_release());
 }

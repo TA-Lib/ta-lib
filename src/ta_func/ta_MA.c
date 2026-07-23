@@ -513,7 +513,13 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          sp->sub = sub;
       }
       break;
-   case TA_MAType_HMA: /* no hma stream */
+   case TA_MAType_HMA:
+      {
+         TA_HMA_Stream *sub = NULL;
+         retCode = TA_HMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -639,7 +645,13 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
-   case TA_MAType_HMA: /* no hma stream */
+   case TA_MAType_HMA:
+      {
+         TA_HMA_Stream *sub = NULL;
+         retCode = TA_HMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -682,6 +694,8 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       return TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
    case TA_MAType_T3:
       return TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
+   case TA_MAType_HMA:
+      return TA_HMA_Update( (TA_HMA_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR;
@@ -716,6 +730,8 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
    case TA_MAType_T3:
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
+   case TA_MAType_HMA:
+      return TA_HMA_Peek( (const TA_HMA_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR;
@@ -753,6 +769,9 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break;
    case TA_MAType_T3:
       TA_T3_Close( (TA_T3_Stream *)stream->sub );
+      break;
+   case TA_MAType_HMA:
+      TA_HMA_Close( (TA_HMA_Stream *)stream->sub );
       break;
    default:
       break; /* identity-only or rejected arm: no sub-stream */

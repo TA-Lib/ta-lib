@@ -863,3 +863,1003 @@ TA_RetCode TA_S_HMA_Unguarded( int    startIdx,
    return TA_SUCCESS;
 }
 
+/**** Streaming API *****/
+
+struct TA_HMA_Stream {
+   int optInTimePeriod;
+   int dividerFull;
+   double periodSubFull;
+   double periodSumFull;
+   double trailingFull;
+   double fullOut;
+   int halfPeriod;
+   int sqrtPeriod;
+   int dividerHalf;
+   int dividerSqrt;
+   double periodSubHalf;
+   double periodSumHalf;
+   double trailingHalf;
+   double periodSubSqrt;
+   double periodSumSqrt;
+   double trailingSqrt;
+   double halfOut;
+   double diffReal;
+   int dRing_Idx;
+   int maxIdx_dRing;
+   int ringPos_trailingIdxFull;
+   int ringCap_trailingIdxFull;
+   double *ring_trailingIdxFull_inReal;
+   double *ringMirror_trailingIdxFull_inReal;
+   int ringPos_trailingIdxHalf;
+   int ringCap_trailingIdxHalf;
+   double *ring_trailingIdxHalf_inReal;
+   double *ringMirror_trailingIdxHalf_inReal;
+   int cbSize_dRing;
+   double *cb_dRing;
+   double *cbMirror_dRing;
+};
+
+/* Private function, not in public API. */
+static void TA_HMA_ReleaseInternal( struct TA_HMA_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->ring_trailingIdxFull_inReal ) TA_Free( sp->ring_trailingIdxFull_inReal );
+   if( sp->ringMirror_trailingIdxFull_inReal ) TA_Free( sp->ringMirror_trailingIdxFull_inReal );
+   if( sp->ring_trailingIdxHalf_inReal ) TA_Free( sp->ring_trailingIdxHalf_inReal );
+   if( sp->ringMirror_trailingIdxHalf_inReal ) TA_Free( sp->ringMirror_trailingIdxHalf_inReal );
+   if( sp->cb_dRing ) TA_Free( sp->cb_dRing );
+   if( sp->cbMirror_dRing ) TA_Free( sp->cbMirror_dRing );
+   TA_Free( sp );
+}
+
+/* Private function, not in public API. */
+static void TA_HMA_StepInternal( struct TA_HMA_Stream *sp, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
+   {
+      double tempReal;
+
+      if( sp->ringCap_trailingIdxFull == 0 )
+      {
+         sp->ring_trailingIdxFull_inReal[0] = inReal;
+      }
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->trailingFull = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
+      sp->fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      *outReal= 2.0 * tempReal - sp->fullOut;
+      sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
+      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
+      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
+      {
+         sp->ringPos_trailingIdxFull = 0;
+      }
+   }
+   else
+   {
+      double tempReal;
+
+      if( sp->ringCap_trailingIdxFull == 0 )
+      {
+         sp->ring_trailingIdxFull_inReal[0] = inReal;
+      }
+      if( sp->ringCap_trailingIdxHalf == 0 )
+      {
+         sp->ring_trailingIdxHalf_inReal[0] = inReal;
+      }
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->trailingFull = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
+      sp->fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      sp->periodSubHalf += tempReal;
+      sp->periodSubHalf -= sp->trailingHalf;
+      sp->periodSumHalf += tempReal * sp->halfPeriod;
+      sp->trailingHalf = sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
+      sp->halfOut = sp->periodSumHalf / sp->dividerHalf;
+      sp->periodSumHalf -= sp->periodSubHalf;
+      sp->diffReal = 2.0 * sp->halfOut - sp->fullOut;
+      sp->periodSubSqrt += sp->diffReal;
+      sp->periodSubSqrt -= sp->trailingSqrt;
+      sp->periodSumSqrt += sp->diffReal * sp->sqrtPeriod;
+      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
+      sp->cb_dRing[sp->dRing_Idx] = sp->diffReal;
+      sp->dRing_Idx = sp->dRing_Idx + 1;
+      if( sp->dRing_Idx > sp->maxIdx_dRing )
+      {
+         sp->dRing_Idx = 0;
+      }
+      *outReal= sp->periodSumSqrt / sp->dividerSqrt;
+      sp->periodSumSqrt -= sp->periodSubSqrt;
+      sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
+      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
+      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
+      {
+         sp->ringPos_trailingIdxFull = 0;
+      }
+      sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf] = inReal;
+      sp->ringPos_trailingIdxHalf = sp->ringPos_trailingIdxHalf + 1;
+      if( sp->ringPos_trailingIdxHalf >= sp->ringCap_trailingIdxHalf )
+      {
+         sp->ringPos_trailingIdxHalf = 0;
+      }
+   }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   struct TA_HMA_Stream *sp;
+   double local_dRing[50];
+   double *dRing;
+   int dRing_Idx;
+   int maxIdx_dRing;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+   double lastValue_outReal;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   lastValue_outReal = 0.0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 2 || optInTimePeriod == 3 )
+   {
+
+   {
+      int lookbackTotal;
+      int lookbackSqrt;
+      int halfPeriod;
+      int sqrtPeriod;
+      int wmaStartIdx;
+      int today;
+      int outIdx;
+      int i;
+      int w;
+      int dividerFull = 0;
+      int trailingIdxFull;
+      double periodSubFull = 0.0;
+      double periodSumFull = 0.0;
+      double trailingFull = 0.0;
+      double tempReal;
+      double fullOut = 0.0;
+      /* The de-lagged series needs only its last sqrt(n) values, so the whole
+       * computation runs in one pass over a single window into the input:
+       * three interleaved WMA rolling sums plus this small ring. The ring has
+       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       */
+      /* Hull Moving Average (Alan Hull, 2005):
+       *
+       *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+       *
+       * Both derived periods use the author's Integer() truncation; some other
+       * published sources round to nearest instead, which is a visibly different
+       * line. See hma.md and issue #139.
+       *
+       * Each of the three WMAs keeps TA_WMA's exact accumulation order
+       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+       * differential in test_composite.c holds it to that, memcmp-exact.
+       */
+      halfPeriod = optInTimePeriod / 2;
+      sqrtPeriod = (int)sqrt((double)optInTimePeriod);
+      lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
+      lookbackTotal = TA_WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* The two price WMAs are anchored where the first de-lagged value is
+       * needed: lookbackSqrt bars before the first requested output.
+       * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+       */
+      wmaStartIdx = startIdx - lookbackSqrt;
+      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      /* Prime the full-period WMA over the optInTimePeriod-1 bars before
+       * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+       */
+      periodSubFull = 0.0;
+      periodSumFull = 0.0;
+      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      i = trailingIdxFull;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubFull += tempReal;
+         periodSumFull += tempReal * w;
+         w += 1;
+      }
+      trailingFull = 0.0;
+      outIdx = 0;
+      /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+       * param so the stream analyzer sees a param-pure dual-mode split.
+       */
+      /* Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
+       * sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
+       * own short-circuit). The whole formula collapses to
+       *    HMA[t] = 2*price[t] - WMA(price, n)[t]
+       * with no de-lag ring at all. In-place note: the output store lands on
+       * the SAME slot the trailing read just consumed (zero margin), so the
+       * read stays ordered before the store.
+       */
+      for( today = startIdx; today <= endIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         lastValue_outReal = 2.0 * tempReal - fullOut;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->dividerFull = dividerFull;
+      sp->periodSubFull = periodSubFull;
+      sp->periodSumFull = periodSumFull;
+      sp->trailingFull = trailingFull;
+      sp->fullOut = fullOut;
+      sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+   else
+   {
+
+   {
+      int lookbackTotal;
+      int lookbackSqrt;
+      int halfPeriod = 0;
+      int sqrtPeriod = 0;
+      int ringSize;
+      int wmaStartIdx;
+      int today;
+      int outIdx;
+      int i;
+      int w;
+      int dividerFull = 0;
+      int dividerHalf = 0;
+      int dividerSqrt = 0;
+      int trailingIdxFull;
+      int trailingIdxHalf;
+      double periodSubFull = 0.0;
+      double periodSumFull = 0.0;
+      double trailingFull = 0.0;
+      double periodSubHalf = 0.0;
+      double periodSumHalf = 0.0;
+      double trailingHalf = 0.0;
+      double periodSubSqrt = 0.0;
+      double periodSumSqrt = 0.0;
+      double trailingSqrt = 0.0;
+      double tempReal;
+      double fullOut = 0.0;
+      double halfOut = 0.0;
+      double diffReal = 0.0;
+      /* The de-lagged series needs only its last sqrt(n) values, so the whole
+       * computation runs in one pass over a single window into the input:
+       * three interleaved WMA rolling sums plus this small ring. The ring has
+       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       */
+      /* Hull Moving Average (Alan Hull, 2005):
+       *
+       *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+       *
+       * Both derived periods use the author's Integer() truncation; some other
+       * published sources round to nearest instead, which is a visibly different
+       * line. See hma.md and issue #139.
+       *
+       * Each of the three WMAs keeps TA_WMA's exact accumulation order
+       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+       * differential in test_composite.c holds it to that, memcmp-exact.
+       */
+      halfPeriod = optInTimePeriod / 2;
+      sqrtPeriod = (int)sqrt((double)optInTimePeriod);
+      lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
+      lookbackTotal = TA_WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* The two price WMAs are anchored where the first de-lagged value is
+       * needed: lookbackSqrt bars before the first requested output.
+       * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+       */
+      wmaStartIdx = startIdx - lookbackSqrt;
+      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      /* Prime the full-period WMA over the optInTimePeriod-1 bars before
+       * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+       */
+      periodSubFull = 0.0;
+      periodSumFull = 0.0;
+      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      i = trailingIdxFull;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubFull += tempReal;
+         periodSumFull += tempReal * w;
+         w += 1;
+      }
+      trailingFull = 0.0;
+      outIdx = 0;
+      /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+       * param so the stream analyzer sees a param-pure dual-mode split.
+       */
+      /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
+       * sqrtPeriod >= 2 -- no period-1 special cases below this point.
+       */
+      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      /* Prime the half-period WMA the same way. */
+      periodSubHalf = 0.0;
+      periodSumHalf = 0.0;
+      trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+      i = trailingIdxHalf;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubHalf += tempReal;
+         periodSumHalf += tempReal * w;
+         w += 1;
+      }
+      trailingHalf = 0.0;
+      /* The de-lagged value computed at bar t is consumed as the outer WMA's
+       * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
+       * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
+       * slot with the current one, advance.
+       */
+      ringSize = sqrtPeriod - 1;
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
+      {
+         dRing = TA_Malloc( sizeof(double)*ringSize );
+         if( !dRing )
+         {
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         dRing = &local_dRing[0];
+      }
+      maxIdx_dRing = (ringSize-1);
+      dRing_Idx = 0;
+      /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
+       * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
+       */
+      periodSubSqrt = 0.0;
+      periodSumSqrt = 0.0;
+      trailingSqrt = 0.0;
+      w = 1;
+      for( today = wmaStartIdx; today < startIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         periodSubHalf += tempReal;
+         periodSubHalf -= trailingHalf;
+         periodSumHalf += tempReal * halfPeriod;
+         trailingHalf = inReal[trailingIdxHalf++];
+         halfOut = periodSumHalf / dividerHalf;
+         periodSumHalf -= periodSubHalf;
+         diffReal = 2.0 * halfOut - fullOut;
+         periodSubSqrt += diffReal;
+         periodSumSqrt += diffReal * w;
+         w += 1;
+         dRing[dRing_Idx] = diffReal;
+         dRing_Idx++;
+         if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
+      }
+      /* Steady state: one pass, three rolling WMAs. Writes trail every read by
+       * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
+       * stays safe.
+       */
+      for( today = startIdx; today <= endIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         periodSubHalf += tempReal;
+         periodSubHalf -= trailingHalf;
+         periodSumHalf += tempReal * halfPeriod;
+         trailingHalf = inReal[trailingIdxHalf++];
+         halfOut = periodSumHalf / dividerHalf;
+         periodSumHalf -= periodSubHalf;
+         diffReal = 2.0 * halfOut - fullOut;
+         periodSubSqrt += diffReal;
+         periodSubSqrt -= trailingSqrt;
+         periodSumSqrt += diffReal * sqrtPeriod;
+         trailingSqrt = dRing[dRing_Idx];
+         dRing[dRing_Idx] = diffReal;
+         dRing_Idx++;
+         if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
+         lastValue_outReal = periodSumSqrt / dividerSqrt;
+         periodSumSqrt -= periodSubSqrt;
+      }
+      dummyBegIdx = startIdx;
+      dummyNBElement = outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->halfPeriod = halfPeriod;
+      sp->sqrtPeriod = sqrtPeriod;
+      sp->dividerFull = dividerFull;
+      sp->dividerHalf = dividerHalf;
+      sp->dividerSqrt = dividerSqrt;
+      sp->periodSubFull = periodSubFull;
+      sp->periodSumFull = periodSumFull;
+      sp->trailingFull = trailingFull;
+      sp->periodSubHalf = periodSubHalf;
+      sp->periodSumHalf = periodSumHalf;
+      sp->trailingHalf = trailingHalf;
+      sp->periodSubSqrt = periodSubSqrt;
+      sp->periodSumSqrt = periodSumSqrt;
+      sp->trailingSqrt = trailingSqrt;
+      sp->fullOut = fullOut;
+      sp->halfOut = halfOut;
+      sp->diffReal = diffReal;
+      sp->dRing_Idx = dRing_Idx;
+      sp->maxIdx_dRing = maxIdx_dRing;
+      sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      sp->ringCap_trailingIdxHalf = (int)(today - trailingIdxHalf);
+      if( sp->ringCap_trailingIdxHalf < 0 || sp->ringCap_trailingIdxHalf > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
+        sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxHalf_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxHalf_inReal, inReal + (historyLen - sp->ringCap_trailingIdxHalf), sizeof(double) * (size_t)sp->ringCap_trailingIdxHalf );
+      }
+      sp->ringPos_trailingIdxHalf = 0;
+      sp->cbSize_dRing = maxIdx_dRing + 1;
+      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( !sp->cbMirror_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_dRing, dRing, sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
+      *outReal = lastValue_outReal;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+
+   return TA_INTERNAL_ERROR;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Open( TA_HMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_HMA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_HMA_Stream *sp;
+   double local_dRing[50];
+   double *dRing;
+   int dRing_Idx;
+   int maxIdx_dRing;
+   int endIdx;
+   int startIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == (int)0x80000000 )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+
+   endIdx = historyLen - 1;
+   startIdx = 0;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 2 || optInTimePeriod == 3 )
+   {
+
+   {
+      int lookbackTotal;
+      int lookbackSqrt;
+      int halfPeriod;
+      int sqrtPeriod;
+      int wmaStartIdx;
+      int today;
+      int outIdx;
+      int i;
+      int w;
+      int dividerFull = 0;
+      int trailingIdxFull;
+      double periodSubFull = 0.0;
+      double periodSumFull = 0.0;
+      double trailingFull = 0.0;
+      double tempReal;
+      double fullOut = 0.0;
+      /* The de-lagged series needs only its last sqrt(n) values, so the whole
+       * computation runs in one pass over a single window into the input:
+       * three interleaved WMA rolling sums plus this small ring. The ring has
+       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       */
+      /* Hull Moving Average (Alan Hull, 2005):
+       *
+       *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+       *
+       * Both derived periods use the author's Integer() truncation; some other
+       * published sources round to nearest instead, which is a visibly different
+       * line. See hma.md and issue #139.
+       *
+       * Each of the three WMAs keeps TA_WMA's exact accumulation order
+       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+       * differential in test_composite.c holds it to that, memcmp-exact.
+       */
+      halfPeriod = optInTimePeriod / 2;
+      sqrtPeriod = (int)sqrt((double)optInTimePeriod);
+      lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
+      lookbackTotal = TA_WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* The two price WMAs are anchored where the first de-lagged value is
+       * needed: lookbackSqrt bars before the first requested output.
+       * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+       */
+      wmaStartIdx = startIdx - lookbackSqrt;
+      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      /* Prime the full-period WMA over the optInTimePeriod-1 bars before
+       * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+       */
+      periodSubFull = 0.0;
+      periodSumFull = 0.0;
+      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      i = trailingIdxFull;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubFull += tempReal;
+         periodSumFull += tempReal * w;
+         w += 1;
+      }
+      trailingFull = 0.0;
+      outIdx = 0;
+      /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+       * param so the stream analyzer sees a param-pure dual-mode split.
+       */
+      /* Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
+       * sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
+       * own short-circuit). The whole formula collapses to
+       *    HMA[t] = 2*price[t] - WMA(price, n)[t]
+       * with no de-lag ring at all. In-place note: the output store lands on
+       * the SAME slot the trailing read just consumed (zero margin), so the
+       * read stays ordered before the store.
+       */
+      for( today = startIdx; today <= endIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         outReal[outIdx++] = 2.0 * tempReal - fullOut;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->dividerFull = dividerFull;
+      sp->periodSubFull = periodSubFull;
+      sp->periodSumFull = periodSumFull;
+      sp->trailingFull = trailingFull;
+      sp->fullOut = fullOut;
+      sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+   else
+   {
+
+   {
+      int lookbackTotal;
+      int lookbackSqrt;
+      int halfPeriod = 0;
+      int sqrtPeriod = 0;
+      int ringSize;
+      int wmaStartIdx;
+      int today;
+      int outIdx;
+      int i;
+      int w;
+      int dividerFull = 0;
+      int dividerHalf = 0;
+      int dividerSqrt = 0;
+      int trailingIdxFull;
+      int trailingIdxHalf;
+      double periodSubFull = 0.0;
+      double periodSumFull = 0.0;
+      double trailingFull = 0.0;
+      double periodSubHalf = 0.0;
+      double periodSumHalf = 0.0;
+      double trailingHalf = 0.0;
+      double periodSubSqrt = 0.0;
+      double periodSumSqrt = 0.0;
+      double trailingSqrt = 0.0;
+      double tempReal;
+      double fullOut = 0.0;
+      double halfOut = 0.0;
+      double diffReal = 0.0;
+      /* The de-lagged series needs only its last sqrt(n) values, so the whole
+       * computation runs in one pass over a single window into the input:
+       * three interleaved WMA rolling sums plus this small ring. The ring has
+       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       */
+      /* Hull Moving Average (Alan Hull, 2005):
+       *
+       *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+       *
+       * Both derived periods use the author's Integer() truncation; some other
+       * published sources round to nearest instead, which is a visibly different
+       * line. See hma.md and issue #139.
+       *
+       * Each of the three WMAs keeps TA_WMA's exact accumulation order
+       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
+       * differential in test_composite.c holds it to that, memcmp-exact.
+       */
+      halfPeriod = optInTimePeriod / 2;
+      sqrtPeriod = (int)sqrt((double)optInTimePeriod);
+      lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
+      lookbackTotal = TA_WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* The two price WMAs are anchored where the first de-lagged value is
+       * needed: lookbackSqrt bars before the first requested output.
+       * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
+       */
+      wmaStartIdx = startIdx - lookbackSqrt;
+      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      /* Prime the full-period WMA over the optInTimePeriod-1 bars before
+       * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
+       */
+      periodSubFull = 0.0;
+      periodSumFull = 0.0;
+      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      i = trailingIdxFull;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubFull += tempReal;
+         periodSumFull += tempReal * w;
+         w += 1;
+      }
+      trailingFull = 0.0;
+      outIdx = 0;
+      /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
+       * param so the stream analyzer sees a param-pure dual-mode split.
+       */
+      /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
+       * sqrtPeriod >= 2 -- no period-1 special cases below this point.
+       */
+      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
+      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      /* Prime the half-period WMA the same way. */
+      periodSubHalf = 0.0;
+      periodSumHalf = 0.0;
+      trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+      i = trailingIdxHalf;
+      w = 1;
+      while( i < wmaStartIdx )
+      {
+         tempReal = inReal[i++];
+         periodSubHalf += tempReal;
+         periodSumHalf += tempReal * w;
+         w += 1;
+      }
+      trailingHalf = 0.0;
+      /* The de-lagged value computed at bar t is consumed as the outer WMA's
+       * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
+       * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
+       * slot with the current one, advance.
+       */
+      ringSize = sqrtPeriod - 1;
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
+      {
+         dRing = TA_Malloc( sizeof(double)*ringSize );
+         if( !dRing )
+         {
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         dRing = &local_dRing[0];
+      }
+      maxIdx_dRing = (ringSize-1);
+      dRing_Idx = 0;
+      /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
+       * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
+       */
+      periodSubSqrt = 0.0;
+      periodSumSqrt = 0.0;
+      trailingSqrt = 0.0;
+      w = 1;
+      for( today = wmaStartIdx; today < startIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         periodSubHalf += tempReal;
+         periodSubHalf -= trailingHalf;
+         periodSumHalf += tempReal * halfPeriod;
+         trailingHalf = inReal[trailingIdxHalf++];
+         halfOut = periodSumHalf / dividerHalf;
+         periodSumHalf -= periodSubHalf;
+         diffReal = 2.0 * halfOut - fullOut;
+         periodSubSqrt += diffReal;
+         periodSumSqrt += diffReal * w;
+         w += 1;
+         dRing[dRing_Idx] = diffReal;
+         dRing_Idx++;
+         if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
+      }
+      /* Steady state: one pass, three rolling WMAs. Writes trail every read by
+       * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
+       * stays safe.
+       */
+      for( today = startIdx; today <= endIdx; today += 1 )
+      {
+         tempReal = inReal[today];
+         periodSubFull += tempReal;
+         periodSubFull -= trailingFull;
+         periodSumFull += tempReal * optInTimePeriod;
+         trailingFull = inReal[trailingIdxFull++];
+         fullOut = periodSumFull / dividerFull;
+         periodSumFull -= periodSubFull;
+         periodSubHalf += tempReal;
+         periodSubHalf -= trailingHalf;
+         periodSumHalf += tempReal * halfPeriod;
+         trailingHalf = inReal[trailingIdxHalf++];
+         halfOut = periodSumHalf / dividerHalf;
+         periodSumHalf -= periodSubHalf;
+         diffReal = 2.0 * halfOut - fullOut;
+         periodSubSqrt += diffReal;
+         periodSubSqrt -= trailingSqrt;
+         periodSumSqrt += diffReal * sqrtPeriod;
+         trailingSqrt = dRing[dRing_Idx];
+         dRing[dRing_Idx] = diffReal;
+         dRing_Idx++;
+         if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
+         outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+         periodSumSqrt -= periodSubSqrt;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->halfPeriod = halfPeriod;
+      sp->sqrtPeriod = sqrtPeriod;
+      sp->dividerFull = dividerFull;
+      sp->dividerHalf = dividerHalf;
+      sp->dividerSqrt = dividerSqrt;
+      sp->periodSubFull = periodSubFull;
+      sp->periodSumFull = periodSumFull;
+      sp->trailingFull = trailingFull;
+      sp->periodSubHalf = periodSubHalf;
+      sp->periodSumHalf = periodSumHalf;
+      sp->trailingHalf = trailingHalf;
+      sp->periodSubSqrt = periodSubSqrt;
+      sp->periodSumSqrt = periodSumSqrt;
+      sp->trailingSqrt = trailingSqrt;
+      sp->fullOut = fullOut;
+      sp->halfOut = halfOut;
+      sp->diffReal = diffReal;
+      sp->dRing_Idx = dRing_Idx;
+      sp->maxIdx_dRing = maxIdx_dRing;
+      sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      sp->ringCap_trailingIdxHalf = (int)(today - trailingIdxHalf);
+      if( sp->ringCap_trailingIdxHalf < 0 || sp->ringCap_trailingIdxHalf > historyLen ) { TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
+        sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxHalf_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memcpy( sp->ring_trailingIdxHalf_inReal, inReal + (historyLen - sp->ringCap_trailingIdxHalf), sizeof(double) * (size_t)sp->ringCap_trailingIdxHalf );
+      }
+      sp->ringPos_trailingIdxHalf = 0;
+      sp->cbSize_dRing = maxIdx_dRing + 1;
+      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( !sp->cbMirror_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_dRing, dRing, sizeof(double) * (size_t)sp->cbSize_dRing );
+      if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+
+   return TA_INTERNAL_ERROR;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Update( TA_HMA_Stream *stream, double inReal, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   TA_HMA_StepInternal( stream, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, double *outReal )
+{
+   struct TA_HMA_Stream scratch;
+
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   scratch = *stream;
+   scratch.ring_trailingIdxFull_inReal = stream->ringMirror_trailingIdxFull_inReal;
+   memcpy( scratch.ring_trailingIdxFull_inReal, stream->ring_trailingIdxFull_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdxFull > 0 ? stream->ringCap_trailingIdxFull : 1) );
+   if( stream->ring_trailingIdxHalf_inReal )
+   {
+      scratch.ring_trailingIdxHalf_inReal = stream->ringMirror_trailingIdxHalf_inReal;
+      memcpy( scratch.ring_trailingIdxHalf_inReal, stream->ring_trailingIdxHalf_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdxHalf > 0 ? stream->ringCap_trailingIdxHalf : 1) );
+   }
+   if( stream->cb_dRing )
+   {
+      scratch.cb_dRing = stream->cbMirror_dRing;
+      memcpy( scratch.cb_dRing, stream->cb_dRing, sizeof(double) * (size_t)stream->cbSize_dRing );
+   }
+   TA_HMA_StepInternal( &scratch, inReal, outReal );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Close( TA_HMA_Stream *stream )
+{
+   TA_HMA_ReleaseInternal( stream );
+   return TA_SUCCESS;
+}
+

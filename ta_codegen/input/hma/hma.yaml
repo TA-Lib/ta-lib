@@ -2,7 +2,7 @@ name: HMA
 camel_case: Hma
 group: Overlap Studies
 hint: Hull Moving Average
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inReal
     type: real

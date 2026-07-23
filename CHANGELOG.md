@@ -18,14 +18,16 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVI: Positive Volume Index (#126)
   - VWMA: Volume Weighted Moving Average (#131)
   - CMF: Chaikin Money Flow (#134)
-  - HMA: Hull Moving Average (#139). Also added as `TA_MAType_HMA`, selectable wherever an `optInMAType` parameter is accepted (MA, BBANDS, STOCH, MACDEXT, ...).
-- Algo Optimisations:
-  - ~3x to 7x faster: DEMA, TEMA and TRIX
-  - ~8x faster: MACD and MACDFIX
-  - ~8x faster: MACDEXT when all three MA types are EMA.
-  - ~2.4x faster: ACCBANDS
-  - ~20% faster: VAR, STDDEV, BBANDS
-  - ~10% faster: ATR and NATR
+  - HMA: Hull Moving Average (#139).
+- New MAType (for MA, BBANDS, STOCK etc...):
+  - TA_MAType_HMA (#139)
+### Speed Optimisations
+- ~3x to 7x faster: DEMA, TEMA and TRIX
+- ~8x faster: MACD and MACDFIX
+- ~8x faster: MACDEXT when MA types are EMA.
+- ~2.4x faster: ACCBANDS
+- ~20% faster: VAR, STDDEV, BBANDS
+- ~10% faster: ATR and NATR
 
 ### Changed
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.

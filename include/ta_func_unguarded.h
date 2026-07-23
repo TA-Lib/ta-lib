@@ -456,6 +456,7 @@ struct TA_DX_Stream;
 struct TA_EMA_Stream;
 struct TA_EXP_Stream;
 struct TA_FLOOR_Stream;
+struct TA_HMA_Stream;
 struct TA_HT_DCPERIOD_Stream;
 struct TA_HT_DCPHASE_Stream;
 struct TA_HT_PHASOR_Stream;
@@ -623,6 +624,7 @@ TA_RetCode TA_DX_OpenInternal( struct TA_DX_Stream **stream, const double inHigh
 TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_EXP_OpenInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_FLOOR_OpenInternal( struct TA_FLOOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
+TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_HT_DCPERIOD_OpenInternal( struct TA_HT_DCPERIOD_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_HT_DCPHASE_OpenInternal( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outInPhase, double *outQuadrature );

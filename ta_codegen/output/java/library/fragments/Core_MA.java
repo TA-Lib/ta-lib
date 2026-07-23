@@ -398,6 +398,9 @@
             case T3:
                this.sub = new T3Stream((T3Stream) other.sub);
                break;
+            case Hma:
+               this.sub = new HmaStream((HmaStream) other.sub);
+               break;
             default:
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
             }
@@ -488,6 +491,10 @@
          sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
          break;
       }
+      case Hma: {
+         sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
+         break;
+      }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
@@ -572,8 +579,12 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
-      case Hma:
-         return RetCode.BadParam; /* no hma stream */
+      case Hma: {
+         HmaStream sub = hmaOpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
@@ -670,8 +681,12 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
-      case Hma:
-         return RetCode.BadParam; /* no hma stream */
+      case Hma: {
+         HmaStream sub = hmaOpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
