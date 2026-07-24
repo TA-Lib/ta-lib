@@ -14,7 +14,7 @@
 //! The tests below make `include/ta_abstract.h` the single authority: every
 //! `TA_FUNC_FLG_*` / `TA_OPTIN_*` / `TA_OUT_*` constant must be known — with
 //! the same bit value where the surface is numeric — by every generator
-//! surface. **Adding a new flag (e.g. `TA_FUNC_FLG_START_DEPENDENT`) fails
+//! surface. **Adding a new flag (e.g. `TA_FUNC_FLG_PATH_DEP`) fails
 //! `cargo test` here until ALL surfaces learn it**; the failure message lists
 //! exactly what to update. A surface knowing a name the header doesn't define
 //! (the `TA_OPTIN_IS_ADVANCED` drift this gate was born from) fails the
@@ -70,7 +70,7 @@ mod tests {
             "TA_FUNC_FLG_CANDLESTICK" => "candlestick",
             // Landed on dev via #127 while this branch was in flight; the
             // entry is inert until the merged header carries the constant.
-            "TA_FUNC_FLG_START_DEP" => "start_dependent",
+            "TA_FUNC_FLG_PATH_DEP" => "path_dependent",
             "TA_OPTIN_IS_PERCENT" => "percent",
             "TA_OPTIN_IS_DEGREE" => "degree",
             "TA_OPTIN_IS_CURRENCY" => "currency",
