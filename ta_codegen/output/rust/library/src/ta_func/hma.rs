@@ -204,9 +204,9 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut w: usize = 0_usize;
-        let mut dividerFull: usize = 0_usize;
-        let mut dividerHalf: usize = 0_usize;
-        let mut dividerSqrt: usize = 0_usize;
+        let mut dividerFull: f64 = 0.0_f64;
+        let mut dividerHalf: f64 = 0.0_f64;
+        let mut dividerSqrt: f64 = 0.0_f64;
         let mut trailingIdxFull: usize = 0_usize;
         let mut trailingIdxHalf: usize = 0_usize;
         let mut periodSubFull: f64 = 0.0_f64;
@@ -261,7 +261,7 @@ impl Core {
         // needed: lookbackSqrt bars before the first requested output.
         // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
         wmaStartIdx = startIdx - lookbackSqrt;
-        dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+        dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
         // Prime the full-period WMA over the optInTimePeriod-1 bars before
         // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
         periodSubFull = 0.0;
@@ -293,7 +293,7 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 outReal[outIdx] = 2.0 * tempReal - fullOut;
                 outIdx += 1;
@@ -302,8 +302,8 @@ impl Core {
         } else {
             // General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
             // sqrtPeriod >= 2 -- no period-1 special cases below this point.
-            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            dividerHalf = (halfPeriod as f64) * (((halfPeriod + 1)) as f64) / 2.0;
+            dividerSqrt = (sqrtPeriod as f64) * (((sqrtPeriod + 1)) as f64) / 2.0;
             // Prime the half-period WMA the same way.
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
@@ -340,13 +340,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -366,13 +366,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -382,7 +382,7 @@ impl Core {
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
-                outReal[outIdx] = periodSumSqrt / ((dividerSqrt) as f64);
+                outReal[outIdx] = periodSumSqrt / dividerSqrt;
                 outIdx += 1;
                 periodSumSqrt -= periodSubSqrt;
             }
@@ -419,9 +419,9 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut w: usize = 0_usize;
-        let mut dividerFull: usize = 0_usize;
-        let mut dividerHalf: usize = 0_usize;
-        let mut dividerSqrt: usize = 0_usize;
+        let mut dividerFull: f64 = 0.0_f64;
+        let mut dividerHalf: f64 = 0.0_f64;
+        let mut dividerSqrt: f64 = 0.0_f64;
         let mut trailingIdxFull: usize = 0_usize;
         let mut trailingIdxHalf: usize = 0_usize;
         let mut periodSubFull: f64 = 0.0_f64;
@@ -457,7 +457,7 @@ impl Core {
             return RetCode::Success;
         }
         wmaStartIdx = startIdx - lookbackSqrt;
-        dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+        dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
         periodSubFull = 0.0;
         periodSumFull = 0.0;
         trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
@@ -478,15 +478,15 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 outReal[outIdx] = 2.0 * tempReal - fullOut;
                 outIdx += 1;
             }
             today = (endIdx as usize) + 1;
         } else {
-            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            dividerHalf = (halfPeriod as f64) * (((halfPeriod + 1)) as f64) / 2.0;
+            dividerSqrt = (sqrtPeriod as f64) * (((sqrtPeriod + 1)) as f64) / 2.0;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
             trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
@@ -516,13 +516,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -539,13 +539,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -555,7 +555,7 @@ impl Core {
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
-                outReal[outIdx] = periodSumSqrt / ((dividerSqrt) as f64);
+                outReal[outIdx] = periodSumSqrt / dividerSqrt;
                 outIdx += 1;
                 periodSumSqrt -= periodSubSqrt;
             }
@@ -583,15 +583,15 @@ pub struct HmaStream {
 #[allow(non_snake_case, dead_code)]
 struct HmaStreamState {
     optInTimePeriod: i32,
-    dividerFull: usize,
+    dividerFull: f64,
     periodSubFull: f64,
     periodSumFull: f64,
     trailingFull: f64,
     fullOut: f64,
     halfPeriod: usize,
     sqrtPeriod: usize,
-    dividerHalf: usize,
-    dividerSqrt: usize,
+    dividerHalf: f64,
+    dividerSqrt: f64,
     periodSubHalf: f64,
     periodSumHalf: f64,
     trailingHalf: f64,
@@ -630,7 +630,7 @@ impl Core {
             sp.periodSubFull -= sp.trailingFull;
             sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
             sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-            sp.fullOut = sp.periodSumFull / ((sp.dividerFull) as f64);
+            sp.fullOut = sp.periodSumFull / sp.dividerFull;
             sp.periodSumFull -= sp.periodSubFull;
             (*outReal) = 2.0 * tempReal - sp.fullOut;
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
@@ -651,13 +651,13 @@ impl Core {
             sp.periodSubFull -= sp.trailingFull;
             sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
             sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-            sp.fullOut = sp.periodSumFull / ((sp.dividerFull) as f64);
+            sp.fullOut = sp.periodSumFull / sp.dividerFull;
             sp.periodSumFull -= sp.periodSubFull;
             sp.periodSubHalf += tempReal;
             sp.periodSubHalf -= sp.trailingHalf;
             sp.periodSumHalf += tempReal * ((sp.halfPeriod) as f64);
             sp.trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
-            sp.halfOut = sp.periodSumHalf / ((sp.dividerHalf) as f64);
+            sp.halfOut = sp.periodSumHalf / sp.dividerHalf;
             sp.periodSumHalf -= sp.periodSubHalf;
             sp.diffReal = 2.0 * sp.halfOut - sp.fullOut;
             sp.periodSubSqrt += sp.diffReal;
@@ -669,7 +669,7 @@ impl Core {
             if sp.dRing_Idx > sp.maxIdx_dRing {
                 sp.dRing_Idx = 0;
             }
-            (*outReal) = sp.periodSumSqrt / ((sp.dividerSqrt) as f64);
+            (*outReal) = sp.periodSumSqrt / sp.dividerSqrt;
             sp.periodSumSqrt -= sp.periodSubSqrt;
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
             sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
@@ -716,9 +716,9 @@ impl Core {
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
             let mut w: usize = 0_usize;
-            let mut dividerFull: usize = 0_usize;
-            let mut dividerHalf: usize = 0_usize;
-            let mut dividerSqrt: usize = 0_usize;
+            let mut dividerFull: f64 = 0.0_f64;
+            let mut dividerHalf: f64 = 0.0_f64;
+            let mut dividerSqrt: f64 = 0.0_f64;
             let mut trailingIdxFull: usize = 0_usize;
             let mut trailingIdxHalf: usize = 0_usize;
             let mut periodSubFull: f64 = 0.0_f64;
@@ -773,7 +773,7 @@ impl Core {
             // needed: lookbackSqrt bars before the first requested output.
             // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
             wmaStartIdx = startIdx - lookbackSqrt;
-            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
             // Prime the full-period WMA over the optInTimePeriod-1 bars before
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
@@ -804,7 +804,7 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 lastValue_outReal = 2.0 * tempReal - fullOut;
             }
@@ -863,9 +863,9 @@ impl Core {
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
             let mut w: usize = 0_usize;
-            let mut dividerFull: usize = 0_usize;
-            let mut dividerHalf: usize = 0_usize;
-            let mut dividerSqrt: usize = 0_usize;
+            let mut dividerFull: f64 = 0.0_f64;
+            let mut dividerHalf: f64 = 0.0_f64;
+            let mut dividerSqrt: f64 = 0.0_f64;
             let mut trailingIdxFull: usize = 0_usize;
             let mut trailingIdxHalf: usize = 0_usize;
             let mut periodSubFull: f64 = 0.0_f64;
@@ -920,7 +920,7 @@ impl Core {
             // needed: lookbackSqrt bars before the first requested output.
             // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
             wmaStartIdx = startIdx - lookbackSqrt;
-            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
             // Prime the full-period WMA over the optInTimePeriod-1 bars before
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
@@ -940,8 +940,8 @@ impl Core {
             // param so the stream analyzer sees a param-pure dual-mode split.
             // General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
             // sqrtPeriod >= 2 -- no period-1 special cases below this point.
-            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            dividerHalf = (halfPeriod as f64) * (((halfPeriod + 1)) as f64) / 2.0;
+            dividerSqrt = (sqrtPeriod as f64) * (((sqrtPeriod + 1)) as f64) / 2.0;
             // Prime the half-period WMA the same way.
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
@@ -978,13 +978,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -1004,13 +1004,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -1020,7 +1020,7 @@ impl Core {
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
-                lastValue_outReal = periodSumSqrt / ((dividerSqrt) as f64);
+                lastValue_outReal = periodSumSqrt / dividerSqrt;
                 periodSumSqrt -= periodSubSqrt;
             }
             today = (endIdx as usize) + 1;
@@ -1139,9 +1139,9 @@ impl Core {
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
             let mut w: usize = 0_usize;
-            let mut dividerFull: usize = 0_usize;
-            let mut dividerHalf: usize = 0_usize;
-            let mut dividerSqrt: usize = 0_usize;
+            let mut dividerFull: f64 = 0.0_f64;
+            let mut dividerHalf: f64 = 0.0_f64;
+            let mut dividerSqrt: f64 = 0.0_f64;
             let mut trailingIdxFull: usize = 0_usize;
             let mut trailingIdxHalf: usize = 0_usize;
             let mut periodSubFull: f64 = 0.0_f64;
@@ -1196,7 +1196,7 @@ impl Core {
             // needed: lookbackSqrt bars before the first requested output.
             // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
             wmaStartIdx = startIdx - lookbackSqrt;
-            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
             // Prime the full-period WMA over the optInTimePeriod-1 bars before
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
@@ -1227,7 +1227,7 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 outReal[outIdx] = 2.0 * tempReal - fullOut;
                 outIdx += 1;
@@ -1287,9 +1287,9 @@ impl Core {
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
             let mut w: usize = 0_usize;
-            let mut dividerFull: usize = 0_usize;
-            let mut dividerHalf: usize = 0_usize;
-            let mut dividerSqrt: usize = 0_usize;
+            let mut dividerFull: f64 = 0.0_f64;
+            let mut dividerHalf: f64 = 0.0_f64;
+            let mut dividerSqrt: f64 = 0.0_f64;
             let mut trailingIdxFull: usize = 0_usize;
             let mut trailingIdxHalf: usize = 0_usize;
             let mut periodSubFull: f64 = 0.0_f64;
@@ -1344,7 +1344,7 @@ impl Core {
             // needed: lookbackSqrt bars before the first requested output.
             // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
             wmaStartIdx = startIdx - lookbackSqrt;
-            dividerFull = (optInTimePeriod * (optInTimePeriod + 1) >> 1) as usize;
+            dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
             // Prime the full-period WMA over the optInTimePeriod-1 bars before
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
@@ -1364,8 +1364,8 @@ impl Core {
             // param so the stream analyzer sees a param-pure dual-mode split.
             // General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
             // sqrtPeriod >= 2 -- no period-1 special cases below this point.
-            dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-            dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+            dividerHalf = (halfPeriod as f64) * (((halfPeriod + 1)) as f64) / 2.0;
+            dividerSqrt = (sqrtPeriod as f64) * (((sqrtPeriod + 1)) as f64) / 2.0;
             // Prime the half-period WMA the same way.
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
@@ -1402,13 +1402,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -1428,13 +1428,13 @@ impl Core {
                 periodSubFull -= trailingFull;
                 periodSumFull += tempReal * ((optInTimePeriod) as f64);
                 trailingFull = inReal[{ let _v = trailingIdxFull; trailingIdxFull += 1; _v }];
-                fullOut = periodSumFull / ((dividerFull) as f64);
+                fullOut = periodSumFull / dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
                 periodSubHalf -= trailingHalf;
                 periodSumHalf += tempReal * ((halfPeriod) as f64);
                 trailingHalf = inReal[{ let _v = trailingIdxHalf; trailingIdxHalf += 1; _v }];
-                halfOut = periodSumHalf / ((dividerHalf) as f64);
+                halfOut = periodSumHalf / dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
@@ -1444,7 +1444,7 @@ impl Core {
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
-                outReal[outIdx] = periodSumSqrt / ((dividerSqrt) as f64);
+                outReal[outIdx] = periodSumSqrt / dividerSqrt;
                 outIdx += 1;
                 periodSumSqrt -= periodSubSqrt;
             }

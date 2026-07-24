@@ -76,8 +76,8 @@ TA_RetCode linearreg_angle(int startIdx, int endIdx,
    today = startIdx;
    trailingIdx = startIdx - lookbackTotal;
 
-   SumX = optInTimePeriod * ( optInTimePeriod - 1 ) * 0.5;
-   SumXSqr = optInTimePeriod * ( optInTimePeriod - 1 ) * ( 2 * optInTimePeriod - 1 ) / 6;
+   SumX = (double)optInTimePeriod * ( optInTimePeriod - 1 ) * 0.5;
+   SumXSqr = (double)optInTimePeriod * ( optInTimePeriod - 1 ) * ( 2 * optInTimePeriod - 1 ) / 6.0;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
 
    /* Prime the two data-dependent window sums for the first output with a

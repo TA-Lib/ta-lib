@@ -6889,3 +6889,53 @@ fn test_c_bbands_open_frees_prior_intermediate_on_oom() {
         "scratch output arrays must clean up progressively on OOM"
     );
 }
+
+/// #142 regression: period-scaled dividers/sums must compute in floating point,
+/// never a bare int32 product. The WMA/HMA triangular divider (n*(n+1)/2)
+/// overflows int32 at period 46341; the linear-regression cubic
+/// (n*(n-1)*(2n-1)/6) overflows at period 1025. Both silently returned garbage.
+/// Widening the operands to double is the fix — pin the generated form across
+/// C/Rust/Java so a revert to the int expression trips here instead of at a
+/// period no test data reaches.
+#[test]
+fn test_period_scaled_arithmetic_is_double_not_int32() {
+    // WMA/HMA triangular divider: double, no int32 `>> 1` shift.
+    for name in ["wma", "hma"] {
+        let (func, enums) = load_indicator(name);
+        let out = generate_all(&func, &enums);
+        assert!(
+            !out.c.contains(">> 1"),
+            "{name}: C divider still uses the int32 `>> 1` shift (#142 overflow at period 46341)"
+        );
+        assert!(
+            out.c.contains("(double)optInTimePeriod * (optInTimePeriod + 1) / 2.0"),
+            "{name}: C divider not widened to double (#142)"
+        );
+        assert!(
+            !out.rust.contains(">> 1"),
+            "{name}: Rust divider still forms the int32 product before the cast (#142)"
+        );
+        assert!(
+            !out.java.contains(">> 1"),
+            "{name}: Java divider still uses the int32 `>> 1` shift (#142)"
+        );
+    }
+    // Linear-regression family SumXSqr cubic: double, no int32 `/ 6` division.
+    for name in ["linearreg", "linearreg_slope", "linearreg_intercept", "linearreg_angle", "tsf"] {
+        let (func, enums) = load_indicator(name);
+        let out = generate_all(&func, &enums);
+        assert!(
+            !out.c.contains("/ 6;"),
+            "{name}: C SumXSqr still uses int32 `/ 6` division (#142 cubic overflow at period 1025)"
+        );
+        assert!(
+            out.c
+                .contains("(double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0"),
+            "{name}: C SumXSqr not widened to double (#142)"
+        );
+        assert!(
+            !out.rust.contains("/ 6) as f64"),
+            "{name}: Rust SumXSqr still forms the int32 cubic before the cast (#142)"
+        );
+    }
+}

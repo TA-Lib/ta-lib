@@ -34,7 +34,7 @@ TA_RetCode hma(int startIdx, int endIdx,
    int lookbackTotal, lookbackSqrt;
    int halfPeriod, sqrtPeriod, ringSize;
    int wmaStartIdx, today, outIdx, i, w;
-   int dividerFull, dividerHalf, dividerSqrt;
+   double dividerFull, dividerHalf, dividerSqrt;
    int trailingIdxFull, trailingIdxHalf;
    double periodSubFull, periodSumFull, trailingFull;
    double periodSubHalf, periodSumHalf, trailingHalf;
@@ -88,7 +88,7 @@ TA_RetCode hma(int startIdx, int endIdx,
     */
    wmaStartIdx = startIdx - lookbackSqrt;
 
-   dividerFull = (optInTimePeriod*(optInTimePeriod+1))>>1;
+   dividerFull = (double)optInTimePeriod*(optInTimePeriod+1)/2.0;
 
    /* Prime the full-period WMA over the optInTimePeriod-1 bars before
     * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
@@ -138,8 +138,8 @@ TA_RetCode hma(int startIdx, int endIdx,
       /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
        * sqrtPeriod >= 2 -- no period-1 special cases below this point.
        */
-      dividerHalf = (halfPeriod*(halfPeriod+1))>>1;
-      dividerSqrt = (sqrtPeriod*(sqrtPeriod+1))>>1;
+      dividerHalf = (double)halfPeriod*(halfPeriod+1)/2.0;
+      dividerSqrt = (double)sqrtPeriod*(sqrtPeriod+1)/2.0;
 
       /* Prime the half-period WMA the same way. */
       periodSubHalf = 0.0;

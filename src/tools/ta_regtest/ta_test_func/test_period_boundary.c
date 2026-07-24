@@ -172,6 +172,7 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history );
 static ErrorNumber testMacdFamilySignalOne( const TA_History *history );
 static ErrorNumber testPeriodOnePins( const TA_History *history );
 static ErrorNumber testMinBoundarySweep( const TA_History *history );
+static ErrorNumber testLinearRegRampOverflowProbe( void );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -202,6 +203,10 @@ ErrorNumber test_func_period_boundary( TA_History *history )
       return errNb;
 
    errNb = testMinBoundarySweep( history );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = testLinearRegRampOverflowProbe();
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -1584,6 +1589,106 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
       printf( "\nFail: boundary sweep tested no parameter (enumeration broken?)\n" );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
+
+   return TA_TEST_PASS;
+}
+
+/* #142 regression: the linear-regression family computed
+ *   SumXSqr = optInTimePeriod*(optInTimePeriod-1)*(2*optInTimePeriod-1)/6
+ * in int32, overflowing (signed-integer-overflow UB) at period >= 1025. This
+ * probe runs the whole family at that supra-threshold period on a tiny (~16 KB)
+ * linear ramp -- a case no prior test reached (reference data tops out at 2760
+ * bars, always at small periods; period=max+1 was only reject-tested, never
+ * computed).
+ *
+ * Where the teeth are: the --sanitize (UBSan) build the nightly runs. The int32
+ * product traps there (-fno-sanitize-recover aborts) while the widened double
+ * form is clean, so a revert to the int expression fails the sanitized run on
+ * these very calls. In a plain -O3 release build the value check below is
+ * effectively VACUOUS -- the optimizer, entitled to assume no signed overflow,
+ * folds the polynomial to the correct value either way -- so a perfect ramp's
+ * closed-form output (least-squares fit is exact) is only a cheap coherence
+ * guard here. The source-form regression guard lives in the generator's
+ * backend_suite.rs (test_period_scaled_arithmetic_is_double_not_int32).
+ */
+#define PB_LR_PROBE_PERIOD 1025
+#define PB_LR_PROBE_N      1030   /* a few outputs past the lookback */
+
+/* Which closed-form value each LR-family output must equal at global bar
+ * `today`, for a ramp value[i] = base + step*i (window position x in
+ * 0..period-1, x=0 the oldest bar; b = intercept at x=0, m = slope). */
+enum { PB_LR_REG = 0, PB_LR_SLOPE, PB_LR_INTERCEPT, PB_LR_TSF, PB_LR_ANGLE };
+
+static ErrorNumber pbLrExpect( const char *label, const TA_Real *out,
+                               TA_Integer begIdx, TA_Integer nbElement,
+                               double base, double step, int period, int kind )
+{
+   TA_Integer i;
+   TA_Integer expectedNb = PB_LR_PROBE_N - ( period - 1 );
+
+   if( nbElement != expectedNb )
+   {
+      printf( "\nFail: %s: outNBElement %d, expected %d (period=%d, n=%d)\n",
+              label, (int)nbElement, (int)expectedNb, period, PB_LR_PROBE_N );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   for( i = 0; i < nbElement; i++ )
+   {
+      TA_Integer today = begIdx + i;
+      double want;
+      switch( kind )
+      {
+      case PB_LR_REG:       want = base + step * (double)today;                    break;
+      case PB_LR_SLOPE:     want = step;                                           break;
+      case PB_LR_INTERCEPT: want = base + step * (double)( today - period + 1 );   break;
+      case PB_LR_TSF:       want = base + step * (double)( today + 1 );            break;
+      default:              want = atan( step ) * ( 180.0 / 3.14159265358979323846 ); break;
+      }
+      if( fabs( out[i] - want ) > 1e-6 * ( fabs( want ) + 1.0 ) )
+      {
+         printf( "\nFail: %s [%d]: got %.17g, expected %.17g (#142 int32 overflow at period %d)\n",
+                 label, (int)today, out[i], want, period );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber testLinearRegRampOverflowProbe( void )
+{
+   static TA_Real ramp[PB_LR_PROBE_N];
+   static TA_Real out[PB_LR_PROBE_N];
+   const double base = 100.0;
+   const double step = 0.25;
+   const int period = PB_LR_PROBE_PERIOD;
+   TA_Integer i, begIdx, nbElement;
+   TA_RetCode rc;
+   ErrorNumber errNb;
+
+   for( i = 0; i < PB_LR_PROBE_N; i++ )
+      ramp[i] = base + step * (double)i;
+
+   #define PB_LR_RUN( FN, LABEL, KIND )                                              \
+      do {                                                                           \
+         rc = FN( 0, PB_LR_PROBE_N - 1, ramp, period, &begIdx, &nbElement, out );    \
+         if( rc != TA_SUCCESS )                                                      \
+         {                                                                           \
+            printf( "\nFail: %s: retCode %d (period=%d)\n", LABEL, (int)rc, period );\
+            return TA_REGTEST_OPTIMIZATION_REF_ERROR;                                \
+         }                                                                           \
+         errNb = pbLrExpect( LABEL, out, begIdx, nbElement, base, step, period, KIND );\
+         if( errNb != TA_TEST_PASS )                                                 \
+            return errNb;                                                            \
+      } while( 0 )
+
+   PB_LR_RUN( TA_LINEARREG,           "LINEARREG@1025",           PB_LR_REG );
+   PB_LR_RUN( TA_LINEARREG_SLOPE,     "LINEARREG_SLOPE@1025",     PB_LR_SLOPE );
+   PB_LR_RUN( TA_LINEARREG_INTERCEPT, "LINEARREG_INTERCEPT@1025", PB_LR_INTERCEPT );
+   PB_LR_RUN( TA_TSF,                 "TSF@1025",                 PB_LR_TSF );
+   PB_LR_RUN( TA_LINEARREG_ANGLE,     "LINEARREG_ANGLE@1025",     PB_LR_ANGLE );
+
+   #undef PB_LR_RUN
 
    return TA_TEST_PASS;
 }

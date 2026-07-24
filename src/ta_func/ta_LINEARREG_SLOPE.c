@@ -137,8 +137,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
    /* Index into the output. */
    today = startIdx;
    trailingIdx = startIdx - lookbackTotal;
-   SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
    /* Prime the two data-dependent window sums for the first output with a
     * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -213,8 +213,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Unguarded( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - lookbackTotal;
-   SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
    SumXY = 0;
    SumY = 0;
@@ -289,8 +289,8 @@ TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - lookbackTotal;
-   SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
    SumXY = 0;
    SumY = 0;
@@ -351,8 +351,8 @@ TA_RetCode TA_S_LINEARREG_SLOPE_Unguarded( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - lookbackTotal;
-   SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
    Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
    SumXY = 0;
    SumY = 0;
@@ -491,8 +491,8 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
       /* Index into the output. */
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       /* Prime the two data-dependent window sums for the first output with a
        * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -631,8 +631,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
       /* Index into the output. */
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       /* Prime the two data-dependent window sums for the first output with a
        * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
