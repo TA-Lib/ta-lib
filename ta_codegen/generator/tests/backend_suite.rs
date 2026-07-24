@@ -6366,10 +6366,13 @@ fn test_c_ma_dispatch_stream_section() {
         "MAMA OpenAndFill forwards outReal + NULL"
     );
     assert!(!c.contains("/* no mama stream */"), "no MAMA reject arm remains");
-    // Update/Peek identity short-circuit reads the handle's params.
+    // Update/Peek identity short-circuit reads the handle's params; the guard
+    // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
     assert!(
-        c.contains("if( stream->optInTimePeriod == 1 )"),
-        "identity short-circuit on the handle"
+        c.contains(
+            "if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )"
+        ),
+        "identity short-circuit on the handle (period 1 or DISABLED)"
     );
     // Peek keeps the handle logically const (const sub cast, no state copy).
     assert!(

@@ -34,9 +34,10 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
-    collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars, collect_var_types,
-    emit_circbuf_prolog_rust, expr_is_untyped_integer, gen_opt_param_validation_with,
-    render_expr, render_hoisted_blocks, render_statement, to_pascal_case, RustRenderCtx,
+    build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
+    collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer,
+    gen_opt_param_validation_with, render_expr, render_hoisted_blocks, render_statement,
+    to_pascal_case, RustRenderCtx,
 };
 use crate::helper_registry::hoist_block_helpers;
 
@@ -2013,7 +2014,7 @@ fn callee_variant(callee: &str) -> String {
 /// A minimal render context for dispatch/period-bank expressions (identity
 /// conditions, arm opt args): param-pure by plan construction, so only the
 /// index scaffolding names are seeded.
-fn plan_ctx(func: &FuncDef) -> RustRenderCtx {
+fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
     let mut index_vars = HashSet::new();
     index_vars.insert("startIdx".to_string());
     index_vars.insert("endIdx".to_string());
@@ -2034,8 +2035,9 @@ fn plan_ctx(func: &FuncDef) -> RustRenderCtx {
         is_lookback: false,
         sentinel_vars: HashSet::new(),
         result_error_returns: true,
-        // Dispatch/period-bank expressions never compare `== TA_MAType_*`.
-        matype_map: HashMap::new(),
+        // The dispatch identity guard can compare `optInMAType == TA_MAType_*`
+        // (TA_MAType_DISABLED, #93); resolve those to their ordinal like batch.
+        matype_map: build_matype_map(enums),
     }
 }
 
@@ -2074,7 +2076,7 @@ fn emit_dispatch(
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let bar_args = inputs.join(", ");
-    let ctx = plan_ctx(func);
+    let ctx = plan_ctx(func, enums);
     let params_join = func
         .optional_inputs
         .iter()

@@ -467,7 +467,8 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {6,"KAMA"},
    {7,"MAMA"},
    {8,"T3"},
-   {9,"HMA"}
+   {9,"HMA"},
+   {10,"DISABLED"}
 };
 
 const TA_IntegerList TA_MA_TypeList =

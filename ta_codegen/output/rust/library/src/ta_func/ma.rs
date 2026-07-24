@@ -57,6 +57,7 @@
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
+ *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  */
 
 // Import types from parent module
@@ -76,7 +77,7 @@ impl Core {
     ///
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -88,7 +89,7 @@ impl Core {
             return usize::MAX;
         }
         let mut retValue: usize = 0_usize;
-        if optInTimePeriod <= 1 {
+        if optInTimePeriod <= 1 || (optInMAType) as usize == 10 {
             return (0) as usize;
         }
         match optInMAType {
@@ -140,6 +141,9 @@ impl Core {
     /// # Notes
     ///
     /// * A period of 1 performs no smoothing for every MAType: the output is a copy of the input.
+    /// * `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output is a copy
+    ///   of the input with a lookback of 0. Every function that takes an MAType parameter accepts
+    ///   it.
     ///
     /// # Arguments
     ///
@@ -148,7 +152,7 @@ impl Core {
     /// * `inReal` — Series to average.
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Selected moving average of the input.
@@ -215,7 +219,9 @@ impl Core {
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut todayIdx: usize = 0_usize;
-        if optInTimePeriod == 1 {
+        // No-smoothing identity: period 1 (every MA type) or the explicit
+        // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
+        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -295,7 +301,7 @@ impl Core {
         let _assertLb = self.ma_lookback(optInTimePeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInTimePeriod == 1 {
+        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -392,7 +398,7 @@ enum MaSub {
 #[allow(unused_parens)]
 impl Core {
     fn ma_step_internal(&self, sp: &mut MaStreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 {
+        if sp.optInTimePeriod == 1 || (sp.optInMAType) as usize == 10 {
             (*outReal) = inReal;
             return;
         }
@@ -450,7 +456,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 {
+        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
             if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
@@ -546,7 +552,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 {
+        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
             if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }

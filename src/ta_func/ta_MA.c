@@ -60,6 +60,7 @@
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
+ *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  */
 
 TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
@@ -71,7 +72,7 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
       return -1;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
-   if( optInTimePeriod <= 1 )
+   if( optInTimePeriod <= 1 || optInMAType == TA_MAType_DISABLED )
    {
       return 0;
    }
@@ -144,7 +145,10 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInTimePeriod == 1 )
+   /* No-smoothing identity: period 1 (every MA type) or the explicit
+    * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
+    */
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       nbElement = endIdx - startIdx + 1;
       *outNBElement= nbElement;
@@ -212,7 +216,7 @@ TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
    int outIdx;
    int todayIdx;
 
-   if( optInTimePeriod == 1 )
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       nbElement = endIdx - startIdx + 1;
       *outNBElement= nbElement;
@@ -292,7 +296,7 @@ TA_RetCode TA_S_MA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInTimePeriod == 1 )
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       nbElement = endIdx - startIdx + 1;
       *outNBElement= nbElement;
@@ -356,7 +360,7 @@ TA_RetCode TA_S_MA_Unguarded( int    startIdx,
    int outIdx;
    int todayIdx;
 
-   if( optInTimePeriod == 1 )
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       nbElement = endIdx - startIdx + 1;
       *outNBElement= nbElement;
@@ -439,7 +443,7 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
    sp->optInTimePeriod = optInTimePeriod;
    sp->optInMAType = optInMAType;
 
-   if( optInTimePeriod == 1 )
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
       *outReal = inReal[historyLen - 1];
@@ -562,7 +566,7 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
    sp->optInTimePeriod = optInTimePeriod;
    sp->optInMAType = optInMAType;
 
-   if( optInTimePeriod == 1 )
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
       {
@@ -669,7 +673,7 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( stream->optInTimePeriod == 1 )
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
    {
       *outReal = inReal;
       return TA_SUCCESS;
@@ -705,7 +709,7 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
 TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( stream->optInTimePeriod == 1 )
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
    {
       *outReal = inReal;
       return TA_SUCCESS;

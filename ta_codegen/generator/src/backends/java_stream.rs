@@ -60,7 +60,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::fma::{self, FmaVarSets};
 use super::java::{
-    collect_address_of_vars, collect_double_address_of_vars, collect_matype_vars,
+    build_matype_map, collect_address_of_vars, collect_double_address_of_vars, collect_matype_vars,
     emit_opt_param_validation, java_type_str, render_expr, render_hoisted_blocks,
     render_statement_ctx, to_java_method_name, JavaRenderCtx, JAVA_CANDLE_FNS,
 };
@@ -1938,7 +1938,10 @@ fn emit_dispatch(
     let bar_args = inputs.join(", ");
     let base = java_base(func);
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let mut ctx = stream_ctx(&empty, counter, stream_fma);
+    // The dispatch identity guard can compare `optInMAType == TA_MAType_*`
+    // (TA_MAType_DISABLED, #93); resolve those to their constant like batch.
+    ctx.matype_map = build_matype_map(enums);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let lb_call = format!("{base}Lookback({})", lb_args.join(", "));
 

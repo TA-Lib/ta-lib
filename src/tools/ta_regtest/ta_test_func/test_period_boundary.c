@@ -315,10 +315,13 @@ static ErrorNumber testLookbackContract( void )
    PB_CHECK_INT( "TA_TRIX_Lookback(1)", TA_TRIX_Lookback( 1 ), 1 );
    PB_CHECK_INT( "TA_ULTOSC_Lookback(1,1,1)", TA_ULTOSC_Lookback( 1, 1, 1 ), 1 );
 
-   for( i = 0; i <= (int)TA_MAType_HMA; i++ )
+   for( i = 0; i <= (int)TA_MAType_DISABLED; i++ )
    {
       PB_CHECK_INT( "TA_MA_Lookback(1,maType)", TA_MA_Lookback( 1, (TA_MAType)i ), 0 );
    }
+   /* TA_MAType_DISABLED ignores the period: lookback is 0 at any period. */
+   PB_CHECK_INT( "TA_MA_Lookback(30,DISABLED)",  TA_MA_Lookback( 30,  TA_MAType_DISABLED ), 0 );
+   PB_CHECK_INT( "TA_MA_Lookback(100,DISABLED)", TA_MA_Lookback( 100, TA_MAType_DISABLED ), 0 );
    PB_CHECK_INT( "TA_MAVP_Lookback(1,2,SMA)", TA_MAVP_Lookback( 1, 2, TA_MAType_SMA ), 1 );
 
    /* TA_INTEGER_DEFAULT maps to the documented default period. */
@@ -494,8 +497,9 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
                                 gBuffer[0].out0, (const double[]){ 1, 0.7 }, 2 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* MA(period=1) for every MAType: the documented "just copy" path. */
-   for( i = 0; i <= (int)TA_MAType_HMA; i++ )
+   /* MA(period=1) for every MAType: the documented "just copy" path
+    * (includes TA_MAType_DISABLED, whose copy is period-independent). */
+   for( i = 0; i <= (int)TA_MAType_DISABLED; i++ )
    {
       char label[64];
       snprintf( label, sizeof(label), "MA(1,maType=%d)", i );
@@ -604,6 +608,62 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
          printf( "Fail: KAMA(1) range test\n" );
          return errNb;
       }
+   }
+
+   /* TA_MAType_DISABLED (#93): identity copy that IGNORES the period. Unlike
+    * the period==1 path above, it must copy for ANY period, with lookback 0 and
+    * outBegIdx 0. Swept across several periods and bitwise-checked cross-language.
+    */
+   {
+      static const int disabledPeriods[] = { 1, 2, 5, 30, 100 };
+      unsigned int p;
+      for( p = 0; p < sizeof(disabledPeriods)/sizeof(disabledPeriods[0]); p++ )
+      {
+         int period = disabledPeriods[p];
+         char label[64];
+         snprintf( label, sizeof(label), "MA(%d,DISABLED)", period );
+
+         retCode = TA_MA( 0, endIdx, gBuffer[0].in, period, TA_MAType_DISABLED,
+                          &outBegIdx, &outNbElement, gBuffer[0].out0 );
+         errNb = pbCheckCallShape( label, retCode, outBegIdx, 0, outNbElement, endIdx );
+         if( errNb != TA_TEST_PASS ) return errNb;
+         errNb = pbCheckSameSeries( label, gBuffer[0].out0, history->close, outNbElement );
+         if( errNb != TA_TEST_PASS ) return errNb;
+
+         if( server_verify_active() )
+         {
+            errNb = server_verify( "MA", 0, endIdx, history->nbBars,
+                                   retCode, outBegIdx, outNbElement,
+                                   (const TA_Real*[]){ gBuffer[0].in, NULL },
+                                   (const double[]){ (double)period, (double)TA_MAType_DISABLED }, 2,
+                                   (const TA_Real*[]){ gBuffer[0].out0, NULL }, NULL );
+            if( errNb != TA_TEST_PASS )
+            {
+               printf( "Fail: %s: server verification\n", label );
+               return errNb;
+            }
+         }
+      }
+   }
+
+   /* DISABLED propagates through a delegating function: BBANDS with a DISABLED
+    * middle band is the raw price (identity MA), so the bands are price +/-
+    * nbDev*stddev. The standard deviation still needs its period-1 warmup, so
+    * outBegIdx = period-1 while the MA lookback is 0 (the accepted
+    * MAMA-large-period pattern, issue #99); the #99 realignment then pairs each
+    * middle-band price with the standard deviation ending at the same bar.
+    */
+   {
+      int period = 5;
+      retCode = TA_BBANDS( 0, endIdx, gBuffer[0].in, period, 2.0, 2.0, TA_MAType_DISABLED,
+                           &outBegIdx, &outNbElement,
+                           gBuffer[0].out0, gBuffer[0].out1, gBuffer[0].out2 );
+      errNb = pbCheckCallShape( "BBANDS(5,DISABLED)", retCode, outBegIdx, period-1, outNbElement, endIdx );
+      if( errNb != TA_TEST_PASS ) return errNb;
+      /* Middle band == raw price at the aligned bars. */
+      errNb = pbCheckSameSeries( "BBANDS(5,DISABLED) middle", gBuffer[0].out1,
+                                 &history->close[outBegIdx], outNbElement );
+      if( errNb != TA_TEST_PASS ) return errNb;
    }
 
    /* doRangeTest varies the unstable period and leaves it set. */
@@ -774,8 +834,8 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
                                  (const double[]){ 1 }, 1 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* MACDEXT with signalPeriod=1 for every signal MAType. */
-   for( maType = 0; maType <= (int)TA_MAType_HMA; maType++ )
+   /* MACDEXT with signalPeriod=1 for every signal MAType (incl. DISABLED). */
+   for( maType = 0; maType <= (int)TA_MAType_DISABLED; maType++ )
    {
       char label[64];
       snprintf( label, sizeof(label), "MACDEXT(12,26,sig=1,maType=%d)", maType );

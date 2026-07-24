@@ -11,6 +11,7 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 ## Notes
 
 - A period of 1 performs no smoothing for every MAType: the output is a copy of the input.
+- `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.
 
 ## Inputs
 

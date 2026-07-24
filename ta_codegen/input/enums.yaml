@@ -19,6 +19,9 @@ MAType:
   - { c_name: TA_MAType_MAMA,  pascal_name: Mama,  value: 7 }
   - { c_name: TA_MAType_T3,    pascal_name: T3,    value: 8 }
   - { c_name: TA_MAType_HMA,   pascal_name: Hma,   value: 9 }
+  # DISABLED (#93): identity copy, lookback 0, ignores optInTimePeriod. Dispatch
+  # is the pre-switch identity guard in ma/ma.c (batch + stream), not a switch arm.
+  - { c_name: TA_MAType_DISABLED, pascal_name: Disabled, value: 10 }
 
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h

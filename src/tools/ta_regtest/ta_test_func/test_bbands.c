@@ -666,18 +666,24 @@ static ErrorNumber test_bbands_mama_alignment( const TA_History *history )
       expectedBeg = mamaBeg > sdBeg ? mamaBeg : sdBeg;
       expectedNb  = endIdx - expectedBeg + 1;
 
-      /* The reported lookback is the middle-band MA lookback (independent of
-       * startIdx and of the stddev clamp), which also sizes the output buffers:
-       * it must NOT grow with the clamp or the buffers would be too small for
-       * the MA that ma() writes. The first output may begin after the lookback,
-       * but never before it. */
+      /* The reported lookback is the LATER of the middle-band MA lookback and the
+       * standard-deviation lookback (optInTimePeriod-1) - a band value needs both
+       * (issue #93 made it honest; #99 had reported only the MA lookback, so
+       * outBegIdx could exceed it). For MAMA it stays the constant 32 until
+       * optInTimePeriod-1 overtakes it at period >= 34, from which point the
+       * lookback tracks the standard deviation. outBegIdx never begins before it. */
       lookback = TA_BBANDS_Lookback( period, nbDev, nbDev, TA_MAType_MAMA );
-      if( lookback != TA_MA_Lookback( period, TA_MAType_MAMA ) || bbBeg < lookback )
       {
-         printf( "BBANDS/MAMA #99: startIdx=%d period=%d lookback=%d begIdx=%d\n",
-                 s, period, lookback, (int)bbBeg );
-         errNb = TA_TEST_TFFR_BAD_MA_LOOKBACK;
-         goto done;
+         int maLb = TA_MA_Lookback( period, TA_MAType_MAMA );
+         int sdLb = TA_STDDEV_Lookback( period, 1.0 );
+         int wantLb = maLb > sdLb ? maLb : sdLb;
+         if( lookback != wantLb || bbBeg < lookback )
+         {
+            printf( "BBANDS/MAMA #99: startIdx=%d period=%d lookback=%d begIdx=%d\n",
+                    s, period, lookback, (int)bbBeg );
+            errNb = TA_TEST_TFFR_BAD_MA_LOOKBACK;
+            goto done;
+         }
       }
 
       if( bbBeg != expectedBeg )
@@ -720,14 +726,12 @@ static ErrorNumber test_bbands_mama_alignment( const TA_History *history )
          }
       }
 
-      /* Buffer sufficiency (startIdx 0 only, where ma() writes the most into the
-       * lookback-sized buffer). A caller sizing outputs from the reported
-       * lookback allocates (endIdx + 1 - lookback) slots. ma() writes exactly
-       * that many into the middle-band buffer and the realignment only re-reads
-       * within that region, so no extra room is required. Verify with buffers
-       * cut to that size plus a one-element guard that must remain untouched
-       * (this also fails loudly if the lookback is ever grown past the MA
-       * lookback). */
+      /* Buffer sufficiency (startIdx 0 only). A caller sizing outputs from the
+       * reported lookback allocates (endIdx + 1 - lookback) slots. With the honest
+       * lookback that is exactly outNBElement: the general path computes the MA
+       * into a scratch buffer and memmoves only the realigned band values into the
+       * caller's array, so it never writes past that region. Verify with buffers
+       * cut to that size plus a one-element guard that must remain untouched. */
       if( s == 0 )
       {
          const int    tight = endIdx + 1 - lookback;

@@ -66,6 +66,9 @@
  *                average and standard deviation into a single pass. Bit-identical.
  *  071726 MF,CC  #118 SMA-path deviation now uses the cancellation-free variance
  *                (var.c); two recurrences in one pass. Bit-identical.
+ *  072426 MF,CC  Lookback is now max(MA, STDDEV) so it is honest for MA types
+ *                whose lookback is below the deviation's (MAMA >= 34, and
+ *                TA_MAType_DISABLED); required for streaming (issue #93).
  */
 
 // Import types from parent module
@@ -88,7 +91,7 @@ impl Core {
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -99,13 +102,22 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        // The lookback is driven by the middle band moving average. It also governs
-        // how the caller sizes the output buffers, which must hold the full moving
-        // average that ma() writes below - so it must not exceed the MA lookback,
-        // even when the standard deviation (lookback optInTimePeriod-1) clamps the
-        // first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
-        // a large period). See the realignment in bbands() for that case.
-        return self.ma_lookback(optInTimePeriod, optInMAType);
+        let mut maLookback: usize = 0_usize;
+        let mut stddevLookback: usize = 0_usize;
+        // A band value needs BOTH the middle-band moving average and the standard
+        // deviation of the outer bands, so the first valid output is the later of the
+        // two lookbacks. For every MA type whose lookback is at least
+        // optInTimePeriod-1 this equals the MA lookback (unchanged); it rises above it
+        // only when the MA lookback is the smaller one - TA_MAType_MAMA at
+        // optInTimePeriod >= 34 (constant MAMA lookback 32) and TA_MAType_DISABLED
+        // (MA lookback 0, issue #93). Reporting the honest value keeps
+        // outBegIdx == lookback: issue #99 kept it at the MA lookback, which
+        // under-reported those cases (outBegIdx > lookback) and broke streaming, whose
+        // Open is tied to lookback+1. The middle band still begins at the MA's earlier
+        // begIdx internally and is realigned to this later bar in bbands() below.
+        maLookback = self.ma_lookback(optInTimePeriod, optInMAType);
+        stddevLookback = self.stddev_lookback(optInTimePeriod, 1.0);
+        return ((if maLookback > stddevLookback { maLookback } else { stddevLookback })) as usize;
     }
     /// Bollinger Bands: a moving-average middle band with upper and lower bands offset by a
     /// multiple of the standard deviation. Used to gauge relative price volatility.
@@ -133,7 +145,7 @@ impl Core {
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
