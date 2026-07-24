@@ -214,8 +214,8 @@ impl Core {
         // Index into the output.
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
         // Prime the two data-dependent window sums for the first output with a
         // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -299,8 +299,8 @@ impl Core {
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
         SumXY = 0.0;
         SumY = 0.0;
@@ -440,8 +440,8 @@ impl Core {
         // Index into the output.
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
         // Prime the two data-dependent window sums for the first output with a
         // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -588,8 +588,8 @@ impl Core {
         // Index into the output.
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = ((optInTimePeriod * (optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = ((optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6) as f64);
+        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
         Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
         // Prime the two data-dependent window sums for the first output with a
         // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;

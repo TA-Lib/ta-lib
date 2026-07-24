@@ -88,9 +88,9 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    int outIdx;
    int i;
    int w;
-   int dividerFull;
-   int dividerHalf;
-   int dividerSqrt;
+   double dividerFull;
+   double dividerHalf;
+   double dividerSqrt;
    int trailingIdxFull;
    int trailingIdxHalf;
    double periodSubFull;
@@ -167,7 +167,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
     * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
     */
    wmaStartIdx = startIdx - lookbackSqrt;
-   dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+   dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
    /* Prime the full-period WMA over the optInTimePeriod-1 bars before
     * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
     */
@@ -214,8 +214,8 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
        * sqrtPeriod >= 2 -- no period-1 special cases below this point.
        */
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       /* Prime the half-period WMA the same way. */
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;
@@ -336,9 +336,9 @@ TA_LIB_API TA_RetCode TA_HMA_Unguarded( int    startIdx,
    int outIdx;
    int i;
    int w;
-   int dividerFull;
-   int dividerHalf;
-   int dividerSqrt;
+   double dividerFull;
+   double dividerHalf;
+   double dividerSqrt;
    int trailingIdxFull;
    int trailingIdxHalf;
    double periodSubFull;
@@ -374,7 +374,7 @@ TA_LIB_API TA_RetCode TA_HMA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    wmaStartIdx = startIdx - lookbackSqrt;
-   dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+   dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
    periodSubFull = 0.0;
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
@@ -404,8 +404,8 @@ TA_LIB_API TA_RetCode TA_HMA_Unguarded( int    startIdx,
       }
    } else 
    {
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
@@ -513,9 +513,9 @@ TA_RetCode TA_S_HMA( int    startIdx,
    int outIdx;
    int i;
    int w;
-   int dividerFull;
-   int dividerHalf;
-   int dividerSqrt;
+   double dividerFull;
+   double dividerHalf;
+   double dividerSqrt;
    int trailingIdxFull;
    int trailingIdxHalf;
    double periodSubFull;
@@ -565,7 +565,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
       return TA_SUCCESS;
    }
    wmaStartIdx = startIdx - lookbackSqrt;
-   dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+   dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
    periodSubFull = 0.0;
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
@@ -595,8 +595,8 @@ TA_RetCode TA_S_HMA( int    startIdx,
       }
    } else 
    {
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
@@ -704,9 +704,9 @@ TA_RetCode TA_S_HMA_Unguarded( int    startIdx,
    int outIdx;
    int i;
    int w;
-   int dividerFull;
-   int dividerHalf;
-   int dividerSqrt;
+   double dividerFull;
+   double dividerHalf;
+   double dividerSqrt;
    int trailingIdxFull;
    int trailingIdxHalf;
    double periodSubFull;
@@ -742,7 +742,7 @@ TA_RetCode TA_S_HMA_Unguarded( int    startIdx,
       return TA_SUCCESS;
    }
    wmaStartIdx = startIdx - lookbackSqrt;
-   dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+   dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
    periodSubFull = 0.0;
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
@@ -772,8 +772,8 @@ TA_RetCode TA_S_HMA_Unguarded( int    startIdx,
       }
    } else 
    {
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
@@ -867,15 +867,15 @@ TA_RetCode TA_S_HMA_Unguarded( int    startIdx,
 
 struct TA_HMA_Stream {
    int optInTimePeriod;
-   int dividerFull;
+   double dividerFull;
    double periodSubFull;
    double periodSumFull;
    double trailingFull;
    double fullOut;
    int halfPeriod;
    int sqrtPeriod;
-   int dividerHalf;
-   int dividerSqrt;
+   double dividerHalf;
+   double dividerSqrt;
    double periodSubHalf;
    double periodSumHalf;
    double trailingHalf;
@@ -1032,7 +1032,7 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
       int outIdx;
       int i;
       int w;
-      int dividerFull = 0;
+      double dividerFull = 0.0;
       int trailingIdxFull;
       double periodSubFull = 0.0;
       double periodSumFull = 0.0;
@@ -1081,7 +1081,7 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
        * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
        */
       wmaStartIdx = startIdx - lookbackSqrt;
-      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       /* Prime the full-period WMA over the optInTimePeriod-1 bars before
        * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
        */
@@ -1163,9 +1163,9 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
       int outIdx;
       int i;
       int w;
-      int dividerFull = 0;
-      int dividerHalf = 0;
-      int dividerSqrt = 0;
+      double dividerFull = 0.0;
+      double dividerHalf = 0.0;
+      double dividerSqrt = 0.0;
       int trailingIdxFull;
       int trailingIdxHalf;
       double periodSubFull = 0.0;
@@ -1223,7 +1223,7 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
        * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
        */
       wmaStartIdx = startIdx - lookbackSqrt;
-      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       /* Prime the full-period WMA over the optInTimePeriod-1 bars before
        * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
        */
@@ -1247,8 +1247,8 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
       /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
        * sqrtPeriod >= 2 -- no period-1 special cases below this point.
        */
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       /* Prime the half-period WMA the same way. */
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;
@@ -1454,7 +1454,7 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
       int outIdx;
       int i;
       int w;
-      int dividerFull = 0;
+      double dividerFull = 0.0;
       int trailingIdxFull;
       double periodSubFull = 0.0;
       double periodSumFull = 0.0;
@@ -1503,7 +1503,7 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
        * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
        */
       wmaStartIdx = startIdx - lookbackSqrt;
-      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       /* Prime the full-period WMA over the optInTimePeriod-1 bars before
        * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
        */
@@ -1584,9 +1584,9 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
       int outIdx;
       int i;
       int w;
-      int dividerFull = 0;
-      int dividerHalf = 0;
-      int dividerSqrt = 0;
+      double dividerFull = 0.0;
+      double dividerHalf = 0.0;
+      double dividerSqrt = 0.0;
       int trailingIdxFull;
       int trailingIdxHalf;
       double periodSubFull = 0.0;
@@ -1644,7 +1644,7 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
        * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
        */
       wmaStartIdx = startIdx - lookbackSqrt;
-      dividerFull = optInTimePeriod * (optInTimePeriod + 1) >> 1;
+      dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       /* Prime the full-period WMA over the optInTimePeriod-1 bars before
        * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
        */
@@ -1668,8 +1668,8 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
       /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
        * sqrtPeriod >= 2 -- no period-1 special cases below this point.
        */
-      dividerHalf = halfPeriod * (halfPeriod + 1) >> 1;
-      dividerSqrt = sqrtPeriod * (sqrtPeriod + 1) >> 1;
+      dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
+      dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
       /* Prime the half-period WMA the same way. */
       periodSubHalf = 0.0;
       periodSumHalf = 0.0;

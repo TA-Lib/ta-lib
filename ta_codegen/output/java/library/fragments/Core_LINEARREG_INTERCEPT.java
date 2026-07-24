@@ -89,8 +89,8 @@
       /* Index into the output. */
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       /* Prime the two data-dependent window sums for the first output with a
        * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -162,8 +162,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       SumXY = 0;
       SumY = 0;
@@ -232,8 +232,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       SumXY = 0;
       SumY = 0;
@@ -291,8 +291,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       SumXY = 0;
       SumY = 0;
@@ -478,8 +478,8 @@
       /* Index into the output. */
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       /* Prime the two data-dependent window sums for the first output with a
        * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
@@ -596,8 +596,8 @@
       /* Index into the output. */
       today = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      SumX = optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       /* Prime the two data-dependent window sums for the first output with a
        * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
