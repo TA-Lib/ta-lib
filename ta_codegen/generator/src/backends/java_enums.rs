@@ -45,3 +45,45 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
 
     super::write_if_changed(path, &format!("{head}{body}"), "FuncUnstId.java", fu.variants.len());
 }
+
+/// The shipped MAType enum declaration; everything before it (license + package)
+/// is hand-written and preserved.
+const MATYPE_DECL: &str = "public enum MAType";
+
+/// Generate the shipped Java `MAType` enum from the `MAType` list in
+/// `enums.yaml` — the same source of truth as the C `include/ta_defs.h` enum.
+///
+/// Only the `public enum MAType { ... }` body is regenerated; the hand-written
+/// license header + package line are preserved verbatim (split at the
+/// `public enum MAType` declaration). The variant declaration ORDER is the enum
+/// ordinal that indexes `optInMAType`; a generation-time assert that the ordinal
+/// equals `value:` catches a future non-contiguous edit before it silently
+/// reorders the ABI.
+#[allow(clippy::implicit_hasher)]
+pub fn generate_matype(enums: &HashMap<String, EnumDef>, path: &Path) {
+    let ma = enums
+        .get("MAType")
+        .expect("MAType enum missing from enums.yaml");
+
+    let existing = std::fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
+    let split = existing
+        .find(MATYPE_DECL)
+        .unwrap_or_else(|| panic!("'{MATYPE_DECL}' missing in {}", path.display()));
+    let head = &existing[..split];
+
+    let mut body = String::from("public enum MAType \n{\n");
+    for (i, v) in ma.variants.iter().enumerate() {
+        assert_eq!(
+            i32::try_from(i).unwrap(),
+            v.value,
+            "MAType values must be contiguous from 0 ({} breaks the sequence)",
+            v.c_name
+        );
+        let comma = if i + 1 == ma.variants.len() { "" } else { "," };
+        body.push_str(&format!("   {}{comma}\n", v.pascal_name));
+    }
+    body.push_str("};\n");
+
+    super::write_if_changed(path, &format!("{head}{body}"), "MAType.java", ma.variants.len());
+}

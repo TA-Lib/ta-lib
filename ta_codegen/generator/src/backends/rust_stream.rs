@@ -241,6 +241,9 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             is_lookback: false,
             sentinel_vars,
             result_error_returns: true,
+            // Stream bodies dispatch MA-type structurally (case labels /
+            // sub-opens), never via `== TA_MAType_*`, so no map is needed.
+            matype_map: HashMap::new(),
         },
         extrema_i32,
     }
@@ -2031,6 +2034,8 @@ fn plan_ctx(func: &FuncDef) -> RustRenderCtx {
         is_lookback: false,
         sentinel_vars: HashSet::new(),
         result_error_returns: true,
+        // Dispatch/period-bank expressions never compare `== TA_MAType_*`.
+        matype_map: HashMap::new(),
     }
 }
 

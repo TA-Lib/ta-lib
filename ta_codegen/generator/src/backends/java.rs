@@ -36,6 +36,28 @@ pub(crate) struct JavaRenderCtx<'a> {
     /// Populated by [`build_fma_var_sets`] so Java's `binop` emits `Math.fma(a,b,c)`
     /// at exactly the sites C/Rust fuse (cross-language bit-parity).
     pub(crate) fma: Option<&'a FmaVarSets>,
+    /// Fully-qualified MAType constant (`TA_MAType_SMA`) → its Java rendering
+    /// (`MAType.Sma`), derived from `enums.yaml` by [`build_matype_map`].
+    /// Populated for batch/lookback bodies — the only place
+    /// `optInMAType == TA_MAType_*` comparisons render; stream bodies dispatch
+    /// MA-type structurally and leave this empty.
+    pub(crate) matype_map: HashMap<String, String>,
+}
+
+/// Build the `TA_MAType_*` → `MAType.<Pascal>` map the [`ExprEmitter::var`] hook
+/// uses for `optInMAType == TA_MAType_SMA` comparisons. Derived from the `MAType`
+/// enum in `enums.yaml`, so a new `TA_MAType_X` row needs no generator edit.
+#[allow(clippy::implicit_hasher)]
+pub(crate) fn build_matype_map(enums: &HashMap<String, EnumDef>) -> HashMap<String, String> {
+    enums
+        .get("MAType")
+        .map(|e| {
+            e.variants
+                .iter()
+                .map(|v| (v.c_name.clone(), format!("MAType.{}", v.pascal_name)))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Check if an expression renders to a boolean result in Java.
@@ -798,6 +820,7 @@ fn gen_func_inner(
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
         fma: Some(&fma_sets),
+        matype_map: build_matype_map(enums),
     };
 
     // Emit VarDecl initializations
@@ -957,6 +980,7 @@ pub fn render_statement(
         // Auxiliary entry (no body available to derive fusion sets); fusion for
         // the shipped indicator bodies flows through gen_func_inner's context.
         fma: None,
+        matype_map: build_matype_map(enums),
     };
     render_statement_ctx(stmt, indent, &ctx, enums, registry, helpers)
 }
@@ -1533,17 +1557,9 @@ impl ExprEmitter for JavaExpr<'_> {
             "SUCCESS" => "RetCode.Success".to_string(),
             "ALLOC_ERR" => "RetCode.AllocErr".to_string(),
             "INTERNAL_ERROR" => "RetCode.InternalError".to_string(),
-            "TA_MAType_SMA" => "MAType.Sma".to_string(),
-            "TA_MAType_EMA" => "MAType.Ema".to_string(),
-            "TA_MAType_WMA" => "MAType.Wma".to_string(),
-            "TA_MAType_DEMA" => "MAType.Dema".to_string(),
-            "TA_MAType_TEMA" => "MAType.Tema".to_string(),
-            "TA_MAType_TRIMA" => "MAType.Trima".to_string(),
-            "TA_MAType_KAMA" => "MAType.Kama".to_string(),
-            "TA_MAType_MAMA" => "MAType.Mama".to_string(),
-            "TA_MAType_T3" => "MAType.T3".to_string(),
-            "TA_MAType_HMA" => "MAType.Hma".to_string(),
-            _ => name.to_string(),
+            // MAType constants (`TA_MAType_SMA` → `MAType.Sma`) resolve from the
+            // enums.yaml-derived map on the ctx; unknown names pass through.
+            _ => self.ctx.matype_map.get(name).cloned().unwrap_or_else(|| name.to_string()),
         };
         if self.ctx.address_of_vars.contains(name) {
             format!("{mapped}.value")
@@ -1685,6 +1701,7 @@ impl ExprEmitter for JavaExpr<'_> {
             // Carry the fusion sets so any a*b+c inside the address-of expression
             // fuses consistently with the surrounding body.
             fma: self.ctx.fma,
+            matype_map: self.ctx.matype_map.clone(),
         };
         render_expr(inner, &inner_ctx, self.registry, self.helpers)
     }
@@ -2109,6 +2126,7 @@ fn render_lookback_code(
         inline_counter: &inline_counter,
         // Lookback bodies are pure integer index arithmetic — no float multiply-add.
         fma: None,
+        matype_map: build_matype_map(enums),
     };
 
     // Declare local variables
