@@ -57,5 +57,6 @@ public enum MAType
    Kama,
    Mama,
    T3,
-   Hma
+   Hma,
+   Disabled
 };

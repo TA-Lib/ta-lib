@@ -16,13 +16,14 @@
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
+ *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  */
 
 int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
 {
    int retValue;
 
-   if( optInTimePeriod <= 1 )
+   if( optInTimePeriod <= 1 || optInMAType == TA_MAType_DISABLED )
       return 0;
 
    switch( optInMAType )
@@ -86,7 +87,9 @@ TA_RetCode ma(int startIdx, int endIdx,
    int nbElement;
    int outIdx, todayIdx;
 
-   if( optInTimePeriod == 1 )
+   /* No-smoothing identity: period 1 (every MA type) or the explicit
+    * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0. */
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       nbElement = endIdx-startIdx+1;
       *outNBElement = nbElement;

@@ -10145,6 +10145,9 @@ public class Core {
  *                average and standard deviation into a single pass. Bit-identical.
  *  071726 MF,CC  #118 SMA-path deviation now uses the cancellation-free variance
  *                (var.c); two recurrences in one pass. Bit-identical.
+ *  072426 MF,CC  Lookback is now max(MA, STDDEV) so it is honest for MA types
+ *                whose lookback is below the deviation's (MAMA >= 34, and
+ *                TA_MAType_DISABLED); required for streaming (issue #93).
  */
 
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -10160,14 +10163,23 @@ public class Core {
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
       }
-      /* The lookback is driven by the middle band moving average. It also governs
-       * how the caller sizes the output buffers, which must hold the full moving
-       * average that ma() writes below - so it must not exceed the MA lookback,
-       * even when the standard deviation (lookback optInTimePeriod-1) clamps the
-       * first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
-       * a large period). See the realignment in bbands() for that case.
+      int maLookback;
+      int stddevLookback;
+      /* A band value needs BOTH the middle-band moving average and the standard
+       * deviation of the outer bands, so the first valid output is the later of the
+       * two lookbacks. For every MA type whose lookback is at least
+       * optInTimePeriod-1 this equals the MA lookback (unchanged); it rises above it
+       * only when the MA lookback is the smaller one - TA_MAType_MAMA at
+       * optInTimePeriod >= 34 (constant MAMA lookback 32) and TA_MAType_DISABLED
+       * (MA lookback 0, issue #93). Reporting the honest value keeps
+       * outBegIdx == lookback: issue #99 kept it at the MA lookback, which
+       * under-reported those cases (outBegIdx > lookback) and broke streaming, whose
+       * Open is tied to lookback+1. The middle band still begins at the MA's earlier
+       * begIdx internally and is realigned to this later bar in bbands() below.
        */
-      return movingAverageLookback(optInTimePeriod, optInMAType) ;
+      maLookback = movingAverageLookback(optInTimePeriod, optInMAType);
+      stddevLookback = stdDevLookback(optInTimePeriod, 1.0);
+      return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
    }
    public RetCode bbands( int startIdx,
@@ -100555,6 +100567,7 @@ public class Core {
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
+ *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  */
 
    public int movingAverageLookback( int optInTimePeriod, MAType optInMAType )
@@ -100565,7 +100578,7 @@ public class Core {
          return -1;
       }
       int retValue;
-      if( optInTimePeriod <= 1 ) {
+      if( optInTimePeriod <= 1 || optInMAType == MAType.Disabled ) {
          return 0 ;
       }
       switch( optInMAType )
@@ -100631,7 +100644,10 @@ public class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod == 1 ) {
+      /* No-smoothing identity: period 1 (every MA type) or the explicit
+       * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
+       */
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -100695,7 +100711,7 @@ public class Core {
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -100766,7 +100782,7 @@ public class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -100826,7 +100842,7 @@ public class Core {
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -100987,7 +101003,7 @@ public class Core {
    }
    void movingAverageStreamStep( MovingAverageStream sp, double inReal )
    {
-      if( sp.optInTimePeriod == 1 ) {
+      if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.Disabled ) {
          sp.cur_outReal = inReal;
          return;
       }
@@ -101052,7 +101068,7 @@ public class Core {
       if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
@@ -101148,7 +101164,7 @@ public class Core {
       if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }

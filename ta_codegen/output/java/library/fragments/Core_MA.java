@@ -16,6 +16,7 @@
  *  111603 MF   Allow period of 1. Just copy input into output.
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
+ *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  */
 
    public int movingAverageLookback( int optInTimePeriod, MAType optInMAType )
@@ -26,7 +27,7 @@
          return -1;
       }
       int retValue;
-      if( optInTimePeriod <= 1 ) {
+      if( optInTimePeriod <= 1 || optInMAType == MAType.Disabled ) {
          return 0 ;
       }
       switch( optInMAType )
@@ -92,7 +93,10 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod == 1 ) {
+      /* No-smoothing identity: period 1 (every MA type) or the explicit
+       * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
+       */
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -156,7 +160,7 @@
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -227,7 +231,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -287,7 +291,7 @@
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement.value = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -448,7 +452,7 @@
    }
    void movingAverageStreamStep( MovingAverageStream sp, double inReal )
    {
-      if( sp.optInTimePeriod == 1 ) {
+      if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.Disabled ) {
          sp.cur_outReal = inReal;
          return;
       }
@@ -513,7 +517,7 @@
       if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
@@ -609,7 +613,7 @@
       if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( optInTimePeriod == 1 ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          if( historyLen < movingAverageLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }

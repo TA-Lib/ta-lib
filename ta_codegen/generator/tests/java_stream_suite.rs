@@ -169,8 +169,9 @@ fn test_java_ma_dispatch() {
     assert!(s.contains("MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);"));
     assert!(s.contains("sp.cur_outReal = subValue.mama;"));
     assert!(s.contains("new double[historyLen]"));
-    // Identity path re-derived from the stored param on every step.
-    assert!(s.contains("if( sp.optInTimePeriod == 1 ) {"));
+    // Identity path re-derived from the stored param on every step; the guard
+    // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
+    assert!(s.contains("if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.Disabled ) {"));
     // Case labels come from the shared enum authority, not hardcoded ints.
     assert!(s.contains("case Mama:"));
 }
