@@ -92,8 +92,8 @@ mechanism absorbs their legitimate trajectory dependence. Documented
 exceptions that keep `TA_DO_NOT_COMPARE` (legitimate, non-converging range
 dependence): running accumulations seeded at `startIdx` (AD, ADOSC, OBV, NVI,
 PVI) and path-dependent state machines (SAR, SAREXT). This set is declared at
-the definition site by the `start_dependent` YAML flag and surfaced through
-`ta_abstract` as `TA_FUNC_FLG_START_DEP`, which `get_integer_tolerance()` reads
+the definition site by the `path_dependent` YAML flag and surfaced through
+`ta_abstract` as `TA_FUNC_FLG_PATH_DEP`, which `get_integer_tolerance()` reads
 from `funcInfo->flags` (issue #127 — the same public flag a wrapper sees, no
 hand-edited second list).
 
@@ -111,7 +111,7 @@ hand a finite-window function the loose convergence tolerance and hide a real bu
 | `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, LINEARREG/TSF/AVGDEV, vector math) |
 | `TA_STABLE_EPSILON` | `1e-9` relative | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
 | `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N) | recursive/IIR — anything in `UNSTABLE_MAP` |
-| `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` — the `TA_FUNC_FLG_START_DEP`-flagged set (#127): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT |
+| `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` — the `TA_FUNC_FLG_PATH_DEP`-flagged set (#127): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT |
 
 `stability_class()` (`test_codegen.c`) assigns the generic-gate class per function
 (explicit `exact[]` list from a source audit, `SKIP` **derived** from

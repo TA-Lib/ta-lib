@@ -109,7 +109,7 @@ DEF_FUNCTION( SAR,
               TA_GroupId_OverlapStudies,
               "Parabolic SAR",
               "Sar",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* SAR END */
 
@@ -334,7 +334,7 @@ DEF_FUNCTION( SAREXT,
               TA_GroupId_OverlapStudies,
               "Parabolic SAR - Extended",
               "SarExt",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_START_DEP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* SAREXT END */
 

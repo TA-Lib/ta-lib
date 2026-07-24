@@ -288,7 +288,7 @@ flag_newtype!(FuncFlags {
     VOLUME = 0x0400_0000,
     UNSTABLE_PERIOD = 0x0800_0000,
     CANDLESTICK = 0x1000_0000,
-    START_DEPENDENT = 0x2000_0000,
+    PATH_DEPENDENT = 0x2000_0000,
 });
 flag_newtype!(InputFlags {
     PRICE_OPEN = 0x0000_0001,

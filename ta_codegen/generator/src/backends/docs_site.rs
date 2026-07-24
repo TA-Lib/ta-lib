@@ -129,10 +129,9 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   past, folded from two disjoint flags into three mutually-exclusive states
 ///   (exactly one checked): `Start-Independent` (neither flag; compare across any
 ///   window), `Initial Unstable Period` (`unstable_period`; converges after a
-///   warm-up), `Path-Dependent` (`path_dependent`, today still the `start_dependent`
-///   YAML word pending the rename; a running accumulation or path-dependent state
-///   machine that never converges — the behavior behind ta-lib-python issues like
-///   #513).
+///   warm-up), `Path-Dependent` (`path_dependent`; a running accumulation or
+///   path-dependent state machine that never converges — the behavior behind
+///   ta-lib-python issues like #513).
 /// * **`Display Flags`** column — `Overlap Input` (output shares the input price
 ///   scale, drawn over price) and its complement `Independent Y-Axis` (own pane) —
 ///   one of the two is always checked — plus `Candlestick` (integer pattern signal).
@@ -142,7 +141,7 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 fn inject_flags(body: &str, func: &FuncDef) -> String {
     let has = |w: &str| func.flags.iter().any(|f| f == w);
     let unstable = has("unstable_period");
-    let path_dependent = has("path_dependent") || has("start_dependent");
+    let path_dependent = has("path_dependent");
 
     let overlap = has("overlap");
     // Stability: three mutually-exclusive states (exactly one checked). `(label,
