@@ -1908,10 +1908,11 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(funcInfo->handle, i, &optInfo);
 
-        /* Sized past the widest single-param list (MAType: 10 values, 9
-         * non-default) so the cap below never silently drops a value if
-         * FROZEN_ORACLE_MATYPE_MAX is retired after a re-freeze. */
-        double cand[12];
+        /* Sized past the widest single-param list (MAType: 11 values today, 10
+         * non-default after #93's DISABLED) so the cap below never silently drops
+         * a value even if FROZEN_ORACLE_MATYPE_MAX is retired after a re-freeze
+         * (which would let all non-default MATypes through). */
+        double cand[16];
         int nc = 0;
 
         if( optInfo->type == TA_OptInput_IntegerRange )
@@ -1951,7 +1952,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  * the tail value instead of counting it. */
                 if( frozen_excludes_enum_value( optInfo, l->data[e].value ) )
                     continue;
-                if( nc < 12 )
+                if( nc < 16 )
                     cand[nc++] = (double)l->data[e].value;
             }
         }
@@ -3199,12 +3200,19 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
 
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
 #define FUZZ_MAX_OPT  16
-#define FUZZ_MAX_VEC  56    /* parameter vectors per function. Sized for the
-                             * widest sweep (MACDEXT: 3 period ranges x up to 6
-                             * candidates + 3 MAType lists x 9 = ~46, + defaults;
-                             * MAType grew to 10 values with HMA #139).
-                             * fuzz_build_vectors reports any overflow and the
-                             * caller fails the run loudly (no silent drop). */
+#define FUZZ_MAX_CAND 24    /* candidate values per single param. Only the MAType
+                             * list can approach it: 11 values today (#93 added
+                             * DISABLED) => 10 non-default. Overflow here is
+                             * counted into *overflow so it fails the run LOUDLY —
+                             * without this the MAType sweep would truncate
+                             * silently (it never reaches the FUZZ_MAX_VEC guard). */
+#define FUZZ_MAX_VEC  80    /* parameter vectors per function. MACDEXT is widest:
+                             * 3 period ranges (~6 candidates each) + 3 MAType
+                             * lists (M-1 each) + the defaults vector = ~3*M+16 in
+                             * the MAType-list length M; M=11 today => 48. 80 gives
+                             * runway to M=21, matching STREAM_MAX_VEC.
+                             * fuzz_build_vectors reports any overflow (this cap or
+                             * the cand cap) and the caller fails the run loudly. */
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
 typedef char fuzz_maxn_fits_output_bufs[FUZZ_MAXN <= MAX_NB_TEST_ELEMENT ? 1 : -1];
 
@@ -3354,7 +3362,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
     {
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
-        double cand[10]; int nc = 0, c;
+        double cand[FUZZ_MAX_CAND]; int nc = 0, c;
 
         if( oi->type == TA_OptInput_IntegerRange )
         {
@@ -3375,17 +3383,25 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
                 if( r && v > (int)r->max ) v = (int)r->max;
                 if( v == def_i ) continue;
                 int dup = 0; for( c = 0; c < nc; c++ ) if( (int)cand[c] == v ) dup = 1;
-                if( !dup && nc < 10 ) cand[nc++] = (double)v;
+                if( !dup && nc < FUZZ_MAX_CAND ) cand[nc++] = (double)v;  /* <= 6, cannot overflow */
             }
         }
         else if( oi->type == TA_OptInput_IntegerList )
         {
             const TA_IntegerList *l = (const TA_IntegerList *)oi->dataSet;
-            for( unsigned int e2 = 0; l && e2 < l->nbElement && nc < 10; e2++ )
-                if( l->data[e2].value != (int)oi->defaultValue
-                    && !(frozenOracle
-                         && frozen_excludes_enum_value( oi, l->data[e2].value )) )
-                    cand[nc++] = (double)l->data[e2].value;
+            for( unsigned int e2 = 0; l && e2 < l->nbElement; e2++ )
+            {
+                if( l->data[e2].value == (int)oi->defaultValue ) continue;
+                if( frozenOracle && frozen_excludes_enum_value( oi, l->data[e2].value ) )
+                    continue;
+                /* A MAType list longer than cand[] would otherwise truncate
+                 * SILENTLY here (this loop never reaches the FUZZ_MAX_VEC guard
+                 * below), quietly dropping arms from the sweep. Count it so the
+                 * run fails loudly instead. #93 took the list to 11 (10
+                 * non-default); FUZZ_MAX_CAND keeps headroom above that. */
+                if( nc >= FUZZ_MAX_CAND ) { (*overflow)++; continue; }
+                cand[nc++] = (double)l->data[e2].value;
+            }
         }
         else if( oi->type == TA_OptInput_RealRange )
         {
@@ -3397,7 +3413,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
                 if( fabs(v) > 1e30 ) continue;
                 if( r && (v < r->min || v > r->max) ) continue;
                 if( v == def[i] ) continue;
-                if( nc < 10 ) cand[nc++] = v;
+                if( nc < FUZZ_MAX_CAND ) cand[nc++] = v;  /* <= 2, cannot overflow */
             }
         }
 
@@ -3815,7 +3831,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( vecOverflow > 0 )
     {
         printf("FUZZ VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped by "
-               "FUZZ_MAX_VEC — they would go uncompared vs 0.6.4\n",
+               "the FUZZ_MAX_VEC/FUZZ_MAX_CAND caps — they would go uncompared vs 0.6.4\n",
                funcInfo->name, vecOverflow);
         ctx->failures++;   /* run fails: failures != 0 (see the 064 exit check) */
         TA_ParamHolderFree(paramHolder);
