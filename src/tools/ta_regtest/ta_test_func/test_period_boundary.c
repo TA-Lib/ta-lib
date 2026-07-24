@@ -48,6 +48,8 @@
  *  070726 MF,CC  Widen the abstract sweep to the full parameter grid
  *                (all parameter types, min..max+1) with a coherence /
  *                clean-BAD_PARAM / finite-output contract (#94).
+ *  072426 MF,CC  Route the sweep's empty-output (period>input) cases through
+ *                server_verify, extending that contract cross-language (#142).
  */
 
 /* Description:
@@ -113,6 +115,11 @@
 
 /* Buffers for the abstract-driven sweep (max 3 outputs per function). */
 #define PB_MAX_OUTPUT 3
+/* Server-verify scratch bounds: a Price input expands to at most OHLCV+OI (6)
+ * pointers, and MACDEXT carries the most optional params (6). Sized with slack;
+ * pbBuildServerInputs guards the input bound, the opt loop the param bound. */
+#define PB_MAX_INPUT  8
+#define PB_MAX_OPT    8
 
 /* An integer max above this is treated as effectively unbounded: we do not
  * probe max+1 (it would overflow a value no caller ever passes) and leave the
@@ -136,6 +143,7 @@ typedef struct
    ErrorNumber errNb;
    int nbParamTested;
    int nbFail;
+   int nbServerEmpty;   /* empty-output cases cross-checked vs the servers (#142) */
 } PBSweepCtx;
 
 /* Diagnostic: when the environment variable PB_SWEEP_LIST_ALL is set, the
@@ -1286,6 +1294,53 @@ static ErrorNumber pbScanOutputsFinite( const char *label,
    return TA_TEST_PASS;
 }
 
+/* Build the NULL-terminated inputs[] array server_verify expects, mirroring the
+ * paramHolder wiring below: a Price input expands to its used OHLCV+OI
+ * components in that fixed order (identical to server_verify's PRICE_COMPONENTS),
+ * and each Real input is the close series (MAVP's periods array too — matching
+ * the TA_SetInputParamRealPtr calls). Returns the pointer count (excluding the
+ * NULL terminator), or -1 if it would exceed maxInputs. */
+static int pbBuildServerInputs( const TA_FuncInfo *funcInfo,
+                                const TA_History *history,
+                                const TA_Real *inputs[], int maxInputs )
+{
+   const TA_FuncHandle *handle = funcInfo->handle;
+   const TA_InputParameterInfo *inputInfo;
+   const struct { unsigned int flag; const TA_Real *data; } price[] = {
+      { TA_IN_PRICE_OPEN,         history->open },
+      { TA_IN_PRICE_HIGH,         history->high },
+      { TA_IN_PRICE_LOW,          history->low },
+      { TA_IN_PRICE_CLOSE,        history->close },
+      { TA_IN_PRICE_VOLUME,       history->volume },
+      { TA_IN_PRICE_OPENINTEREST, history->openInterest },
+   };
+   unsigned int i;
+   int n = 0, c;
+
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      switch( inputInfo->type )
+      {
+      case TA_Input_Price:
+         for( c = 0; c < 6; c++ )
+            if( inputInfo->flags & price[c].flag )
+            {
+               if( n >= maxInputs - 1 ) return -1;
+               inputs[n++] = price[c].data;
+            }
+         break;
+      case TA_Input_Real:
+      case TA_Input_Integer:   /* no integer-input function today; close is fine */
+         if( n >= maxInputs - 1 ) return -1;
+         inputs[n++] = history->close;
+         break;
+      }
+   }
+   inputs[n] = NULL;
+   return n;
+}
+
 /* Run one sweep case: optional parameter `paramNb` set to `ivalue` (integer
  * params) or `dvalue` (when isReal), every other parameter left at its
  * default. `expect` is PB_EXPECT_STRICT (must succeed, coherent+finite),
@@ -1460,6 +1515,66 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
          TA_ParamHolderFree( paramHolder );
          return;
       }
+
+      /* #142 deferred: extend the empty-output (period > input-length) contract
+       * to the language servers. The generic --codegen / --xlang-hash sweeps keep
+       * every lookback < nbBars (compute_large_int clamps to nbBars-5), so this
+       * is the one boundary they never cross-check. Each server must likewise
+       * return TA_SUCCESS with a zero-length output at the same outBegIdx. */
+      if( server_verify_active() && funcInfo->nbOptInput <= PB_MAX_OPT )
+      {
+         const TA_Real     *svInputs[PB_MAX_INPUT];
+         const TA_Real     *svOutReal[PB_MAX_OUTPUT + 1];
+         const TA_Integer  *svOutInt[PB_MAX_OUTPUT + 1];
+         double             svOpt[PB_MAX_OPT];
+         const TA_OutputParameterInfo *oinfo;
+         unsigned int j;
+         int nReal = 0, nInt = 0;
+         ErrorNumber svErr;
+
+         if( pbBuildServerInputs( funcInfo, history, svInputs, PB_MAX_INPUT ) < 0 )
+         {
+            printf( "\nFail: %s: too many inputs for server verify\n", label );
+            pbFail( ctx );
+            TA_ParamHolderFree( paramHolder );
+            return;
+         }
+
+         /* Full optional-parameter vector: every parameter at the default the
+          * paramHolder used, the swept one at its probed value. */
+         for( j = 0; j < funcInfo->nbOptInput; j++ )
+         {
+            const TA_OptInputParameterInfo *oi;
+            TA_GetOptInputParameterInfo( handle, j, &oi );
+            svOpt[j] = oi->defaultValue;
+         }
+         svOpt[paramNb] = isReal ? dvalue : (double)ivalue;
+
+         for( j = 0; j < funcInfo->nbOutput && j < PB_MAX_OUTPUT; j++ )
+         {
+            TA_GetOutputParameterInfo( handle, j, &oinfo );
+            if( oinfo->type == TA_Output_Integer )
+               svOutInt[nInt++] = &pbSweepOutInt[j][0];
+            else
+               svOutReal[nReal++] = &pbSweepOutReal[j][0];
+         }
+         svOutReal[nReal] = NULL;
+         svOutInt[nInt]   = NULL;
+
+         svErr = server_verify( funcInfo->name, 0, endIdx, (int)history->nbBars,
+                                retCode, outBegIdx, outNbElement,
+                                svInputs, svOpt, (int)funcInfo->nbOptInput,
+                                nReal ? svOutReal : NULL,
+                                nInt  ? svOutInt  : NULL );
+         if( svErr != TA_TEST_PASS )
+         {
+            printf( "Fail: %s: server verification (empty-output contract)\n", label );
+            pbFail( ctx );
+            TA_ParamHolderFree( paramHolder );
+            return;
+         }
+         ctx->nbServerEmpty++;
+      }
    }
 
    TA_ParamHolderFree( paramHolder );
@@ -1633,6 +1748,7 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    ctx.errNb = TA_TEST_PASS;
    ctx.nbParamTested = 0;
    ctx.nbFail = 0;
+   ctx.nbServerEmpty = 0;
    g_pbListAll = ( getenv( "PB_SWEEP_LIST_ALL" ) != NULL );
 
    TA_ForEachFunc( pbSweepOneFunction, &ctx );
@@ -1648,6 +1764,20 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    {
       printf( "\nFail: boundary sweep tested no parameter (enumeration broken?)\n" );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* The period > input-length empty-output contract must be exercised against
+    * the servers non-vacuously when they are up (#142 deferred follow-up). */
+   if( server_verify_active() )
+   {
+      if( ctx.nbServerEmpty == 0 )
+      {
+         printf( "\nFail: boundary sweep cross-checked no empty-output case vs the "
+                 "servers (period>input contract vacuous)\n" );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      printf( "  boundary sweep: %d empty-output case(s) cross-checked vs servers\n",
+              ctx.nbServerEmpty );
    }
 
    return TA_TEST_PASS;
