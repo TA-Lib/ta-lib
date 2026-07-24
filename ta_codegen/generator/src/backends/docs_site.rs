@@ -85,7 +85,8 @@ fn transform_page(
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
-    let linked = linkify_see_also(&injected, known);
+    let with_flags = inject_flags(&injected, func);
+    let linked = linkify_see_also(&with_flags, known);
     let mut out = String::from("---\n");
     out.push_str(&format!("title: {name}\n"));
     if !desc.is_empty() {
@@ -94,6 +95,111 @@ fn transform_page(
     out.push_str("---\n\n");
     out.push_str(&linked);
     out
+}
+
+/// Escape a string for inclusion inside a double-quoted HTML attribute.
+fn attr_escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
+}
+
+/// Render one flag cell: checked -> a check plus **bold** label; unchecked -> an
+/// outlined empty box (U+2610, not a filled square, so it does not read as a bullet)
+/// plus a dimmed label. Each cell trails a focusable `.flag-tip` help badge carrying
+/// `tip` in `data-tip`/`aria-label` (styled in `.vuepress/styles/index.scss` as a
+/// hover/focus tooltip). Shared by both `## Stability` and `## Display Flags` so they
+/// read identically; the dim uses `opacity` (not a fixed color) so it lightens
+/// correctly against either the light or dark site theme.
+fn flag_cell(label: &str, on: bool, tip: &str) -> String {
+    let esc = attr_escape(tip);
+    let info = format!(
+        "<span class=\"flag-tip\" tabindex=\"0\" role=\"note\" aria-label=\"{esc}\" data-tip=\"{esc}\">i</span>"
+    );
+    if on {
+        format!("<span class=\"flag-box\">✅</span> **{label}** {info}")
+    } else {
+        format!("<span class=\"flag-box\">☐</span> <span style=\"opacity:0.5\">{label}</span> {info}")
+    }
+}
+
+/// Inject the per-function `## Properties` table before `## Implementation` (present
+/// on every page), computed from the raw YAML flags — a two-column table, checked
+/// cells bold and the rest dimmed, each column's items stacked as rows:
+///
+/// * **`Numerical Stability`** column — how much the value at a bar depends on the
+///   past, folded from two disjoint flags into three mutually-exclusive states
+///   (exactly one checked): `Start-Independent` (neither flag; compare across any
+///   window), `Initial Unstable Period` (`unstable_period`; converges after a
+///   warm-up), `Path-Dependent` (`path_dependent`, today still the `start_dependent`
+///   YAML word pending the rename; a running accumulation or path-dependent state
+///   machine that never converges — the behavior behind ta-lib-python issues like
+///   #513).
+/// * **`Display Flags`** column — `Overlap Input` (output shares the input price
+///   scale, drawn over price) and its complement `Independent Y-Axis` (own pane) —
+///   one of the two is always checked — plus `Candlestick` (integer pattern signal).
+///
+/// `stream` (internal codegen concern) and `volume` (in the ABI but set by no
+/// function) are not surfaced.
+fn inject_flags(body: &str, func: &FuncDef) -> String {
+    let has = |w: &str| func.flags.iter().any(|f| f == w);
+    let unstable = has("unstable_period");
+    let path_dependent = has("path_dependent") || has("start_dependent");
+
+    let overlap = has("overlap");
+    // Stability: three mutually-exclusive states (exactly one checked). `(label,
+    // checked, tooltip)`.
+    let stability = [
+        (
+            "Start-Independent",
+            !unstable && !path_dependent,
+            "The value at a bar does not depend on where your data starts — safe to compare across different-length windows.",
+        ),
+        (
+            "Initial Unstable Period",
+            unstable,
+            "Early values depend on how much history precedes them but converge as more bars are supplied; tunable via the unstable period.",
+        ),
+        (
+            "Path-Dependent",
+            path_dependent,
+            "Built up from the first bar (a running accumulation or path-tracking state machine): the value depends on where your data begins and never converges — don't compare across different windows.",
+        ),
+    ];
+    // Display: Y-axis placement (one of the pair always checked) + candlestick.
+    let display = [
+        (
+            "Overlap Input",
+            overlap,
+            "Output is on the same scale as the input price, so it is drawn over the price chart.",
+        ),
+        (
+            "Independent Y-Axis",
+            !overlap,
+            "Output is on its own scale, drawn in a separate pane below the price chart.",
+        ),
+        (
+            "Candlestick",
+            has("candlestick"),
+            "Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).",
+        ),
+    ];
+    // Two-column table: `Numerical Stability` | `Display Flags`, each column's items
+    // stacked as rows (both have three). The two-word headers wrap to two lines.
+    let mut block =
+        String::from("## Properties\n\n| Numerical<br>Stability | Display<br>Flags |\n| :-- | :-- |\n");
+    for i in 0..stability.len().max(display.len()) {
+        let l = stability.get(i).map(|it| flag_cell(it.0, it.1, it.2)).unwrap_or_default();
+        let r = display.get(i).map(|it| flag_cell(it.0, it.1, it.2)).unwrap_or_default();
+        block.push_str(&format!("| {l} | {r} |\n"));
+    }
+    block.push('\n');
+
+    match body.find("\n## Implementation") {
+        Some(pos) => {
+            let (before, after) = body.split_at(pos + 1);
+            format!("{before}{block}{after}")
+        }
+        None => format!("{body}\n{block}"),
+    }
 }
 
 /// Pull the `## Summary` paragraph as a single line for the page meta description.
