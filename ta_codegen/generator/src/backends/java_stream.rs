@@ -796,6 +796,8 @@ fn stream_ctx<'a>(
         float_input_params: empty,
         inline_counter: counter,
         fma: Some(fma_sets),
+        // Stream bodies dispatch MA-type structurally, never via `== TA_MAType_*`.
+        matype_map: HashMap::new(),
     }
 }
 
@@ -1234,6 +1236,7 @@ fn emit_open_region(
         float_input_params: &empty,
         inline_counter: counter,
         fma: Some(stream_fma),
+        matype_map: HashMap::new(),
     };
 
     // VarDecl initializations (mirrors gen_func_inner).
@@ -2733,6 +2736,7 @@ fn emit_composed_open(
         float_input_params: &empty,
         inline_counter: counter,
         fma: Some(stream_fma),
+        matype_map: HashMap::new(),
     };
     let region_len = region_stmts.len();
     let mut inserts: Vec<(usize, String)> = Vec::new();

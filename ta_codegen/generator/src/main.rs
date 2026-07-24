@@ -667,8 +667,10 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // and stay under ta_codegen/output/, but Java — like C — is a shipped product).
     if backends_to_run.contains(&"java") {
         let java_pkg = root.join("ta_codegen/output/java/library/src/com/tictactec/ta/lib");
-        // FuncUnstId.java depends only on enums.yaml — always safe to regenerate.
+        // FuncUnstId.java + MAType.java depend only on enums.yaml — always safe
+        // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
+        backends::java_enums::generate_matype(&enums, &java_pkg.join("MAType.java"));
         // Core.java's GENCODE section and CoreAnnotated.java splice ALL indicators
         // into a single file, so only regenerate on a full (unfiltered) run — a
         // --func subset would drop every other indicator's methods.

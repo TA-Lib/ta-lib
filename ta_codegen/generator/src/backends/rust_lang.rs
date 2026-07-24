@@ -51,6 +51,33 @@ pub struct RustRenderCtx {
     /// `return Err(RetCode::X);` — the stream tier's `Result` shape — instead
     /// of the batch tier's bare `return RetCode::X;`.
     pub result_error_returns: bool,
+    /// Fully-qualified MAType constant (`TA_MAType_SMA`) → its Rust rendering
+    /// (the integer value, e.g. `"0"`), derived from `enums.yaml` by
+    /// [`build_matype_map`]. Populated for batch/lookback bodies — the only
+    /// place `optInMAType == TA_MAType_*` comparisons render; stream bodies
+    /// dispatch MA-type structurally (case labels / sub-opens) and leave this
+    /// empty. Empty ⇒ the constant renders literally (unresolved), which a
+    /// build catches immediately.
+    pub matype_map: std::collections::HashMap<String, String>,
+}
+
+/// Build the `TA_MAType_*` → value-string map the [`ExprEmitter::var`] hook uses
+/// to render `optInMAType == TA_MAType_SMA` comparisons in the batch functions.
+/// Derived from the `MAType` enum in `enums.yaml` (the value is the enum ordinal
+/// the i32 param carries) — so a new `TA_MAType_X` row needs no generator edit.
+#[allow(clippy::implicit_hasher)]
+pub(crate) fn build_matype_map(
+    enums: &HashMap<String, EnumDef>,
+) -> std::collections::HashMap<String, String> {
+    enums
+        .get("MAType")
+        .map(|e| {
+            e.variants
+                .iter()
+                .map(|v| (v.c_name.clone(), v.value.to_string()))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 impl RustRenderCtx {
@@ -78,6 +105,9 @@ impl RustRenderCtx {
             is_lookback: true,
             sentinel_vars: std::collections::HashSet::new(),
             result_error_returns: false,
+            // Populated by the caller (which has `enums`); lookback bodies never
+            // reference MA-type constants, but keep it consistent with batch.
+            matype_map: std::collections::HashMap::new(),
         }
     }
 }
@@ -227,6 +257,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         is_lookback: false,
         sentinel_vars,
         result_error_returns: false,
+        matype_map: build_matype_map(enums),
     };
 
     // For functions with explicit _private:
@@ -411,6 +442,7 @@ fn gen_guarded_func(
             is_lookback: false,
             sentinel_vars: g_sentinel_vars,
             result_error_returns: false,
+            matype_map: build_matype_map(enums),
         };
         let g_for_loop_vars = collect_for_loop_vars(&func.body);
         let g_var_inits: std::collections::HashMap<String, &Expr> = func
@@ -503,6 +535,7 @@ fn gen_guarded_func(
             is_lookback: false,
             sentinel_vars: g_sentinel_vars,
             result_error_returns: false,
+            matype_map: build_matype_map(enums),
         };
 
         // Use the same full rendering as gen_unguarded_func
@@ -2716,17 +2749,9 @@ impl ExprEmitter for RustExpr<'_> {
             "SUCCESS" => "RetCode::Success".to_string(),
             "ALLOC_ERR" => "RetCode::AllocErr".to_string(),
             "INTERNAL_ERROR" => "RetCode::InternalError".to_string(),
-            "TA_MAType_SMA" => "0".to_string(),
-            "TA_MAType_EMA" => "1".to_string(),
-            "TA_MAType_WMA" => "2".to_string(),
-            "TA_MAType_DEMA" => "3".to_string(),
-            "TA_MAType_TEMA" => "4".to_string(),
-            "TA_MAType_TRIMA" => "5".to_string(),
-            "TA_MAType_KAMA" => "6".to_string(),
-            "TA_MAType_MAMA" => "7".to_string(),
-            "TA_MAType_T3" => "8".to_string(),
-            "TA_MAType_HMA" => "9".to_string(),
-            _ => name.to_string(),
+            // MAType constants (`TA_MAType_SMA` → `"0"`) resolve from the
+            // enums.yaml-derived map on the ctx; unknown names pass through.
+            _ => self.ctx.matype_map.get(name).cloned().unwrap_or_else(|| name.to_string()),
         }
     }
 
@@ -3403,7 +3428,8 @@ fn render_lookback_code(
         out.push_str(&emit_rust_unpacking(&candle_used, 8));
     }
 
-    let lookback_ctx = RustRenderCtx::for_lookback();
+    let mut lookback_ctx = RustRenderCtx::for_lookback();
+    lookback_ctx.matype_map = build_matype_map(enums);
     let inline_counter = Cell::new(0);
     for stmt in stmts {
         if matches!(stmt, Statement::VarDecl { .. }) {

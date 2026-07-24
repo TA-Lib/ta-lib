@@ -151,21 +151,21 @@ typedef enum {
     TA_COMPATIBILITY_METASTOCK = 1
 } TA_Compatibility;
 
-typedef enum {
-   TA_MAType_SMA   =0,
-   TA_MAType_EMA   =1,
-   TA_MAType_WMA   =2,
-   TA_MAType_DEMA  =3,
-   TA_MAType_TEMA  =4,
-   TA_MAType_TRIMA =5,
-   TA_MAType_KAMA  =6,
-   TA_MAType_MAMA  =7,
-   TA_MAType_T3    =8,
-   TA_MAType_HMA   =9
-} TA_MAType;
-
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
+
+typedef enum {
+    TA_MAType_SMA   =  0,
+    TA_MAType_EMA   =  1,
+    TA_MAType_WMA   =  2,
+    TA_MAType_DEMA  =  3,
+    TA_MAType_TEMA  =  4,
+    TA_MAType_TRIMA =  5,
+    TA_MAType_KAMA  =  6,
+    TA_MAType_MAMA  =  7,
+    TA_MAType_T3    =  8,
+    TA_MAType_HMA   =  9
+} TA_MAType;
 
 typedef enum {
     TA_FUNC_UNST_ADX          =  0,

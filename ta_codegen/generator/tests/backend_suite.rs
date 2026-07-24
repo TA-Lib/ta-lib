@@ -58,6 +58,14 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     (func_def, enums)
 }
 
+/// Load the shared `enums.yaml` (MAType, FuncUnstId) — the same source of truth
+/// the generator derives its var() maps from. Used by tests that render enum
+/// constants without needing a full indicator.
+fn load_enums() -> HashMap<String, ir::EnumDef> {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input/enums.yaml");
+    parser::enums::load_enums(&path)
+}
+
 /// Like [`load_indicator`], but wires a hand-written source body onto the real
 /// YAML metadata — for fixtures that no shipped `.c` provides. Mirrors the
 /// production load path (`wire_parsed_source`), matching the function by name.
@@ -4343,7 +4351,9 @@ fn rust_lookback_code_renders_var_types_correctly() {
 
 /// Helper to call Java render_statement with minimal boilerplate.
 fn render_java_stmt(stmt: &ir::Statement) -> String {
-    let enums = HashMap::new();
+    // Real enums so MAType constants resolve from the enums.yaml-derived map
+    // (var() no longer hardcodes the TA_MAType_* → MAType.<Pascal> arms).
+    let enums = load_enums();
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
@@ -5602,7 +5612,8 @@ fn stochrsi_lookback_cross_calls() {
 
 #[test]
 fn java_var_name_mappings() {
-    let stmts = vec![
+    // Fixed (non-enum) constant renderings.
+    let mut cases: Vec<(String, String)> = [
         ("COMPATIBILITY", "this.compatibility"),
         ("METASTOCK", "Compatibility.Metastock"),
         ("DEFAULT", "Compatibility.Default"),
@@ -5610,27 +5621,29 @@ fn java_var_name_mappings() {
         ("SUCCESS", "RetCode.Success"),
         ("ALLOC_ERR", "RetCode.AllocErr"),
         ("INTERNAL_ERROR", "RetCode.InternalError"),
-        ("TA_MAType_SMA", "MAType.Sma"),
-        ("TA_MAType_EMA", "MAType.Ema"),
-        ("TA_MAType_WMA", "MAType.Wma"),
-        ("TA_MAType_DEMA", "MAType.Dema"),
-        ("TA_MAType_TEMA", "MAType.Tema"),
-        ("TA_MAType_TRIMA", "MAType.Trima"),
-        ("TA_MAType_KAMA", "MAType.Kama"),
-        ("TA_MAType_MAMA", "MAType.Mama"),
-        ("TA_MAType_T3", "MAType.T3"),
-        ("TA_MAType_HMA", "MAType.Hma"),
-    ];
+    ]
+    .iter()
+    .map(|(a, b)| ((*a).to_string(), (*b).to_string()))
+    .collect();
 
-    for (var_name, expected) in stmts {
+    // MAType constants are derived from enums.yaml — iterate the enum rather than
+    // a literal table so the test can never go stale when a TA_MAType_X row lands.
+    let enums = load_enums();
+    let matype = &enums["MAType"];
+    assert!(!matype.variants.is_empty(), "MAType enum should be non-empty");
+    for v in &matype.variants {
+        cases.push((v.c_name.clone(), format!("MAType.{}", v.pascal_name)));
+    }
+
+    for (var_name, expected) in cases {
         let stmt = ir::Statement::Assign {
             target: ir::Expr::Var("result".to_string()),
-            value: ir::Expr::Var(var_name.to_string()),
+            value: ir::Expr::Var(var_name.clone()),
             compound: false,
         };
         let rendered = render_java_stmt(&stmt);
         assert!(
-            rendered.contains(expected),
+            rendered.contains(&expected),
             "Java Var '{var_name}' should map to '{expected}': {rendered}"
         );
     }
