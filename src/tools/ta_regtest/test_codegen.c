@@ -2071,7 +2071,12 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 /* Headroom over the widest shipped function (SAREXT, 8) so a normal-sized new
  * function cannot reach the cap. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_OPT 16
-#define STREAM_MAX_VEC 64
+/* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
+ * params, so its count is 6*M+1 in the MAType-list length M (base 4 + 3 params *
+ * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list)). M=11 today
+ * (#93 added TA_MAType_DISABLED) => 67; 128 keeps runway for ~10 more MATypes
+ * before MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
+#define STREAM_MAX_VEC 128
 #define STREAM_N       240
 
 static int stream_flag(const char *resp, const char *key)
