@@ -730,6 +730,12 @@ fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
 /// The `/functions/stability` reference: the four numerical-stability categories, each with a
 /// stable anchor every function page links to.
 ///
+/// Headings are phrased conditionally and trail off ("If Initial Unstable Period, then...")
+/// so a reader landing mid-page sees that a section describes one case out of four, not a
+/// property of every function, and that the answer is the section body. Their anchors are pinned with `{#id}` (markdown-it-attrs, enabled by the
+/// theme) rather than left to the slugifier, so the ids stay short and, more importantly,
+/// survive any future rewording of the headings -- 168 generated pages link to them.
+///
 /// Generated, never hand-written: the MA-type table under `#depends-on-ma-type` is not
 /// readable off the YAML (DEMA and TEMA declare no unstable period of their own yet inherit
 /// EMA's), and a new MA type — HMA in 0.8.1, `DISABLED` in #93 — must not require anyone to
@@ -750,7 +756,7 @@ fn build_stability_page(
          passed in?**\n\n",
     );
 
-    s.push_str("## Start-Independent\n\n");
+    s.push_str("## If Start-Independent, then... {#start-independent}\n\n");
     s.push_str(
         "The value at a bar does not depend on where your data starts. Feed the function a \
          year or a decade and the value it reports for a given bar is identical. These \
@@ -758,7 +764,7 @@ fn build_stability_page(
          older.\n\n",
     );
 
-    s.push_str("## Initial Unstable Period\n\n");
+    s.push_str("## If Initial Unstable Period, then... {#initial-unstable-period}\n\n");
     s.push_str(
         "Early values depend on how much history precedes them, and converge as more bars are \
          supplied. These functions are defined recursively: each value folds in the previous \
@@ -773,7 +779,7 @@ fn build_stability_page(
          unstable values for you.\n\n",
     );
 
-    s.push_str("## Depends on MA Type\n\n");
+    s.push_str("## If Depends on MA Type, then... {#depends-on-ma-type}\n\n");
     s.push_str(
         "Some functions take an `optInMAType` parameter selecting how their moving average is \
          computed. That choice decides which of the properties above applies: a recursive MA \
@@ -814,7 +820,7 @@ fn build_stability_page(
     }
     s.push('\n');
 
-    s.push_str("## Path-Dependent\n\n");
+    s.push_str("## If Path-Dependent, then... {#path-dependent}\n\n");
     s.push_str(
         "The value is built up from the first bar — a running accumulation or a state machine \
          that tracks the path prices took — so it depends on where your data begins and never \
