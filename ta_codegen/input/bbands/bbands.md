@@ -6,12 +6,25 @@ Bollinger Bands: a moving-average middle band with upper and lower bands offset 
 
 ## Formula
 
-middle = MA(inReal, period); sd = stddev(inReal, period); upper = middle + nbDevUp*sd; lower = middle - nbDevDn*sd
+$$
+\begin{aligned}
+\text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
+\sigma_t &= \operatorname{STDDEV}(X, n)_t \\
+\text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
+\text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
+\end{aligned}
+$$
+
+where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
+and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 
 ## Notes
 
-- The standard deviation uses the population form (dividing by the period), not the sample form.
-- The standard deviation is always computed with a simple moving average regardless of the selected MA type.
+- The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with
+  $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.
+- $\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are
+  independent — $\sigma$ depends only on the price window, so changing the middle band re-centres
+  the bands without resizing them.
 
 ## Inputs
 
