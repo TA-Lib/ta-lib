@@ -27,8 +27,10 @@ TA_RetCode mavp(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   int i, j, lookbackTotal, outputSize, tempInt, curPeriod;
+   int i, lookbackTotal, outputSize, tempInt, curPeriod;
+   int lastOccurrence, chainIdx;
    int *localPeriodArray;
+   int *periodIndex;
    double *localOutputArray;
    double *localFinalArray;
    int finalIsAllocated;
@@ -85,6 +87,20 @@ TA_RetCode mavp(int startIdx, int endIdx,
    double *localOutputArray = malloc((outputSize) * sizeof(double));
    int *localPeriodArray = malloc((outputSize) * sizeof(int));
 
+   /* Occurrence index for the period grouping below, one pair of entries per
+    * representable period: periodIndex[period] is the first output using that
+    * period and periodIndex[optInMaxPeriod+1+period] the last one.
+    */
+   periodIndex = malloc((2*(optInMaxPeriod+1)) * sizeof(int));
+   if( periodIndex == NULL )
+   {
+      free(localOutputArray);
+      free(localPeriodArray);
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_ALLOC_ERR;
+   }
+
    /* In-place defence (issue #130): each ma() pass below re-reads inReal over
     * the full range, so with outReal==inReal the results are staged in a
     * scratch buffer and copied once at the end. A regular call writes
@@ -100,9 +116,16 @@ TA_RetCode mavp(int startIdx, int endIdx,
       localFinalArray = outReal;
    }
 
-   /* Copy caller array of period into local buffer.
-    * At the same time, truncate to min/max.
+   /* Read the caller array of period, truncate to min/max, and group the
+    * outputs by that truncated period in the same pass. localPeriodArray now
+    * holds, for each output, the next output using the same period (-1 ends
+    * the chain), so the outputs of one period form a linked list rooted at
+    * periodIndex[period]. This replaces the flag-and-rescan below, which
+    * walked the rest of the range once per distinct period.
     */
+   for( i=0; i <= optInMaxPeriod; i++ )
+      periodIndex[i] = -1;
+
    for( i=0; i < outputSize; i++ )
    {
       tempInt = (int)(inPeriods[startIdx+i]);
@@ -110,29 +133,35 @@ TA_RetCode mavp(int startIdx, int endIdx,
          tempInt = optInMinPeriod;
       else if( tempInt > optInMaxPeriod )
          tempInt = optInMaxPeriod;
-      localPeriodArray[i] = tempInt;
+
+      if( periodIndex[tempInt] == -1 )
+         periodIndex[tempInt] = i;
+      else
+         localPeriodArray[periodIndex[optInMaxPeriod+1+tempInt]] = i;
+      periodIndex[optInMaxPeriod+1+tempInt] = i;
+      localPeriodArray[i] = -1;
    }
 
-   /* Process each element of the input.
+   /* Process each period actually requested.
     * For each possible period value, the MA is calculated
-    * only once.
+    * only once, and only as far as the last output using it.
     * The outReal is then fill up for all element with
-    * the same period.
-    * A local flag (value 0) is set in localPeriodArray
-    * to avoid doing a second time the same calculation.
+    * the same period by walking that period's chain.
     */
-   for( i=0; i < outputSize; i++ )
+   for( curPeriod=optInMinPeriod; curPeriod <= optInMaxPeriod; curPeriod++ )
    {
-      curPeriod = localPeriodArray[i];
-      if( curPeriod != 0 )
+      if( periodIndex[curPeriod] != -1 )
       {
          /* TODO: This portion of the function can be slightly speed
           *       optimized by making the function without unstable period
-          *       start their calculation at 'startIdx+i' instead of startIdx.
+          *       start their calculation at the first output using this
+          *       period instead of startIdx.
           */
 
+         lastOccurrence = periodIndex[optInMaxPeriod+1+curPeriod];
+
          /* Calculation of the MA required. */
-         retCode = ma( startIdx, endIdx, inReal,
+         retCode = ma( startIdx, startIdx+lastOccurrence, inReal,
             curPeriod, optInMAType,
             &localBegIdx,&localNbElement,localOutputArray );
 
@@ -140,20 +169,18 @@ TA_RetCode mavp(int startIdx, int endIdx,
          {
             free(localOutputArray);
             free(localPeriodArray);
+            free(periodIndex);
             if( finalIsAllocated ) { free(localFinalArray); }
                *outBegIdx = 0;
             *outNBElement = 0;
             return retCode;
          }
 
-         localFinalArray[i] = localOutputArray[i];
-         for( j=i+1; j < outputSize; j++ )
+         chainIdx = periodIndex[curPeriod];
+         while( chainIdx != -1 )
          {
-            if( localPeriodArray[j] == curPeriod )
-            {
-               localPeriodArray[j] = 0; /* Flag to avoid recalculation */
-               localFinalArray[j] = localOutputArray[j];
-            }
+            localFinalArray[chainIdx] = localOutputArray[chainIdx];
+            chainIdx = localPeriodArray[chainIdx];
          }
       }
    }
@@ -168,6 +195,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
 
    free(localOutputArray);
    free(localPeriodArray);
+   free(periodIndex);
    if( finalIsAllocated ) { free(localFinalArray); }
 
       /* Done. Inform the caller of the success. */

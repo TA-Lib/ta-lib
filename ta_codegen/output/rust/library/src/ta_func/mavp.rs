@@ -190,12 +190,14 @@ impl Core {
         }
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
         let mut tempInt: usize = 0_usize;
         let mut curPeriod: usize = 0_usize;
+        let mut lastOccurrence: usize = 0_usize;
+        let mut chainIdx: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
+        let mut periodIndex: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
         let mut finalIsAllocated: usize = 0_usize;
@@ -241,6 +243,10 @@ impl Core {
         // Allocate intermediate local buffer.
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        // Occurrence index for the period grouping below, one pair of entries per
+        // representable period: periodIndex[period] is the first output using that
+        // period and periodIndex[optInMaxPeriod+1+period] the last one.
+        periodIndex = vec![0_i32; ((2 * (optInMaxPeriod + 1)) as usize * 1) as usize];
         // In-place defence (issue #130): each ma() pass below re-reads inReal over
         // the full range, so with outReal==inReal the results are staged in a
         // scratch buffer and copied once at the end. A regular call writes
@@ -252,8 +258,16 @@ impl Core {
         } else {
             localFinalArray = outReal.to_vec();
         }
-        // Copy caller array of period into local buffer.
-        // At the same time, truncate to min/max.
+        // Read the caller array of period, truncate to min/max, and group the
+        // outputs by that truncated period in the same pass. localPeriodArray now
+        // holds, for each output, the next output using the same period (-1 ends
+        // the chain), so the outputs of one period form a linked list rooted at
+        // periodIndex[period]. This replaces the flag-and-rescan below, which
+        // walked the rest of the range once per distinct period.
+        for i in (0 as usize)..(optInMaxPeriod as usize) + 1 {
+            periodIndex[i] = (0 - 1) as i32;
+        }
+        i = (optInMaxPeriod as usize) + 1;
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -263,26 +277,29 @@ impl Core {
             } else if tempInt > (optInMaxPeriod) as usize {
                 tempInt = (optInMaxPeriod) as usize;
             }
-            localPeriodArray[i] = (tempInt) as i32;
+            if (periodIndex[tempInt]) as i32 == 0 - 1 {
+                periodIndex[tempInt] = (i) as i32;
+            } else {
+                localPeriodArray[(periodIndex[((optInMaxPeriod + 1) as usize + tempInt) as usize]) as usize] = (i) as i32;
+            }
+            periodIndex[((optInMaxPeriod + 1) as usize + tempInt) as usize] = (i) as i32;
+            localPeriodArray[i] = (0 - 1) as i32;
             i += 1;
         }
-        // Process each element of the input.
+        // Process each period actually requested.
         // For each possible period value, the MA is calculated
-        // only once.
+        // only once, and only as far as the last output using it.
         // The outReal is then fill up for all element with
-        // the same period.
-        // A local flag (value 0) is set in localPeriodArray
-        // to avoid doing a second time the same calculation.
-        // for( i = 0; i < outputSize; i += 1 )
-        i = 0;
-        while i < outputSize {
-            curPeriod = (localPeriodArray[i]) as usize;
-            if curPeriod != 0 {
+        // the same period by walking that period's chain.
+        for curPeriod in (optInMinPeriod as usize)..(optInMaxPeriod as usize) + 1 {
+            if (periodIndex[curPeriod]) as i32 != 0 - 1 {
                 // TODO: This portion of the function can be slightly speed
                 //       optimized by making the function without unstable period
-                //       start their calculation at 'startIdx+i' instead of startIdx.
+                //       start their calculation at the first output using this
+                //       period instead of startIdx.
+                lastOccurrence = (periodIndex[((optInMaxPeriod + 1) as usize + curPeriod) as usize]) as usize;
                 // Calculation of the MA required.
-                retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                 if retCode != RetCode::Success {
                     if finalIsAllocated != 0 {
                     }
@@ -290,20 +307,14 @@ impl Core {
                     (*outNBElement) = 0;
                     return retCode;
                 }
-                localFinalArray[i] = localOutputArray[i];
-                // for( j = i + 1; j < outputSize; j += 1 )
-                j = i + 1;
-                while j < outputSize {
-                    if (localPeriodArray[j]) as usize == curPeriod {
-                        localPeriodArray[j] = 0;
-                        // Flag to avoid recalculation
-                        localFinalArray[j] = localOutputArray[j];
-                    }
-                    j += 1;
+                chainIdx = (periodIndex[curPeriod]) as usize;
+                while (chainIdx) as i32 != 0 - 1 {
+                    localFinalArray[chainIdx] = localOutputArray[chainIdx];
+                    chainIdx = (localPeriodArray[chainIdx]) as usize;
                 }
             }
-            i += 1;
         }
+        curPeriod = (optInMaxPeriod as usize) + 1;
         // Pointer-inequality guard, not finalIsAllocated: in backends where the
         // scratch election materializes as a copy (Rust), the copy-back must
         // always run; in C/Java the non-aliased self-copy is skipped.
@@ -343,12 +354,14 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
         let mut tempInt: usize = 0_usize;
         let mut curPeriod: usize = 0_usize;
+        let mut lastOccurrence: usize = 0_usize;
+        let mut chainIdx: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
+        let mut periodIndex: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
         let mut finalIsAllocated: usize = 0_usize;
@@ -387,6 +400,7 @@ impl Core {
         outputSize = endIdx - tempInt + 1;
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        periodIndex = vec![0_i32; ((2 * (optInMaxPeriod + 1)) as usize * 1) as usize];
         finalIsAllocated = 0;
         if outReal.as_ptr() == inReal.as_ptr() {
             finalIsAllocated = 1;
@@ -394,6 +408,10 @@ impl Core {
         } else {
             localFinalArray = outReal.to_vec();
         }
+        for i in (0 as usize)..(optInMaxPeriod as usize) + 1 {
+            periodIndex[i] = (0 - 1) as i32;
+        }
+        i = (optInMaxPeriod as usize) + 1;
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -403,15 +421,19 @@ impl Core {
             } else if tempInt > (optInMaxPeriod) as usize {
                 tempInt = (optInMaxPeriod) as usize;
             }
-            localPeriodArray[i] = (tempInt) as i32;
+            if (periodIndex[tempInt]) as i32 == 0 - 1 {
+                periodIndex[tempInt] = (i) as i32;
+            } else {
+                localPeriodArray[(periodIndex[((optInMaxPeriod + 1) as usize + tempInt) as usize]) as usize] = (i) as i32;
+            }
+            periodIndex[((optInMaxPeriod + 1) as usize + tempInt) as usize] = (i) as i32;
+            localPeriodArray[i] = (0 - 1) as i32;
             i += 1;
         }
-        // for( i = 0; i < outputSize; i += 1 )
-        i = 0;
-        while i < outputSize {
-            curPeriod = (localPeriodArray[i]) as usize;
-            if curPeriod != 0 {
-                retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+        for curPeriod in (optInMinPeriod as usize)..(optInMaxPeriod as usize) + 1 {
+            if (periodIndex[curPeriod]) as i32 != 0 - 1 {
+                lastOccurrence = (periodIndex[((optInMaxPeriod + 1) as usize + curPeriod) as usize]) as usize;
+                retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                 if retCode != RetCode::Success {
                     if finalIsAllocated != 0 {
                     }
@@ -419,19 +441,14 @@ impl Core {
                     (*outNBElement) = 0;
                     return retCode;
                 }
-                localFinalArray[i] = localOutputArray[i];
-                // for( j = i + 1; j < outputSize; j += 1 )
-                j = i + 1;
-                while j < outputSize {
-                    if (localPeriodArray[j]) as usize == curPeriod {
-                        localPeriodArray[j] = 0;
-                        localFinalArray[j] = localOutputArray[j];
-                    }
-                    j += 1;
+                chainIdx = (periodIndex[curPeriod]) as usize;
+                while (chainIdx) as i32 != 0 - 1 {
+                    localFinalArray[chainIdx] = localOutputArray[chainIdx];
+                    chainIdx = (localPeriodArray[chainIdx]) as usize;
                 }
             }
-            i += 1;
         }
+        curPeriod = (optInMaxPeriod as usize) + 1;
         if localFinalArray.as_ptr() != outReal.as_ptr() {
             {
             let _n = (outputSize * 1) as usize;
