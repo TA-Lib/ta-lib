@@ -107521,12 +107521,14 @@ public class Core {
                                                double outReal[] )
    {
       int i = 0;
-      int j = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      int lastOccurrence = 0;
+      int chainIdx = 0;
       int[] localPeriodArray;
+      int[] periodIndex;
       double[] localOutputArray;
       double[] localFinalArray;
       int finalIsAllocated = 0;
@@ -107591,6 +107593,11 @@ public class Core {
       /* Allocate intermediate local buffer. */
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      /* Occurrence index for the period grouping below, one pair of entries per
+       * representable period: periodIndex[period] is the first output using that
+       * period and periodIndex[optInMaxPeriod+1+period] the last one.
+       */
+      periodIndex = new int[(int)(2 * (optInMaxPeriod + 1) * 1)];
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
        * the full range, so with outReal==inReal the results are staged in a
        * scratch buffer and copied once at the end. A regular call writes
@@ -107603,9 +107610,16 @@ public class Core {
       } else {
          localFinalArray = outReal;
       }
-      /* Copy caller array of period into local buffer.
-       * At the same time, truncate to min/max.
+      /* Read the caller array of period, truncate to min/max, and group the
+       * outputs by that truncated period in the same pass. localPeriodArray now
+       * holds, for each output, the next output using the same period (-1 ends
+       * the chain), so the outputs of one period form a linked list rooted at
+       * periodIndex[period]. This replaces the flag-and-rescan below, which
+       * walked the rest of the range once per distinct period.
        */
+      for( i = 0; i <= optInMaxPeriod; i += 1 ) {
+         periodIndex[i] = 0 - 1;
+      }
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)inPeriods[startIdx + i];
          if( tempInt < optInMinPeriod ) {
@@ -107613,25 +107627,30 @@ public class Core {
          } else if( tempInt > optInMaxPeriod ) {
             tempInt = optInMaxPeriod;
          }
-         localPeriodArray[i] = tempInt;
+         if( periodIndex[tempInt] == 0 - 1 ) {
+            periodIndex[tempInt] = i;
+         } else {
+            localPeriodArray[periodIndex[optInMaxPeriod + 1 + tempInt]] = i;
+         }
+         periodIndex[optInMaxPeriod + 1 + tempInt] = i;
+         localPeriodArray[i] = 0 - 1;
       }
-      /* Process each element of the input.
+      /* Process each period actually requested.
        * For each possible period value, the MA is calculated
-       * only once.
+       * only once, and only as far as the last output using it.
        * The outReal is then fill up for all element with
-       * the same period.
-       * A local flag (value 0) is set in localPeriodArray
-       * to avoid doing a second time the same calculation.
+       * the same period by walking that period's chain.
        */
-      for( i = 0; i < outputSize; i += 1 ) {
-         curPeriod = localPeriodArray[i];
-         if( curPeriod != 0 ) {
+      for( curPeriod = optInMinPeriod; curPeriod <= optInMaxPeriod; curPeriod += 1 ) {
+         if( periodIndex[curPeriod] != 0 - 1 ) {
             /* TODO: This portion of the function can be slightly speed
              *       optimized by making the function without unstable period
-             *       start their calculation at 'startIdx+i' instead of startIdx.
+             *       start their calculation at the first output using this
+             *       period instead of startIdx.
              */
+            lastOccurrence = periodIndex[optInMaxPeriod + 1 + curPeriod];
             /* Calculation of the MA required. */
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+            retCode = movingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -107639,13 +107658,10 @@ public class Core {
                outNBElement.value = 0;
                return retCode ;
             }
-            localFinalArray[i] = localOutputArray[i];
-            for( j = i + 1; j < outputSize; j += 1 ) {
-               if( localPeriodArray[j] == curPeriod ) {
-                  localPeriodArray[j] = 0;
-                  /* Flag to avoid recalculation */
-                  localFinalArray[j] = localOutputArray[j];
-               }
+            chainIdx = periodIndex[curPeriod];
+            while( chainIdx != 0 - 1 ) {
+               localFinalArray[chainIdx] = localOutputArray[chainIdx];
+               chainIdx = localPeriodArray[chainIdx];
             }
          }
       }
@@ -107675,12 +107691,14 @@ public class Core {
                                                         double outReal[] )
    {
       int i = 0;
-      int j = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      int lastOccurrence = 0;
+      int chainIdx = 0;
       int[] localPeriodArray;
+      int[] periodIndex;
       double[] localOutputArray;
       double[] localFinalArray;
       int finalIsAllocated = 0;
@@ -107714,12 +107732,16 @@ public class Core {
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      periodIndex = new int[(int)(2 * (optInMaxPeriod + 1) * 1)];
       finalIsAllocated = 0;
       if( outReal == inReal ) {
          finalIsAllocated = 1;
          localFinalArray = new double[(int)(outputSize * 1)];
       } else {
          localFinalArray = outReal;
+      }
+      for( i = 0; i <= optInMaxPeriod; i += 1 ) {
+         periodIndex[i] = 0 - 1;
       }
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)inPeriods[startIdx + i];
@@ -107728,12 +107750,18 @@ public class Core {
          } else if( tempInt > optInMaxPeriod ) {
             tempInt = optInMaxPeriod;
          }
-         localPeriodArray[i] = tempInt;
+         if( periodIndex[tempInt] == 0 - 1 ) {
+            periodIndex[tempInt] = i;
+         } else {
+            localPeriodArray[periodIndex[optInMaxPeriod + 1 + tempInt]] = i;
+         }
+         periodIndex[optInMaxPeriod + 1 + tempInt] = i;
+         localPeriodArray[i] = 0 - 1;
       }
-      for( i = 0; i < outputSize; i += 1 ) {
-         curPeriod = localPeriodArray[i];
-         if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+      for( curPeriod = optInMinPeriod; curPeriod <= optInMaxPeriod; curPeriod += 1 ) {
+         if( periodIndex[curPeriod] != 0 - 1 ) {
+            lastOccurrence = periodIndex[optInMaxPeriod + 1 + curPeriod];
+            retCode = movingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -107741,12 +107769,10 @@ public class Core {
                outNBElement.value = 0;
                return retCode ;
             }
-            localFinalArray[i] = localOutputArray[i];
-            for( j = i + 1; j < outputSize; j += 1 ) {
-               if( localPeriodArray[j] == curPeriod ) {
-                  localPeriodArray[j] = 0;
-                  localFinalArray[j] = localOutputArray[j];
-               }
+            chainIdx = periodIndex[curPeriod];
+            while( chainIdx != 0 - 1 ) {
+               localFinalArray[chainIdx] = localOutputArray[chainIdx];
+               chainIdx = localPeriodArray[chainIdx];
             }
          }
       }
@@ -107771,12 +107797,14 @@ public class Core {
                                                double outReal[] )
    {
       int i = 0;
-      int j = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      int lastOccurrence = 0;
+      int chainIdx = 0;
       int[] localPeriodArray;
+      int[] periodIndex;
       double[] localOutputArray;
       double[] localFinalArray;
       int finalIsAllocated = 0;
@@ -107826,12 +107854,16 @@ public class Core {
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      periodIndex = new int[(int)(2 * (optInMaxPeriod + 1) * 1)];
       finalIsAllocated = 0;
       if( false ) {
          finalIsAllocated = 1;
          localFinalArray = new double[(int)(outputSize * 1)];
       } else {
          localFinalArray = outReal;
+      }
+      for( i = 0; i <= optInMaxPeriod; i += 1 ) {
+         periodIndex[i] = 0 - 1;
       }
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)(double)inPeriods[startIdx + i];
@@ -107840,12 +107872,18 @@ public class Core {
          } else if( tempInt > optInMaxPeriod ) {
             tempInt = optInMaxPeriod;
          }
-         localPeriodArray[i] = tempInt;
+         if( periodIndex[tempInt] == 0 - 1 ) {
+            periodIndex[tempInt] = i;
+         } else {
+            localPeriodArray[periodIndex[optInMaxPeriod + 1 + tempInt]] = i;
+         }
+         periodIndex[optInMaxPeriod + 1 + tempInt] = i;
+         localPeriodArray[i] = 0 - 1;
       }
-      for( i = 0; i < outputSize; i += 1 ) {
-         curPeriod = localPeriodArray[i];
-         if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+      for( curPeriod = optInMinPeriod; curPeriod <= optInMaxPeriod; curPeriod += 1 ) {
+         if( periodIndex[curPeriod] != 0 - 1 ) {
+            lastOccurrence = periodIndex[optInMaxPeriod + 1 + curPeriod];
+            retCode = movingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -107853,12 +107891,10 @@ public class Core {
                outNBElement.value = 0;
                return retCode ;
             }
-            localFinalArray[i] = localOutputArray[i];
-            for( j = i + 1; j < outputSize; j += 1 ) {
-               if( localPeriodArray[j] == curPeriod ) {
-                  localPeriodArray[j] = 0;
-                  localFinalArray[j] = localOutputArray[j];
-               }
+            chainIdx = periodIndex[curPeriod];
+            while( chainIdx != 0 - 1 ) {
+               localFinalArray[chainIdx] = localOutputArray[chainIdx];
+               chainIdx = localPeriodArray[chainIdx];
             }
          }
       }
@@ -107883,12 +107919,14 @@ public class Core {
                                                         double outReal[] )
    {
       int i = 0;
-      int j = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      int lastOccurrence = 0;
+      int chainIdx = 0;
       int[] localPeriodArray;
+      int[] periodIndex;
       double[] localOutputArray;
       double[] localFinalArray;
       int finalIsAllocated = 0;
@@ -107922,12 +107960,16 @@ public class Core {
       outputSize = endIdx - tempInt + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
+      periodIndex = new int[(int)(2 * (optInMaxPeriod + 1) * 1)];
       finalIsAllocated = 0;
       if( false ) {
          finalIsAllocated = 1;
          localFinalArray = new double[(int)(outputSize * 1)];
       } else {
          localFinalArray = outReal;
+      }
+      for( i = 0; i <= optInMaxPeriod; i += 1 ) {
+         periodIndex[i] = 0 - 1;
       }
       for( i = 0; i < outputSize; i += 1 ) {
          tempInt = (int)(double)inPeriods[startIdx + i];
@@ -107936,12 +107978,18 @@ public class Core {
          } else if( tempInt > optInMaxPeriod ) {
             tempInt = optInMaxPeriod;
          }
-         localPeriodArray[i] = tempInt;
+         if( periodIndex[tempInt] == 0 - 1 ) {
+            periodIndex[tempInt] = i;
+         } else {
+            localPeriodArray[periodIndex[optInMaxPeriod + 1 + tempInt]] = i;
+         }
+         periodIndex[optInMaxPeriod + 1 + tempInt] = i;
+         localPeriodArray[i] = 0 - 1;
       }
-      for( i = 0; i < outputSize; i += 1 ) {
-         curPeriod = localPeriodArray[i];
-         if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+      for( curPeriod = optInMinPeriod; curPeriod <= optInMaxPeriod; curPeriod += 1 ) {
+         if( periodIndex[curPeriod] != 0 - 1 ) {
+            lastOccurrence = periodIndex[optInMaxPeriod + 1 + curPeriod];
+            retCode = movingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -107949,12 +107997,10 @@ public class Core {
                outNBElement.value = 0;
                return retCode ;
             }
-            localFinalArray[i] = localOutputArray[i];
-            for( j = i + 1; j < outputSize; j += 1 ) {
-               if( localPeriodArray[j] == curPeriod ) {
-                  localPeriodArray[j] = 0;
-                  localFinalArray[j] = localOutputArray[j];
-               }
+            chainIdx = periodIndex[curPeriod];
+            while( chainIdx != 0 - 1 ) {
+               localFinalArray[chainIdx] = localOutputArray[chainIdx];
+               chainIdx = localPeriodArray[chainIdx];
             }
          }
       }
