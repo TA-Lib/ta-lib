@@ -25,4 +25,5 @@ pub mod ir;
 pub mod parser;
 pub mod registry;
 pub mod server_gen;
+pub mod stability;
 pub mod streaming;

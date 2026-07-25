@@ -18,6 +18,7 @@
 
 use super::doc_meta::{self, RangeMeta};
 use crate::ir::{EnumDef, FuncDef, ParamType};
+use crate::stability::{self, Stability};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
@@ -27,6 +28,10 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path
     let input_base = root.join("ta_codegen/input");
     let out_dir = root.join("website/src/functions");
     std::fs::create_dir_all(&out_dir).expect("create website/src/functions");
+
+    // Stability is derived from the whole call graph (see `crate::stability`), so it must be
+    // computed over every function -- `all_funcs` is passed here even on a `--func=X` run.
+    let stability = stability::classify(funcs);
 
     let mut funcs: Vec<&FuncDef> = funcs.iter().collect();
     funcs.sort_by(|a, b| a.name.cmp(&b.name));
@@ -42,10 +47,13 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path
             eprintln!("  docs: no source {dir}/{dir}.md — skipping page");
             continue;
         };
-        let page = transform_page(&body, f, enums, &known);
+        let page = transform_page(&body, f, enums, &known, &stability);
         super::write_if_changed_silent(&out_dir.join(format!("{dir}.md")), &page);
         paged.push(f);
     }
+
+    let stability_page = build_stability_page(enums, &stability, &known);
+    super::write_if_changed_silent(&out_dir.join("stability.md"), &stability_page);
 
     let index = build_index(&paged);
     super::write_if_changed(
@@ -61,6 +69,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path
         .map(|f| format!("{}.md", f.name.to_lowercase()))
         .collect();
     keep.insert("index.md".to_string());
+    keep.insert("stability.md".to_string());
     if let Ok(rd) = std::fs::read_dir(&out_dir) {
         for e in rd.flatten() {
             let p = e.path();
@@ -80,12 +89,13 @@ fn transform_page(
     func: &FuncDef,
     enums: &HashMap<String, EnumDef>,
     known: &HashSet<&str>,
+    stability: &HashMap<String, Stability>,
 ) -> String {
     let name = &func.name;
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
-    let with_flags = inject_flags(&injected, func);
+    let with_flags = inject_flags(&injected, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
     let pruned = strip_empty_sections(&linked);
     let mut out = String::from("---\n");
@@ -131,6 +141,23 @@ fn attr_escape(s: &str) -> String {
     s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
+/// Resolve an MAType parameter default (a raw enum value) to its short name, e.g. `EMA`.
+fn matype_name(enums: &HashMap<String, EnumDef>, default: Option<f64>) -> Option<String> {
+    #[allow(clippy::cast_possible_truncation)]
+    let want = default? as i32;
+    let e = enums.get("MAType")?;
+    e.variants.iter().find(|v| v.value == want).map(|v| v.short_name.clone())
+}
+
+/// `["EMA"]` -> `EMA`; `["ADX", "EMA"]` -> `ADX and EMA`.
+fn join_and(names: &[String]) -> String {
+    match names {
+        [] => String::new(),
+        [one] => one.clone(),
+        [rest @ .., last] => format!("{} and {last}", rest.join(", ")),
+    }
+}
+
 /// Render one flag cell: checked -> a check plus **bold** label; unchecked -> an
 /// outlined empty box (U+2610, not a filled square, so it does not read as a bullet)
 /// plus a dimmed label. Each cell trails a focusable `.flag-tip` help badge carrying
@@ -139,14 +166,15 @@ fn attr_escape(s: &str) -> String {
 /// read identically; the dim uses `opacity` (not a fixed color) so it lightens
 /// correctly against either the light or dark site theme.
 fn flag_cell(label: &str, on: bool, tip: &str) -> String {
-    let esc = attr_escape(tip);
-    let info = format!(
-        "<span class=\"flag-tip\" tabindex=\"0\" role=\"note\" aria-label=\"{esc}\" data-tip=\"{esc}\">i</span>"
-    );
     if on {
+        let esc = attr_escape(tip);
+        let info = format!(
+            "<span class=\"flag-tip\" tabindex=\"0\" role=\"note\" aria-label=\"{esc}\" data-tip=\"{esc}\">i</span>"
+        );
         format!("<span class=\"flag-box\">✅</span> **{label}** {info}")
     } else {
-        format!("<span class=\"flag-box\">☐</span> <span style=\"opacity:0.5\">{label}</span> {info}")
+        // No tooltip: its text would describe a property this function does not have.
+        format!("<span class=\"flag-box\">☐</span> <span style=\"opacity:0.5\">{label}</span>")
     }
 }
 
@@ -167,32 +195,20 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///
 /// `stream` (internal codegen concern) and `volume` (in the ABI but set by no
 /// function) are not surfaced.
-fn inject_flags(body: &str, func: &FuncDef) -> String {
+fn inject_flags(
+    body: &str,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    all: &HashMap<String, Stability>,
+) -> String {
     let has = |w: &str| func.flags.iter().any(|f| f == w);
-    let unstable = has("unstable_period");
-    let path_dependent = has("path_dependent");
-
     let overlap = has("overlap");
-    // Stability: three mutually-exclusive states (exactly one checked). `(label,
-    // checked, tooltip)`.
-    let stability = [
-        (
-            "Start-Independent",
-            !unstable && !path_dependent,
-            "The value at a bar does not depend on where your data starts — safe to compare across different-length windows.",
-        ),
-        (
-            "Initial Unstable Period",
-            unstable,
-            "Early values depend on how much history precedes them but converge as more bars are supplied; tunable via the unstable period.",
-        ),
-        (
-            "Path-Dependent",
-            path_dependent,
-            "Built up from the first bar (a running accumulation or path-tracking state machine): the value depends on where your data begins and never converges — don't compare across different windows.",
-        ),
-    ];
-    // Display: Y-axis placement (one of the pair always checked) + candlestick.
+
+    // Display flags stay a table: they are a two-way pick plus a marker, and nothing about
+    // them is stated by negation. Tooltips are emitted for checked cells only -- an
+    // unchecked cell carrying its definition puts a sentence describing a property the
+    // function does NOT have into the page text, where a crawler or a language model reads
+    // it as a claim about this function.
     let display = [
         (
             "Overlap Input",
@@ -210,14 +226,12 @@ fn inject_flags(body: &str, func: &FuncDef) -> String {
             "Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).",
         ),
     ];
-    // Two-column table: `Numerical Stability` | `Display Flags`, each column's items
-    // stacked as rows (both have three). The two-word headers wrap to two lines.
-    let mut block =
-        String::from("## Properties\n\n| Numerical<br>Stability | Display<br>Flags |\n| :-- | :-- |\n");
-    for i in 0..stability.len().max(display.len()) {
-        let l = stability.get(i).map(|it| flag_cell(it.0, it.1, it.2)).unwrap_or_default();
-        let r = display.get(i).map(|it| flag_cell(it.0, it.1, it.2)).unwrap_or_default();
-        block.push_str(&format!("| {l} | {r} |\n"));
+
+    let mut block = String::from("## Properties\n\n");
+    block.push_str(&stability_line(func, enums, all));
+    block.push_str("\n\n| Display<br>Flags |\n| :-- |\n");
+    for (label, on, tip) in display {
+        block.push_str(&format!("| {} |\n", flag_cell(label, on, tip)));
     }
     block.push('\n');
 
@@ -228,6 +242,114 @@ fn inject_flags(body: &str, func: &FuncDef) -> String {
         }
         None => format!("{body}\n{block}"),
     }
+}
+
+/// The one-line numerical-stability statement: the state that applies, linked to its
+/// section of the stability reference, followed by the reason specific to this function.
+///
+/// Deliberately prose rather than a checklist of four boxes. A checklist states three
+/// facts by negation -- an unchecked box next to `Path-Dependent` -- and negation is
+/// exactly what a search snippet, an embedding or a summarising model drops first. Only
+/// what is true about this function appears on its page.
+fn stability_line(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    all: &HashMap<String, Stability>,
+) -> String {
+    let st = all.get(&func.name).cloned().unwrap_or_default();
+    let link = |anchor: &str, label: &str| format!("[{label}](/functions/stability#{anchor})");
+
+    let (state, mut reason) = if st.path_dependent {
+        // Path-dependence subsumes an unstable period -- nothing converges either way -- but
+        // an inherited period still moves the lookback, so ADOSC must not lose that it
+        // responds to EMA's setting just because the stronger property won the headline.
+        let mut why = "built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows."
+            .to_string();
+        if !st.inherited_from.is_empty() {
+            let names = join_and(&st.inherited_from);
+            why.push_str(&format!(
+                " It also computes {names} internally, so {names}'s unstable period still governs how many leading values are discarded."
+            ));
+        }
+        (link("path-dependent", "Path-Dependent"), why)
+    } else if st.unconditional() {
+        let mut why = if st.inherited_from.is_empty() {
+            "early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.".to_string()
+        } else {
+            let names = join_and(&st.inherited_from);
+            format!(
+                "early values depend on how much history precedes them but converge as more bars are supplied. Inherited from {names}, which {} computes internally; tunable via {names}'s unstable period.",
+                func.name
+            )
+        };
+        if st.matype_dependent {
+            why.push_str(" The MA type selected may add one of its own.");
+        }
+        (link("initial-unstable-period", "Initial Unstable Period"), why)
+    } else if st.matype_dependent {
+        (link("depends-on-ma-type", "Depends on MA Type"), matype_reason(func, enums, all))
+    } else {
+        (
+            link("start-independent", "Start-Independent"),
+            "the value at a bar does not depend on where your data starts — safe to compare across different-length windows."
+                .to_string(),
+        )
+    };
+    if let Some(first) = reason.get_mut(0..1) {
+        first.make_ascii_uppercase();
+    }
+    format!("**Numerical Stability:** {state} — {reason}")
+}
+
+/// The reason clause for `Depends on MA Type`. Names no MA type as the stable one — a
+/// future MA type need not be recursive — but does state this function's own default, so a
+/// reader who never touches the parameter gets an answer without following the link.
+fn matype_reason(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    all: &HashMap<String, Stability>,
+) -> String {
+    let mut defaults: Vec<String> = Vec::new();
+    for opt in &func.optional_inputs {
+        if !matches!(&opt.param_type, ParamType::Enum(e) if e == "MAType") {
+            continue;
+        }
+        if let Some(name) = matype_name(enums, opt.default) {
+            if !defaults.contains(&name) {
+                defaults.push(name);
+            }
+        }
+    }
+    let tail = match defaults.as_slice() {
+        [] => String::new(),
+        [one] => {
+            let unstable = all.get(one.as_str()).is_some_and(Stability::unconditional);
+            if unstable {
+                format!(" This function's default, {one}, carries one.")
+            } else {
+                format!(" This function's default, {one}, does not.")
+            }
+        }
+        many => {
+            let unstable: Vec<String> = many
+                .iter()
+                .filter(|m| all.get(m.as_str()).is_some_and(Stability::unconditional))
+                .cloned()
+                .collect();
+            if unstable.is_empty() {
+                format!(" This function's defaults ({}) do not.", many.join(", "))
+            } else {
+                format!(
+                    " Of this function's defaults ({}), {} does.",
+                    many.join(", "),
+                    join_and(&unstable)
+                )
+            }
+        }
+    };
+    format!(
+        "whether early values depend on how much history precedes them is decided by the MA type selected: some carry an unstable period, others do not.{tail}"
+    )
 }
 
 /// Pull the `## Summary` paragraph as a single line for the page meta description.
@@ -599,6 +721,105 @@ fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
     out
 }
 
+/// The `/functions/stability` reference: the four numerical-stability states, each with a
+/// stable anchor every function page links to.
+///
+/// Generated, never hand-written: the MA-type table under `#depends-on-ma-type` is not
+/// readable off the YAML (DEMA and TEMA declare no unstable period of their own yet inherit
+/// EMA's), and a new MA type — HMA in 0.8.1, `DISABLED` in #93 — must not require anyone to
+/// remember to edit prose.
+fn build_stability_page(
+    enums: &HashMap<String, EnumDef>,
+    stability: &HashMap<String, Stability>,
+    known: &HashSet<&str>,
+) -> String {
+    let mut s = String::from(
+        "---\ntitle: Numerical Stability\ndescription: \"What it means for an indicator to be start-independent, to carry an initial unstable period, to depend on the MA type selected, or to be path-dependent.\"\n---\n\n",
+    );
+    s.push_str("# Numerical Stability\n\n");
+    s.push_str(
+        "Every function page states one of the four properties below. They answer a single \
+         practical question: **does the value at a given bar depend on how much history you \
+         passed in?** If it does, the same bar can carry different values in a backtest and in \
+         a live feed, and comparing across differently-sized windows is unsound.\n\n",
+    );
+
+    s.push_str("## Start-Independent\n\n");
+    s.push_str(
+        "The value at a bar does not depend on where your data starts. Feed the function a \
+         year or a decade and the value it reports for a given bar is identical. These \
+         functions read a bounded window — a fixed number of bars — and forget everything \
+         older, so there is nothing to converge to.\n\n\
+         Safe to compare across different-length windows.\n\n",
+    );
+
+    s.push_str("## Initial Unstable Period\n\n");
+    s.push_str(
+        "Early values depend on how much history precedes them, and converge as more bars are \
+         supplied. These functions are defined recursively: each value folds in the previous \
+         one, so the series never entirely forgets where it began — though the influence decays \
+         until it is lost in floating-point rounding.\n\n\
+         How many leading values are discarded is tunable with `TA_SetUnstablePeriod`. Some \
+         functions own their setting; others inherit one from a function they compute \
+         internally — DEMA has no unstable period of its own, but is built from EMA and \
+         responds to EMA's. Each function page names the setting it responds to.\n\n\
+         Comparing across different-length windows is sound only once past the unstable \
+         period.\n\n",
+    );
+
+    s.push_str("## Depends on MA Type\n\n");
+    s.push_str(
+        "Some functions take an `optInMAType` parameter selecting how their moving average is \
+         computed. That choice decides which of the properties above applies: a recursive MA \
+         type gives the function an initial unstable period, a windowed one leaves it \
+         start-independent.\n\n",
+    );
+    s.push_str("| MA Type | Value | Numerical Stability | Why |\n| :-- | --: | :-- | :-- |\n");
+    if let Some(e) = enums.get("MAType") {
+        let mut variants = e.variants.clone();
+        variants.sort_by_key(|v| v.value);
+        for v in &variants {
+            let name = &v.short_name;
+            let (state, why) = match stability.get(name.as_str()) {
+                None => (
+                    "Start-Independent",
+                    "Not a moving average: the input is copied through unchanged.".to_string(),
+                ),
+                Some(st) if st.intrinsic => (
+                    "Initial Unstable Period",
+                    format!("Recursive: each value folds in the previous one. Tunable via {name}'s own unstable period."),
+                ),
+                Some(st) if !st.inherited_from.is_empty() => (
+                    "Initial Unstable Period",
+                    format!("Built from {}, and inherits its unstable period.", join_and(&st.inherited_from)),
+                ),
+                Some(_) => (
+                    "Start-Independent",
+                    "A windowed average: it reads a fixed number of bars and forgets everything older.".to_string(),
+                ),
+            };
+            let linked = if known.contains(name.as_str()) {
+                format!("[{name}](/functions/{})", name.to_lowercase())
+            } else {
+                format!("`{name}`")
+            };
+            s.push_str(&format!("| {linked} | {} | {state} | {why} |\n", v.value));
+        }
+    }
+    s.push('\n');
+
+    s.push_str("## Path-Dependent\n\n");
+    s.push_str(
+        "The value is built up from the first bar — a running accumulation or a state machine \
+         that tracks the path prices took — so it depends on where your data begins and never \
+         converges. Unlike an unstable period, there is no warm-up you can discard: the \
+         difference persists for the whole series.\n\n\
+         Do not compare these values across differently-sized windows, and expect a backtest \
+         starting at a different date to produce different numbers.\n",
+    );
+    s
+}
+
 /// The `/functions/` landing page: every function linked, grouped by category.
 fn build_index(funcs: &[&FuncDef]) -> String {
     let mut by_group: BTreeMap<&str, Vec<&FuncDef>> = BTreeMap::new();
@@ -865,6 +1086,76 @@ mod tests {
         let trailing = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n\n### Notes on tuning\n";
         let err = try_inject_parameters(trailing, &f, &HashMap::new()).unwrap_err();
         assert!(err.contains("Notes on tuning"), "{err}");
+    }
+
+    fn stability_of(name: &str, flags: &[&str], opts: Vec<crate::ir::OptInput>) -> FuncDef {
+        let mut f = func(name, opts);
+        f.flags = flags.iter().map(|s| (*s).to_string()).collect();
+        f
+    }
+
+    /// The stability statement must assert only what is true of this function: no unchecked
+    /// boxes, no definitions of states that do not apply. A crawler or a language model
+    /// reading the page text must not find `Path-Dependent` prose on a page that is not.
+    #[test]
+    fn stability_line_states_only_the_applicable_property() {
+        let enums = HashMap::new();
+        let f = stability_of("SMA", &[], vec![]);
+        let mut all = HashMap::new();
+        all.insert("SMA".to_string(), Stability::default());
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("[Start-Independent](/functions/stability#start-independent)"), "{line}");
+        assert!(!line.contains("Path-Dependent"), "no negated states on the page: {line}");
+        assert!(!line.contains("Unstable"), "no negated states on the page: {line}");
+
+        // Transitive: names the inner function, twice (what it inherits, what to tune).
+        let f = stability_of("DEMA", &[], vec![]);
+        let mut all = HashMap::new();
+        all.insert(
+            "DEMA".to_string(),
+            Stability { inherited_from: vec!["EMA".into()], ..Stability::default() },
+        );
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("Inherited from EMA, which DEMA computes internally"), "{line}");
+        assert!(line.contains("tunable via EMA's unstable period"), "{line}");
+
+        // Combination: unstable regardless *and* MA-type dependent -> both stated.
+        let f = stability_of("STOCHRSI", &[], vec![]);
+        let mut all = HashMap::new();
+        all.insert(
+            "STOCHRSI".to_string(),
+            Stability {
+                inherited_from: vec!["RSI".into()],
+                matype_dependent: true,
+                ..Stability::default()
+            },
+        );
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("Inherited from RSI"), "{line}");
+        assert!(line.contains("may add one of its own"), "{line}");
+
+        // Path-dependent wins over everything: it never converges.
+        let f = stability_of("OBV", &["path_dependent"], vec![]);
+        let mut all = HashMap::new();
+        all.insert(
+            "OBV".to_string(),
+            Stability { path_dependent: true, ..Stability::default() },
+        );
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("[Path-Dependent](/functions/stability#path-dependent)"), "{line}");
+        assert!(line.contains("never converges"), "{line}");
+    }
+
+    /// An unchecked display cell must not carry a tooltip: its text would describe a
+    /// property the function does not have.
+    #[test]
+    fn only_checked_cells_carry_their_definition() {
+        let on = flag_cell("Candlestick", true, "Output is an integer pattern signal.");
+        assert!(on.contains("data-tip=\"Output is an integer pattern signal.\""), "{on}");
+        let off = flag_cell("Candlestick", false, "Output is an integer pattern signal.");
+        assert!(!off.contains("data-tip"), "{off}");
+        assert!(!off.contains("integer pattern signal"), "{off}");
+        assert!(off.contains("Candlestick"), "the label still shows: {off}");
     }
 
     /// An empty `## Notes` placeholder must not reach the site, while a section with any
