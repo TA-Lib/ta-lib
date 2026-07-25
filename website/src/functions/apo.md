@@ -35,7 +35,7 @@ The standard form is exponential — APO with EMA and periods 12/26 is the fast-
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, carries an unstable period.
+**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
 
 | Display<br>Flags |
 | :-- |

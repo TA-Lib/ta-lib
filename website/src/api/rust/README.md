@@ -75,7 +75,7 @@ Enum parameters (e.g. an `MAType`) and integer parameters are `i32`; real parame
 
 ## Settings
 
-Library settings — [unstable period](/api/#unstable_period) and candle settings — live on `Core` and are **immutable after construction**. Set them through the builder:
+Library settings — [unstable period](/api/#numerical_stability) and candle settings — live on `Core` and are **immutable after construction**. Set them through the builder:
 
 ```rust
 use ta_lib::{Core, FuncUnstId};

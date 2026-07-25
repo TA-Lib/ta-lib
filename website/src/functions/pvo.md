@@ -35,7 +35,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volu
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, carries an unstable period.
+**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
 
 | Display<br>Flags |
 | :-- |
