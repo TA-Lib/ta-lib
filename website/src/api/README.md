@@ -19,7 +19,7 @@ toc: false
 <p><a href="#advanced">4.0 Advanced Features</a></p>
 <blockquote>
 <p><a href="#abstract">4.1 Abstraction layer</a><br>
-<a href="#unstable_period">4.2 Unstable Period</a><br>
+<a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#input_type">4.3 Input Type: float vs. double</a><br>
 <a href="#multithreading">4.4 High-performance Multi-threading</a></p>
 </blockquote>
@@ -194,10 +194,11 @@ it is TA_SMA_Lookback.</p>
 </ul>
 <p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
 
-<h3 id="unstable_period">4.2 Unstable Period</h3>
-<p>For some recursive TA functions, such as the Exponential Moving Average, the first outputs depend on where the input data begins — an effect that decays until the output becomes stable. The unstable period setting
-(<a href="/api/unstable-period/#api">TA_SetUnstablePeriod</a>,
-<a href="/api/unstable-period/#api">TA_GetUnstablePeriod</a>) controls how many of those early values are discarded. See the <a href="/api/unstable-period/">Unstable Period</a> page for details and the list of affected functions.</p>
+<h3 id="numerical_stability">4.2 Numerical Stability</h3>
+<a id="unstable_period"></a>
+<p>Take one bar and compute an indicator for it twice: once with a year of history before it, once with a decade. Do you get the same value? For many functions, always — they read a fixed number of bars and ignore everything older. Others are recursive, so their earliest values depend on how much history precedes them, converging as more bars are supplied — the Exponential Moving Average is the classic example. A few accumulate from the very first bar and never converge at all.</p>
+<p>Each function's documentation specifies which of the four <a href="/functions/stability">numerical-stability categories</a> applies to it.</p>
+<p>See the <a href="/api/unstable-period/">Unstable Period</a> page for more configurability.</p>
 <h3 id="input_type">4.3 Input Type: float vs. double</h3>
 <p>Each TA function has two implementations: one accepts input arrays of double, the other of float. The float version carries the &quot;TA_S_&quot; prefix, e.g. TA_S_MA is the float equivalent of TA_MA.</p>
 <pre>TA_RetCode TA_MA( int          startIdx,

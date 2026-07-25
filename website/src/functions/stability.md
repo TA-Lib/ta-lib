@@ -5,13 +5,11 @@ description: "What it means for an indicator to be start-independent, to carry a
 
 # Numerical Stability
 
-Every function page states one of the four properties below. They answer a single practical question: **does the value at a given bar depend on how much history you passed in?** If it does, the same bar can carry different values in a backtest and in a live feed, and comparing across differently-sized windows is unsound.
+The documentation specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on how much history you passed in?**
 
 ## Start-Independent
 
-The value at a bar does not depend on where your data starts. Feed the function a year or a decade and the value it reports for a given bar is identical. These functions read a bounded window — a fixed number of bars — and forget everything older, so there is nothing to converge to.
-
-Safe to compare across different-length windows.
+The value at a bar does not depend on where your data starts. Feed the function a year or a decade and the value it reports for a given bar is identical. These functions read a bounded window — a fixed number of bars — and ignore everything older.
 
 ## Initial Unstable Period
 
@@ -19,7 +17,7 @@ Early values depend on how much history precedes them, and converge as more bars
 
 How many leading values are discarded is tunable with `TA_SetUnstablePeriod`. Some functions own their setting; others inherit one from a function they compute internally — DEMA has no unstable period of its own, but is built from EMA and responds to EMA's. Each function page names the setting it responds to.
 
-Comparing across different-length windows is sound only once past the unstable period.
+See [Unstable Period](/api/unstable-period/) for what to do about it: when to ignore it, when to supply extra history, and how to have TA-Lib drop the unstable values for you.
 
 ## Depends on MA Type
 

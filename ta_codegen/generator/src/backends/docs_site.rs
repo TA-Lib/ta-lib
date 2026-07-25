@@ -333,9 +333,9 @@ fn matype_reason(
         [one] => {
             let unstable = all.get(one.as_str()).is_some_and(Stability::unconditional);
             if unstable {
-                format!("this function's default, {one}, carries an unstable period.")
+                format!("this function's default, {one}, has an initial unstable period.")
             } else {
-                format!("this function's default, {one}, does not carry one.")
+                format!("this function's default, {one}, is start-independent.")
             }
         }
         many => {
@@ -345,10 +345,10 @@ fn matype_reason(
                 .cloned()
                 .collect();
             if unstable.is_empty() {
-                format!("this function's defaults ({}) carry none.", many.join(", "))
+                format!("this function's defaults ({}) are start-independent.", many.join(", "))
             } else {
                 format!(
-                    "of this function's defaults ({}), {} carries one.",
+                    "of this function's defaults ({}), {} has an initial unstable period.",
                     many.join(", "),
                     join_and(&unstable)
                 )
@@ -727,7 +727,7 @@ fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
     out
 }
 
-/// The `/functions/stability` reference: the four numerical-stability states, each with a
+/// The `/functions/stability` reference: the four numerical-stability categories, each with a
 /// stable anchor every function page links to.
 ///
 /// Generated, never hand-written: the MA-type table under `#depends-on-ma-type` is not
@@ -744,19 +744,18 @@ fn build_stability_page(
     );
     s.push_str("# Numerical Stability\n\n");
     s.push_str(
-        "Every function page states one of the four properties below. They answer a single \
+        "The documentation specifies which of the four categories below applies to each function. \
+         They answer a single \
          practical question: **does the value at a given bar depend on how much history you \
-         passed in?** If it does, the same bar can carry different values in a backtest and in \
-         a live feed, and comparing across differently-sized windows is unsound.\n\n",
+         passed in?**\n\n",
     );
 
     s.push_str("## Start-Independent\n\n");
     s.push_str(
         "The value at a bar does not depend on where your data starts. Feed the function a \
          year or a decade and the value it reports for a given bar is identical. These \
-         functions read a bounded window — a fixed number of bars — and forget everything \
-         older, so there is nothing to converge to.\n\n\
-         Safe to compare across different-length windows.\n\n",
+         functions read a bounded window — a fixed number of bars — and ignore everything \
+         older.\n\n",
     );
 
     s.push_str("## Initial Unstable Period\n\n");
@@ -769,8 +768,9 @@ fn build_stability_page(
          functions own their setting; others inherit one from a function they compute \
          internally — DEMA has no unstable period of its own, but is built from EMA and \
          responds to EMA's. Each function page names the setting it responds to.\n\n\
-         Comparing across different-length windows is sound only once past the unstable \
-         period.\n\n",
+         See [Unstable Period](/api/unstable-period/) for what to do about it: when to \
+         ignore it, when to supply extra history, and how to have TA-Lib drop the \
+         unstable values for you.\n\n",
     );
 
     s.push_str("## Depends on MA Type\n\n");

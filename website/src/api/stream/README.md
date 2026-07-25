@@ -49,7 +49,7 @@ TA_SMA_Close( s );
 
 - **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#unstable_period) and candle settings are first read at `Open` and must not change during the stream's life.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are first read at `Open` and must not change during the stream's life.
 - **Threads.** A stream is single-writer: never drive one stream from two threads at once (even `Peek`, despite its `const`). Distinct streams are fully independent.
 - **Don't persist** a stream across library versions.
 
