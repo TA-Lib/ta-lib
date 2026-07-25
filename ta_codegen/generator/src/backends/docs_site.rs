@@ -87,14 +87,43 @@ fn transform_page(
     let injected = inject_parameters(body, func, enums);
     let with_flags = inject_flags(&injected, func);
     let linked = linkify_see_also(&with_flags, known);
+    let pruned = strip_empty_sections(&linked);
     let mut out = String::from("---\n");
     out.push_str(&format!("title: {name}\n"));
     if !desc.is_empty() {
         out.push_str(&format!("description: {desc:?}\n"));
     }
     out.push_str("---\n\n");
-    out.push_str(&linked);
+    out.push_str(&pruned);
     out
+}
+
+/// Drop any `## Section` whose body is blank. The input pages carry `## Notes` as an
+/// authoring placeholder whether or not there is anything to say (85 of 168 leave it
+/// empty), and a bare heading with nothing under it reads as a rendering bug on the
+/// site. Only `##` headings are considered — `###` and the `#` title are never sections
+/// on these pages — and a section is kept the moment any non-blank line follows it.
+fn strip_empty_sections(body: &str) -> String {
+    let lines: Vec<&str> = body.lines().collect();
+    let mut out: Vec<&str> = Vec::with_capacity(lines.len());
+    let mut i = 0;
+    while i < lines.len() {
+        if lines[i].starts_with("## ") {
+            let mut j = i + 1;
+            while j < lines.len() && !lines[j].starts_with("## ") {
+                j += 1;
+            }
+            if lines[i + 1..j].iter().all(|l| l.trim().is_empty()) {
+                i = j;
+                continue;
+            }
+        }
+        out.push(lines[i]);
+        i += 1;
+    }
+    let mut s = out.join("\n");
+    s.push('\n');
+    s
 }
 
 /// Escape a string for inclusion inside a double-quoted HTML attribute.
@@ -836,6 +865,24 @@ mod tests {
         let trailing = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n\n### Notes on tuning\n";
         let err = try_inject_parameters(trailing, &f, &HashMap::new()).unwrap_err();
         assert!(err.contains("Notes on tuning"), "{err}");
+    }
+
+    /// An empty `## Notes` placeholder must not reach the site, while a section with any
+    /// content — including one whose body is only the `###` subheadings — is untouched.
+    #[test]
+    fn empty_sections_are_dropped_and_populated_ones_kept() {
+        let body = "# X\n\n## Formula\n\n$$a = b$$\n\n## Notes\n\n\n\n## Inputs\n\n- `inReal`\n";
+        let out = strip_empty_sections(body);
+        assert!(!out.contains("## Notes"), "{out}");
+        assert!(out.contains("## Formula") && out.contains("$$a = b$$"), "{out}");
+        assert!(out.contains("## Inputs") && out.contains("- `inReal`"), "{out}");
+        assert!(out.contains("# X"), "the title is not a section: {out}");
+
+        // Trailing empty section (no following heading to close it) is dropped too.
+        assert!(!strip_empty_sections("# X\n\n## Notes\n\n").contains("## Notes"));
+        // A section holding only a subheading is content, not empty.
+        let sub = "# X\n\n## Notes\n\n### Tuning\n\ntext\n";
+        assert!(strip_empty_sections(sub).contains("## Notes"), "{sub}");
     }
 
     /// A bullet wrapped over two lines is legitimate authoring — it must keep working, and
