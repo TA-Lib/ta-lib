@@ -37,7 +37,7 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — Built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows.
+**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
 
 | Display<br>Flags |
 | :-- |

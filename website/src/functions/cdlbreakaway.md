@@ -26,7 +26,7 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

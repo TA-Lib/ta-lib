@@ -30,7 +30,7 @@ Two candles. 1st: black (close<open) with long real body (realbody > BodyLong av
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

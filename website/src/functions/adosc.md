@@ -36,7 +36,7 @@ ADOSC = fastEMA - slowEMA
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — Built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows. It also computes EMA internally, so EMA's unstable period still governs how many leading values are discarded.
+**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — It also computes EMA internally, so EMA's unstable period governs how many leading values are discarded.
 
 | Display<br>Flags |
 | :-- |

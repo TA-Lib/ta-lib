@@ -34,7 +34,7 @@ For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = ar
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

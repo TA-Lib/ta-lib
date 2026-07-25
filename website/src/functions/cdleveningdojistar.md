@@ -32,7 +32,7 @@ A three-candle bearish reversal pattern: a long white candle, a doji that gaps u
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

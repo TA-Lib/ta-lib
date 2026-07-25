@@ -30,7 +30,7 @@ If matched: output = candle color * 100 (+100 white, -100 black); else 0.
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

@@ -36,7 +36,7 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |

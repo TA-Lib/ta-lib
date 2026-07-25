@@ -37,7 +37,7 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — Whether early values depend on how much history precedes them is decided by the MA type selected: some carry an unstable period, others do not. This function's default, SMA, does not.
+**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, SMA, does not carry one.
 
 | Display<br>Flags |
 | :-- |
