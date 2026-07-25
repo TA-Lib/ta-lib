@@ -36,7 +36,7 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — Built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows.
+**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
 
 | Display<br>Flags |
 | :-- |

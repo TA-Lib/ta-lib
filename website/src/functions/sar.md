@@ -33,7 +33,7 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — Built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows.
+**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
 
 | Display<br>Flags |
 | :-- |

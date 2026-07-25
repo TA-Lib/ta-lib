@@ -245,7 +245,10 @@ fn inject_flags(
 }
 
 /// The one-line numerical-stability statement: the state that applies, linked to its
-/// section of the stability reference, followed by the reason specific to this function.
+/// section of the stability reference, plus a clause **only when there is something
+/// specific to this function to say** — which inner function it inherits its period from,
+/// or what its own MAType default implies. What a state *means* is written once, on the
+/// reference page, rather than restated on 168 pages.
 ///
 /// Deliberately prose rather than a checklist of four boxes. A checklist states three
 /// facts by negation -- an unchecked box next to `Path-Dependent` -- and negation is
@@ -263,38 +266,43 @@ fn stability_line(
         // Path-dependence subsumes an unstable period -- nothing converges either way -- but
         // an inherited period still moves the lookback, so ADOSC must not lose that it
         // responds to EMA's setting just because the stronger property won the headline.
-        let mut why = "built up from the first bar, so the value depends on where your data begins and never converges — don't compare across different windows."
-            .to_string();
-        if !st.inherited_from.is_empty() {
-            let names = join_and(&st.inherited_from);
-            why.push_str(&format!(
-                " It also computes {names} internally, so {names}'s unstable period still governs how many leading values are discarded."
-            ));
-        }
-        (link("path-dependent", "Path-Dependent"), why)
-    } else if st.unconditional() {
-        let mut why = if st.inherited_from.is_empty() {
-            "early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.".to_string()
+        let why = if st.inherited_from.is_empty() {
+            String::new()
         } else {
             let names = join_and(&st.inherited_from);
             format!(
-                "early values depend on how much history precedes them but converge as more bars are supplied. Inherited from {names}, which {} computes internally; tunable via {names}'s unstable period.",
+                "it also computes {names} internally, so {names}'s unstable period governs how many leading values are discarded."
+            )
+        };
+        (link("path-dependent", "Path-Dependent"), why)
+    } else if st.unconditional() {
+        // Owning the period is the plain case the reference page already describes; only
+        // an inherited one, or an extra contributed by the MA type, is worth saying here.
+        let mut why = if st.inherited_from.is_empty() {
+            String::new()
+        } else {
+            let names = join_and(&st.inherited_from);
+            format!(
+                "inherited from {names}, which {} computes internally; tunable via {names}'s unstable period.",
                 func.name
             )
         };
         if st.matype_dependent {
-            why.push_str(" The MA type selected may add one of its own.");
+            if why.is_empty() {
+                why.push_str("the MA type selected may add one of its own.");
+            } else {
+                why.push_str(" The MA type selected may add one of its own.");
+            }
         }
         (link("initial-unstable-period", "Initial Unstable Period"), why)
     } else if st.matype_dependent {
         (link("depends-on-ma-type", "Depends on MA Type"), matype_reason(func, enums, all))
     } else {
-        (
-            link("start-independent", "Start-Independent"),
-            "the value at a bar does not depend on where your data starts — safe to compare across different-length windows."
-                .to_string(),
-        )
+        (link("start-independent", "Start-Independent"), String::new())
     };
+    if reason.is_empty() {
+        return format!("**Numerical Stability:** {state}");
+    }
     if let Some(first) = reason.get_mut(0..1) {
         first.make_ascii_uppercase();
     }
@@ -325,9 +333,9 @@ fn matype_reason(
         [one] => {
             let unstable = all.get(one.as_str()).is_some_and(Stability::unconditional);
             if unstable {
-                format!(" This function's default, {one}, carries one.")
+                format!("this function's default, {one}, carries an unstable period.")
             } else {
-                format!(" This function's default, {one}, does not.")
+                format!("this function's default, {one}, does not carry one.")
             }
         }
         many => {
@@ -337,19 +345,17 @@ fn matype_reason(
                 .cloned()
                 .collect();
             if unstable.is_empty() {
-                format!(" This function's defaults ({}) do not.", many.join(", "))
+                format!("this function's defaults ({}) carry none.", many.join(", "))
             } else {
                 format!(
-                    " Of this function's defaults ({}), {} does.",
+                    "of this function's defaults ({}), {} carries one.",
                     many.join(", "),
                     join_and(&unstable)
                 )
             }
         }
     };
-    format!(
-        "whether early values depend on how much history precedes them is decided by the MA type selected: some carry an unstable period, others do not.{tail}"
-    )
+    tail.trim_start().to_string()
 }
 
 /// Pull the `## Summary` paragraph as a single line for the page meta description.
@@ -1104,9 +1110,11 @@ mod tests {
         let mut all = HashMap::new();
         all.insert("SMA".to_string(), Stability::default());
         let line = stability_line(&f, &enums, &all);
-        assert!(line.contains("[Start-Independent](/functions/stability#start-independent)"), "{line}");
-        assert!(!line.contains("Path-Dependent"), "no negated states on the page: {line}");
-        assert!(!line.contains("Unstable"), "no negated states on the page: {line}");
+        assert_eq!(
+            line,
+            "**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)",
+            "the plain case is the bare state: what it means belongs on the reference page"
+        );
 
         // Transitive: names the inner function, twice (what it inherits, what to tune).
         let f = stability_of("DEMA", &[], vec![]);
@@ -1118,6 +1126,16 @@ mod tests {
         let line = stability_line(&f, &enums, &all);
         assert!(line.contains("Inherited from EMA, which DEMA computes internally"), "{line}");
         assert!(line.contains("tunable via EMA's unstable period"), "{line}");
+
+        // An intrinsically-unstable function says nothing extra: owning the period is the
+        // plain case the reference page describes.
+        let f = stability_of("EMA", &["unstable_period"], vec![]);
+        let mut all = HashMap::new();
+        all.insert("EMA".to_string(), Stability { intrinsic: true, ..Stability::default() });
+        assert_eq!(
+            stability_line(&f, &enums, &all),
+            "**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)"
+        );
 
         // Combination: unstable regardless *and* MA-type dependent -> both stated.
         let f = stability_of("STOCHRSI", &[], vec![]);
@@ -1142,8 +1160,26 @@ mod tests {
             Stability { path_dependent: true, ..Stability::default() },
         );
         let line = stability_line(&f, &enums, &all);
-        assert!(line.contains("[Path-Dependent](/functions/stability#path-dependent)"), "{line}");
-        assert!(line.contains("never converges"), "{line}");
+        assert_eq!(
+            line,
+            "**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)",
+            "no trailing prose when there is nothing specific to this function to say"
+        );
+
+        // ...but a path-dependent function that also inherits a period keeps that clause,
+        // because the period still moves its lookback (ADOSC through EMA).
+        let f = stability_of("ADOSC", &["path_dependent"], vec![]);
+        let mut all = HashMap::new();
+        all.insert(
+            "ADOSC".to_string(),
+            Stability {
+                path_dependent: true,
+                inherited_from: vec!["EMA".into()],
+                ..Stability::default()
+            },
+        );
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("computes EMA internally"), "{line}");
     }
 
     /// An unchecked display cell must not carry a tooltip: its text would describe a

@@ -42,7 +42,7 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied. Inherited from RSI, which STOCHRSI computes internally; tunable via RSI's unstable period. The MA type selected may add one of its own.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from RSI, which STOCHRSI computes internally; tunable via RSI's unstable period. The MA type selected may add one of its own.
 
 | Display<br>Flags |
 | :-- |

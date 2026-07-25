@@ -33,7 +33,7 @@ period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |

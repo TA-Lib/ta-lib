@@ -38,7 +38,7 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied. Inherited from EMA, which MACD computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which MACD computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |

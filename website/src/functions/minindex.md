@@ -33,7 +33,7 @@ outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into in
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent) — The value at a bar does not depend on where your data starts — safe to compare across different-length windows.
+**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
 
 | Display<br>Flags |
 | :-- |

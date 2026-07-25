@@ -34,7 +34,7 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |

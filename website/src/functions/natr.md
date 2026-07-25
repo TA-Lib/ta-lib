@@ -32,7 +32,7 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied; tunable via this function's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |

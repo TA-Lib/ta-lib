@@ -37,7 +37,7 @@ Hist = MACD - Signal
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Early values depend on how much history precedes them but converge as more bars are supplied. Inherited from EMA, which MACDFIX computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which MACDFIX computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |
