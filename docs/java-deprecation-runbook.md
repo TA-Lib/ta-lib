@@ -1,6 +1,12 @@
 # Java Deprecation Runbook — retiring `/java` (`com.tictactec`) for a generated, Maven-published artifact
 
-**Status:** 📝 **PLANNED — decisions locked, implementation NOT STARTED (2026-07-08).** Coordinates,
+**Status:** 🚧 **IN PROGRESS.** The API-shape work of `to_be_deleted/java-next-steps.md` landed
+2026-07-25/26 (immutable `Core` + builder, `OutRange`, the package rename, the generated metadata
+registry + call-by-name). What remains here is the *packaging* track: the `pom.xml`, the Maven
+Central publish, and retiring the checked-in `ta-lib.jar`. Note the root `java/` tree this document
+describes as "the shipped library" was deleted in `f00131f3` (2026-07-15) — the library now lives at
+`ta_codegen/output/java/library/`.
+*(Original status: 📝 PLANNED — decisions locked, implementation NOT STARTED, 2026-07-08.)* Coordinates,
 abstract-layer fate, build tool, website posture, and removal gating are all decided (see §6). No
 Java-build code has changed yet. The only thing done so far is a docs cosmetic: the website's
 per-function Java link now points at `ta_codegen/output/java/Core_<NAME>.java` instead of the
@@ -210,9 +216,26 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
 
 ---
 
-## 6. Decisions locked (2026-07-08)
+## 6. Decisions locked (2026-07-08, amended 2026-07-26)
 - **Coordinates (A):** `io.github.ta-lib:ta-lib`, package `io.github.talib`, GitHub-org-verified.
-- **Abstract layer (B1):** dropped — ship `Core` + enums + `MInteger` only.
+  **Done** — the package rename landed 2026-07-26 (`e2b15dde`); the tree is at
+  `ta_codegen/output/java/library/src/io/github/talib/`.
+- **Abstract layer:** ~~B1 dropped~~ → **REVERSED and re-locked 2026-07-26: ship the *generated*
+  registry.** The 2026-07-08 lock predates `java_abstract.rs` (#114, ~2026-07-15), which made the
+  full-fidelity metadata table free — the cost fell from "hand-maintain a fourth copy" to "route an
+  existing one". Shipped as `io.github.talib.metadata` (`Functions.all()` / `byName`), rendered from
+  the same rows as the JSON-RPC server's table, so the two cannot disagree. It also carries what the
+  retired hand-written `meta/` island never did: function hints (168/168), per-parameter hints
+  (122/122), and named constants for the whole `TA_OUT_*` vocabulary including `NULLABLE` (0x2000)
+  and the band flags. **Call-by-name ships with it** (maintainer decision 2026-07-24, the
+  charting-app case): a `ParamHolder` + a *generated static switch*, never reflection.
+- **`MInteger`:** ~~shipped~~ → **REVERSED and re-locked 2026-07-26: superseded by
+  `record OutRange(begIdx, count)`.** `MInteger`/`RetCode` are now package-private internals; the
+  public batch API returns `OutRange` and throws on misuse. A range shorter than the lookback stays
+  a success with `count == 0`, exactly as in C.
+- **JDK floor: 17 (LTS)**, locked 2026-07-26. `OutRange` is a `record`. Enforced by `build.xml`'s
+  `release="17"` and `--release 17` on both javac calls in `ta_codegen build`; the Maven track
+  should carry `<maven.compiler.release>17</maven.compiler.release>`.
 - **Build tool (C):** Maven (`pom.xml`).
 - **Website:** stays at `ta-lib.org`, hosted on GitHub Pages; `ta-lib.github.io/ta-lib` is the durable
   fallback (currently 301 → ta-lib.org). Not moving.

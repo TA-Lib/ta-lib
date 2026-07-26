@@ -682,9 +682,17 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
                 &helper_registry,
                 &java_pkg.join("Core.java"),
             );
+            // The shipped introspection registry, from the same rows the
+            // JSON-RPC server's table renders (so the two cannot disagree).
+            backends::java_metadata::generate(
+                &generated_funcs,
+                &enums,
+                &root.join("ta_codegen/output/java/library/src"),
+            );
         } else {
             println!(
-                "  (skipping shipped Core.java — needs a full generate without --func)"
+                "  (skipping shipped Core.java + metadata registry — needs a full \
+                 generate without --func)"
             );
         }
     }
