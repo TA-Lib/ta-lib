@@ -163,8 +163,9 @@ public class StreamSmokeTest {
         /* Settings are per-instance and frozen into the stream at open: a core
          * with a huge BodyDoji factor calls every candle a doji, the default
          * core calls none of these one. */
-        Core tuned = new Core();
-        tuned.SetCandleSettings(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9);
+        Core tuned = Core.builder()
+            .candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
+            .build();
         Core.CdlDojiStream d1 = core.cdlDojiOpen(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
             java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));

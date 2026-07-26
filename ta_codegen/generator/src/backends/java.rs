@@ -22,6 +22,111 @@ use super::stmt_walk::StatementEmitter;
 /// unconditionally before the `if`.
 pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
+// ---------------------------------------------------------------------------
+// Compatibility fold (Java pins the mode to Default)
+// ---------------------------------------------------------------------------
+//
+// Metastock compatibility is retired project-wide and Java's `Core` carries no
+// compatibility field at all, so every `TA_GetCompatibility()` test in the shared
+// input sources is a compile-time constant on this backend. Fold it at render
+// time: `== DEFAULT` is true, `== METASTOCK` is false, the surviving `if` arm is
+// spliced in place of the branch. C (which still ships the setting) renders the
+// same IR untouched, so its output is unaffected.
+//
+// The fold hangs off [`StatementEmitter::if_stmt`], which every Java render path
+// funnels through — batch bodies, `LookbackExpr::Code` (CMO/RSI test the mode
+// inside their lookback), and the streaming warm-up opens. Anything that reaches
+// [`ExprEmitter::var`] or the `Compatibility` builtin afterwards is a construct
+// this fold does not understand, and panics rather than emitting a reference to
+// a field that no longer exists.
+
+/// Result of folding a condition against Java's pinned-to-Default compatibility.
+enum CompatFold {
+    /// The condition is a compile-time constant on this backend.
+    Known(bool),
+    /// Not compatibility-dependent, or only partly folded. `changed` is false when
+    /// nothing folded, so the caller can take the untouched rendering path.
+    Open { expr: Expr, changed: bool },
+}
+
+impl CompatFold {
+    /// An operand that folded away nothing.
+    fn unchanged(expr: &Expr) -> Self {
+        CompatFold::Open { expr: expr.clone(), changed: false }
+    }
+}
+
+/// Is this expression the `COMPATIBILITY()` builtin (or its bare-`Var` spelling)?
+fn is_compat_read(expr: &Expr) -> bool {
+    match expr {
+        Expr::Var(n) => n == "COMPATIBILITY",
+        Expr::FuncCall(n, args) => n == "COMPATIBILITY" && args.is_empty(),
+        _ => false,
+    }
+}
+
+/// The truth value of `COMPATIBILITY() == <name>` under the Default pin.
+fn compat_variant_matches(expr: &Expr) -> Option<bool> {
+    match expr {
+        Expr::Var(n) if n == "DEFAULT" => Some(true),
+        Expr::Var(n) if n == "METASTOCK" => Some(false),
+        _ => None,
+    }
+}
+
+/// Fold a condition against the Default pin. Handles both operand orders and
+/// propagates through `&&` / `||` / `!` so a compound test such as
+/// `unstablePeriod == 0 && COMPATIBILITY() == METASTOCK` collapses whole.
+fn fold_compat_cond(expr: &Expr) -> CompatFold {
+    match expr {
+        Expr::BinOp(lhs, op @ (BinOp::Eq | BinOp::NotEq), rhs) => {
+            let matched = if is_compat_read(lhs) {
+                compat_variant_matches(rhs)
+            } else if is_compat_read(rhs) {
+                compat_variant_matches(lhs)
+            } else {
+                None
+            };
+            match matched {
+                Some(eq) => CompatFold::Known(if matches!(op, BinOp::Eq) { eq } else { !eq }),
+                None => CompatFold::unchanged(expr),
+            }
+        }
+        Expr::BinOp(lhs, op @ (BinOp::And | BinOp::Or), rhs) => {
+            let is_and = matches!(op, BinOp::And);
+            // Short-circuiting is preserved: the operands here are pure reads
+            // (the compat test has no side effects), so dropping one is safe.
+            let (l, r) = (fold_compat_cond(lhs), fold_compat_cond(rhs));
+            match (l, r) {
+                // `x && false` / `x || true` — the absorbing element wins.
+                (CompatFold::Known(k), _) | (_, CompatFold::Known(k)) if k != is_and => {
+                    CompatFold::Known(k)
+                }
+                (CompatFold::Known(_), CompatFold::Known(_)) => CompatFold::Known(is_and),
+                // `x && true` / `x || false` — the identity element drops out.
+                (CompatFold::Known(_), CompatFold::Open { expr, .. })
+                | (CompatFold::Open { expr, .. }, CompatFold::Known(_)) => {
+                    CompatFold::Open { expr, changed: true }
+                }
+                (
+                    CompatFold::Open { expr: le, changed: lc },
+                    CompatFold::Open { expr: re, changed: rc },
+                ) => CompatFold::Open {
+                    expr: Expr::BinOp(Box::new(le), op.clone(), Box::new(re)),
+                    changed: lc || rc,
+                },
+            }
+        }
+        Expr::Not(inner) => match fold_compat_cond(inner) {
+            CompatFold::Known(k) => CompatFold::Known(!k),
+            CompatFold::Open { expr, changed } => {
+                CompatFold::Open { expr: Expr::Not(Box::new(expr)), changed }
+            }
+        },
+        _ => CompatFold::unchanged(expr),
+    }
+}
+
 /// Per-render state for the Java backend, mirroring `RustRenderCtx`/`CRenderCtx`.
 /// Bundles the loose per-render state (precision flag, address-of variable sets,
 /// float input params, and the inline-helper counter) threaded through the
@@ -1276,6 +1381,31 @@ impl StatementEmitter for JavaStmt<'_> {
         if contains_alloc_err_return(then_body) {
             return String::new();
         }
+        // Compatibility is pinned to Default in Java: fold the branch away and
+        // splice the surviving arm in place (see `fold_compat_cond`). The dropped
+        // arm's statements are the only thing removed — the survivor renders at
+        // this `if`'s own indent, since its block is dissolved.
+        match fold_compat_cond(condition) {
+            CompatFold::Known(taken) => {
+                let kept = if taken { then_body } else { else_body };
+                return kept.iter().map(|s| self.walk_stmt(s, indent)).collect();
+            }
+            CompatFold::Open { expr, changed: true } => {
+                // A compound condition that lost a compatibility operand (e.g.
+                // `unstablePeriod == 0 && COMPATIBILITY() == METASTOCK`) re-renders
+                // through the normal path with the survivor alone. The per-operand
+                // comments no longer line up with the shortened `&&`-chain, so they
+                // are dropped rather than mis-attached.
+                let rebuilt = Statement::If {
+                    condition: expr,
+                    then_body: then_body.to_vec(),
+                    else_body: else_body.to_vec(),
+                    cond_comments: Vec::new(),
+                };
+                return self.walk_stmt(&rebuilt, indent);
+            }
+            CompatFold::Open { changed: false, .. } => {}
+        }
         // Split `if(A && B)` into nested `if(A) { if(B)` when both sides
         // contain a candle helper call (ta_candlerange/ta_candleaverage).
         // This preserves short-circuit evaluation so the expensive ternary
@@ -1550,9 +1680,15 @@ struct JavaExpr<'a> {
 impl ExprEmitter for JavaExpr<'_> {
     fn var(&self, name: &str) -> String {
         let mapped = match name {
-            "COMPATIBILITY" => "this.compatibility".to_string(),
-            "METASTOCK" => "Compatibility.Metastock".to_string(),
-            "DEFAULT" => "Compatibility.Default".to_string(),
+            // Java has no compatibility field: every read is folded away by
+            // `fold_compat_cond` before rendering. Reaching here means a new
+            // construct escaped the fold — fail loudly rather than emit a
+            // reference to a field that does not exist.
+            "COMPATIBILITY" | "METASTOCK" | "DEFAULT" => panic!(
+                "java: compatibility reference `{name}` survived the render-time fold \
+                 (Java pins the mode to Default — extend fold_compat_cond to cover \
+                 this construct)"
+            ),
             "BAD_PARAM" => "RetCode.BadParam".to_string(),
             "SUCCESS" => "RetCode.Success".to_string(),
             "ALLOC_ERR" => "RetCode.AllocErr".to_string(),
@@ -1945,8 +2081,13 @@ fn render_func_call(
                 "this.unstablePeriod[0]".to_string()
             }
             SpecialBuiltin::Compatibility => {
-                // COMPATIBILITY() -> this.compatibility
-                "this.compatibility".to_string()
+                // See the `var` hook: Java pins the mode to Default and carries no
+                // compatibility field, so a surviving read is a generator bug.
+                panic!(
+                    "java: COMPATIBILITY() survived the render-time fold (Java pins \
+                     the mode to Default — extend fold_compat_cond to cover this \
+                     construct)"
+                )
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

@@ -27,10 +27,6 @@ enum FuncUnstId {
     Natr, PlusDI, PlusDM, Rsi, Unused22, T3, None;
 }
 
-enum Compatibility {
-    Default, Metastock;
-}
-
 enum MAType {
     Sma, Ema, Wma, Dema, Tema, Trima, Kama, Mama, T3, Hma, Disabled;
 }
@@ -54,7 +50,6 @@ enum CandleSettingType {
 
 class Core {
     int[] unstablePeriod = new int[FuncUnstId.values().length];
-    Compatibility compatibility = Compatibility.Default;
     CandleSetting[] candleSettings = {
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong
         new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong
@@ -69462,9 +69457,6 @@ class Core {
           }
           int retValue;
           retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
-          if( this.compatibility == Compatibility.Metastock ) {
-             retValue -= 1;
-          }
           return retValue ;
 
        }
@@ -69555,50 +69547,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             /* Write the output. */
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-             } else {
-                outReal[outIdx++] = 0.0;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             /* Start over for the next price bar. */
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -69729,37 +69677,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-             } else {
-                outReal[outIdx++] = 0.0;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -69878,37 +69795,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-             } else {
-                outReal[outIdx++] = 0.0;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -70016,37 +69902,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-             } else {
-                outReal[outIdx++] = 0.0;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -70292,50 +70147,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             /* Write the output. */
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                lastValue_outReal = 100 * (tempValue3 / tempValue4);
-             } else {
-                lastValue_outReal = 0.0;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.OutOfRangeEndIndex ;
-             }
-             /* Start over for the next price bar. */
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -70515,50 +70326,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = inReal[today++];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / optInTimePeriod;
-             tempValue2 = prevGain / optInTimePeriod;
-             tempValue3 = tempValue2 - tempValue1;
-             tempValue4 = tempValue1 + tempValue2;
-             /* Write the output. */
-             if( !((-0.00000000000001 < tempValue4) && (tempValue4 < 0.00000000000001)) ) {
-                outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-             } else {
-                outReal[outIdx++] = 0.0;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.OutOfRangeEndIndex ;
-             }
-             /* Start over for the next price bar. */
-             today -= optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -73066,46 +72833,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed each EMA with its first
-              * input value: EMA1 from inReal[0], EMA2 from the first
-              * EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance both EMA in lockstep through the unstable period
            * of EMA2, up to the first output bar.
            */
@@ -73158,33 +72912,24 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -73239,33 +72984,24 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -73309,33 +73045,24 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -73512,46 +73239,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed each EMA with its first
-              * input value: EMA1 from inReal[0], EMA2 from the first
-              * EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance both EMA in lockstep through the unstable period
            * of EMA2, up to the first output bar.
            */
@@ -73663,46 +73377,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed each EMA with its first
-              * input value: EMA1 from inReal[0], EMA2 from the first
-              * EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance both EMA in lockstep through the unstable period
            * of EMA2, up to the first output bar.
            */
@@ -75819,18 +75520,13 @@ class Core {
            *    period is 1 who use 2th price bar or something
            *    like that... (not an obvious one...).
            */
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -75868,18 +75564,13 @@ class Core {
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = (double)inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -75964,18 +75655,13 @@ class Core {
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = (double)inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -76013,18 +75699,13 @@ class Core {
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = (double)inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -76187,18 +75868,13 @@ class Core {
            *    period is 1 who use 2th price bar or something
            *    like that... (not an obvious one...).
            */
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -76289,18 +75965,13 @@ class Core {
            *    period is 1 who use 2th price bar or something
            *    like that... (not an obvious one...).
            */
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevMA = tempReal / optInTimePeriod;
-          } else {
-             prevMA = inReal[0];
-             today = 1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
           }
@@ -101358,67 +101029,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -101507,50 +101160,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -101656,50 +101296,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += (double)inReal[today];
-                tempReal += (double)inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = (double)inReal[0];
-             prevSlow = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += (double)inReal[today];
+             tempReal += (double)inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = (double)inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -101781,50 +101408,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += (double)inReal[today];
-                tempReal += (double)inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = (double)inReal[0];
-             prevSlow = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += (double)inReal[today];
+             tempReal += (double)inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = (double)inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -102089,67 +101703,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -102302,67 +101898,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -103596,67 +103174,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -103731,50 +103291,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -103856,50 +103403,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += (double)inReal[today];
-                tempReal += (double)inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = (double)inReal[0];
-             prevSlow = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += (double)inReal[today];
+             tempReal += (double)inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = (double)inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -103967,50 +103501,37 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += (double)inReal[today];
-                tempReal += (double)inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             prevFast = (double)inReal[0];
-             prevSlow = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = (double)inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += (double)inReal[today];
+             tempReal += (double)inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           while( today <= startIdx ) {
              tempReal = (double)inReal[today++];
              prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
@@ -104248,67 +103769,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -104436,67 +103939,49 @@ class Core {
            * [outIdx] are written only after inReal[startIdx+outIdx] was
            * read.
            */
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed each price EMA with a simple average of its first
-              * 'period' price bars. The fast window is the tail of the
-              * slow window: consume the leading slow-only bars first,
-              * then accumulate both over the shared bars.
-              */
-             today = startIdx - lookbackTotal;
-             tempReal = 0.0;
-             i = optInSlowPeriod - optInFastPeriod;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevFast = 0.0;
-             i = optInFastPeriod;
-             while( i-- > 0 ) {
-                prevFast += inReal[today];
-                tempReal += inReal[today++];
-             }
-             prevSlow = tempReal / optInSlowPeriod;
-             prevFast = prevFast / optInFastPeriod;
-             /* Advance both EMA through their unstable period, up to the
-              * first MACD-line bar.
-              */
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             /* Seed the signal EMA with a simple average of the first
-              * 'signal period' MACD-line values, accumulated as they are
-              * produced.
-              */
-             prevSignal = 0.0;
-             prevSignal += macdValue;
-             i = optInSignalPeriod - 1;
-             while( i-- > 0 ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-             }
-             prevSignal = prevSignal / optInSignalPeriod;
-          } else {
-             /* Metastock/Tradestation: seed the fast and slow EMA with
-              * inReal[0], advance them in lockstep up to the first
-              * MACD-line bar, then seed the signal EMA with the first
-              * MACD-line value.
-              */
-             prevFast = inReal[0];
-             prevSlow = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackSignal ) {
-                tempReal = inReal[today++];
-                prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-                prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
-             }
-             macdValue = prevFast - prevSlow;
-             prevSignal = macdValue;
+          /* Seed each price EMA with a simple average of its first
+           * 'period' price bars. The fast window is the tail of the
+           * slow window: consume the leading slow-only bars first,
+           * then accumulate both over the shared bars.
+           */
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          /* Advance both EMA through their unstable period, up to the
+           * first MACD-line bar.
+           */
+          while( today <= startIdx - lookbackSignal ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          macdValue = prevFast - prevSlow;
+          /* Seed the signal EMA with a simple average of the first
+           * 'signal period' MACD-line values, accumulated as they are
+           * produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += macdValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             macdValue = prevFast - prevSlow;
+             prevSignal += macdValue;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
           /* Advance everything in lockstep through the unstable period
            * of the signal EMA, up to the first output bar.
            */
@@ -128908,9 +128393,6 @@ class Core {
           }
           int retValue;
           retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-          if( this.compatibility == Compatibility.Metastock ) {
-             retValue = retValue - 1;
-          }
           return retValue ;
 
        }
@@ -129002,52 +128484,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             /* Write the output. */
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                outReal[outIdx] = 0.0;
-                outIdx = outIdx + 1;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             /* Start over for the next price bar. */
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -129182,39 +128618,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                outReal[outIdx] = 0.0;
-                outIdx = outIdx + 1;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -129337,39 +128740,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                outReal[outIdx] = 0.0;
-                outIdx = outIdx + 1;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -129481,39 +128851,6 @@ class Core {
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             savePrevValue = prevValue;
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                outReal[outIdx] = 0.0;
-                outIdx = outIdx + 1;
-             }
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.Success ;
-             }
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -129766,52 +129103,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             /* Write the output. */
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                lastValue_outReal = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                lastValue_outReal = 0.0;
-                outIdx = outIdx + 1;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.OutOfRangeEndIndex ;
-             }
-             /* Start over for the next price bar. */
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -129998,52 +129289,6 @@ class Core {
            * no need to calculate since this
            * first value will be surely skip.
            */
-          if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-             /* Preserve prevValue because it may get
-              * overwritten by the output.
-              * (because output ptr could be the same as input ptr).
-              */
-             savePrevValue = prevValue;
-             /* No unstable period, so must calculate first output
-              * particular to Metastock.
-              * (Metastock re-use the first price bar, so there
-              *  is no loss/gain at first. Beats me why they
-              *  are doing all this).
-              */
-             prevGain = 0.0;
-             prevLoss = 0.0;
-             for( i = optInTimePeriod; i > 0; i -= 1 ) {
-                tempValue1 = (double)inReal[today];
-                today = today + 1;
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-             }
-             tempValue1 = prevLoss / (double)optInTimePeriod;
-             tempValue2 = prevGain / (double)optInTimePeriod;
-             /* Write the output. */
-             tempValue1 = tempValue2 + tempValue1;
-             if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-                outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-                outIdx = outIdx + 1;
-             } else {
-                outReal[outIdx] = 0.0;
-                outIdx = outIdx + 1;
-             }
-             /* Are we done? */
-             if( today > endIdx ) {
-                outBegIdx.value = startIdx;
-                outNBElement.value = outIdx;
-                return RetCode.OutOfRangeEndIndex ;
-             }
-             /* Start over for the next price bar. */
-             today = today - (int)optInTimePeriod;
-             prevValue = savePrevValue;
-          }
           /* Remaining of the processing is identical
            * for both Classic calculation and Metastock.
            */
@@ -141705,45 +140950,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -141751,25 +140984,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the first output bar.
            */
@@ -141834,50 +141060,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - lookbackEMA ) {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -141944,50 +141157,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - lookbackEMA ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -142043,50 +141243,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - lookbackEMA ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -142293,45 +141480,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -142339,25 +141514,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the first output bar.
            */
@@ -142499,45 +141667,33 @@ class Core {
            * is written only after inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - lookbackEMA * 2 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - lookbackEMA * 2 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -142545,25 +141701,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the first output bar.
            */
@@ -145026,45 +144175,33 @@ class Core {
            * inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -145072,25 +144209,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the bar before the first output.
            */
@@ -145150,50 +144280,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - (lookbackEMA + 1) ) {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx - 1 ) {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -145255,50 +144372,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - (lookbackEMA + 1) ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx - 1 ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -145349,50 +144453,37 @@ class Core {
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += (double)inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA1 = (double)inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           while( today <= startIdx - (lookbackEMA + 1) ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             tempReal = 0.0;
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           while( today <= startIdx - 1 ) {
              prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
@@ -145552,45 +144643,33 @@ class Core {
            * inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -145598,25 +144677,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the bar before the first output.
            */
@@ -145703,45 +144775,33 @@ class Core {
            * inReal[startIdx+outIdx] was read.
            */
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA1 with a simple average of the first
-              * 'period' price bars.
-              */
-             today = startIdx - lookbackTotal;
-             i = optInTimePeriod;
-             tempReal = 0.0;
-             while( i-- > 0 ) {
-                tempReal += inReal[today++];
-             }
-             prevEMA1 = tempReal / optInTimePeriod;
-             /* Advance EMA1 alone through its unstable period, up to
-              * the bar where EMA2 seeding begins.
-              */
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             /* Seed EMA2 with a simple average of the first 'period'
-              * EMA1 values, accumulated as EMA1 produces them.
-              */
-             tempReal = 0.0;
-             tempReal += prevEMA1;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-             }
-             prevEMA2 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA1 from the first price
-              * bar, EMA2 from the first EMA1 value.
-              */
-             prevEMA1 = inReal[0];
-             today = 1;
-             while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-             }
-             prevEMA2 = prevEMA1;
+          /* Seed EMA1 with a simple average of the first
+           * 'period' price bars.
+           */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
           }
+          prevEMA1 = tempReal / optInTimePeriod;
+          /* Advance EMA1 alone through its unstable period, up to
+           * the bar where EMA2 seeding begins.
+           */
+          while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+          }
+          /* Seed EMA2 with a simple average of the first 'period'
+           * EMA1 values, accumulated as EMA1 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA1;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             tempReal += prevEMA1;
+          }
+          prevEMA2 = tempReal / optInTimePeriod;
           /* Advance EMA1 and EMA2 in lockstep through the unstable
            * period of EMA2, up to the bar where EMA3 seeding begins.
            */
@@ -145749,25 +144809,18 @@ class Core {
              prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
              prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
           }
-          if( this.compatibility == Compatibility.Default ) {
-             /* Seed EMA3 with a simple average of the first 'period'
-              * EMA2 values, accumulated as EMA2 produces them.
-              */
-             tempReal = 0.0;
+          /* Seed EMA3 with a simple average of the first 'period'
+           * EMA2 values, accumulated as EMA2 produces them.
+           */
+          tempReal = 0.0;
+          tempReal += prevEMA2;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+             prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
              tempReal += prevEMA2;
-             i = optInTimePeriod - 1;
-             while( i-- > 0 ) {
-                prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-                prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-             }
-             prevEMA3 = tempReal / optInTimePeriod;
-          } else {
-             /* Metastock/Tradestation: seed EMA3 from the first EMA2
-              * value.
-              */
-             prevEMA3 = prevEMA2;
           }
+          prevEMA3 = tempReal / optInTimePeriod;
           /* Advance all three EMA in lockstep through the unstable
            * period of EMA3, up to the bar before the first output.
            */
@@ -153972,8 +153025,10 @@ public class TaCodegenServe {
         }
         else if (json.contains("\"set_compatibility\"")) {
             int mode = jsonInt(json, "mode");
-            core.compatibility = (mode == 1) ? Compatibility.Metastock : Compatibility.Default;
-            return "{\"status\":\"ok\"}";
+            if (mode == 0) {
+                return "{\"status\":\"ok\"}";
+            }
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
         }
         else if (json.contains("\"eval_predicate\"")) {
             int which = jsonInt(json, "which");
@@ -165534,6 +164589,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -165556,7 +164614,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.accbands(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1, b2);
             int lb = c2.accbandsLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -165658,6 +164715,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -165677,7 +164737,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.acos(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.acosLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -165756,6 +164815,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -165775,7 +164837,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.ad(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0);
             int lb = c2.adLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -165854,6 +164915,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -165873,7 +164937,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.add(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.addLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -165952,6 +165015,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 3;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 10;
         double[] fz_o = new double[svN];
@@ -165973,7 +165039,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.adOsc(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, beg, nb, b0);
             int lb = c2.adOscLookback(optInFastPeriod, optInSlowPeriod);
@@ -166058,6 +165123,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166078,7 +165146,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[0] = svK;
             RetCode rc = c2.adx(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.adxLookback(optInTimePeriod);
@@ -166163,6 +165230,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166183,7 +165253,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[0] = svK;
             RetCode rc = c2.adxr(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.adxrLookback(optInTimePeriod);
@@ -166268,6 +165337,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -166296,7 +165368,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -166384,6 +165455,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166405,7 +165479,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.aroon(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1);
             int lb = c2.aroonLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -166499,6 +165572,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166519,7 +165595,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.aroonOsc(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
             int lb = c2.aroonOscLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -166603,6 +165678,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -166622,7 +165700,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.asin(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.asinLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -166701,6 +165778,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -166720,7 +165800,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.atan(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.atanLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -166799,6 +165878,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166819,7 +165901,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[2] = svK;
             RetCode rc = c2.atr(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.atrLookback(optInTimePeriod);
@@ -166904,6 +165985,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -166924,7 +166008,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.avgDev(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.avgDevLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -167008,6 +166091,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -167027,7 +166113,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.avgPrice(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.avgPriceLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -167106,6 +166191,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
@@ -167137,7 +166225,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -167243,6 +166330,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167263,7 +166353,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.beta(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
             int lb = c2.betaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -167347,6 +166436,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -167366,7 +166458,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.bop(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.bopLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -167445,6 +166536,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167465,7 +166559,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.cci(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.cciLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -167549,6 +166642,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167569,7 +166665,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl2Crows(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl2CrowsLookback();
@@ -167650,6 +166745,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167670,7 +166768,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3BlackCrows(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3BlackCrowsLookback();
@@ -167751,6 +166848,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167771,7 +166871,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3Inside(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3InsideLookback();
@@ -167852,6 +166951,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167872,7 +166974,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3LineStrike(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3LineStrikeLookback();
@@ -167953,6 +167054,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -167973,7 +167077,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3Outside(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3OutsideLookback();
@@ -168054,6 +167157,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168074,7 +167180,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3StarsInSouth(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3StarsInSouthLookback();
@@ -168155,6 +167260,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168175,7 +167283,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdl3WhiteSoldiers(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdl3WhiteSoldiersLookback();
@@ -168256,6 +167363,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -168277,7 +167387,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlAbandonedBaby(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlAbandonedBabyLookback(optInPenetration);
@@ -168358,6 +167467,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168378,7 +167490,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlAdvanceBlock(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlAdvanceBlockLookback();
@@ -168459,6 +167570,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168479,7 +167593,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlBeltHold(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlBeltHoldLookback();
@@ -168560,6 +167673,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168580,7 +167696,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlBreakaway(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlBreakawayLookback();
@@ -168661,6 +167776,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168681,7 +167799,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlClosingMarubozu(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlClosingMarubozuLookback();
@@ -168762,6 +167879,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168782,7 +167902,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlConcealBabysWall(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlConcealBabysWallLookback();
@@ -168863,6 +167982,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -168883,7 +168005,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlCounterAttack(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlCounterAttackLookback();
@@ -168964,6 +168085,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 5e-1;
         double[] fz_o = new double[svN];
@@ -168985,7 +168109,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlDarkCloudCover(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlDarkCloudCoverLookback(optInPenetration);
@@ -169066,6 +168189,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169086,7 +168212,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlDoji(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlDojiLookback();
@@ -169167,6 +168292,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169187,7 +168315,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlDojiStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlDojiStarLookback();
@@ -169268,6 +168395,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169288,7 +168418,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlDragonflyDoji(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlDragonflyDojiLookback();
@@ -169369,6 +168498,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169389,7 +168521,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlEngulfing(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlEngulfingLookback();
@@ -169470,6 +168601,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -169491,7 +168625,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlEveningDojiStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlEveningDojiStarLookback(optInPenetration);
@@ -169572,6 +168705,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -169593,7 +168729,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlEveningStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlEveningStarLookback(optInPenetration);
@@ -169674,6 +168809,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169694,7 +168832,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlGapSideSideWhite(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlGapSideSideWhiteLookback();
@@ -169775,6 +168912,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169795,7 +168935,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlGravestoneDoji(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlGravestoneDojiLookback();
@@ -169876,6 +169015,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169896,7 +169038,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHammer(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHammerLookback();
@@ -169977,6 +169118,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -169997,7 +169141,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHangingMan(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHangingManLookback();
@@ -170078,6 +169221,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170098,7 +169244,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHarami(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHaramiLookback();
@@ -170179,6 +169324,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170199,7 +169347,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHaramiCross(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHaramiCrossLookback();
@@ -170280,6 +169427,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170300,7 +169450,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHignWave(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHignWaveLookback();
@@ -170381,6 +169530,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170401,7 +169553,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHikkake(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHikkakeLookback();
@@ -170482,6 +169633,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170502,7 +169656,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHikkakeMod(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHikkakeModLookback();
@@ -170583,6 +169736,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170603,7 +169759,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlHomingPigeon(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlHomingPigeonLookback();
@@ -170684,6 +169839,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170704,7 +169862,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlIdentical3Crows(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlIdentical3CrowsLookback();
@@ -170785,6 +169942,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170805,7 +169965,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlInNeck(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlInNeckLookback();
@@ -170886,6 +170045,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -170906,7 +170068,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlInvertedHammer(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlInvertedHammerLookback();
@@ -170987,6 +170148,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171007,7 +170171,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlKicking(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlKickingLookback();
@@ -171088,6 +170251,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171108,7 +170274,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlKickingByLength(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlKickingByLengthLookback();
@@ -171189,6 +170354,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171209,7 +170377,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlLadderBottom(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlLadderBottomLookback();
@@ -171290,6 +170457,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171310,7 +170480,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlLongLeggedDoji(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlLongLeggedDojiLookback();
@@ -171391,6 +170560,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171411,7 +170583,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlLongLine(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlLongLineLookback();
@@ -171492,6 +170663,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171512,7 +170686,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlMarubozu(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlMarubozuLookback();
@@ -171593,6 +170766,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -171613,7 +170789,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlMatchingLow(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlMatchingLowLookback();
@@ -171694,6 +170869,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 5e-1;
         double[] fz_o = new double[svN];
@@ -171715,7 +170893,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlMatHold(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlMatHoldLookback(optInPenetration);
@@ -171796,6 +170973,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -171817,7 +170997,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlMorningDojiStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlMorningDojiStarLookback(optInPenetration);
@@ -171898,6 +171077,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -171919,7 +171101,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlMorningStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
             int lb = c2.cdlMorningStarLookback(optInPenetration);
@@ -172000,6 +171181,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172020,7 +171204,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlOnNeck(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlOnNeckLookback();
@@ -172101,6 +171284,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172121,7 +171307,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlPiercing(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlPiercingLookback();
@@ -172202,6 +171387,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172222,7 +171410,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlRickshawMan(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlRickshawManLookback();
@@ -172303,6 +171490,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172323,7 +171513,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlRiseFall3Methods(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlRiseFall3MethodsLookback();
@@ -172404,6 +171593,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172424,7 +171616,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlSeperatingLines(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlSeperatingLinesLookback();
@@ -172505,6 +171696,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172525,7 +171719,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlShootingStar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlShootingStarLookback();
@@ -172606,6 +171799,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172626,7 +171822,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlShortLine(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlShortLineLookback();
@@ -172707,6 +171902,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172727,7 +171925,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlSpinningTop(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlSpinningTopLookback();
@@ -172808,6 +172005,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172828,7 +172028,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlStalledPattern(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlStalledPatternLookback();
@@ -172909,6 +172108,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -172929,7 +172131,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlStickSandwich(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlStickSandwichLookback();
@@ -173010,6 +172211,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173030,7 +172234,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlTakuri(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlTakuriLookback();
@@ -173111,6 +172314,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173131,7 +172337,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlTasukiGap(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlTasukiGapLookback();
@@ -173212,6 +172417,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173232,7 +172440,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlThrusting(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlThrustingLookback();
@@ -173313,6 +172520,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173333,7 +172543,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlTristar(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlTristarLookback();
@@ -173414,6 +172623,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173434,7 +172646,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlUnique3River(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlUnique3RiverLookback();
@@ -173515,6 +172726,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173535,7 +172749,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlUpsideGap2Crows(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlUpsideGap2CrowsLookback();
@@ -173616,6 +172829,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173636,7 +172852,6 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             svApplyCandleRound(c2, rd);
             RetCode rc = c2.cdlXSideGap3Methods(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.cdlXSideGap3MethodsLookback();
@@ -173717,6 +172932,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -173736,7 +172954,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.ceil(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.ceilLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -173815,6 +173032,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173835,7 +173055,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.cmf(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
             int lb = c2.cmfLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -173919,6 +173138,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -173939,7 +173161,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[3] = svK;
             RetCode rc = c2.cmo(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.cmoLookback(optInTimePeriod);
@@ -174024,6 +173245,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -174044,7 +173268,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.cmou(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.cmouLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174128,6 +173351,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -174148,7 +173374,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.correl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
             int lb = c2.correlLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174232,6 +173457,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -174251,7 +173479,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.cos(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.cosLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174330,6 +173557,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -174349,7 +173579,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.cosh(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.coshLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174428,6 +173657,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -174448,7 +173680,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.dema(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.demaLookback(optInTimePeriod);
@@ -174533,6 +173764,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -174552,7 +173786,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.div(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.divLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174631,6 +173864,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -174651,7 +173887,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[4] = svK;
             RetCode rc = c2.dx(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.dxLookback(optInTimePeriod);
@@ -174736,6 +173971,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -174756,7 +173994,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.ema(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.emaLookback(optInTimePeriod);
@@ -174841,6 +174078,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -174860,7 +174100,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.exp(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.expLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -174939,6 +174178,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -174958,7 +174200,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.floor(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.floorLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -175037,6 +174278,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -175057,7 +174301,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.hma(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.hmaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -175141,6 +174384,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175160,7 +174406,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[6] = svK;
             RetCode rc = c2.htDcPeriod(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.htDcPeriodLookback();
@@ -175240,6 +174485,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175259,7 +174507,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[7] = svK;
             RetCode rc = c2.htDcPhase(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.htDcPhaseLookback();
@@ -175339,6 +174586,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175359,7 +174609,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[8] = svK;
             RetCode rc = c2.htPhasor(0, svN - 1, fz_c, beg, nb, b0, b1);
             int lb = c2.htPhasorLookback();
@@ -175448,6 +174697,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175468,7 +174720,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[9] = svK;
             RetCode rc = c2.htSine(0, svN - 1, fz_c, beg, nb, b0, b1);
             int lb = c2.htSineLookback();
@@ -175557,6 +174808,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175576,7 +174830,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[10] = svK;
             RetCode rc = c2.htTrendline(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.htTrendlineLookback();
@@ -175656,6 +174909,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -175675,7 +174931,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[11] = svK;
             RetCode rc = c2.htTrendMode(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.htTrendModeLookback();
@@ -175754,6 +175009,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -175774,7 +175032,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.imi(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.imiLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -175858,6 +175115,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -175878,7 +175138,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[13] = svK;
             RetCode rc = c2.kama(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.kamaLookback(optInTimePeriod);
@@ -175963,6 +175222,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -175983,7 +175245,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.linearReg(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.linearRegLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176067,6 +175328,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -176087,7 +175351,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.linearRegAngle(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.linearRegAngleLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176171,6 +175434,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -176191,7 +175457,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.linearRegIntercept(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.linearRegInterceptLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176275,6 +175540,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -176295,7 +175563,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.linearRegSlope(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.linearRegSlopeLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176379,6 +175646,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -176398,7 +175668,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.ln(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.lnLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176477,6 +175746,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -176496,7 +175768,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.log10(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.log10Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -176575,6 +175846,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
@@ -176602,7 +175876,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -176690,6 +175963,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
@@ -176714,7 +175990,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.macd(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2);
             int lb = c2.macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -176817,6 +176092,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int _raw_optInFastMAType = json.contains("\"optInFastMAType\"") ? jsonInt(json, "optInFastMAType") : 0;
         if (_raw_optInFastMAType < 0 || _raw_optInFastMAType >= MAType.values().length) {
@@ -176862,7 +176140,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -176968,6 +176245,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -176990,7 +176270,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.macdFix(0, svN - 1, fz_c, optInSignalPeriod, beg, nb, b0, b1, b2);
             int lb = c2.macdFixLookback(optInSignalPeriod);
@@ -177093,6 +176372,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double optInFastLimit = json.contains("\"optInFastLimit\"") ? jsonDouble(json, "optInFastLimit") : 5e-1;
         double optInSlowLimit = json.contains("\"optInSlowLimit\"") ? jsonDouble(json, "optInSlowLimit") : 5e-2;
         double[] fz_o = new double[svN];
@@ -177115,7 +176397,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[14] = svK;
             RetCode rc = c2.mama(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, beg, nb, b0, b1);
             int lb = c2.mamaLookback(optInFastLimit, optInSlowLimit);
@@ -177204,6 +176485,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInMinPeriod = json.contains("\"optInMinPeriod\"") ? jsonInt(json, "optInMinPeriod") : 2;
         int optInMaxPeriod = json.contains("\"optInMaxPeriod\"") ? jsonInt(json, "optInMaxPeriod") : 30;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
@@ -177233,7 +176517,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -177321,6 +176604,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177341,7 +176627,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.max(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.maxLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177425,6 +176710,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177445,7 +176733,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.maxIndex(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.maxIndexLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177528,6 +176815,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -177547,7 +176837,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.medPrice(0, svN - 1, fz_h, fz_l, beg, nb, b0);
             int lb = c2.medPriceLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177626,6 +176915,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177646,7 +176938,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.mfi(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
             int lb = c2.mfiLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177730,6 +177021,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177750,7 +177044,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.midPoint(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.midPointLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177834,6 +177127,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177854,7 +177150,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.midPrice(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
             int lb = c2.midPriceLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -177938,6 +177233,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -177958,7 +177256,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.min(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.minLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178042,6 +177339,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178062,7 +177362,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.minIndex(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.minIndexLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178145,6 +177444,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178166,7 +177468,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.minMax(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1);
             int lb = c2.minMaxLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178260,6 +177561,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178281,7 +177585,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.minMaxIndex(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1);
             int lb = c2.minMaxIndexLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178373,6 +177676,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178393,7 +177699,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[16] = svK;
             RetCode rc = c2.minusDI(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.minusDILookback(optInTimePeriod);
@@ -178478,6 +177783,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178498,7 +177806,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[17] = svK;
             RetCode rc = c2.minusDM(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
             int lb = c2.minusDMLookback(optInTimePeriod);
@@ -178583,6 +177890,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178603,7 +177913,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.mom(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.momLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178687,6 +177996,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -178706,7 +178018,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.mult(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.multLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178785,6 +178096,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -178805,7 +178119,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[18] = svK;
             RetCode rc = c2.natr(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.natrLookback(optInTimePeriod);
@@ -178890,6 +178203,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -178909,7 +178225,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.nvi(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.nviLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -178988,6 +178303,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -179007,7 +178325,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.obv(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.obvLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179086,6 +178403,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179106,7 +178426,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[19] = svK;
             RetCode rc = c2.plusDI(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.plusDILookback(optInTimePeriod);
@@ -179191,6 +178510,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179211,7 +178533,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[20] = svK;
             RetCode rc = c2.plusDM(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
             int lb = c2.plusDMLookback(optInTimePeriod);
@@ -179296,6 +178617,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -179324,7 +178648,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -179412,6 +178735,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -179431,7 +178757,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.pvi(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.pviLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179510,6 +178835,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -179538,7 +178866,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -179626,6 +178953,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179646,7 +178976,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.roc(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.rocLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179730,6 +179059,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179750,7 +179082,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.rocP(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.rocPLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179834,6 +179165,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179854,7 +179188,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.rocR(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.rocRLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -179938,6 +179271,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -179958,7 +179294,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.rocR100(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.rocR100Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180042,6 +179377,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -180062,7 +179400,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[21] = svK;
             RetCode rc = c2.rsi(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.rsiLookback(optInTimePeriod);
@@ -180147,6 +179484,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double optInAcceleration = json.contains("\"optInAcceleration\"") ? jsonDouble(json, "optInAcceleration") : 2e-2;
         double optInMaximum = json.contains("\"optInMaximum\"") ? jsonDouble(json, "optInMaximum") : 2e-1;
         double[] fz_o = new double[svN];
@@ -180168,7 +179508,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sar(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, beg, nb, b0);
             int lb = c2.sarLookback(optInAcceleration, optInMaximum);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180247,6 +179586,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double optInStartValue = json.contains("\"optInStartValue\"") ? jsonDouble(json, "optInStartValue") : 0e0;
         double optInOffsetOnReverse = json.contains("\"optInOffsetOnReverse\"") ? jsonDouble(json, "optInOffsetOnReverse") : 0e0;
         double optInAccelerationInitLong = json.contains("\"optInAccelerationInitLong\"") ? jsonDouble(json, "optInAccelerationInitLong") : 2e-2;
@@ -180274,7 +179616,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sarExt(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, beg, nb, b0);
             int lb = c2.sarExtLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180353,6 +179694,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -180372,7 +179716,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sin(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.sinLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180451,6 +179794,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -180470,7 +179816,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sinh(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.sinhLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180549,6 +179894,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -180569,7 +179917,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sma(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.smaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180653,6 +180000,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -180672,7 +180022,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sqrt(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.sqrtLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180751,6 +180100,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 1e0;
         double[] fz_o = new double[svN];
@@ -180772,7 +180124,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.stdDev(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0);
             int lb = c2.stdDevLookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -180856,6 +180207,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
         int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 0;
@@ -180893,7 +180247,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -180991,6 +180344,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
         int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : 0;
@@ -181020,7 +180376,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -181118,6 +180473,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
@@ -181148,7 +180506,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
@@ -181247,6 +180604,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -181266,7 +180626,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sub(0, svN - 1, fz_c, fz_v, beg, nb, b0);
             int lb = c2.subLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -181345,6 +180704,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -181365,7 +180727,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.sum(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.sumLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -181449,6 +180810,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInVFactor = json.contains("\"optInVFactor\"") ? jsonDouble(json, "optInVFactor") : 7e-1;
         double[] fz_o = new double[svN];
@@ -181470,7 +180834,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[23] = svK;
             RetCode rc = c2.t3(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, beg, nb, b0);
             int lb = c2.t3Lookback(optInTimePeriod, optInVFactor);
@@ -181555,6 +180918,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -181574,7 +180940,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.tan(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.tanLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -181653,6 +181018,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -181672,7 +181040,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.tanh(0, svN - 1, fz_c, beg, nb, b0);
             int lb = c2.tanhLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -181751,6 +181118,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -181771,7 +181141,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.tema(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.temaLookback(optInTimePeriod);
@@ -181856,6 +181225,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -181875,7 +181247,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.trueRange(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.trueRangeLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -181954,6 +181325,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -181974,7 +181348,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.trima(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.trimaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182058,6 +181431,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -182078,7 +181454,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             c2.unstablePeriod[5] = svK;
             RetCode rc = c2.trix(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.trixLookback(optInTimePeriod);
@@ -182163,6 +181538,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -182183,7 +181561,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.tsf(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.tsfLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182267,6 +181644,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -182286,7 +181666,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.typPrice(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.typPriceLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182365,6 +181744,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod1 = json.contains("\"optInTimePeriod1\"") ? jsonInt(json, "optInTimePeriod1") : 7;
         int optInTimePeriod2 = json.contains("\"optInTimePeriod2\"") ? jsonInt(json, "optInTimePeriod2") : 14;
         int optInTimePeriod3 = json.contains("\"optInTimePeriod3\"") ? jsonInt(json, "optInTimePeriod3") : 28;
@@ -182387,7 +181769,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.ultOsc(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, beg, nb, b0);
             int lb = c2.ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182471,6 +181852,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 1e0;
         double[] fz_o = new double[svN];
@@ -182492,7 +181876,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.variance(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0);
             int lb = c2.varianceLookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182576,6 +181959,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -182596,7 +181982,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.vwma(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
             int lb = c2.vwmaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182680,6 +182065,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -182699,7 +182087,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.wclPrice(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
             int lb = c2.wclPriceLookback();
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182778,6 +182165,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -182798,7 +182188,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.willR(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.willRLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
@@ -182882,6 +182271,9 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -182902,7 +182294,6 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;
             RetCode rc = c2.wma(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
             int lb = c2.wmaLookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {

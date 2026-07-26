@@ -88,18 +88,13 @@
        *    period is 1 who use 2th price bar or something
        *    like that... (not an obvious one...).
        */
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
@@ -137,18 +132,13 @@
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += (double)inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = (double)inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += (double)inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
@@ -233,18 +223,13 @@
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += (double)inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = (double)inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += (double)inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
@@ -282,18 +267,13 @@
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += (double)inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = (double)inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += (double)inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
@@ -456,18 +436,13 @@
        *    period is 1 who use 2th price bar or something
        *    like that... (not an obvious one...).
        */
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
@@ -558,18 +533,13 @@
        *    period is 1 who use 2th price bar or something
        *    like that... (not an obvious one...).
        */
-      if( this.compatibility == Compatibility.Default ) {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else {
-         prevMA = inReal[0];
-         today = 1;
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
