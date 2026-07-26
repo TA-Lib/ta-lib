@@ -52,6 +52,8 @@
  *  021807 MF     Initial Version
  *  072026 MF,CC  Fix #130. Stage results locally so in-place (outReal==inReal)
  *                calls no longer corrupt the input the ma() passes re-read.
+ *  072626 MF,CC  #143. Group outputs by clamped period (counting sort) and
+ *                bound each ma() pass at its period's last use.
  */
 
 // Import types from parent module
@@ -190,12 +192,19 @@ impl Core {
         }
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
         let mut tempInt: usize = 0_usize;
         let mut curPeriod: usize = 0_usize;
+        let mut firstOccurrence: usize = 0_usize;
+        let mut lastOccurrence: usize = 0_usize;
+        let mut bucketStart: usize = 0_usize;
+        let mut bucketEnd: usize = 0_usize;
+        let mut minUsed: usize = 0_usize;
+        let mut maxUsed: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
+        let mut sortedIdx: Vec<i32> = Vec::new();
+        let mut bucketOfs: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
         let mut finalIsAllocated: usize = 0_usize;
@@ -241,6 +250,8 @@ impl Core {
         // Allocate intermediate local buffer.
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        // Output indices grouped by clamped period (counting sort below).
+        sortedIdx = vec![0_i32; (outputSize * 1) as usize];
         // In-place defence (issue #130): each ma() pass below re-reads inReal over
         // the full range, so with outReal==inReal the results are staged in a
         // scratch buffer and copied once at the end. A regular call writes
@@ -252,8 +263,17 @@ impl Core {
         } else {
             localFinalArray = outReal.to_vec();
         }
-        // Copy caller array of period into local buffer.
-        // At the same time, truncate to min/max.
+        // Read the caller array of period, truncate to min/max, and track the
+        // range of periods actually used so all later work is sized by the data,
+        // not by optInMaxPeriod. The floor at 1 (and on minUsed's start value) is
+        // inert through the guarded API (optInMinPeriod >= 1); it keeps an
+        // off-contract unguarded call with a period below 1 from indexing the
+        // occurrence tables out of range.
+        minUsed = (optInMaxPeriod) as usize;
+        if minUsed < 1 {
+            minUsed = 1;
+        }
+        maxUsed = 1;
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -263,46 +283,105 @@ impl Core {
             } else if tempInt > (optInMaxPeriod) as usize {
                 tempInt = (optInMaxPeriod) as usize;
             }
+            if tempInt < 1 {
+                tempInt = 1;
+            }
             localPeriodArray[i] = (tempInt) as i32;
-            i += 1;
-        }
-        // Process each element of the input.
-        // For each possible period value, the MA is calculated
-        // only once.
-        // The outReal is then fill up for all element with
-        // the same period.
-        // A local flag (value 0) is set in localPeriodArray
-        // to avoid doing a second time the same calculation.
-        // for( i = 0; i < outputSize; i += 1 )
-        i = 0;
-        while i < outputSize {
-            curPeriod = (localPeriodArray[i]) as usize;
-            if curPeriod != 0 {
-                // TODO: This portion of the function can be slightly speed
-                //       optimized by making the function without unstable period
-                //       start their calculation at 'startIdx+i' instead of startIdx.
-                // Calculation of the MA required.
-                retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
-                if retCode != RetCode::Success {
-                    if finalIsAllocated != 0 {
-                    }
-                    (*outBegIdx) = 0;
-                    (*outNBElement) = 0;
-                    return retCode;
-                }
-                localFinalArray[i] = localOutputArray[i];
-                // for( j = i + 1; j < outputSize; j += 1 )
-                j = i + 1;
-                while j < outputSize {
-                    if (localPeriodArray[j]) as usize == curPeriod {
-                        localPeriodArray[j] = 0;
-                        // Flag to avoid recalculation
-                        localFinalArray[j] = localOutputArray[j];
-                    }
-                    j += 1;
-                }
+            if tempInt < minUsed {
+                minUsed = tempInt;
+            }
+            if tempInt > maxUsed {
+                maxUsed = tempInt;
             }
             i += 1;
+        }
+        // Per-period bucket cursor for the counting sort; indexed by absolute
+        // period value, so sized by the largest period actually used.
+        bucketOfs = vec![0_i32; ((maxUsed + 2) * 1) as usize];
+        if minUsed == maxUsed {
+            // Single distinct period: one MA pass, written straight into the
+            // destination buffer. Nothing to group or copy.
+            retCode = self.ma_unguarded(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            if retCode != RetCode::Success {
+                if finalIsAllocated != 0 {
+                }
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return retCode;
+            }
+        } else {
+            // Counting sort: sortedIdx ends up holding the output indices ordered
+            // by period, one contiguous ascending slice per distinct period, with
+            // bucketOfs[p] the end of period p's slice.
+            for curPeriod in (minUsed as usize)..(maxUsed + 1 as usize) + 1 {
+                bucketOfs[curPeriod] = 0;
+            }
+            curPeriod = (maxUsed + 1 as usize) + 1;
+            // for( i = 0; i < outputSize; i += 1 )
+            i = 0;
+            while i < outputSize {
+                bucketOfs[(localPeriodArray[i] + 1) as usize] = (bucketOfs[(localPeriodArray[i] + 1) as usize] + 1) as i32;
+                i += 1;
+            }
+            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
+                bucketOfs[curPeriod + 1] = (bucketOfs[curPeriod + 1] + bucketOfs[curPeriod]) as i32;
+            }
+            curPeriod = (maxUsed as usize) + 1;
+            // for( i = 0; i < outputSize; i += 1 )
+            i = 0;
+            while i < outputSize {
+                tempInt = (localPeriodArray[i]) as usize;
+                sortedIdx[(bucketOfs[tempInt]) as usize] = (i) as i32;
+                bucketOfs[tempInt] = (bucketOfs[tempInt] + 1) as i32;
+                i += 1;
+            }
+            // One MA pass per period actually requested, ending at the last output
+            // that uses it: outputs before that point cannot depend on later input
+            // (every MA here fills forward), so the shorter range is bit-identical.
+            // The pass must still START at startIdx: the window MAs (SMA, WMA,
+            // TRIMA, HMA) slide a running accumulator seeded at startIdx-lookback,
+            // so starting at the period's first use would change the rounding path
+            // and break bit-identity, as would moving any recursive MA's warm-up.
+            // The direct indexing of localOutputArray also relies on ma_lookback
+            // being non-decreasing in the period, so the inner call never moves
+            // its own start up. Both properties are pinned by the MAVP/GROUPING
+            // regression test.
+            bucketStart = 0;
+            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
+                bucketEnd = (bucketOfs[curPeriod]) as usize;
+                if bucketEnd > bucketStart {
+                    firstOccurrence = (sortedIdx[bucketStart]) as usize;
+                    lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
+                    // Calculation of the MA required.
+                    retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    if retCode != RetCode::Success {
+                        if finalIsAllocated != 0 {
+                        }
+                        (*outBegIdx) = 0;
+                        (*outNBElement) = 0;
+                        return retCode;
+                    }
+                    if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
+                        // The period's outputs form one contiguous run: block copy.
+                        {
+            let _n = ((bucketEnd - bucketStart) * 1) as usize;
+            let _di = (firstOccurrence) as usize;
+            let _si = (firstOccurrence) as usize;
+            localFinalArray[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
+        };
+                    } else {
+                        // for( i = bucketStart; i < bucketEnd; i += 1 )
+                        i = bucketStart;
+                        while i < bucketEnd {
+                            tempInt = (sortedIdx[i]) as usize;
+                            localFinalArray[tempInt] = localOutputArray[tempInt];
+                            i += 1;
+                        }
+                    }
+                }
+                bucketStart = bucketEnd;
+            }
+            curPeriod = (maxUsed as usize) + 1;
         }
         // Pointer-inequality guard, not finalIsAllocated: in backends where the
         // scratch election materializes as a copy (Rust), the copy-back must
@@ -343,12 +422,19 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
         let mut tempInt: usize = 0_usize;
         let mut curPeriod: usize = 0_usize;
+        let mut firstOccurrence: usize = 0_usize;
+        let mut lastOccurrence: usize = 0_usize;
+        let mut bucketStart: usize = 0_usize;
+        let mut bucketEnd: usize = 0_usize;
+        let mut minUsed: usize = 0_usize;
+        let mut maxUsed: usize = 0_usize;
         let mut localPeriodArray: Vec<i32> = Vec::new();
+        let mut sortedIdx: Vec<i32> = Vec::new();
+        let mut bucketOfs: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
         let mut localFinalArray: Vec<f64> = Vec::new();
         let mut finalIsAllocated: usize = 0_usize;
@@ -387,6 +473,7 @@ impl Core {
         outputSize = endIdx - tempInt + 1;
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
+        sortedIdx = vec![0_i32; (outputSize * 1) as usize];
         finalIsAllocated = 0;
         if outReal.as_ptr() == inReal.as_ptr() {
             finalIsAllocated = 1;
@@ -394,6 +481,11 @@ impl Core {
         } else {
             localFinalArray = outReal.to_vec();
         }
+        minUsed = (optInMaxPeriod) as usize;
+        if minUsed < 1 {
+            minUsed = 1;
+        }
+        maxUsed = 1;
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
@@ -403,34 +495,85 @@ impl Core {
             } else if tempInt > (optInMaxPeriod) as usize {
                 tempInt = (optInMaxPeriod) as usize;
             }
+            if tempInt < 1 {
+                tempInt = 1;
+            }
             localPeriodArray[i] = (tempInt) as i32;
-            i += 1;
-        }
-        // for( i = 0; i < outputSize; i += 1 )
-        i = 0;
-        while i < outputSize {
-            curPeriod = (localPeriodArray[i]) as usize;
-            if curPeriod != 0 {
-                retCode = self.ma_unguarded(startIdx, endIdx, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
-                if retCode != RetCode::Success {
-                    if finalIsAllocated != 0 {
-                    }
-                    (*outBegIdx) = 0;
-                    (*outNBElement) = 0;
-                    return retCode;
-                }
-                localFinalArray[i] = localOutputArray[i];
-                // for( j = i + 1; j < outputSize; j += 1 )
-                j = i + 1;
-                while j < outputSize {
-                    if (localPeriodArray[j]) as usize == curPeriod {
-                        localPeriodArray[j] = 0;
-                        localFinalArray[j] = localOutputArray[j];
-                    }
-                    j += 1;
-                }
+            if tempInt < minUsed {
+                minUsed = tempInt;
+            }
+            if tempInt > maxUsed {
+                maxUsed = tempInt;
             }
             i += 1;
+        }
+        bucketOfs = vec![0_i32; ((maxUsed + 2) * 1) as usize];
+        if minUsed == maxUsed {
+            retCode = self.ma_unguarded(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            if retCode != RetCode::Success {
+                if finalIsAllocated != 0 {
+                }
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return retCode;
+            }
+        } else {
+            for curPeriod in (minUsed as usize)..(maxUsed + 1 as usize) + 1 {
+                bucketOfs[curPeriod] = 0;
+            }
+            curPeriod = (maxUsed + 1 as usize) + 1;
+            // for( i = 0; i < outputSize; i += 1 )
+            i = 0;
+            while i < outputSize {
+                bucketOfs[(localPeriodArray[i] + 1) as usize] = (bucketOfs[(localPeriodArray[i] + 1) as usize] + 1) as i32;
+                i += 1;
+            }
+            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
+                bucketOfs[curPeriod + 1] = (bucketOfs[curPeriod + 1] + bucketOfs[curPeriod]) as i32;
+            }
+            curPeriod = (maxUsed as usize) + 1;
+            // for( i = 0; i < outputSize; i += 1 )
+            i = 0;
+            while i < outputSize {
+                tempInt = (localPeriodArray[i]) as usize;
+                sortedIdx[(bucketOfs[tempInt]) as usize] = (i) as i32;
+                bucketOfs[tempInt] = (bucketOfs[tempInt] + 1) as i32;
+                i += 1;
+            }
+            bucketStart = 0;
+            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
+                bucketEnd = (bucketOfs[curPeriod]) as usize;
+                if bucketEnd > bucketStart {
+                    firstOccurrence = (sortedIdx[bucketStart]) as usize;
+                    lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
+                    retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    if retCode != RetCode::Success {
+                        if finalIsAllocated != 0 {
+                        }
+                        (*outBegIdx) = 0;
+                        (*outNBElement) = 0;
+                        return retCode;
+                    }
+                    if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
+                        {
+            let _n = ((bucketEnd - bucketStart) * 1) as usize;
+            let _di = (firstOccurrence) as usize;
+            let _si = (firstOccurrence) as usize;
+            localFinalArray[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
+        };
+                    } else {
+                        // for( i = bucketStart; i < bucketEnd; i += 1 )
+                        i = bucketStart;
+                        while i < bucketEnd {
+                            tempInt = (sortedIdx[i]) as usize;
+                            localFinalArray[tempInt] = localOutputArray[tempInt];
+                            i += 1;
+                        }
+                    }
+                }
+                bucketStart = bucketEnd;
+            }
+            curPeriod = (maxUsed as usize) + 1;
         }
         if localFinalArray.as_ptr() != outReal.as_ptr() {
             {

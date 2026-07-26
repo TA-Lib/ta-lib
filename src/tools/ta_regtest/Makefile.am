@@ -34,6 +34,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_imi.c \
 	ta_test_func/test_avgdev.c \
 	ta_test_func/test_period_boundary.c \
+	ta_test_func/test_mavp.c \
 	ta_test_func/test_s_overflow.c \
 	ta_test_func/test_composite.c \
 	ta_test_func/test_cmf.c \

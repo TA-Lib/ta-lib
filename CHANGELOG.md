@@ -21,13 +21,16 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - HMA: Hull Moving Average (#139).
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
-### Speed Optimisations
-- ~3x to 7x faster: DEMA, TEMA and TRIX
-- ~8x faster: MACD and MACDFIX
-- ~8x faster: MACDEXT when MA types are EMA.
-- ~2.4x faster: ACCBANDS
-- ~20% faster: VAR, STDDEV, BBANDS
-- ~10% faster: ATR and NATR
+
+### Faster
+- ~3x to 7x: DEMA, TEMA and TRIX
+- ~8x: MACD and MACDFIX
+- ~8x: MACDEXT when MA types are EMA.
+- ~2.4x: ACCBANDS
+- ~30%: MAVP (#143). Thanks @dexhunter !
+- ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
+- ~20%: VAR, STDDEV, BBANDS
+- ~10%: ATR and NATR
 
 ### Changed
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
