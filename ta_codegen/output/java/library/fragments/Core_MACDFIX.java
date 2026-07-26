@@ -30,15 +30,15 @@
       return emaLookback(26) + emaLookback(optInSignalPeriod) ;
 
    }
-   public RetCode macdFix( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           int optInSignalPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outMACD[],
-                           double outMACDSignal[],
-                           double outMACDHist[] )
+   RetCode macdFixInternal( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInSignalPeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outMACD[],
+                            double outMACDSignal[],
+                            double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -196,15 +196,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macdFixUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInSignalPeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outMACD[],
-                                    double outMACDSignal[],
-                                    double outMACDHist[] )
+   RetCode macdFixUnguardedInternal( int startIdx,
+                                     int endIdx,
+                                     double inReal[],
+                                     int optInSignalPeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outMACD[],
+                                     double outMACDSignal[],
+                                     double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -294,15 +294,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macdFix( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           int optInSignalPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outMACD[],
-                           double outMACDSignal[],
-                           double outMACDHist[] )
+   RetCode macdFixInternal( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInSignalPeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outMACD[],
+                            double outMACDSignal[],
+                            double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -406,15 +406,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macdFixUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInSignalPeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outMACD[],
-                                    double outMACDSignal[],
-                                    double outMACDHist[] )
+   RetCode macdFixUnguardedInternal( int startIdx,
+                                     int endIdx,
+                                     float inReal[],
+                                     int optInSignalPeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outMACD[],
+                                     double outMACDSignal[],
+                                     double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -504,6 +504,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange macdFix( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInSignalPeriod,
+                            double outMACD[],
+                            double outMACDSignal[],
+                            double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = macdFixInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode != RetCode.Success ) {
+         throw failure("MACDFIX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macdFixUnguarded( int startIdx,
+                                     int endIdx,
+                                     double inReal[],
+                                     int optInSignalPeriod,
+                                     double outMACD[],
+                                     double outMACDSignal[],
+                                     double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      macdFixUnguardedInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macdFix( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInSignalPeriod,
+                            double outMACD[],
+                            double outMACDSignal[],
+                            double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = macdFixInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode != RetCode.Success ) {
+         throw failure("MACDFIX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macdFixUnguarded( int startIdx,
+                                     int endIdx,
+                                     float inReal[],
+                                     int optInSignalPeriod,
+                                     double outMACD[],
+                                     double outMACDSignal[],
+                                     double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      macdFixUnguardedInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -534,8 +592,15 @@
       double cur_outMACDSignal;
       double cur_outMACDHist;
       Value cachedValue;
+      OutRange fillRange;
 
       MacdFixStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#macdFixOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MacdFixStream( MacdFixStream other ) {
          this.core = other.core;
@@ -550,6 +615,7 @@
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -1009,11 +1075,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MacdFixStream#fillRange()}.
     */
-   public MacdFixStream macdFixOpenAndFill( double inReal[], int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   public MacdFixStream macdFixOpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       MacdFixStream sp = new MacdFixStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = macdFixOpenAndFillBody(sp, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

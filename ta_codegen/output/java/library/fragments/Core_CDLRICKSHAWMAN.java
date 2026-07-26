@@ -26,15 +26,15 @@
       return Math.max(Math.max(BodyDoji_avgPeriod, ShadowLong_avgPeriod), Near_avgPeriod) ;
 
    }
-   public RetCode cdlRickshawMan( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlRickshawManInternal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -135,15 +135,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRickshawManUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlRickshawManUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -212,15 +212,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRickshawMan( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlRickshawManInternal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -295,15 +295,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRickshawManUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlRickshawManUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -372,6 +372,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlRickshawMan( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlRickshawManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLRICKSHAWMAN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRickshawManUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlRickshawManUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRickshawMan( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlRickshawManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLRICKSHAWMAN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRickshawManUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlRickshawManUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -422,8 +480,15 @@
       int cs_ShadowLong_avgPeriod;
       double cs_ShadowLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlRickshawManStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlRickshawManOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlRickshawManStream( CdlRickshawManStream other ) {
          this.core = other.core;
@@ -458,6 +523,7 @@
          this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
          this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -953,11 +1019,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlRickshawManStream#fillRange()}.
     */
-   public CdlRickshawManStream cdlRickshawManOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlRickshawManStream cdlRickshawManOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlRickshawManStream sp = new CdlRickshawManStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlRickshawManOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

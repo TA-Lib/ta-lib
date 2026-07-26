@@ -34,15 +34,15 @@
       return movingAverageLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
-   public RetCode ppo( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInFastPeriod,
-                       int optInSlowPeriod,
-                       MAType optInMAType,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode ppoInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MAType optInMAType,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -80,12 +80,12 @@
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -105,15 +105,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode ppoUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInFastPeriod,
-                                int optInSlowPeriod,
-                                MAType optInMAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode ppoUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInFastPeriod,
+                                 int optInSlowPeriod,
+                                 MAType optInMAType,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -129,11 +129,11 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -148,15 +148,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode ppo( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInFastPeriod,
-                       int optInSlowPeriod,
-                       MAType optInMAType,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode ppoInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MAType optInMAType,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -188,11 +188,11 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -207,15 +207,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode ppoUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInFastPeriod,
-                                int optInSlowPeriod,
-                                MAType optInMAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode ppoUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInFastPeriod,
+                                 int optInSlowPeriod,
+                                 MAType optInMAType,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -231,11 +231,11 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -249,6 +249,64 @@
          }
       }
       return RetCode.Success ;
+   }
+   public OutRange ppo( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MAType optInMAType,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ppoInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("PPO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ppoUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInFastPeriod,
+                                 int optInSlowPeriod,
+                                 MAType optInMAType,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ppoUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ppo( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MAType optInMAType,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ppoInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("PPO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ppoUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInFastPeriod,
+                                 int optInSlowPeriod,
+                                 MAType optInMAType,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ppoUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -275,8 +333,15 @@
       double cur_outReal;
       MovingAverageStream sub0;
       MovingAverageStream sub1;
+      OutRange fillRange;
 
       PpoStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#ppoOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       PpoStream( PpoStream other ) {
          this.core = other.core;
@@ -286,6 +351,7 @@
          this.cur_outReal = other.cur_outReal;
          this.sub0 = new MovingAverageStream(other.sub0);
          this.sub1 = new MovingAverageStream(other.sub1);
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -387,7 +453,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInFastPeriod, optInMAType);
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -395,7 +461,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInSlowPeriod, optInMAType);
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -470,7 +536,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInFastPeriod, optInMAType);
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -478,7 +544,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInSlowPeriod, optInMAType);
-      retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -545,11 +611,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link PpoStream#fillRange()}.
     */
-   public PpoStream ppoOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public PpoStream ppoOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
       PpoStream sp = new PpoStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = ppoOpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

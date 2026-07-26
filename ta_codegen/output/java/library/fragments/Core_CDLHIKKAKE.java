@@ -23,15 +23,15 @@
       return 5 ;
 
    }
-   public RetCode cdlHikkake( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlHikkakeInternal( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -131,15 +131,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkakeUnguarded( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlHikkakeUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -198,15 +198,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkake( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlHikkakeInternal( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -271,15 +271,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkakeUnguarded( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlHikkakeUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -338,6 +338,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlHikkake( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHikkakeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIKKAKE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkakeUnguarded( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHikkakeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkake( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHikkakeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIKKAKE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkakeUnguarded( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHikkakeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -366,8 +424,15 @@
       double lag1_inLow;
       double lag2_inLow;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlHikkakeStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlHikkakeOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlHikkakeStream( CdlHikkakeStream other ) {
          this.core = other.core;
@@ -380,6 +445,7 @@
          this.lag1_inLow = other.lag1_inLow;
          this.lag2_inLow = other.lag2_inLow;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -709,11 +775,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlHikkakeStream#fillRange()}.
     */
-   public CdlHikkakeStream cdlHikkakeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlHikkakeStream cdlHikkakeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlHikkakeStream sp = new CdlHikkakeStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlHikkakeOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

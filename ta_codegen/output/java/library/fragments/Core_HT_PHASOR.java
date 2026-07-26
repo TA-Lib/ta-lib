@@ -19,13 +19,13 @@
       return 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()] ;
 
    }
-   public RetCode htPhasor( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outInPhase[],
-                            double outQuadrature[] )
+   RetCode htPhasorInternal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outInPhase[],
+                             double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -366,13 +366,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htPhasorUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outInPhase[],
-                                     double outQuadrature[] )
+   RetCode htPhasorUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outInPhase[],
+                                      double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -651,13 +651,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htPhasor( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outInPhase[],
-                            double outQuadrature[] )
+   RetCode htPhasorInternal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outInPhase[],
+                             double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -945,13 +945,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htPhasorUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outInPhase[],
-                                     double outQuadrature[] )
+   RetCode htPhasorUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outInPhase[],
+                                      double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1230,6 +1230,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htPhasor( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             double outInPhase[],
+                             double outQuadrature[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htPhasorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_PHASOR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htPhasorUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      double outInPhase[],
+                                      double outQuadrature[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htPhasorUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htPhasor( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             double outInPhase[],
+                             double outQuadrature[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htPhasorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_PHASOR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htPhasorUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      double outInPhase[],
+                                      double outQuadrature[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htPhasorUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1306,8 +1356,15 @@
       double cur_outInPhase;
       double cur_outQuadrature;
       Value cachedValue;
+      OutRange fillRange;
 
       HtPhasorStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htPhasorOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtPhasorStream( HtPhasorStream other ) {
          this.core = other.core;
@@ -1368,6 +1425,7 @@
          this.cur_outInPhase = other.cur_outInPhase;
          this.cur_outQuadrature = other.cur_outQuadrature;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -2432,11 +2490,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtPhasorStream#fillRange()}.
     */
-   public HtPhasorStream htPhasorOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   public HtPhasorStream htPhasorOpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
       HtPhasorStream sp = new HtPhasorStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htPhasorOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

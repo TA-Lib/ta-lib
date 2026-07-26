@@ -20,15 +20,15 @@
       return BodyLong_avgPeriod + 1 ;
 
    }
-   public RetCode cdlPiercing( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlPiercingInternal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -111,15 +111,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlPiercingUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlPiercingUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -166,15 +166,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlPiercing( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlPiercingInternal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -227,15 +227,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlPiercingUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlPiercingUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -282,6 +282,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlPiercing( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlPiercingInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLPIERCING", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlPiercingUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlPiercingUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlPiercing( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlPiercingInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLPIERCING", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlPiercingUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlPiercingUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -324,8 +382,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlPiercingStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlPiercingOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlPiercingStream( CdlPiercingStream other ) {
          this.core = other.core;
@@ -352,6 +417,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -764,11 +830,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlPiercingStream#fillRange()}.
     */
-   public CdlPiercingStream cdlPiercingOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlPiercingStream cdlPiercingOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlPiercingStream sp = new CdlPiercingStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlPiercingOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

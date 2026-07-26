@@ -9,7 +9,7 @@ toc: false
 The Java API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The Java library is a native port of TA-Lib in the `com.tictactec.ta.lib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays, and is **bit-identical** to the C library over the same inputs.
+The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays, and is **bit-identical** to the C library over the same inputs.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [Java Streaming API](/api/java/stream/).
 
@@ -18,9 +18,9 @@ To process a live feed one bar at a time instead of a whole array, see the compa
 Each indicator takes a `startIdx`/`endIdx` range, the inputs, the optional parameters, two `MInteger` boxes reporting where the valid output begins and how many were written, and the caller-provided output array(s):
 
 ```java
-import com.tictactec.ta.lib.Core;
-import com.tictactec.ta.lib.MInteger;
-import com.tictactec.ta.lib.RetCode;
+import io.github.talib.Core;
+import io.github.talib.MInteger;
+import io.github.talib.RetCode;
 
 Core core = new Core();                 // create once, reuse
 

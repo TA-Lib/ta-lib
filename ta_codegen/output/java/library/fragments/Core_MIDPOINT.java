@@ -26,13 +26,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode midPoint( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode midPointInternal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -140,13 +140,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPointUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode midPointUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -216,13 +216,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPoint( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode midPointInternal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -303,13 +303,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPointUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode midPointUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -379,6 +379,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange midPoint( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = midPointInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MIDPOINT", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPointUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      int optInTimePeriod,
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      midPointUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPoint( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = midPointInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MIDPOINT", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPointUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      int optInTimePeriod,
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      midPointUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -411,8 +461,15 @@
       int xCap;
       double[] x_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       MidPointStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#midPointOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MidPointStream( MidPointStream other ) {
          this.core = other.core;
@@ -429,6 +486,7 @@
          this.xCap = other.xCap;
          this.x_inReal = other.x_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -818,11 +876,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MidPointStream#fillRange()}.
     */
-   public MidPointStream midPointOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MidPointStream midPointOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       MidPointStream sp = new MidPointStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = midPointOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

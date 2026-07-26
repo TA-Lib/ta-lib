@@ -29,15 +29,15 @@
       return Math.max(Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod), Near_avgPeriod) + 1 ;
 
    }
-   public RetCode cdlHangingMan( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode cdlHangingManInternal( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -154,15 +154,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHangingManUnguarded( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
+   RetCode cdlHangingManUnguardedInternal( int startIdx,
+                                           int endIdx,
+                                           double inOpen[],
+                                           double inHigh[],
+                                           double inLow[],
+                                           double inClose[],
+                                           MInteger outBegIdx,
+                                           MInteger outNBElement,
+                                           int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -246,15 +246,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHangingMan( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode cdlHangingManInternal( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -344,15 +344,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHangingManUnguarded( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
+   RetCode cdlHangingManUnguardedInternal( int startIdx,
+                                           int endIdx,
+                                           float inOpen[],
+                                           float inHigh[],
+                                           float inLow[],
+                                           float inClose[],
+                                           MInteger outBegIdx,
+                                           MInteger outNBElement,
+                                           int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -436,6 +436,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlHangingMan( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHangingManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHANGINGMAN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHangingManUnguarded( int startIdx,
+                                           int endIdx,
+                                           double inOpen[],
+                                           double inHigh[],
+                                           double inLow[],
+                                           double inClose[],
+                                           int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHangingManUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHangingMan( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHangingManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHANGINGMAN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHangingManUnguarded( int startIdx,
+                                           int endIdx,
+                                           float inOpen[],
+                                           float inHigh[],
+                                           float inLow[],
+                                           float inClose[],
+                                           int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHangingManUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -500,8 +558,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlHangingManStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlHangingManOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlHangingManStream( CdlHangingManStream other ) {
          this.core = other.core;
@@ -550,6 +615,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1153,11 +1219,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlHangingManStream#fillRange()}.
     */
-   public CdlHangingManStream cdlHangingManOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlHangingManStream cdlHangingManOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlHangingManStream sp = new CdlHangingManStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlHangingManOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

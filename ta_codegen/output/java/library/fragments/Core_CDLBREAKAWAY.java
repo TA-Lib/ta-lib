@@ -20,15 +20,15 @@
       return BodyLong_avgPeriod + 4 ;
 
    }
-   public RetCode cdlBreakaway( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlBreakawayInternal( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -106,15 +106,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBreakawayUnguarded( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode cdlBreakawayUnguardedInternal( int startIdx,
+                                          int endIdx,
+                                          double inOpen[],
+                                          double inHigh[],
+                                          double inLow[],
+                                          double inClose[],
+                                          MInteger outBegIdx,
+                                          MInteger outNBElement,
+                                          int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -156,15 +156,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBreakaway( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlBreakawayInternal( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -212,15 +212,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBreakawayUnguarded( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode cdlBreakawayUnguardedInternal( int startIdx,
+                                          int endIdx,
+                                          float inOpen[],
+                                          float inHigh[],
+                                          float inLow[],
+                                          float inClose[],
+                                          MInteger outBegIdx,
+                                          MInteger outNBElement,
+                                          int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -261,6 +261,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange cdlBreakaway( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlBreakawayInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLBREAKAWAY", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBreakawayUnguarded( int startIdx,
+                                          int endIdx,
+                                          double inOpen[],
+                                          double inHigh[],
+                                          double inLow[],
+                                          double inClose[],
+                                          int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlBreakawayUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBreakaway( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlBreakawayInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLBREAKAWAY", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBreakawayUnguarded( int startIdx,
+                                          int endIdx,
+                                          float inOpen[],
+                                          float inHigh[],
+                                          float inLow[],
+                                          float inClose[],
+                                          int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlBreakawayUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -309,8 +367,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlBreakawayStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlBreakawayOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlBreakawayStream( CdlBreakawayStream other ) {
          this.core = other.core;
@@ -342,6 +407,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -730,11 +796,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlBreakawayStream#fillRange()}.
     */
-   public CdlBreakawayStream cdlBreakawayOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlBreakawayStream cdlBreakawayOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlBreakawayStream sp = new CdlBreakawayStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlBreakawayOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

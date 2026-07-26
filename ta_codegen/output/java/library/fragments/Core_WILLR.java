@@ -23,15 +23,15 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode willR( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode willRInternal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -140,15 +140,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode willRUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode willRUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -228,15 +228,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode willR( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode willRInternal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -327,15 +327,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode willRUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode willRUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -415,6 +415,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange willR( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = willRInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WILLR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange willRUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      willRUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange willR( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = willRInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WILLR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange willRUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      willRUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -448,8 +506,15 @@
       double[] x_inLow;
       double[] x_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       WillRStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#willROpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       WillRStream( WillRStream other ) {
          this.core = other.core;
@@ -467,6 +532,7 @@
          this.x_inLow = other.x_inLow.clone();
          this.x_inClose = other.x_inClose.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -881,11 +947,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link WillRStream#fillRange()}.
     */
-   public WillRStream willROpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public WillRStream willROpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       WillRStream sp = new WillRStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = willROpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

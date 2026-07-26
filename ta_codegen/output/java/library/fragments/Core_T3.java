@@ -38,14 +38,14 @@
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
 
    }
-   public RetCode t3( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      int optInTimePeriod,
-                      double optInVFactor,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode t3Internal( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       double optInVFactor,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -211,14 +211,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode t3Unguarded( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               int optInTimePeriod,
-                               double optInVFactor,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode t3UnguardedInternal( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                int optInTimePeriod,
+                                double optInVFactor,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -332,14 +332,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode t3( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      int optInTimePeriod,
-                      double optInVFactor,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode t3Internal( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       double optInVFactor,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -469,14 +469,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode t3Unguarded( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               int optInTimePeriod,
-                               double optInVFactor,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode t3UnguardedInternal( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                int optInTimePeriod,
+                                double optInVFactor,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -590,6 +590,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange t3( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       double optInVFactor,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = t3Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("T3", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange t3Unguarded( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                int optInTimePeriod,
+                                double optInVFactor,
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange t3( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       double optInVFactor,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = t3Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("T3", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange t3Unguarded( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                int optInTimePeriod,
+                                double optInVFactor,
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -624,8 +678,15 @@
       double c3;
       double c4;
       double cur_outReal;
+      OutRange fillRange;
 
       T3Stream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#t3OpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       T3Stream( T3Stream other ) {
          this.core = other.core;
@@ -644,6 +705,7 @@
          this.c3 = other.c3;
          this.c4 = other.c4;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1132,11 +1194,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link T3Stream#fillRange()}.
     */
-   public T3Stream t3OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public T3Stream t3OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
       T3Stream sp = new T3Stream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = t3OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

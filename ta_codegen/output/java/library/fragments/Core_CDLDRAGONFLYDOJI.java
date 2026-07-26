@@ -23,15 +23,15 @@
       return Math.max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
-   public RetCode cdlDragonflyDoji( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlDragonflyDojiInternal( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -115,15 +115,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDragonflyDojiUnguarded( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
+   RetCode cdlDragonflyDojiUnguardedInternal( int startIdx,
+                                              int endIdx,
+                                              double inOpen[],
+                                              double inHigh[],
+                                              double inLow[],
+                                              double inClose[],
+                                              MInteger outBegIdx,
+                                              MInteger outNBElement,
+                                              int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -178,15 +178,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDragonflyDoji( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlDragonflyDojiInternal( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -247,15 +247,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDragonflyDojiUnguarded( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
+   RetCode cdlDragonflyDojiUnguardedInternal( int startIdx,
+                                              int endIdx,
+                                              float inOpen[],
+                                              float inHigh[],
+                                              float inLow[],
+                                              float inClose[],
+                                              MInteger outBegIdx,
+                                              MInteger outNBElement,
+                                              int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -310,6 +310,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlDragonflyDoji( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDragonflyDojiInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDRAGONFLYDOJI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDragonflyDojiUnguarded( int startIdx,
+                                              int endIdx,
+                                              double inOpen[],
+                                              double inHigh[],
+                                              double inLow[],
+                                              double inClose[],
+                                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDragonflyDojiUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDragonflyDoji( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDragonflyDojiInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDRAGONFLYDOJI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDragonflyDojiUnguarded( int startIdx,
+                                              int endIdx,
+                                              float inOpen[],
+                                              float inHigh[],
+                                              float inLow[],
+                                              float inClose[],
+                                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDragonflyDojiUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -350,8 +408,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlDragonflyDojiStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlDragonflyDojiOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlDragonflyDojiStream( CdlDragonflyDojiStream other ) {
          this.core = other.core;
@@ -376,6 +441,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -769,11 +835,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlDragonflyDojiStream#fillRange()}.
     */
-   public CdlDragonflyDojiStream cdlDragonflyDojiOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlDragonflyDojiStream cdlDragonflyDojiOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlDragonflyDojiStream sp = new CdlDragonflyDojiStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlDragonflyDojiOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

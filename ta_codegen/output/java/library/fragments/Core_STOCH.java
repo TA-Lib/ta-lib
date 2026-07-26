@@ -45,20 +45,20 @@
       return retValue ;
 
    }
-   public RetCode stoch( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         int optInFastK_Period,
-                         int optInSlowK_Period,
-                         MAType optInSlowK_MAType,
-                         int optInSlowD_Period,
-                         MAType optInSlowD_MAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outSlowK[],
-                         double outSlowD[] )
+   RetCode stochInternal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInFastK_Period,
+                          int optInSlowK_Period,
+                          MAType optInSlowK_MAType,
+                          int optInSlowD_Period,
+                          MAType optInSlowD_MAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outSlowK[],
+                          double outSlowD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -247,7 +247,7 @@
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -259,7 +259,7 @@
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
        */
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -284,20 +284,20 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode stochUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  int optInFastK_Period,
-                                  int optInSlowK_Period,
-                                  MAType optInSlowK_MAType,
-                                  int optInSlowD_Period,
-                                  MAType optInSlowD_MAType,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outSlowK[],
-                                  double outSlowD[] )
+   RetCode stochUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInFastK_Period,
+                                   int optInSlowK_Period,
+                                   MAType optInSlowK_MAType,
+                                   int optInSlowD_Period,
+                                   MAType optInSlowD_MAType,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outSlowK[],
+                                   double outSlowD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -388,7 +388,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -396,7 +396,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -408,20 +408,20 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode stoch( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         int optInFastK_Period,
-                         int optInSlowK_Period,
-                         MAType optInSlowK_MAType,
-                         int optInSlowD_Period,
-                         MAType optInSlowD_MAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outSlowK[],
-                         double outSlowD[] )
+   RetCode stochInternal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInFastK_Period,
+                          int optInSlowK_Period,
+                          MAType optInSlowK_MAType,
+                          int optInSlowD_Period,
+                          MAType optInSlowD_MAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outSlowK[],
+                          double outSlowD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -536,7 +536,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -544,7 +544,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -556,20 +556,20 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode stochUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  int optInFastK_Period,
-                                  int optInSlowK_Period,
-                                  MAType optInSlowK_MAType,
-                                  int optInSlowD_Period,
-                                  MAType optInSlowD_MAType,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outSlowK[],
-                                  double outSlowD[] )
+   RetCode stochUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInFastK_Period,
+                                   int optInSlowK_Period,
+                                   MAType optInSlowK_MAType,
+                                   int optInSlowD_Period,
+                                   MAType optInSlowD_MAType,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outSlowK[],
+                                   double outSlowD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -660,7 +660,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -668,7 +668,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -679,6 +679,84 @@
       }
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange stoch( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInFastK_Period,
+                          int optInSlowK_Period,
+                          MAType optInSlowK_MAType,
+                          int optInSlowD_Period,
+                          MAType optInSlowD_MAType,
+                          double outSlowK[],
+                          double outSlowD[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = stochInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      if( retCode != RetCode.Success ) {
+         throw failure("STOCH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stochUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInFastK_Period,
+                                   int optInSlowK_Period,
+                                   MAType optInSlowK_MAType,
+                                   int optInSlowD_Period,
+                                   MAType optInSlowD_MAType,
+                                   double outSlowK[],
+                                   double outSlowD[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      stochUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stoch( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInFastK_Period,
+                          int optInSlowK_Period,
+                          MAType optInSlowK_MAType,
+                          int optInSlowD_Period,
+                          MAType optInSlowD_MAType,
+                          double outSlowK[],
+                          double outSlowD[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = stochInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      if( retCode != RetCode.Success ) {
+         throw failure("STOCH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stochUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInFastK_Period,
+                                   int optInSlowK_Period,
+                                   MAType optInSlowK_MAType,
+                                   int optInSlowD_Period,
+                                   MAType optInSlowD_MAType,
+                                   double outSlowK[],
+                                   double outSlowD[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      stochUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -721,8 +799,15 @@
       Value cachedValue;
       MovingAverageStream sub0;
       MovingAverageStream sub1;
+      OutRange fillRange;
 
       StochStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#stochOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       StochStream( StochStream other ) {
          this.core = other.core;
@@ -748,6 +833,7 @@
          this.cachedValue = other.cachedValue;
          this.sub0 = new MovingAverageStream(other.sub0);
          this.sub1 = new MovingAverageStream(other.sub1);
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -1077,7 +1163,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1092,7 +1178,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1350,7 +1436,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1365,7 +1451,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguarded(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1467,11 +1553,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link StochStream#fillRange()}.
     */
-   public StochStream stochOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
+   public StochStream stochOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outSlowK[], double outSlowD[] )
    {
       StochStream sp = new StochStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = stochOpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

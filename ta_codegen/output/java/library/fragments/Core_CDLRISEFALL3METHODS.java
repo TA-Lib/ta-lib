@@ -23,15 +23,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   public RetCode cdlRiseFall3Methods( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlRiseFall3MethodsInternal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -145,15 +145,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRiseFall3MethodsUnguarded( int startIdx,
-                                                int endIdx,
-                                                double inOpen[],
-                                                double inHigh[],
-                                                double inLow[],
-                                                double inClose[],
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                int outInteger[] )
+   RetCode cdlRiseFall3MethodsUnguardedInternal( int startIdx,
+                                                 int endIdx,
+                                                 double inOpen[],
+                                                 double inHigh[],
+                                                 double inLow[],
+                                                 double inClose[],
+                                                 MInteger outBegIdx,
+                                                 MInteger outNBElement,
+                                                 int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -218,15 +218,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRiseFall3Methods( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlRiseFall3MethodsInternal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -297,15 +297,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlRiseFall3MethodsUnguarded( int startIdx,
-                                                int endIdx,
-                                                float inOpen[],
-                                                float inHigh[],
-                                                float inLow[],
-                                                float inClose[],
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                int outInteger[] )
+   RetCode cdlRiseFall3MethodsUnguardedInternal( int startIdx,
+                                                 int endIdx,
+                                                 float inOpen[],
+                                                 float inHigh[],
+                                                 float inLow[],
+                                                 float inClose[],
+                                                 MInteger outBegIdx,
+                                                 MInteger outNBElement,
+                                                 int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -369,6 +369,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange cdlRiseFall3Methods( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlRiseFall3MethodsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLRISEFALL3METHODS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRiseFall3MethodsUnguarded( int startIdx,
+                                                 int endIdx,
+                                                 double inOpen[],
+                                                 double inHigh[],
+                                                 double inLow[],
+                                                 double inClose[],
+                                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlRiseFall3MethodsUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRiseFall3Methods( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlRiseFall3MethodsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLRISEFALL3METHODS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlRiseFall3MethodsUnguarded( int startIdx,
+                                                 int endIdx,
+                                                 float inOpen[],
+                                                 float inHigh[],
+                                                 float inLow[],
+                                                 float inClose[],
+                                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlRiseFall3MethodsUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -434,8 +492,15 @@
       int cs_BodyShort_avgPeriod;
       double cs_BodyShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlRiseFall3MethodsStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlRiseFall3MethodsOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlRiseFall3MethodsStream( CdlRiseFall3MethodsStream other ) {
          this.core = other.core;
@@ -484,6 +549,7 @@
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1087,11 +1153,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlRiseFall3MethodsStream#fillRange()}.
     */
-   public CdlRiseFall3MethodsStream cdlRiseFall3MethodsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlRiseFall3MethodsStream cdlRiseFall3MethodsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlRiseFall3MethodsStream sp = new CdlRiseFall3MethodsStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlRiseFall3MethodsOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

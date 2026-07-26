@@ -29,15 +29,15 @@
       return Math.max(Math.max(BodyLong_avgPeriod, BodyShort_avgPeriod), Math.max(ShadowVeryShort_avgPeriod, Near_avgPeriod)) + 2 ;
 
    }
-   public RetCode cdlStalledPattern( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlStalledPatternInternal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -174,15 +174,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlStalledPatternUnguarded( int startIdx,
-                                              int endIdx,
-                                              double inOpen[],
-                                              double inHigh[],
-                                              double inLow[],
-                                              double inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlStalledPatternUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -275,15 +275,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlStalledPattern( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlStalledPatternInternal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -382,15 +382,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlStalledPatternUnguarded( int startIdx,
-                                              int endIdx,
-                                              float inOpen[],
-                                              float inHigh[],
-                                              float inLow[],
-                                              float inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlStalledPatternUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -483,6 +483,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlStalledPattern( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlStalledPatternInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLSTALLEDPATTERN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlStalledPatternUnguarded( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlStalledPatternUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlStalledPattern( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlStalledPatternInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLSTALLEDPATTERN", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlStalledPatternUnguarded( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlStalledPatternUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -561,8 +619,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlStalledPatternStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlStalledPatternOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlStalledPatternStream( CdlStalledPatternStream other ) {
          this.core = other.core;
@@ -625,6 +690,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1390,11 +1456,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlStalledPatternStream#fillRange()}.
     */
-   public CdlStalledPatternStream cdlStalledPatternOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlStalledPatternStream cdlStalledPatternOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlStalledPatternStream sp = new CdlStalledPatternStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlStalledPatternOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

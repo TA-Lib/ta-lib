@@ -20,15 +20,15 @@
       return Near_avgPeriod + 3 ;
 
    }
-   public RetCode cdl3LineStrike( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdl3LineStrikeInternal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -113,15 +113,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3LineStrikeUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdl3LineStrikeUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -168,15 +168,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3LineStrike( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdl3LineStrikeInternal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -229,15 +229,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3LineStrikeUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdl3LineStrikeUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -283,6 +283,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange cdl3LineStrike( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3LineStrikeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3LINESTRIKE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3LineStrikeUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3LineStrikeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3LineStrike( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3LineStrikeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3LINESTRIKE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3LineStrikeUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3LineStrikeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -334,8 +392,15 @@
       int cs_Near_avgPeriod;
       double cs_Near_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       Cdl3LineStrikeStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdl3LineStrikeOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       Cdl3LineStrikeStream( Cdl3LineStrikeStream other ) {
          this.core = other.core;
@@ -370,6 +435,7 @@
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -811,11 +877,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link Cdl3LineStrikeStream#fillRange()}.
     */
-   public Cdl3LineStrikeStream cdl3LineStrikeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public Cdl3LineStrikeStream cdl3LineStrikeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       Cdl3LineStrikeStream sp = new Cdl3LineStrikeStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdl3LineStrikeOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

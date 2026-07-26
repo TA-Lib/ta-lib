@@ -21,15 +21,15 @@
       return BodyDoji_avgPeriod + 2 ;
 
    }
-   public RetCode cdlTristar( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlTristarInternal( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -112,15 +112,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTristarUnguarded( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlTristarUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -169,15 +169,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTristar( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlTristarInternal( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -232,15 +232,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTristarUnguarded( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlTristarUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -289,6 +289,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlTristar( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlTristarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLTRISTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTristarUnguarded( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlTristarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTristar( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlTristarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLTRISTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTristarUnguarded( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlTristarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -327,8 +385,15 @@
       int cs_BodyDoji_avgPeriod;
       double cs_BodyDoji_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlTristarStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlTristarOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlTristarStream( CdlTristarStream other ) {
          this.core = other.core;
@@ -351,6 +416,7 @@
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -716,11 +782,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlTristarStream#fillRange()}.
     */
-   public CdlTristarStream cdlTristarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlTristarStream cdlTristarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlTristarStream sp = new CdlTristarStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlTristarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

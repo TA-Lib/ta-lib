@@ -24,14 +24,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode correl( int startIdx,
-                          int endIdx,
-                          double inReal0[],
-                          double inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode correlInternal( int startIdx,
+                           int endIdx,
+                           double inReal0[],
+                           double inReal1[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -133,14 +133,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode correlUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inReal0[],
-                                   double inReal1[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode correlUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inReal0[],
+                                    double inReal1[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -215,14 +215,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode correl( int startIdx,
-                          int endIdx,
-                          float inReal0[],
-                          float inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode correlInternal( int startIdx,
+                           int endIdx,
+                           float inReal0[],
+                           float inReal1[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -308,14 +308,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode correlUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inReal0[],
-                                   float inReal1[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode correlUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inReal0[],
+                                    float inReal1[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -390,6 +390,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange correl( int startIdx,
+                           int endIdx,
+                           double inReal0[],
+                           double inReal1[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = correlInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CORREL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange correlUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal0[],
+                                    double inReal1[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      correlUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange correl( int startIdx,
+                           int endIdx,
+                           float inReal0[],
+                           float inReal1[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = correlInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CORREL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange correlUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal0[],
+                                    float inReal1[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      correlUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -425,8 +479,15 @@
       double[] ring_trailingIdx_inReal0;
       double[] ring_trailingIdx_inReal1;
       double cur_outReal;
+      OutRange fillRange;
 
       CorrelStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#correlOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CorrelStream( CorrelStream other ) {
          this.core = other.core;
@@ -446,6 +507,7 @@
          this.ring_trailingIdx_inReal0 = other.ring_trailingIdx_inReal0.clone();
          this.ring_trailingIdx_inReal1 = other.ring_trailingIdx_inReal1.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -823,11 +885,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CorrelStream#fillRange()}.
     */
-   public CorrelStream correlOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public CorrelStream correlOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
       CorrelStream sp = new CorrelStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = correlOpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -34,12 +34,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HtTrendMode.ordinal()] ;
 
    }
-   public RetCode htTrendMode( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode htTrendModeInternal( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -521,12 +521,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendModeUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inReal[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode htTrendModeUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -918,12 +918,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendMode( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode htTrendModeInternal( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1321,12 +1321,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendModeUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inReal[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode htTrendModeUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1718,6 +1718,52 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htTrendMode( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htTrendModeInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_TRENDMODE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendModeUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htTrendModeUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendMode( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htTrendModeInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_TRENDMODE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendModeUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htTrendModeUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1821,8 +1867,15 @@
       int cbSize_smoothPrice;
       double[] cb_smoothPrice;
       int cur_outInteger;
+      OutRange fillRange;
 
       HtTrendModeStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htTrendModeOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtTrendModeStream( HtTrendModeStream other ) {
          this.core = other.core;
@@ -1910,6 +1963,7 @@
          this.cbSize_smoothPrice = other.cbSize_smoothPrice;
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -3413,11 +3467,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtTrendModeStream#fillRange()}.
     */
-   public HtTrendModeStream htTrendModeOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public HtTrendModeStream htTrendModeOpenAndFill( double inReal[], int outInteger[] )
    {
       HtTrendModeStream sp = new HtTrendModeStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htTrendModeOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

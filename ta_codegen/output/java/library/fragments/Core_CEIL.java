@@ -16,12 +16,12 @@
       return 0 ;
 
    }
-   public RetCode ceil( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ceilInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -38,12 +38,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ceilUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode ceilUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -54,12 +54,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ceil( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ceilInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -76,12 +76,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ceilUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode ceilUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -91,6 +91,52 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange ceil( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ceilInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CEIL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ceilUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ceilUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ceil( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ceilInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CEIL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ceilUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ceilUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -112,12 +158,20 @@
    public static final class CeilStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       CeilStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#ceilOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CeilStream( CeilStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -242,11 +296,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CeilStream#fillRange()}.
     */
-   public CeilStream ceilOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public CeilStream ceilOpenAndFill( double inReal[], double outReal[] )
    {
       CeilStream sp = new CeilStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = ceilOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

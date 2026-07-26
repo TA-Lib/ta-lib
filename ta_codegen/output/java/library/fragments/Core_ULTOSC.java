@@ -38,17 +38,17 @@
       return smaLookback(maxPeriod) + 1 ;
 
    }
-   public RetCode ultOsc( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inClose[],
-                          int optInTimePeriod1,
-                          int optInTimePeriod2,
-                          int optInTimePeriod3,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ultOscInternal( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod1,
+                           int optInTimePeriod2,
+                           int optInTimePeriod3,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -301,17 +301,17 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ultOscUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInTimePeriod1,
-                                   int optInTimePeriod2,
-                                   int optInTimePeriod3,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode ultOscUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    int optInTimePeriod1,
+                                    int optInTimePeriod2,
+                                    int optInTimePeriod3,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -525,17 +525,17 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ultOsc( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inClose[],
-                          int optInTimePeriod1,
-                          int optInTimePeriod2,
-                          int optInTimePeriod3,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ultOscInternal( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod1,
+                           int optInTimePeriod2,
+                           int optInTimePeriod3,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -770,17 +770,17 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode ultOscUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInTimePeriod1,
-                                   int optInTimePeriod2,
-                                   int optInTimePeriod3,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode ultOscUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    int optInTimePeriod1,
+                                    int optInTimePeriod2,
+                                    int optInTimePeriod3,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -994,6 +994,72 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange ultOsc( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod1,
+                           int optInTimePeriod2,
+                           int optInTimePeriod3,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ultOscInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ULTOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ultOscUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    int optInTimePeriod1,
+                                    int optInTimePeriod2,
+                                    int optInTimePeriod3,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ultOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ultOsc( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod1,
+                           int optInTimePeriod2,
+                           int optInTimePeriod3,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ultOscInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ULTOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ultOscUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    int optInTimePeriod1,
+                                    int optInTimePeriod2,
+                                    int optInTimePeriod3,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      ultOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1043,8 +1109,15 @@
       double[] ring_trailingIdx3_inLow;
       double[] ring_trailingIdx3_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       UltOscStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#ultOscOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       UltOscStream( UltOscStream other ) {
          this.core = other.core;
@@ -1078,6 +1151,7 @@
          this.ring_trailingIdx3_inLow = other.ring_trailingIdx3_inLow.clone();
          this.ring_trailingIdx3_inClose = other.ring_trailingIdx3_inClose.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1966,11 +2040,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link UltOscStream#fillRange()}.
     */
-   public UltOscStream ultOscOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public UltOscStream ultOscOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
       UltOscStream sp = new UltOscStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = ultOscOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

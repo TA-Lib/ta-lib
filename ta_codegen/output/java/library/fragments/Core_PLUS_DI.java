@@ -32,15 +32,15 @@
       }
 
    }
-   public RetCode plusDI( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inClose[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode plusDIInternal( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -357,15 +357,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode plusDIUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode plusDIUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -540,15 +540,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode plusDI( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inClose[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode plusDIInternal( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -734,15 +734,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode plusDIUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode plusDIUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -917,6 +917,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange plusDI( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = plusDIInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("PLUS_DI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange plusDIUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      plusDIUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange plusDI( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = plusDIInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("PLUS_DI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange plusDIUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      plusDIUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -946,8 +1004,15 @@
       double prevPlusDM;
       double prevTR;
       double cur_outReal;
+      OutRange fillRange;
 
       PlusDIStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#plusDIOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       PlusDIStream( PlusDIStream other ) {
          this.core = other.core;
@@ -961,6 +1026,7 @@
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -2047,11 +2113,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link PlusDIStream#fillRange()}.
     */
-   public PlusDIStream plusDIOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public PlusDIStream plusDIOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       PlusDIStream sp = new PlusDIStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = plusDIOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -96,7 +96,7 @@ TA-Lib Definition: <name>.c · <name>.yaml
 |--------|------|
 | C      | src/ta_func/ta_<NAME>.c                      |
 | Rust   | ta_codegen/output/rust/src/ta_func/<name>.rs |
-| Java   | java/src/com/tictactec/ta/lib/Core.java      |
+| Java   | java/src/io/github/talib/Core.java      |
 
 TA-Lib is also available for Python, R and more using a wrapper → ta-lib.org/wrappers/
 ```

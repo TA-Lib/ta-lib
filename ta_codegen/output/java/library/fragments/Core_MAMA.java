@@ -49,15 +49,15 @@
       return 32 + this.unstablePeriod[FuncUnstId.Mama.ordinal()] ;
 
    }
-   public RetCode mama( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        double optInFastLimit,
-                        double optInSlowLimit,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outMAMA[],
-                        double outFAMA[] )
+   RetCode mamaInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double optInFastLimit,
+                         double optInSlowLimit,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMAMA[],
+                         double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -444,15 +444,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mamaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 double optInFastLimit,
-                                 double optInSlowLimit,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMAMA[],
-                                 double outFAMA[] )
+   RetCode mamaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double optInFastLimit,
+                                  double optInSlowLimit,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outMAMA[],
+                                  double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -759,15 +759,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mama( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        double optInFastLimit,
-                        double optInSlowLimit,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outMAMA[],
-                        double outFAMA[] )
+   RetCode mamaInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         double optInFastLimit,
+                         double optInSlowLimit,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMAMA[],
+                         double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1093,15 +1093,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mamaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 double optInFastLimit,
-                                 double optInSlowLimit,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMAMA[],
-                                 double outFAMA[] )
+   RetCode mamaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  double optInFastLimit,
+                                  double optInSlowLimit,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outMAMA[],
+                                  double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1408,6 +1408,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange mama( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double optInFastLimit,
+                         double optInSlowLimit,
+                         double outMAMA[],
+                         double outFAMA[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = mamaInternal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mamaUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double optInFastLimit,
+                                  double optInSlowLimit,
+                                  double outMAMA[],
+                                  double outFAMA[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      mamaUnguardedInternal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mama( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         double optInFastLimit,
+                         double optInSlowLimit,
+                         double outMAMA[],
+                         double outFAMA[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = mamaInternal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mamaUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  double optInFastLimit,
+                                  double optInSlowLimit,
+                                  double outMAMA[],
+                                  double outFAMA[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      mamaUnguardedInternal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1489,8 +1547,15 @@
       double cur_outMAMA;
       double cur_outFAMA;
       Value cachedValue;
+      OutRange fillRange;
 
       MamaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#mamaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MamaStream( MamaStream other ) {
          this.core = other.core;
@@ -1556,6 +1621,7 @@
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -2754,11 +2820,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MamaStream#fillRange()}.
     */
-   public MamaStream mamaOpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
+   public MamaStream mamaOpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
       MamaStream sp = new MamaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = mamaOpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

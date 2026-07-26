@@ -28,16 +28,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   public RetCode cdlEveningStar( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  double optInPenetration,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlEveningStarInternal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   double optInPenetration,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -141,16 +141,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlEveningStarUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           double optInPenetration,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlEveningStarUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            double optInPenetration,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -210,16 +210,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlEveningStar( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  double optInPenetration,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlEveningStarInternal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   double optInPenetration,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -290,16 +290,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlEveningStarUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           double optInPenetration,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlEveningStarUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            double optInPenetration,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -359,6 +359,68 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlEveningStar( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   double optInPenetration,
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlEveningStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLEVENINGSTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlEveningStarUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            double optInPenetration,
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlEveningStarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlEveningStar( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   double optInPenetration,
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlEveningStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLEVENINGSTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlEveningStarUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            double optInPenetration,
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlEveningStarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -410,8 +472,15 @@
       int cs_BodyShort_avgPeriod;
       double cs_BodyShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlEveningStarStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlEveningStarOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlEveningStarStream( CdlEveningStarStream other ) {
          this.core = other.core;
@@ -447,6 +516,7 @@
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -934,11 +1004,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlEveningStarStream#fillRange()}.
     */
-   public CdlEveningStarStream cdlEveningStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlEveningStarStream cdlEveningStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       CdlEveningStarStream sp = new CdlEveningStarStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlEveningStarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

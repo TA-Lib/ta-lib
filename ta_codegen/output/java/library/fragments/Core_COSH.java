@@ -16,12 +16,12 @@
       return 0 ;
 
    }
-   public RetCode cosh( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode coshInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -38,12 +38,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode coshUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode coshUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -54,12 +54,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cosh( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode coshInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -76,12 +76,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode coshUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode coshUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -91,6 +91,52 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange cosh( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = coshInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("COSH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange coshUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      coshUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cosh( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = coshInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("COSH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange coshUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      coshUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -112,12 +158,20 @@
    public static final class CoshStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       CoshStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#coshOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CoshStream( CoshStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -242,11 +296,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CoshStream#fillRange()}.
     */
-   public CoshStream coshOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public CoshStream coshOpenAndFill( double inReal[], double outReal[] )
    {
       CoshStream sp = new CoshStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = coshOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

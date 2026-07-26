@@ -25,15 +25,15 @@
       return Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   public RetCode cdlHaramiCross( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlHaramiCrossInternal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -134,15 +134,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHaramiCrossUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlHaramiCrossUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -208,15 +208,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHaramiCross( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlHaramiCrossInternal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -288,15 +288,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHaramiCrossUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlHaramiCrossUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -362,6 +362,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlHaramiCross( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHaramiCrossInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHARAMICROSS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHaramiCrossUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHaramiCrossUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHaramiCross( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHaramiCrossInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHARAMICROSS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHaramiCrossUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHaramiCrossUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -406,8 +464,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlHaramiCrossStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlHaramiCrossOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlHaramiCrossStream( CdlHaramiCrossStream other ) {
          this.core = other.core;
@@ -436,6 +501,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -892,11 +958,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlHaramiCrossStream#fillRange()}.
     */
-   public CdlHaramiCrossStream cdlHaramiCrossOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlHaramiCrossStream cdlHaramiCrossOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlHaramiCrossStream sp = new CdlHaramiCrossStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlHaramiCrossOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

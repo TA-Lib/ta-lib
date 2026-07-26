@@ -32,15 +32,15 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode cci( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode cciInternal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -142,15 +142,15 @@
       /* Free the circular buffer if it was dynamically allocated. */
       return RetCode.Success ;
    }
-   public RetCode cciUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode cciUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -212,15 +212,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cci( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode cciInternal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -293,15 +293,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cciUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode cciUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -363,6 +363,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cci( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cciInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CCI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cciUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cciUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cci( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cciInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CCI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cciUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cciUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -392,8 +450,15 @@
       int cbSize_circBuffer;
       double[] cb_circBuffer;
       double cur_outReal;
+      OutRange fillRange;
 
       CciStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cciOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CciStream( CciStream other ) {
          this.core = other.core;
@@ -407,6 +472,7 @@
          this.cbSize_circBuffer = other.cbSize_circBuffer;
          this.cb_circBuffer = other.cb_circBuffer.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -754,11 +820,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CciStream#fillRange()}.
     */
-   public CciStream cciOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public CciStream cciOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       CciStream sp = new CciStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cciOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

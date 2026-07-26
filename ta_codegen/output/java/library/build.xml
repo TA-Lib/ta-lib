@@ -4,22 +4,24 @@
 	<property name="dir.src" value="src/"/>
 	<property name="file.jar" value="ta-lib.jar"/>
 	<property name="dir.classes" value="classes"/>
-	<property name="junit.jar" value="junit.jar"/>
 	<path id="classpath.base">
 		<pathelement location="${dir.src}"/>
-		<pathelement location="${junit.jar}"/>
 	</path>
-	<path id="classpath.test">
-		<pathelement location="${file.jar}"/>
-		<pathelement location="${junit.jar}"/>
-	</path>
+	<!-- The tests are plain main() classes: junit is not in the tree, the old
+	     junit target had been dead for years, and its suite registered a single
+	     class that the API break deleted (it would have passed vacuously). The
+	     same classes run from `ta_codegen build --backend=java`, so they gate
+	     every build; this target is the manual equivalent. -->
 	<target name="test" depends="build">
 		<echo message="Running ${ant.project.name} tests"/>
-		<junit>
-			<classpath refid="classpath.test"/>
-			<formatter type="brief" usefile="false"/>
-			<test name="com.tictactec.ta.lib.test.AllTests"/>
-		</junit>
+		<java classname="io.github.talib.test.CoreApiTest"
+		      classpath="${dir.classes}" failonerror="true"/>
+		<java classname="io.github.talib.test.BatchApiTest"
+		      classpath="${dir.classes}" failonerror="true"/>
+		<java classname="io.github.talib.test.SMathOverflowTest"
+		      classpath="${dir.classes}" failonerror="true"/>
+		<java classname="io.github.talib.test.StreamSmokeTest"
+		      classpath="${dir.classes}" failonerror="true"/>
 	</target>
 	<target name="build" description="Build ta-lib.">
 		<echo message="Building project ${ant.project.name}"/>
@@ -27,20 +29,16 @@
 		<copy todir="${dir.classes}" includeEmptyDirs="false">
 			<fileset dir="${dir.src}" excludes="**/*.java"/>
 		</copy>
-		<!-- Minimum JDK 9: the generated Core.java uses java.lang.Math.fma
-		     (the FMA numerical contract, PR #96), which was added in Java 9.
-		     Pinning release=9 makes an older-JDK build fail with a clear
+		<!-- Minimum JDK 17 (LTS): the public API returns `record OutRange`,
+		     which needs Java 16+, and the generated Core.java uses
+		     java.lang.Math.fma (the FMA numerical contract, PR #96) from Java 9.
+		     Pinning release=17 makes an older-JDK build fail with a clear
 		     unsupported-release error instead of a confusing missing-symbol one. -->
-		<javac srcdir="${dir.src}" destdir="${dir.classes}" debug="${debug}" release="9">
+		<javac srcdir="${dir.src}" destdir="${dir.classes}" debug="${debug}" release="17">
 			<classpath refid="classpath.base"/>
 		</javac>
 		<delete file="${file.jar}"/>
 		<jar destfile="${file.jar}" basedir="${dir.classes}"/>
-	</target>
-	<target name="stream-smoke" depends="build"
-	        description="Run the junit-free streaming smoke test (StreamSmokeTest.main).">
-		<java classname="com.tictactec.ta.lib.test.StreamSmokeTest"
-		      classpath="${dir.classes}" failonerror="true"/>
 	</target>
 	<target name="clean" description="clean up all generated files.">
 		<echo message="Cleaning up project ${ant.project.name}"/>

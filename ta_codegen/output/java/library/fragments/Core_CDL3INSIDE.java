@@ -23,15 +23,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   public RetCode cdl3Inside( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdl3InsideInternal( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -121,15 +121,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3InsideUnguarded( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdl3InsideUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -185,15 +185,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3Inside( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdl3InsideInternal( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -255,15 +255,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3InsideUnguarded( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdl3InsideUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -319,6 +319,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdl3Inside( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3InsideInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3INSIDE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3InsideUnguarded( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3InsideUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3Inside( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3InsideInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3INSIDE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3InsideUnguarded( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3InsideUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -367,8 +425,15 @@
       int cs_BodyShort_avgPeriod;
       double cs_BodyShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       Cdl3InsideStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdl3InsideOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       Cdl3InsideStream( Cdl3InsideStream other ) {
          this.core = other.core;
@@ -401,6 +466,7 @@
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -835,11 +901,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link Cdl3InsideStream#fillRange()}.
     */
-   public Cdl3InsideStream cdl3InsideOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public Cdl3InsideStream cdl3InsideOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       Cdl3InsideStream sp = new Cdl3InsideStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdl3InsideOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

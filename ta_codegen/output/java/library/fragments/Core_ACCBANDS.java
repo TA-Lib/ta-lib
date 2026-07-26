@@ -30,17 +30,17 @@
       return smaLookback(optInTimePeriod) ;
 
    }
-   public RetCode accbands( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outRealUpperBand[],
-                            double outRealMiddleBand[],
-                            double outRealLowerBand[] )
+   RetCode accbandsInternal( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outRealUpperBand[],
+                             double outRealMiddleBand[],
+                             double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -160,17 +160,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode accbandsUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outRealUpperBand[],
-                                     double outRealMiddleBand[],
-                                     double outRealLowerBand[] )
+   RetCode accbandsUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outRealUpperBand[],
+                                      double outRealMiddleBand[],
+                                      double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -246,17 +246,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode accbands( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outRealUpperBand[],
-                            double outRealMiddleBand[],
-                            double outRealLowerBand[] )
+   RetCode accbandsInternal( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outRealUpperBand[],
+                             double outRealMiddleBand[],
+                             double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -346,17 +346,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode accbandsUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outRealUpperBand[],
-                                     double outRealMiddleBand[],
-                                     double outRealLowerBand[] )
+   RetCode accbandsUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outRealUpperBand[],
+                                      double outRealMiddleBand[],
+                                      double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -432,6 +432,72 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange accbands( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             int optInTimePeriod,
+                             double outRealUpperBand[],
+                             double outRealMiddleBand[],
+                             double outRealLowerBand[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = accbandsInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      if( retCode != RetCode.Success ) {
+         throw failure("ACCBANDS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange accbandsUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      int optInTimePeriod,
+                                      double outRealUpperBand[],
+                                      double outRealMiddleBand[],
+                                      double outRealLowerBand[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      accbandsUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange accbands( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             int optInTimePeriod,
+                             double outRealUpperBand[],
+                             double outRealMiddleBand[],
+                             double outRealLowerBand[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = accbandsInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      if( retCode != RetCode.Success ) {
+         throw failure("ACCBANDS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange accbandsUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      int optInTimePeriod,
+                                      double outRealUpperBand[],
+                                      double outRealMiddleBand[],
+                                      double outRealLowerBand[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      accbandsUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -467,8 +533,15 @@
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
       Value cachedValue;
+      OutRange fillRange;
 
       AccbandsStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#accbandsOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AccbandsStream( AccbandsStream other ) {
          this.core = other.core;
@@ -488,6 +561,7 @@
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -936,11 +1010,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AccbandsStream#fillRange()}.
     */
-   public AccbandsStream accbandsOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   public AccbandsStream accbandsOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
       AccbandsStream sp = new AccbandsStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = accbandsOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -26,12 +26,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()] ;
 
    }
-   public RetCode htDcPhase( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode htDcPhaseInternal( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -434,12 +434,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPhaseUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
+   RetCode htDcPhaseUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       double inReal[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -770,12 +770,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPhase( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode htDcPhaseInternal( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1112,12 +1112,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPhaseUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
+   RetCode htDcPhaseUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       float inReal[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1448,6 +1448,52 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htDcPhase( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htDcPhaseInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_DCPHASE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPhaseUnguarded( int startIdx,
+                                       int endIdx,
+                                       double inReal[],
+                                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htDcPhaseUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPhase( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htDcPhaseInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_DCPHASE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPhaseUnguarded( int startIdx,
+                                       int endIdx,
+                                       float inReal[],
+                                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htDcPhaseUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1535,8 +1581,15 @@
       int cbSize_smoothPrice;
       double[] cb_smoothPrice;
       double cur_outReal;
+      OutRange fillRange;
 
       HtDcPhaseStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htDcPhaseOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtDcPhaseStream( HtDcPhaseStream other ) {
          this.core = other.core;
@@ -1608,6 +1661,7 @@
          this.cbSize_smoothPrice = other.cbSize_smoothPrice;
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -2851,11 +2905,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtDcPhaseStream#fillRange()}.
     */
-   public HtDcPhaseStream htDcPhaseOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public HtDcPhaseStream htDcPhaseOpenAndFill( double inReal[], double outReal[] )
    {
       HtDcPhaseStream sp = new HtDcPhaseStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htDcPhaseOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

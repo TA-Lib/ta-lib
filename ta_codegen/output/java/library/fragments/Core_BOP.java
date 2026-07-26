@@ -17,15 +17,15 @@
       return 0 ;
 
    }
-   public RetCode bop( int startIdx,
-                       int endIdx,
-                       double inOpen[],
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode bopInternal( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -50,15 +50,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode bopUnguarded( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode bopUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -76,15 +76,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode bop( int startIdx,
-                       int endIdx,
-                       float inOpen[],
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode bopInternal( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -108,15 +108,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode bopUnguarded( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode bopUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -133,6 +133,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange bop( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = bopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("BOP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange bopUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      bopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange bop( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = bopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("BOP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange bopUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      bopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -154,12 +212,20 @@
    public static final class BopStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       BopStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#bopOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       BopStream( BopStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -306,11 +372,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link BopStream#fillRange()}.
     */
-   public BopStream bopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public BopStream bopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       BopStream sp = new BopStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = bopOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

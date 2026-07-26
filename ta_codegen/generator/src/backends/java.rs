@@ -1,5 +1,6 @@
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Write as _;
 
 use crate::candle_settings::{detect_candle_settings, emit_java_unpacking};
 use crate::helper_registry::{hoist_block_helpers, try_inline_expr, HelperRegistry};
@@ -482,10 +483,19 @@ pub fn generate(
         out.push_str(&gen_private(func, enums, registry, helpers)); // Private method (double)
         out.push_str(&gen_private_sp(func, enums, registry, helpers)); // Private method (float overload)
     }
+    // Internal cores keep the RetCode + MInteger shape: this text is spliced
+    // verbatim into BOTH the shipped Core and the JSON-RPC server's inline Core,
+    // and the server calls these directly — so the harness's retCode ints and
+    // output hashes are untouched by the public surface below.
     out.push_str(&gen_func(func, false, false, enums, registry, helpers)); // double-precision guarded
     out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double-precision logic (unguarded)
     out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
     out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic (unguarded)
+    // Public surface: OutRange-returning wrappers over the cores above.
+    out.push_str(&gen_public_wrapper(func, false, false));
+    out.push_str(&gen_public_wrapper(func, false, true));
+    out.push_str(&gen_public_wrapper(func, true, false));
+    out.push_str(&gen_public_wrapper(func, true, true));
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {
         out.push_str(&super::java_stream::generate(func, enums, registry, helpers));
@@ -642,6 +652,104 @@ fn render_init_expr(expr: &Expr) -> String {
     }
 }
 
+/// Name of the package-private core behind a public wrapper.
+///
+/// The cores keep the C-shaped `RetCode` + `MInteger` signature (A3 lock 1): the
+/// same fragment text is spliced into the shipped `Core` and the JSON-RPC
+/// server's inline `Core`, and the server calls the cores, so the cross-language
+/// hash/retCode surface is unaffected by the public API above them.
+fn internal_core_name(base: &str, unguarded: bool) -> String {
+    if unguarded {
+        format!("{base}UnguardedInternal")
+    } else {
+        format!("{base}Internal")
+    }
+}
+
+/// Emit the public, `OutRange`-returning wrapper over one internal core.
+///
+/// Guarded wrappers translate the core's `RetCode` into the documented exception
+/// mapping; unguarded wrappers check nothing and never throw (the documented
+/// sharp edge, mirroring Rust's public unguarded tier). Both are thin: the
+/// numerics live entirely in the core.
+///
+/// **A short range is not an error.** A valid range shorter than the lookback
+/// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
+/// `count` is 0 — exactly C's contract, never an exception.
+fn gen_public_wrapper(func: &FuncDef, single_precision: bool, unguarded: bool) -> String {
+    let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
+    let core = internal_core_name(&base_name, unguarded);
+    let public_name = if unguarded {
+        format!("{base_name}Unguarded")
+    } else {
+        base_name.clone()
+    };
+
+    // Parameters: same as the core minus the two MInteger out-params.
+    let mut params: Vec<String> = vec!["int startIdx".to_string(), "int endIdx".to_string()];
+    let mut args: Vec<String> = vec!["startIdx".to_string(), "endIdx".to_string()];
+    for input in &func.inputs {
+        let java_type = match (&input.param_type, single_precision) {
+            (ParamType::Real, true) => "float",
+            (ParamType::Real, false) => "double",
+            _ => "int",
+        };
+        params.push(format!("{} {}[]", java_type, input.name));
+        args.push(input.name.clone());
+    }
+    for opt in &func.optional_inputs {
+        let java_type = match &opt.param_type {
+            ParamType::Real => "double",
+            ParamType::Integer => "int",
+            ParamType::Enum(ref name) => name.as_str(),
+            ParamType::Price(_) => unreachable!("Price expanded during parsing"),
+        };
+        params.push(format!("{} {}", java_type, opt.name));
+        args.push(opt.name.clone());
+    }
+    args.push("outBegIdx".to_string());
+    args.push("outNBElement".to_string());
+    for output in &func.outputs {
+        let java_type = match &output.param_type {
+            ParamType::Real => "double",
+            _ => "int",
+        };
+        params.push(format!("{} {}[]", java_type, output.name));
+        args.push(output.name.clone());
+    }
+
+    let mut out = String::new();
+    let sig_prefix = format!("   public OutRange {public_name}( ");
+    let indent = " ".repeat(sig_prefix.len());
+    out.push_str(&sig_prefix);
+    for (i, param) in params.iter().enumerate() {
+        if i > 0 {
+            out.push_str(&format!(",\n{indent}"));
+        }
+        out.push_str(param);
+    }
+    out.push_str(" )\n   {\n");
+    out.push_str("      MInteger outBegIdx = new MInteger();\n");
+    out.push_str("      MInteger outNBElement = new MInteger();\n");
+    if unguarded {
+        // Checks nothing by contract, so there is no failure to report and the
+        // core's RetCode is discarded.
+        let _ = write!(out, "      {core}(");
+        out.push_str(&args.join(", "));
+        out.push_str(");\n");
+    } else {
+        let _ = write!(out, "      RetCode retCode = {core}(");
+        out.push_str(&args.join(", "));
+        out.push_str(");\n");
+        out.push_str("      if( retCode != RetCode.Success ) {\n");
+        let _ = writeln!(out, "         throw failure(\"{}\", retCode);", func.name);
+        out.push_str("      }\n");
+    }
+    out.push_str("      return new OutRange(outBegIdx.value, outNBElement.value);\n");
+    out.push_str("   }\n");
+    out
+}
+
 /// Generate the Private method (double, extra params).
 fn gen_private(
     func: &FuncDef,
@@ -694,10 +802,9 @@ fn gen_func_inner(
     let name = if let Some(n) = name_override {
         n.to_string()
     } else if logic {
-        // Public unguarded variant — matches C's `TA_<NAME>_Unguarded` surface.
-        format!("{base_name}Unguarded")
+        internal_core_name(&base_name, true)
     } else {
-        base_name
+        internal_core_name(&base_name, false)
     };
 
     // Build parameter list
@@ -752,8 +859,9 @@ fn gen_func_inner(
         params.push(format!("{} {}[]", java_type, output.name));
     }
 
-    // Format signature
-    let sig_prefix = format!("   public RetCode {name}( ");
+    // Format signature. Package-private: these are the internal cores the public
+    // OutRange wrappers (and the JSON-RPC server) delegate to, not the API.
+    let sig_prefix = format!("   RetCode {name}( ");
     let indent = " ".repeat(sig_prefix.len());
     out.push_str(&sig_prefix);
     for (i, param) in params.iter().enumerate() {
@@ -2345,32 +2453,46 @@ mod tests {
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        // Should contain the unguarded variant
-        assert!(output.contains("smaUnguarded("), "Missing smaUnguarded function");
+        // Both internal cores are emitted, package-private (no `public`).
+        assert!(output.contains("   RetCode smaUnguardedInternal("), "Missing unguarded core");
+        assert!(output.contains("   RetCode smaInternal("), "Missing guarded core");
+        assert!(
+            !output.contains("public RetCode sma"),
+            "cores must be package-private — RetCode never appears on the public surface"
+        );
 
-        // Unguarded variant should NOT have validation
-        // Find the smaUnguarded section and verify no validation
-        let logic_pos = output.find("smaUnguarded( ").unwrap();
+        // The unguarded core skips validation; the guarded one performs it.
+        let logic_pos = output.find("RetCode smaUnguardedInternal( ").unwrap();
         let logic_section = &output[logic_pos..];
-        let next_fn_pos = logic_section
-            .find("   public RetCode")
-            .unwrap_or(logic_section.len());
+        let next_fn_pos = logic_section[1..]
+            .find("   RetCode ")
+            .map_or(logic_section.len(), |i| i + 1);
         let logic_body = &logic_section[..next_fn_pos];
         assert!(
             !logic_body.contains("OutOfRangeStartIndex"),
-            "Unguarded variant should not contain validation"
+            "Unguarded core should not contain validation"
         );
 
-        // The guarded variant should have validation
-        let guarded_pos = output.find("public RetCode sma( ").unwrap();
+        let guarded_pos = output.find("RetCode smaInternal( ").unwrap();
         let guarded_section = &output[guarded_pos..];
         let guarded_end = guarded_section
-            .find("public RetCode smaUnguarded(")
+            .find("RetCode smaUnguardedInternal(")
             .unwrap_or(guarded_section.len());
         let guarded_body = &guarded_section[..guarded_end];
         assert!(
             guarded_body.contains("OutOfRangeStartIndex"),
-            "Guarded variant should contain validation"
+            "Guarded core should contain validation"
+        );
+
+        // The public surface is OutRange-returning wrappers over those cores.
+        assert!(output.contains("   public OutRange sma( "), "Missing public sma wrapper");
+        assert!(
+            output.contains("   public OutRange smaUnguarded( "),
+            "Missing public smaUnguarded wrapper"
+        );
+        assert!(
+            output.contains("throw failure(\"SMA\", retCode);"),
+            "guarded wrapper must map RetCode onto the documented exception"
         );
     }
 }

@@ -21,13 +21,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode avgDev( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode avgDevInternal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -76,13 +76,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode avgDevUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode avgDevUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -118,13 +118,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode avgDev( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode avgDevInternal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -171,13 +171,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode avgDevUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode avgDevUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -213,6 +213,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange avgDev( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = avgDevInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AVGDEV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgDevUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      avgDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgDev( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = avgDevInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AVGDEV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgDevUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      avgDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -237,8 +287,15 @@
       int winCap_i;
       double[] win_i_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       AvgDevStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#avgDevOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AvgDevStream( AvgDevStream other ) {
          this.core = other.core;
@@ -247,6 +304,7 @@
          this.winCap_i = other.winCap_i;
          this.win_i_inReal = other.win_i_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -471,11 +529,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AvgDevStream#fillRange()}.
     */
-   public AvgDevStream avgDevOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AvgDevStream avgDevOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       AvgDevStream sp = new AvgDevStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = avgDevOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

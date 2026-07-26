@@ -32,15 +32,15 @@
       return 1 ;
 
    }
-   public RetCode sar( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double optInAcceleration,
-                       double optInMaximum,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode sarInternal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double optInAcceleration,
+                        double optInMaximum,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -139,7 +139,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -287,15 +287,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode sarUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double optInAcceleration,
-                                double optInMaximum,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode sarUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double optInAcceleration,
+                                 double optInMaximum,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -323,7 +323,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -431,15 +431,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode sar( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       double optInAcceleration,
-                       double optInMaximum,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode sarInternal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        double optInAcceleration,
+                        double optInMaximum,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -483,7 +483,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -591,15 +591,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode sarUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                double optInAcceleration,
-                                double optInMaximum,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode sarUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 double optInAcceleration,
+                                 double optInMaximum,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -627,7 +627,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -734,6 +734,64 @@
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
+   }
+   public OutRange sar( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double optInAcceleration,
+                        double optInMaximum,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = sarInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("SAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange sarUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double optInAcceleration,
+                                 double optInMaximum,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      sarUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange sar( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        double optInAcceleration,
+                        double optInMaximum,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = sarInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("SAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange sarUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 double optInAcceleration,
+                                 double optInMaximum,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      sarUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -763,8 +821,15 @@
       double ep;
       double sar;
       double cur_outReal;
+      OutRange fillRange;
 
       SarStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#sarOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       SarStream( SarStream other ) {
          this.core = other.core;
@@ -777,6 +842,7 @@
          this.ep = other.ep;
          this.sar = other.sar;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1037,7 +1103,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1297,7 +1363,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1491,11 +1557,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link SarStream#fillRange()}.
     */
-   public SarStream sarOpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public SarStream sarOpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
       SarStream sp = new SarStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = sarOpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

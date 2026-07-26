@@ -31,14 +31,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode imi( int startIdx,
-                       int endIdx,
-                       double inOpen[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode imiInternal( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -89,14 +89,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode imiUnguarded( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode imiUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -131,14 +131,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode imi( int startIdx,
-                       int endIdx,
-                       float inOpen[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode imiInternal( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -184,14 +184,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode imiUnguarded( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode imiUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -226,6 +226,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange imi( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = imiInternal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("IMI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange imiUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      imiUnguardedInternal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange imi( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = imiInternal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("IMI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange imiUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      imiUnguardedInternal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -251,8 +305,15 @@
       double[] win_i_inOpen;
       double[] win_i_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       ImiStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#imiOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       ImiStream( ImiStream other ) {
          this.core = other.core;
@@ -262,6 +323,7 @@
          this.win_i_inOpen = other.win_i_inOpen.clone();
          this.win_i_inClose = other.win_i_inClose.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -506,11 +568,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link ImiStream#fillRange()}.
     */
-   public ImiStream imiOpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public ImiStream imiOpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       ImiStream sp = new ImiStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = imiOpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

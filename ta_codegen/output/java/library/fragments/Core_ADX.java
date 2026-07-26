@@ -28,15 +28,15 @@
       return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1 ;
 
    }
-   public RetCode adx( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode adxInternal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -395,15 +395,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adxUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode adxUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -597,15 +597,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adx( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode adxInternal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -810,15 +810,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adxUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode adxUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1012,6 +1012,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange adx( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adxUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adxUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adx( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adxUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adxUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1045,8 +1103,15 @@
       double plusDI;
       double prevADX;
       double cur_outReal;
+      OutRange fillRange;
 
       AdxStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#adxOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AdxStream( AdxStream other ) {
          this.core = other.core;
@@ -1064,6 +1129,7 @@
          this.plusDI = other.plusDI;
          this.prevADX = other.prevADX;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1943,11 +2009,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AdxStream#fillRange()}.
     */
-   public AdxStream adxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AdxStream adxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       AdxStream sp = new AdxStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = adxOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -23,15 +23,15 @@
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
-   public RetCode cdlBeltHold( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlBeltHoldInternal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -114,15 +114,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBeltHoldUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlBeltHoldUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -177,15 +177,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBeltHold( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlBeltHoldInternal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -246,15 +246,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlBeltHoldUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlBeltHoldUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -309,6 +309,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlBeltHold( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlBeltHoldInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLBELTHOLD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBeltHoldUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlBeltHoldUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBeltHold( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlBeltHoldInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLBELTHOLD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlBeltHoldUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlBeltHoldUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -349,8 +407,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlBeltHoldStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlBeltHoldOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlBeltHoldStream( CdlBeltHoldStream other ) {
          this.core = other.core;
@@ -375,6 +440,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -768,11 +834,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlBeltHoldStream#fillRange()}.
     */
-   public CdlBeltHoldStream cdlBeltHoldOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlBeltHoldStream cdlBeltHoldOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlBeltHoldStream sp = new CdlBeltHoldStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlBeltHoldOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

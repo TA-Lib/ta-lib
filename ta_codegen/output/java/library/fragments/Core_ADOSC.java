@@ -36,17 +36,17 @@
       return emaLookback(slowestPeriod) ;
 
    }
-   public RetCode adOsc( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         double inVolume[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode adOscInternal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          double inVolume[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -180,17 +180,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adOscUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  double inVolume[],
-                                  int optInFastPeriod,
-                                  int optInSlowPeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode adOscUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   double inVolume[],
+                                   int optInFastPeriod,
+                                   int optInSlowPeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -267,17 +267,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adOsc( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         float inVolume[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode adOscInternal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          float inVolume[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -370,17 +370,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode adOscUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  float inVolume[],
-                                  int optInFastPeriod,
-                                  int optInSlowPeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode adOscUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   float inVolume[],
+                                   int optInFastPeriod,
+                                   int optInSlowPeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -457,6 +457,72 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange adOsc( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          double inVolume[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adOscInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adOscUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   double inVolume[],
+                                   int optInFastPeriod,
+                                   int optInSlowPeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adOsc( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          float inVolume[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adOscInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adOscUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   float inVolume[],
+                                   int optInFastPeriod,
+                                   int optInSlowPeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -486,8 +552,15 @@
       double one_minus_fastk;
       double ad;
       double cur_outReal;
+      OutRange fillRange;
 
       AdOscStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#adOscOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AdOscStream( AdOscStream other ) {
          this.core = other.core;
@@ -501,6 +574,7 @@
          this.one_minus_fastk = other.one_minus_fastk;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -890,11 +964,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AdOscStream#fillRange()}.
     */
-   public AdOscStream adOscOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AdOscStream adOscOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
       AdOscStream sp = new AdOscStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = adOscOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

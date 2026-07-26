@@ -23,14 +23,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode vwma( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        double inVolume[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode vwmaInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -118,14 +118,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode vwmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 double inVolume[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode vwmaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double inVolume[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -176,14 +176,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode vwma( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        float inVolume[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode vwmaInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         float inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -245,14 +245,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode vwmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 float inVolume[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode vwmaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  float inVolume[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -303,6 +303,60 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange vwma( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double inVolume[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = vwmaInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("VWMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange vwmaUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  double inVolume[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      vwmaUnguardedInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange vwma( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         float inVolume[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = vwmaInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("VWMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange vwmaUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  float inVolume[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      vwmaUnguardedInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -332,8 +386,15 @@
       double[] ring_trailingIdx_inReal;
       double[] ring_trailingIdx_inVolume;
       double cur_outReal;
+      OutRange fillRange;
 
       VwmaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#vwmaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       VwmaStream( VwmaStream other ) {
          this.core = other.core;
@@ -347,6 +408,7 @@
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -675,11 +737,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link VwmaStream#fillRange()}.
     */
-   public VwmaStream vwmaOpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public VwmaStream vwmaOpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       VwmaStream sp = new VwmaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = vwmaOpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

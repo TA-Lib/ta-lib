@@ -23,15 +23,15 @@
       return Math.max(BodyShort_avgPeriod, ShadowVeryLong_avgPeriod) ;
 
    }
-   public RetCode cdlHignWave( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlHignWaveInternal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -113,15 +113,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHignWaveUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlHignWaveUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -176,15 +176,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHignWave( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlHignWaveInternal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -245,15 +245,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHignWaveUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlHignWaveUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -308,6 +308,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlHignWave( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHignWaveInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIGHWAVE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHignWaveUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHignWaveUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHignWave( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHignWaveInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIGHWAVE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHignWaveUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHignWaveUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -348,8 +406,15 @@
       int cs_ShadowVeryLong_avgPeriod;
       double cs_ShadowVeryLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlHignWaveStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlHignWaveOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlHignWaveStream( CdlHignWaveStream other ) {
          this.core = other.core;
@@ -374,6 +439,7 @@
          this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
          this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -763,11 +829,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlHignWaveStream#fillRange()}.
     */
-   public CdlHignWaveStream cdlHignWaveOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlHignWaveStream cdlHignWaveOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlHignWaveStream sp = new CdlHignWaveStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlHignWaveOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -20,14 +20,14 @@
       return 0 ;
 
    }
-   public RetCode typPrice( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode typPriceInternal( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -46,14 +46,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode typPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode typPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -65,14 +65,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode typPrice( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode typPriceInternal( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -90,14 +90,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode typPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode typPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -108,6 +108,60 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange typPrice( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = typPriceInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TYPPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange typPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      typPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange typPrice( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = typPriceInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TYPPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange typPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      typPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -129,12 +183,20 @@
    public static final class TypPriceStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       TypPriceStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#typPriceOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       TypPriceStream( TypPriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -263,11 +325,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link TypPriceStream#fillRange()}.
     */
-   public TypPriceStream typPriceOpenAndFill( double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public TypPriceStream typPriceOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       TypPriceStream sp = new TypPriceStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = typPriceOpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

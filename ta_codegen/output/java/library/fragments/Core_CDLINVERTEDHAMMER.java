@@ -26,15 +26,15 @@
       return Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod) + 1 ;
 
    }
-   public RetCode cdlInvertedHammer( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlInvertedHammerInternal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -137,15 +137,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInvertedHammerUnguarded( int startIdx,
-                                              int endIdx,
-                                              double inOpen[],
-                                              double inHigh[],
-                                              double inLow[],
-                                              double inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlInvertedHammerUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -214,15 +214,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInvertedHammer( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlInvertedHammerInternal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -297,15 +297,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInvertedHammerUnguarded( int startIdx,
-                                              int endIdx,
-                                              float inOpen[],
-                                              float inHigh[],
-                                              float inLow[],
-                                              float inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlInvertedHammerUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -374,6 +374,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlInvertedHammer( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlInvertedHammerInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLINVERTEDHAMMER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInvertedHammerUnguarded( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlInvertedHammerUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInvertedHammer( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlInvertedHammerInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLINVERTEDHAMMER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInvertedHammerUnguarded( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlInvertedHammerUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -426,8 +484,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlInvertedHammerStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlInvertedHammerOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlInvertedHammerStream( CdlInvertedHammerStream other ) {
          this.core = other.core;
@@ -464,6 +529,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -970,11 +1036,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlInvertedHammerStream#fillRange()}.
     */
-   public CdlInvertedHammerStream cdlInvertedHammerOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlInvertedHammerStream cdlInvertedHammerOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlInvertedHammerStream sp = new CdlInvertedHammerStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlInvertedHammerOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

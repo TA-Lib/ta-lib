@@ -23,15 +23,15 @@
       return Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   public RetCode cdlDojiStar( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlDojiStarInternal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -119,15 +119,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDojiStarUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlDojiStarUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -182,15 +182,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDojiStar( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode cdlDojiStarInternal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -251,15 +251,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDojiStarUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode cdlDojiStarUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -314,6 +314,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlDojiStar( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDojiStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDOJISTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDojiStarUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDojiStarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDojiStar( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDojiStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDOJISTAR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDojiStarUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDojiStarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -358,8 +416,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlDojiStarStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlDojiStarOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlDojiStarStream( CdlDojiStarStream other ) {
          this.core = other.core;
@@ -388,6 +453,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -804,11 +870,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlDojiStarStream#fillRange()}.
     */
-   public CdlDojiStarStream cdlDojiStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlDojiStarStream cdlDojiStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlDojiStarStream sp = new CdlDojiStarStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlDojiStarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

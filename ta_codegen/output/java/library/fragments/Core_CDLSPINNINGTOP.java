@@ -20,15 +20,15 @@
       return BodyShort_avgPeriod ;
 
    }
-   public RetCode cdlSpinningTop( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlSpinningTopInternal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -96,15 +96,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlSpinningTopUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlSpinningTopUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -145,15 +145,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlSpinningTop( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlSpinningTopInternal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -200,15 +200,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlSpinningTopUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
+   RetCode cdlSpinningTopUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -249,6 +249,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlSpinningTop( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlSpinningTopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLSPINNINGTOP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlSpinningTopUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inOpen[],
+                                            double inHigh[],
+                                            double inLow[],
+                                            double inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlSpinningTopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlSpinningTop( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlSpinningTopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLSPINNINGTOP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlSpinningTopUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inOpen[],
+                                            float inHigh[],
+                                            float inLow[],
+                                            float inClose[],
+                                            int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlSpinningTopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -279,8 +337,15 @@
       int cs_BodyShort_avgPeriod;
       double cs_BodyShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlSpinningTopStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlSpinningTopOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlSpinningTopStream( CdlSpinningTopStream other ) {
          this.core = other.core;
@@ -295,6 +360,7 @@
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -592,11 +658,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlSpinningTopStream#fillRange()}.
     */
-   public CdlSpinningTopStream cdlSpinningTopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlSpinningTopStream cdlSpinningTopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlSpinningTopStream sp = new CdlSpinningTopStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlSpinningTopOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

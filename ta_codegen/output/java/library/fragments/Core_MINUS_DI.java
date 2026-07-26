@@ -32,15 +32,15 @@
       }
 
    }
-   public RetCode minusDI( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode minusDIInternal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -357,15 +357,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minusDIUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
+   RetCode minusDIUnguardedInternal( int startIdx,
+                                     int endIdx,
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -540,15 +540,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minusDI( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode minusDIInternal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -734,15 +734,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minusDIUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
+   RetCode minusDIUnguardedInternal( int startIdx,
+                                     int endIdx,
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -917,6 +917,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange minusDI( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod,
+                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minusDIInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINUS_DI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minusDIUnguarded( int startIdx,
+                                     int endIdx,
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     int optInTimePeriod,
+                                     double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minusDIUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minusDI( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod,
+                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minusDIInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINUS_DI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minusDIUnguarded( int startIdx,
+                                     int endIdx,
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     int optInTimePeriod,
+                                     double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minusDIUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -946,8 +1004,15 @@
       double prevMinusDM;
       double prevTR;
       double cur_outReal;
+      OutRange fillRange;
 
       MinusDIStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#minusDIOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MinusDIStream( MinusDIStream other ) {
          this.core = other.core;
@@ -961,6 +1026,7 @@
          this.prevMinusDM = other.prevMinusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -2047,11 +2113,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MinusDIStream#fillRange()}.
     */
-   public MinusDIStream minusDIOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MinusDIStream minusDIOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       MinusDIStream sp = new MinusDIStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = minusDIOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

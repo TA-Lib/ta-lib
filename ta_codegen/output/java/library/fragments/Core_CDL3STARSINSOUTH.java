@@ -29,15 +29,15 @@
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, ShadowLong_avgPeriod), Math.max(BodyLong_avgPeriod, BodyShort_avgPeriod)) + 2 ;
 
    }
-   public RetCode cdl3StarsInSouth( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdl3StarsInSouthInternal( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -172,15 +172,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3StarsInSouthUnguarded( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
+   RetCode cdl3StarsInSouthUnguardedInternal( int startIdx,
+                                              int endIdx,
+                                              double inOpen[],
+                                              double inHigh[],
+                                              double inLow[],
+                                              double inClose[],
+                                              MInteger outBegIdx,
+                                              MInteger outNBElement,
+                                              int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -269,15 +269,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3StarsInSouth( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdl3StarsInSouthInternal( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -372,15 +372,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3StarsInSouthUnguarded( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
+   RetCode cdl3StarsInSouthUnguardedInternal( int startIdx,
+                                              int endIdx,
+                                              float inOpen[],
+                                              float inHigh[],
+                                              float inLow[],
+                                              float inClose[],
+                                              MInteger outBegIdx,
+                                              MInteger outNBElement,
+                                              int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -469,6 +469,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdl3StarsInSouth( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3StarsInSouthInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3STARSINSOUTH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3StarsInSouthUnguarded( int startIdx,
+                                              int endIdx,
+                                              double inOpen[],
+                                              double inHigh[],
+                                              double inLow[],
+                                              double inClose[],
+                                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3StarsInSouthUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3StarsInSouth( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3StarsInSouthInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3STARSINSOUTH", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3StarsInSouthUnguarded( int startIdx,
+                                              int endIdx,
+                                              float inOpen[],
+                                              float inHigh[],
+                                              float inLow[],
+                                              float inClose[],
+                                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3StarsInSouthUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -547,8 +605,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       Cdl3StarsInSouthStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdl3StarsInSouthOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       Cdl3StarsInSouthStream( Cdl3StarsInSouthStream other ) {
          this.core = other.core;
@@ -611,6 +676,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1376,11 +1442,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link Cdl3StarsInSouthStream#fillRange()}.
     */
-   public Cdl3StarsInSouthStream cdl3StarsInSouthOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public Cdl3StarsInSouthStream cdl3StarsInSouthOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       Cdl3StarsInSouthStream sp = new Cdl3StarsInSouthStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdl3StarsInSouthOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
