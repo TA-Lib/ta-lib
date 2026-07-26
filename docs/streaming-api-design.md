@@ -246,7 +246,8 @@ double p = s.peek(formingBarClose);             // forming bar, non-committing (
 Core.SmaStream t = s.copy();                    // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
 Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
-Core.SmaStream s2 = core.smaOpenAndFill(history, 14, beg, nb, warmup);
+Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
+OutRange fr = s2.fillRange();                   // range written, on the handle
 ```
 
 - Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),

@@ -1249,8 +1249,17 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         );
     }
 
-    // Run every junit-free test main() found in the test package.
-    for test in JAVA_LIBRARY_TESTS {
+    // Run every test class DISCOVERED in the sources, not a hardcoded list: a
+    // hardcoded roster is how the retired `AllTests` suite went vacuous (it
+    // named one class, which a later change deleted, and `ant test` kept
+    // passing). A new *Test.java with a main() is picked up automatically; one
+    // without a main() is a hard error rather than a silent skip.
+    let tests = discover_java_tests(&sources);
+    if tests.is_empty() {
+        println!("  Building Java library... FAILED (no test classes discovered)");
+        return false;
+    }
+    for test in &tests {
         print!("  Running Java {}... ", test);
         match std::process::Command::new("java")
             .arg("-cp")
@@ -1272,10 +1281,31 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     true
 }
 
-/// Junit-free test classes in the shipped Java library, run by
-/// [`build_java_library`]. Each has a `main()` that exits non-zero on failure.
-const JAVA_LIBRARY_TESTS: &[&str] =
-    &["CoreApiTest", "BatchApiTest", "SMathOverflowTest", "StreamSmokeTest"];
+/// Every `*Test.java` in the shipped library's test package, in a stable order.
+///
+/// Discovered rather than listed so a new suite cannot be compiled-but-never-run
+/// (the `AllTests` trap). A `*Test.java` without a `main()` is reported and
+/// counted as a failure: silently skipping it would recreate exactly the vacuity
+/// this replaces.
+fn discover_java_tests(sources: &[std::path::PathBuf]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for src in sources {
+        let Some(stem) = src.file_stem().map(|s| s.to_string_lossy().to_string()) else {
+            continue;
+        };
+        if !stem.ends_with("Test") {
+            continue;
+        }
+        let text = std::fs::read_to_string(src).unwrap_or_default();
+        if text.contains("public static void main(") {
+            out.push(stem);
+        } else {
+            println!("  WARNING: {stem} looks like a test but has no main() — not run");
+        }
+    }
+    out.sort();
+    out
+}
 
 /// JDK floor for everything Java this tool compiles, kept in one place so the
 /// server and the shipped library cannot drift apart. Mirrors `build.xml`'s

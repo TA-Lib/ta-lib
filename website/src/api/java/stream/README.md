@@ -29,7 +29,7 @@ There is no `close` — a stream is ordinary heap state, so an unreferenced stre
 ```java
 import io.github.talib.Core;
 
-Core core = new Core();
+Core core = Core.DEFAULT;
 
 // Seed with warm-up history (>= smaLookback(period) + 1 bars).
 double[] history = /* ...your closing prices... */;
@@ -48,7 +48,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 - **Warm-up.** `Open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same code on a throwaway deep copy (which allocates for windowed indicators — `update` is the cheaper path). `value()` re-reads the last committed value without recomputing.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are captured at `Open` and must not change on the owning `Core` while its streams are live.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
@@ -57,16 +57,18 @@ double provisional = s.peek(formingClose);      // state left unchanged
 `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live stream, in one pass:
 
 ```java
-MInteger beg = new MInteger(), nb = new MInteger();
+import io.github.talib.OutRange;
+
 double[] warmup = new double[history.length];
 
-Core.SmaStream s = core.smaOpenAndFill(history, 30, beg, nb, warmup);
+Core.SmaStream s = core.smaOpenAndFill(history, 30, warmup);
+OutRange r = s.fillRange();                     // what was written, on the handle
 
-// warmup[0 .. nb.value - 1] is the SMA over all of history; then stream on:
+// warmup[0 .. r.count() - 1] is the SMA over all of history; then stream on:
 double v = s.update(newClose);
 ```
 
-The optional parameters and outputs (`outBegIdx`, `outNBElement`, one array per output) are exactly the [batch method](/api/java/)'s; the output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The filled range is reported on the returned handle as `fillRange()` (`null` after a plain `Open`, which fills nothing) rather than through out-parameters. The output arrays must not alias the input or each other.
 
 ## Multi-input / multi-output
 

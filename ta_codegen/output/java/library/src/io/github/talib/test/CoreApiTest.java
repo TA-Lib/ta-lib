@@ -122,7 +122,7 @@ public class CoreApiTest {
                 if (id.ordinal() >= FuncUnstId.All.ordinal()) {
                     continue;   // All / None are sentinels, not functions
                 }
-                if (core.GetUnstablePeriod(id) != 0) {
+                if (core.getUnstablePeriod(id) != 0) {
                     allZero = false;
                 }
             }
@@ -132,9 +132,9 @@ public class CoreApiTest {
 
     static void builderSetsOnePeriod() {
         Core core = Core.builder().unstablePeriod(FuncUnstId.Rsi, 10).build();
-        check(core.GetUnstablePeriod(FuncUnstId.Rsi) == 10, "builder sets the named period");
-        check(core.GetUnstablePeriod(FuncUnstId.Ema) == 0, "builder leaves other periods alone");
-        check(Core.DEFAULT.GetUnstablePeriod(FuncUnstId.Rsi) == 0,
+        check(core.getUnstablePeriod(FuncUnstId.Rsi) == 10, "builder sets the named period");
+        check(core.getUnstablePeriod(FuncUnstId.Ema) == 0, "builder leaves other periods alone");
+        check(Core.DEFAULT.getUnstablePeriod(FuncUnstId.Rsi) == 0,
               "building does not disturb Core.DEFAULT");
     }
 
@@ -142,7 +142,7 @@ public class CoreApiTest {
         Core core = Core.builder().unstablePeriod(FuncUnstId.All, 7).build();
         boolean everySlot = true;
         for (FuncUnstId id : FuncUnstId.values()) {
-            if (id.ordinal() < FuncUnstId.All.ordinal() && core.GetUnstablePeriod(id) != 7) {
+            if (id.ordinal() < FuncUnstId.All.ordinal() && core.getUnstablePeriod(id) != 7) {
                 everySlot = false;
             }
         }
@@ -220,9 +220,9 @@ public class CoreApiTest {
         Core first = b.build();
         b.unstablePeriod(FuncUnstId.Rsi, 99);
         Core second = b.build();
-        check(first.GetUnstablePeriod(FuncUnstId.Rsi) == 3,
+        check(first.getUnstablePeriod(FuncUnstId.Rsi) == 3,
               "reusing the builder does not mutate an already-built Core");
-        check(second.GetUnstablePeriod(FuncUnstId.Rsi) == 99, "the second build sees the new value");
+        check(second.getUnstablePeriod(FuncUnstId.Rsi) == 99, "the second build sees the new value");
     }
 
     static void toBuilderRoundTripsAndDoesNotAlias() {
@@ -232,9 +232,9 @@ public class CoreApiTest {
             .build();
         Core derived = original.toBuilder().unstablePeriod(FuncUnstId.Ema, 8).build();
 
-        check(derived.GetUnstablePeriod(FuncUnstId.Rsi) == 5, "toBuilder carries settings over");
-        check(derived.GetUnstablePeriod(FuncUnstId.Ema) == 8, "the derived Core has the new setting");
-        check(original.GetUnstablePeriod(FuncUnstId.Ema) == 0,
+        check(derived.getUnstablePeriod(FuncUnstId.Rsi) == 5, "toBuilder carries settings over");
+        check(derived.getUnstablePeriod(FuncUnstId.Ema) == 8, "the derived Core has the new setting");
+        check(original.getUnstablePeriod(FuncUnstId.Ema) == 0,
               "deriving does not mutate the original Core");
     }
 
@@ -305,12 +305,12 @@ public class CoreApiTest {
             () -> Core.builder().candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
             "negative avgPeriod -> IAE");
         checkThrows(NullPointerException.class,
-            () -> Core.DEFAULT.GetUnstablePeriod(null), "null id on the getter -> NPE");
+            () -> Core.DEFAULT.getUnstablePeriod(null), "null id on the getter -> NPE");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.GetUnstablePeriod(FuncUnstId.All),
+            () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.All),
             "FuncUnstId.All has no single value to read -> IAE");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.GetUnstablePeriod(FuncUnstId.None),
+            () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.None),
             "FuncUnstId.None is not a function -> IAE");
     }
 
