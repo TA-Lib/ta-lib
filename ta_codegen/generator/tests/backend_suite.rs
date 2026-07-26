@@ -602,10 +602,31 @@ fn test_rsi_java_unstable_period() {
         out.java.contains("this.unstablePeriod"),
         "Java RSI should reference this.unstablePeriod"
     );
-    assert!(
-        out.java.contains("this.compatibility"),
-        "Java RSI should reference this.compatibility"
-    );
+}
+
+/// Java pins compatibility to Default and carries no such field, so the branches
+/// are constant-folded at render time. RSI is the witness: its lookback has a
+/// bare `== METASTOCK` test and its body a compound
+/// `unstablePeriod == 0 && ... == METASTOCK` one, and both arms are dead here.
+///
+/// C renders the same IR and must keep both arms — that contrast is what makes
+/// this non-vacuous (an empty Java body would satisfy the first assert alone).
+#[test]
+fn java_compatibility_is_folded_away() {
+    for name in ["rsi", "cmo", "ema", "dema", "tema", "trix", "macd", "macdfix"] {
+        let (func, enums) = load_indicator(name);
+        let out = generate_all(&func, &enums);
+
+        assert!(
+            !out.java.contains("compatibility ==") && !out.java.contains("Compatibility."),
+            "Java {name} must not reference the compatibility field — it is folded away"
+        );
+        assert!(
+            out.c.contains("TA_GLOBALS_COMPATIBILITY"),
+            "C {name} must keep both compatibility arms (proves the Java fold is \
+             a backend choice, not an empty input)"
+        );
+    }
 }
 
 // --- EMA: unstable period + ARRAY_COPY ---
@@ -5612,11 +5633,11 @@ fn stochrsi_lookback_cross_calls() {
 
 #[test]
 fn java_var_name_mappings() {
-    // Fixed (non-enum) constant renderings.
+    // Fixed (non-enum) constant renderings. COMPATIBILITY/METASTOCK/DEFAULT are
+    // deliberately absent: Java pins the mode to Default and the branches are
+    // constant-folded away before rendering, so those names never reach `var`
+    // (reaching it panics — see `java_compatibility_is_folded_away`).
     let mut cases: Vec<(String, String)> = [
-        ("COMPATIBILITY", "this.compatibility"),
-        ("METASTOCK", "Compatibility.Metastock"),
-        ("DEFAULT", "Compatibility.Default"),
         ("BAD_PARAM", "RetCode.BadParam"),
         ("SUCCESS", "RetCode.Success"),
         ("ALLOC_ERR", "RetCode.AllocErr"),

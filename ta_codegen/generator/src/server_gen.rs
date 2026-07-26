@@ -2102,9 +2102,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("}\n\n");
 
-    s.push_str("enum Compatibility {\n");
-    s.push_str("    Default, Metastock;\n");
-    s.push_str("}\n\n");
+    // No Compatibility enum: the Java backend constant-folds the Metastock arms
+    // out of the generated indicator code (the shipped Core has no such setting),
+    // so nothing spliced in here can reference one.
 
     // MAType — ordinal == the C enum value (enums.yaml rows are ascending).
     s.push_str("enum MAType {\n");
@@ -2141,7 +2141,6 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Core class — method bodies are inlined by the caller via inline_java_core_methods()
     s.push_str("class Core {\n");
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.values().length];\n");
-    s.push_str("    Compatibility compatibility = Compatibility.Default;\n");
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
     s.push_str("    CandleSetting[] candleSettings = {\n");
@@ -2350,11 +2349,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            return \"{\\\"error\\\":\\\"Invalid id\\\"}\"; \n");
     s.push_str("        }\n");
 
-    // set_compatibility method
+    // set_compatibility method. The Java library exposes no way to select a
+    // compatibility variant (the Metastock arms are constant-folded out of the
+    // generated code), so mode 0 is a no-op and any other mode is an explicit
+    // error — the driver skips that leg rather than silently comparing a Default
+    // run against a Metastock reference. Mirrors the Rust server.
     s.push_str("        else if (json.contains(\"\\\"set_compatibility\\\"\")) {\n");
     s.push_str("            int mode = jsonInt(json, \"mode\");\n");
-    s.push_str("            core.compatibility = (mode == 1) ? Compatibility.Metastock : Compatibility.Default;\n");
-    s.push_str("            return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("            if (mode == 0) {\n");
+    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            return \"{\\\"error\\\":\\\"java has no compatibility API (pinned to Default)\\\"}\";\n");
     s.push_str("        }\n");
 
     // eval_predicate method — boolean near-zero builtin on each input value.
@@ -4414,6 +4419,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        if (svN < 2) svN = 2;\n        if (svN > 256) svN = 256;\n");
     s.push_str("        int svK = jsonInt(json, \"unstablePeriod\");\n");
     s.push_str("        int svCompat = jsonInt(json, \"compatibility\");\n");
+    // Compatibility is pinned to Default in the Java library (the Metastock arms
+    // are constant-folded out of the generated code), so a Metastock leg would
+    // silently re-run the Default one — refuse it instead of passing vacuously.
+    s.push_str("        if (svCompat != 0) {\n");
+    s.push_str("            return \"{\\\"error\\\":\\\"java has no compatibility API (pinned to Default)\\\"}\";\n");
+    s.push_str("        }\n");
     if candle {
         s.push_str("        int candleLegs = jsonInt(json, \"candleLegs\");\n");
     }
@@ -4529,7 +4540,6 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     // Fresh, pinned, configured Core for this round (per-instance settings).
     s.push_str("            Core c2 = new Core();\n");
-    s.push_str("            c2.compatibility = (svCompat == 1) ? Compatibility.Metastock : Compatibility.Default;\n");
     for id in collect_pin_ids(func, funcs) {
         let _ = writeln!(s, "            c2.unstablePeriod[{id}] = svK;");
     }

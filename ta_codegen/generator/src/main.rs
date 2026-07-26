@@ -1086,6 +1086,9 @@ fn build_servers(backend_filter: Option<&str>) {
                         println!("FAILED (javac not found: {})", e);
                     }
                 }
+                if !build_java_library(&root, &bin_dir) {
+                    failures += 1;
+                }
             }
             "dotnet" => {
                 // Build shared library from generated C files (needed by .NET P/Invoke)
@@ -1187,6 +1190,117 @@ fn build_servers(backend_filter: Option<&str>) {
              real break reads as green."
         );
         std::process::exit(1);
+    }
+}
+
+/// Compile the **shipped** Java library and run its junit-free tests.
+///
+/// The JSON-RPC server above is self-contained (it splices the same per-function
+/// fragments into its own inline `Core`), so building it proves nothing about
+/// `output/java/library/` — which is the artifact users get. Without this step the
+/// shipped tree has no compile coverage at all in any gate, and a break in the
+/// hand-written scaffolding (`Core.java`'s preserved region, `CoreBuilder`, the
+/// shared types) surfaces only when someone opens an IDE.
+///
+/// The in-tree JUnit-3 tests are skipped: `junit.jar` is not in the tree and no
+/// script or CI job ever ran them. The junit-free `main()` tests are compiled AND
+/// executed — "compile + one call" is the project's standing Java rule. Skips are
+/// printed, never silent.
+///
+/// Returns `true` on success.
+fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
+    let src_root = root.join("ta_codegen/output/java/library/src");
+    if !src_root.exists() {
+        println!("  Building Java library... SKIPPED (no {})", src_root.display());
+        return true;
+    }
+
+    let mut sources: Vec<std::path::PathBuf> = Vec::new();
+    let mut junit_skipped: Vec<String> = Vec::new();
+    collect_java_sources(&src_root, &mut sources, &mut junit_skipped);
+    sources.sort();
+    junit_skipped.sort();
+
+    print!("  Building Java library ({} files)... ", sources.len());
+    let class_dir = bin_dir.join("ta_codegen_java_lib");
+    let _ = std::fs::remove_dir_all(&class_dir);
+    std::fs::create_dir_all(&class_dir).ok();
+
+    let mut cmd = std::process::Command::new("javac");
+    cmd.arg("-d").arg(&class_dir).arg("-nowarn");
+    for src in &sources {
+        cmd.arg(src);
+    }
+    match cmd.status() {
+        Ok(s) if s.success() => println!("OK"),
+        Ok(s) => {
+            println!("FAILED (exit {})", s.code().unwrap_or(-1));
+            return false;
+        }
+        Err(e) => {
+            println!("FAILED (javac not found: {})", e);
+            return false;
+        }
+    }
+    if !junit_skipped.is_empty() {
+        println!(
+            "    (skipped {} junit-dependent test file(s), no junit.jar in tree: {})",
+            junit_skipped.len(),
+            junit_skipped.join(", ")
+        );
+    }
+
+    // Run every junit-free test main() found in the test package.
+    for test in JAVA_LIBRARY_TESTS {
+        print!("  Running Java {}... ", test);
+        match std::process::Command::new("java")
+            .arg("-cp")
+            .arg(&class_dir)
+            .arg(format!("com.tictactec.ta.lib.test.{test}"))
+            .status()
+        {
+            Ok(s) if s.success() => println!("OK"),
+            Ok(s) => {
+                println!("FAILED (exit {})", s.code().unwrap_or(-1));
+                return false;
+            }
+            Err(e) => {
+                println!("FAILED (java not found: {})", e);
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// Junit-free test classes in the shipped Java library, run by
+/// [`build_java_library`]. Each has a `main()` that exits non-zero on failure.
+const JAVA_LIBRARY_TESTS: &[&str] = &["CoreApiTest", "StreamSmokeTest"];
+
+/// Recursively collect `.java` sources under `dir`, partitioning out the files
+/// that need junit (which is not in the tree).
+fn collect_java_sources(
+    dir: &Path,
+    sources: &mut Vec<std::path::PathBuf>,
+    junit_skipped: &mut Vec<String>,
+) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_java_sources(&path, sources, junit_skipped);
+        } else if path.extension().is_some_and(|e| e == "java") {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            if text.contains("import junit.") || text.contains("junit.framework") {
+                junit_skipped.push(
+                    path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                );
+            } else {
+                sources.push(path);
+            }
+        }
     }
 }
 

@@ -23,9 +23,6 @@
       }
       int retValue;
       retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-      if( this.compatibility == Compatibility.Metastock ) {
-         retValue = retValue - 1;
-      }
       return retValue ;
 
    }
@@ -117,52 +114,6 @@
        * no need to calculate since this
        * first value will be surely skip.
        */
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         /* Preserve prevValue because it may get
-          * overwritten by the output.
-          * (because output ptr could be the same as input ptr).
-          */
-         savePrevValue = prevValue;
-         /* No unstable period, so must calculate first output
-          * particular to Metastock.
-          * (Metastock re-use the first price bar, so there
-          *  is no loss/gain at first. Beats me why they
-          *  are doing all this).
-          */
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         /* Write the output. */
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            outReal[outIdx] = 0.0;
-            outIdx = outIdx + 1;
-         }
-         /* Are we done? */
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.Success ;
-         }
-         /* Start over for the next price bar. */
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       /* Remaining of the processing is identical
        * for both Classic calculation and Metastock.
        */
@@ -297,39 +248,6 @@
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         savePrevValue = prevValue;
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            outReal[outIdx] = 0.0;
-            outIdx = outIdx + 1;
-         }
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.Success ;
-         }
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -452,39 +370,6 @@
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         savePrevValue = prevValue;
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            outReal[outIdx] = 0.0;
-            outIdx = outIdx + 1;
-         }
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.Success ;
-         }
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -596,39 +481,6 @@
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         savePrevValue = prevValue;
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            outReal[outIdx] = 0.0;
-            outIdx = outIdx + 1;
-         }
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.Success ;
-         }
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -881,52 +733,6 @@
        * no need to calculate since this
        * first value will be surely skip.
        */
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         /* Preserve prevValue because it may get
-          * overwritten by the output.
-          * (because output ptr could be the same as input ptr).
-          */
-         savePrevValue = prevValue;
-         /* No unstable period, so must calculate first output
-          * particular to Metastock.
-          * (Metastock re-use the first price bar, so there
-          *  is no loss/gain at first. Beats me why they
-          *  are doing all this).
-          */
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         /* Write the output. */
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            lastValue_outReal = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            lastValue_outReal = 0.0;
-            outIdx = outIdx + 1;
-         }
-         /* Are we done? */
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.OutOfRangeEndIndex ;
-         }
-         /* Start over for the next price bar. */
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       /* Remaining of the processing is identical
        * for both Classic calculation and Metastock.
        */
@@ -1113,52 +919,6 @@
        * no need to calculate since this
        * first value will be surely skip.
        */
-      if( unstablePeriod == 0 && this.compatibility == Compatibility.Metastock ) {
-         /* Preserve prevValue because it may get
-          * overwritten by the output.
-          * (because output ptr could be the same as input ptr).
-          */
-         savePrevValue = prevValue;
-         /* No unstable period, so must calculate first output
-          * particular to Metastock.
-          * (Metastock re-use the first price bar, so there
-          *  is no loss/gain at first. Beats me why they
-          *  are doing all this).
-          */
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 ) {
-            tempValue1 = (double)inReal[today];
-            today = today + 1;
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / (double)optInTimePeriod;
-         tempValue2 = prevGain / (double)optInTimePeriod;
-         /* Write the output. */
-         tempValue1 = tempValue2 + tempValue1;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
-            outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
-            outIdx = outIdx + 1;
-         } else {
-            outReal[outIdx] = 0.0;
-            outIdx = outIdx + 1;
-         }
-         /* Are we done? */
-         if( today > endIdx ) {
-            outBegIdx.value = startIdx;
-            outNBElement.value = outIdx;
-            return RetCode.OutOfRangeEndIndex ;
-         }
-         /* Start over for the next price bar. */
-         today = today - (int)optInTimePeriod;
-         prevValue = savePrevValue;
-      }
       /* Remaining of the processing is identical
        * for both Classic calculation and Metastock.
        */

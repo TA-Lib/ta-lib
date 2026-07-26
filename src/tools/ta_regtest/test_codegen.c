@@ -70,11 +70,12 @@ static const CodegenLanguage ALL_LANGUAGES[] = {
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
-/* See test_codegen.h. Rust pins compatibility to Default and exposes no setter,
- * so its Metastock legs are skipped rather than run vacuously. */
+/* See test_codegen.h. Rust and Java pin compatibility to Default and expose no
+ * setter, so their Metastock legs are skipped rather than run vacuously. */
 int codegen_lang_has_compatibility_api(const char *lang)
 {
-    return !(lang && strcmp(lang, "rust") == 0);
+    if( !lang ) return 1;
+    return !(strcmp(lang, "rust") == 0 || strcmp(lang, "java") == 0);
 }
 
 /* One line per language per kind of skipped leg, so the coverage a language

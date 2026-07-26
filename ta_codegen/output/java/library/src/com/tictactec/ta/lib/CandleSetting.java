@@ -44,16 +44,25 @@
  *  -------------------------------------------------------------------
  *  121005 MF     First Version
  *  022206 BT     add copy constructor
+ *  072526 MF,CC  Immutable: final fields, read accessors, no CopyFrom/copy ctor.
  */
 
 package com.tictactec.ta.lib;
 
-public class CandleSetting {
-    
+/**
+ * One candlestick-pattern setting: how a candle part is measured
+ * ({@link RangeType}), over how many previous candles, and by what factor.
+ *
+ * <p><b>Immutable.</b> This is what makes {@link Core}'s {@code CandleSetting[]}
+ * deeply immutable and therefore safe to share across threads; instances are
+ * created through {@link CoreBuilder#candleSetting}.
+ */
+public final class CandleSetting {
+
     /** Creates a new instance of TA_CandleSetting */
-    public CandleSetting( CandleSettingType p_settingType, 
-                             RangeType p_rangeType, 
-                             int p_avgPeriod, 
+    public CandleSetting( CandleSettingType p_settingType,
+                             RangeType p_rangeType,
+                             int p_avgPeriod,
                              double p_factor )
     {
         settingType = p_settingType;
@@ -62,24 +71,29 @@ public class CandleSetting {
         factor = p_factor;
     }
 
-    public CandleSetting(CandleSetting that)
+    /** Which candle attribute this setting describes. */
+    public CandleSettingType settingType() { return settingType; }
+
+    /** How the candle range is measured. */
+    public RangeType rangeType() { return rangeType; }
+
+    /** Number of previous candles averaged over (0 = no averaging). */
+    public int avgPeriod() { return avgPeriod; }
+
+    /** Multiplier applied to the average. */
+    public double factor() { return factor; }
+
+    @Override
+    public String toString()
     {
-       this.settingType = that.settingType;
-       this.rangeType = that.rangeType;
-       this.avgPeriod = that.avgPeriod;
-       this.factor = that.factor;       
+       return "CandleSetting[" + settingType + ", " + rangeType
+            + ", avgPeriod=" + avgPeriod + ", factor=" + factor + "]";
     }
-    
-    public void CopyFrom( CandleSetting src )
-    {
-       this.settingType = src.settingType;
-       this.rangeType = src.rangeType;
-       this.avgPeriod = src.avgPeriod;
-       this.factor = src.factor;
-    }
-    
-    CandleSettingType    settingType;
-    RangeType            rangeType;
-    int                     avgPeriod;
-    double                  factor;    
+
+    /* Package-private and final: the generated indicator code in Core reads these
+     * fields directly (candleSettings[X.ordinal()].avgPeriod). */
+    final CandleSettingType    settingType;
+    final RangeType            rangeType;
+    final int                     avgPeriod;
+    final double                  factor;
 }

@@ -16,11 +16,11 @@ ErrorNumber test_codegen(const TA_History *history,
 
 /* Can this language server select a compatibility variant?
  * C still carries the deprecated TA_SetCompatibility and .NET P/Invokes into it.
- * The Rust crate does not: its mode is pinned to Default with no public setter,
- * so a Metastock leg would silently re-run the Default one — callers must skip
- * it visibly instead. Java's shipped Core lost its setter too, but the Java
- * server embeds its own Core copy whose field stays settable, so the Metastock
- * branches in the generated Java keep their bit-exact coverage.
+ * Neither Rust nor Java does: both are pinned to Default with no public setter,
+ * and the Java backend now constant-folds the Metastock branches out of the
+ * generated code entirely, so those arms do not exist to be selected. A
+ * Metastock leg would silently re-run the Default one — callers must skip it
+ * visibly instead. The Metastock arms keep their bit-exact coverage in C.
  * Returns 1 when the mode can be switched. */
 int codegen_lang_has_compatibility_api(const char *lang);
 
