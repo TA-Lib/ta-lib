@@ -76,7 +76,10 @@ fn test_java_sma_ring_stream_section() {
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
     assert!(s.contains("(Object)outReal == (Object)inReal"));
-    assert!(s.contains("public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )"));
+    assert!(s.contains("public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
+    // The filled range rides on the handle instead of a pair of out-params.
+    assert!(s.contains("public OutRange fillRange() { return fillRange; }"));
+    assert!(s.contains("sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);"));
     // Composition seam is package-private with a startIdx anchor.
     assert!(s.contains("SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
 }
@@ -87,8 +90,12 @@ fn test_java_ema_private_extra_param_and_compat() {
     // The k factor is captured state, computed after default substitution.
     assert!(s.contains("double optInK_1;"));
     assert!(s.contains("sp.optInK_1 = optInK_1;"));
-    // Compatibility branches transcribe into the open (settings at open).
-    assert!(s.contains("this.compatibility == Compatibility.Default"));
+    // Compatibility is pinned to Default in Java and folded away at render
+    // time, so the open carries the Default arm inline with no branch left.
+    assert!(!s.contains("compatibility"), "no compatibility reference survives the fold");
+    assert!(!s.contains("Compatibility."), "no Compatibility enum reference survives the fold");
+    // Non-vacuity: the Default arm's body is what remains.
+    assert!(s.contains("sp.optInK_1 = optInK_1;"));
 }
 
 #[test]

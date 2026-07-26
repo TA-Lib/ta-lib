@@ -25,16 +25,16 @@
       return BodyLong_avgPeriod + 1 ;
 
    }
-   public RetCode cdlDarkCloudCover( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     double optInPenetration,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlDarkCloudCoverInternal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      double optInPenetration,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -117,16 +117,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDarkCloudCoverUnguarded( int startIdx,
-                                              int endIdx,
-                                              double inOpen[],
-                                              double inHigh[],
-                                              double inLow[],
-                                              double inClose[],
-                                              double optInPenetration,
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlDarkCloudCoverUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               double optInPenetration,
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -168,16 +168,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDarkCloudCover( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     double optInPenetration,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlDarkCloudCoverInternal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      double optInPenetration,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -230,16 +230,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlDarkCloudCoverUnguarded( int startIdx,
-                                              int endIdx,
-                                              float inOpen[],
-                                              float inHigh[],
-                                              float inLow[],
-                                              float inClose[],
-                                              double optInPenetration,
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdlDarkCloudCoverUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               double optInPenetration,
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -281,6 +281,68 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlDarkCloudCover( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      double optInPenetration,
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDarkCloudCoverInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDARKCLOUDCOVER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDarkCloudCoverUnguarded( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               double optInPenetration,
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDarkCloudCoverUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDarkCloudCover( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      double optInPenetration,
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlDarkCloudCoverInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLDARKCLOUDCOVER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlDarkCloudCoverUnguarded( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               double optInPenetration,
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlDarkCloudCoverUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -317,8 +379,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlDarkCloudCoverStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlDarkCloudCoverOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlDarkCloudCoverStream( CdlDarkCloudCoverStream other ) {
          this.core = other.core;
@@ -339,6 +408,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -704,11 +774,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlDarkCloudCoverStream#fillRange()}.
     */
-   public CdlDarkCloudCoverStream cdlDarkCloudCoverOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlDarkCloudCoverStream cdlDarkCloudCoverOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       CdlDarkCloudCoverStream sp = new CdlDarkCloudCoverStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlDarkCloudCoverOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

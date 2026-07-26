@@ -20,15 +20,15 @@
       return ShadowVeryShort_avgPeriod + 3 ;
 
    }
-   public RetCode cdlConcealBabysWall( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlConcealBabysWallInternal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -120,15 +120,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlConcealBabysWallUnguarded( int startIdx,
-                                                int endIdx,
-                                                double inOpen[],
-                                                double inHigh[],
-                                                double inLow[],
-                                                double inClose[],
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                int outInteger[] )
+   RetCode cdlConcealBabysWallUnguardedInternal( int startIdx,
+                                                 int endIdx,
+                                                 double inOpen[],
+                                                 double inHigh[],
+                                                 double inLow[],
+                                                 double inClose[],
+                                                 MInteger outBegIdx,
+                                                 MInteger outNBElement,
+                                                 int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -177,15 +177,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlConcealBabysWall( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode cdlConcealBabysWallInternal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -240,15 +240,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlConcealBabysWallUnguarded( int startIdx,
-                                                int endIdx,
-                                                float inOpen[],
-                                                float inHigh[],
-                                                float inLow[],
-                                                float inClose[],
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                int outInteger[] )
+   RetCode cdlConcealBabysWallUnguardedInternal( int startIdx,
+                                                 int endIdx,
+                                                 float inOpen[],
+                                                 float inHigh[],
+                                                 float inLow[],
+                                                 float inClose[],
+                                                 MInteger outBegIdx,
+                                                 MInteger outNBElement,
+                                                 int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -296,6 +296,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange cdlConcealBabysWall( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlConcealBabysWallInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLCONCEALBABYSWALL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlConcealBabysWallUnguarded( int startIdx,
+                                                 int endIdx,
+                                                 double inOpen[],
+                                                 double inHigh[],
+                                                 double inLow[],
+                                                 double inClose[],
+                                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlConcealBabysWallUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlConcealBabysWall( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlConcealBabysWallInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLCONCEALBABYSWALL", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlConcealBabysWallUnguarded( int startIdx,
+                                                 int endIdx,
+                                                 float inOpen[],
+                                                 float inHigh[],
+                                                 float inLow[],
+                                                 float inClose[],
+                                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlConcealBabysWallUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -347,8 +405,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlConcealBabysWallStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlConcealBabysWallOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlConcealBabysWallStream( CdlConcealBabysWallStream other ) {
          this.core = other.core;
@@ -383,6 +448,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -843,11 +909,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlConcealBabysWallStream#fillRange()}.
     */
-   public CdlConcealBabysWallStream cdlConcealBabysWallOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlConcealBabysWallStream cdlConcealBabysWallOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlConcealBabysWallStream sp = new CdlConcealBabysWallStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlConcealBabysWallOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -30,13 +30,13 @@
       return emaLookback * 3 + rocRLookback(1) ;
 
    }
-   public RetCode trix( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode trixInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -158,13 +158,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode trixUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode trixUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -239,13 +239,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode trix( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode trixInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -331,13 +331,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode trixUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode trixUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -412,6 +412,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange trix( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trixInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRIX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trixUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trixUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trix( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trixInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRIX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trixUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trixUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -437,8 +487,15 @@
       double prevEMA3;
       double optInK_1;
       double cur_outReal;
+      OutRange fillRange;
 
       TrixStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#trixOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       TrixStream( TrixStream other ) {
          this.core = other.core;
@@ -448,6 +505,7 @@
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -801,11 +859,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link TrixStream#fillRange()}.
     */
-   public TrixStream trixOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public TrixStream trixOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       TrixStream sp = new TrixStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = trixOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

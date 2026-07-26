@@ -26,14 +26,14 @@
       return optInTimePeriod ;
 
    }
-   public RetCode beta( int startIdx,
-                        int endIdx,
-                        double inReal0[],
-                        double inReal1[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode betaInternal( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -196,14 +196,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode betaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal0[],
-                                 double inReal1[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode betaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal0[],
+                                  double inReal1[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -316,14 +316,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode beta( int startIdx,
-                        int endIdx,
-                        float inReal0[],
-                        float inReal1[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode betaInternal( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -447,14 +447,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode betaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal0[],
-                                 float inReal1[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode betaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal0[],
+                                  float inReal1[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -567,6 +567,60 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange beta( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = betaInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("BETA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange betaUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal0[],
+                                  double inReal1[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      betaUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange beta( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = betaInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("BETA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange betaUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal0[],
+                                  float inReal1[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      betaUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -603,8 +657,15 @@
       double[] ring_trailingIdx_inReal0;
       double[] ring_trailingIdx_inReal1;
       double cur_outReal;
+      OutRange fillRange;
 
       BetaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#betaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       BetaStream( BetaStream other ) {
          this.core = other.core;
@@ -625,6 +686,7 @@
          this.ring_trailingIdx_inReal0 = other.ring_trailingIdx_inReal0.clone();
          this.ring_trailingIdx_inReal1 = other.ring_trailingIdx_inReal1.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1148,11 +1210,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link BetaStream#fillRange()}.
     */
-   public BetaStream betaOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public BetaStream betaOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
       BetaStream sp = new BetaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = betaOpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

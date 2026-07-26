@@ -19,12 +19,12 @@
       return 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()] ;
 
    }
-   public RetCode htDcPeriod( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode htDcPeriodInternal( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -359,12 +359,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPeriodUnguarded( int startIdx,
-                                       int endIdx,
-                                       double inReal[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
+   RetCode htDcPeriodUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        double inReal[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -641,12 +641,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPeriod( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode htDcPeriodInternal( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -929,12 +929,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htDcPeriodUnguarded( int startIdx,
-                                       int endIdx,
-                                       float inReal[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
+   RetCode htDcPeriodUnguardedInternal( int startIdx,
+                                        int endIdx,
+                                        float inReal[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1211,6 +1211,52 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htDcPeriod( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htDcPeriodInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_DCPERIOD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPeriodUnguarded( int startIdx,
+                                        int endIdx,
+                                        double inReal[],
+                                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htDcPeriodUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPeriod( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htDcPeriodInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_DCPERIOD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htDcPeriodUnguarded( int startIdx,
+                                        int endIdx,
+                                        float inReal[],
+                                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htDcPeriodUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1286,8 +1332,15 @@
       int ringCap_trailingWMAIdx;
       double[] ring_trailingWMAIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       HtDcPeriodStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htDcPeriodOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtDcPeriodStream( HtDcPeriodStream other ) {
          this.core = other.core;
@@ -1347,6 +1400,7 @@
          this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -2375,11 +2429,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtDcPeriodStream#fillRange()}.
     */
-   public HtDcPeriodStream htDcPeriodOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public HtDcPeriodStream htDcPeriodOpenAndFill( double inReal[], double outReal[] )
    {
       HtDcPeriodStream sp = new HtDcPeriodStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htDcPeriodOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -663,17 +663,17 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     }
 
     // Take over gen_code's Java role: generate the shipped Java library files into
-    // java/src/com/tictactec/ta/lib/ (the Rust/.NET bindings have no canonical home
+    // java/src/io/github/talib/ (the Rust/.NET bindings have no canonical home
     // and stay under ta_codegen/output/, but Java — like C — is a shipped product).
     if backends_to_run.contains(&"java") {
-        let java_pkg = root.join("ta_codegen/output/java/library/src/com/tictactec/ta/lib");
+        let java_pkg = root.join("ta_codegen/output/java/library/src/io/github/talib");
         // FuncUnstId.java + MAType.java depend only on enums.yaml — always safe
         // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
         backends::java_enums::generate_matype(&enums, &java_pkg.join("MAType.java"));
-        // Core.java's GENCODE section and CoreAnnotated.java splice ALL indicators
-        // into a single file, so only regenerate on a full (unfiltered) run — a
-        // --func subset would drop every other indicator's methods.
+        // Core.java's GENCODE section splices ALL indicators into a single file,
+        // so only regenerate on a full (unfiltered) run — a --func subset would
+        // drop every other indicator's methods.
         if func_filter.is_none() {
             backends::java_shipped::generate_core(
                 &generated_funcs,
@@ -682,15 +682,9 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
                 &helper_registry,
                 &java_pkg.join("Core.java"),
             );
-            backends::java_shipped::generate_annotated(
-                &generated_funcs,
-                &enums,
-                &java_pkg.join("CoreAnnotated.java"),
-            );
         } else {
             println!(
-                "  (skipping shipped Core.java/CoreAnnotated.java — needs a full \
-                 generate without --func)"
+                "  (skipping shipped Core.java — needs a full generate without --func)"
             );
         }
     }
@@ -1070,6 +1064,11 @@ fn build_servers(backend_filter: Option<&str>) {
                 std::fs::create_dir_all(&class_dir).ok();
                 match std::process::Command::new("javac")
                     .args([
+                        // JDK 17 (LTS) floor: the spliced public wrappers return
+                        // `record OutRange`. Pinning it here means a too-old JDK
+                        // fails with a clear unsupported-release error.
+                        "--release",
+                        JAVA_RELEASE,
                         "-d",
                         class_dir.to_str().unwrap(),
                         java_dir.join("TaCodegenServe.java").to_str().unwrap(),
@@ -1227,7 +1226,7 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     std::fs::create_dir_all(&class_dir).ok();
 
     let mut cmd = std::process::Command::new("javac");
-    cmd.arg("-d").arg(&class_dir).arg("-nowarn");
+    cmd.arg("--release").arg(JAVA_RELEASE).arg("-d").arg(&class_dir).arg("-nowarn");
     for src in &sources {
         cmd.arg(src);
     }
@@ -1256,7 +1255,7 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         match std::process::Command::new("java")
             .arg("-cp")
             .arg(&class_dir)
-            .arg(format!("com.tictactec.ta.lib.test.{test}"))
+            .arg(format!("io.github.talib.test.{test}"))
             .status()
         {
             Ok(s) if s.success() => println!("OK"),
@@ -1275,7 +1274,13 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
 
 /// Junit-free test classes in the shipped Java library, run by
 /// [`build_java_library`]. Each has a `main()` that exits non-zero on failure.
-const JAVA_LIBRARY_TESTS: &[&str] = &["CoreApiTest", "StreamSmokeTest"];
+const JAVA_LIBRARY_TESTS: &[&str] =
+    &["CoreApiTest", "BatchApiTest", "SMathOverflowTest", "StreamSmokeTest"];
+
+/// JDK floor for everything Java this tool compiles, kept in one place so the
+/// server and the shipped library cannot drift apart. Mirrors `build.xml`'s
+/// `release="17"`.
+const JAVA_RELEASE: &str = "17";
 
 /// Recursively collect `.java` sources under `dir`, partitioning out the files
 /// that need junit (which is not in the tree).

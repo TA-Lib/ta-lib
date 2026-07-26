@@ -20,15 +20,15 @@
       return BodyLong_avgPeriod + 2 ;
 
    }
-   public RetCode cdl2Crows( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdl2CrowsInternal( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -109,15 +109,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl2CrowsUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode cdl2CrowsUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       double inOpen[],
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -159,15 +159,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl2Crows( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdl2CrowsInternal( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -215,15 +215,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl2CrowsUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode cdl2CrowsUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       float inOpen[],
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -265,6 +265,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdl2Crows( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL2CROWS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl2CrowsUnguarded( int startIdx,
+                                       int endIdx,
+                                       double inOpen[],
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl2CrowsUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl2Crows( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL2CROWS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl2CrowsUnguarded( int startIdx,
+                                       int endIdx,
+                                       float inOpen[],
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl2CrowsUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -303,8 +361,15 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       Cdl2CrowsStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdl2CrowsOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       Cdl2CrowsStream( Cdl2CrowsStream other ) {
          this.core = other.core;
@@ -327,6 +392,7 @@
          this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
          this.cs_BodyLong_factor = other.cs_BodyLong_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -683,11 +749,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link Cdl2CrowsStream#fillRange()}.
     */
-   public Cdl2CrowsStream cdl2CrowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public Cdl2CrowsStream cdl2CrowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       Cdl2CrowsStream sp = new Cdl2CrowsStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdl2CrowsOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -23,15 +23,15 @@
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   public RetCode cdlInNeck( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlInNeckInternal( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -121,15 +121,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInNeckUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode cdlInNeckUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       double inOpen[],
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -185,15 +185,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInNeck( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlInNeckInternal( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -255,15 +255,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlInNeckUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode cdlInNeckUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       float inOpen[],
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -319,6 +319,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlInNeck( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlInNeckInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLINNECK", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInNeckUnguarded( int startIdx,
+                                       int endIdx,
+                                       double inOpen[],
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlInNeckUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInNeck( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlInNeckInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLINNECK", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlInNeckUnguarded( int startIdx,
+                                       int endIdx,
+                                       float inOpen[],
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlInNeckUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -365,8 +423,15 @@
       int cs_Equal_avgPeriod;
       double cs_Equal_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlInNeckStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlInNeckOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlInNeckStream( CdlInNeckStream other ) {
          this.core = other.core;
@@ -397,6 +462,7 @@
          this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
          this.cs_Equal_factor = other.cs_Equal_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -856,11 +922,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlInNeckStream#fillRange()}.
     */
-   public CdlInNeckStream cdlInNeckOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlInNeckStream cdlInNeckOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlInNeckStream sp = new CdlInNeckStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlInNeckOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

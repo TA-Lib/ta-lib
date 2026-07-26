@@ -136,11 +136,15 @@ impl Registry {
 
         // Bare indicator names resolve to the Unguarded variant.
         // All code in ta_codegen/input is internal — cross-indicator calls skip validation.
+        // Java routes to the package-private internal core (`…UnguardedInternal`),
+        // not the public `…Unguarded` wrapper: the callers pass the C-shaped
+        // MInteger out-params, and going through the wrapper would allocate a
+        // throwaway pair per call.
         if self.contains(func_name) {
             return match lang {
                 Lang::Rust => format!("{func_name}_unguarded"),
                 Lang::C => format!("TA_{}_Unguarded", func_name.to_uppercase()),
-                Lang::Java => format!("{}Unguarded", self.java_base(func_name)),
+                Lang::Java => format!("{}UnguardedInternal", self.java_base(func_name)),
                 Lang::DotNet => {
                     let pascal = capitalize(func_name);
                     format!("{pascal}Logic")
@@ -269,19 +273,21 @@ mod tests {
         // Rust: _private stays as _private (generic, handles both f32/f64)
         assert_eq!(registry.resolve_call("ema_private", Lang::Rust), "ema_private");
 
-        // Java backend (bare names resolve to Unguarded, matching C's public API)
+        // Java backend: bare names resolve to the package-private unguarded
+        // *core*, not the public OutRange wrapper — cross-indicator callers pass
+        // the C-shaped MInteger out-params straight through.
         assert_eq!(
             registry.resolve_call("ema_lookback", Lang::Java),
             "emaLookback"
         );
-        assert_eq!(registry.resolve_call("ema", Lang::Java), "emaUnguarded");
+        assert_eq!(registry.resolve_call("ema", Lang::Java), "emaUnguardedInternal");
         assert_eq!(registry.resolve_call("ema_private", Lang::Java), "emaPrivate");
 
         // Java backend: irregular/typo names come from the YAML `camel_case` field,
         // not a naive lowercase of the C name.
-        assert_eq!(registry.resolve_call("ma", Lang::Java), "movingAverageUnguarded");
-        assert_eq!(registry.resolve_call("willr", Lang::Java), "willRUnguarded");
-        assert_eq!(registry.resolve_call("stochf", Lang::Java), "stochFUnguarded");
+        assert_eq!(registry.resolve_call("ma", Lang::Java), "movingAverageUnguardedInternal");
+        assert_eq!(registry.resolve_call("willr", Lang::Java), "willRUnguardedInternal");
+        assert_eq!(registry.resolve_call("stochf", Lang::Java), "stochFUnguardedInternal");
         assert_eq!(
             registry.resolve_call("ma_lookback", Lang::Java),
             "movingAverageLookback"

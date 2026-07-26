@@ -16,13 +16,13 @@
       return 0 ;
 
    }
-   public RetCode add( int startIdx,
-                       int endIdx,
-                       double inReal0[],
-                       double inReal1[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode addInternal( int startIdx,
+                        int endIdx,
+                        double inReal0[],
+                        double inReal1[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -39,13 +39,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode addUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal0[],
-                                double inReal1[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode addUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal0[],
+                                 double inReal1[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -56,13 +56,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode add( int startIdx,
-                       int endIdx,
-                       float inReal0[],
-                       float inReal1[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode addInternal( int startIdx,
+                        int endIdx,
+                        float inReal0[],
+                        float inReal1[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,13 +79,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode addUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal0[],
-                                float inReal1[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode addUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal0[],
+                                 float inReal1[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -95,6 +95,56 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange add( int startIdx,
+                        int endIdx,
+                        double inReal0[],
+                        double inReal1[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = addInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange addUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal0[],
+                                 double inReal1[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      addUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange add( int startIdx,
+                        int endIdx,
+                        float inReal0[],
+                        float inReal1[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = addInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ADD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange addUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal0[],
+                                 float inReal1[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      addUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -116,12 +166,20 @@
    public static final class AddStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       AddStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#addOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AddStream( AddStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -246,11 +304,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AddStream#fillRange()}.
     */
-   public AddStream addOpenAndFill( double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AddStream addOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       AddStream sp = new AddStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = addOpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

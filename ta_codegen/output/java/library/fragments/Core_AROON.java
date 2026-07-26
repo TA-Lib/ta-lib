@@ -24,15 +24,15 @@
       return optInTimePeriod ;
 
    }
-   public RetCode aroon( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outAroonDown[],
-                         double outAroonUp[] )
+   RetCode aroonInternal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outAroonDown[],
+                          double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -139,15 +139,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode aroonUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outAroonDown[],
-                                  double outAroonUp[] )
+   RetCode aroonUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outAroonDown[],
+                                   double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -218,15 +218,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode aroon( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outAroonDown[],
-                         double outAroonUp[] )
+   RetCode aroonInternal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outAroonDown[],
+                          double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -311,15 +311,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode aroonUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outAroonDown[],
-                                  double outAroonUp[] )
+   RetCode aroonUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outAroonDown[],
+                                   double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -390,6 +390,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange aroon( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          int optInTimePeriod,
+                          double outAroonDown[],
+                          double outAroonUp[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = aroonInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      if( retCode != RetCode.Success ) {
+         throw failure("AROON", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange aroonUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   int optInTimePeriod,
+                                   double outAroonDown[],
+                                   double outAroonUp[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      aroonUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange aroon( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          int optInTimePeriod,
+                          double outAroonDown[],
+                          double outAroonUp[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = aroonInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      if( retCode != RetCode.Success ) {
+         throw failure("AROON", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange aroonUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   int optInTimePeriod,
+                                   double outAroonDown[],
+                                   double outAroonUp[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      aroonUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -424,8 +482,15 @@
       double cur_outAroonDown;
       double cur_outAroonUp;
       Value cachedValue;
+      OutRange fillRange;
 
       AroonStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#aroonOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AroonStream( AroonStream other ) {
          this.core = other.core;
@@ -444,6 +509,7 @@
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -867,11 +933,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AroonStream#fillRange()}.
     */
-   public AroonStream aroonOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
+   public AroonStream aroonOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
    {
       AroonStream sp = new AroonStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = aroonOpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

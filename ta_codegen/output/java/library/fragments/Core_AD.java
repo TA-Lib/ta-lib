@@ -20,15 +20,15 @@
       return 0 ;
 
    }
-   public RetCode ad( int startIdx,
-                      int endIdx,
-                      double inHigh[],
-                      double inLow[],
-                      double inClose[],
-                      double inVolume[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode adInternal( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       double inVolume[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -79,15 +79,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode adUnguarded( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               double inVolume[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode adUnguardedInternal( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                double inVolume[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -117,15 +117,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode ad( int startIdx,
-                      int endIdx,
-                      float inHigh[],
-                      float inLow[],
-                      float inClose[],
-                      float inVolume[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode adInternal( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       float inVolume[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -161,15 +161,15 @@
       }
       return RetCode.Success ;
    }
-   public RetCode adUnguarded( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               float inVolume[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode adUnguardedInternal( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                float inVolume[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -199,6 +199,64 @@
       }
       return RetCode.Success ;
    }
+   public OutRange ad( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       double inVolume[],
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adUnguarded( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                double inVolume[],
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ad( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       float inVolume[],
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = adInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange adUnguarded( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                float inVolume[],
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      adUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -220,13 +278,21 @@
       final Core core;
       double ad;
       double cur_outReal;
+      OutRange fillRange;
 
       AdStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#adOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AdStream( AdStream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -432,11 +498,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AdStream#fillRange()}.
     */
-   public AdStream adOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AdStream adOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
       AdStream sp = new AdStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = adOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

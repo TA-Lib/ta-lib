@@ -18,14 +18,14 @@
       return 1 ;
 
    }
-   public RetCode trueRange( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode trueRangeInternal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -90,14 +90,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trueRangeUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
+   RetCode trueRangeUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -137,14 +137,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trueRange( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode trueRangeInternal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -190,14 +190,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trueRangeUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
+   RetCode trueRangeUnguardedInternal( int startIdx,
+                                       int endIdx,
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       MInteger outBegIdx,
+                                       MInteger outNBElement,
+                                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -237,6 +237,60 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange trueRange( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trueRangeInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRANGE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trueRangeUnguarded( int startIdx,
+                                       int endIdx,
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trueRangeUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trueRange( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trueRangeInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRANGE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trueRangeUnguarded( int startIdx,
+                                       int endIdx,
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trueRangeUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -259,14 +313,22 @@
       double val3;
       double lag1_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       TrueRangeStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#trueRangeOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       TrueRangeStream( TrueRangeStream other ) {
          this.core = other.core;
          this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -511,11 +573,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link TrueRangeStream#fillRange()}.
     */
-   public TrueRangeStream trueRangeOpenAndFill( double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public TrueRangeStream trueRangeOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       TrueRangeStream sp = new TrueRangeStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = trueRangeOpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

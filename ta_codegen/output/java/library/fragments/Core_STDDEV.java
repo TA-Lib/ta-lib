@@ -29,14 +29,14 @@
       return varianceLookback(optInTimePeriod, optInNbDev) ;
 
    }
-   public RetCode stdDev( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          double optInNbDev,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode stdDevInternal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double optInNbDev,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -56,7 +56,7 @@
          optInNbDev = 1e0;
       }
       /* Calculate the variance. */
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -86,19 +86,19 @@
       }
       return RetCode.Success ;
    }
-   public RetCode stdDevUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   int optInTimePeriod,
-                                   double optInNbDev,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode stdDevUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    double optInNbDev,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int i = 0;
       RetCode retCode;
       double tempReal = 0;
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -123,14 +123,14 @@
       }
       return RetCode.Success ;
    }
-   public RetCode stdDev( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          double optInNbDev,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode stdDevInternal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double optInNbDev,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -149,7 +149,7 @@
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
       }
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -174,19 +174,19 @@
       }
       return RetCode.Success ;
    }
-   public RetCode stdDevUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   int optInTimePeriod,
-                                   double optInNbDev,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
+   RetCode stdDevUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    double optInNbDev,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outReal[] )
    {
       int i = 0;
       RetCode retCode;
       double tempReal = 0;
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -210,6 +210,60 @@
          }
       }
       return RetCode.Success ;
+   }
+   public OutRange stdDev( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double optInNbDev,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = stdDevInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("STDDEV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stdDevUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    double optInNbDev,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      stdDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stdDev( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double optInNbDev,
+                           double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = stdDevInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("STDDEV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange stdDevUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    double optInNbDev,
+                                    double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      stdDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -234,8 +288,15 @@
       double optInNbDev;
       double cur_outReal;
       VarianceStream sub0;
+      OutRange fillRange;
 
       StdDevStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#stdDevOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       StdDevStream( StdDevStream other ) {
          this.core = other.core;
@@ -243,6 +304,7 @@
          this.optInNbDev = other.optInNbDev;
          this.cur_outReal = other.cur_outReal;
          this.sub0 = new VarianceStream(other.sub0);
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -333,7 +395,7 @@
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -398,7 +460,7 @@
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -473,11 +535,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link StdDevStream#fillRange()}.
     */
-   public StdDevStream stdDevOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public StdDevStream stdDevOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
       StdDevStream sp = new StdDevStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = stdDevOpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

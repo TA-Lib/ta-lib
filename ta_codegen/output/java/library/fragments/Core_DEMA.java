@@ -28,13 +28,13 @@
       return emaLookback(optInTimePeriod) * 2 ;
 
    }
-   public RetCode dema( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode demaInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -163,13 +163,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode demaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode demaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -224,13 +224,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode dema( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode demaInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -296,13 +296,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode demaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode demaUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -357,6 +357,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange dema( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = demaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DEMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange demaUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange dema( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = demaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DEMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange demaUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -381,8 +431,15 @@
       double prevEMA2;
       double optInK_1;
       double cur_outReal;
+      OutRange fillRange;
 
       DemaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#demaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       DemaStream( DemaStream other ) {
          this.core = other.core;
@@ -391,6 +448,7 @@
          this.prevEMA2 = other.prevEMA2;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -749,11 +807,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link DemaStream#fillRange()}.
     */
-   public DemaStream demaOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public DemaStream demaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       DemaStream sp = new DemaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = demaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

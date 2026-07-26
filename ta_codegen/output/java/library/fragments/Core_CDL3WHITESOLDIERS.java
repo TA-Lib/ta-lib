@@ -29,15 +29,15 @@
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, BodyShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)) + 2 ;
 
    }
-   public RetCode cdl3WhiteSoldiers( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdl3WhiteSoldiersInternal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -183,15 +183,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3WhiteSoldiersUnguarded( int startIdx,
-                                              int endIdx,
-                                              double inOpen[],
-                                              double inHigh[],
-                                              double inLow[],
-                                              double inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdl3WhiteSoldiersUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -290,15 +290,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3WhiteSoldiers( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdl3WhiteSoldiersInternal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -403,15 +403,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdl3WhiteSoldiersUnguarded( int startIdx,
-                                              int endIdx,
-                                              float inOpen[],
-                                              float inHigh[],
-                                              float inLow[],
-                                              float inClose[],
-                                              MInteger outBegIdx,
-                                              MInteger outNBElement,
-                                              int outInteger[] )
+   RetCode cdl3WhiteSoldiersUnguardedInternal( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               MInteger outBegIdx,
+                                               MInteger outNBElement,
+                                               int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -510,6 +510,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdl3WhiteSoldiers( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3WhiteSoldiersInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3WHITESOLDIERS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3WhiteSoldiersUnguarded( int startIdx,
+                                               int endIdx,
+                                               double inOpen[],
+                                               double inHigh[],
+                                               double inLow[],
+                                               double inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3WhiteSoldiersUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3WhiteSoldiers( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdl3WhiteSoldiersInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDL3WHITESOLDIERS", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdl3WhiteSoldiersUnguarded( int startIdx,
+                                               int endIdx,
+                                               float inOpen[],
+                                               float inHigh[],
+                                               float inLow[],
+                                               float inClose[],
+                                               int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdl3WhiteSoldiersUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -588,8 +646,15 @@
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       Cdl3WhiteSoldiersStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdl3WhiteSoldiersOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       Cdl3WhiteSoldiersStream( Cdl3WhiteSoldiersStream other ) {
          this.core = other.core;
@@ -652,6 +717,7 @@
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1440,11 +1506,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link Cdl3WhiteSoldiersStream#fillRange()}.
     */
-   public Cdl3WhiteSoldiersStream cdl3WhiteSoldiersOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public Cdl3WhiteSoldiersStream cdl3WhiteSoldiersOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       Cdl3WhiteSoldiersStream sp = new Cdl3WhiteSoldiersStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdl3WhiteSoldiersOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

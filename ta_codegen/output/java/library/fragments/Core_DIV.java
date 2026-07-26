@@ -16,13 +16,13 @@
       return 0 ;
 
    }
-   public RetCode div( int startIdx,
-                       int endIdx,
-                       double inReal0[],
-                       double inReal1[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode divInternal( int startIdx,
+                        int endIdx,
+                        double inReal0[],
+                        double inReal1[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -39,13 +39,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode divUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal0[],
-                                double inReal1[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode divUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal0[],
+                                 double inReal1[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -56,13 +56,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode div( int startIdx,
-                       int endIdx,
-                       float inReal0[],
-                       float inReal1[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode divInternal( int startIdx,
+                        int endIdx,
+                        float inReal0[],
+                        float inReal1[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,13 +79,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode divUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal0[],
-                                float inReal1[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode divUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal0[],
+                                 float inReal1[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -95,6 +95,56 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange div( int startIdx,
+                        int endIdx,
+                        double inReal0[],
+                        double inReal1[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = divInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DIV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange divUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal0[],
+                                 double inReal1[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      divUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange div( int startIdx,
+                        int endIdx,
+                        float inReal0[],
+                        float inReal1[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = divInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DIV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange divUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal0[],
+                                 float inReal1[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      divUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -116,12 +166,20 @@
    public static final class DivStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       DivStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#divOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       DivStream( DivStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -246,11 +304,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link DivStream#fillRange()}.
     */
-   public DivStream divOpenAndFill( double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public DivStream divOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       DivStream sp = new DivStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = divOpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

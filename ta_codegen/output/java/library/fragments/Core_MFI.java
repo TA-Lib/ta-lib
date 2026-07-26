@@ -34,16 +34,16 @@
       return optInTimePeriod ;
 
    }
-   public RetCode mfi( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       double inVolume[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode mfiInternal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        double inVolume[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -172,16 +172,16 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mfiUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                double inVolume[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode mfiUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 double inVolume[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -277,16 +277,16 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mfi( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       float inVolume[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode mfiInternal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        float inVolume[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -393,16 +393,16 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode mfiUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                float inVolume[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode mfiUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 float inVolume[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -498,6 +498,68 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange mfi( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        double inVolume[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = mfiInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MFI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mfiUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 double inVolume[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      mfiUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mfi( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        float inVolume[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = mfiInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MFI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mfiUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 float inVolume[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      mfiUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -530,8 +592,15 @@
       double[] cb_mflow_positive;
       double[] cb_mflow_negative;
       double cur_outReal;
+      OutRange fillRange;
 
       MfiStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#mfiOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MfiStream( MfiStream other ) {
          this.core = other.core;
@@ -548,6 +617,7 @@
          this.cb_mflow_positive = other.cb_mflow_positive.clone();
          this.cb_mflow_negative = other.cb_mflow_negative.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -959,11 +1029,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MfiStream#fillRange()}.
     */
-   public MfiStream mfiOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MfiStream mfiOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       MfiStream sp = new MfiStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = mfiOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

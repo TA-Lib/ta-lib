@@ -27,7 +27,7 @@ There is no `close` — a stream is ordinary heap state, so an unreferenced stre
 ## Example (SMA)
 
 ```java
-import com.tictactec.ta.lib.Core;
+import io.github.talib.Core;
 
 Core core = new Core();
 

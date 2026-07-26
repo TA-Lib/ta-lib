@@ -29,13 +29,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode linearRegAngle( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode linearRegAngleInternal( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -132,13 +132,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegAngleUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inReal[],
-                                           int optInTimePeriod,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
+   RetCode linearRegAngleUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inReal[],
+                                            int optInTimePeriod,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -191,13 +191,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegAngle( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode linearRegAngleInternal( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -261,13 +261,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegAngleUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inReal[],
-                                           int optInTimePeriod,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
+   RetCode linearRegAngleUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inReal[],
+                                            int optInTimePeriod,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -320,6 +320,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange linearRegAngle( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = linearRegAngleInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("LINEARREG_ANGLE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegAngleUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inReal[],
+                                            int optInTimePeriod,
+                                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      linearRegAngleUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegAngle( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = linearRegAngleInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("LINEARREG_ANGLE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegAngleUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inReal[],
+                                            int optInTimePeriod,
+                                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      linearRegAngleUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -349,8 +399,15 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       LinearRegAngleStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#linearRegAngleOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       LinearRegAngleStream( LinearRegAngleStream other ) {
          this.core = other.core;
@@ -364,6 +421,7 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -693,11 +751,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link LinearRegAngleStream#fillRange()}.
     */
-   public LinearRegAngleStream linearRegAngleOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public LinearRegAngleStream linearRegAngleOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       LinearRegAngleStream sp = new LinearRegAngleStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = linearRegAngleOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

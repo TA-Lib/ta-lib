@@ -25,13 +25,13 @@
       return retValue ;
 
    }
-   public RetCode cmo( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode cmoInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -198,13 +198,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode cmoUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode cmoUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -305,13 +305,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode cmo( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode cmoInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -423,13 +423,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode cmoUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode cmoUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -530,6 +530,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange cmo( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cmoInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CMO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cmoUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cmoUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cmo( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cmoInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("CMO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cmoUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cmoUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -554,8 +604,15 @@
       double prevLoss;
       double prevValue;
       double cur_outReal;
+      OutRange fillRange;
 
       CmoStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cmoOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CmoStream( CmoStream other ) {
          this.core = other.core;
@@ -564,6 +621,7 @@
          this.prevLoss = other.prevLoss;
          this.prevValue = other.prevValue;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1019,11 +1077,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CmoStream#fillRange()}.
     */
-   public CmoStream cmoOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public CmoStream cmoOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       CmoStream sp = new CmoStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cmoOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

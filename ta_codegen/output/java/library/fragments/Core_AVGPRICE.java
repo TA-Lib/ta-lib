@@ -20,15 +20,15 @@
       return 0 ;
 
    }
-   public RetCode avgPrice( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode avgPriceInternal( int startIdx,
+                             int endIdx,
+                             double inOpen[],
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,15 +47,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode avgPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode avgPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -67,15 +67,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode avgPrice( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode avgPriceInternal( int startIdx,
+                             int endIdx,
+                             float inOpen[],
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -93,15 +93,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode avgPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode avgPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -112,6 +112,64 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange avgPrice( int startIdx,
+                             int endIdx,
+                             double inOpen[],
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = avgPriceInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AVGPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      avgPriceUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgPrice( int startIdx,
+                             int endIdx,
+                             float inOpen[],
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = avgPriceInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AVGPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange avgPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      avgPriceUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -133,12 +191,20 @@
    public static final class AvgPriceStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       AvgPriceStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#avgPriceOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AvgPriceStream( AvgPriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -267,11 +333,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AvgPriceStream#fillRange()}.
     */
-   public AvgPriceStream avgPriceOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AvgPriceStream avgPriceOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       AvgPriceStream sp = new AvgPriceStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = avgPriceOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

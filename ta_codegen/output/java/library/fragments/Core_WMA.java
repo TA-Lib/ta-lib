@@ -23,13 +23,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode wma( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode wmaInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -153,13 +153,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wmaUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode wmaUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -216,13 +216,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wma( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode wmaInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -290,13 +290,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wmaUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode wmaUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -353,6 +353,56 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange wma( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wmaUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wma( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wmaUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -381,8 +431,15 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       WmaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#wmaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       WmaStream( WmaStream other ) {
          this.core = other.core;
@@ -395,6 +452,7 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -802,11 +860,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link WmaStream#fillRange()}.
     */
-   public WmaStream wmaOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public WmaStream wmaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       WmaStream sp = new WmaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = wmaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

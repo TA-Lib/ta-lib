@@ -16,12 +16,12 @@
       return 0 ;
 
    }
-   public RetCode floor( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode floorInternal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -38,12 +38,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode floorUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode floorUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -54,12 +54,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode floor( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode floorInternal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -76,12 +76,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode floorUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode floorUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -91,6 +91,52 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange floor( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = floorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("FLOOR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange floorUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      floorUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange floor( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = floorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("FLOOR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange floorUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      floorUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -112,12 +158,20 @@
    public static final class FloorStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       FloorStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#floorOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       FloorStream( FloorStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -242,11 +296,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link FloorStream#fillRange()}.
     */
-   public FloorStream floorOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public FloorStream floorOpenAndFill( double inReal[], double outReal[] )
    {
       FloorStream sp = new FloorStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = floorOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -23,13 +23,13 @@
       return optInTimePeriod ;
 
    }
-   public RetCode mom( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode momInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -103,13 +103,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode momUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode momUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -132,13 +132,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode mom( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode momInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -172,13 +172,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode momUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode momUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -200,6 +200,56 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange mom( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = momInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MOM", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange momUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      momUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mom( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = momInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MOM", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange momUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      momUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -225,8 +275,15 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       MomStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#momOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MomStream( MomStream other ) {
          this.core = other.core;
@@ -235,6 +292,7 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -503,11 +561,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MomStream#fillRange()}.
     */
-   public MomStream momOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MomStream momOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       MomStream sp = new MomStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = momOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

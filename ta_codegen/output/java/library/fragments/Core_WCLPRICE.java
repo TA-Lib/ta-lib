@@ -20,14 +20,14 @@
       return 0 ;
 
    }
-   public RetCode wclPrice( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode wclPriceInternal( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -46,14 +46,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wclPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode wclPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -65,14 +65,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wclPrice( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode wclPriceInternal( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -90,14 +90,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode wclPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode wclPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -108,6 +108,60 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange wclPrice( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wclPriceInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WCLPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wclPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      wclPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wclPrice( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wclPriceInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("WCLPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange wclPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      wclPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -129,12 +183,20 @@
    public static final class WclPriceStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       WclPriceStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#wclPriceOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       WclPriceStream( WclPriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -263,11 +325,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link WclPriceStream#fillRange()}.
     */
-   public WclPriceStream wclPriceOpenAndFill( double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public WclPriceStream wclPriceOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       WclPriceStream sp = new WclPriceStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = wclPriceOpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

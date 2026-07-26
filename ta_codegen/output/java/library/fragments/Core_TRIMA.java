@@ -30,13 +30,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode trima( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode trimaInternal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -311,13 +311,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trimaUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode trimaUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -421,13 +421,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trima( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode trimaInternal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -542,13 +542,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode trimaUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode trimaUnguardedInternal( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -652,6 +652,56 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange trima( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRIMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trimaUnguarded( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trima( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("TRIMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange trimaUnguarded( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -684,8 +734,15 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       TrimaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#trimaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       TrimaStream( TrimaStream other ) {
          this.core = other.core;
@@ -702,6 +759,7 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1746,11 +1804,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link TrimaStream#fillRange()}.
     */
-   public TrimaStream trimaOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public TrimaStream trimaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       TrimaStream sp = new TrimaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = trimaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

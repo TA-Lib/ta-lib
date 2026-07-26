@@ -26,13 +26,13 @@
       return 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()] ;
 
    }
-   public RetCode htSine( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outSine[],
-                          double outLeadSine[] )
+   RetCode htSineInternal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outSine[],
+                           double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -441,13 +441,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htSineUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outSine[],
-                                   double outLeadSine[] )
+   RetCode htSineUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outSine[],
+                                    double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -781,13 +781,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htSine( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outSine[],
-                          double outLeadSine[] )
+   RetCode htSineInternal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outSine[],
+                           double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1130,13 +1130,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htSineUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outSine[],
-                                   double outLeadSine[] )
+   RetCode htSineUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outSine[],
+                                    double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1470,6 +1470,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htSine( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           double outSine[],
+                           double outLeadSine[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htSineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_SINE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htSineUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    double outSine[],
+                                    double outLeadSine[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htSineUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htSine( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           double outSine[],
+                           double outLeadSine[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htSineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_SINE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htSineUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    double outSine[],
+                                    double outLeadSine[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htSineUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1560,8 +1610,15 @@
       double cur_outSine;
       double cur_outLeadSine;
       Value cachedValue;
+      OutRange fillRange;
 
       HtSineStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htSineOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtSineStream( HtSineStream other ) {
          this.core = other.core;
@@ -1636,6 +1693,7 @@
          this.cur_outSine = other.cur_outSine;
          this.cur_outLeadSine = other.cur_outLeadSine;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -2918,11 +2976,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtSineStream#fillRange()}.
     */
-   public HtSineStream htSineOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
+   public HtSineStream htSineOpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
       HtSineStream sp = new HtSineStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htSineOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

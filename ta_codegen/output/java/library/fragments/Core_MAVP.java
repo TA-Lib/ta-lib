@@ -28,16 +28,16 @@
       return movingAverageLookback(optInMaxPeriod, optInMAType) ;
 
    }
-   public RetCode movingAverageVariablePeriod( int startIdx,
-                                               int endIdx,
-                                               double inReal[],
-                                               double inPeriods[],
-                                               int optInMinPeriod,
-                                               int optInMaxPeriod,
-                                               MAType optInMAType,
-                                               MInteger outBegIdx,
-                                               MInteger outNBElement,
-                                               double outReal[] )
+   RetCode movingAverageVariablePeriodInternal( int startIdx,
+                                                int endIdx,
+                                                double inReal[],
+                                                double inPeriods[],
+                                                int optInMinPeriod,
+                                                int optInMaxPeriod,
+                                                MAType optInMAType,
+                                                MInteger outBegIdx,
+                                                MInteger outNBElement,
+                                                double outReal[] )
    {
       int i = 0;
       int j = 0;
@@ -150,7 +150,7 @@
              *       start their calculation at 'startIdx+i' instead of startIdx.
              */
             /* Calculation of the MA required. */
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+            retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -182,16 +182,16 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   public RetCode movingAverageVariablePeriodUnguarded( int startIdx,
-                                                        int endIdx,
-                                                        double inReal[],
-                                                        double inPeriods[],
-                                                        int optInMinPeriod,
-                                                        int optInMaxPeriod,
-                                                        MAType optInMAType,
-                                                        MInteger outBegIdx,
-                                                        MInteger outNBElement,
-                                                        double outReal[] )
+   RetCode movingAverageVariablePeriodUnguardedInternal( int startIdx,
+                                                         int endIdx,
+                                                         double inReal[],
+                                                         double inPeriods[],
+                                                         int optInMinPeriod,
+                                                         int optInMaxPeriod,
+                                                         MAType optInMAType,
+                                                         MInteger outBegIdx,
+                                                         MInteger outNBElement,
+                                                         double outReal[] )
    {
       int i = 0;
       int j = 0;
@@ -252,7 +252,7 @@
       for( i = 0; i < outputSize; i += 1 ) {
          curPeriod = localPeriodArray[i];
          if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+            retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -278,16 +278,16 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   public RetCode movingAverageVariablePeriod( int startIdx,
-                                               int endIdx,
-                                               float inReal[],
-                                               float inPeriods[],
-                                               int optInMinPeriod,
-                                               int optInMaxPeriod,
-                                               MAType optInMAType,
-                                               MInteger outBegIdx,
-                                               MInteger outNBElement,
-                                               double outReal[] )
+   RetCode movingAverageVariablePeriodInternal( int startIdx,
+                                                int endIdx,
+                                                float inReal[],
+                                                float inPeriods[],
+                                                int optInMinPeriod,
+                                                int optInMaxPeriod,
+                                                MAType optInMAType,
+                                                MInteger outBegIdx,
+                                                MInteger outNBElement,
+                                                double outReal[] )
    {
       int i = 0;
       int j = 0;
@@ -364,7 +364,7 @@
       for( i = 0; i < outputSize; i += 1 ) {
          curPeriod = localPeriodArray[i];
          if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+            retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -390,16 +390,16 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   public RetCode movingAverageVariablePeriodUnguarded( int startIdx,
-                                                        int endIdx,
-                                                        float inReal[],
-                                                        float inPeriods[],
-                                                        int optInMinPeriod,
-                                                        int optInMaxPeriod,
-                                                        MAType optInMAType,
-                                                        MInteger outBegIdx,
-                                                        MInteger outNBElement,
-                                                        double outReal[] )
+   RetCode movingAverageVariablePeriodUnguardedInternal( int startIdx,
+                                                         int endIdx,
+                                                         float inReal[],
+                                                         float inPeriods[],
+                                                         int optInMinPeriod,
+                                                         int optInMaxPeriod,
+                                                         MAType optInMAType,
+                                                         MInteger outBegIdx,
+                                                         MInteger outNBElement,
+                                                         double outReal[] )
    {
       int i = 0;
       int j = 0;
@@ -460,7 +460,7 @@
       for( i = 0; i < outputSize; i += 1 ) {
          curPeriod = localPeriodArray[i];
          if( curPeriod != 0 ) {
-            retCode = movingAverageUnguarded(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+            retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
             if( retCode != RetCode.Success ) {
                if( (finalIsAllocated) != 0 ) {
                }
@@ -485,6 +485,68 @@
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
       return RetCode.Success ;
+   }
+   public OutRange movingAverageVariablePeriod( int startIdx,
+                                                int endIdx,
+                                                double inReal[],
+                                                double inPeriods[],
+                                                int optInMinPeriod,
+                                                int optInMaxPeriod,
+                                                MAType optInMAType,
+                                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = movingAverageVariablePeriodInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAVP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange movingAverageVariablePeriodUnguarded( int startIdx,
+                                                         int endIdx,
+                                                         double inReal[],
+                                                         double inPeriods[],
+                                                         int optInMinPeriod,
+                                                         int optInMaxPeriod,
+                                                         MAType optInMAType,
+                                                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      movingAverageVariablePeriodUnguardedInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange movingAverageVariablePeriod( int startIdx,
+                                                int endIdx,
+                                                float inReal[],
+                                                float inPeriods[],
+                                                int optInMinPeriod,
+                                                int optInMaxPeriod,
+                                                MAType optInMAType,
+                                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = movingAverageVariablePeriodInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAVP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange movingAverageVariablePeriodUnguarded( int startIdx,
+                                                         int endIdx,
+                                                         float inReal[],
+                                                         float inPeriods[],
+                                                         int optInMinPeriod,
+                                                         int optInMaxPeriod,
+                                                         MAType optInMAType,
+                                                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      movingAverageVariablePeriodUnguardedInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -511,8 +573,15 @@
       double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       MovingAverageStream[] bank;
+      OutRange fillRange;
 
       MovingAverageVariablePeriodStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#movingAverageVariablePeriodOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MovingAverageVariablePeriodStream( MovingAverageVariablePeriodStream other ) {
          this.core = other.core;
@@ -524,6 +593,7 @@
          for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
             this.bank[bankIdx] = new MovingAverageStream(other.bank[bankIdx]);
          }
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -731,11 +801,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MovingAverageVariablePeriodStream#fillRange()}.
     */
-   public MovingAverageVariablePeriodStream movingAverageVariablePeriodOpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MovingAverageVariablePeriodStream movingAverageVariablePeriodOpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
       MovingAverageVariablePeriodStream sp = new MovingAverageVariablePeriodStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = movingAverageVariablePeriodOpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

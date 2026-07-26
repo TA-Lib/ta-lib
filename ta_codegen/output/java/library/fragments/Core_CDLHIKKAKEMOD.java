@@ -26,15 +26,15 @@
       return Math.max(1, Near_avgPeriod) + 5 ;
 
    }
-   public RetCode cdlHikkakeMod( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode cdlHikkakeModInternal( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -162,15 +162,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkakeModUnguarded( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
+   RetCode cdlHikkakeModUnguardedInternal( int startIdx,
+                                           int endIdx,
+                                           double inOpen[],
+                                           double inHigh[],
+                                           double inLow[],
+                                           double inClose[],
+                                           MInteger outBegIdx,
+                                           MInteger outNBElement,
+                                           int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -247,15 +247,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkakeMod( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode cdlHikkakeModInternal( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -338,15 +338,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlHikkakeModUnguarded( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
+   RetCode cdlHikkakeModUnguardedInternal( int startIdx,
+                                           int endIdx,
+                                           float inOpen[],
+                                           float inHigh[],
+                                           float inLow[],
+                                           float inClose[],
+                                           MInteger outBegIdx,
+                                           MInteger outNBElement,
+                                           int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -423,6 +423,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlHikkakeMod( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHikkakeModInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIKKAKEMOD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkakeModUnguarded( int startIdx,
+                                           int endIdx,
+                                           double inOpen[],
+                                           double inHigh[],
+                                           double inLow[],
+                                           double inClose[],
+                                           int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHikkakeModUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkakeMod( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlHikkakeModInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLHIKKAKEMOD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlHikkakeModUnguarded( int startIdx,
+                                           int endIdx,
+                                           float inOpen[],
+                                           float inHigh[],
+                                           float inLow[],
+                                           float inClose[],
+                                           int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlHikkakeModUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -468,8 +526,15 @@
       int cs_Near_avgPeriod;
       double cs_Near_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlHikkakeModStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlHikkakeModOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlHikkakeModStream( CdlHikkakeModStream other ) {
          this.core = other.core;
@@ -499,6 +564,7 @@
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -986,11 +1052,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlHikkakeModStream#fillRange()}.
     */
-   public CdlHikkakeModStream cdlHikkakeModOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlHikkakeModStream cdlHikkakeModOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlHikkakeModStream sp = new CdlHikkakeModStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlHikkakeModOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -23,14 +23,14 @@
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.Ema.ordinal()] ;
 
    }
-   public RetCode emaPrivate( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              double optInK_1,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode emaPrivate( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       double optInK_1,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -107,14 +107,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode emaPrivate( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              double optInK_1,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode emaPrivate( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       double optInK_1,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -151,13 +151,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode ema( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode emaInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double optInK_1 = 0;
       if( startIdx < 0 ) {
@@ -175,25 +175,25 @@
       /* Simply call the internal implementation of the EMA. */
       return emaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal) ;
    }
-   public RetCode emaUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode emaUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double optInK_1 = 0;
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       return emaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal) ;
    }
-   public RetCode ema( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode emaInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -242,13 +242,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode emaUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode emaUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -285,6 +285,56 @@
       }
       outNBElement.value = outIdx;
       return RetCode.Success ;
+   }
+   public OutRange ema( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("EMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange emaUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange ema( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("EMA", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange emaUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -309,8 +359,15 @@
       double optInK_1;
       double prevMA;
       double cur_outReal;
+      OutRange fillRange;
 
       EmaStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#emaOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       EmaStream( EmaStream other ) {
          this.core = other.core;
@@ -318,6 +375,7 @@
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -593,11 +651,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link EmaStream#fillRange()}.
     */
-   public EmaStream emaOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public EmaStream emaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       EmaStream sp = new EmaStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = emaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

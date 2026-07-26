@@ -20,15 +20,15 @@
       return Near_avgPeriod + 2 ;
 
    }
-   public RetCode cdlTasukiGap( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlTasukiGapInternal( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -115,15 +115,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTasukiGapUnguarded( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode cdlTasukiGapUnguardedInternal( int startIdx,
+                                          int endIdx,
+                                          double inOpen[],
+                                          double inHigh[],
+                                          double inLow[],
+                                          double inClose[],
+                                          MInteger outBegIdx,
+                                          MInteger outNBElement,
+                                          int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -165,15 +165,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTasukiGap( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlTasukiGapInternal( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -221,15 +221,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlTasukiGapUnguarded( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode cdlTasukiGapUnguardedInternal( int startIdx,
+                                          int endIdx,
+                                          float inOpen[],
+                                          float inHigh[],
+                                          float inLow[],
+                                          float inClose[],
+                                          MInteger outBegIdx,
+                                          MInteger outNBElement,
+                                          int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -271,6 +271,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlTasukiGap( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlTasukiGapInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLTASUKIGAP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTasukiGapUnguarded( int startIdx,
+                                          int endIdx,
+                                          double inOpen[],
+                                          double inHigh[],
+                                          double inLow[],
+                                          double inClose[],
+                                          int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlTasukiGapUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTasukiGap( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlTasukiGapInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLTASUKIGAP", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlTasukiGapUnguarded( int startIdx,
+                                          int endIdx,
+                                          float inOpen[],
+                                          float inHigh[],
+                                          float inLow[],
+                                          float inClose[],
+                                          int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlTasukiGapUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -308,8 +366,15 @@
       int cs_Near_avgPeriod;
       double cs_Near_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlTasukiGapStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlTasukiGapOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlTasukiGapStream( CdlTasukiGapStream other ) {
          this.core = other.core;
@@ -331,6 +396,7 @@
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -716,11 +782,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlTasukiGapStream#fillRange()}.
     */
-   public CdlTasukiGapStream cdlTasukiGapOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlTasukiGapStream cdlTasukiGapOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlTasukiGapStream sp = new CdlTasukiGapStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlTasukiGapOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

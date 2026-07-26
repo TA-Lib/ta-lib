@@ -30,15 +30,15 @@
       }
 
    }
-   public RetCode dx( int startIdx,
-                      int endIdx,
-                      double inHigh[],
-                      double inLow[],
-                      double inClose[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode dxInternal( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -336,15 +336,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode dxUnguarded( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode dxUnguardedInternal( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int optInTimePeriod,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -504,15 +504,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode dx( int startIdx,
-                      int endIdx,
-                      float inHigh[],
-                      float inLow[],
-                      float inClose[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode dxInternal( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -683,15 +683,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode dxUnguarded( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode dxUnguardedInternal( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int optInTimePeriod,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -851,6 +851,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange dx( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInTimePeriod,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = dxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange dxUnguarded( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int optInTimePeriod,
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      dxUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange dx( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInTimePeriod,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = dxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("DX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange dxUnguarded( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int optInTimePeriod,
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      dxUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -884,8 +942,15 @@
       double plusDI;
       double lastOut_outReal;
       double cur_outReal;
+      OutRange fillRange;
 
       DxStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#dxOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       DxStream( DxStream other ) {
          this.core = other.core;
@@ -903,6 +968,7 @@
          this.plusDI = other.plusDI;
          this.lastOut_outReal = other.lastOut_outReal;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1662,11 +1728,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link DxStream#fillRange()}.
     */
-   public DxStream dxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public DxStream dxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       DxStream sp = new DxStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = dxOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

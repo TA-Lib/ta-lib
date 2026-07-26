@@ -37,12 +37,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()] ;
 
    }
-   public RetCode htTrendline( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode htTrendlineInternal( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -417,12 +417,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendlineUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inReal[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        double outReal[] )
+   RetCode htTrendlineUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -723,12 +723,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendline( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode htTrendlineInternal( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1035,12 +1035,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode htTrendlineUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inReal[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        double outReal[] )
+   RetCode htTrendlineUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1341,6 +1341,52 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange htTrendline( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htTrendlineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_TRENDLINE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendlineUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htTrendlineUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendline( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = htTrendlineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("HT_TRENDLINE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange htTrendlineUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      htTrendlineUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -1425,8 +1471,15 @@
       int winCap_i;
       double[] win_i_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       HtTrendlineStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#htTrendlineOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       HtTrendlineStream( HtTrendlineStream other ) {
          this.core = other.core;
@@ -1495,6 +1548,7 @@
          this.winCap_i = other.winCap_i;
          this.win_i_inReal = other.win_i_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -2666,11 +2720,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link HtTrendlineStream#fillRange()}.
     */
-   public HtTrendlineStream htTrendlineOpenAndFill( double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public HtTrendlineStream htTrendlineOpenAndFill( double inReal[], double outReal[] )
    {
       HtTrendlineStream sp = new HtTrendlineStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = htTrendlineOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

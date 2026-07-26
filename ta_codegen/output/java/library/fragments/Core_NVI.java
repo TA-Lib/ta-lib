@@ -19,13 +19,13 @@
       return 0 ;
 
    }
-   public RetCode nvi( int startIdx,
-                       int endIdx,
-                       double inClose[],
-                       double inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode nviInternal( int startIdx,
+                        int endIdx,
+                        double inClose[],
+                        double inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -65,13 +65,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode nviUnguarded( int startIdx,
-                                int endIdx,
-                                double inClose[],
-                                double inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode nviUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inClose[],
+                                 double inVolume[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -98,13 +98,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode nvi( int startIdx,
-                       int endIdx,
-                       float inClose[],
-                       float inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode nviInternal( int startIdx,
+                        int endIdx,
+                        float inClose[],
+                        float inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -137,13 +137,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode nviUnguarded( int startIdx,
-                                int endIdx,
-                                float inClose[],
-                                float inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode nviUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inClose[],
+                                 float inVolume[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -170,6 +170,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange nvi( int startIdx,
+                        int endIdx,
+                        double inClose[],
+                        double inVolume[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = nviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("NVI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange nviUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inClose[],
+                                 double inVolume[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      nviUnguardedInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange nvi( int startIdx,
+                        int endIdx,
+                        float inClose[],
+                        float inVolume[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = nviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("NVI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange nviUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inClose[],
+                                 float inVolume[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      nviUnguardedInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -193,8 +243,15 @@
       double prevClose;
       double prevVolume;
       double cur_outReal;
+      OutRange fillRange;
 
       NviStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#nviOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       NviStream( NviStream other ) {
          this.core = other.core;
@@ -202,6 +259,7 @@
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -391,11 +449,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link NviStream#fillRange()}.
     */
-   public NviStream nviOpenAndFill( double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public NviStream nviOpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
       NviStream sp = new NviStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = nviOpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

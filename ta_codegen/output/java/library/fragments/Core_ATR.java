@@ -32,15 +32,15 @@
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.Atr.ordinal()] ;
 
    }
-   public RetCode atr( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode atrInternal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -198,15 +198,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode atrUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode atrUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -296,15 +296,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode atr( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode atrInternal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -405,15 +405,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode atrUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode atrUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -503,6 +503,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange atr( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = atrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ATR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange atrUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      atrUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange atr( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = atrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ATR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange atrUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      atrUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -527,8 +585,15 @@
       double val3;
       double lag1_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       AtrStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#atrOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       AtrStream( AtrStream other ) {
          this.core = other.core;
@@ -537,6 +602,7 @@
          this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -974,11 +1040,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AtrStream#fillRange()}.
     */
-   public AtrStream atrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public AtrStream atrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       AtrStream sp = new AtrStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = atrOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -53,17 +53,17 @@
       return emaLookback(optInSlowPeriod) + emaLookback(optInSignalPeriod) ;
 
    }
-   public RetCode macd( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outMACD[],
-                        double outMACDSignal[],
-                        double outMACDHist[] )
+   RetCode macdInternal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -244,17 +244,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macdUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 int optInSignalPeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
+   RetCode macdUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInFastPeriod,
+                                  int optInSlowPeriod,
+                                  int optInSignalPeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outMACD[],
+                                  double outMACDSignal[],
+                                  double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -356,17 +356,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macd( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outMACD[],
-                        double outMACDSignal[],
-                        double outMACDHist[] )
+   RetCode macdInternal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -492,17 +492,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode macdUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 int optInSignalPeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
+   RetCode macdUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInFastPeriod,
+                                  int optInSlowPeriod,
+                                  int optInSignalPeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outMACD[],
+                                  double outMACDSignal[],
+                                  double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -604,6 +604,72 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange macd( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = macdInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode != RetCode.Success ) {
+         throw failure("MACD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macdUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInFastPeriod,
+                                  int optInSlowPeriod,
+                                  int optInSignalPeriod,
+                                  double outMACD[],
+                                  double outMACDSignal[],
+                                  double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macd( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = macdInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode != RetCode.Success ) {
+         throw failure("MACD", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange macdUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInFastPeriod,
+                                  int optInSlowPeriod,
+                                  int optInSignalPeriod,
+                                  double outMACD[],
+                                  double outMACDSignal[],
+                                  double outMACDHist[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -636,8 +702,15 @@
       double cur_outMACDSignal;
       double cur_outMACDHist;
       Value cachedValue;
+      OutRange fillRange;
 
       MacdStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#macdOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MacdStream( MacdStream other ) {
          this.core = other.core;
@@ -654,6 +727,7 @@
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -1163,11 +1237,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MacdStream#fillRange()}.
     */
-   public MacdStream macdOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   public MacdStream macdOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       MacdStream sp = new MacdStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = macdOpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

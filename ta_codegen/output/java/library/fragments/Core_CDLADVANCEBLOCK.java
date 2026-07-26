@@ -32,15 +32,15 @@
       return Math.max(Math.max(Math.max(ShadowLong_avgPeriod, ShadowShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
 
    }
-   public RetCode cdlAdvanceBlock( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdlAdvanceBlockInternal( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -200,15 +200,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlAdvanceBlockUnguarded( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
+   RetCode cdlAdvanceBlockUnguardedInternal( int startIdx,
+                                             int endIdx,
+                                             double inOpen[],
+                                             double inHigh[],
+                                             double inLow[],
+                                             double inClose[],
+                                             MInteger outBegIdx,
+                                             MInteger outNBElement,
+                                             int outInteger[] )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -325,15 +325,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlAdvanceBlock( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdlAdvanceBlockInternal( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -456,15 +456,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlAdvanceBlockUnguarded( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
+   RetCode cdlAdvanceBlockUnguardedInternal( int startIdx,
+                                             int endIdx,
+                                             float inOpen[],
+                                             float inHigh[],
+                                             float inLow[],
+                                             float inClose[],
+                                             MInteger outBegIdx,
+                                             MInteger outNBElement,
+                                             int outInteger[] )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -581,6 +581,64 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   public OutRange cdlAdvanceBlock( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlAdvanceBlockInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLADVANCEBLOCK", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlAdvanceBlockUnguarded( int startIdx,
+                                             int endIdx,
+                                             double inOpen[],
+                                             double inHigh[],
+                                             double inLow[],
+                                             double inClose[],
+                                             int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlAdvanceBlockUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlAdvanceBlock( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = cdlAdvanceBlockInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("CDLADVANCEBLOCK", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange cdlAdvanceBlockUnguarded( int startIdx,
+                                             int endIdx,
+                                             float inOpen[],
+                                             float inHigh[],
+                                             float inLow[],
+                                             float inClose[],
+                                             int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      cdlAdvanceBlockUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -671,8 +729,15 @@
       int cs_ShadowShort_avgPeriod;
       double cs_ShadowShort_factor;
       int cur_outInteger;
+      OutRange fillRange;
 
       CdlAdvanceBlockStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#cdlAdvanceBlockOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       CdlAdvanceBlockStream( CdlAdvanceBlockStream other ) {
          this.core = other.core;
@@ -747,6 +812,7 @@
          this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
          this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1662,11 +1728,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link CdlAdvanceBlockStream#fillRange()}.
     */
-   public CdlAdvanceBlockStream cdlAdvanceBlockOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public CdlAdvanceBlockStream cdlAdvanceBlockOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       CdlAdvanceBlockStream sp = new CdlAdvanceBlockStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = cdlAdvanceBlockOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

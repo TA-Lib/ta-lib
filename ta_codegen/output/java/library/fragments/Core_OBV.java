@@ -21,13 +21,13 @@
       return 0 ;
 
    }
-   public RetCode obv( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       double inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode obvInternal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        double inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -57,13 +57,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode obvUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                double inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode obvUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 double inVolume[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -87,13 +87,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode obv( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       float inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode obvInternal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        float inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -123,13 +123,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode obvUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                float inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode obvUnguardedInternal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 float inVolume[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -152,6 +152,56 @@
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
       return RetCode.Success ;
+   }
+   public OutRange obv( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        double inVolume[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = obvInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("OBV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange obvUnguarded( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 double inVolume[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      obvUnguardedInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange obv( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        float inVolume[],
+                        double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = obvInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("OBV", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange obvUnguarded( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 float inVolume[],
+                                 double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      obvUnguardedInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -175,14 +225,22 @@
       double prevReal;
       double prevOBV;
       double cur_outReal;
+      OutRange fillRange;
 
       ObvStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#obvOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       ObvStream( ObvStream other ) {
          this.core = other.core;
          this.prevReal = other.prevReal;
          this.prevOBV = other.prevOBV;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -345,11 +403,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link ObvStream#fillRange()}.
     */
-   public ObvStream obvOpenAndFill( double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public ObvStream obvOpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
       ObvStream sp = new ObvStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = obvOpenAndFillBody(sp, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -33,15 +33,15 @@
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.Natr.ordinal()] ;
 
    }
-   public RetCode natr( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode natrInternal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -241,15 +241,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode natrUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode natrUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -359,15 +359,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode natr( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode natrInternal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -488,15 +488,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode natrUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode natrUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  int optInTimePeriod,
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -606,6 +606,64 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange natr( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = natrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("NATR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange natrUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      natrUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange natr( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = natrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("NATR", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange natrUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      natrUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -631,8 +689,15 @@
       double val3;
       double lag1_inClose;
       double cur_outReal;
+      OutRange fillRange;
 
       NatrStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#natrOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       NatrStream( NatrStream other ) {
          this.core = other.core;
@@ -642,6 +707,7 @@
          this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -1175,11 +1241,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link NatrStream#fillRange()}.
     */
-   public NatrStream natrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public NatrStream natrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       NatrStream sp = new NatrStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = natrOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

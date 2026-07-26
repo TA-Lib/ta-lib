@@ -21,14 +21,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode minMaxIndex( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outMinIdx[],
-                               int outMaxIdx[] )
+   RetCode minMaxIndexInternal( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                int optInTimePeriod,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outMinIdx[],
+                                int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -129,14 +129,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMaxIndexUnguarded( int startIdx,
-                                        int endIdx,
-                                        double inReal[],
-                                        int optInTimePeriod,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outMinIdx[],
-                                        int outMaxIdx[] )
+   RetCode minMaxIndexUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         int optInTimePeriod,
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outMinIdx[],
+                                         int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -208,14 +208,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMaxIndex( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outMinIdx[],
-                               int outMaxIdx[] )
+   RetCode minMaxIndexInternal( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                int optInTimePeriod,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outMinIdx[],
+                                int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -301,14 +301,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMaxIndexUnguarded( int startIdx,
-                                        int endIdx,
-                                        float inReal[],
-                                        int optInTimePeriod,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outMinIdx[],
-                                        int outMaxIdx[] )
+   RetCode minMaxIndexUnguardedInternal( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         int optInTimePeriod,
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outMinIdx[],
+                                         int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -380,6 +380,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange minMaxIndex( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                int optInTimePeriod,
+                                int outMinIdx[],
+                                int outMaxIdx[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minMaxIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINMAXINDEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMaxIndexUnguarded( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         int optInTimePeriod,
+                                         int outMinIdx[],
+                                         int outMaxIdx[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minMaxIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMaxIndex( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                int optInTimePeriod,
+                                int outMinIdx[],
+                                int outMaxIdx[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minMaxIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINMAXINDEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMaxIndexUnguarded( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         int optInTimePeriod,
+                                         int outMinIdx[],
+                                         int outMaxIdx[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minMaxIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -414,8 +468,15 @@
       int cur_outMinIdx;
       int cur_outMaxIdx;
       Value cachedValue;
+      OutRange fillRange;
 
       MinMaxIndexStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#minMaxIndexOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MinMaxIndexStream( MinMaxIndexStream other ) {
          this.core = other.core;
@@ -434,6 +495,7 @@
          this.cur_outMinIdx = other.cur_outMinIdx;
          this.cur_outMaxIdx = other.cur_outMaxIdx;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -834,11 +896,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MinMaxIndexStream#fillRange()}.
     */
-   public MinMaxIndexStream minMaxIndexOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
+   public MinMaxIndexStream minMaxIndexOpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
    {
       MinMaxIndexStream sp = new MinMaxIndexStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = minMaxIndexOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

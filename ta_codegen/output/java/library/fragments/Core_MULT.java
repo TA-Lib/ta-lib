@@ -16,13 +16,13 @@
       return 0 ;
 
    }
-   public RetCode mult( int startIdx,
-                        int endIdx,
-                        double inReal0[],
-                        double inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode multInternal( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -43,13 +43,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode multUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal0[],
-                                 double inReal1[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode multUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  double inReal0[],
+                                  double inReal1[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -64,13 +64,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode mult( int startIdx,
-                        int endIdx,
-                        float inReal0[],
-                        float inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode multInternal( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -91,13 +91,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode multUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal0[],
-                                 float inReal1[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
+   RetCode multUnguardedInternal( int startIdx,
+                                  int endIdx,
+                                  float inReal0[],
+                                  float inReal1[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -111,6 +111,56 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       return RetCode.Success ;
+   }
+   public OutRange mult( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = multInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MULT", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange multUnguarded( int startIdx,
+                                  int endIdx,
+                                  double inReal0[],
+                                  double inReal1[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      multUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange mult( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = multInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MULT", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange multUnguarded( int startIdx,
+                                  int endIdx,
+                                  float inReal0[],
+                                  float inReal1[],
+                                  double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      multUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
@@ -132,12 +182,20 @@
    public static final class MultStream {
       final Core core;
       double cur_outReal;
+      OutRange fillRange;
 
       MultStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#multOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MultStream( MultStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -270,11 +328,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MultStream#fillRange()}.
     */
-   public MultStream multOpenAndFill( double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MultStream multOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       MultStream sp = new MultStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = multOpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

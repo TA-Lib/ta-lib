@@ -29,14 +29,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode midPrice( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode midPriceInternal( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -171,14 +171,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inHigh[],
-                                     double inLow[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode midPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -268,14 +268,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPrice( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode midPriceInternal( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -376,14 +376,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode midPriceUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inHigh[],
-                                     float inLow[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode midPriceUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -473,6 +473,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange midPrice( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             int optInTimePeriod,
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = midPriceInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MIDPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inHigh[],
+                                      double inLow[],
+                                      int optInTimePeriod,
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      midPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPrice( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             int optInTimePeriod,
+                             double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = midPriceInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("MIDPRICE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange midPriceUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inHigh[],
+                                      float inLow[],
+                                      int optInTimePeriod,
+                                      double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      midPriceUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -504,8 +558,15 @@
       double[] x_inHigh;
       double[] x_inLow;
       double cur_outReal;
+      OutRange fillRange;
 
       MidPriceStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#midPriceOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MidPriceStream( MidPriceStream other ) {
          this.core = other.core;
@@ -521,6 +582,7 @@
          this.x_inHigh = other.x_inHigh.clone();
          this.x_inLow = other.x_inLow.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -929,11 +991,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MidPriceStream#fillRange()}.
     */
-   public MidPriceStream midPriceOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public MidPriceStream midPriceOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
       MidPriceStream sp = new MidPriceStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = midPriceOpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

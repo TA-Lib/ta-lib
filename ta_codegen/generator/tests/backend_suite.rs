@@ -206,8 +206,9 @@ fn check_java_variants(j: &str, lower: &str, name: &str) {
         lower
     );
     assert!(
-        j.contains(&format!("RetCode {}(", lower)) || j.contains(&format!("RetCode {} (", lower)),
-        "{}: Java missing {} function",
+        j.contains(&format!("RetCode {}Internal(", lower))
+            || j.contains(&format!("RetCode {}Internal (", lower)),
+        "{}: Java missing {} internal core",
         name,
         lower
     );
@@ -379,9 +380,10 @@ fn test_ma_java_cross_calls() {
         j.contains("emaLookback("),
         "Java: MA should call emaLookback"
     );
-    // Bare cross-indicator calls resolve to Unguarded (skip validation)
-    assert!(j.contains("smaUnguarded("), "Java: MA should call smaUnguarded");
-    assert!(j.contains("emaUnguarded("), "Java: MA should call emaUnguarded");
+    // Bare cross-indicator calls resolve to the unguarded internal core
+    // (skip validation, and keep the C-shaped MInteger out-params).
+    assert!(j.contains("smaUnguardedInternal("), "Java: MA should call smaUnguardedInternal");
+    assert!(j.contains("emaUnguardedInternal("), "Java: MA should call emaUnguardedInternal");
 }
 
 #[test]
@@ -464,8 +466,8 @@ fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // Extract guarded function (between "RetCode sma(" and "smaUnguarded(")
-    let guarded = extract_section(&out.java, "RetCode sma(", "smaUnguarded(");
+    // Extract the guarded core (between its own signature and the unguarded one)
+    let guarded = extract_section(&out.java, "RetCode smaInternal(", "smaUnguardedInternal(");
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
         "Java guarded SMA should have start index validation"
@@ -2628,7 +2630,7 @@ fn candle_settings_unpacking_in_lookback() {
         "Rust lookback should contain candle settings unpacking"
     );
 
-    let java_lookback_end = java_out.find("public RetCode cdl2Crows(").unwrap();
+    let java_lookback_end = java_out.find("RetCode cdl2CrowsInternal(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
         java_lookback.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
@@ -4681,8 +4683,8 @@ fn java_ma_cross_indicator_calls() {
     // Anchor the call site so demaUnguarded(/temaUnguarded( (adjacent dispatch
     // arms) cannot substring-shadow the EMA arm.
     assert!(
-        j.contains("= emaUnguarded("),
-        "Java MA should call emaUnguarded(): {j}"
+        j.contains("= emaUnguardedInternal("),
+        "Java MA should call emaUnguardedInternal(): {j}"
     );
     assert!(
         j.contains("= emaLookback("),
@@ -5595,7 +5597,7 @@ fn java_macd_lookback_code_rendering() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    let lookback_end = j.find("public RetCode macd(").unwrap();
+    let lookback_end = j.find("RetCode macdInternal(").unwrap();
     let lookback = &j[..lookback_end];
     assert!(
         lookback.contains("macdLookback"),

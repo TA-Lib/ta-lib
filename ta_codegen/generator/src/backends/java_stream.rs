@@ -593,7 +593,19 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      {jty} {name};");
     }
     o.push_str(extra_members);
+    // Set once, by openAndFill only (null for a plain open) — the range of the
+    // warm-up values that call wrote into the caller's output arrays.
+    let _ = writeln!(o, "      OutRange fillRange;");
     let _ = writeln!(o, "\n      {class}( Core core ) {{ this.core = core; }}");
+    let _ = writeln!(
+        o,
+        "\n      /**\n\
+         \x20      * The range filled by {{@link Core#{base}OpenAndFill}}, or {{@code null}}\n\
+         \x20      * when this handle came from a plain {{@code open}} (which fills nothing).\n\
+         \x20      */\n\
+         \x20     public OutRange fillRange() {{ return fillRange; }}",
+        base = java_base(func)
+    );
 
     // Deep-copy constructor: scalars assign, arrays clone (element-wise for
     // sub-handle arrays via copy_extra), sub-handles copy recursively; the
@@ -608,6 +620,9 @@ fn emit_handle_class_with_members(
         }
     }
     o.push_str(copy_extra);
+    // OutRange is immutable, so the copy shares it — a fork describes the same
+    // warm-up fill as the handle it was taken from.
+    let _ = writeln!(o, "         this.fillRange = other.fillRange;");
     let _ = writeln!(o, "      }}");
 
     emit_value_class(o, func);
@@ -1659,13 +1674,12 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(o, "   }}");
 
-    // Public openAndFill.
+    // Public openAndFill. The filled range is reported on the handle
+    // (`fillRange()`), not through a pair of caller-supplied out-params.
     let mut fill_sig: Vec<String> = in_sig.clone();
     for p in &opt_sig {
         fill_sig.push(p.clone());
     }
-    fill_sig.push("MInteger outBegIdx".to_string());
-    fill_sig.push("MInteger outNBElement".to_string());
     let mut fill_fwd: Vec<String> = in_fwd.clone();
     for p in &opt_fwd {
         fill_fwd.push(p.clone());
@@ -1684,6 +1698,8 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
          \x20   * (no separate batch call needed for the warm-up plot). Output arrays must\n\
          \x20   * not alias the inputs or each other, and must hold\n\
          \x20   * {{@code historyLen - lookback}} values.\n\
+         \x20   * <p>The range written is on the returned handle:\n\
+         \x20   * {{@link {class}#fillRange()}}.\n\
          \x20   */"
     );
     let _ = writeln!(
@@ -1692,10 +1708,16 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         fill_sig.join(", ")
     );
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
+    let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
+    let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
     let _ = writeln!(
         o,
         "      RetCode retCode = {base}OpenAndFillBody(sp, {});",
         fill_fwd.join(", ")
+    );
+    let _ = writeln!(
+        o,
+        "      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);"
     );
     emit_reject_conversion(o, func, "openAndFill");
     let _ = writeln!(o, "   }}");
@@ -2130,9 +2152,17 @@ fn emit_dispatch(
                         } else {
                             format!("{}, ", opts.join(", "))
                         };
+                        // The callee's public openAndFill reports its filled
+                        // range on the handle; this body still owes its caller
+                        // the MInteger pair, so copy it back out.
                         let _ = writeln!(
                             o,
-                            "         {cls} sub = {callee_base}OpenAndFill({bar_args}, {opts}outBegIdx, outNBElement, {fill_outs});"
+                            "         {cls} sub = {callee_base}OpenAndFill({bar_args}, {opts}{fill_outs});"
+                        );
+                        let _ = writeln!(o, "         outBegIdx.value = sub.fillRange().begIdx();");
+                        let _ = writeln!(
+                            o,
+                            "         outNBElement.value = sub.fillRange().count();"
                         );
                     }
                 }

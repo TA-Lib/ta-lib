@@ -21,14 +21,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode minMax( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMin[],
-                          double outMax[] )
+   RetCode minMaxInternal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outMin[],
+                           double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -129,14 +129,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMaxUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outMin[],
-                                   double outMax[] )
+   RetCode minMaxUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outMin[],
+                                    double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -208,14 +208,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMax( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMin[],
-                          double outMax[] )
+   RetCode minMaxInternal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outMin[],
+                           double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -301,14 +301,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode minMaxUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outMin[],
-                                   double outMax[] )
+   RetCode minMaxUnguardedInternal( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    double outMin[],
+                                    double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -380,6 +380,60 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange minMax( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double outMin[],
+                           double outMax[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minMaxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINMAX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMaxUnguarded( int startIdx,
+                                    int endIdx,
+                                    double inReal[],
+                                    int optInTimePeriod,
+                                    double outMin[],
+                                    double outMax[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minMaxUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMax( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double outMin[],
+                           double outMax[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = minMaxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      if( retCode != RetCode.Success ) {
+         throw failure("MINMAX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange minMaxUnguarded( int startIdx,
+                                    int endIdx,
+                                    float inReal[],
+                                    int optInTimePeriod,
+                                    double outMin[],
+                                    double outMax[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      minMaxUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -414,8 +468,15 @@
       double cur_outMin;
       double cur_outMax;
       Value cachedValue;
+      OutRange fillRange;
 
       MinMaxStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#minMaxOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MinMaxStream( MinMaxStream other ) {
          this.core = other.core;
@@ -434,6 +495,7 @@
          this.cur_outMin = other.cur_outMin;
          this.cur_outMax = other.cur_outMax;
          this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
       }
 
       /** One output set, in batch output order. Immutable. */
@@ -834,11 +896,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MinMaxStream#fillRange()}.
     */
-   public MinMaxStream minMaxOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
+   public MinMaxStream minMaxOpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
    {
       MinMaxStream sp = new MinMaxStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = minMaxOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

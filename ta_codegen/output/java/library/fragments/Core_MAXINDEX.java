@@ -21,13 +21,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode maxIndex( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode maxIndexInternal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -102,13 +102,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode maxIndexUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode maxIndexUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -157,13 +157,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode maxIndex( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode maxIndexInternal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -223,13 +223,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode maxIndexUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode maxIndexUnguardedInternal( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      int optInTimePeriod,
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -278,6 +278,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange maxIndex( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = maxIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAXINDEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange maxIndexUnguarded( int startIdx,
+                                      int endIdx,
+                                      double inReal[],
+                                      int optInTimePeriod,
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      maxIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange maxIndex( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = maxIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      if( retCode != RetCode.Success ) {
+         throw failure("MAXINDEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange maxIndexUnguarded( int startIdx,
+                                      int endIdx,
+                                      float inReal[],
+                                      int optInTimePeriod,
+                                      int outInteger[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      maxIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -306,8 +356,15 @@
       int xCap;
       double[] x_inReal;
       int cur_outInteger;
+      OutRange fillRange;
 
       MaxIndexStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#maxIndexOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       MaxIndexStream( MaxIndexStream other ) {
          this.core = other.core;
@@ -320,6 +377,7 @@
          this.xCap = other.xCap;
          this.x_inReal = other.x_inReal.clone();
          this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -619,11 +677,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link MaxIndexStream#fillRange()}.
     */
-   public MaxIndexStream maxIndexOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   public MaxIndexStream maxIndexOpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
       MaxIndexStream sp = new MaxIndexStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = maxIndexOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -26,13 +26,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   public RetCode linearRegSlope( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode linearRegSlopeInternal( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -126,13 +126,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegSlopeUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inReal[],
-                                           int optInTimePeriod,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
+   RetCode linearRegSlopeUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            double inReal[],
+                                            int optInTimePeriod,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -182,13 +182,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegSlope( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode linearRegSlopeInternal( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -249,13 +249,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   public RetCode linearRegSlopeUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inReal[],
-                                           int optInTimePeriod,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
+   RetCode linearRegSlopeUnguardedInternal( int startIdx,
+                                            int endIdx,
+                                            float inReal[],
+                                            int optInTimePeriod,
+                                            MInteger outBegIdx,
+                                            MInteger outNBElement,
+                                            double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -305,6 +305,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   public OutRange linearRegSlope( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = linearRegSlopeInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("LINEARREG_SLOPE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegSlopeUnguarded( int startIdx,
+                                            int endIdx,
+                                            double inReal[],
+                                            int optInTimePeriod,
+                                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      linearRegSlopeUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegSlope( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = linearRegSlopeInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("LINEARREG_SLOPE", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   public OutRange linearRegSlopeUnguarded( int startIdx,
+                                            int endIdx,
+                                            float inReal[],
+                                            int optInTimePeriod,
+                                            double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      linearRegSlopeUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
 /**** Streaming API *****/
 
    /**
@@ -334,8 +384,15 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
+      OutRange fillRange;
 
       LinearRegSlopeStream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#linearRegSlopeOpenAndFill}, or {@code null}
+       * when this handle came from a plain {@code open} (which fills nothing).
+       */
+      public OutRange fillRange() { return fillRange; }
 
       LinearRegSlopeStream( LinearRegSlopeStream other ) {
          this.core = other.core;
@@ -349,6 +406,7 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
       }
 
       /**
@@ -670,11 +728,16 @@
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link LinearRegSlopeStream#fillRange()}.
     */
-   public LinearRegSlopeStream linearRegSlopeOpenAndFill( double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   public LinearRegSlopeStream linearRegSlopeOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       LinearRegSlopeStream sp = new LinearRegSlopeStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
       RetCode retCode = linearRegSlopeOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
