@@ -750,8 +750,8 @@ fn build_stability_page(
     );
     s.push_str("# Numerical Stability\n\n");
     s.push_str(
-        "The documentation specifies which of the four categories below applies to each function. \
-         They answer a single \
+        "The [Function Documentation](/functions/) specifies which of the four categories below \
+         applies to each function. They answer a single \
          practical question: **does the value at a given bar depend on how much history you \
          passed in?**\n\n",
     );
@@ -770,10 +770,6 @@ fn build_stability_page(
          supplied. These functions are defined recursively: each value folds in the previous \
          one, so the series never entirely forgets where it began — though the influence decays \
          until it is lost in floating-point rounding.\n\n\
-         How many leading values are discarded is tunable with `TA_SetUnstablePeriod`. Some \
-         functions own their setting; others inherit one from a function they compute \
-         internally — DEMA has no unstable period of its own, but is built from EMA and \
-         responds to EMA's. Each function page names the setting it responds to.\n\n\
          See [Unstable Period](/api/unstable-period/) for what to do about it: when to \
          ignore it, when to supply extra history, and how to have TA-Lib drop the \
          unstable values for you.\n\n",
@@ -826,6 +822,15 @@ fn build_stability_page(
          that tracks the path prices took — so it depends on where your data begins and never \
          converges. Unlike an unstable period, there is no warm-up you can discard: the \
          difference persists for the whole series.\n\n\
+         Two Examples:\n\n\
+         - [AD](/functions/ad) adds each bar's money-flow volume to a running total that begins \
+         at zero on your first bar. Only the differences between bars carry meaning; the \
+         absolute level is an artifact of the start date.\n\
+         - [SAR](/functions/sar) is a state machine: it reads the first two bars to decide \
+         whether the trend starts long or short, then carries that direction, the extreme \
+         price, and an acceleration factor forward. Start a day earlier and it can pick the \
+         opposite direction, putting the stop on the other side of price for the rest of the \
+         run.\n\n\
          Do not compare these values across differently-sized windows, and expect a backtest \
          starting at a different date to produce different numbers.\n",
     );

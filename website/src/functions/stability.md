@@ -5,7 +5,7 @@ description: "What it means for an indicator to be start-independent, to carry a
 
 # Numerical Stability
 
-The documentation specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on how much history you passed in?**
+The [Function Documentation](/functions/) specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on how much history you passed in?**
 
 ## If Start-Independent, then... {#start-independent}
 
@@ -14,8 +14,6 @@ The value at a bar does not depend on where your data starts. Feed the function 
 ## If Initial Unstable Period, then... {#initial-unstable-period}
 
 Early values depend on how much history precedes them, and converge as more bars are supplied. These functions are defined recursively: each value folds in the previous one, so the series never entirely forgets where it began — though the influence decays until it is lost in floating-point rounding.
-
-How many leading values are discarded is tunable with `TA_SetUnstablePeriod`. Some functions own their setting; others inherit one from a function they compute internally — DEMA has no unstable period of its own, but is built from EMA and responds to EMA's. Each function page names the setting it responds to.
 
 See [Unstable Period](/api/unstable-period/) for what to do about it: when to ignore it, when to supply extra history, and how to have TA-Lib drop the unstable values for you.
 
@@ -40,5 +38,10 @@ Some functions take an `optInMAType` parameter selecting how their moving averag
 ## If Path-Dependent, then... {#path-dependent}
 
 The value is built up from the first bar — a running accumulation or a state machine that tracks the path prices took — so it depends on where your data begins and never converges. Unlike an unstable period, there is no warm-up you can discard: the difference persists for the whole series.
+
+Two Examples:
+
+- [AD](/functions/ad) adds each bar's money-flow volume to a running total that begins at zero on your first bar. Only the differences between bars carry meaning; the absolute level is an artifact of the start date.
+- [SAR](/functions/sar) is a state machine: it reads the first two bars to decide whether the trend starts long or short, then carries that direction, the extreme price, and an acceleration factor forward. Start a day earlier and it can pick the opposite direction, putting the stop on the other side of price for the rest of the run.
 
 Do not compare these values across differently-sized windows, and expect a backtest starting at a different date to produce different numbers.
