@@ -64,6 +64,7 @@
 #include "ta_memory.h"
 #include "ta_defs.h"
 #include "ta_common.h"
+#include "codegen_pipe.h"
 
 
 /**** External functions declarations. ****/
@@ -80,6 +81,7 @@
 
 /**** Local functions declarations.    ****/
 static ErrorNumber testCircularBuffer( void );
+static ErrorNumber testBoundedAppend( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -103,6 +105,102 @@ ErrorNumber test_internals( void )
       printf( "\nFailed: Circular buffer tests (%d)\n", retValue );
       return retValue;
    }
+
+   retValue = testBoundedAppend();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Bounded append tests (%d)\n", retValue );
+      return retValue;
+   }
+
+   return TA_TEST_PASS; /* Success. */
+}
+
+/* codegen_appendf/codegen_appendc replaced the
+ *    pos += snprintf(buf + pos, buf_size - pos, ...)
+ * idiom used to build every JSON-RPC request/response in the test tools.
+ * That idiom lets `pos` run past `buf_size` on the first truncation; the next
+ * call then passes a negative int that converts to a huge size_t and writes
+ * past the buffer (CodeQL cpp/overflowing-snprintf, CWE-190/CWE-253).
+ *
+ * The contract asserted here: `pos` NEVER exceeds `buf_size - 1`, the buffer
+ * stays NUL-terminated, and nothing is ever written at or past `buf_size`.
+ * A guard region filled with 0xA5 detects the latter directly, so the test
+ * fails on the actual overflow rather than on a symptom.
+ *
+ * Non-vacuity: ARENA is much larger than BUFSZ and truncation is forced
+ * (TA_INTERNAL_APPEND_VACUOUS fires if the overflowing loop never saturates). */
+#define APPEND_ARENA  256
+#define APPEND_BUFSZ   16
+#define APPEND_GUARD  0xA5
+
+static int appendGuardIntact( const char *arena, int bufSize )
+{
+   int i;
+   for( i = bufSize; i < APPEND_ARENA; i++ )
+      if( (unsigned char)arena[i] != APPEND_GUARD )
+         return 0;
+   return 1;
+}
+
+static ErrorNumber testBoundedAppend( void )
+{
+   char arena[APPEND_ARENA];
+   int pos, i, saturatedAt;
+
+   /* 1. Plain accumulation stays exact while it fits. */
+   memset( arena, APPEND_GUARD, sizeof(arena) );
+   pos = codegen_appendf( arena, APPEND_BUFSZ, 0, "ab" );
+   pos = codegen_appendc( arena, APPEND_BUFSZ, pos, 'c' );
+   pos = codegen_appendf( arena, APPEND_BUFSZ, pos, "%d", 42 );
+   if( pos != 5 || strcmp( arena, "abc42" ) != 0 )
+      return TA_INTERNAL_APPEND_FAIL_0;
+   if( !appendGuardIntact( arena, APPEND_BUFSZ ) )
+      return TA_INTERNAL_APPEND_FAIL_1;
+
+   /* 2. A single oversized append truncates, saturates and NUL-terminates. */
+   memset( arena, APPEND_GUARD, sizeof(arena) );
+   pos = codegen_appendf( arena, APPEND_BUFSZ, 0, "%s",
+                          "0123456789ABCDEF0123456789ABCDEF" );
+   if( pos != APPEND_BUFSZ - 1 )
+      return TA_INTERNAL_APPEND_FAIL_2;
+   if( arena[APPEND_BUFSZ - 1] != '\0' || strlen( arena ) != APPEND_BUFSZ - 1u )
+      return TA_INTERNAL_APPEND_FAIL_3;
+   if( !appendGuardIntact( arena, APPEND_BUFSZ ) )
+      return TA_INTERNAL_APPEND_FAIL_4;
+
+   /* 3. The overflow loop: keep appending well past capacity. This is the
+    *    shape that used to walk off the end. */
+   memset( arena, APPEND_GUARD, sizeof(arena) );
+   pos = 0;
+   saturatedAt = -1;
+   for( i = 0; i < 64; i++ )
+   {
+      pos = codegen_appendf( arena, APPEND_BUFSZ, pos, ",%d", i );
+      pos = codegen_appendc( arena, APPEND_BUFSZ, pos, 'x' );
+      if( pos < 0 || pos > APPEND_BUFSZ - 1 )
+         return TA_INTERNAL_APPEND_FAIL_5;
+      if( saturatedAt < 0 && pos == APPEND_BUFSZ - 1 )
+         saturatedAt = i;
+   }
+   if( !appendGuardIntact( arena, APPEND_BUFSZ ) )
+      return TA_INTERNAL_APPEND_FAIL_6;
+   if( saturatedAt < 0 )
+      return TA_INTERNAL_APPEND_VACUOUS;   /* never truncated: test proved nothing */
+
+   /* 4. Degenerate sizes must not write at all. */
+   memset( arena, APPEND_GUARD, sizeof(arena) );
+   if( codegen_appendf( arena, 0, 0, "x" ) != 0 ||
+       codegen_appendc( arena, 0, 0, 'x' ) != 0 ||
+       !appendGuardIntact( arena, 0 ) )
+      return TA_INTERNAL_APPEND_FAIL_7;
+
+   /* buf_size 1 holds only the terminator; both helpers must stay at 0. */
+   memset( arena, APPEND_GUARD, sizeof(arena) );
+   if( codegen_appendf( arena, 1, 0, "x" ) != 0 ||
+       codegen_appendc( arena, 1, 0, 'x' ) != 0 ||
+       !appendGuardIntact( arena, 1 ) )
+      return TA_INTERNAL_APPEND_FAIL_7;
 
    return TA_TEST_PASS; /* Success. */
 }

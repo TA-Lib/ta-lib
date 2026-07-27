@@ -106,8 +106,9 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
 
 /* Serialize `count` doubles as one JSON string of 16-hex-char IEEE-754 bit
  * groups (lossless, no float-parse rounding, no library) — the shared input
- * transport for both gates' C<=>server comparisons. Returns bytes written. */
-int codegen_write_hexbits_array(char *buf, int buf_size,
+ * transport for both gates' C<=>server comparisons. Appends at absolute `pos`
+ * (bounded, like codegen_appendf) and returns the new position. */
+int codegen_write_hexbits_array(char *buf, int buf_size, int pos,
                                 const TA_Real *data, int count);
 
 /* Verdict of a tolerance element-compare of a server's %.15g array response vs

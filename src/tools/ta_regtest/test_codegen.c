@@ -130,44 +130,38 @@ static int              g_numTimingResults = 0;
 
 /* ---- Minimal JSON helpers (no library dependency) ---- */
 
-static int json_write_double_array(char *buf, int buf_size,
+static int json_write_double_array(char *buf, int buf_size, int pos,
                                    const TA_Real *data, int count, int widen)
 {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = codegen_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ )
     {
         if( i > 0 )
-            pos += snprintf(buf + pos, buf_size - pos, ",");
+            pos = codegen_appendc(buf, buf_size, pos, ',');
         if( widen )
             /* Round to float then back to double; %.17g round-trips exactly. */
-            pos += snprintf(buf + pos, buf_size - pos, "%.17g", (double)(float)data[i]);
+            pos = codegen_appendf(buf, buf_size, pos, "%.17g", (double)(float)data[i]);
         else
-            pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
+            pos = codegen_appendf(buf, buf_size, pos, "%.15g", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return codegen_appendc(buf, buf_size, pos, ']');
 }
 
 /* Lossless input transport (issue #115, shared via test_codegen.h): serialize
  * each double as its 16-hex-char IEEE-754 bit pattern inside one JSON string,
  * decoded byte-exactly by every server's array parser. No %.15g rounding to hide
  * a divergence behind. Used by --xlang-hash's Java leg and by server_verify. */
-int codegen_write_hexbits_array(char *buf, int buf_size,
+int codegen_write_hexbits_array(char *buf, int buf_size, int pos,
                                 const TA_Real *data, int count)
 {
-    int pos = 0;
-    buf[pos++] = '"';
+    pos = codegen_appendc(buf, buf_size, pos, '"');
     for( int i = 0; i < count; i++ )
     {
         unsigned long long bits;
         memcpy(&bits, &data[i], sizeof(bits));
-        pos += snprintf(buf + pos, buf_size - pos, "%016llx", bits);
+        pos = codegen_appendf(buf, buf_size, pos, "%016llx", bits);
     }
-    buf[pos++] = '"';
-    buf[pos] = '\0';
-    return pos;
+    return codegen_appendc(buf, buf_size, pos, '"');
 }
 
 static const char *json_find_field(const char *json, const char *field, int *len)
@@ -479,7 +473,7 @@ static int build_json_request(CodegenRangeTestParam *p,
     int realInputCount = 0;
 
     /* Method and startIdx/endIdx */
-    pos += snprintf(buf + pos, bufSize - pos,
+    pos = codegen_appendf(buf, bufSize, pos,
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
         fi->name, (int)startIdx, (int)endIdx);
 
@@ -506,38 +500,38 @@ static int build_json_request(CodegenRangeTestParam *p,
             TA_InputFlags flags = inputInfo->flags;
             if( flags & TA_IN_PRICE_OPEN )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inOpen\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inOpen\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->open, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_HIGH )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inHigh\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inHigh\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->high, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_LOW )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inLow\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inLow\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->low, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_CLOSE )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inClose\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inClose\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->close, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_VOLUME )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inVolume\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inVolume\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->volume, p->nbBars, p->widenFloatInputs);
             }
             if( flags & TA_IN_PRICE_OPENINTEREST )
             {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inOpenInterest\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inOpenInterest\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->openInterest, p->nbBars, p->widenFloatInputs);
             }
             break;
@@ -547,8 +541,8 @@ static int build_json_request(CodegenRangeTestParam *p,
             if( totalRealInputs == 1 )
             {
                 /* Single real input: "inReal" */
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inReal\":");
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inReal\":");
+                pos = json_write_double_array(buf, bufSize, pos,
                            p->history->close, p->nbBars, p->widenFloatInputs);
             }
             else
@@ -564,8 +558,8 @@ static int build_json_request(CodegenRangeTestParam *p,
                 else
                     data = p->history->close;  /* fallback */
 
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inReal%d\":", realInputCount);
-                pos += json_write_double_array(buf + pos, bufSize - pos,
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inReal%d\":", realInputCount);
+                pos = json_write_double_array(buf, bufSize, pos,
                            data, p->nbBars, p->widenFloatInputs);
             }
             realInputCount++;
@@ -584,23 +578,23 @@ static int build_json_request(CodegenRangeTestParam *p,
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(fi->handle, i, &optInfo);
 
-        pos += snprintf(buf + pos, bufSize - pos, ",\"%s\":", optInfo->paramName);
+        pos = codegen_appendf(buf, bufSize, pos, ",\"%s\":", optInfo->paramName);
 
         switch( optInfo->type )
         {
         case TA_OptInput_RealRange:
         case TA_OptInput_RealList:
-            pos += snprintf(buf + pos, bufSize - pos, "%.15g",
+            pos = codegen_appendf(buf, bufSize, pos, "%.15g",
                 p->optOverrideActive ? p->optOverride[i] : optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerRange:
-            pos += snprintf(buf + pos, bufSize - pos, "%d",
+            pos = codegen_appendf(buf, bufSize, pos, "%d",
                 p->optOverrideActive ? (int)p->optOverride[i]
                 : p->useLargePeriod  ? compute_large_int(optInfo, p->nbBars)
                                      : (int)optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerList:
-            pos += snprintf(buf + pos, bufSize - pos, "%d",
+            pos = codegen_appendf(buf, bufSize, pos, "%d",
                 p->optOverrideActive ? (int)p->optOverride[i]
                                      : (int)optInfo->defaultValue);
             break;
@@ -612,13 +606,13 @@ static int build_json_request(CodegenRangeTestParam *p,
     {
         int unstPeriod = (p->unstId != TA_FUNC_UNST_NONE)
                          ? (int)TA_GetUnstablePeriod(p->unstId) : 0;
-        pos += snprintf(buf + pos, bufSize - pos, ",\"unstablePeriod\":%d", unstPeriod);
+        pos = codegen_appendf(buf, bufSize, pos, ",\"unstablePeriod\":%d", unstPeriod);
     }
 
     if( p->useFloat )
-        pos += snprintf(buf + pos, bufSize - pos, ",\"use_float\":1");
+        pos = codegen_appendf(buf, bufSize, pos, ",\"use_float\":1");
 
-    pos += snprintf(buf + pos, bufSize - pos, "}}");
+    pos = codegen_appendf(buf, bufSize, pos, "}}");
 
     return pos;
 }
@@ -2093,7 +2087,7 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
                                  int shape, int seed, int n,
                                  int unstablePeriod, int compat)
 {
-    int pos = sprintf(buf,
+    int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_%s\","
         "\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d,"
         "\"unstablePeriod\":%d,\"compatibility\":%d",
@@ -2101,18 +2095,18 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
     /* Candle functions: ask the server for the settings-variation rounds
      * (avgPeriods bumped, then zeroed) on top of the default-settings legs. */
     if( fi->flags & TA_FUNC_FLG_CANDLESTICK )
-        pos += sprintf(buf + pos, ",\"candleLegs\":1");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"candleLegs\":1");
     unsigned int i;
     for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
     {
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos += sprintf(buf + pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
         else
-            pos += sprintf(buf + pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
-    sprintf(buf + pos, "}}");
+    codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
 /* Param vectors: defaults, integer params at their true minimum (period==1
@@ -2539,14 +2533,14 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
 
     for( int which = 0; which <= 2; which++ )
     {
-        int pos = snprintf(reqBuf, JSON_BUF_SIZE,
+        int pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
             "{\"method\":\"eval_predicate\",\"params\":{\"which\":%d,\"values\":[", which);
         for( int i = 0; i < n; i++ )
-            pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "%s%.17g", i ? "," : "", vals[i]);
-        pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "],\"scale\":[");
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "%s%.17g", i ? "," : "", vals[i]);
+        pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "],\"scale\":[");
         for( int i = 0; i < n; i++ )
-            pos += snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "%s%.17g", i ? "," : "", scales[i]);
-        snprintf(reqBuf + pos, JSON_BUF_SIZE - pos, "]}}");
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "%s%.17g", i ? "," : "", scales[i]);
+        codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "]}}");
 
         if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
             || json_is_error(respBuf) )
@@ -2603,7 +2597,7 @@ static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *r
     {
         int present = 0;
         unsigned long long ih;
-        sprintf(requestBuf,
+        codegen_appendf(requestBuf, JSON_BUF_SIZE, 0,
                 "{\"method\":\"fuzz_in_hash\",\"params\":{"
                 "\"gen_shape\":%d,\"gen_seed\":7,\"gen_n\":%d}}", shape, n);
         if( codegen_pipe_call(cp, requestBuf, responseBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
@@ -2750,7 +2744,7 @@ static ErrorNumber test_codegen_for_language(
     if( ctx.error == TA_TEST_PASS )
     {
         ErrorNumber probeErr;
-        sprintf(requestBuf,
+        codegen_appendf(requestBuf, JSON_BUF_SIZE, 0,
                 "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_STREAM_PROBE\","
                 "\"gen_shape\":0,\"gen_seed\":1,\"gen_n\":2,\"unstablePeriod\":0,\"compatibility\":0}}");
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
@@ -3304,25 +3298,25 @@ static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
                                int s, int e, int shape, int seed, int n,
                                const double *optVals, int fullOutput)
 {
-    int pos = snprintf(buf, JSON_BUF_SIZE,
+    int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"abstract_call\",\"params\":{\"funcName\":\"%s\","
         "\"startIdx\":%d,\"endIdx\":%d,"
         "\"gen_present\":1,\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d",
         fi->name, s, e, shape, seed, n);
     if( fullOutput )
-        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"full_output\":1");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"full_output\":1");
     for( unsigned int i = 0; i < fi->nbOptInput; i++ )
     {
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
         else
-            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
-        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"unstablePeriod\":0");
-    snprintf(buf + pos, JSON_BUF_SIZE - pos, "}}");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":0");
+    codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
 static unsigned long long fuzz_parse_hash(const char *resp)
@@ -4445,7 +4439,7 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
                                     int s, int e, const double *optVals,
                                     int wantHash)
 {
-    int pos = snprintf(buf, JSON_BUF_SIZE,
+    int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
         fi->name, s, e);
 
@@ -4475,8 +4469,8 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
             for( int c = 0; c < 6; c++ )
                 if( ii->flags & comp[c].flag )
                 {
-                    pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":", comp[c].key);
-                    pos += codegen_write_hexbits_array(buf + pos, JSON_BUF_SIZE - pos,
+                    pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":", comp[c].key);
+                    pos = codegen_write_hexbits_array(buf, JSON_BUF_SIZE, pos,
                                                        comp[c].data, nbBars);
                 }
         }
@@ -4485,10 +4479,10 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
             const TA_Real *data = (realCount == 0) ? hist->close
                                 : (realCount == 1) ? hist->volume : hist->close;
             if( totalRealInputs == 1 )
-                pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"inReal\":");
+                pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"inReal\":");
             else
-                pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"inReal%d\":", realCount);
-            pos += codegen_write_hexbits_array(buf + pos, JSON_BUF_SIZE - pos, data, nbBars);
+                pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"inReal%d\":", realCount);
+            pos = codegen_write_hexbits_array(buf, JSON_BUF_SIZE, pos, data, nbBars);
             realCount++;
         }
     }
@@ -4498,16 +4492,16 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
         else
-            pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
 
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
-        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"unstablePeriod\":0");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":0");
     if( wantHash )
-        pos += snprintf(buf + pos, JSON_BUF_SIZE - pos, ",\"want_hash\":1");
-    snprintf(buf + pos, JSON_BUF_SIZE - pos, "}}");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"want_hash\":1");
+    codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
 /* Per-function bitwise comparison: golden in-process C vs each server. */

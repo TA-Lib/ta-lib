@@ -52,7 +52,7 @@ def filter_list_functions(src_text, post_funcs):
     """Remove post_funcs' entries from the serve's list_functions payload.
 
     Each entry is a line like
-        pos += snprintf(resp + pos, resp_size - pos, ",\\"TA_PVO\\"");
+        pos = json_appendf(resp, resp_size, pos, ",\\"TA_PVO\\"");
     The escaped-quote token \\"TA_<NAME>\\" appears ONLY in list_functions (the
     dispatch chain uses the bare "TA_<NAME>"), so removing the whole line is
     safe. Every non-first entry carries its own leading comma, so dropping a

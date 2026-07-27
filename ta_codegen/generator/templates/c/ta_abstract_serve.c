@@ -7,7 +7,8 @@
  * This file is #included by the generated server (ta_codegen_serve.c).
  * It depends on:
  *   - JSON helpers: json_find_string, json_find_int, json_find_double,
- *     json_find_double_array, json_write_double_array, json_write_int_array
+ *     json_find_double_array, json_write_double_array, json_write_int_array,
+ *     json_appendf (bounded formatted append)
  *   - Global buffers: g_inBuf0..5, g_outBuf0..2, g_outIntBuf0..1, MAX_ARRAY_SIZE
  *   - ta_abstract.h (included below)
  *
@@ -32,7 +33,7 @@ typedef struct {
 static void abstract_for_each_cb(const TA_FuncInfo *funcInfo, void *opaque) {
    ForEachCtx *ctx = (ForEachCtx *)opaque;
    const char *comma = ctx->count > 0 ? "," : "";
-   ctx->pos += snprintf(ctx->buf + ctx->pos, ctx->buf_size - ctx->pos,
+   ctx->pos = json_appendf(ctx->buf, ctx->buf_size, ctx->pos,
       "%s{\"name\":\"%s\",\"group\":\"%s\",\"nbInput\":%u,\"nbOptInput\":%u,\"nbOutput\":%u}",
       comma, funcInfo->name, funcInfo->group,
       funcInfo->nbInput, funcInfo->nbOptInput, funcInfo->nbOutput);
@@ -44,10 +45,10 @@ static void handle_abstract_for_each_func(const char *json, char *resp, int resp
    ForEachCtx ctx;
    ctx.buf = resp;
    ctx.buf_size = resp_size;
-   ctx.pos = snprintf(resp, resp_size, "{\"functions\":[");
+   ctx.pos = json_appendf(resp, resp_size, 0, "{\"functions\":[");
    ctx.count = 0;
    TA_ForEachFunc(abstract_for_each_cb, &ctx);
-   snprintf(resp + ctx.pos, resp_size - ctx.pos, "]}");
+   json_appendf(resp, resp_size, ctx.pos, "]}");
 }
 
 /* ---- Helper: parse funcName from JSON ---- */
@@ -274,7 +275,7 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
    TA_ParamHolderFree(params);
 
    /* Build response */
-   int pos = snprintf(resp, resp_size,
+   int pos = json_appendf(resp, resp_size, 0,
       "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"lookback\":%d",
       (int)rc, outBegIdx, outNBElement, (int)lookback);
 
@@ -284,21 +285,21 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       if( outputIsInteger[i] ) {
          const char *key = intKeyIdx == 0 ? "outInteger" : "outInteger1";
          int *buf = intKeyIdx == 0 ? g_outIntBuf0 : g_outIntBuf1;
-         pos += snprintf(resp + pos, resp_size - pos, ",\"%s\":", key);
-         pos += json_write_int_array(resp + pos, resp_size - pos, buf, outNBElement);
+         pos = json_appendf(resp, resp_size, pos, ",\"%s\":", key);
+         pos = json_write_int_array(resp, resp_size, pos, buf, outNBElement);
          intKeyIdx++;
       } else {
          const char *key = realKeyIdx == 0 ? "outReal" :
          realKeyIdx == 1 ? "outReal1" : "outReal2";
          double *buf = realKeyIdx == 0 ? g_outBuf0 :
          realKeyIdx == 1 ? g_outBuf1 : g_outBuf2;
-         pos += snprintf(resp + pos, resp_size - pos, ",\"%s\":", key);
-         pos += json_write_double_array(resp + pos, resp_size - pos, buf, outNBElement);
+         pos = json_appendf(resp, resp_size, pos, ",\"%s\":", key);
+         pos = json_write_double_array(resp, resp_size, pos, buf, outNBElement);
          realKeyIdx++;
       }
    }
 
-   snprintf(resp + pos, resp_size - pos, "}");
+   json_appendf(resp, resp_size, pos, "}");
 }
 
 /* ---- TA_GetFuncInfo ----
@@ -376,7 +377,7 @@ static void handle_TA_GetOptInputParameterInfo(const char *json, char *resp, int
       return;
    }
 
-   int pos = snprintf(resp, resp_size,
+   int pos = json_appendf(resp, resp_size, 0,
       "{\"type\":%d,\"paramName\":\"%s\",\"flags\":%d,"
       "\"displayName\":\"%s\",\"defaultValue\":%.15g",
       (int)info->type,
@@ -389,14 +390,14 @@ static void handle_TA_GetOptInputParameterInfo(const char *json, char *resp, int
    if( info->dataSet ) {
       if( info->type == TA_OptInput_RealRange ) {
          const TA_RealRange *r = (const TA_RealRange *)info->dataSet;
-         pos += snprintf(resp + pos, resp_size - pos,
+         pos = json_appendf(resp, resp_size, pos,
             ",\"min\":%.15g,\"max\":%.15g,\"precision\":%d,"
             "\"suggestedStart\":%.15g,\"suggestedEnd\":%.15g,\"suggestedIncrement\":%.15g",
             r->min, r->max, (int)r->precision,
             r->suggested_start, r->suggested_end, r->suggested_increment);
       } else if( info->type == TA_OptInput_IntegerRange ) {
          const TA_IntegerRange *r = (const TA_IntegerRange *)info->dataSet;
-         pos += snprintf(resp + pos, resp_size - pos,
+         pos = json_appendf(resp, resp_size, pos,
             ",\"min\":%d,\"max\":%d,"
             "\"suggestedStart\":%d,\"suggestedEnd\":%d,\"suggestedIncrement\":%d",
             (int)r->min, (int)r->max,
@@ -404,17 +405,17 @@ static void handle_TA_GetOptInputParameterInfo(const char *json, char *resp, int
       } else if( info->type == TA_OptInput_IntegerList ) {
          const TA_IntegerList *l = (const TA_IntegerList *)info->dataSet;
          unsigned int vi;
-         pos += snprintf(resp + pos, resp_size - pos, ",\"valueList\":\"");
+         pos = json_appendf(resp, resp_size, pos, ",\"valueList\":\"");
          for( vi = 0; vi < l->nbElement; vi++ ) {
-            pos += snprintf(resp + pos, resp_size - pos, "%s%d=%s",
+            pos = json_appendf(resp, resp_size, pos, "%s%d=%s",
                vi ? ";" : "", (int)l->data[vi].value,
                l->data[vi].string ? l->data[vi].string : "");
          }
-         pos += snprintf(resp + pos, resp_size - pos, "\"");
+         pos = json_appendf(resp, resp_size, pos, "\"");
       }
    }
 
-   snprintf(resp + pos, resp_size - pos, "}");
+   json_appendf(resp, resp_size, pos, "}");
 }
 
 /* ---- TA_GetOutputParameterInfo ----

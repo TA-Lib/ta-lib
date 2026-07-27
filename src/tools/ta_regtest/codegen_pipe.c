@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #if defined(WIN32) || defined(_WIN32)
@@ -203,3 +204,34 @@ void codegen_pipe_close(CodegenPipe *cp)
 }
 
 #endif /* WIN32 / POSIX */
+
+/* ---- Bounded JSON buffer append (platform independent) ---- */
+
+int codegen_appendf( char *buf, int buf_size, int pos, const char *fmt, ... )
+{
+    va_list ap;
+    int avail, n;
+
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+
+    avail = buf_size - pos;
+    va_start( ap, fmt );
+    n = vsnprintf( buf + pos, (size_t)avail, fmt, ap );
+    va_end( ap );
+
+    if( n < 0 ) return pos;              /* encoding error: nothing appended */
+    if( n >= avail ) return buf_size - 1; /* truncated: saturate */
+    return pos + n;
+}
+
+int codegen_appendc( char *buf, int buf_size, int pos, char c )
+{
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+    buf[pos++] = c;
+    buf[pos] = '\0';
+    return pos;
+}

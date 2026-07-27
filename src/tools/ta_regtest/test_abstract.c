@@ -204,19 +204,16 @@ static const double *abstract_volume_view( const double *input, unsigned int siz
     return volBuf;
 }
 
-static int abstract_json_write_double_array(char *buf, int buf_size,
+static int abstract_json_write_double_array(char *buf, int buf_size, int pos,
                                             const double *data, int count)
 {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = codegen_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ )
     {
-        if( i > 0 ) pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
+        if( i > 0 ) pos = codegen_appendc(buf, buf_size, pos, ',');
+        pos = codegen_appendf(buf, buf_size, pos, "%.15g", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return codegen_appendc(buf, buf_size, pos, ']');
 }
 
 static int abstract_json_is_error(const char *json)
@@ -521,12 +518,12 @@ static ErrorNumber abstract_verify_func_metadata(
                 }
             } else if( crefOpt->type == TA_OptInput_IntegerList ) {
                 const TA_IntegerList *l = (const TA_IntegerList *)crefOpt->dataSet;
-                char crefList[1024]; int p = 0; unsigned int vi;
+                char crefList[1024] = {0}; int p = 0; unsigned int vi;
                 char srvList[1024] = {0};
                 for( vi = 0; vi < l->nbElement; vi++ ) {
-                    p += snprintf(crefList + p, (int)sizeof(crefList) - p, "%s%d=%s",
-                                  vi ? ";" : "", (int)l->data[vi].value,
-                                  l->data[vi].string ? l->data[vi].string : "");
+                    p = codegen_appendf(crefList, (int)sizeof(crefList), p, "%s%d=%s",
+                                        vi ? ";" : "", (int)l->data[vi].value,
+                                        l->data[vi].string ? l->data[vi].string : "");
                 }
                 abstract_json_get_string(g_abstractRespBuf, "valueList", srvList, sizeof(srvList));
                 if( strcmp(srvList, crefList) != 0 ) {
@@ -675,7 +672,7 @@ static ErrorNumber abstract_verify_server_call(
     int bufSize = ABSTRACT_JSON_BUF_SIZE;
     int pos = 0;
 
-    pos += snprintf(buf + pos, bufSize - pos,
+    pos = codegen_appendf(buf, bufSize, pos,
         "{\"method\":\"abstract_call\",\"params\":{\"funcName\":\"%s\""
         ",\"startIdx\":%d,\"endIdx\":%d",
         funcName, startIdx, endIdx);
@@ -701,37 +698,37 @@ static ErrorNumber abstract_verify_server_call(
         {
             TA_InputFlags flags = inputInfo->flags;
             if( flags & TA_IN_PRICE_OPEN ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inOpen\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inOpen\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             }
             if( flags & TA_IN_PRICE_HIGH ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inHigh\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inHigh\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             }
             if( flags & TA_IN_PRICE_LOW ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inLow\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inLow\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             }
             if( flags & TA_IN_PRICE_CLOSE ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inClose\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inClose\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             }
             if( flags & TA_IN_PRICE_VOLUME ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inVolume\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, volInput, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inVolume\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, volInput, size);
             }
             if( flags & TA_IN_PRICE_OPENINTEREST ) {
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inOpenInterest\":");
-                pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inOpenInterest\":");
+                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             }
             break;
         }
         case TA_Input_Real:
             if( totalRealInputs == 1 )
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inReal\":");
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inReal\":");
             else
-                pos += snprintf(buf + pos, bufSize - pos, ",\"inReal%d\":", realInputCount);
-            pos += abstract_json_write_double_array(buf + pos, bufSize - pos, input, size);
+                pos = codegen_appendf(buf, bufSize, pos, ",\"inReal%d\":", realInputCount);
+            pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
             realInputCount++;
             break;
         case TA_Input_Integer:
@@ -746,21 +743,21 @@ static ErrorNumber abstract_verify_server_call(
     {
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(handle, i, &optInfo);
-        pos += snprintf(buf + pos, bufSize - pos, ",\"%s\":", optInfo->paramName);
+        pos = codegen_appendf(buf, bufSize, pos, ",\"%s\":", optInfo->paramName);
         switch( optInfo->type )
         {
         case TA_OptInput_RealRange:
         case TA_OptInput_RealList:
-            pos += snprintf(buf + pos, bufSize - pos, "%.15g", optInfo->defaultValue);
+            pos = codegen_appendf(buf, bufSize, pos, "%.15g", optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerRange:
         case TA_OptInput_IntegerList:
-            pos += snprintf(buf + pos, bufSize - pos, "%d", (int)optInfo->defaultValue);
+            pos = codegen_appendf(buf, bufSize, pos, "%d", (int)optInfo->defaultValue);
             break;
         }
     }
 
-    pos += snprintf(buf + pos, bufSize - pos, "}}");
+    pos = codegen_appendf(buf, bufSize, pos, "}}");
 
     /* Send to server */
     ErrorNumber err = codegen_pipe_call(g_abstractPipe, buf,
@@ -1378,7 +1375,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    if( g_abstractPipe )
    {
       int pos = 0;
-      pos += snprintf(g_abstractReqBuf + pos, ABSTRACT_JSON_BUF_SIZE - pos,
+      pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
           "{\"method\":\"abstract_get_lookback\",\"params\":{\"funcName\":\"%s\"",
           funcName);
 
@@ -1387,16 +1384,16 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       {
          const TA_OptInputParameterInfo *oi;
          TA_GetOptInputParameterInfo(handle, k, &oi);
-         pos += snprintf(g_abstractReqBuf + pos, ABSTRACT_JSON_BUF_SIZE - pos,
+         pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
              ",\"%s\":", oi->paramName);
          if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos += snprintf(g_abstractReqBuf + pos, ABSTRACT_JSON_BUF_SIZE - pos,
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
                 "%.15g", oi->defaultValue);
          else
-            pos += snprintf(g_abstractReqBuf + pos, ABSTRACT_JSON_BUF_SIZE - pos,
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
                 "%d", (int)oi->defaultValue);
       }
-      snprintf(g_abstractReqBuf + pos, ABSTRACT_JSON_BUF_SIZE - pos, "}}");
+      codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "}}");
 
       ErrorNumber srvErr = codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
                                               g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE);

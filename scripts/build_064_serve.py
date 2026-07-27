@@ -141,8 +141,8 @@ OUTPUT_HOOK = r'''
          }
       }
       fz_h = fuzz_hash_fin(fz_h);
-      pos += snprintf(resp + pos, resp_size - pos, ",\"out_hash\":\"%016llx\"", fz_h);
-      snprintf(resp + pos, resp_size - pos, "}");
+      pos = json_appendf(resp, resp_size, pos, ",\"out_hash\":\"%016llx\"", fz_h);
+      json_appendf(resp, resp_size, pos, "}");
       return;
    }
 '''
@@ -176,8 +176,8 @@ def build(root, bin_dir, lib_a):
     src = src.replace('int main(void) {',
                       'int main(void) { TA_Initialize(); '
                       'TA_RestoreCandleDefaultSettings(TA_AllCandleSettings);')
-    patched = src.replace('snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);',
-                          'snprintf(buf + pos, buf_size - pos, "%a", data[i]);')
+    patched = src.replace('json_appendf(buf, buf_size, pos, "%.15g", data[i]);',
+                          'json_appendf(buf, buf_size, pos, "%a", data[i]);')
     if patched == src:
         die("output serializer pattern not found — %a patch NOT applied")
     src = patched
