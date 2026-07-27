@@ -204,7 +204,7 @@ static long long get_nanotime(void) {
 }
 
 
-static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
+static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
 static void generate_price_data(int n) {
@@ -215,8 +215,10 @@ static void generate_price_data(int n) {
     g_close  = calloc(n, sizeof(double));
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
+    g_periods = calloc(n, sizeof(double));
     unsigned int seed = 42;
     double price = 100.0;
+    int period = 16;
     for( int i = 0; i < n; i++ ) {
         seed = seed * 1103515245 + 12345;
         double r = ((double)(seed >> 16) / 32768.0) - 1.0;
@@ -227,6 +229,12 @@ static void generate_price_data(int n) {
         g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
         g_volume[i] = 1000000.0 + r * 500000.0;
         price = c; if( price < 1.0 ) price = 1.0;
+        /* Wandering period series in MAVP's default [2..30] range: exercises
+         * the multi-period grouping, not just the single-period fast path. */
+        period += (int)((seed >> 8) % 7) - 3;
+        if( period < 2 ) period = 2;
+        if( period > 30 ) period = 30;
+        g_periods[i] = (double)period;
     }
 }
 
@@ -2078,7 +2086,7 @@ static void bench_all(const char *filter, int iters) {
             int outBegIdx, outNBElement;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
-                TA_MAVP(0, g_nPoints - 1, g_close, g_high, 2, 30, 0, &outBegIdx, &outNBElement, g_outBuf0);
+                TA_MAVP(0, g_nPoints - 1, g_close, g_periods, 2, 30, 0, &outBegIdx, &outNBElement, g_outBuf0);
             }
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
@@ -2973,6 +2981,6 @@ int main(int argc, char *argv[]) {
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     generate_price_data(n_points);
     bench_all(func_filter, n_iters);
-    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     return 0;
 }
