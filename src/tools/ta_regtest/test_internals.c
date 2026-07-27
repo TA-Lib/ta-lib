@@ -200,7 +200,7 @@ static ErrorNumber testBoundedAppend( void )
    if( codegen_appendf( arena, 1, 0, "x" ) != 0 ||
        codegen_appendc( arena, 1, 0, 'x' ) != 0 ||
        !appendGuardIntact( arena, 1 ) )
-      return TA_INTERNAL_APPEND_FAIL_7;
+      return TA_INTERNAL_APPEND_FAIL_8;
 
    return TA_TEST_PASS; /* Success. */
 }

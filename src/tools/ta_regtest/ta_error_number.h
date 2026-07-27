@@ -249,7 +249,8 @@ typedef enum
   TA_INTERNAL_APPEND_FAIL_5         = 717,
   TA_INTERNAL_APPEND_FAIL_6         = 718,
   TA_INTERNAL_APPEND_FAIL_7         = 719,
-  TA_INTERNAL_APPEND_VACUOUS        = 720,
+  TA_INTERNAL_APPEND_FAIL_8         = 720,
+  TA_INTERNAL_APPEND_VACUOUS        = 721,
 
   /* Error code related to CSI data source tests. */
   TA_CSI_ADDDATASOURCE_FAILED    = 800,
