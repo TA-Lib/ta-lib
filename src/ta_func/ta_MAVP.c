@@ -178,10 +178,11 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    localPeriodArray = malloc(outputSize * sizeof(int));
    /* Output indices grouped by clamped period (counting sort below). */
    sortedIdx = malloc(outputSize * sizeof(int));
-   if( sortedIdx == NULL )
+   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
    {
       free(localOutputArray);
       free(localPeriodArray);
+      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -196,6 +197,15 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    {
       finalIsAllocated = 1;
       localFinalArray = malloc(outputSize * sizeof(double));
+      if( localFinalArray == NULL )
+      {
+         free(localOutputArray);
+         free(localPeriodArray);
+         free(sortedIdx);
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
    } else 
    {
       localFinalArray = outReal;
@@ -438,10 +448,11 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
-   if( sortedIdx == NULL )
+   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
    {
       free(localOutputArray);
       free(localPeriodArray);
+      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -451,6 +462,15 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    {
       finalIsAllocated = 1;
       localFinalArray = malloc(outputSize * sizeof(double));
+      if( localFinalArray == NULL )
+      {
+         free(localOutputArray);
+         free(localPeriodArray);
+         free(sortedIdx);
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
    } else 
    {
       localFinalArray = outReal;
@@ -679,10 +699,11 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
-   if( sortedIdx == NULL )
+   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
    {
       free(localOutputArray);
       free(localPeriodArray);
+      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -692,6 +713,15 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    {
       finalIsAllocated = 1;
       localFinalArray = malloc(outputSize * sizeof(double));
+      if( localFinalArray == NULL )
+      {
+         free(localOutputArray);
+         free(localPeriodArray);
+         free(sortedIdx);
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
    } else 
    {
       localFinalArray = outReal;
@@ -898,10 +928,11 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
-   if( sortedIdx == NULL )
+   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
    {
       free(localOutputArray);
       free(localPeriodArray);
+      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -911,6 +942,15 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    {
       finalIsAllocated = 1;
       localFinalArray = malloc(outputSize * sizeof(double));
+      if( localFinalArray == NULL )
+      {
+         free(localOutputArray);
+         free(localPeriodArray);
+         free(sortedIdx);
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
    } else 
    {
       localFinalArray = outReal;
