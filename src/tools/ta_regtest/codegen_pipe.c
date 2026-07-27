@@ -221,7 +221,9 @@ int codegen_appendf( char *buf, int buf_size, int pos, const char *fmt, ... )
     n = vsnprintf( buf + pos, (size_t)avail, fmt, ap );
     va_end( ap );
 
-    if( n < 0 ) return pos;              /* encoding error: nothing appended */
+    /* C11 7.21.6.12: only a non-negative return guarantees what was written,
+       so on an encoding error re-terminate rather than trust the buffer. */
+    if( n < 0 ) { buf[pos] = '\0'; return pos; }
     if( n >= avail ) return buf_size - 1; /* truncated: saturate */
     return pos + n;
 }
