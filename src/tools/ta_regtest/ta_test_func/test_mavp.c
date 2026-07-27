@@ -44,6 +44,8 @@
  *  -------------------------------------------------------------------
  *  072626 MF,CC  First version. Targeted MAVP grouping-path legs with a
  *                per-bar TA_MA oracle and end-truncation pins (#143).
+ *  072726 MF,CC  #145. Iterate the generated MAType list instead of a
+ *                hand-kept one, and verify the unstable legs cross-language.
  */
 
 /* Description:
@@ -82,7 +84,9 @@
  *
  * When --codegen is active every successful full-range call is also
  * verified against the language servers (C, Rust, Java, .NET) through
- * server_verify, extending every shape cross-language bitwise.
+ * server_verify, extending every shape cross-language bitwise — at the
+ * default unstable period and at a non-zero one, which server_verify
+ * forwards to each server.
  */
 
 /**** Headers ****/
@@ -94,6 +98,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "server_verify.h"
+#include "ta_func_unguarded.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -108,19 +113,22 @@
 #define MV_DATA_SIZE 252   /* Daily reference data size. */
 #define MV_BUF_SIZE  280
 
-/* Every MAType routed through ma(): window-slide (SMA/WMA/TRIMA),
- * recursive (EMA/DEMA/TEMA/KAMA), the period-ignoring path (MAMA), the
+/* Every MAType routed through ma(), read at run time from ta_abstract's
+ * MAType list rather than spelled out here: that list is generated from
+ * ta_codegen/input/enums.yaml (backends/ta_abstract_c.rs emits
+ * TA_MA_TypeDataPair straight from the enum variants), so an appended
+ * MAType is exercised by this file without editing it (#145).
+ *
+ * Today the list covers window-slide (SMA/WMA/TRIMA), recursive
+ * (EMA/DEMA/TEMA/KAMA), the period-ignoring path (MAMA), the
  * long-lookback cascades (T3/HMA — T3 goes empty on the wide-range
  * shapes, exercising the empty contract) and the period-independent
- * identity copy (DISABLED). A new MAType appended to the enum should
- * be added here.
+ * identity copy (DISABLED).
  */
-static const TA_MAType mvTypes[] = {
-   TA_MAType_SMA, TA_MAType_EMA, TA_MAType_WMA, TA_MAType_DEMA,
-   TA_MAType_TEMA, TA_MAType_TRIMA, TA_MAType_KAMA, TA_MAType_MAMA,
-   TA_MAType_T3, TA_MAType_HMA, TA_MAType_DISABLED
-};
-#define MV_NB_TYPES ((int)(sizeof(mvTypes)/sizeof(mvTypes[0])))
+#define MV_MAX_TYPES 32
+#define MV_MIN_TYPES 11   /* non-vacuity floor: the count when this was written */
+static TA_MAType mvTypes[MV_MAX_TYPES];
+static int       mvNbTypes;
 
 static TA_Real mvPeriods[MV_BUF_SIZE];
 static TA_Real mvOut[MV_BUF_SIZE];
@@ -131,6 +139,8 @@ static float   mvPriceS[MV_BUF_SIZE];
 static float   mvPeriodsS[MV_BUF_SIZE];
 
 /**** Local functions declarations.    ****/
+static ErrorNumber mvLoadTypes( void );
+static ErrorNumber mvUnguardedBoundCheck( void );
 static ErrorNumber mvOracleCheck( const char *label,
                                   const TA_History *history,
                                   const TA_Real *periods,
@@ -168,6 +178,9 @@ ErrorNumber test_func_mavp( TA_History *history )
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
    endIdx = MV_DATA_SIZE - 1;
+
+   errNb = mvLoadTypes();
+   if( errNb != TA_TEST_PASS ) return errNb;
 
    /* These tests assume pristine global settings. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
@@ -284,7 +297,7 @@ ErrorNumber test_func_mavp( TA_History *history )
    /* End-truncation pins for every MA type (sawtooth shape). */
    for( i = 0; i < MV_DATA_SIZE; i++ )
       mvPeriods[i] = (TA_Real)( 2 + i % 12 );
-   for( i = 0; i < MV_NB_TYPES; i++ )
+   for( i = 0; i < mvNbTypes; i++ )
    {
       char label[64];
       snprintf( label, sizeof(label), "truncation maType=%d", (int)mvTypes[i] );
@@ -308,14 +321,153 @@ ErrorNumber test_func_mavp( TA_History *history )
                                    2, 30, TA_MAType_SMA );
    if( errNb != TA_TEST_PASS ) return errNb;
 
+   /* Off-contract unguarded periods must stay bounded (#145). */
+   errNb = mvUnguardedBoundCheck();
+   if( errNb != TA_TEST_PASS ) return errNb;
+
    /* Leave globals as found. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   printf( "\n  MAVP grouping: %d MAType(s) from the generated ta_abstract list,"
+           " each shape at unstable 0 and 7%s\n", mvNbTypes,
+           server_verify_active() ? " (both cross-language)" : "" );
 
    return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
+
+/* Fill mvTypes from ta_abstract's generated MAType list, found by name on
+ * MAVP's own optInMAType parameter (not by a hardcoded parameter index).
+ */
+static ErrorNumber mvLoadTypes( void )
+{
+   const TA_FuncHandle *handle;
+   const TA_FuncInfo   *funcInfo;
+   const TA_OptInputParameterInfo *optInfo;
+   const TA_IntegerList *list = NULL;
+   unsigned int i;
+
+   if( TA_GetFuncHandle( "MAVP", &handle ) != TA_SUCCESS ||
+       TA_GetFuncInfo( handle, &funcInfo ) != TA_SUCCESS )
+   {
+      printf( "\nFail: MAVP: cannot reach ta_abstract metadata\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   for( i = 0; i < funcInfo->nbOptInput; i++ )
+   {
+      if( TA_GetOptInputParameterInfo( handle, i, &optInfo ) != TA_SUCCESS )
+         continue;
+      if( optInfo->type == TA_OptInput_IntegerList &&
+          strcmp( optInfo->paramName, "optInMAType" ) == 0 )
+      {
+         list = (const TA_IntegerList *)optInfo->dataSet;
+         break;
+      }
+   }
+   if( list == NULL || list->data == NULL )
+   {
+      printf( "\nFail: MAVP: no optInMAType integer list in ta_abstract\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* Floor, not an equality: the count must never SHRINK (that would make
+    * every matrix below quietly thinner), but a newly appended MAType is
+    * meant to be picked up here with no edit. */
+   if( list->nbElement < MV_MIN_TYPES || list->nbElement > MV_MAX_TYPES )
+   {
+      printf( "\nFail: MAVP: MAType list has %u entries, expected %d..%d\n",
+              list->nbElement, MV_MIN_TYPES, MV_MAX_TYPES );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   for( i = 0; i < list->nbElement; i++ )
+      mvTypes[i] = (TA_MAType)list->data[i].value;
+   mvNbTypes = (int)list->nbElement;
+
+   return TA_TEST_PASS;
+}
+
+/* Issue #145: the bucket table must stay bounded on an OFF-CONTRACT unguarded
+ * call carrying a near-INT_MAX period.
+ *
+ * ma_lookback() returns 0 for TA_MAType_DISABLED at any period, so a huge
+ * optInMaxPeriod does NOT push startIdx past endIdx — a handful of bars is
+ * enough to reach the allocation. That is the one path where the pre-#145
+ * `malloc((maxUsed+2) * sizeof(int))` evaluated 2147483646+2 in signed int
+ * (UBSan: "signed integer overflow ... cannot be represented in type 'int'"),
+ * and where merely-huge periods asked for a multi-GB table.
+ */
+static ErrorNumber mvUnguardedBoundCheck( void )
+{
+   TA_RetCode retCode;
+   TA_Integer outBegIdx, outNbElement;
+   int i;
+   const int huge = 2147483646;   /* INT_MAX-1 */
+
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvInplace[i] = 100.0 + (TA_Real)i;
+
+   /* Widest possible spread: the table is refused, not overflowed. */
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvPeriods[i] = ( i % 2 ) ? 1.0 : (TA_Real)huge;
+   outBegIdx = outNbElement = -1;
+   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                                1, huge, TA_MAType_DISABLED,
+                                &outBegIdx, &outNbElement, mvOut );
+   if( retCode != TA_BAD_PARAM || outBegIdx != 0 || outNbElement != 0 )
+   {
+      printf( "\nFail: MAVP unguarded wide spread: rc=%d beg=%d nb=%d,"
+              " expected clean TA_BAD_PARAM\n",
+              (int)retCode, (int)outBegIdx, (int)outNbElement );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* Same huge period on every bar: the spread is 0, so relative indexing
+    * makes this a two-int table and an ordinary success — the absolute
+    * indexing it replaced would have asked for ~8GB here. */
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvPeriods[i] = (TA_Real)huge;
+   outBegIdx = outNbElement = -1;
+   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                                huge, huge, TA_MAType_DISABLED,
+                                &outBegIdx, &outNbElement, mvOut );
+   if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
+   {
+      printf( "\nFail: MAVP unguarded narrow huge band: rc=%d beg=%d nb=%d,"
+              " expected the identity copy over %d bars\n",
+              (int)retCode, (int)outBegIdx, (int)outNbElement, MV_DATA_SIZE );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+   {
+      if( !( mvOut[i] == mvInplace[i] ) )
+      {
+         printf( "\nFail: MAVP unguarded narrow huge band [%d]: got %.17g,"
+                 " expected %.17g\n", i, mvOut[i], mvInplace[i] );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
+
+   /* Control: the same path at in-contract periods is untouched. The bound is
+    * inert for anything the guarded API can express. */
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvPeriods[i] = (TA_Real)( 2 + i % 50 );
+   outBegIdx = outNbElement = -1;
+   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                                1, 100000, TA_MAType_DISABLED,
+                                &outBegIdx, &outNbElement, mvOut );
+   if( retCode != TA_SUCCESS || outNbElement != MV_DATA_SIZE )
+   {
+      printf( "\nFail: MAVP unguarded in-contract control: rc=%d nb=%d\n",
+              (int)retCode, (int)outNbElement );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   return TA_TEST_PASS;
+}
 
 /* Clamp a raw period value exactly like the implementation does. */
 static int mvClamp( TA_Real raw, int minPeriod, int maxPeriod )
@@ -337,7 +489,7 @@ static ErrorNumber mvRunShapeMatrix( const char *label,
    int t, u;
    char subLabel[96];
 
-   for( t = 0; t < MV_NB_TYPES; t++ )
+   for( t = 0; t < mvNbTypes; t++ )
    {
       for( u = 0; u <= 1; u++ )
       {
@@ -476,10 +628,13 @@ static ErrorNumber mvOracleCheck( const char *label,
       }
    }
 
-   /* Cross-language, on pristine globals only (the servers are not sent
-    * the unstable-period setting from here).
+   /* Cross-language, on every leg. server_verify forwards the current
+    * TA_SetUnstablePeriod state to each server before the call
+    * (sync_unstable_periods), so the unstable legs verify too: with the
+    * forwarding disabled these fail on the EMA-family types, where the
+    * unstable period moves outBegIdx (#145).
     */
-   if( unstable == 0 && server_verify_active() )
+   if( server_verify_active() )
    {
       ErrorNumber errNb;
       errNb = server_verify( "MAVP", startIdx, endIdx, MV_DATA_SIZE,
