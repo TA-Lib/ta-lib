@@ -607,6 +607,7 @@ fn output_type_name(ty: i32) -> &'static str {
 // generated switch over the typed public wrappers: no reflection, so it survives
 // AOT/jlink and cannot desync from the real signatures.
 
+#[allow(clippy::too_many_lines)]
 fn param_holder_class() -> String {
     let mut s = header("MF,CC");
     s.push_str(
