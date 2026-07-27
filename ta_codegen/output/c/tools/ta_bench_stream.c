@@ -239,7 +239,7 @@ static long long get_nanotime(void) {
 }
 
 
-static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
+static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
 static void generate_price_data(int n) {
@@ -250,8 +250,10 @@ static void generate_price_data(int n) {
     g_close  = calloc(n, sizeof(double));
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
+    g_periods = calloc(n, sizeof(double));
     unsigned int seed = 42;
     double price = 100.0;
+    int period = 16;
     for( int i = 0; i < n; i++ ) {
         seed = seed * 1103515245 + 12345;
         double r = ((double)(seed >> 16) / 32768.0) - 1.0;
@@ -262,6 +264,12 @@ static void generate_price_data(int n) {
         g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
         g_volume[i] = 1000000.0 + r * 500000.0;
         price = c; if( price < 1.0 ) price = 1.0;
+        /* Wandering period series in MAVP's default [2..30] range: exercises
+         * the multi-period grouping, not just the single-period fast path. */
+        period += (int)((seed >> 8) % 7) - 3;
+        if( period < 2 ) period = 2;
+        if( period > 30 ) period = 30;
+        g_periods[i] = (double)period;
     }
 }
 
@@ -272,7 +280,7 @@ static double g_outBuf2[MAX_POINTS];
 static int g_outIntBuf0[MAX_POINTS];
 static int g_outIntBuf1[MAX_POINTS];
 
-static double *g_rt_open, *g_rt_high, *g_rt_low, *g_rt_close, *g_rt_volume, *g_rt_oi;
+static double *g_rt_open, *g_rt_high, *g_rt_low, *g_rt_close, *g_rt_volume, *g_rt_oi, *g_rt_periods;
 static int g_rtCap;
 
 
@@ -7823,8 +7831,8 @@ static void bench_stream_all(const char *filter, int iters) {
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                g_rt_high[t] = g_high[it & BENCH_MASK];
-                TA_MAVP(t, t, g_rt_close, g_rt_high, 2, 30, 0, &begIdx, &nb, g_outBuf0);
+                g_rt_periods[t] = g_periods[it & BENCH_MASK];
+                TA_MAVP(t, t, g_rt_close, g_rt_periods, 2, 30, 0, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7834,7 +7842,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAVP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAVP_Open(&st, g_close, g_high, g_nPoints, 2, 30, 0, &v0);
+        TA_RetCode orc = TA_MAVP_Open(&st, g_close, g_periods, g_nPoints, 2, 30, 0, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7842,7 +7850,7 @@ static void bench_stream_all(const char *filter, int iters) {
             for( int pass = 0; pass < 3; pass++ ) {
                 long long t0 = get_nanotime();
                 for( int it = 0; it < iters; it++ ) {
-                    TA_MAVP_Update(st, g_close[it & BENCH_MASK], g_high[it & BENCH_MASK], &v0);
+                    TA_MAVP_Update(st, g_close[it & BENCH_MASK], g_periods[it & BENCH_MASK], &v0);
                     acc += v0;
                 }
                 long long tu = get_nanotime() - t0;
@@ -7854,13 +7862,13 @@ static void bench_stream_all(const char *filter, int iters) {
                     long long t0 = get_nanotime();
                     for( int j = 0; j < blk; j++ ) {
                         int it = b * blk + j;
-                        TA_MAVP_Peek(st, g_close[it & BENCH_MASK], g_high[it & BENCH_MASK], &v0);
+                        TA_MAVP_Peek(st, g_close[it & BENCH_MASK], g_periods[it & BENCH_MASK], &v0);
                         acc += v0;
                     }
                     tp += get_nanotime() - t0;
                     for( int j = 0; j < blk; j++ ) {
                         int it = b * blk + j;
-                        TA_MAVP_Update(st, g_close[it & BENCH_MASK], g_high[it & BENCH_MASK], &v0);
+                        TA_MAVP_Update(st, g_close[it & BENCH_MASK], g_periods[it & BENCH_MASK], &v0);
                         acc += v0;
                     }
                 }
@@ -11418,7 +11426,8 @@ int main(int argc, char *argv[]) {
     g_rt_close  = malloc(sizeof(double) * (size_t)g_rtCap);
     g_rt_volume = malloc(sizeof(double) * (size_t)g_rtCap);
     g_rt_oi     = malloc(sizeof(double) * (size_t)g_rtCap);
-    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi ) {
+    g_rt_periods = malloc(sizeof(double) * (size_t)g_rtCap);
+    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi || !g_rt_periods ) {
         fprintf( stderr, "ta_bench_stream: allocation failed (try a smaller --iters)\n" );
         return 1;
     }
@@ -11426,9 +11435,10 @@ int main(int argc, char *argv[]) {
         int j = i % g_nPoints;
         g_rt_open[i]=g_open[j]; g_rt_high[i]=g_high[j]; g_rt_low[i]=g_low[j];
         g_rt_close[i]=g_close[j]; g_rt_volume[i]=g_volume[j]; g_rt_oi[i]=g_oi[j];
+        g_rt_periods[i]=g_periods[j];
     }
     bench_stream_all(func_filter, n_iters);
-    free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi);
-    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     return 0;
 }

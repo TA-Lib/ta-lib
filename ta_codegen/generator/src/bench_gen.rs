@@ -55,6 +55,35 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     s
 }
 
+/// Per expanded array slot: true when that slot is MAVP's per-element period
+/// series (`inPeriods`).
+///
+/// `expand_input_names` renames generic reals to `inReal0`/`inReal1` whenever a
+/// function has more than one of them, so by the time a caller sees the expanded
+/// name MAVP's `inPeriods` is indistinguishable from any other second real. This
+/// walks the ORIGINAL IR inputs in the same slot order to recover it — the same
+/// thing `variant_frame.rs` does for `TA_VIN_PERIODS`.
+fn periods_slots(func: &FuncDef) -> Vec<bool> {
+    let mut slots = Vec::new();
+    for inp in &func.inputs {
+        match &inp.param_type {
+            ParamType::Real => slots.push(inp.name == "inPeriods"),
+            ParamType::Price(components) => slots.extend(components.iter().map(|_| false)),
+            _ => {} // Integer / Enum inputs are not array parameters
+        }
+    }
+    slots
+}
+
+/// Map an expanded input name to the global benchmark array variable.
+/// `is_periods` comes from [`periods_slots`] and wins over the name.
+fn input_slot_to_global(name: &str, real_idx: usize, is_periods: bool) -> String {
+    if is_periods {
+        return "g_periods".to_string();
+    }
+    input_name_to_global(name, real_idx)
+}
+
 /// Map an expanded input name to the global benchmark array variable.
 fn input_name_to_global(name: &str, real_idx: usize) -> String {
     match name {
@@ -64,6 +93,12 @@ fn input_name_to_global(name: &str, real_idx: usize) -> String {
         "inClose" => "g_close".to_string(),
         "inVolume" => "g_volume".to_string(),
         "inOpenInterest" => "g_oi".to_string(),
+        // MAVP's per-element period series (same special case as the variant
+        // frame's TA_VIN_PERIODS): a price series here clamps every bar to
+        // maxPeriod, so the bench would only ever measure the one-distinct-
+        // period fast path. Only reachable when it is the sole generic real —
+        // otherwise the slot is flagged by `periods_slots`, which wins.
+        "inPeriods" => "g_periods".to_string(),
         _ => {
             // Generic real inputs: first uses g_close, second uses g_high
             if real_idx == 0 { "g_close".to_string() } else { "g_high".to_string() }
@@ -94,9 +129,14 @@ fn generate_bench_func(s: &mut String, funcs: &[FuncDef]) {
         args.push("g_nPoints - 1".to_string());
 
         // Input arrays
+        let periods = periods_slots(func);
         let mut real_idx = 0;
-        for inp_name in &input_names {
-            args.push(input_name_to_global(inp_name, real_idx));
+        for (k, inp_name) in input_names.iter().enumerate() {
+            args.push(input_slot_to_global(
+                inp_name,
+                real_idx,
+                periods.get(k).copied().unwrap_or(false),
+            ));
             if !matches!(
                 inp_name.as_str(),
                 "inOpen" | "inHigh" | "inLow" | "inClose" | "inVolume" | "inOpenInterest"
@@ -273,11 +313,12 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         let (out_decls, out_addrs, out_acc) = stream_out_bits(func);
 
         // Input array args (Open + batch@last) and per-bar scalar args (Update/Peek).
+        let periods = periods_slots(func);
         let mut in_arrays = Vec::new();
         let mut bar_scalars = Vec::new();
         let mut real_idx = 0usize;
-        for inp in &input_names {
-            let g = input_name_to_global(inp, real_idx);
+        for (k, inp) in input_names.iter().enumerate() {
+            let g = input_slot_to_global(inp, real_idx, periods.get(k).copied().unwrap_or(false));
             in_arrays.push(g.clone());
             bar_scalars.push(format!("{g}[it & BENCH_MASK]"));
             if !matches!(
@@ -497,7 +538,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
 
     // Growing history batch@last appends into (distinct from the static price
     // arrays the update feed rotates over).
-    s.push_str("static double *g_rt_open, *g_rt_high, *g_rt_low, *g_rt_close, *g_rt_volume, *g_rt_oi;\n");
+    s.push_str("static double *g_rt_open, *g_rt_high, *g_rt_low, *g_rt_close, *g_rt_volume, *g_rt_oi, *g_rt_periods;\n");
     s.push_str("static int g_rtCap;\n\n");
 
     s.push_str(FUNC_MATCHES);
@@ -576,7 +617,8 @@ int main(int argc, char *argv[]) {
     g_rt_close  = malloc(sizeof(double) * (size_t)g_rtCap);
     g_rt_volume = malloc(sizeof(double) * (size_t)g_rtCap);
     g_rt_oi     = malloc(sizeof(double) * (size_t)g_rtCap);
-    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi ) {
+    g_rt_periods = malloc(sizeof(double) * (size_t)g_rtCap);
+    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi || !g_rt_periods ) {
         fprintf( stderr, "ta_bench_stream: allocation failed (try a smaller --iters)\n" );
         return 1;
     }
@@ -584,10 +626,11 @@ int main(int argc, char *argv[]) {
         int j = i % g_nPoints;
         g_rt_open[i]=g_open[j]; g_rt_high[i]=g_high[j]; g_rt_low[i]=g_low[j];
         g_rt_close[i]=g_close[j]; g_rt_volume[i]=g_volume[j]; g_rt_oi[i]=g_oi[j];
+        g_rt_periods[i]=g_periods[j];
     }
     bench_stream_all(func_filter, n_iters);
-    free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi);
-    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     return 0;
 }
 "#;
@@ -610,7 +653,7 @@ static long long get_nanotime(void) {
 ";
 
 const PRICE_DATA_GEN: &str = r"
-static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
+static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
 static void generate_price_data(int n) {
@@ -621,8 +664,10 @@ static void generate_price_data(int n) {
     g_close  = calloc(n, sizeof(double));
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
+    g_periods = calloc(n, sizeof(double));
     unsigned int seed = 42;
     double price = 100.0;
+    int period = 16;
     for( int i = 0; i < n; i++ ) {
         seed = seed * 1103515245 + 12345;
         double r = ((double)(seed >> 16) / 32768.0) - 1.0;
@@ -633,6 +678,12 @@ static void generate_price_data(int n) {
         g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
         g_volume[i] = 1000000.0 + r * 500000.0;
         price = c; if( price < 1.0 ) price = 1.0;
+        /* Wandering period series in MAVP's default [2..30] range: exercises
+         * the multi-period grouping, not just the single-period fast path. */
+        period += (int)((seed >> 8) % 7) - 3;
+        if( period < 2 ) period = 2;
+        if( period > 30 ) period = 30;
+        g_periods[i] = (double)period;
     }
 }
 
@@ -664,7 +715,7 @@ int main(int argc, char *argv[]) {
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     generate_price_data(n_points);
     bench_all(func_filter, n_iters);
-    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     return 0;
 }
 "#;
